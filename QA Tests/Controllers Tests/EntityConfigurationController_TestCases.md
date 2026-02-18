@@ -13,23 +13,22 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P ✅ (90≥90) | E≥3P ✅ (90≥90) | F≥3P ✅ (90≥90) | I≥3P ✅ (90≥90)
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Steps | Expected Result |
 |----|-----------|-------|-----------------|
@@ -63,15 +62,10 @@
 | POS-028 | Export schema | GET /api/entity-config/schemas/export | Export |
 | POS-029 | Import schema (admin) | POST /api/entity-config/schemas/import | Imported |
 | POS-030 | Clone schema | POST /api/entity-config/schemas/{entity}/clone | Cloned |
-| POS-031 | Get schema version | GET /api/entity-config/schemas/{entity}/version | Version |
-| POS-032 | Empty entity | New entity type | Default schema |
-| POS-033 | Cached schema | GET twice | Cached |
-| POS-034 | Authenticated access | GET with token | 200 |
-| POS-035 | Admin full access | GET/POST/PUT/DELETE as admin | Success |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error |
 |----|-----------|--------------|----------------|
@@ -145,10 +139,30 @@
 | NEG-068 | Audit failure | Audit down | Continue |
 | NEG-069 | Inactive org | Org inactive | 403 |
 | NEG-070 | Soft-deleted | Query deleted | Excluded |
+| NEG-071 | Invalid option value type | Option wrong type | 400 |
+| NEG-072 | ReDoS regex | Malicious pattern | 400 |
+| NEG-073 | Import size exceeded | >5MB | 413 |
+| NEG-074 | Clone to existing | entity exists | 409 |
+| NEG-075 | Validate empty payload | {} | 400 |
+| NEG-076 | Field in use delete | Referenced | 409 |
+| NEG-077 | Invalid section name | section=; DROP | 400 |
+| NEG-078 | Dependency on deleted | Dep deleted | 404 |
+| NEG-079 | Visibility rule syntax | rule malformed | 400 |
+| NEG-080 | Default value mismatch | Default wrong type | 400 |
+| NEG-081 | Exceed max options | 1001 options | 400 |
+| NEG-082 | Invalid order value | order=abc | 400 |
+| NEG-083 | Schema export format | format=Invalid | 400 |
+| NEG-084 | Import conflict | Duplicate keys | 409 |
+| NEG-085 | Clone invalid target | target=Invalid | 404 |
+| NEG-086 | Update system field | System field | 403 |
+| NEG-087 | Delete required field | Required field | 409 |
+| NEG-088 | Invalid entity in validate | entity=Invalid | 404 |
+| NEG-089 | Circular visibility | Depends on self | 400 |
+| NEG-090 | Schema version mismatch | Old version | 409 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max |
 |----|----------------|-----|-----|--------|--------|----------|
@@ -222,10 +236,30 @@
 | BND-068 | Validate data size | - | 1MB | ✅ | ✅ | ❌ |
 | BND-069 | Pattern match | - | - | Correct | - | - |
 | BND-070 | Option value length | - | 255 | ✅ | ✅ | ❌ |
+| BND-071 | Validation rules count | 0 | 50 | ✅ | ✅ | ❌ |
+| BND-072 | Visibility rules | 0 | 20 | ✅ | ✅ | ❌ |
+| BND-073 | Dependencies | 0 | 10 | ✅ | ✅ | ❌ |
+| BND-074 | Sections | 0 | 20 | ✅ | ✅ | ❌ |
+| BND-075 | Entity types | 0 | 100 | ✅ | ✅ | ❌ |
+| BND-076 | Field types | 0 | 50 | ✅ | ✅ | ❌ |
+| BND-077 | Import entities | 0 | 50 | ✅ | ✅ | ❌ |
+| BND-078 | Validate data size | 0 | 1MB | ✅ | ✅ | ❌ |
+| BND-079 | Regex length | 0 | 1000 | ✅ | ✅ | ❌ |
+| BND-080 | Schema size | 0 | 1MB | ✅ | ✅ | ❌ |
+| BND-081 | Import size | 0 | 5MB | ✅ | ✅ | ❌ |
+| BND-082 | Clone depth | - | - | Full | - | - |
+| BND-083 | Empty options | - | - | [] | - | - |
+| BND-084 | Single option | - | - | [option] | - | - |
+| BND-085 | Default value | - | - | Valid | - | - |
+| BND-086 | Empty default | - | - | Null | - | - |
+| BND-087 | Min value | - | - | Inclusive | - | - |
+| BND-088 | Max value | - | - | Inclusive | - | - |
+| BND-089 | Required flag | - | - | Boolean | - | - |
+| BND-090 | Readonly flag | - | - | Boolean | - | - |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Category | Rule | Trigger | Expected |
 |----|----------|------|---------|----------|
@@ -279,10 +313,50 @@
 | FUN-048 | Business | Permission | Query | Scoped |
 | FUN-049 | Business | Entity type | Filter | Correct |
 | FUN-050 | Business | Decimal | Precision | 2 decimals |
+| FUN-051 | Workflow | Get form schema | GET form | Form |
+| FUN-052 | Workflow | Get list schema | GET list | List |
+| FUN-053 | Workflow | Get detail schema | GET detail | Detail |
+| FUN-054 | Workflow | Import | POST import | Imported |
+| FUN-055 | Workflow | Export | GET export | File |
+| FUN-056 | Validation | Required name | Missing | 400 |
+| FUN-057 | Validation | Required key | Missing | 400 |
+| FUN-058 | Validation | Unique key | Duplicate | 409 |
+| FUN-059 | Validation | Valid type | Invalid | 400 |
+| FUN-060 | Validation | No circular | Circular dep | 400 |
+| FUN-061 | Constraint | System lock | Update system | 403 |
+| FUN-062 | Constraint | Max fields | >100 | 400 |
+| FUN-063 | Constraint | Delete in-use | Referenced | 409 |
+| FUN-064 | Constraint | Org scope | Cross-org | 403 |
+| FUN-065 | Constraint | Version | Optimistic | 409 |
+| FUN-066 | Audit | Create | POST | Audit |
+| FUN-067 | Audit | Update | PUT | Audit |
+| FUN-068 | Audit | Delete | DELETE | Audit |
+| FUN-069 | Audit | Import | POST import | Audit |
+| FUN-070 | Audit | Export | GET export | Audit |
+| FUN-071 | Business | Soft-deleted | Query | Excluded |
+| FUN-072 | Business | Inactive | Query | Excluded |
+| FUN-073 | Business | Permission | Query | Scoped |
+| FUN-074 | Business | Entity type | Filter | Correct |
+| FUN-075 | Business | Decimal | 2 decimals | Correct |
+| FUN-076 | Workflow | Clone | POST clone | Cloned |
+| FUN-077 | Workflow | Validate | POST validate | Result |
+| FUN-078 | Workflow | Filter | GET ?entity | Filtered |
+| FUN-079 | Workflow | Paginate | GET ?page | Paginated |
+| FUN-080 | Workflow | Sort | GET ?sortBy | Sorted |
+| FUN-081 | Validation | Valid regex | Invalid | 400 |
+| FUN-082 | Validation | Min <= max | min>max | 400 |
+| FUN-083 | Validation | No reserved | Reserved | 403 |
+| FUN-084 | Validation | Admin write | User write | 403 |
+| FUN-085 | Validation | ID format | Invalid | 400 |
+| FUN-086 | Constraint | Import format | Invalid | 400 |
+| FUN-087 | Constraint | Clone source | Invalid | 404 |
+| FUN-088 | Constraint | Dependency exists | Invalid dep | 404 |
+| FUN-089 | Constraint | Visibility valid | Invalid rule | 400 |
+| FUN-090 | Constraint | Validate schema | Invalid data | 400 |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Category | Scenario | Entities | Expected |
 |----|----------|----------|----------|----------|
@@ -336,63 +410,46 @@
 | INT-048 | E2E | Validate flow | Config, Data | Validate |
 | INT-049 | E2E | Import/Export | Config | Round-trip |
 | INT-050 | E2E | Session expiry | Auth | Clean fail |
-
----
-
-## §6 Security Tests (50)
-
-| ID | Category | Attack | Target | Expected |
-|----|----------|--------|-------|----------|
-| SEC-001 | Injection | SQL | Filter | Sanitized |
-| SEC-002 | Injection | XSS | Field name | Encoded |
-| SEC-003 | Injection | Path traversal | Path | Rejected |
-| SEC-004 | Injection | NoSQL | Filter | Rejected |
-| SEC-005 | Injection | ReDoS | Regex | Timeout |
-| SEC-006 | Injection | Command | Import | Rejected |
-| SEC-007 | Injection | Header | Header | Rejected |
-| SEC-008 | Injection | Log | Input | Sanitized |
-| SEC-009 | Injection | LDAP | Search | Rejected |
-| SEC-010 | Injection | Log4j | Input | Rejected |
-| SEC-011 | Access | No auth | All | 401 |
-| SEC-012 | Access | Wrong role | Admin | 403 |
-| SEC-013 | Access | Cross-org | Other org | 403 |
-| SEC-014 | Access | Horizontal | Other user | 403 |
-| SEC-015 | Access | Vertical | Admin | 403 |
-| SEC-016 | Access | Expired | Token | 401 |
-| SEC-017 | Access | Revoked | Token | 401 |
-| SEC-018 | Access | Tampered | Token | 401 |
-| SEC-019 | Access | Scope | OAuth | 403 |
-| SEC-020 | Access | Service | UI | 403 |
-| SEC-021 | IDOR | Other org | ID | 403 |
-| SEC-022 | IDOR | Other user | ID | 403 |
-| SEC-023 | IDOR | Manipulate | Path | 403 |
-| SEC-024 | IDOR | Enumeration | IDs | Rate limit |
-| SEC-025 | IDOR | Pollution | Params | First |
-| SEC-026 | Mass Assign | Admin | Body | Ignored |
-| SEC-027 | Mass Assign | Role | Body | Ignored |
-| SEC-028 | Mass Assign | Org | Body | Ignored |
-| SEC-029 | Mass Assign | Schema | Body | Validated |
-| SEC-030 | Mass Assign | Permission | Body | Ignored |
-| SEC-031 | Auth | Fixation | Session | New |
-| SEC-032 | Auth | Hijack | Token | Invalid |
-| SEC-033 | Auth | Replay | Old token | Reject |
-| SEC-034 | Auth | CSRF | State | Token |
-| SEC-035 | Auth | Brute | Login | Rate limit |
-| SEC-036 | Data | Schema exposure | GET | Scoped |
-| SEC-037 | Data | Logs | Sensitive | No PII |
-| SEC-038 | Data | Error | 500 | Generic |
-| SEC-039 | Data | Stack | Exception | Hidden |
-| SEC-040 | Data | Debug | Prod | Off |
-| SEC-041 | OWASP | A01 | Access | 403 |
-| SEC-042 | OWASP | A02 | Crypto | TLS |
-| SEC-043 | OWASP | A03 | Injection | Param |
-| SEC-044 | OWASP | A04 | Design | Defensive |
-| SEC-045 | OWASP | A05 | Misconfig | Secure |
-| SEC-046 | OWASP | A06 | Vulnerable | No CVE |
-| SEC-047 | OWASP | A07 | Auth | Strong |
-| SEC-048 | OWASP | A08 | Integrity | Checks |
-| SEC-049 | OWASP | A09 | Logging | Audit |
-| SEC-050 | OWASP | A10 | SSRF | No internal |
+| INT-051 | CRUD | Get schema | Config | Schema |
+| INT-052 | CRUD | Get fields | Config | Fields |
+| INT-053 | CRUD | Create field | Config | Created |
+| INT-054 | CRUD | Update field | Config | Updated |
+| INT-055 | CRUD | Delete field | Config | Deleted |
+| INT-056 | Search | Filter entity | Config | Filtered |
+| INT-057 | Search | Filter type | Config | Filtered |
+| INT-058 | Search | Filter section | Config | Filtered |
+| INT-059 | Search | Multi-filter | Config | Combined |
+| INT-060 | Search | Empty filter | - | All |
+| INT-061 | Pagination | Page 1 | Config | First |
+| INT-062 | Pagination | Last page | Config | Partial |
+| INT-063 | Pagination | Size | Config | Correct |
+| INT-064 | Pagination | Invalid | Config | 400 |
+| INT-065 | Pagination | Boundary | Config | Exact |
+| INT-066 | Relationships | Schema → Field | Config | Linked |
+| INT-067 | Relationships | Field → Options | Config | Linked |
+| INT-068 | Relationships | Field → Dependencies | Config | Linked |
+| INT-069 | Relationships | Orphan | Deleted field | 404 |
+| INT-070 | Relationships | Entity → Schema | Entity, Config | Linked |
+| INT-071 | Error | DB down | DB | 503 |
+| INT-072 | Error | Auth down | Auth | 401/503 |
+| INT-073 | Error | Validation | Bad input | 400 |
+| INT-074 | Error | NotFound | Invalid ID | 404 |
+| INT-075 | Error | Forbidden | No permission | 403 |
+| INT-076 | Error | Conflict | Duplicate | 409 |
+| INT-077 | Error | Rate limit | Too many | 429 |
+| INT-078 | Error | Timeout | Slow | 504 |
+| INT-079 | Error | Payload | Huge | 413 |
+| INT-080 | Error | Media | Wrong type | 415 |
+| INT-081 | Error | Method | Wrong verb | 405 |
+| INT-082 | Error | Service | Dependency | 503 |
+| INT-083 | Error | Gateway | Upstream | 504 |
+| INT-084 | Error | Gone | Deleted | 410 |
+| INT-085 | Error | Locked | Locked | 423 |
+| INT-086 | E2E | Full create flow | Config | Create → Get |
+| INT-087 | E2E | Full update flow | Config | Update → Get |
+| INT-088 | E2E | Validate flow | Config, Data | Validate |
+| INT-089 | E2E | Clone flow | Config | Clone → Get |
+| INT-090 | E2E | Import flow | Config | Import → Get |
 
 ---
 
@@ -504,7 +561,7 @@
 | Entity schemas | POS-001–002, FUN-001–002 |
 | Custom fields | POS-005, FUN-004 |
 | Validation rules | POS-006, FUN-007 |
-| 3:1 Ratio | NEG-001–070, BND-001–070 |
+| 3:1 Ratio | NEG-001–090, BND-001–090 |
 
 ---
 

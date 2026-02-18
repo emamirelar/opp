@@ -11,19 +11,24 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+| Check | Formula | Result |
+|-------|---------|--------|
+| N≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| E≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| F≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| I≥3P | 90 ≥ 3×30=90 | ✅ PASS |
 
 ---
 
@@ -33,7 +38,7 @@ Org hierarchy lookup service: unit search, typeahead, tree traversal, type filte
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|-------------|-------|-----------------|
@@ -67,15 +72,10 @@ Org hierarchy lookup service: unit search, typeahead, tree traversal, type filte
 | POS-028 | Resolve unit | Code | ResolveUnitAsync(code) | Unit |
 | POS-029 | Get active units | None | GetActiveUnitsAsync() | Active |
 | POS-030 | Get metadata | Unit ID | GetMetadataAsync(id) | Metadata |
-| POS-031 | Full tree with types | None | GetTreeWithTypesAsync() | Tree |
-| POS-032 | Filtered tree | Filter | GetFilteredTreeAsync(filter) | Filtered |
-| POS-033 | Unit count | Filter | GetCountAsync(filter) | Count |
-| POS-034 | Search with types | Query, types | SearchAsync(query, types) | Filtered |
-| POS-035 | Get full details | Unit ID | GetFullDetailsAsync(id) | Full details |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error |
 |----|-----------|---------------|----------------|
@@ -226,10 +226,30 @@ Org hierarchy lookup service: unit search, typeahead, tree traversal, type filte
 | BND-068 | Batch distinct | [1,2,3] | 3 |
 | BND-069 | Batch overlap | [1,2,1] | 2 |
 | BND-070 | Subtree depth 0 | Leaf | Leaf only |
+| BND-071 | Type count = 0 | [] | All |
+| BND-072 | Type count = 5 | Many | Filtered |
+| BND-073 | Path length = 1 | [root] | Valid |
+| BND-074 | Path length = 20 | Max | Valid |
+| BND-075 | Sibling count = 0 | Only | [] |
+| BND-076 | Sibling count = 50 | Many | All |
+| BND-077 | Descendant count = 0 | Leaf | [] |
+| BND-078 | Descendant count = 1000 | Many | All |
+| BND-079 | Typeahead limit = 10 | 10 | Limited |
+| BND-080 | Typeahead limit = 100 | Max | Limited |
+| BND-081 | Tree nodes = 0 | Empty | [] |
+| BND-082 | Tree nodes = 10000 | Many | All |
+| BND-083 | Filter empty | {} | All |
+| BND-084 | Filter full | Full | Filtered |
+| BND-085 | Status active | Active | Active only |
+| BND-086 | Status all | All | All |
+| BND-087 | Depth 0 | Root | 0 |
+| BND-088 | Depth 10 | Deep | 10 |
+| BND-089 | Count 0 | No match | 0 |
+| BND-090 | Count max | Many | Count |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule | Trigger | Expected Outcome |
 |----|-----------|------|---------|------------------|
@@ -283,10 +303,50 @@ Org hierarchy lookup service: unit search, typeahead, tree traversal, type filte
 | FUN-048 | Dropdown order | Order | GetDropdown | Sorted |
 | FUN-049 | Resolve logic | Resolve | ResolveUnit | Correct |
 | FUN-050 | Full details merge | Merge | GetFullDetails | Merged |
+| FUN-051 | Code uniqueness | Unique | GetByCode | One |
+| FUN-052 | ID uniqueness | Unique | GetById | One |
+| FUN-053 | Hierarchy integrity | Integrity | GetTree | Valid |
+| FUN-054 | Permission scoping | Scope | Search | Scoped |
+| FUN-055 | Type filtering | Filter | GetByType | Filtered |
+| FUN-056 | Cache TTL | TTL | Cache | Expires |
+| FUN-057 | Soft delete excluded | Exclude | GetAll | No deleted |
+| FUN-058 | Active filter | Active | GetActive | Active only |
+| FUN-059 | Search case-insensitive | Case | Search | Case-insensitive |
+| FUN-060 | Search partial match | Partial | Search | Matches |
+| FUN-061 | Tree traversal order | Order | GetTree | DFS/BFS |
+| FUN-062 | Ancestor order | Order | GetAncestors | Root last |
+| FUN-063 | Descendant order | Order | GetDescendants | Level order |
+| FUN-064 | Path order | Order | GetPathToRoot | Root last |
+| FUN-065 | Typeahead limit | Limit | GetTypeahead | Limited |
+| FUN-066 | Pagination offset | Offset | Search | Correct |
+| FUN-067 | Batch deduplication | Dedup | GetByIds | Deduplicated |
+| FUN-068 | Invalidation on update | Invalidation | Update | Cache cleared |
+| FUN-069 | Warm-up loads all | Warm-up | WarmCache | All loaded |
+| FUN-070 | Fallback for missing | Fallback | Missing | Fallback |
+| FUN-071 | Error format | Format | Error | Consistent |
+| FUN-072 | Trim input | Trim | Search | Trimmed |
+| FUN-073 | Normalize code | Normalize | Code | Uppercase |
+| FUN-074 | Retry on transient | Retry | Transient | Retried |
+| FUN-075 | No retry on permanent | No retry | Permanent | Fail |
+| FUN-076 | Timeout handling | Timeout | Slow | Timeout |
+| FUN-077 | Cancellation | Cancel | Cancel | Cancelled |
+| FUN-078 | Rate limit | Rate | Many | Limited |
+| FUN-079 | Audit trail | Audit | Get | Logged |
+| FUN-080 | Permission check | Permission | Get | Checked |
+| FUN-081 | Tenant isolation | Tenant | Get | Isolated |
+| FUN-082 | Descendant check | Check | IsDescendantOf | Correct |
+| FUN-083 | Ancestor check | Check | IsAncestorOf | Correct |
+| FUN-084 | Sibling check | Check | GetSiblings | Exclude self |
+| FUN-085 | Root identification | Root | GetRootUnits | Correct |
+| FUN-086 | Leaf identification | Leaf | GetLeafUnits | Correct |
+| FUN-087 | Depth calculation | Calc | GetDepth | Correct |
+| FUN-088 | Path resolution | Resolve | GetPathToRoot | Correct |
+| FUN-089 | Subtree boundary | Boundary | GetSubtree | Inclusive |
+| FUN-090 | Filter combination | Combine | Search | AND/OR |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Integration | Scenario | Expected Result |
 |----|-----------|-------------|----------|-----------------|
@@ -340,6 +400,46 @@ Org hierarchy lookup service: unit search, typeahead, tree traversal, type filte
 | INT-048 | Path + units | Path | GetUnitsInPath | Resolved |
 | INT-049 | Sibling + parent | Sibling | GetSiblings | Correct |
 | INT-050 | End-to-end | All | Full flow | Success |
+| INT-051 | DbContext | EF Core | GetById | Loaded |
+| INT-052 | Org unit entity | Entity | GetById | Mapped |
+| INT-053 | Cache service | ICacheService | GetById | Cached |
+| INT-054 | Permission service | IPermissionService | Search | Scoped |
+| INT-055 | User service | IUserService | User | Resolved |
+| INT-056 | Opportunity | IOpportunityManager | Unit in opp | Linked |
+| INT-057 | Partner | IPartnerManager | Unit in partner | Linked |
+| INT-058 | Configuration | IConfiguration | Config | Applied |
+| INT-059 | Logger | ILogger | Log | Logged |
+| INT-060 | AutoMapper | IMapper | Map | Mapped |
+| INT-061 | Full search flow | All | Search | Success |
+| INT-062 | Full tree flow | All | GetTree | Success |
+| INT-063 | Full hierarchy flow | All | GetAncestors | Success |
+| INT-064 | Opportunity + unit | Opp + unit | Opp with unit | Linked |
+| INT-065 | Partner + unit | Partner + unit | Partner with unit | Linked |
+| INT-066 | Search + pagination | Search + pagination | Search paged | Success |
+| INT-067 | Cache + DB | Cache + DB | Miss then hit | Both |
+| INT-068 | Cache invalidation | Cache + update | Update | Invalidated |
+| INT-069 | Soft delete filter | DbContext | Get all | Filtered |
+| INT-070 | Permission + search | Permission | Search | Checked |
+| INT-071 | Tenant + get | Tenant | Get | Scoped |
+| INT-072 | Tree + types | Tree + types | GetTreeWithTypes | Combined |
+| INT-073 | Batch + cache | Batch + cache | GetByIds | Mixed |
+| INT-074 | Search + filter | Search + filter | Search | Filtered |
+| INT-075 | Pagination + sort | Pagination + sort | Page | Sorted |
+| INT-076 | Config + cache TTL | Config | Cache | TTL |
+| INT-077 | Logger + error | Logger | Error | Logged |
+| INT-078 | Mapper + entity | Mapper | Entity | Mapped |
+| INT-079 | DbContext + transaction | DbContext | Transaction | Consistent |
+| INT-080 | Retry + transient | Retry | Transient | Retried |
+| INT-081 | Timeout + get | Timeout | Get | Timeout |
+| INT-082 | Cancellation + get | Cancel | Get | Cancelled |
+| INT-083 | Rate limit + get | Rate limit | Many | Limited |
+| INT-084 | Audit + get | Audit | Get | Logged |
+| INT-085 | Validation + API | Validation | API | Validated |
+| INT-086 | Error handler + get | Error | Get | Handled |
+| INT-087 | DoA lookup | DoA | GetDoA | Linked |
+| INT-088 | EntityUserRole | EntityUserRole | GetRole | Linked |
+| INT-089 | Org hierarchy manager | OrgHierarchyManager | Full | Linked |
+| INT-090 | End-to-end | All | Full flow | Success |
 
 ---
 

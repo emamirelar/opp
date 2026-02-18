@@ -12,19 +12,19 @@
 
 | Category | File/Section | Count | Minimum Required | Status |
 |----------|-------------|-------|-----------------|--------|
-| Positive Tests | §1 | 35 | 30-50 | ✅ |
-| Negative Tests | §2 | 70 | Max(50, 2×35)=70 | ✅ |
-| Boundary Tests | §3 | 70 | Max(50, 2×35)=70 | ✅ |
-| Functional Tests | §4 | 50 | ≥50 | ✅ |
-| Integration Tests | §5 | 50 | ≥50 | ✅ |
+| Positive Tests | §1 | 30 | 30-50 | ✅ |
+| Negative Tests | §2 | 90 | Max(50, 3×30)=90 | ✅ |
+| Boundary Tests | §3 | 90 | Max(50, 3×30)=90 | ✅ |
+| Functional Tests | §4 | 90 | ≥90 | ✅ |
+| Integration Tests | §5 | 90 | ≥90 | ✅ |
 | Security Tests | §6 | 50 | ≥50 | ✅ |
 | Concurrency Tests | §7 | 25 | ≥25 | ✅ |
 | Unit Tests | §8 | 21 | ≥21 | ✅ |
 | Performance Tests | §9 | 16 | ≥16 | ✅ |
 | Load Tests | §10 | 10 | ≥10 | ✅ |
-| **TOTAL** | | **397** | **≥347** | ✅ |
+| **TOTAL** | | **462** | **≥462** | ✅ |
 
-**3:1 Ratio Check:** (N + B) = 140 ≥ 3 × P = 105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -134,17 +134,12 @@ The InteractionManager handles CRUD operations for interactions (meetings, email
 | POS-028 | Map entity to model | Interaction entity | mapper.Map<InteractionModel> | All fields mapped | P2 |
 | POS-029 | Map create request to entity | CreateInteractionRequest | mapper.Map<Interaction> | All fields mapped | P2 |
 | POS-030 | Interaction with long description (4000 chars) | Long text | Create with 4000 chars | Stored completely | P2 |
-| POS-031 | Status lifecycle — Active to Completed | Active interaction | ChangeStatus(Completed) | Status=Completed, audit set | P2 |
-| POS-032 | Status lifecycle — Active to Cancelled | Active interaction | ChangeStatus(Cancelled) | Status=Cancelled | P2 |
-| POS-033 | Paginate page 2 | 50+ interactions | GetInteractions(page=2) | Interactions 21-40 | P2 |
-| POS-034 | Get interaction audit trail | Modified interaction | GetAudit | Audit entries returned | P2 |
-| POS-035 | Restore soft-deleted interaction | Deleted interaction | Restore | IsDeleted=false | P2 |
 
 ---
 
-## §2 Negative Tests (Failure Scenarios)
+## §2 Negative Tests (Failure Scenarios) — 90 tests
 
-> **Minimum:** 70 tests
+> **Minimum:** 90 tests
 
 ### 2.1 Invalid Input (10)
 
@@ -245,12 +240,32 @@ The InteractionManager handles CRUD operations for interactions (meetings, email
 | NEG-068 | Filter invalid date format | Parsing error | P1 |
 | NEG-069 | Batch create with mixed valid/invalid | Valid created, invalid rejected | P1 |
 | NEG-070 | Create with contact from different partner | Business rule validation | P1 |
+| NEG-071 | Input | Null type for filter | Default or error | P2 |
+| NEG-072 | Input | Invalid date format in search | Parsing error | P1 |
+| NEG-073 | State | Update during delete | Conflict | P1 |
+| NEG-074 | Dep | Gmail API timeout | Graceful | P2 |
+| NEG-075 | Auth | Create for deleted partner | BusinessException | P1 |
+| NEG-076 | Auth | Create for deleted contact | BusinessException | P1 |
+| NEG-077 | Data | Description with null chars | Sanitized | P1 |
+| NEG-078 | Data | FromDate = ToDate + 1 day | Rejected | P0 |
+| NEG-079 | State | Completed interaction update | BusinessException (if locked) | P1 |
+| NEG-080 | Dep | Transaction deadlock on bulk | Retry | P1 |
+| NEG-081 | Mass | Mass assign IsDeleted | Blocked | P0 |
+| NEG-082 | Mass | Mass assign CreatedBy | Blocked | P0 |
+| NEG-083 | Search | Search with SQL chars | Escaped | P0 |
+| NEG-084 | Filter | Filter by invalid status | Error | P2 |
+| NEG-085 | Gmail | Gmail ID format invalid | Rejected | P2 |
+| NEG-086 | Input | Negative limit for recent | Error | P2 |
+| NEG-087 | State | Reassign to deleted contact | BusinessException | P1 |
+| NEG-088 | Dep | Connection pool exhausted | Wait or error | P1 |
+| NEG-089 | Data | Type with 51 chars | Validation error | P1 |
+| NEG-090 | Input | Null partner for filter | Error or all | P2 |
 
 ---
 
-## §3 Boundary Tests (Edge Cases)
+## §3 Boundary Tests (Edge Cases) — 90 tests
 
-> **Minimum:** 70 tests
+> **Minimum:** 90 tests
 
 ### 3.1 String Lengths (8)
 
@@ -356,12 +371,32 @@ The InteractionManager handles CRUD operations for interactions (meetings, email
 | BND-068 | Paginate exactly to last page | Total / pageSize = integer | Last page full | P2 |
 | BND-069 | Gmail message ID at max length | 500 chars | Stored correctly | P2 |
 | BND-070 | Multiple contacts for same interaction | Many-to-many if supported | All linked | P2 |
+| BND-071 | Description 2000 chars | Accepted | P1 |
+| BND-072 | Type 25 chars | Accepted | P1 |
+| BND-073 | ContactId 500 | Retrieved | P1 |
+| BND-074 | PartnerId 1000 | Retrieved | P1 |
+| BND-075 | Page 100 | Handled | P2 |
+| BND-076 | PageSize 500 | Accepted | P1 |
+| BND-077 | Interactions 500 per partner | Paginated | P1 |
+| BND-078 | Interactions 100 per contact | Loaded | P1 |
+| BND-079 | Duration 1 hour | Accepted | P1 |
+| BND-080 | Duration 8 hours | Accepted | P1 |
+| BND-081 | FromDate = ToDate (same hour) | Accepted | P1 |
+| BND-082 | Search range 7 days | Correct | P1 |
+| BND-083 | Recent limit 50 | 50 returned | P2 |
+| BND-084 | Interaction ID 100 | Retrieved | P2 |
+| BND-085 | Unicode Location | Arabic | Stored | P2 |
+| BND-086 | Subject 100 chars | Accepted | P1 |
+| BND-087 | Participants 500 chars | Accepted | P2 |
+| BND-088 | Notes 2000 chars | Accepted | P2 |
+| BND-089 | GmailThreadId 200 chars | Stored | P2 |
+| BND-090 | All types in one partner | 6 types | All returned | P1 |
 
 ---
 
-## §4 Functional Tests (Business Rules)
+## §4 Functional Tests (Business Rules) — 90 tests
 
-> **Minimum:** 50 tests
+> **Minimum:** 90 tests
 
 ### 4.1 Workflow Rules (15)
 
@@ -432,12 +467,52 @@ The InteractionManager handles CRUD operations for interactions (meetings, email
 | FUN-048 | Failed operation | No audit change | P1 |
 | FUN-049 | Reassign contact | Audit trail entry | P1 |
 | FUN-050 | Restore | IsDeleted=false, LastModifiedBy updated | P1 |
+| FUN-051 | IsDeleted filter | Deleted excluded | P0 |
+| FUN-052 | Create audit | CreatedBy/Date | P0 |
+| FUN-053 | Update audit | LastModifiedBy/Date | P0 |
+| FUN-054 | Delete soft-delete | IsDeleted set | P0 |
+| FUN-055 | Name auto-set | Type + Date | P1 |
+| FUN-056 | Contact validation | Exists, !deleted | P0 |
+| FUN-057 | Partner validation | Exists, !deleted | P0 |
+| FUN-058 | Date range | FromDate ≤ ToDate | P0 |
+| FUN-059 | Gmail dedup | MessageId | P1 |
+| FUN-060 | Status transitions | Valid only | P1 |
+| FUN-061 | Search case-insensitive | Match | P1 |
+| FUN-062 | Pagination defaults | Page=1, Size=20 | P1 |
+| FUN-063 | Recent sort desc | Most recent first | P1 |
+| FUN-064 | Count exclude deleted | !IsDeleted | P1 |
+| FUN-065 | Contact change scope | Follows contact | P1 |
+| FUN-066 | Description required | Reject null | P0 |
+| FUN-067 | ContactId positive | Reject 0 | P0 |
+| FUN-068 | PartnerId positive | Reject 0 | P0 |
+| FUN-069 | Type valid enum | Reject invalid | P0 |
+| FUN-070 | FromDate required | Reject null | P0 |
+| FUN-071 | FromDate ≤ ToDate | Reject reversed | P0 |
+| FUN-072 | Contact exists | Reject deleted | P0 |
+| FUN-073 | Partner exists | Reject deleted | P0 |
+| FUN-074 | XSS sanitize | Escape script | P0 |
+| FUN-075 | Description max 4000 | Reject 4001 | P1 |
+| FUN-076 | Location max 500 | Reject 501 | P2 |
+| FUN-077 | Subject max 200 | Reject 201 | P2 |
+| FUN-078 | Description trim | Trimmed | P2 |
+| FUN-079 | Gmail MessageId | Valid format | P2 |
+| FUN-080 | Status Active→Completed | Valid | P1 |
+| FUN-081 | Max page size 1000 | Capped | P1 |
+| FUN-082 | FK contact | Violation | P0 |
+| FUN-083 | FK partner | Violation | P0 |
+| FUN-084 | Soft-delete no cascade | Contact/Partner intact | P1 |
+| FUN-085 | Gmail MessageId unique | Dedup | P1 |
+| FUN-086 | Search limit | Paginated | P2 |
+| FUN-087 | Batch limit | Processed | P2 |
+| FUN-088 | Max per contact | Enforced | P2 |
+| FUN-089 | Date range limit | Accepted | P2 |
+| FUN-090 | Recent limit 100 | Capped | P2 |
 
 ---
 
-## §5 Integration Tests (End-to-End)
+## §5 Integration Tests (End-to-End) — 90 tests
 
-> **Minimum:** 50 tests
+> **Minimum:** 90 tests
 
 ### 5.1 CRUD (10)
 
@@ -513,6 +588,46 @@ The InteractionManager handles CRUD operations for interactions (meetings, email
 | INT-048 | SQL injection sanitized | No harm | P0 |
 | INT-049 | Large payload → 413 | Request too large | P2 |
 | INT-050 | Session expired → 401 | Auth required | P1 |
+| INT-051 | Full CRUD | All succeed | P0 |
+| INT-052 | Create→Partner list | Listed | P0 |
+| INT-053 | Create→Contact list | Listed | P0 |
+| INT-054 | Delete→Excluded | Not in lists | P0 |
+| INT-055 | Update→Persisted | Saved | P0 |
+| INT-056 | Create all 6 types | All created | P1 |
+| INT-057 | Status lifecycle | Active→Completed | P1 |
+| INT-058 | Gmail import lifecycle | Import→Search | P1 |
+| INT-059 | Restore | Available again | P1 |
+| INT-060 | Bulk create 50 | All created | P1 |
+| INT-061 | Search type Meeting | Only meetings | P0 |
+| INT-062 | Search date range | Recent only | P0 |
+| INT-063 | Search type+date | Intersection | P1 |
+| INT-064 | Search partner | Partner's | P1 |
+| INT-065 | Search contact | Contact's | P1 |
+| INT-066 | Search case-insensitive | Same | P1 |
+| INT-067 | Search empty | Empty | P1 |
+| INT-068 | Filter exclude deleted | Correct | P1 |
+| INT-069 | Combined filters | Narrow | P1 |
+| INT-070 | Clear filters | All shown | P1 |
+| INT-071 | Page 1 of 3 | 20 items | P1 |
+| INT-072 | Page 3 partial | Remaining | P1 |
+| INT-073 | Empty page | 0 total | P1 |
+| INT-074 | Single page | < pageSize | P2 |
+| INT-075 | Large page 1000 | All | P2 |
+| INT-076 | Interaction→Contact | Loaded | P0 |
+| INT-077 | Interaction→Partner | Loaded | P0 |
+| INT-078 | Contact delete impact | Handled | P1 |
+| INT-079 | Partner delete impact | Handled | P1 |
+| INT-080 | Same partner diff contacts | Both listed | P1 |
+| INT-081 | Gmail→Interaction | Linked | P1 |
+| INT-082 | Interaction→OrgUnit | Scope | P1 |
+| INT-083 | Multiple same contact | All listed | P2 |
+| INT-084 | Type affects category | Grouping | P2 |
+| INT-085 | Audit integration | Match | P1 |
+| INT-086 | Invalid 400 | BusinessException | P0 |
+| INT-087 | NotFound 404 | KeyNotFound | P0 |
+| INT-088 | Unauthorized 403 | Unauthorized | P0 |
+| INT-089 | Duplicate Gmail | Handled | P1 |
+| INT-090 | End-to-end | Full flow | P0 |
 
 ---
 

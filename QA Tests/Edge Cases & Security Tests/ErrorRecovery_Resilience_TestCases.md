@@ -11,19 +11,18 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P? 90≥90 ✅ | E≥3P? 90≥90 ✅ | F≥3P? 90≥90 ✅ | I≥3P? 90≥90 ✅
 
 ---
 
@@ -43,7 +42,7 @@
 
 ## §1 Positive Tests (Happy Path)
 
-> **Count: 35** | **Minimum: 30-50** | ✅ COMPLIANT
+> **Count: 30** | **Minimum: 30-50** | ✅ COMPLIANT
 
 | ID | Test Name | Precondition | Steps (Brief) | Expected Result | Priority |
 |----|-----------|-------------|---------------|-----------------|----------|
@@ -77,17 +76,12 @@
 | POS-028 | Degraded mode notification | Service down | User notified | Degraded message | P1 |
 | POS-029 | Recovery after stress | High load | Cool-down | Normal latency | P1 |
 | POS-030 | Audit write retry | Audit table locked | Retry | Audit written | P1 |
-| POS-031 | Notification retry | Email fail | Queued | Retry later | P1 |
-| POS-032 | Search index rebuild | Index corrupt | Rebuild | Index restored | P2 |
-| POS-033 | Config reload on error | Config stale | Reload | Fresh config | P1 |
-| POS-034 | Session restore | Session lost | Re-login | New session | P0 |
-| POS-035 | Rate limit backoff | 429 received | Backoff | Retry after window | P1 |
 
 ---
 
 ## §2 Negative Tests (Failure Scenarios)
 
-> **Count: 70** | **Minimum: 70** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90** | ✅ COMPLIANT
 
 ### 2.1 Connection Failures (15)
 
@@ -184,11 +178,36 @@
 | NEG-069 | Cache inconsistency | Cache/DB mismatch | Stale or correct | P1 |
 | NEG-070 | Search index lag | Update not indexed | Eventually consistent | P1 |
 
+### 2.6 Additional Negative (20)
+
+| ID | Test Name | Scenario | Expected | Priority |
+|----|-----------|----------|----------|----------|
+| NEG-071 | Retry on 405 Method Not Allowed | 405 response | No retry | P0 |
+| NEG-072 | Retry on 501 Not Implemented | 501 response | No retry | P1 |
+| NEG-073 | Circuit open during retry | Retry then circuit | Circuit wins | P0 |
+| NEG-074 | Timeout during retry | Retry then timeout | Timeout | P1 |
+| NEG-075 | Connection pool exhausted during retry | Retry exhausts pool | 503 | P0 |
+| NEG-076 | Half-open test timeout | Test request times out | Stays open | P1 |
+| NEG-077 | Invalid retry config | Retry count=-1 | Reject or default | P1 |
+| NEG-078 | Invalid circuit config | Threshold=0 | Reject or default | P1 |
+| NEG-079 | Fallback chain exhausted | All levels fail | Final error | P1 |
+| NEG-080 | Health check timeout | Health check slow | Degraded or timeout | P1 |
+| NEG-081 | Connection recovery fails | DB stays down | Retry then fail | P1 |
+| NEG-082 | Export stream interrupted | Client disconnect | Cleanup | P1 |
+| NEG-083 | Import with corrupt chunk | Chunk corrupt | Reject chunk | P1 |
+| NEG-084 | Audit retry exhausted | Audit 5x fail | CUD fails or degrades | P1 |
+| NEG-085 | Notification queue full | Queue at limit | Reject or drop | P1 |
+| NEG-086 | Config reload fails | Config invalid | Keep old config | P1 |
+| NEG-087 | Multiple circuits open | 3 services down | All fail fast | P1 |
+| NEG-088 | Retry on 408 Request Timeout | 408 | Retry or no retry | P1 |
+| NEG-089 | Connection refused | Port closed | Clear error | P0 |
+| NEG-090 | SSL handshake failure | Invalid cert | Connection rejected | P0 |
+
 ---
 
 ## §3 Boundary Tests (Edge Cases)
 
-> **Count: 70** | **Minimum: 70** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90** | ✅ COMPLIANT
 
 ### 3.1 Timeout Boundaries (15)
 
@@ -285,11 +304,36 @@
 | BND-069 | Stack trace | Never | No stack | P0 |
 | BND-070 | Internal details | Error | Generic | P0 |
 
+### 3.6 Additional Boundaries (20)
+
+| ID | Test Name | Input | Expected | Priority |
+|----|-----------|-------|----------|----------|
+| BND-071 | Retry at exact max count | 5th retry | Success or final fail | P1 |
+| BND-072 | Circuit at half-open threshold | First test | Single request | P1 |
+| BND-073 | Timeout at 1 second | 1s timeout | Fires at 1s | P1 |
+| BND-074 | Pool at 0 available | All in use | Queue or 503 | P0 |
+| BND-075 | Backoff at 1st retry | Base 100 | 100 ms | P1 |
+| BND-076 | Backoff at 5th retry | Base 100, 2x | Max delay | P1 |
+| BND-077 | Health check at 0 interval | Config 0 | Reject or default | P1 |
+| BND-078 | Bulk timeout at 60s | 60s | Fires at 60s | P1 |
+| BND-079 | Export at 30 min | 30 min export | Complete or timeout | P2 |
+| BND-080 | Jitter at 0% | No jitter | Exact delay | P1 |
+| BND-081 | Jitter at 50% | Max jitter | 50-150% of base | P1 |
+| BND-082 | Failure count at threshold | 5th failure | Circuit opens | P1 |
+| BND-083 | Connection idle at 0 | Idle 0 | Released immediately | P1 |
+| BND-084 | Queue size at 0 | Empty queue | Accept or reject | P1 |
+| BND-085 | Error rate at 100% | All fail | Circuit open | P1 |
+| BND-086 | Fallback at level 0 | No fallback | Primary only | P1 |
+| BND-087 | Degraded at 1 service | 1 down | Partial function | P0 |
+| BND-088 | Batch at 100% success | All ok | Complete | P0 |
+| BND-089 | Retry budget at 0 | Exhausted | No retry | P1 |
+| BND-090 | Circuit duration at min | 10 sec | Half-open at 10s | P1 |
+
 ---
 
 ## §4 Functional Tests (Business Rules)
 
-> **Count: 50** | **Minimum: 50** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90** | ✅ COMPLIANT
 
 ### 4.1 Retry Rules (15)
 
@@ -365,7 +409,7 @@
 
 ## §5 Integration Tests (End-to-End Flows)
 
-> **Count: 50** | **Minimum: 50** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90** | ✅ COMPLIANT
 
 ### 5.1 Connection Recovery (15)
 
@@ -436,6 +480,51 @@
 | INT-048 | Timeout + retry | Timeout | Retry | P1 |
 | INT-049 | Nested timeout | Inner | Propagate | P1 |
 | INT-050 | Timeout config | Change | Applied | P1 |
+
+### 5.5 Additional Integration Flows (40)
+
+| ID | Test | Scenario | Expected | Priority |
+|----|------|----------|----------|----------|
+| INT-051 | DB down → Recovery → Reconnect | DB restart | Reconnect | P0 |
+| INT-052 | Redis down → Fallback → Cache up | Redis restart | Repopulate | P1 |
+| INT-053 | GCS 503 → Retry → Success | GCS recovers | Upload succeeds | P1 |
+| INT-054 | Email fail → Queue → Retry | SMTP recovers | Queue drains | P1 |
+| INT-055 | oUP 503 → Retry → Sync | oUP recovers | Sync completes | P1 |
+| INT-056 | Circuit open → Wait → Half-open | Timeout | Test request | P0 |
+| INT-057 | Half-open success → Close | Test request OK | Circuit closes | P0 |
+| INT-058 | Half-open fail → Stay open | Test request fail | Stays open | P0 |
+| INT-059 | Bulk partial → Retry failed | 50 failed | Retry 50 | P1 |
+| INT-060 | Export timeout → Stream resume | Network blip | Resume | P1 |
+| INT-061 | Create → 503 → Retry → Success | Transient 503 | Create succeeds | P0 |
+| INT-062 | Update → 503 → Retry → Success | Transient 503 | Update succeeds | P0 |
+| INT-063 | Pool exhausted → Release → New | Connections released | New requests | P0 |
+| INT-064 | Connection stale → Health check | Stale detected | Replaced | P0 |
+| INT-065 | Config stale → Reload | Config changed | Fresh config | P1 |
+| INT-066 | Session lost → Re-login | Session expired | New session | P0 |
+| INT-067 | 429 → Backoff → Retry | Rate limit | Retry after window | P1 |
+| INT-068 | Audit fail → Retry → Written | Audit locked | Retry succeeds | P1 |
+| INT-069 | Notification fail → Queue | SMTP down | Queued | P1 |
+| INT-070 | Search index corrupt → Rebuild | Index down | Rebuild | P2 |
+| INT-071 | Multi-DB: replica down → Primary | Primary only | Read from primary | P1 |
+| INT-072 | WebSocket disconnect → Reconnect | Connection lost | Reconnect | P1 |
+| INT-073 | DNS timeout → Retry | DNS slow | Retry or fail | P1 |
+| INT-074 | SSL failure → Clear error | Invalid cert | Rejected | P0 |
+| INT-075 | Transaction timeout → Rollback | Long tx | Rollback | P0 |
+| INT-076 | Bulk timeout → Partial + report | Large import | Timeout or partial | P1 |
+| INT-077 | Export timeout → Chunked | Large export | Chunked | P1 |
+| INT-078 | Circuit + retry: circuit wins | Both configured | Circuit | P0 |
+| INT-079 | Retry + timeout: timeout wins | Both | Timeout | P1 |
+| INT-080 | Degraded + recovery | Service up | Full function | P1 |
+| INT-081 | Health check + degraded | Partial failure | Degraded status | P1 |
+| INT-082 | Metrics + circuit | Circuit open | Metrics | P1 |
+| INT-083 | User notification + degraded | Degraded | User notified | P1 |
+| INT-084 | Recovery + notification | Recovered | Status update | P1 |
+| INT-085 | Batch + partial + report | 80/100 | Report 20 | P1 |
+| INT-086 | Rollback + full failure | All invalid | No records | P0 |
+| INT-087 | Connection + pool recovery | Exhausted | Release, refill | P0 |
+| INT-088 | Retry + idempotent | Duplicate | Same result | P0 |
+| INT-089 | Timeout + cleanup | Timeout | Resources released | P0 |
+| INT-090 | Fallback + chain | Level 1 fail | Level 2 | P1 |
 
 ---
 

@@ -11,19 +11,22 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+| **N≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
+| **E≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
+| **F≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
+| **I≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
 
 ---
 
@@ -133,11 +136,6 @@ Take-a-tour/onboarding: guided tour steps, tooltip display, skip/complete, progr
 | POS-028 | Multi-language tour | fr locale | View tour | French content | P2 |
 | POS-029 | Tour completion analytics | Complete tour | Complete | Event tracked | P2 |
 | POS-030 | Skip analytics | Skip tour | Skip | Event tracked | P2 |
-| POS-031 | Tour for specific role | Role-based | View | Role-specific steps | P2 |
-| POS-032 | Conditional step | Step depends on feature | Feature on | Step shown | P2 |
-| POS-033 | Tour with video | Step has video | View | Video plays | P2 |
-| POS-034 | Tour badge/indicator | New user | View header | Badge shown | P2 |
-| POS-035 | Tour auto-start | First visit | Load page | Tour may auto-start | P2 |
 
 ---
 

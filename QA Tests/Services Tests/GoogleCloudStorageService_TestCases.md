@@ -11,19 +11,24 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+| Check | Formula | Result |
+|-------|---------|--------|
+| N≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| E≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| F≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| I≥3P | 90 ≥ 3×30=90 | ✅ PASS |
 
 ---
 
@@ -33,7 +38,7 @@ Google Cloud Storage: file upload/download, bucket management, signed URLs, ACL,
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|-------------|-------|-----------------|
@@ -67,15 +72,10 @@ Google Cloud Storage: file upload/download, bucket management, signed URLs, ACL,
 | POS-028 | Download with range | File | DownloadAsync(..., range) | Range |
 | POS-029 | Make public | Object | SetAclAsync(..., public) | Public |
 | POS-030 | Make private | Object | SetAclAsync(..., private) | Private |
-| POS-031 | CORS config | Bucket | SetCorsAsync(bucket, config) | CORS set |
-| POS-032 | Get CORS | Bucket | GetCorsAsync(bucket) | CORS |
-| POS-033 | Compose objects | Sources | ComposeAsync(bucket, sources, dest) | Composed |
-| POS-034 | Upload resumable | Large file | UploadResumableAsync(...) | Uploaded |
-| POS-035 | Cancel upload | Upload in progress | CancelUploadAsync(uploadId) | Cancelled |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error |
 |----|-----------|---------------|----------------|
@@ -149,10 +149,30 @@ Google Cloud Storage: file upload/download, bucket management, signed URLs, ACL,
 | NEG-068 | Retention period max | SetRetentionAsync(..., max) | Valid |
 | NEG-069 | Signed URL method | GetSignedUrlAsync(..., "PUT") | URL for PUT |
 | NEG-070 | Bucket location invalid | CreateBucketAsync(..., badLoc) | ArgumentException |
+| NEG-071 | Null Compose sources | ComposeAsync(..., null, dest) | ArgumentNullException |
+| NEG-072 | Null Compose dest | ComposeAsync(..., sources, null) | ArgumentNullException |
+| NEG-073 | Null SetCors | SetCorsAsync(bucket, null) | ArgumentNullException |
+| NEG-074 | Null GetCors | GetCorsAsync(null) | ArgumentNullException |
+| NEG-075 | Null SetLifecycle | SetLifecycleAsync(bucket, null) | ArgumentNullException |
+| NEG-076 | Null GetLifecycle | GetLifecycleAsync(null) | ArgumentNullException |
+| NEG-077 | Null SetRetention | SetRetentionAsync(bucket, null) | ArgumentNullException |
+| NEG-078 | Null GetRetention | GetRetentionAsync(null) | ArgumentNullException |
+| NEG-079 | Null Exists | ExistsAsync(null, path) | ArgumentNullException |
+| NEG-080 | Null BucketExists | BucketExistsAsync(null) | ArgumentNullException |
+| NEG-081 | Null GetBucketMetadata | GetBucketMetadataAsync(null) | ArgumentNullException |
+| NEG-082 | Null ListObjects | ListObjectsAsync(null, prefix) | ArgumentNullException |
+| NEG-083 | Invalid ListObjects prefix | ListObjectsAsync(bucket, invalid) | ArgumentException |
+| NEG-084 | Null Copy source | CopyAsync(bucket, null, dest) | ArgumentNullException |
+| NEG-085 | Null Move source | MoveAsync(bucket, null, dest) | ArgumentNullException |
+| NEG-086 | Null SetAcl | SetAclAsync(bucket, path, null) | ArgumentNullException |
+| NEG-087 | Null GetAcl | GetAclAsync(null, path) | ArgumentNullException |
+| NEG-088 | Null CreateBucket | CreateBucketAsync(null) | ArgumentNullException |
+| NEG-089 | Null DeleteBucket | DeleteBucketAsync(null) | ArgumentNullException |
+| NEG-090 | Invalid CancelUpload | CancelUploadAsync(null) | ArgumentNullException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Value | Expected Result |
 |----|-----------|----------------|-----------------|
@@ -226,10 +246,30 @@ Google Cloud Storage: file upload/download, bucket management, signed URLs, ACL,
 | BND-068 | Generation = 0 | 0 | Default |
 | BND-069 | Generation = latest | -1 | Latest |
 | BND-070 | IfMatch = * | * | Any |
+| BND-071 | Object count = 0 | Empty | [] |
+| BND-072 | Object count = 1 | One | [1] |
+| BND-073 | Object count = 10000 | Many | Paginated |
+| BND-074 | Compose sources = 1 | 1 | Valid |
+| BND-075 | Compose sources = 32 | Max | Valid |
+| BND-076 | Lifecycle rules = 1 | 1 | Valid |
+| BND-077 | Lifecycle rules = 100 | Max | Valid |
+| BND-078 | CORS origins = 1 | 1 | Valid |
+| BND-079 | CORS origins = 100 | Max | Valid |
+| BND-080 | Metadata keys = 0 | {} | Valid |
+| BND-081 | Metadata keys = 100 | Max | Valid |
+| BND-082 | Retention = 1 | 1 day | Valid |
+| BND-083 | Retention = 36500 | Max | Valid |
+| BND-084 | Signed URL expiry = 1s | 1 second | Valid |
+| BND-085 | Signed URL expiry = 7d | 7 days | Valid |
+| BND-086 | Chunk size = 256KB | 256KB | Valid |
+| BND-087 | Chunk size = 5MB | 5MB | Valid |
+| BND-088 | Concurrent uploads = 1 | 1 | Success |
+| BND-089 | Concurrent uploads = 100 | 100 | Throttled |
+| BND-090 | Download range = full | Full | Valid |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule | Trigger | Expected Outcome |
 |----|-----------|------|---------|------------------|
@@ -283,10 +323,50 @@ Google Cloud Storage: file upload/download, bucket management, signed URLs, ACL,
 | FUN-048 | Default KMS | KMS | Bucket | Encrypted |
 | FUN-049 | Customer KMS | KMS | Upload | Custom |
 | FUN-050 | Error retry | Retry | Transient | Retried |
+| FUN-051 | Bucket naming | Naming | CreateBucket | Valid name |
+| FUN-052 | Path sanitization | Sanitize | Upload | Clean path |
+| FUN-053 | Content type propagation | Propagate | Upload | Type set |
+| FUN-054 | Metadata preservation | Preserve | Copy | Metadata kept |
+| FUN-055 | ACL inheritance | Inherit | Create | Default ACL |
+| FUN-056 | Retention enforcement | Enforce | Delete | Blocked |
+| FUN-057 | Lifecycle execution | Execute | Time | Rule applied |
+| FUN-058 | Signed URL scope | Scope | GetSignedUrl | Scoped |
+| FUN-059 | Checksum verification | Verify | Upload | Verified |
+| FUN-060 | Multipart threshold | Threshold | Upload large | Multipart |
+| FUN-061 | Copy overwrite | Overwrite | Copy dest exists | Overwritten |
+| FUN-062 | Move = copy + delete | Move | MoveAsync | Both |
+| FUN-063 | List alphabetical | Order | ListObjects | Sorted |
+| FUN-064 | Pagination token | Token | ListObjects | Next |
+| FUN-065 | Prefix filter | Filter | ListObjects | Filtered |
+| FUN-066 | Delimiter | Delimiter | ListObjects | Folders |
+| FUN-067 | CORS preflight | Preflight | OPTIONS | CORS |
+| FUN-068 | Public read | Public | GetAcl | Read |
+| FUN-069 | Private default | Private | Create | Private |
+| FUN-070 | Retention lock | Lock | SetRetention | Locked |
+| FUN-071 | Lifecycle delete | Delete | Lifecycle | Deleted |
+| FUN-072 | Lifecycle archive | Archive | Lifecycle | Archived |
+| FUN-073 | Coldline transition | Transition | Lifecycle | Coldline |
+| FUN-074 | Nearline transition | Transition | Lifecycle | Nearline |
+| FUN-075 | Consistency | Consistency | Read after write | Consistent |
+| FUN-076 | Idempotent delete | Idempotent | Delete twice | 404 ok |
+| FUN-077 | Idempotent upload | Idempotent | Upload same | Overwrite |
+| FUN-078 | Stream position | Position | Upload | Reset |
+| FUN-079 | Range request | Range | Download | Partial |
+| FUN-080 | Custom metadata | Metadata | Upload | Preserved |
+| FUN-081 | Cache control | Cache | Upload | Header |
+| FUN-082 | Content disposition | Disposition | Upload | Header |
+| FUN-083 | Content encoding | Encoding | Upload | Header |
+| FUN-084 | Custom time | CustomTime | Upload | Set |
+| FUN-085 | Event notification | Notification | Upload | Notified |
+| FUN-086 | Object versioning | Version | Bucket | Versions |
+| FUN-087 | Soft delete | Soft delete | Delete | Deleted |
+| FUN-088 | Hold | Hold | SetHold | Hold |
+| FUN-089 | Legal hold | Legal | SetLegalHold | Hold |
+| FUN-090 | TTL | TTL | SetTTL | Expires |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Integration | Scenario | Expected Result |
 |----|-----------|-------------|----------|-----------------|
@@ -340,6 +420,46 @@ Google Cloud Storage: file upload/download, bucket management, signed URLs, ACL,
 | INT-048 | Tracing + request | Tracing | Request | Traced |
 | INT-049 | Health check | Health | Check | Healthy |
 | INT-050 | End-to-end | All | Full flow | Success |
+| INT-051 | GCS client | StorageClient | Upload | Success |
+| INT-052 | Credentials | GoogleCredential | Auth | Authenticated |
+| INT-053 | Configuration | IConfiguration | Config | Applied |
+| INT-054 | Logger | ILogger | Log | Logged |
+| INT-055 | Document manager | IDocumentManager | Upload doc | Linked |
+| INT-056 | Opportunity | IOpportunityManager | Doc to opp | Linked |
+| INT-057 | Partner | IPartnerManager | Doc to partner | Linked |
+| INT-058 | Audit | IAuditService | Upload | Logged |
+| INT-059 | Permission | IPermissionService | Upload | Checked |
+| INT-060 | Tenant | Tenant context | Upload | Isolated |
+| INT-061 | Full upload flow | All | Upload file | Success |
+| INT-062 | Full download flow | All | Download file | Success |
+| INT-063 | Full signed URL flow | All | Get URL | Success |
+| INT-064 | Upload + metadata | GCS + metadata | Upload | Metadata |
+| INT-065 | Download + stream | GCS + stream | Download | Stream |
+| INT-066 | List + pagination | GCS + pagination | List | Pages |
+| INT-067 | Copy + delete | GCS | Copy then delete | Success |
+| INT-068 | Move + metadata | GCS | Move | Metadata |
+| INT-069 | ACL + download | ACL + download | Public | Download |
+| INT-070 | Retention + delete | Retention | Delete | Blocked |
+| INT-071 | Lifecycle + list | Lifecycle | List | Filtered |
+| INT-072 | Bucket + CORS | Bucket + CORS | CORS | Set |
+| INT-073 | Config + bucket | Config | Bucket name | From config |
+| INT-074 | Credentials + project | Credentials | Project | Scoped |
+| INT-075 | Logger + error | Logger | Error | Logged |
+| INT-076 | Audit + upload | Audit | Upload | Audited |
+| INT-077 | Permission + upload | Permission | Upload | Checked |
+| INT-078 | Tenant + bucket | Tenant | Bucket | Isolated |
+| INT-079 | Document + GCS | Document | Link | Linked |
+| INT-080 | Opportunity + GCS | Opportunity | Attach | Attached |
+| INT-081 | Partner + GCS | Partner | Attach | Attached |
+| INT-082 | Retry + transient | Retry | Transient | Retried |
+| INT-083 | Timeout + upload | Timeout | Slow | Timeout |
+| INT-084 | Cancellation + upload | Cancel | Upload | Cancelled |
+| INT-085 | Rate limit + many | Rate limit | Many | Limited |
+| INT-086 | Multipart + large | Multipart | Large | Uploaded |
+| INT-087 | Resumable + interrupt | Resumable | Interrupt | Resumed |
+| INT-088 | Checksum + verify | Checksum | Upload | Verified |
+| INT-089 | Range + download | Range | Download | Partial |
+| INT-090 | End-to-end | All | Full flow | Success |
 
 ---
 

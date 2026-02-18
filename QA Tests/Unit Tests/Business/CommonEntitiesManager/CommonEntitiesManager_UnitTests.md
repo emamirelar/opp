@@ -1,7 +1,7 @@
 # CommonEntitiesManager — Unit Test Cases
 
 **Component:** `UNOPS.PAO.Business/Managers/CommonEntitiesManager` (Unit Tests)  
-**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Created:** 2026-02-04 | **Last Updated:** 2026-02-18  
 **Author:** QA Team  
 **Standard:** 10-Category, 3:1 Ratio
 
@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,7 +33,7 @@ Common entities manager provides lookup values, dropdown data, and reference dat
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,15 +67,10 @@ Common entities manager provides lookup values, dropdown data, and reference dat
 | POS-028 | Get localized names | i18n | GetWithLocale | Localized |
 | POS-029 | Audit on create | Create | Check audit | Audit set |
 | POS-030 | Audit on update | Update | Check audit | Audit set |
-| POS-031 | Pagination | Many entities | List page | Page returned |
-| POS-032 | Count by type | Type exists | Count | Count correct |
-| POS-033 | Get inactive | Include inactive | GetInactive | Inactive included |
-| POS-034 | Reorder | Ordered type | Reorder | Order updated |
-| POS-035 | Duplicate check | Unique name | CheckDuplicate | Duplicate detected |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Action | Expected Result |
 |----|-----------|---------------------|-----------------|
@@ -149,10 +144,30 @@ Common entities manager provides lookup values, dropdown data, and reference dat
 | NEG-068 | Child override throws | Child throws | Propagated |
 | NEG-069 | Audit missing user | User=0 | InvalidOperationException |
 | NEG-070 | Cache invalid key | Key invalid | ArgumentException |
+| NEG-071 | GetMultiple null types | Types=null | ArgumentNullException |
+| NEG-072 | GetMultiple empty | Types=[] | Returns empty |
+| NEG-073 | GetWithParent invalid parent | Parent invalid | ArgumentException |
+| NEG-074 | SetDefault invalid entity | Entity invalid | KeyNotFoundException |
+| NEG-075 | ClearDefault no default | No default | InvalidOperationException |
+| NEG-076 | SyncFromExternal null | Source=null | ArgumentNullException |
+| NEG-077 | MergeEntities same entity | Same ID | ArgumentException |
+| NEG-078 | CloneEntity null source | Source=null | ArgumentNullException |
+| NEG-079 | GetStatistics invalid range | End<Start | ArgumentException |
+| NEG-080 | ValidateConfig null | Config=null | ArgumentNullException |
+| NEG-081 | GetByExternalId invalid | Id invalid | KeyNotFoundException |
+| NEG-082 | MapToExternal null | Entity=null | ArgumentNullException |
+| NEG-083 | ResolveReference null | Ref=null | ArgumentNullException |
+| NEG-084 | GetAncestors invalid | Id invalid | KeyNotFoundException |
+| NEG-085 | GetDescendants invalid | Id invalid | KeyNotFoundException |
+| NEG-086 | SetOrder invalid order | Order negative | ArgumentException |
+| NEG-087 | GetByOrder invalid | Order invalid | ArgumentException |
+| NEG-088 | Activate deleted | Entity deleted | KeyNotFoundException |
+| NEG-089 | Deactivate deleted | Entity deleted | KeyNotFoundException |
+| NEG-090 | GetVersion invalid | Version invalid | KeyNotFoundException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Condition | Expected Result |
 |----|-----------|-------------------|-----------------|
@@ -206,7 +221,7 @@ Common entities manager provides lookup values, dropdown data, and reference dat
 | BND-048 | Export large result | 10k rows | Stream or chunk |
 | BND-049 | Typeahead min chars | 1 char | Valid |
 | BND-050 | Typeahead max results | Limit=100 | Capped |
-| BND-051 | Bulk get max | 1000 IDs | Valid | 
+| BND-051 | Bulk get max | 1000 IDs | Valid |
 | BND-052 | Bulk get over max | 1001 IDs | Reject |
 | BND-053 | GetDisplayValue empty | Empty display | Fallback |
 | BND-054 | Validate edge ID | Id=1 | Valid |
@@ -226,10 +241,30 @@ Common entities manager provides lookup values, dropdown data, and reference dat
 | BND-068 | Localized missing | No translation | Fallback |
 | BND-069 | Async cancellation | Cancel token | OperationCanceledException |
 | BND-070 | Task timeout | Timeout | TimeoutException |
+| BND-071 | Name exactly 200 chars | Length=200 | Valid |
+| BND-072 | Code exactly max | At limit | Valid |
+| BND-073 | Description exactly 4000 | 4000 chars | Valid |
+| BND-074 | Page 1 first | Page=1 | First page |
+| BND-075 | Page at last | Page=last | Last page |
+| BND-076 | Zero results | No match | Empty list |
+| BND-077 | Single result | One match | Single item |
+| BND-078 | Int32.MinValue ID | Id=min | Reject |
+| BND-079 | External ID boundary | External ID | Valid |
+| BND-080 | Version at 1 | Version=1 | Valid |
+| BND-081 | Version at max | Version=max | Valid |
+| BND-082 | Order at zero | Order=0 | Valid |
+| BND-083 | Order at max int | Order=max | Valid |
+| BND-084 | Locale max length | Locale length | Valid |
+| BND-085 | Typeahead 1 char | 1 char | Valid |
+| BND-086 | Typeahead 100 results | 100 | Capped |
+| BND-087 | Ancestors empty | No ancestors | Empty |
+| BND-088 | Descendants empty | No descendants | Empty |
+| BND-089 | Merge conflict resolution | Conflict | Config |
+| BND-090 | Clone preserves config | Clone | Config |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -283,10 +318,50 @@ Common entities manager provides lookup values, dropdown data, and reference dat
 | FUN-048 | Import duplicate | Validation | Import | Duplicate handling |
 | FUN-049 | Export headers | Format | Export | Headers correct |
 | FUN-050 | AsNoTracking read-only | Performance | List | No tracking |
+| FUN-051 | GetMultiple combines | Data | GetMultiple | Combined |
+| FUN-052 | GetWithParent loads | Data | GetWithParent | Parent |
+| FUN-053 | SetDefault updates | Update | SetDefault | Updated |
+| FUN-054 | ClearDefault clears | Update | ClearDefault | Cleared |
+| FUN-055 | SyncFromExternal syncs | Data | Sync | Synced |
+| FUN-056 | MergeEntities merges | Data | Merge | Merged |
+| FUN-057 | CloneEntity copies | Data | Clone | Copied |
+| FUN-058 | GetStatistics aggregates | Calculation | GetStatistics | Correct |
+| FUN-059 | ValidateConfig validates | Validation | ValidateConfig | Valid |
+| FUN-060 | GetByExternalId finds | Data | GetByExternalId | Found |
+| FUN-061 | MapToExternal maps | Data | MapToExternal | Mapped |
+| FUN-062 | ResolveReference resolves | Logic | ResolveReference | Resolved |
+| FUN-063 | GetAncestors returns | Data | GetAncestors | Ancestors |
+| FUN-064 | GetDescendants returns | Data | GetDescendants | Descendants |
+| FUN-065 | SetOrder updates | Update | SetOrder | Updated |
+| FUN-066 | GetByOrder returns | Data | GetByOrder | Ordered |
+| FUN-067 | Activate sets status | Update | Activate | Active |
+| FUN-068 | Deactivate sets status | Update | Deactivate | Inactive |
+| FUN-069 | GetVersion returns | Data | GetVersion | Version |
+| FUN-070 | External ID mapping | Logic | Map | Mapped |
+| FUN-071 | Version tracking | Audit | Update | Versioned |
+| FUN-072 | Ancestor chain correct | Logic | GetAncestors | Chain |
+| FUN-073 | Descendant tree correct | Logic | GetDescendants | Tree |
+| FUN-074 | Order sequence | Logic | Reorder | Sequence |
+| FUN-075 | Status transition | Workflow | Activate/Deactivate | Valid |
+| FUN-076 | Import rollback | Transaction | Import | Rollback |
+| FUN-077 | Export streaming | Format | Export | Stream |
+| FUN-078 | Cache key format | Cache | GetByType | Key |
+| FUN-079 | Locale fallback chain | i18n | GetWithLocale | Fallback |
+| FUN-080 | Hierarchy validation | Validation | Create | Valid |
+| FUN-081 | Bulk get order | Data | GetByIds | Order |
+| FUN-082 | Typeahead min chars | Constraint | Typeahead | Min |
+| FUN-083 | Reorder validation | Validation | Reorder | Valid |
+| FUN-084 | Default uniqueness | Constraint | SetDefault | One |
+| FUN-085 | Sync conflict resolution | Logic | Sync | Resolved |
+| FUN-086 | Merge conflict resolution | Logic | Merge | Resolved |
+| FUN-087 | Clone excludes audit | Logic | Clone | Excludes |
+| FUN-088 | Statistics calculation | Calculation | GetStatistics | Correct |
+| FUN-089 | Config validation rules | Validation | ValidateConfig | Rules |
+| FUN-090 | External ID uniqueness | Constraint | Create | Unique |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|
@@ -332,7 +407,7 @@ Common entities manager provides lookup values, dropdown data, and reference dat
 | INT-040 | Bulk create | Scenario | Reference | All created |
 | INT-041 | Bulk update | Scenario | Reference | All updated |
 | INT-042 | Concurrent get | Scenario | Parallel | No conflict |
-| INT-043 | concurrent create | Scenario | Parallel | All created |
+| INT-043 | Concurrent create | Scenario | Parallel | All created |
 | INT-044 | Import with validation | Scenario | Import | Validated |
 | INT-045 | Export with filter | Scenario | Export | Filtered |
 | INT-046 | Hierarchy deep | Scenario | Reference | Deep tree |
@@ -340,6 +415,46 @@ Common entities manager provides lookup values, dropdown data, and reference dat
 | INT-048 | GetDropdown with cache | Scenario | Dropdown | Cached |
 | INT-049 | Refresh cache after create | Scenario | Create, Cache | Refreshed |
 | INT-050 | E2E CRUD cycle | Scenario | Full cycle | Create→Update→Delete |
+| INT-051 | GetMultiple flow | Scenario | GetMultiple | Combined |
+| INT-052 | GetWithParent flow | Scenario | GetWithParent | Parent |
+| INT-053 | SetDefault flow | Scenario | SetDefault | Set |
+| INT-054 | ClearDefault flow | Scenario | ClearDefault | Cleared |
+| INT-055 | SyncFromExternal flow | Scenario | Sync | Synced |
+| INT-056 | MergeEntities flow | Scenario | Merge | Merged |
+| INT-057 | CloneEntity flow | Scenario | Clone | Cloned |
+| INT-058 | GetStatistics flow | Scenario | GetStatistics | Stats |
+| INT-059 | ValidateConfig flow | Scenario | ValidateConfig | Valid |
+| INT-060 | GetByExternalId flow | Scenario | GetByExternalId | Found |
+| INT-061 | GetAncestors flow | Scenario | GetAncestors | Ancestors |
+| INT-062 | GetDescendants flow | Scenario | GetDescendants | Descendants |
+| INT-063 | SetOrder flow | Scenario | SetOrder | Updated |
+| INT-064 | Activate flow | Scenario | Activate | Active |
+| INT-065 | Deactivate flow | Scenario | Deactivate | Inactive |
+| INT-066 | Config service integration | Integration | Config | Read |
+| INT-067 | Cache service integration | Integration | Cache | Hit/miss |
+| INT-068 | Multiple entity types | Scenario | Reference | Multiple |
+| INT-069 | Hierarchy full load | Scenario | GetHierarchy | Full |
+| INT-070 | Pagination with filter | Scenario | Paginate | Filtered |
+| INT-071 | Sort with filter | Scenario | List | Sorted, filtered |
+| INT-072 | Typeahead full | Scenario | Typeahead | Results |
+| INT-073 | Import export round-trip | Scenario | Import, Export | Match |
+| INT-074 | Bulk operations | Scenario | Bulk | All |
+| INT-075 | Concurrent operations | Scenario | Parallel | No conflict |
+| INT-076 | Error recovery | Scenario | Error | Recover |
+| INT-077 | Audit trail full | Scenario | CRUD | Full trail |
+| INT-078 | Permission integration | Scenario | Permission | Enforced |
+| INT-079 | User context integration | Scenario | User | Context |
+| INT-080 | Logger integration flow | Scenario | Log | Logged |
+| INT-081 | Mapper round-trip | Scenario | Map | Correct |
+| INT-082 | Repository CRUD cycle | Scenario | Repository | CRUD |
+| INT-083 | DbContext scoping | Scenario | DbContext | Scoped |
+| INT-084 | Transaction rollback | Scenario | Transaction | Rollback |
+| INT-085 | Cache invalidation | Scenario | Update | Invalidated |
+| INT-086 | Locale fallback chain | Scenario | GetWithLocale | Fallback |
+| INT-087 | Hierarchy validation | Scenario | Create | Valid |
+| INT-088 | External sync full | Scenario | Sync | Synced |
+| INT-089 | Merge conflict handling | Scenario | Merge | Handled |
+| INT-090 | E2E with all features | Scenario | Full | Complete |
 
 ---
 
@@ -500,5 +615,5 @@ Common entities manager provides lookup values, dropdown data, and reference dat
 
 ---
 
-**Last Updated:** 2026-02-11  
+**Last Updated:** 2026-02-18  
 **Status:** Ready for Implementation

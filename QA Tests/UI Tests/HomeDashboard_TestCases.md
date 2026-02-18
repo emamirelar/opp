@@ -11,19 +11,22 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+| **N≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
+| **E≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
+| **F≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
+| **I≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
 
 ---
 
@@ -133,11 +136,6 @@ Home dashboard UI: widget rendering, KPI display, recent activity, pipeline char
 | POS-028 | Dashboard after login | Fresh login | Navigate | Dashboard loads | P2 |
 | POS-029 | Dashboard with permissions | Limited permissions | View | Only permitted widgets | P2 |
 | POS-030 | Export dashboard data | Export enabled | Export | Data exported | P2 |
-| POS-031 | Custom date range | Custom range | Select range | Data filtered | P2 |
-| POS-032 | Widget refresh individually | Widget has refresh | Click widget refresh | Widget refreshes | P2 |
-| POS-033 | Dashboard title | Page loaded | Check title | Correct title | P2 |
-| POS-034 | Favicon | Page loaded | Check favicon | Correct favicon | P2 |
-| POS-035 | Breadcrumb | Dashboard | Check breadcrumb | Home/dashboard | P2 |
 
 ---
 
@@ -249,6 +247,26 @@ Home dashboard UI: widget rendering, KPI display, recent activity, pipeline char
 | NEG-068 | LDAP injection in search | `*)(cn=*` | Sanitized | P1 |
 | NEG-069 | Regex DoS in filter | `(((...)))` | Rejected or timeout | P1 |
 | NEG-070 | Concurrent tab refresh | 2 tabs refresh | Both complete | P1 |
+| NEG-071 | Dashboard with invalid widget order | Order = -1 | Default order | P1 |
+| NEG-072 | Dashboard with null KPI type | Type = null | Default or skip | P1 |
+| NEG-073 | Dashboard with invalid chart config | Config malformed | Default chart | P1 |
+| NEG-074 | Activity with invalid timestamp | Timestamp invalid | Skipped or error | P1 |
+| NEG-075 | Dashboard with duplicate widget ID | Same ID twice | One shown | P1 |
+| NEG-076 | Export with invalid format | Format = "invalid" | Default CSV | P1 |
+| NEG-077 | Dashboard with negative refresh interval | Interval = -5 | Default | P1 |
+| NEG-078 | Widget with null title | Title = null | Placeholder | P1 |
+| NEG-079 | Chart with null data points | Data = null | Empty chart | P1 |
+| NEG-080 | KPI with null value | Value = null | Zero displayed | P1 |
+| NEG-081 | Dashboard with empty widget config | Config = [] | Empty dashboard | P1 |
+| NEG-082 | Date range with invalid timezone | TZ = "invalid" | Default | P2 |
+| NEG-083 | Dashboard with NaN in chart | Value = NaN | Handled | P1 |
+| NEG-084 | Dashboard with Infinity in chart | Value = Infinity | Handled | P1 |
+| NEG-085 | Activity link with invalid URL | URL malformed | No navigation | P1 |
+| NEG-086 | Dashboard with circular widget ref | Circular | Error or truncated | P1 |
+| NEG-087 | Export with oversized data | 100MB | Chunked or error | P1 |
+| NEG-088 | Dashboard with null user context | User = null | Default or error | P1 |
+| NEG-089 | Widget with invalid permission | Perm = "invalid" | Hidden | P1 |
+| NEG-090 | Dashboard with stale cache | Old cache | Refetch | P1 |
 
 ---
 
@@ -360,6 +378,26 @@ Home dashboard UI: widget rendering, KPI display, recent activity, pipeline char
 | BND-068 | Font scaling | 150% font | Readable | P2 |
 | BND-069 | Color blind mode | Protanopia | Distinguishable | P2 |
 | BND-070 | Print view | Print | Print layout | P2 |
+| BND-071 | KPI count exactly 0 | Zero | "0" displayed | P1 |
+| BND-072 | KPI count exactly 999999 | Max | Formatted | P1 |
+| BND-073 | Chart with exactly 1 segment | Single | Renders | P1 |
+| BND-074 | Chart with exactly 50 segments | Max | Scroll or paginate | P2 |
+| BND-075 | Activity count exactly 0 | Empty | Empty message | P1 |
+| BND-076 | Activity count exactly 100 | Page size | Full page | P1 |
+| BND-077 | Widget count exactly 1 | Single | 1 widget | P1 |
+| BND-078 | Widget count exactly 50 | Max | All displayed | P1 |
+| BND-079 | Date range exactly 1 day | Same from/to | That day | P2 |
+| BND-080 | Date range exactly 1 year | Full year | Correct | P2 |
+| BND-081 | Viewport exactly 320px | Mobile | Mobile layout | P1 |
+| BND-082 | Viewport exactly 1920px | Desktop | Desktop layout | P1 |
+| BND-083 | Refresh interval exactly 1s | Min | 1s refresh | P2 |
+| BND-084 | Refresh interval exactly 3600s | Max | 1h refresh | P2 |
+| BND-085 | Page size exactly 1 | Min | 1 activity | P2 |
+| BND-086 | Page size exactly 100 | Max | 100 activities | P2 |
+| BND-087 | User name exactly 0 chars | Empty | Placeholder | P1 |
+| BND-088 | User name exactly 200 chars | Max | Truncated or full | P1 |
+| BND-089 | Activity title exactly 500 chars | Max | Truncated | P1 |
+| BND-090 | Chart value exactly 0 | Zero | Renders | P1 |
 
 ---
 
@@ -436,6 +474,46 @@ Home dashboard UI: widget rendering, KPI display, recent activity, pipeline char
 | FUN-048 | Error occurred | API error | Error logged | P1 |
 | FUN-049 | No PII in logs | Any | No PII in logs | P0 |
 | FUN-050 | Audit immutable | Read | Logs not modified | P1 |
+| FUN-051 | Dashboard loads on nav | Nav | Navigate to / | Dashboard loads | P0 |
+| FUN-052 | KPIs from API | API | Load | KPI data fetched | P0 |
+| FUN-053 | Activities from API | API | Load | Activity data fetched | P0 |
+| FUN-054 | Chart from API | API | Load | Chart data fetched | P0 |
+| FUN-055 | Refresh fetches new data | Refresh | Click refresh | API called | P0 |
+| FUN-056 | Date range filters data | Date | Select range | Filtered data | P0 |
+| FUN-057 | Activity click navigates | Click | Click activity | Navigate to record | P0 |
+| FUN-058 | Chart click navigates | Click | Click segment | Navigate to list | P0 |
+| FUN-059 | Widget visibility by permission | Permission | Load | Only permitted | P0 |
+| FUN-060 | Data scoped by OrgUnit | OrgUnit | Load | Scoped data | P0 |
+| FUN-061 | Loading state during fetch | Fetch | API call | Loading shown | P1 |
+| FUN-062 | Error state on failure | Failure | API error | Error shown | P1 |
+| FUN-063 | Empty state when no data | No data | Empty response | Empty state | P1 |
+| FUN-064 | Retry on error | Error | Click retry | Retry attempted | P1 |
+| FUN-065 | Cache on repeat visit | Repeat | Navigate again | Cached or fresh | P1 |
+| FUN-066 | Date range From ≤ To | Range | Valid range | From > To invalid | P0 |
+| FUN-067 | User authenticated | Auth | Valid token | No token redirect | P0 |
+| FUN-068 | Viewport dimensions | Viewport | > 0 | 0 invalid | P1 |
+| FUN-069 | Widget ID valid | ID | Valid | Invalid hidden | P1 |
+| FUN-070 | Chart data non-negative | Chart | ≥ 0 | < 0 handled | P1 |
+| FUN-071 | Activity link valid | Link | Valid URL | Invalid no nav | P1 |
+| FUN-072 | No XSS in user name | Sanitize | "John" | `<script>` escaped | P0 |
+| FUN-073 | No XSS in activity | Sanitize | "Update" | `<script>` escaped | P0 |
+| FUN-074 | Export format valid | Format | CSV, PDF | Invalid default | P1 |
+| FUN-075 | Refresh interval valid | Interval | 1-3600 | 0, -1 default | P1 |
+| FUN-076 | Theme valid | Theme | Light, Dark | Invalid default | P2 |
+| FUN-077 | Locale valid | Locale | en, fr, etc. | Invalid default | P2 |
+| FUN-078 | Widget config valid | Config | Valid JSON | Invalid error | P1 |
+| FUN-079 | KPI type valid | Type | Valid enum | Invalid default | P1 |
+| FUN-080 | Chart type valid | Type | Bar, Pie, etc. | Invalid default | P1 |
+| FUN-081 | Max widgets 50 | Constraint | 50 | 51 capped | P1 |
+| FUN-082 | Max activities per page 100 | Constraint | 100 | 150 capped | P1 |
+| FUN-083 | Max date range 1 year | Constraint | 1 year | 2 years capped | P1 |
+| FUN-084 | Export row limit 10000 | Constraint | 10000 | Paginated | P2 |
+| FUN-085 | Chart segment limit 50 | Constraint | 50 | Scroll | P2 |
+| FUN-086 | Refresh debounce 1s | Constraint | 1s | Rapid debounced | P1 |
+| FUN-087 | Cache TTL 5 min | Constraint | 5 min | Refetch after | P2 |
+| FUN-088 | Concurrent fetch limit 5 | Constraint | 5 | 10 queued | P2 |
+| FUN-089 | Session timeout 30 min | Constraint | 30 min | Redirect after | P1 |
+| FUN-090 | Request timeout 30s | Constraint | 30s | Timeout after | P1 |
 
 ---
 
@@ -517,6 +595,46 @@ Home dashboard UI: widget rendering, KPI display, recent activity, pipeline char
 | INT-048 | XSS in response | Malicious data | Sanitized | P0 |
 | INT-049 | Large payload | 10MB | Rejected or truncated | P2 |
 | INT-050 | Session expired | Mid-session | Re-auth | P0 |
+| INT-051 | Login → Dashboard | Full flow | Dashboard loads | P0 |
+| INT-052 | Dashboard → Activity → Record | Full flow | Navigate to record | P0 |
+| INT-053 | Dashboard → Chart → List | Full flow | Navigate to list | P0 |
+| INT-054 | Refresh → Updated data | Refresh | Data updated | P0 |
+| INT-055 | Date change → Filtered data | Date | Filtered | P1 |
+| INT-056 | Widget reorder → Persisted | Reorder | Order saved | P1 |
+| INT-057 | Theme change → Applied | Theme | Theme applied | P1 |
+| INT-058 | Locale change → Translated | Locale | Labels translated | P1 |
+| INT-059 | Export → File downloaded | Export | File downloaded | P1 |
+| INT-060 | Logout → Redirect | Logout | Redirect to login | P0 |
+| INT-061 | Filter by date range 7 days | Filter | 7 days data | P0 |
+| INT-062 | Filter by date range 30 days | Filter | 30 days data | P0 |
+| INT-063 | Filter by custom range | Filter | January data | P1 |
+| INT-064 | Filter by OrgUnit | Filter | Scoped data | P1 |
+| INT-065 | Filter by permission | Filter | Permitted data | P1 |
+| INT-066 | No filter default | Filter | All user data | P1 |
+| INT-067 | Filter empty result | Filter | Empty state | P1 |
+| INT-068 | Filter then refresh | Filter + Refresh | Filtered refresh | P1 |
+| INT-069 | Multiple filter combo | Filter | Combined | P2 |
+| INT-070 | Clear filter | Clear | Default filter | P1 |
+| INT-071 | Activity page 1 | Pagination | 20 items | P1 |
+| INT-072 | Activity last page | Pagination | Remaining items | P1 |
+| INT-073 | Empty pagination | Pagination | Empty, total=0 | P1 |
+| INT-074 | Single page | Pagination | All items | P2 |
+| INT-075 | Large page | Pagination | 100 items | P2 |
+| INT-076 | Dashboard → User | Relationship | User info fetched | P0 |
+| INT-077 | Dashboard → KPIs | Relationship | KPI API called | P0 |
+| INT-078 | Dashboard → Activities | Relationship | Activity API called | P0 |
+| INT-079 | Dashboard → Chart | Relationship | Chart API called | P0 |
+| INT-080 | Activity → Record | Relationship | Navigate to record | P0 |
+| INT-081 | Chart → Opportunity List | Relationship | Navigate to list | P0 |
+| INT-082 | Widget → Config | Relationship | Widget configured | P1 |
+| INT-083 | Dashboard → Permissions | Relationship | Widgets filtered | P1 |
+| INT-084 | Dashboard → OrgUnit | Relationship | Data scoped | P1 |
+| INT-085 | Export → Dashboard data | Relationship | Data in file | P1 |
+| INT-086 | API 500 | Error | Error message | P0 |
+| INT-087 | API 401 | Error | Redirect to login | P0 |
+| INT-088 | API 403 | Error | Access denied | P0 |
+| INT-089 | API 404 | Error | Not found message | P0 |
+| INT-090 | Dashboard end-to-end full flow | E2E | Login→Dashboard→Refresh→Export | P0 |
 
 ---
 

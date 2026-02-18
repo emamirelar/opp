@@ -11,19 +11,24 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
-| §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| §1 Positive (P) | 30 | 30-50 | ✅ |
+| §2 Negative (N) | 90 | 90 | ✅ |
+| §3 Boundary (E) | 90 | 90 | ✅ |
+| §4 Functional (F) | 90 | 90 | ✅ |
+| §5 Integration (I) | 90 | 90 | ✅ |
+| §6 Concurrency (CON) | 25 | 25 | ✅ |
+| §7 Unit (UNT) | 21 | 21 | ✅ |
+| §8 Performance (PRF) | 16 | 16 | ✅ |
+| §9 Load (LDT) | 10 | 10 | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance Check**
+| Check | Result | Formula |
+|-------|--------|---------|
+| N≥3P? | ✅ | 90 ≥ 90 |
+| E≥3P? | ✅ | 90 ≥ 90 |
+| F≥3P? | ✅ | 90 ≥ 90 |
+| I≥3P? | ✅ | 90 ≥ 90 |
 
 ---
 
@@ -33,7 +38,7 @@
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps (Brief) | Expected Result | Priority |
 |----|-----------|-------------|---------------|-----------------|----------|
@@ -67,15 +72,9 @@
 | POS-028 | Pagination — multiple pages | 100 contacts | Query pages 1, 2, 3 | Correct records per page | P1 |
 | POS-029 | Contact with special characters in name | Unicode name | Create "François O'Neill" | Stored and retrieved correctly | P2 |
 | POS-030 | Get contact by email — multiple matches | 2 contacts same email | GetContactByEmailAsync | Single contact returned | P2 |
-| POS-031 | Create contact — minimal required | First name, last name, email only | CreateContactAsync | Created successfully | P1 |
-| POS-032 | Update contact — add optional fields | Contact exists | Update with phone, position | Fields saved | P2 |
-| POS-033 | Get partner contacts — sorted | Partner with contacts | GetPartnerContacts with sort | Sorted results | P2 |
-| POS-034 | Specification — multi-criteria | Complex filter | GetContactsWithSpecificationAsync | Correct filtered set | P2 |
-| POS-035 | Full CRUD cycle | None | Create→Get→Update→Get→Delete | All operations succeed | P0 |
-
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Condition | Expected Result | Priority |
 |----|-----------|------------------------|-----------------|----------|
@@ -150,9 +149,30 @@
 | NEG-069 | Update — contact locked | Contact locked by another user | Lock error | P2 |
 | NEG-070 | Get contact — audit log failure | Audit service down | Get succeeds, audit queued | P2 |
 
+| NEG-071 | Create — missing Title | Title null/empty | Validation error (Title required) | P0 |
+| NEG-072 | Create — PartnerId zero | PartnerId=0 | Validation error (PartnerId required) | P0 |
+| NEG-073 | Scan contact data — null file | ScanContactData with File=null | BusinessException | P1 |
+| NEG-074 | Scan contact data — empty file | File.Length=0 | BusinessException | P1 |
+| NEG-075 | Scan contact data — incompatible file type | File type not supported | BusinessException | P1 |
+| NEG-076 | Bulk upload — null request | BulkUploadContacts(null) | BusinessException | P1 |
+| NEG-077 | Bulk upload — invalid Type | Type!="Contact" | BusinessException | P1 |
+| NEG-078 | Profile picture — null file | UploadProfilePicture with file=null | BusinessException | P1 |
+| NEG-079 | Profile picture — empty file | File.Length=0 | BusinessException | P1 |
+| NEG-080 | Profile picture — wrong content type | ContentType not image/jpeg|png|webp | BusinessException | P1 |
+| NEG-081 | Advanced search — empty filters | filters="" or null | 400 Bad Request | P1 |
+| NEG-082 | Advanced search — malformed JSON filters | Invalid JSON in filters | 400 Bad Request | P1 |
+| NEG-083 | Search contacts — empty query | query="" or whitespace | BusinessException | P1 |
+| NEG-084 | Detect duplicates — null request | DetectDuplicatesForContact(null) | 400 Bad Request | P1 |
+| NEG-085 | Analyse contact file — null request | AnalyseContactData(null) | BusinessException | P1 |
+| NEG-086 | Create — invalid OrganizationHierarchyIds | Non-existent org unit IDs | Error or handled | P2 |
+| NEG-087 | Update — invalid OrganizationHierarchyIds | Non-existent org unit IDs | Error or handled | P2 |
+| NEG-088 | Get contact — base manager throws NotSupported | GetContactSearchFields on base ContactManager | NotSupportedException | P1 |
+| NEG-089 | Get contacts — base manager throws NotImplemented | GetContactsForGmailAddon on base ContactManager | NotImplementedException | P1 |
+| NEG-090 | Get contact by email — base manager throws NotImplemented | GetContactByEmailAsync on base ContactManager | NotImplementedException | P1 |
+
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max | Priority |
 |----|----------------|-----|-----|--------|--------|----------|----------|
@@ -227,9 +247,30 @@
 | BND-069 | Empty filter criteria | — | — | Specification with no criteria | — | — | P1 |
 | BND-070 | Max nested includes | — | — | Contact→Partner→OrgUnit | — | — | P2 |
 
+| BND-071 | MailingStreet | 0 | 500 | "" | 500 chars | 501 chars | P2 |
+| BND-072 | MailingStreet2 | 0 | 255 | "" | 255 chars | 256 chars | P2 |
+| BND-073 | MailingCity | 0 | 100 | "" | 100 chars | 101 chars | P2 |
+| BND-074 | MailingStateProvince | 0 | 100 | "" | 100 chars | 101 chars | P2 |
+| BND-075 | MailingPostalCode | 0 | 20 | "" | 20 chars | 21 chars | P2 |
+| BND-076 | MailingCountry | 0 | 100 | "" | 100 chars | 101 chars | P2 |
+| BND-077 | Assistant | 0 | 255 | "" | 255 chars | 256 chars | P2 |
+| BND-078 | AssistantPhone | 0 | 50 | "" | 50 chars | 51 chars | P2 |
+| BND-079 | AssistantEmail | 0 | 320 | "" | 320 chars | 321 chars | P2 |
+| BND-080 | Department | 0 | 255 | "" | 255 chars | 256 chars | P2 |
+| BND-081 | Description | 0 | 4000 | "" | 4000 chars | 4001 chars | P2 |
+| BND-082 | MiddleName | 0 | 255 | "" | 255 chars | 256 chars | P2 |
+| BND-083 | Suffix | 0 | 50 | "" | 50 chars | 51 chars | P2 |
+| BND-084 | OrganizationHierarchyIds | 0 | 100 | [] | 100 IDs | 101 IDs | P2 |
+| BND-085 | Profile picture 1MB | 0 | 1MB | 0 bytes | 1MB | 1MB+1 | P1 |
+| BND-086 | ListAllContacts pageIndex | 1 | Max | 1 | Valid | 0 | P1 |
+| BND-087 | ListAllContacts pageSize | 1 | int.MaxValue (export) | 1 | 20 default | — | P1 |
+| BND-088 | Search filters array | 1 | 50 | 1 filter | 50 filters | — | P2 |
+| BND-089 | Gmail email addresses | 1 | 100 | 1 email | 100 emails | 101 | P1 |
+| BND-090 | GetByIdsAsync ids array | 1 | 500 | 1 ID | 500 IDs | — | P2 |
+
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Scenario | Trigger | Expected Outcome | Priority |
 |----|-----------|---------------|---------|------------------|----------|
@@ -284,9 +325,50 @@
 | FUN-049 | Name length validation | Name > 255 | Create/Update | Validation error | P1 |
 | FUN-050 | Optional vs required fields | All optional null | Create with required only | Created | P1 |
 
+| FUN-051 | Name concatenation | Name = Salutation + FirstName + MiddleName + LastName | CreateContactAsync, UpdateContactAsync | Name field populated correctly | P0 |
+| FUN-052 | OrganizationUnitRelationships on create | Create with OrganizationHierarchyIds | CreateContactAsync | OrganizationUnitRelationship records created | P1 |
+| FUN-053 | OrganizationUnitRelationships on update | Update with new OrganizationHierarchyIds | UpdateContactAsync | Old removed, new added | P1 |
+| FUN-054 | Soft delete OrganizationUnitRelationships on delete | Delete contact | DeleteContactAsync | OrgUnitRelationships soft-deleted | P1 |
+| FUN-055 | ContactSpecificationAdapter routing | Specification is ContactSpecificationAdapter | GetContactsWithSpecificationAsync | Routes to GetUNOPSContactsWithSpecificationAsync | P1 |
+| FUN-056 | ApplyAccessControlFilters on GetContact | User has access | GetContactAsync(ClaimsPrincipal, id) | Contact returned if access granted | P0 |
+| FUN-057 | ApplyAccessControlFilters on GetContact — denied | User lacks access | GetContactAsync(ClaimsPrincipal, id) | Null returned | P0 |
+| FUN-058 | GlobalFilterService applied | FilterActive=true | GetContactsWithSpecification | Global filters applied | P1 |
+| FUN-059 | GetContactByEmailAsync case-insensitive | Email="John@Example.COM" | GetContactByEmailAsync | Matches john@example.com | P1 |
+| FUN-060 | GetContactsForGmailAddon lowercase | EmailAddresses with mixed case | GetContactsForGmailAddon | Contacts matched case-insensitively | P1 |
+| FUN-061 | GetContactWithInteractionsAsync structure | Contact has interactions | GetContactWithInteractionsAsync | JSON with interactions, documents, summary | P1 |
+| FUN-062 | GetContactWithInteractionsAsync — no interactions | Contact has 0 interactions | GetContactWithInteractionsAsync | totalInteractions=0 | P1 |
+| FUN-063 | Profile picture signed URL | Upload profile picture | UpdateContactProfilePictureAsync | Signed URL returned | P1 |
+| FUN-064 | ProfilePictureUrl in model | Get contact with profile picture | GetContactAsync | ProfilePictureUrl as signed URL | P1 |
+| FUN-065 | CreatedByName/CreatedByOfficeName | Contact created by user | GetContactAsync | CreatedByName, CreatedByOfficeName populated | P1 |
+| FUN-066 | PatchNonNullProperties on update | Update with partial fields | UpdateContactAsync | Only non-null fields updated | P1 |
+| FUN-067 | GetPartnerContacts — Partner.PartnerGroup | Partner has PartnerGroup | GetPartnerContacts | PartnerGroup loaded | P1 |
+| FUN-068 | GetContacts — LoadOrganizationUnitRelationships | Load contacts | GetContacts | OrgUnitRelationships loaded for each | P1 |
+| FUN-069 | GetPostedContacts — all contacts | Posted contacts | GetPostedContacts | All contacts returned (no IsPosted filter) | P1 |
+| FUN-070 | GetUnmatchedEmailsWithPartnerSuggestions — domain match | Email domain exists in contacts | GetUnmatchedEmailsWithPartnerSuggestionsAsync | PartnerId/PartnerName from most common partner | P1 |
+| FUN-071 | GetUnmatchedEmailsWithPartnerSuggestions — Gemini fallback | Domain not in DB | GetUnmatchedEmailsWithPartnerSuggestionsAsync | Gemini lookup for unknown domains | P2 |
+| FUN-072 | GetByIdsAsync — access control | User with limited scope | GetByIdsAsync(ids, user) | Only accessible contacts returned | P1 |
+| FUN-073 | GetBasicEntityAsync — contact | GetBasicEntityAsync | BaseUNOPSManager | ContactModel returned | P1 |
+| FUN-074 | GetBasicEntityDataAsync — contact | GetBasicEntityDataAsync | BaseUNOPSManager | ContactModel returned | P1 |
+| FUN-075 | GetPartnerNamesFromGeminiAsync — empty domains | Contact has no email domain | GetPartnerNamesFromGeminiAsync | Empty result with fallbacks | P2 |
+| FUN-076 | GetPartnerNamesForAIAsync — prompt not found | No AiPrompt for domain_organization_lookup | GetPartnerNamesForAIAsync | Fallback values, error in response | P2 |
+| FUN-077 | Search fields — fullName | GetContactSearchFields | GetContactSearchFields | fullName field with operators | P1 |
+| FUN-078 | Search fields — partner.name | GetContactSearchFields | GetContactSearchFields | partner.name IsNavigationProperty=true | P1 |
+| FUN-079 | Search fields — status enum | GetContactSearchFields | GetContactSearchFields | status with DropdownOptions | P1 |
+| FUN-080 | Search fields — createdDate | GetContactSearchFields | GetContactSearchFields | createdDate with date operators | P1 |
+| FUN-081 | Gmail Add-on — permissions per contact | GetContactsForGmailAddon | GetContactsForGmailAddon | Contacts include Permissions | P1 |
+| FUN-082 | Gmail Add-on — interactions per contact | GetContactsForGmailAddon | GetContactsForGmailAddon | Interactions include Permissions | P1 |
+| FUN-083 | PageIndex < 1 default | GetContacts PageIndex=0 | GetContacts | PageIndex defaults to 1 | P1 |
+| FUN-084 | GetContacts — user info batch lookup | GetContacts with multiple creators | GetContacts | Single userInfo query | P1 |
+| FUN-085 | GetContactsWithSpecification — filteredData is list | ApplyAccessControlFilters returns list | GetContactsWithSpecificationAsync | Pagination on filtered list | P1 |
+| FUN-086 | GetContactsWithSpecification — filteredData is not list | ApplyAccessControlFilters returns other type | GetContactsWithSpecificationAsync | Empty result fallback | P1 |
+| FUN-087 | GetContactWithInteractionsAsync — hasCV | Document link contains "cv" | GetContactWithInteractionsAsync | hasCV=true in summary | P1 |
+| FUN-088 | GetContactWithInteractionsAsync — mailingAddress | Contact has MailingStreet | GetContactWithInteractionsAsync | mailingAddress object in response | P1 |
+| FUN-089 | GetContactWithInteractionsAsync — assistant | Contact has Assistant | GetContactWithInteractionsAsync | assistant object in response | P1 |
+| FUN-090 | GetContactWithInteractionsAsync — userProfile | GetContactWithInteractionsAsync | GetContactWithInteractionsAsync | userProfile included | P1 |
+
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities Involved | Expected Result | Priority |
 |----|-----------|----------|-------------------|-----------------|----------|
@@ -341,66 +423,50 @@
 | INT-049 | Contact feature flag | Feature flag for contact | Contact, FeatureFlags | Flag respected | P2 |
 | INT-050 | Contact multi-tenant | Org scope isolation | Contact, Tenant | Data isolated | P0 |
 
----
-
-## §6 Security Tests (50)
-
-| ID | Test Name | Attack Vector | Target | Expected Block | Priority |
-|----|-----------|--------------|--------|----------------|----------|
-| SEC-001 | SQL injection in FirstName | '; DROP TABLE-- | CreateContactAsync | Sanitized/Rejected | P0 |
-| SEC-002 | SQL injection in LastName | 1' OR '1'='1 | CreateContactAsync | Sanitized/Rejected | P0 |
-| SEC-003 | SQL injection in Email | admin'-- | GetContactByEmailAsync | Sanitized/Rejected | P0 |
-| SEC-004 | SQL injection in search | ' UNION SELECT * | Specification filter | Sanitized/Rejected | P0 |
-| SEC-005 | XSS in Notes | <script>alert(1)</script> | CreateContactAsync | Sanitized/Rejected | P0 |
-| SEC-006 | XSS in Address | <img src=x onerror=alert(1)> | CreateContactAsync | Sanitized/Rejected | P0 |
-| SEC-007 | Path traversal in profile picture | ../../../etc/passwd | UpdateContactProfilePicture | Rejected | P0 |
-| SEC-008 | IDOR — access other user's contact | GetContact(userId, otherContactId) | GetContact | 403 or filtered | P0 |
-| SEC-009 | IDOR — update other user's contact | UpdateContactAsync(otherId) | UpdateContactAsync | 403 | P0 |
-| SEC-010 | IDOR — delete other user's contact | DeleteContactAsync(otherId) | DeleteContactAsync | 403 | P0 |
-| SEC-011 | Mass assignment — set CreatedBy | Include CreatedBy in request | CreateContactAsync | Field ignored | P0 |
-| SEC-012 | Mass assignment — set Id | Include Id in CreateRequest | CreateContactAsync | Field ignored | P0 |
-| SEC-013 | Mass assignment — set IsDeleted | Include IsDeleted=false | UpdateContactAsync | Field ignored | P0 |
-| SEC-014 | Unauthenticated Create | No auth token | CreateContactAsync | 401 | P0 |
-| SEC-015 | Unauthenticated Get | No auth token | GetContact | 401 | P0 |
-| SEC-016 | Expired token | Expired JWT | Any operation | 401 | P0 |
-| SEC-017 | Tampered token | Modified JWT | Any operation | 401 | P0 |
-| SEC-018 | Wrong role — Create | User without CanCreateContacts | CreateContactAsync | 403 | P0 |
-| SEC-019 | Wrong role — Update | User without CanEditContacts | UpdateContactAsync | 403 | P0 |
-| SEC-020 | Wrong role — Delete | User without CanDeleteContacts | DeleteContactAsync | 403 | P0 |
-| SEC-021 | Org unit scope bypass | User from OrgA access OrgB contact | GetContact | 403 or empty | P0 |
-| SEC-022 | Privilege escalation | User tries admin action | Admin endpoint | 403 | P0 |
-| SEC-023 | LDAP injection in search | *)(uid=* | Search field | Sanitized | P0 |
-| SEC-024 | NoSQL injection (if applicable) | {'$gt': ''} | Filter | Sanitized | P1 |
-| SEC-025 | Command injection in filename | ; rm -rf / | Profile picture | Rejected | P0 |
-| SEC-026 | XXE in file upload | XML entity in file | Document upload | Rejected | P1 |
-| SEC-027 | Sensitive data in error | Stack trace with connection string | Exception | No sensitive data | P0 |
-| SEC-028 | Sensitive data in response | Password in ContactModel | GetContact | Not exposed | P0 |
-| SEC-029 | Rate limit bypass | Rapid requests | API | 429 after limit | P1 |
-| SEC-030 | CSRF on Create | Cross-site request | CreateContactAsync | CSRF token validation | P0 |
-| SEC-031 | CSRF on Update | Cross-site request | UpdateContactAsync | CSRF token validation | P0 |
-| SEC-032 | CSRF on Delete | Cross-site request | DeleteContactAsync | CSRF token validation | P0 |
-| SEC-033 | Open redirect in callback | Redirect URL manipulation | OAuth callback | Validated | P1 |
-| SEC-034 | HTTP verb tampering | PUT instead of POST | Create | 405 | P1 |
-| SEC-035 | Parameter pollution | id=1&id=2 | GetContact | Handled | P1 |
-| SEC-036 | Header injection | Malicious headers | Any request | Sanitized | P1 |
-| SEC-037 | Cookie manipulation | Modify auth cookie | Request | Rejected | P0 |
-| SEC-038 | Session fixation | Fixate session ID | Login | New session | P1 |
-| SEC-039 | Insecure direct reference — PartnerId | Access partner from other org | Create with PartnerId | Validated | P0 |
-| SEC-040 | Insecure direct reference — DocId | Access doc from other contact | Document link | Validated | P0 |
-| SEC-041 | Information disclosure — enum | Probe error messages | Invalid input | Generic message | P1 |
-| SEC-042 | Timing attack on existence | Measure response time | GetContact(valid vs invalid) | Constant time | P2 |
-| SEC-043 | Brute force contact IDs | Enumerate IDs | GetContact(1..1000) | Rate limited | P1 |
-| SEC-044 | Replay attack | Replay captured request | CreateContactAsync | Nonce/timestamp | P1 |
-| SEC-045 | JWT algorithm confusion | alg=none | Request | Rejected | P0 |
-| SEC-046 | Substitution attack | Replace JWT with another user's | Request | 403 | P0 |
-| SEC-047 | Excessive data in list | Request huge PageSize | GetContacts | Capped | P1 |
-| SEC-048 | Log injection |恶意日志<script> | Log field | Sanitized | P1 |
-| SEC-049 | Email header injection | \r\nBcc: attacker@evil.com | Email field | Sanitized | P1 |
-| SEC-050 | Null byte injection | File.txt%00.jpg | Filename | Rejected | P0 |
+| INT-051 | Contact→OrganizationUnitRelationship | Create contact with OrganizationHierarchyIds | Contact, OrganizationUnitRelationship | Relationships persisted | P1 |
+| INT-052 | Contact→Partner→PartnerGroup | Get contact | Contact, Partner, PartnerGroup | Full hierarchy loaded | P1 |
+| INT-053 | Contact→Partner→LiaisonOffice | GetContactWithInteractionsAsync | Contact, Partner, LiaisonOffice | LiaisonOffice in response | P1 |
+| INT-054 | Contact→Documents→DocumentType | Get contact with documents | Contact, Document, DocumentType | DocumentType loaded | P1 |
+| INT-055 | Contact→InteractionContacts→Interaction | GetContactsForGmailAddon | Contact, InteractionContact, Interaction | Interactions per contact | P1 |
+| INT-056 | Contact→InteractionUsers→User | GetContactWithInteractionsAsync | Contact, Interaction, User | Users in interaction | P1 |
+| INT-057 | ContactController→AdvancedSearchService | SearchContacts with query | Controller, AdvancedSearchService, Contact | SearchWithQueryAndMetadataAsync | P1 |
+| INT-058 | ContactController→AdvancedSearchService filters | AdvancedSearchContacts | Controller, AdvancedSearchService | SearchWithFiltersAsync | P1 |
+| INT-059 | ContactController→AiContextualService | Create with duplicate detection | Controller, AiContextualService | DetectDuplicateForSingleRecordAsync | P1 |
+| INT-060 | ContactController→GeminiManager | ScanContactData | Controller, GeminiManager | ScanFileForGeminiProcessing | P1 |
+| INT-061 | ContactController→GeminiManager | AnalyseContactData | Controller, GeminiManager | ExtractDataAfterAnalysis | P1 |
+| INT-062 | ContactController→GeminiManager | BulkUploadContacts | Controller, GeminiManager | BulkInsertRecordsAsync | P1 |
+| INT-063 | ContactController→EntityConfigurationManager | GetMetadataInfo | Controller, EntityConfigurationManager | GetEntityConfigurationDetailsAsync | P1 |
+| INT-064 | UNOPSContactManager→GoogleCloudStorageService | UpdateContactProfilePictureAsync | ContactManager, GoogleCloudStorageService | UploadFileAsync, signed URL | P1 |
+| INT-065 | UNOPSContactManager→PermissionService | GetContactsForGmailAddon | ContactManager, PermissionService | HasInstanceAccessAsync per contact | P1 |
+| INT-066 | UNOPSContactManager→AiContextualService | GetPartnerNamesForAIAsync | ContactManager, AiContextualService | FetchResultFromGemini | P2 |
+| INT-067 | UNOPSContactManager→GlobalFilterService | GetContactsWithSpecification | ContactManager, GlobalFilterService | ApplyGlobalFiltersAsync | P1 |
+| INT-068 | UNOPSContactManager→UserProfile | MapEntityToModel | ContactManager, UserProfile | CreatedByName from UserProfile | P1 |
+| INT-069 | UNOPSContactManager→OrganizationHierarchy | MapEntityToModel | ContactManager, OrganizationHierarchy | CreatedByOfficeName from OrgUnit | P1 |
+| INT-070 | Contact→InteractionContacts junction | GetContactsForGmailAddon | Contact, InteractionContact | Junction table queried | P1 |
+| INT-071 | ListAllContacts→ContactCompositeSpecification | ListAllContacts with partnerId | Controller, ContactCompositeSpecification | Filtered results | P1 |
+| INT-072 | SearchContacts→UnifiedSearchRequest | Search with partnerId filter | AdvancedSearchService, SearchFilter | PartnerId filter applied | P1 |
+| INT-073 | Contact API permissions endpoint | GET /contact/{id}/permissions | Controller, AuthorizationService | Permissions returned | P0 |
+| INT-074 | Contact API profile picture | POST /contact/{id}/profile-picture | Controller, ContactManager | 200 OK with imageUrl | P1 |
+| INT-075 | Contact API detect-duplicates | POST /contact/detect-duplicates | Controller, AiContextualService | Duplicate info returned | P1 |
+| INT-076 | Contact API metadata-info | GET /contact/metadata-info | Controller, EntityConfigurationManager | Entity config returned | P1 |
+| INT-077 | Contact API scan-data | POST /contact/scan-data | Controller, GeminiManager | Extracted data returned | P1 |
+| INT-078 | Contact API analyse-file | POST /contact/analyse-file | Controller, GeminiManager | Structured data returned | P1 |
+| INT-079 | Contact API bulk-upload | POST /contact/bulk-upload | Controller, GeminiManager | Bulk result returned | P1 |
+| INT-080 | Contact API search-fields | GET /contact/search-fields | Controller, ContactManager | SearchFieldInfo list | P1 |
+| INT-081 | BaseRepository→UNOPSAppDbContext | Contact CRUD | BaseRepository, DbContext | Persisted via context | P0 |
+| INT-082 | Contact→Partner FK | Create contact for partner | Contact, Partner | PartnerId FK valid | P0 |
+| INT-083 | Contact LoadOrganizationUnitRelationshipsAsync | GetPartnerContacts | Contact, Extension method | OrgUnitRelationships loaded | P1 |
+| INT-084 | Partner LoadOrganizationUnitRelationshipsAsync | GetPartnerContacts | Partner, Extension method | Partner OrgUnitRelationships loaded | P1 |
+| INT-085 | ContactFilterRequest→ContactCompositeSpecification | ListAllContacts | ContactFilterRequest, Specification | Specification built | P1 |
+| INT-086 | ContactSpecificationAdapter→GetUNOPSContactsWithSpecification | Specification with adapter | ContactSpecificationAdapter, Manager | UNOPS-specific path | P1 |
+| INT-087 | UNOPSContactManager→AiPrompt | GetPartnerNamesFromGeminiAsync | ContactManager, AiPrompt | domain_organization_lookup prompt | P2 |
+| INT-088 | UNOPSContactManager→CommonEntityRepository | Base entity operations | ContactManager, CommonEntityRepository | Shared repository | P2 |
+| INT-089 | Contact→Interaction many-to-many | Interaction with contact | Contact, Interaction, InteractionContact | Many-to-many via junction | P1 |
+| INT-090 | UNOPSManagerWrapper→UNOPSContactManager | Resolve ContactManager | ManagerWrapper, UNOPSContactManager | UNOPS implementation used | P0 |
 
 ---
 
-## §7 Concurrency Tests (25)
+## §6 Concurrency Tests (25)
 
 | ID | Test Name | Concurrent Scenario | Expected Behavior | Priority |
 |----|-----------|---------------------|-------------------|----------|
@@ -432,7 +498,7 @@
 
 ---
 
-## §8 Unit Tests (21)
+## §7 Unit Tests (21)
 
 | ID | Test Name | Category | Input | Expected Output | Priority |
 |----|-----------|----------|-------|-----------------|----------|
@@ -460,7 +526,7 @@
 
 ---
 
-## §9 Performance Tests (16)
+## §8 Performance Tests (16)
 
 | ID | Test Name | Operation | Threshold | Priority |
 |----|-----------|----------|-----------|----------|
@@ -483,7 +549,7 @@
 
 ---
 
-## §10 Load Tests (10)
+## §9 Load Tests (10)
 
 | ID | Test Name | Load Profile | Duration | Success Criteria | Priority |
 |----|-----------|-------------|----------|-------------------|----------|

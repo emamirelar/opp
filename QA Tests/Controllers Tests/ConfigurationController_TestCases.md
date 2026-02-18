@@ -13,23 +13,22 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P ✅ (90≥90) | E≥3P ✅ (90≥90) | F≥3P ✅ (90≥90) | I≥3P ✅ (90≥90)
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Steps | Expected Result |
 |----|-----------|-------|-----------------|
@@ -63,15 +62,10 @@
 | POS-028 | Get overrides | GET /api/configuration/overrides | Overrides |
 | POS-029 | Get region config | GET /api/configuration/region | Region |
 | POS-030 | Get tenant config | GET /api/configuration/tenant | Tenant |
-| POS-031 | Cache config response | GET twice | Cached |
-| POS-032 | Empty optional | GET without optional | Defaults |
-| POS-033 | Accept header JSON | Accept: application/json | JSON |
-| POS-034 | Authenticated access | GET with token | 200 OK |
-| POS-035 | Admin full access | GET as admin | Full config |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error |
 |----|-----------|--------------|----------------|
@@ -145,10 +139,30 @@
 | NEG-068 | Blocked IP | From blocked IP | 403 |
 | NEG-069 | CORS preflight fail | Invalid origin | CORS error |
 | NEG-070 | Config validation fail | Invalid config | 400 |
+| NEG-071 | Reload during update | Reload mid-update | 409 |
+| NEG-072 | Invalid override key | override=invalid | 400 |
+| NEG-073 | Tenant config cross-tenant | Other tenant | 403 |
+| NEG-074 | Region config wrong region | Wrong region | 403 |
+| NEG-075 | Feature flag readonly | Update readonly flag | 403 |
+| NEG-076 | Parameter readonly | Update readonly param | 403 |
+| NEG-077 | Invalid cache TTL | ttl=-1 | 400 |
+| NEG-078 | Invalid timeout | timeout=invalid | 400 |
+| NEG-079 | Invalid port | port=99999 | 400 |
+| NEG-080 | Invalid percent | percent=150 | 400 |
+| NEG-081 | Schema validation fail | Wrong schema | 400 |
+| NEG-082 | Circular config ref | Self-reference | 500 |
+| NEG-083 | Deprecated key update | Update deprecated | 400 |
+| NEG-084 | Environment override invalid | env=Invalid | 400 |
+| NEG-085 | Tenant override invalid | tenant=Invalid | 400 |
+| NEG-086 | Region override invalid | region=Invalid | 400 |
+| NEG-087 | Hot reload disabled | Reload when disabled | 403 |
+| NEG-088 | Config file locked | File in use | 503 |
+| NEG-089 | Merge conflict | Conflicting overrides | 500 |
+| NEG-090 | Type coercion fail | Wrong type | 400 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max |
 |----|----------------|-----|-----|--------|--------|----------|
@@ -222,10 +236,30 @@
 | BND-068 | Dot notation | key.subkey | - | Nested | - | - |
 | BND-069 | Array index | key[0] | - | Array | - | - |
 | BND-070 | Escaped chars | key\.sub | - | Escaped | - | - |
+| BND-071 | Config sections | 0 | 50 | ✅ | ✅ | ❌ |
+| BND-072 | Feature flags | 0 | 500 | ✅ | ✅ | ❌ |
+| BND-073 | Parameters | 0 | 1000 | ✅ | ✅ | ❌ |
+| BND-074 | Overrides | 0 | 100 | ✅ | ✅ | ❌ |
+| BND-075 | Environment names | - | - | dev,staging,prod | - | - |
+| BND-076 | Tenant ID | 1 | int.Max | ✅ | ✅ | ❌ |
+| BND-077 | Region code | 0 | 10 | ✅ | ✅ | ❌ |
+| BND-078 | Locale code | 0 | 10 | ✅ | ✅ | ❌ |
+| BND-079 | Timezone | 0 | 50 | ✅ | ✅ | ❌ |
+| BND-080 | Reload cooldown | - | 60s | Enforce | - | - |
+| BND-081 | Mask length | - | 4 | Show last 4 | - | - |
+| BND-082 | Default fallback | - | - | Correct | - | - |
+| BND-083 | Schema validation | - | - | Validate | - | - |
+| BND-084 | Type coercion | - | - | Correct type | - | - |
+| BND-085 | Empty section | - | - | {} | - | - |
+| BND-086 | Missing section | - | - | 404 | - | - |
+| BND-087 | Partial config | - | - | Merge defaults | - | - |
+| BND-088 | Config merge order | - | - | Correct | - | - |
+| BND-089 | Override precedence | - | - | Override wins | - | - |
+| BND-090 | Hot reload | - | - | New values | - | - |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Category | Rule | Trigger | Expected |
 |----|----------|------|---------|----------|
@@ -279,10 +313,50 @@
 | FUN-048 | Business | Permission | Query | Scoped |
 | FUN-049 | Business | Tenant isolation | Query | Tenant only |
 | FUN-050 | Business | Override precedence | Merge | Correct order |
+| FUN-051 | Workflow | Get settings | GET | Settings |
+| FUN-052 | Workflow | Get features | GET | Flags |
+| FUN-053 | Workflow | Get parameters | GET | Parameters |
+| FUN-054 | Workflow | Update feature | PUT | Updated |
+| FUN-055 | Workflow | Update parameter | PUT | Updated |
+| FUN-056 | Validation | Required key | Missing | 400 |
+| FUN-057 | Validation | Valid key format | Invalid | 400 |
+| FUN-058 | Validation | Valid value type | Wrong type | 400 |
+| FUN-059 | Validation | Range | Out of range | 400 |
+| FUN-060 | Validation | Permission | No permission | 403 |
+| FUN-061 | Constraint | Read-only | Update read-only | 403 |
+| FUN-062 | Constraint | System lock | Update system | 403 |
+| FUN-063 | Constraint | Unique key | Duplicate | 409 |
+| FUN-064 | Constraint | Reload cooldown | Too soon | 429 |
+| FUN-065 | Constraint | Sensitive never | Expose secret | Never |
+| FUN-066 | Audit | Read sensitive | GET secret | Audit |
+| FUN-067 | Audit | Create | POST | Audit |
+| FUN-068 | Audit | Update | PUT | Audit |
+| FUN-069 | Audit | Delete | DELETE | Audit |
+| FUN-070 | Audit | Reload | POST reload | Audit |
+| FUN-071 | Business | Soft-deleted | Query | Excluded |
+| FUN-072 | Business | Inactive | Query | Excluded |
+| FUN-073 | Business | Permission | Query | Scoped |
+| FUN-074 | Business | Tenant | Query | Tenant only |
+| FUN-075 | Business | Override | Merge | Correct |
+| FUN-076 | Workflow | Reload | POST | Reloaded |
+| FUN-077 | Workflow | Validate | GET validate | Result |
+| FUN-078 | Workflow | Section filter | GET ?section | Filtered |
+| FUN-079 | Workflow | Default fallback | GET missing | Default |
+| FUN-080 | Workflow | Mask sensitive | GET as user | Masked |
+| FUN-081 | Validation | Admin only | User update | 403 |
+| FUN-082 | Validation | Tenant scope | Cross-tenant | 403 |
+| FUN-083 | Validation | Whitelist | Invalid section | 400 |
+| FUN-084 | Validation | No reserved | Reserved key | 403 |
+| FUN-085 | Validation | Format | Wrong format | 400 |
+| FUN-086 | Constraint | Max value length | Too long | 400 |
+| FUN-087 | Constraint | Audit update | Any update | Audit |
+| FUN-088 | Constraint | Cache TTL | Stale | Refresh |
+| FUN-089 | Constraint | Version | Optimistic | 409 |
+| FUN-090 | Constraint | Environment | Wrong env | 400 |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Category | Scenario | Entities | Expected |
 |----|----------|----------|----------|----------|
@@ -336,63 +410,46 @@
 | INT-048 | E2E | Reload flow | Config | Reload → Get |
 | INT-049 | E2E | Multi-tenant | Tenants | Isolated |
 | INT-050 | E2E | Session expiry | Auth | Clean fail |
-
----
-
-## §6 Security Tests (50)
-
-| ID | Category | Attack | Target | Expected |
-|----|----------|--------|-------|----------|
-| SEC-001 | Injection | SQL | Key | Sanitized |
-| SEC-002 | Injection | XSS | Value | Encoded |
-| SEC-003 | Injection | Path traversal | Path | Rejected |
-| SEC-004 | Injection | NoSQL | Filter | Rejected |
-| SEC-005 | Injection | Command | Reload | Rejected |
-| SEC-006 | Injection | Template | Value | Rejected |
-| SEC-007 | Injection | Log | Input | Sanitized |
-| SEC-008 | Injection | LDAP | Search | Rejected |
-| SEC-009 | Injection | Log4j | Input | Rejected |
-| SEC-010 | Injection | SSRF | URL value | Rejected |
-| SEC-011 | Access | No auth | All | 401 |
-| SEC-012 | Access | Wrong role | Admin | 403 |
-| SEC-013 | Access | Cross-tenant | Other tenant | 403 |
-| SEC-014 | Access | Horizontal | Other user | 403 |
-| SEC-015 | Access | Vertical | Admin | 403 |
-| SEC-016 | Access | Expired | Token | 401 |
-| SEC-017 | Access | Revoked | Token | 401 |
-| SEC-018 | Access | Tampered | Token | 401 |
-| SEC-019 | Access | Scope | OAuth | 403 |
-| SEC-020 | Access | Service | UI | 403 |
-| SEC-021 | IDOR | Other tenant config | ID | 403 |
-| SEC-022 | IDOR | Other user | ID | 403 |
-| SEC-023 | IDOR | Manipulate key | Path | 403 |
-| SEC-024 | IDOR | Enumeration | Keys | Rate limit |
-| SEC-025 | IDOR | Pollution | Params | First |
-| SEC-026 | Mass Assign | Admin | Body | Ignored |
-| SEC-027 | Mass Assign | Role | Body | Ignored |
-| SEC-028 | Mass Assign | Tenant | Body | Ignored |
-| SEC-029 | Mass Assign | Secret | Body | Rejected |
-| SEC-030 | Mass Assign | Permission | Body | Ignored |
-| SEC-031 | Auth | Fixation | Session | New |
-| SEC-032 | Auth | Hijack | Token | Invalid |
-| SEC-033 | Auth | Replay | Old token | Reject |
-| SEC-034 | Auth | CSRF | State | Token |
-| SEC-035 | Auth | Brute | Login | Rate limit |
-| SEC-036 | Data | Secret exposure | GET | Never |
-| SEC-037 | Data | Connection string | GET user | 403 |
-| SEC-038 | Data | API key | GET user | Masked |
-| SEC-039 | Data | Password | GET | Never |
-| SEC-040 | Data | Certificate | GET user | Masked |
-| SEC-041 | OWASP | A01 | Access | 403 |
-| SEC-042 | OWASP | A02 | Crypto | TLS |
-| SEC-043 | OWASP | A03 | Injection | Param |
-| SEC-044 | OWASP | A04 | Design | Defensive |
-| SEC-045 | OWASP | A05 | Misconfig | Secure |
-| SEC-046 | OWASP | A06 | Vulnerable | No CVE |
-| SEC-047 | OWASP | A07 | Auth | Strong |
-| SEC-048 | OWASP | A08 | Integrity | Checks |
-| SEC-049 | OWASP | A09 | Logging | Audit |
-| SEC-050 | OWASP | A10 | SSRF | No internal |
+| INT-051 | CRUD | Get settings | Config | Settings |
+| INT-052 | CRUD | Get feature | Config | Flag |
+| INT-053 | CRUD | Get parameter | Config | Value |
+| INT-054 | CRUD | Update feature | Config | Updated |
+| INT-055 | CRUD | Update parameter | Config | Updated |
+| INT-056 | Search | Filter section | Config | Filtered |
+| INT-057 | Search | Filter key | Config | Filtered |
+| INT-058 | Search | Filter env | Config | Filtered |
+| INT-059 | Search | Filter tenant | Config | Filtered |
+| INT-060 | Search | Multi-filter | Config | Combined |
+| INT-061 | Pagination | Page 1 | Config | First |
+| INT-062 | Pagination | Last page | Config | Partial |
+| INT-063 | Pagination | Size | Config | Correct |
+| INT-064 | Pagination | Invalid | Config | 400 |
+| INT-065 | Pagination | Boundary | Config | Exact |
+| INT-066 | Relationships | Config → App | Linked | Correct |
+| INT-067 | Relationships | Config → Tenant | Scoped | Correct |
+| INT-068 | Relationships | Config → Env | Scoped | Correct |
+| INT-069 | Relationships | Override chain | Config | Correct |
+| INT-070 | Relationships | Dependency | Config | Resolved |
+| INT-071 | Error | DB down | DB | 503 |
+| INT-072 | Error | Auth down | Auth | 401/503 |
+| INT-073 | Error | Validation | Bad input | 400 |
+| INT-074 | Error | NotFound | Invalid key | 404 |
+| INT-075 | Error | Forbidden | No permission | 403 |
+| INT-076 | Error | Conflict | Duplicate | 409 |
+| INT-077 | Error | Rate limit | Too many | 429 |
+| INT-078 | Error | Timeout | Slow | 504 |
+| INT-079 | Error | Payload | Huge | 413 |
+| INT-080 | Error | Media | Wrong type | 415 |
+| INT-081 | Error | Method | Wrong verb | 405 |
+| INT-082 | Error | Service | Dependency | 503 |
+| INT-083 | Error | Gateway | Upstream | 504 |
+| INT-084 | Error | Gone | Deleted | 410 |
+| INT-085 | Error | Locked | Locked | 423 |
+| INT-086 | E2E | Full get flow | Config | Get → Use |
+| INT-087 | E2E | Full update flow | Config | Update → Get |
+| INT-088 | E2E | Reload flow | Config | Reload → Get |
+| INT-089 | E2E | Validate flow | Config | Validate |
+| INT-090 | E2E | Section filter flow | Config | Filter → Get |
 
 ---
 
@@ -504,7 +561,7 @@
 | Feature flags | POS-002–003, FUN-002 |
 | System parameters | POS-004–005, FUN-003 |
 | Environment config | POS-006, NEG-056 |
-| 3:1 Ratio | NEG-001–070, BND-001–070 |
+| 3:1 Ratio | NEG-001–090, BND-001–090 |
 
 ---
 

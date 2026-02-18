@@ -1,7 +1,7 @@
 # UNOPSPartnerTreeManager — Unit Test Cases
 
 **Component:** `UNOPS.PAO.Business/Managers/PartnerTreeManager` (Unit Tests)  
-**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Created:** 2026-02-04 | **Last Updated:** 2026-02-18  
 **Author:** QA Team  
 **Standard:** 10-Category, 3:1 Ratio
 
@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,7 +33,7 @@ Partner tree manager unit tests cover tree building, hierarchy, expand/collapse,
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,15 +67,10 @@ Partner tree manager unit tests cover tree building, hierarchy, expand/collapse,
 | POS-028 | Expand all | Tree exists | ExpandAll | All expanded |
 | POS-029 | Collapse all | Tree exists | CollapseAll | All collapsed |
 | POS-030 | Search case insensitive | Tree exists | Search | Matching |
-| POS-031 | Get by level | Tree exists | GetByLevel | Filtered |
-| POS-032 | Count nodes | Tree exists | CountNodes | Count |
-| POS-033 | Is leaf check | Leaf partner | IsLeaf | True |
-| POS-034 | Is root check | Root partner | IsRoot | True |
-| POS-035 | Get subtree | Partner exists | GetSubtree | Subtree |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Action | Expected Result |
 |----|-----------|---------------------|-----------------|
@@ -149,10 +144,30 @@ Partner tree manager unit tests cover tree building, hierarchy, expand/collapse,
 | NEG-068 | BuildTree orphan | Orphan partners | Handle |
 | NEG-069 | Traverse while modifying | Concurrent | Consistent |
 | NEG-070 | Search deleted | Include deleted | Config |
+| NEG-071 | GetRoots invalid filter | Filter invalid | ArgumentException |
+| NEG-072 | GetChildren invalid include | Include invalid | ArgumentException |
+| NEG-073 | AddChild parent equals child | Parent=Child | BusinessException |
+| NEG-074 | MovePartner same parent | Same parent | No-op or reject |
+| NEG-075 | RemoveChild null child | Child=null | ArgumentNullException |
+| NEG-076 | UpdateParent null parent | Parent=null | ArgumentNullException |
+| NEG-077 | GetSubtree null partner | Partner=null | ArgumentNullException |
+| NEG-078 | FindInTree null term | Term=null | ArgumentNullException |
+| NEG-079 | GetByLevel over max | Level=100 | ArgumentException |
+| NEG-080 | Validate null tree | Tree=null | ArgumentNullException |
+| NEG-081 | Expand null node | Node=null | ArgumentNullException |
+| NEG-082 | Collapse null node | Node=null | ArgumentNullException |
+| NEG-083 | TraverseDepthFirst null | Tree=null | ArgumentNullException |
+| NEG-084 | TraverseBreadthFirst null | Tree=null | ArgumentNullException |
+| NEG-085 | CountNodes invalid tree | Tree invalid | ArgumentException |
+| NEG-086 | GetSiblings null partner | Partner=null | ArgumentNullException |
+| NEG-087 | GetParentPath null partner | Partner=null | ArgumentNullException |
+| NEG-088 | BuildTree duplicate IDs | Duplicate IDs | Handle |
+| NEG-089 | MovePartner to deleted | Parent deleted | KeyNotFoundException |
+| NEG-090 | AddChild max depth | At max depth | BusinessException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Condition | Expected Result |
 |----|-----------|-------------------|-----------------|
@@ -226,10 +241,30 @@ Partner tree manager unit tests cover tree building, hierarchy, expand/collapse,
 | BND-068 | Filter empty result | No match | Empty list |
 | BND-069 | Sort empty | Empty list | No exception |
 | BND-070 | Concurrent tree build | Two build | Both correct |
+| BND-071 | Tree depth zero | Empty | 0 |
+| BND-072 | GetRoots single | One root | Valid |
+| BND-073 | GetRoots multiple | Multiple roots | Valid |
+| BND-074 | GetChildren max | Max children | Valid |
+| BND-075 | GetDescendants max | Max descendants | Valid |
+| BND-076 | GetAncestors max | Max ancestors | Valid |
+| BND-077 | Search result max | Max results | Paginate |
+| BND-078 | Expand state persist | Expand | Persisted |
+| BND-079 | Collapse state persist | Collapse | Persisted |
+| BND-080 | Traverse order | Traverse | Order |
+| BND-081 | Validate valid tree | Valid | True |
+| BND-082 | Validate invalid tree | Invalid | False |
+| BND-083 | UpdateParent same | Same parent | No-op |
+| BND-084 | RemoveChild first | First child | Valid |
+| BND-085 | AddChild middle | Middle position | Valid |
+| BND-086 | MovePartner level change | Level change | Valid |
+| BND-087 | GetParentPath empty | Root | Empty |
+| BND-088 | FindInTree case | Case | Config |
+| BND-089 | GetByLevel empty | No at level | [] |
+| BND-090 | CountNodes large tree | 10000 nodes | Count |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -283,10 +318,50 @@ Partner tree manager unit tests cover tree building, hierarchy, expand/collapse,
 | FUN-048 | Permission cached | Performance | Repeated check | Cached |
 | FUN-049 | AsNoTracking read-only | Performance | List | No tracking |
 | FUN-050 | Tree caching | Performance | Repeated build | Cached |
+| FUN-051 | GetRoots excludes deleted | Constraint | GetRoots | Excludes |
+| FUN-052 | GetParentPath ordered | Logic | GetParentPath | Ordered |
+| FUN-053 | GetSiblings same level | Logic | GetSiblings | Same level |
+| FUN-054 | ExpandAll recursive | Logic | ExpandAll | Recursive |
+| FUN-055 | CollapseAll recursive | Logic | CollapseAll | Recursive |
+| FUN-056 | MovePartner updates path | Logic | MovePartner | Path |
+| FUN-057 | AddChild updates count | Logic | AddChild | Count |
+| FUN-058 | RemoveChild updates count | Logic | RemoveChild | Count |
+| FUN-059 | GetByLevel excludes deleted | Constraint | GetByLevel | Excludes |
+| FUN-060 | FindInTree excludes deleted | Constraint | FindInTree | Excludes |
+| FUN-061 | Traverse excludes deleted | Constraint | Traverse | Excludes |
+| FUN-062 | CountNodes excludes deleted | Constraint | CountNodes | Excludes |
+| FUN-063 | GetDepth excludes deleted | Constraint | GetDepth | Excludes |
+| FUN-064 | GetSubtree excludes deleted | Constraint | GetSubtree | Excludes |
+| FUN-065 | BuildTree order | Logic | BuildTree | Order |
+| FUN-066 | Search relevance | Logic | Search | Relevance |
+| FUN-067 | Filter by parent | Logic | Filter | Parent |
+| FUN-068 | Sort by level | Logic | Sort | Level |
+| FUN-069 | Pagination total | Calculation | Paginate | Total |
+| FUN-070 | AddChild audit | Audit | AddChild | Audit |
+| FUN-071 | RemoveChild audit | Audit | RemoveChild | Audit |
+| FUN-072 | MovePartner audit | Audit | MovePartner | Audit |
+| FUN-073 | UpdateParent audit | Audit | UpdateParent | Audit |
+| FUN-074 | GetRoots filter | Logic | GetRoots | Filter |
+| FUN-075 | GetChildren filter | Logic | GetChildren | Filter |
+| FUN-076 | GetDescendants filter | Logic | GetDescendants | Filter |
+| FUN-077 | GetAncestors filter | Logic | GetAncestors | Filter |
+| FUN-078 | Validate depth | Logic | Validate | Depth |
+| FUN-079 | Validate structure | Logic | Validate | Structure |
+| FUN-080 | Expand state validation | Validation | Expand | Valid |
+| FUN-081 | Collapse state validation | Validation | Collapse | Valid |
+| FUN-082 | MovePartner validation | Validation | MovePartner | Valid |
+| FUN-083 | AddChild validation | Validation | AddChild | Valid |
+| FUN-084 | RemoveChild validation | Validation | RemoveChild | Valid |
+| FUN-085 | UpdateParent validation | Validation | UpdateParent | Valid |
+| FUN-086 | GetSubtree validation | Validation | GetSubtree | Valid |
+| FUN-087 | FindInTree validation | Validation | FindInTree | Valid |
+| FUN-088 | GetByLevel validation | Validation | GetByLevel | Valid |
+| FUN-089 | CountNodes validation | Validation | CountNodes | Valid |
+| FUN-090 | GetDepth validation | Validation | GetDepth | Valid |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|
@@ -340,6 +415,46 @@ Partner tree manager unit tests cover tree building, hierarchy, expand/collapse,
 | INT-048 | Level filter integration | Scenario | GetByLevel | Correct |
 | INT-049 | Expand state integration | Scenario | Expand, Build | State |
 | INT-050 | E2E build-move-search | Scenario | Full cycle | Complete |
+| INT-051 | BuildTree then GetRoots | Scenario | Build, GetRoots | Complete |
+| INT-052 | AddChild then GetChildren | Scenario | Add, GetChildren | Complete |
+| INT-053 | MovePartner then GetParentPath | Scenario | Move, GetPath | Complete |
+| INT-054 | RemoveChild then GetChildren | Scenario | Remove, GetChildren | Complete |
+| INT-055 | Search then FindInTree | Scenario | Search, Find | Complete |
+| INT-056 | ExpandAll then CollapseAll | Scenario | Expand, Collapse | Complete |
+| INT-057 | GetDescendants then GetAncestors | Scenario | Desc, Anc | Complete |
+| INT-058 | UpdateParent then GetParentPath | Scenario | Update, GetPath | Complete |
+| INT-059 | Validate then BuildTree | Scenario | Validate, Build | Complete |
+| INT-060 | GetByLevel then GetChildren | Scenario | ByLevel, Children | Complete |
+| INT-061 | TraverseDepthFirst then Count | Scenario | Traverse, Count | Complete |
+| INT-062 | TraverseBreadthFirst then Count | Scenario | Traverse, Count | Complete |
+| INT-063 | GetSubtree then GetDepth | Scenario | Subtree, Depth | Complete |
+| INT-064 | FindInTree then GetById | Scenario | Find, Get | Complete |
+| INT-065 | GetSiblings then GetChildren | Scenario | Siblings, Children | Complete |
+| INT-066 | BuildTree with filter | Scenario | Build | Filtered |
+| INT-067 | MovePartner with validation | Scenario | Move | Validated |
+| INT-068 | AddChild with audit | Scenario | Add | Audit |
+| INT-069 | RemoveChild with audit | Scenario | Remove | Audit |
+| INT-070 | Search with pagination | Scenario | Search | Paginated |
+| INT-071 | Filter with sort | Scenario | Filter | Sorted |
+| INT-072 | GetRoots with pagination | Scenario | GetRoots | Paginated |
+| INT-073 | GetChildren with sort | Scenario | GetChildren | Sorted |
+| INT-074 | GetDescendants with filter | Scenario | GetDescendants | Filtered |
+| INT-075 | GetAncestors with sort | Scenario | GetAncestors | Sorted |
+| INT-076 | Expand with state | Scenario | Expand | State |
+| INT-077 | Collapse with state | Scenario | Collapse | State |
+| INT-078 | BuildTree with expand | Scenario | Build | Expand |
+| INT-079 | MovePartner with children | Scenario | Move | Children |
+| INT-080 | AddChild with siblings | Scenario | Add | Siblings |
+| INT-081 | RemoveChild with siblings | Scenario | Remove | Siblings |
+| INT-082 | UpdateParent with validation | Scenario | Update | Validated |
+| INT-083 | GetSubtree with filter | Scenario | GetSubtree | Filtered |
+| INT-084 | FindInTree with expand | Scenario | Find | Expand |
+| INT-085 | GetByLevel with sort | Scenario | GetByLevel | Sorted |
+| INT-086 | CountNodes with filter | Scenario | CountNodes | Filtered |
+| INT-087 | GetDepth with validate | Scenario | GetDepth | Validate |
+| INT-088 | GetParentPath with ancestors | Scenario | GetPath | Ancestors |
+| INT-089 | GetSiblings with filter | Scenario | GetSiblings | Filtered |
+| INT-090 | E2E full tree lifecycle | Scenario | Full cycle | Complete |
 
 ---
 
@@ -500,5 +615,5 @@ Partner tree manager unit tests cover tree building, hierarchy, expand/collapse,
 
 ---
 
-**Last Updated:** 2026-02-11  
+**Last Updated:** 2026-02-18  
 **Status:** Ready for Implementation

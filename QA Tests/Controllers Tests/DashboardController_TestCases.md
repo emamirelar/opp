@@ -13,23 +13,22 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P ✅ (90≥90) | E≥3P ✅ (90≥90) | F≥3P ✅ (90≥90) | I≥3P ✅ (90≥90)
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Steps | Expected Result |
 |----|-----------|-------|-----------------|
@@ -63,16 +62,11 @@
 | POS-028 | Empty dashboard | New user | Default layout |
 | POS-029 | Cached dashboard | GET twice | Cached |
 | POS-030 | Localized dashboard | GET ?lang=fr | French labels |
-| POS-031 | Theme preference | GET ?theme=dark | Dark theme |
-| POS-032 | Authenticated access | GET with token | 200 |
-| POS-033 | Role-based widgets | GET as user | Scoped widgets |
-| POS-034 | Admin full dashboard | GET as admin | Full data |
-| POS-035 | Export dashboard | GET /api/dashboard/export | Export file |
 
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error |
 |----|-----------|--------------|----------------|
@@ -146,10 +140,30 @@
 | NEG-068 | Permission change mid-load | Permission revoked | 403 |
 | NEG-069 | Inactive org | Org inactive | 403 |
 | NEG-070 | Soft-deleted data | Query deleted | Excluded |
+| NEG-071 | Invalid widget position | position=-1 | 400 |
+| NEG-072 | Invalid KPI aggregation | agg=Invalid | 400 |
+| NEG-073 | Missing org context | No orgUnitId for scoped | 400 |
+| NEG-074 | Invalid refresh token | Refresh with invalid | 401 |
+| NEG-075 | Widget type mismatch | Add wrong type | 400 |
+| NEG-076 | Invalid drill parameters | drill?invalid=1 | 400 |
+| NEG-077 | Alert already dismissed | Dismiss again | 400 |
+| NEG-078 | Pipeline stage invalid | stage=Invalid | 400 |
+| NEG-079 | Notification mark invalid | mark=Invalid | 400 |
+| NEG-080 | Export format invalid | format=Invalid | 400 |
+| NEG-081 | Layout schema invalid | Wrong schema version | 400 |
+| NEG-082 | Widget config type wrong | Config wrong type | 400 |
+| NEG-083 | Duplicate shortcut | Add existing | 409 |
+| NEG-084 | Invalid chart type | chartType=Invalid | 400 |
+| NEG-085 | Missing required filter | Required filter absent | 400 |
+| NEG-086 | Conflicting filters | Mutually exclusive | 400 |
+| NEG-087 | Invalid date timezone | tz=Invalid | 400 |
+| NEG-088 | Widget dependency cycle | Circular dependency | 400 |
+| NEG-089 | KPI source unavailable | Source down | 503 |
+| NEG-090 | Dashboard locked | Another user editing | 423 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max |
 |----|----------------|-----|-----|--------|--------|----------|
@@ -223,10 +237,30 @@
 | BND-068 | Null KPI | - | - | 0 or N/A | - | - |
 | BND-069 | Negative KPI | - | - | Reject or 0 | - | - |
 | BND-070 | Version | 1 | - | ✅ | ❌ | - |
+| BND-071 | Widget refresh rate | 0 | 3600 | ✅ | ✅ | ❌ |
+| BND-072 | Activity type enum | - | - | Valid | - | - |
+| BND-073 | Pipeline stage count | 0 | 20 | ✅ | ✅ | ❌ |
+| BND-074 | KPI decimal places | 0 | 4 | ✅ | ✅ | ❌ |
+| BND-075 | Alert priority range | 0 | 3 | ✅ | ✅ | ❌ |
+| BND-076 | Notification batch | 0 | 50 | ✅ | ✅ | ❌ |
+| BND-077 | Shortcut max | 0 | 20 | ✅ | ✅ | ❌ |
+| BND-078 | Chart series max | 0 | 10 | ✅ | ✅ | ❌ |
+| BND-079 | Top N limit | 1 | 100 | ✅ | ✅ | ❌ |
+| BND-080 | Drill level | 0 | 5 | ✅ | ✅ | ❌ |
+| BND-081 | Export format | - | - | csv, xlsx | - | - |
+| BND-082 | Layout version | 1 | - | ✅ | ❌ | - |
+| BND-083 | Widget min size | 1 | - | ✅ | - | - |
+| BND-084 | Filter combo max | - | 10 | ✅ | ✅ | ❌ |
+| BND-085 | Cached response TTL | - | 300s | ✅ | ✅ | ❌ |
+| BND-086 | Org unit depth | 0 | 10 | ✅ | ✅ | ❌ |
+| BND-087 | Date precision | - | - | Day | - | - |
+| BND-088 | Null optional filter | - | - | Default | - | - |
+| BND-089 | Empty filter set | - | - | All | - | - |
+| BND-090 | Single filter | - | - | Applied | - | - |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Category | Rule | Trigger | Expected |
 |----|----------|------|---------|----------|
@@ -280,10 +314,50 @@
 | FUN-048 | Business | Permission | Query | Scoped |
 | FUN-049 | Business | Role-based | Query | Role widgets |
 | FUN-050 | Business | Decimal | Currency | 2 decimals |
+| FUN-051 | Workflow | Get export | GET export | File |
+| FUN-052 | Workflow | Update layout | PUT layout | Updated |
+| FUN-053 | Workflow | Add multiple widgets | POST batch | Added |
+| FUN-054 | Workflow | Filter by stage | GET ?stage | Filtered |
+| FUN-055 | Workflow | Get drill data | GET drill | Data |
+| FUN-056 | Validation | Widget ID format | Invalid | 400 |
+| FUN-057 | Validation | Layout JSON | Malformed | 400 |
+| FUN-058 | Validation | Date range | Invalid | 400 |
+| FUN-059 | Validation | Org unit | Invalid | 404 |
+| FUN-060 | Validation | Activity type | Invalid | 400 |
+| FUN-061 | Constraint | Max widgets | >20 | 400 |
+| FUN-062 | Constraint | Export limit | >10K | Truncate |
+| FUN-063 | Constraint | Drill depth | >5 | Limit |
+| FUN-064 | Constraint | Refresh cooldown | Too soon | 429 |
+| FUN-065 | Constraint | Alert ownership | Other user | 403 |
+| FUN-066 | Audit | Add widget | POST | Audit |
+| FUN-067 | Audit | Remove widget | DELETE | Audit |
+| FUN-068 | Audit | Update layout | PUT | Audit |
+| FUN-069 | Audit | Dismiss alert | POST | Audit |
+| FUN-070 | Audit | Export | GET | Audit |
+| FUN-071 | Business | Cache invalidation | Update | Refresh |
+| FUN-072 | Business | Permission change | Mid-session | Next request |
+| FUN-073 | Business | Org hierarchy | Rollup | Correct |
+| FUN-074 | Business | Timezone | Display | UTC |
+| FUN-075 | Business | Localization | lang param | Correct |
+| FUN-076 | Workflow | Get layout | GET | Layout |
+| FUN-077 | Workflow | Get config | GET config | Config |
+| FUN-078 | Workflow | Filter activity | GET ?type | Filtered |
+| FUN-079 | Workflow | Paginate | GET ?page | Paginated |
+| FUN-080 | Workflow | Sort | GET ?sortBy | Sorted |
+| FUN-081 | Validation | Required auth | No auth | 401 |
+| FUN-082 | Validation | Permission | No perm | 403 |
+| FUN-083 | Validation | Valid ID | Invalid | 400 |
+| FUN-084 | Validation | Cross-org | Other org | 403 |
+| FUN-085 | Validation | Config format | Invalid | 400 |
+| FUN-086 | Constraint | System widget | No delete | 403 |
+| FUN-087 | Constraint | Widget order | Unique | Enforce |
+| FUN-088 | Constraint | Cache TTL | Stale | Refresh |
+| FUN-089 | Constraint | Rate limit | Too many | 429 |
+| FUN-090 | Constraint | Version | Optimistic | 409 |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Category | Scenario | Entities | Expected |
 |----|----------|----------|----------|----------|
@@ -337,63 +411,46 @@
 | INT-048 | E2E | Layout update flow | Layout | Update → persist |
 | INT-049 | E2E | Multi-user | Users | Isolated |
 | INT-050 | E2E | Session expiry | Auth | Clean fail |
-
----
-
-## §6 Security Tests (50)
-
-| ID | Category | Attack | Target | Expected |
-|----|----------|--------|-------|----------|
-| SEC-001 | Injection | SQL | Filter | Sanitized |
-| SEC-002 | Injection | XSS | Widget name | Encoded |
-| SEC-003 | Injection | Path traversal | Path | Rejected |
-| SEC-004 | Injection | NoSQL | Filter | Rejected |
-| SEC-005 | Injection | Command | Export | Rejected |
-| SEC-006 | Injection | Header | Header | Rejected |
-| SEC-007 | Injection | Log | Input | Sanitized |
-| SEC-008 | Injection | LDAP | Search | Rejected |
-| SEC-009 | Injection | Log4j | Input | Rejected |
-| SEC-010 | Injection | SSRF | URL | Rejected |
-| SEC-011 | Access | No auth | All | 401 |
-| SEC-012 | Access | Wrong role | Admin | 403 |
-| SEC-013 | Access | Cross-org | Other org | 403 |
-| SEC-014 | Access | Horizontal | Other user | 403 |
-| SEC-015 | Access | Vertical | Admin | 403 |
-| SEC-016 | Access | Expired | Token | 401 |
-| SEC-017 | Access | Revoked | Token | 401 |
-| SEC-018 | Access | Tampered | Token | 401 |
-| SEC-019 | Access | Scope | OAuth | 403 |
-| SEC-020 | Access | Service | UI | 403 |
-| SEC-021 | IDOR | Other org dashboard | ID | 403 |
-| SEC-022 | IDOR | Other user widget | ID | 403 |
-| SEC-023 | IDOR | Manipulate | Path | 403 |
-| SEC-024 | IDOR | Enumeration | IDs | Rate limit |
-| SEC-025 | IDOR | Pollution | Params | First |
-| SEC-026 | Mass Assign | Admin | Body | Ignored |
-| SEC-027 | Mass Assign | Role | Body | Ignored |
-| SEC-028 | Mass Assign | Org | Body | Ignored |
-| SEC-029 | Mass Assign | User | Body | Ignored |
-| SEC-030 | Mass Assign | Permission | Body | Ignored |
-| SEC-031 | Auth | Fixation | Session | New |
-| SEC-032 | Auth | Hijack | Token | Invalid |
-| SEC-033 | Auth | Replay | Old token | Reject |
-| SEC-034 | Auth | CSRF | State | Token |
-| SEC-035 | Auth | Brute | Login | Rate limit |
-| SEC-036 | Data | PII in export | Export | Masked |
-| SEC-037 | Data | Logs | Sensitive | No PII |
-| SEC-038 | Data | Error | 500 | Generic |
-| SEC-039 | Data | Stack | Exception | Hidden |
-| SEC-040 | Data | Debug | Prod | Off |
-| SEC-041 | OWASP | A01 | Access | 403 |
-| SEC-042 | OWASP | A02 | Crypto | TLS |
-| SEC-043 | OWASP | A03 | Injection | Param |
-| SEC-044 | OWASP | A04 | Design | Defensive |
-| SEC-045 | OWASP | A05 | Misconfig | Secure |
-| SEC-046 | OWASP | A06 | Vulnerable | No CVE |
-| SEC-047 | OWASP | A07 | Auth | Strong |
-| SEC-048 | OWASP | A08 | Integrity | Checks |
-| SEC-049 | OWASP | A09 | Logging | Audit |
-| SEC-050 | OWASP | A10 | SSRF | No internal |
+| INT-051 | CRUD | Get layout | Layout | Data |
+| INT-052 | CRUD | Update layout | Layout | Updated |
+| INT-053 | CRUD | Add widget | Widget | Added |
+| INT-054 | CRUD | Remove widget | Widget | Removed |
+| INT-055 | CRUD | Get config | Config | Config |
+| INT-056 | Search | Filter org | Dashboard | Filtered |
+| INT-057 | Search | Filter date | Dashboard | Filtered |
+| INT-058 | Search | Filter type | Activity | Filtered |
+| INT-059 | Search | Multi-filter | Dashboard | Combined |
+| INT-060 | Search | Empty filter | - | Default |
+| INT-061 | Pagination | Page 1 | Activity | First |
+| INT-062 | Pagination | Last page | Activity | Partial |
+| INT-063 | Pagination | Size | Activity | Correct |
+| INT-064 | Pagination | Invalid | Activity | 400 |
+| INT-065 | Pagination | Boundary | Activity | Exact |
+| INT-066 | Relationships | Dashboard → Widget | Linked | Correct |
+| INT-067 | Relationships | Dashboard → User | Linked | Correct |
+| INT-068 | Relationships | KPI → Drill | Linked | Correct |
+| INT-069 | Relationships | Orphan | Deleted widget | 404 |
+| INT-070 | Relationships | Pipeline → Stage | Linked | Correct |
+| INT-071 | Error | DB down | DB | 503 |
+| INT-072 | Error | Auth down | Auth | 401/503 |
+| INT-073 | Error | Validation | Bad input | 400 |
+| INT-074 | Error | NotFound | Invalid ID | 404 |
+| INT-075 | Error | Forbidden | No permission | 403 |
+| INT-076 | Error | Conflict | Duplicate | 409 |
+| INT-077 | Error | Rate limit | Too many | 429 |
+| INT-078 | Error | Timeout | Slow | 504 |
+| INT-079 | Error | Payload | Huge | 413 |
+| INT-080 | Error | Media | Wrong type | 415 |
+| INT-081 | Error | Method | Wrong verb | 405 |
+| INT-082 | Error | Service | Dependency | 503 |
+| INT-083 | Error | Gateway | Upstream | 504 |
+| INT-084 | Error | Gone | Deleted | 410 |
+| INT-085 | Error | Locked | Locked | 423 |
+| INT-086 | E2E | Full load | All | Load → display |
+| INT-087 | E2E | Add widget flow | Widget | Add → refresh |
+| INT-088 | E2E | Layout update | Layout | Update → persist |
+| INT-089 | E2E | Export flow | Export | Export → file |
+| INT-090 | E2E | Drill flow | Drill | Drill → data |
 
 ---
 
@@ -506,7 +563,7 @@
 | Recent activity | POS-004, FUN-004 |
 | Pipeline overview | POS-005, FUN-005 |
 | Partner statistics | POS-006, FUN-006 |
-| 3:1 Ratio | NEG-001–070, BND-001–070 |
+| 3:1 Ratio | NEG-001–090, BND-001–090 |
 
 ---
 

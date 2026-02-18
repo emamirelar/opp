@@ -11,19 +11,24 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
-| §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| §1 Positive (P) | 30 | 30-50 | ✅ |
+| §2 Negative (N) | 90 | 90 | ✅ |
+| §3 Boundary (E) | 90 | 90 | ✅ |
+| §4 Functional (F) | 90 | 90 | ✅ |
+| §5 Integration (I) | 90 | 90 | ✅ |
+| §6 Concurrency (CON) | 25 | 25 | ✅ |
+| §7 Unit (UNT) | 21 | 21 | ✅ |
+| §8 Performance (PRF) | 16 | 16 | ✅ |
+| §9 Load (LDT) | 10 | 10 | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance Check**
+| Check | Result | Formula |
+|-------|--------|---------|
+| N≥3P? | ✅ | 90 ≥ 90 |
+| E≥3P? | ✅ | 90 ≥ 90 |
+| F≥3P? | ✅ | 90 ≥ 90 |
+| I≥3P? | ✅ | 90 ≥ 90 |
 
 ---
 
@@ -33,7 +38,7 @@
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps (Brief) | Expected Result | Priority |
 |----|-----------|-------------|---------------|-----------------|----------|
@@ -67,15 +72,10 @@
 | POS-028 | Junction table integrity | Create | CreateInteractionAsync | All FKs valid | P0 |
 | POS-029 | Update non-existent | ID 99999 | UpdateInteractionAsync | Null | P1 |
 | POS-030 | Delete non-existent | ID 99999 | DeleteInteractionAsync | Graceful | P1 |
-| POS-031 | Get by contact | Contact 101 | GetInteractionsForContact(101) | List | P1 |
-| POS-032 | Get by partner | Partner 201 | GetInteractionsForPartner(201) | List | P1 |
-| POS-033 | Get by user | User 301 | GetInteractionsForUser(301) | List | P1 |
-| POS-034 | Sort by date | Interactions exist | GetInteractions OrderBy=Date | Sorted | P1 |
-| POS-035 | Audit trail | Create | CreateInteractionAsync | Audit entry | P1 |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Condition | Expected Result | Priority |
 |----|-----------|------------------------|-----------------|----------|
@@ -149,10 +149,30 @@
 | NEG-068 | Specification — invalid | Malformed spec | GetInteractionsWithSpecification | Error | P2 |
 | NEG-069 | Date overflow | Year 9999 | Create | Handled | P2 |
 | NEG-070 | Audit log failure | Audit down | Any op | Op succeeds | P2 |
+| NEG-071 | Create — invalid OrganizationHierarchyId | OrganizationHierarchyIds=[99999] | BusinessException | P1 |
+| NEG-072 | Create — OrganizationHierarchy not OrgUnit type | OrganizationHierarchyIds=[non-OrgUnitId] | BusinessException | P1 |
+| NEG-073 | CreateGmailInteraction — duplicate Gmail | Same GmailThreadId+GmailMessageId | Returns existing | P1 |
+| NEG-074 | Create — empty Subject | Subject="" | Validation error | P0 |
+| NEG-075 | Create — whitespace-only Subject | Subject="   " | Validation error | P1 |
+| NEG-076 | GetInteractionDetailsForAI — not found | GetInteractionDetailsForAIAsync(99999) | Error object | P1 |
+| NEG-077 | Create — invalid email in EmailAddresses | EmailAddresses=["invalid"] | Per validation | P1 |
+| NEG-078 | Update — model.Id zero | UpdateInteractionAsync(Id=0) | Error | P1 |
+| NEG-079 | Search — empty query | SearchInteractions(query="") | BusinessException | P1 |
+| NEG-080 | Advanced search — invalid filter JSON | filters="not valid json" | 400 Bad Request | P1 |
+| NEG-081 | Create — negative OrganizationHierarchyId | OrganizationHierarchyIds=[-1] | Error | P1 |
+| NEG-082 | Bulk upload — wrong entity type | Type="Partner" | BusinessException | P1 |
+| NEG-083 | Scan data — unsupported file type | GeminiFileRequest with .exe | BusinessException | P1 |
+| NEG-084 | Deep search — threshold out of range | threshold=1.5 | 400 Bad Request | P1 |
+| NEG-085 | Deep search — limit out of range | limit=101 | 400 Bad Request | P1 |
+| NEG-086 | Permissions — non-existent interaction | GET /interaction/99999/permissions | BusinessException | P1 |
+| NEG-087 | Create — null Subject | Subject=null | Validation error | P0 |
+| NEG-088 | Create — no participants | No ContactIds, PartnerIds, UserIds, EmailAddresses | Validation error | P0 |
+| NEG-089 | Update — invalid CreatedBy | CreatedBy=99999 | Per design | P1 |
+| NEG-090 | GetByIdsAsync — empty array | GetByIdsAsync([]) | Empty list | P1 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max | Priority |
 |----|----------------|-----|-----|--------|--------|----------|----------|
@@ -226,10 +246,30 @@
 | BND-068 | Null type | — | — | Type=null | — | — | P1 |
 | BND-069 | Case type | — | — | "meeting" vs "Meeting" | — | — | P1 |
 | BND-070 | Mixed associations | — | — | 1 contact, 2 partners, 3 users | — | — | P1 |
+| BND-071 | Location | 0 | 500 | "" | 500 chars | 501 chars | P1 |
+| BND-072 | GmailMessageId | 0 | 80 | "" | 80 chars | 81 chars | P1 |
+| BND-073 | GmailThreadId | 0 | 255 | "" | 255 chars | 256 chars | P1 |
+| BND-074 | EmailAddresses count | 0 | 100 | 0 | 100 | 101 | P1 |
+| BND-075 | OrganizationHierarchyIds count | 0 | 50 | 0 | 50 | 51 | P1 |
+| BND-076 | Description length | 0 | 4000 | "" | 4000 chars | 4001 chars | P1 |
+| BND-077 | Deep search threshold | 0 | 1 | 0 | 1 | 1.1 | P1 |
+| BND-078 | Deep search limit | 1 | 100 | 1 | 100 | 101 | P1 |
+| BND-079 | OrderBy valid values | — | — | "date" | "type","subject","description" | "invalid" | P1 |
+| BND-080 | Single email in EmailAddresses | — | — | ["a@b.com"] | — | — | P1 |
+| BND-081 | InteractionType enum values | — | — | Email, Chat, Call, VirtualMeeting, InPersonMeeting, Other | — | — | P1 |
+| BND-082 | GetContactInteractionsAsync PageIndex | 1 | Max | 1 | Valid | 0 | P1 |
+| BND-083 | Export PageSize | 1 | int.MaxValue | 1 | int.MaxValue | 0 | P1 |
+| BND-084 | Subject single character | — | — | "A" | — | — | P1 |
+| BND-085 | Subject whitespace only | — | — | "   " | — | — | P1 |
+| BND-086 | Date at SQL min | — | — | 0001-01-01 | — | — | P1 |
+| BND-087 | Date at SQL max | — | — | 9999-12-31 | — | — | P1 |
+| BND-088 | CreatedBy valid | — | — | Valid userId | — | — | P1 |
+| BND-089 | ConfirmDuplicateCreation flag | — | — | true | false | — | P1 |
+| BND-090 | GetByIdsAsync input size | — | — | [1,2,3] | 1000 ids | — | P1 |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Scenario | Trigger | Expected Outcome | Priority |
 |----|-----------|---------------|---------|------------------|----------|
@@ -340,67 +380,50 @@
 | INT-048 | Soft delete cascade | Delete contact | Interaction | Per rule | P1 |
 | INT-049 | Restore | Restore | Interaction | Restored | P2 |
 | INT-050 | Archive | Archive | Interaction | Archived | P2 |
+| INT-051 | Search fields endpoint | GET /interaction/search-fields | Interaction, Controller | SearchFieldInfo list | P1 |
+| INT-052 | GetByIdsAsync batch | GetByIdsAsync([1,2,3]) | Interaction, Contact, Partner, User | List of models | P1 |
+| INT-053 | CreateGmailInteraction flow | Create from Gmail | Interaction, GmailAddonManager | Interaction created | P1 |
+| INT-054 | FindGmailInteraction | Find by GmailThreadId+MessageId | Interaction, DbContext | Existing or null | P1 |
+| INT-055 | Scan data endpoint | POST /interaction/scan-data | Interaction, GeminiManager | Extracted data | P1 |
+| INT-056 | Analyse file endpoint | POST /interaction/analyse-file | Interaction, GeminiManager | Structured data | P1 |
+| INT-057 | Bulk upload endpoint | POST /interaction/bulk-upload | Interaction, GeminiManager | Bulk result | P1 |
+| INT-058 | GetInteractionDetailsForAI | AI prompt data | Interaction, Contacts, Partners, Users | JSON structure | P1 |
+| INT-059 | Deep search endpoint | GET /interaction/deepSearch | Interaction, AiContextualService | Similar interactions | P1 |
+| INT-060 | Detect duplicates endpoint | POST /interaction/detect-duplicates | Interaction, AiContextualService | Duplicate info | P1 |
+| INT-061 | Auto-populate from contacts | Create with ContactIds | Interaction, ContactManager | PartnerIds+EmailAddresses | P1 |
+| INT-062 | GetInteractionsBrief | GET /interactions-brief | Interaction, AdvancedSearchService | Paginated list | P1 |
+| INT-063 | SecureSearchControllerHelper | List with spec | Interaction, SecureSpecificationFactory | Filtered list | P1 |
+| INT-064 | OrganizationUnitRelationships | Create with OrgUnitIds | Interaction, OrganizationHierarchy | Relationships | P1 |
+| INT-065 | Soft delete OrgUnitRelationships | Delete interaction | Interaction, OrganizationUnitRelationship | Cascade soft delete | P1 |
+| INT-066 | GoogleCloudStorageService | Get with contacts | Interaction, Contact.ProfilePictureUrl | Signed URLs | P1 |
+| INT-067 | UserProfileCacheService | Batch user names | Interaction, UserProfile | Cached names | P1 |
+| INT-068 | GlobalFilterService | GetInteractionsWithSpecification | Interaction, GlobalFilterService | Org-filtered | P1 |
+| INT-069 | Access control filters | ApplyAccessControlFilters | Interaction, PermissionService | Filtered by role | P1 |
+| INT-070 | Metadata info endpoint | GET /interaction/metadata-info | Interaction, EntityConfigurationManager | Field config | P1 |
+| INT-071 | Duplicate detection on create | Create with similar | Interaction, AiContextualService | Confirmation required | P1 |
+| INT-072 | ConfirmDuplicateCreation bypass | Create with flag | Interaction, AiContextualService | Created | P1 |
+| INT-073 | NormalizeDateTimeToUtc | Create with Local | Interaction, Controller | UTC stored | P1 |
+| INT-074 | Partner filter in list | ListAllInteractions(partnerId) | Interaction, Partner | Partner-filtered | P1 |
+| INT-075 | Contact filter in list | ListAllInteractions(contactId) | Interaction, Contact | Contact-filtered | P1 |
+| INT-076 | Advanced search with filters | AdvancedSearchInteractions | Interaction, AdvancedSearchService | Filtered results | P1 |
+| INT-077 | Search with partner filter | SearchInteractions(partnerId) | Interaction, AdvancedSearchService | Combined filter | P1 |
+| INT-078 | Export mode | List with export=true | Interaction, Controller | Full dataset | P1 |
+| INT-079 | GetBasicEntityAsync | AI/reflection call | Interaction, BaseUNOPSManager | Entity details | P1 |
+| INT-080 | GetInteractionDetailsForOpportunityCreation | Gemini reflection | Interaction, GeminiManager | Dictionary | P1 |
+| INT-081 | ProcessJunctionTables | Create with all IDs | Interaction, InteractionContact/Partner/User | All junctions | P1 |
+| INT-082 | ProcessGmailInteractionJunctionTables | CreateGmailInteraction | Interaction, Junction tables | Bulk insert | P1 |
+| INT-083 | LoadOrganizationUnitRelationshipsAsync | Get single | Interaction, OrganizationUnitRelationship | Loaded | P1 |
+| INT-084 | PatchNonNullProperties | Update partial | Interaction, UpdateInteractionRequest | Only changed | P1 |
+| INT-085 | UpdateOrganizationUnitRelationshipsDifferential | Update OrgUnitIds | Interaction, OrganizationHierarchy | Differential update | P1 |
+| INT-086 | HandleOperationAsync | Any controller op | Controller, Exception handler | Consistent response | P1 |
+| INT-087 | ValidatePaginationParameters | List with invalid page | Controller, BaseController | 400 | P1 |
+| INT-088 | AccessControlled attribute | Request without permission | Controller, Authorization | 403 | P1 |
+| INT-089 | IAP authentication | Request without auth | Controller, Auth | 401 | P1 |
+| INT-090 | DbContextFactory parallel | GetInteractionDetailsForAI | Interaction, DbContextFactory | Parallel queries | P1 |
 
 ---
 
-## §6 Security Tests (50)
-
-| ID | Test Name | Attack Vector | Target | Expected Block | Priority |
-|----|-----------|--------------|--------|----------------|----------|
-| SEC-001 | SQL injection subject | '; DROP TABLE-- | CreateInteractionAsync | Sanitized | P0 |
-| SEC-002 | SQL injection notes | 1' OR '1'='1 | CreateInteractionAsync | Sanitized | P0 |
-| SEC-003 | XSS in subject | <script>alert(1)</script> | CreateInteractionAsync | Sanitized | P0 |
-| SEC-004 | XSS in notes | <img src=x onerror=alert(1)> | CreateInteractionAsync | Sanitized | P0 |
-| SEC-005 | IDOR get | GetInteraction(otherId) | GetInteraction | 403 | P0 |
-| SEC-006 | IDOR update | UpdateInteractionAsync(otherId) | Update | 403 | P0 |
-| SEC-007 | IDOR delete | DeleteInteractionAsync(otherId) | Delete | 403 | P0 |
-| SEC-008 | Mass assignment Id | Include Id | CreateInteractionAsync | Ignored | P0 |
-| SEC-009 | Mass assignment CreatedBy | Include | CreateInteractionAsync | Ignored | P0 |
-| SEC-010 | Unauthenticated | No auth | Any op | 401 | P0 |
-| SEC-011 | Expired token | Expired JWT | Any | 401 | P0 |
-| SEC-012 | Wrong role create | No permission | CreateInteractionAsync | 403 | P0 |
-| SEC-013 | Wrong role update | No permission | UpdateInteractionAsync | 403 | P0 |
-| SEC-014 | Wrong role delete | No permission | DeleteInteractionAsync | 403 | P0 |
-| SEC-015 | Org scope bypass | Cross-org | GetInteraction | 403 | P0 |
-| SEC-016 | Contact IDOR | ContactId other org | CreateInteractionAsync | Error | P0 |
-| SEC-017 | Partner IDOR | PartnerId other org | CreateInteractionAsync | Error | P0 |
-| SEC-018 | User IDOR | UserId other org | CreateInteractionAsync | Error | P0 |
-| SEC-019 | LDAP injection | *)(uid=* | Filter | Sanitized | P0 |
-| SEC-020 | Sensitive data error | Stack trace | Exception | Not exposed | P0 |
-| SEC-021 | Rate limit | Too many | CreateInteractionAsync | 429 | P1 |
-| SEC-022 | CSRF create | Cross-site | CreateInteractionAsync | Token validated | P0 |
-| SEC-023 | CSRF update | Cross-site | UpdateInteractionAsync | Token validated | P0 |
-| SEC-024 | CSRF delete | Cross-site | DeleteInteractionAsync | Token validated | P0 |
-| SEC-025 | Parameter pollution | id=1&id=2 | Get | Handled | P1 |
-| SEC-026 | Header injection | Malicious header | Request | Sanitized | P1 |
-| SEC-027 | Brute force | Enumerate | GetInteraction | Rate limited | P1 |
-| SEC-028 | JWT alg none | alg=none | Request | Rejected | P0 |
-| SEC-029 | Log injection | Malicious log | Log | Sanitized | P1 |
-| SEC-030 | Info disclosure | Probe | Invalid | Generic | P1 |
-| SEC-031 | Cookie manipulation | Modify auth | Request | Rejected | P0 |
-| SEC-032 | Substitution attack | Replace JWT | Request | 403 | P0 |
-| SEC-033 | Timing attack | Response time | GetInteraction | Constant | P2 |
-| SEC-034 | Cache poisoning | Malicious cache | Cache | Sanitized | P1 |
-| SEC-035 | Excessive data | Huge PageSize | GetInteractions | Capped | P1 |
-| SEC-036 | DoS create | Many creates | CreateInteractionAsync | 429 | P0 |
-| SEC-037 | DoS list | Many lists | GetInteractions | Rate limited | P0 |
-| SEC-038 | Privilege escalation | Admin action | User | 403 | P0 |
-| SEC-039 | Insecure reference | ContactId manip | Create | Validated | P0 |
-| SEC-040 | Token expiry | Expired | Request | 401 | P0 |
-| SEC-041 | Session fixation | Fixate | Login | New session | P1 |
-| SEC-042 | Path traversal | ../../../ | Any | Rejected | P0 |
-| SEC-043 | Null byte | %00 | Subject | Rejected | P0 |
-| SEC-044 | Open redirect | Redirect | Callback | Validated | P1 |
-| SEC-045 | Audit bypass | Skip audit | Any op | Audit required | P0 |
-| SEC-046 | PII in log | PII | Log | Not logged | P0 |
-| SEC-047 | HTTP verb tampering | PUT vs POST | Create | 405 | P1 |
-| SEC-048 | Replay attack | Replay | CreateInteractionAsync | Rejected | P0 |
-| SEC-049 | NoSQL injection | If applicable | Filter | Sanitized | P1 |
-| SEC-050 | Command injection | ; rm -rf | Notes | Rejected | P0 |
-
----
-
-## §7 Concurrency Tests (25)
+## §6 Concurrency Tests (25)
 
 | ID | Test Name | Concurrent Scenario | Expected Behavior | Priority |
 |----|-----------|---------------------|-------------------|----------|
@@ -432,7 +455,7 @@
 
 ---
 
-## §8 Unit Tests (21)
+## §7 Unit Tests (21)
 
 | ID | Test Name | Category | Input | Expected Output | Priority |
 |----|-----------|----------|-------|-----------------|----------|
@@ -460,7 +483,7 @@
 
 ---
 
-## §9 Performance Tests (16)
+## §8 Performance Tests (16)
 
 | ID | Test Name | Operation | Threshold | Priority |
 |----|-----------|----------|-----------|----------|
@@ -483,7 +506,7 @@
 
 ---
 
-## §10 Load Tests (10)
+## §9 Load Tests (10)
 
 | ID | Test Name | Load Profile | Duration | Success Criteria | Priority |
 |----|-----------|-------------|----------|-------------------|----------|

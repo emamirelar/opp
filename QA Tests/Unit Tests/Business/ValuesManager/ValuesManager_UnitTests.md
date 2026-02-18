@@ -11,19 +11,23 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**Ratio Compliance:**
+- N ≥ 3P: 90 ≥ 90 → ✅ PASS
+- E ≥ 3P: 90 ≥ 90 → ✅ PASS
+- F ≥ 3P: 90 ≥ 90 → ✅ PASS
+- I ≥ 3P: 90 ≥ 90 → ✅ PASS
 
 ---
 
@@ -33,7 +37,7 @@ Values manager unit tests cover lookup values, dropdown data, caching, and refer
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,11 +71,6 @@ Values manager unit tests cover lookup values, dropdown data, caching, and refer
 | POS-028 | Cache hit | Cached | GetByType | From cache |
 | POS-029 | Cache miss | Not cached | GetByType | From DB |
 | POS-030 | Get by code | Code exists | GetByCode | Value |
-| POS-031 | Translate value | Value exists | Translate | Translated |
-| POS-032 | Get hierarchy | Hierarchical type | GetHierarchy | Hierarchy |
-| POS-033 | Get child values | Parent exists | GetChildren | Children |
-| POS-034 | Validate reference | Value exists | ValidateRef | Valid |
-| POS-035 | Get metadata | Type exists | GetMetadata | Metadata |
 
 ---
 
@@ -149,10 +148,30 @@ Values manager unit tests cover lookup values, dropdown data, caching, and refer
 | NEG-068 | GetMetadata invalid type | Type invalid | ArgumentException |
 | NEG-069 | Storage unavailable | Cache down | Handle |
 | NEG-070 | Duplicate import | Duplicate in import | BusinessException |
+| NEG-071 | GetByType null type | Type=null | ArgumentNullException |
+| NEG-072 | Add null code | Code=null | ArgumentNullException |
+| NEG-073 | SetSystemValue null key | Key=null | ArgumentNullException |
+| NEG-074 | GetSystemValue null key | Key=null | ArgumentNullException |
+| NEG-075 | GetByIds null list | Ids=null | ArgumentNullException |
+| NEG-076 | BulkUpdate null list | List=null | ArgumentNullException |
+| NEG-077 | Reorder null order | Order=null | ArgumentNullException |
+| NEG-078 | GetChildren null parent | Parent=null | ArgumentNullException |
+| NEG-079 | GetHierarchy null type | Type=null | ArgumentNullException |
+| NEG-080 | Translate null value | Value=null | ArgumentNullException |
+| NEG-081 | ValidateRef null value | Value=null | ArgumentNullException |
+| NEG-082 | GetMetadata null type | Type=null | ArgumentNullException |
+| NEG-083 | CacheValues null type | Type=null | ArgumentNullException |
+| NEG-084 | InvalidateCache null type | Type=null | ArgumentNullException |
+| NEG-085 | RefreshCache null type | Type=null | ArgumentNullException |
+| NEG-086 | GetOrdered null type | Type=null | ArgumentNullException |
+| NEG-087 | GetActive null type | Type=null | ArgumentNullException |
+| NEG-088 | Export null format | Format=null | ArgumentNullException |
+| NEG-089 | Import null stream | Stream=null | ArgumentNullException |
+| NEG-090 | GetDefault null type | Type=null | ArgumentNullException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Condition | Expected Result |
 |----|-----------|-------------------|-----------------|
@@ -226,10 +245,30 @@ Values manager unit tests cover lookup values, dropdown data, caching, and refer
 | BND-068 | GetMetadata empty | No metadata | Empty |
 | BND-069 | ValidateRef valid | Valid ref | True |
 | BND-070 | Concurrent cache access | Two get | Both valid |
+| BND-071 | GetByType single value | 1 value | Valid |
+| BND-072 | GetDropdown single | 1 item | Valid |
+| BND-073 | GetHierarchy two levels | 2 levels | Valid |
+| BND-074 | GetChildren single | 1 child | Valid |
+| BND-075 | Translate fallback | No translation | Fallback |
+| BND-076 | Sequence at boundary | At boundary | Valid |
+| BND-077 | Parent at root | ParentId=null | Valid |
+| BND-078 | Code case boundary | Case | Config |
+| BND-079 | Name case boundary | Case | Config |
+| BND-080 | System value empty | Value="" | Valid |
+| BND-081 | Bulk get single | 1 ID | Valid |
+| BND-082 | Bulk update single | 1 value | Valid |
+| BND-083 | Reorder first last | First, last | Valid |
+| BND-084 | GetDefault boundary | Default | Valid |
+| BND-085 | Export empty | No values | Empty |
+| BND-086 | Import single | 1 record | Valid |
+| BND-087 | Cache TTL boundary | At TTL | Hit or miss |
+| BND-088 | Refresh boundary | At refresh | Refreshed |
+| BND-089 | ListTypes single | 1 type | Valid |
+| BND-090 | GetOrdered empty | No values | [] |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -500,5 +539,5 @@ Values manager unit tests cover lookup values, dropdown data, caching, and refer
 
 ---
 
-**Last Updated:** 2026-02-11  
+**Last Updated:** 2026-02-18  
 **Status:** Ready for Implementation

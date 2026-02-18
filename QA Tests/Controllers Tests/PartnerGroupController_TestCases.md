@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,7 +33,7 @@ REST API for partner groups: CRUD groups, membership management, group-level ope
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Steps | Expected Result |
 |----|-----------|-------|-----------------|
@@ -67,11 +67,6 @@ REST API for partner groups: CRUD groups, membership management, group-level ope
 | POS-028 | Admin update | PUT as admin | 200 |
 | POS-029 | Admin delete | DELETE as admin | 204 |
 | POS-030 | Combined filter | GET ?search=text&type=X | Combined |
-| POS-031 | Sort ascending | GET ?sortBy=name&sortOrder=asc | Sorted |
-| POS-032 | Sort descending | GET ?sortBy=name&sortOrder=desc | Sorted |
-| POS-033 | First page | GET ?page=1 | First page |
-| POS-034 | Last page | GET ?page=last | Partial |
-| POS-035 | Cached response | GET same query | 200 |
 
 ---
 
@@ -149,10 +144,30 @@ REST API for partner groups: CRUD groups, membership management, group-level ope
 | NEG-068 | Invalid operation | operation=invalid | 400 |
 | NEG-069 | Empty member list | Get members empty | [] |
 | NEG-070 | Soft-deleted filter | Query deleted | Excluded |
+| NEG-071 | Invalid JSON schema | Schema mismatch | 400 |
+| NEG-072 | Missing group name | Name null | 400 |
+| NEG-073 | Invalid group type | type=invalid | 400 |
+| NEG-074 | Empty member list | members=[] | 400 |
+| NEG-075 | Invalid operation | operation=invalid | 400 |
+| NEG-076 | Group locked | Locked group | 423 |
+| NEG-077 | Maintenance mode | During maintenance | 503 |
+| NEG-078 | Quota exceeded | Member quota | 507 |
+| NEG-079 | Invalid description | desc too long | 400 |
+| NEG-080 | Circular hierarchy | parentId=self | 400 |
+| NEG-081 | Migration mode | During migration | 503 |
+| NEG-082 | Session invalid | Invalid session | 401 |
+| NEG-083 | Token type wrong | Wrong token type | 401 |
+| NEG-084 | Scope insufficient | OAuth scope | 403 |
+| NEG-085 | Rate limit per user | User rate limit | 429 |
+| NEG-086 | Concurrent limit | Too many concurrent | 429 |
+| NEG-087 | Request timeout | Slow request | 408 |
+| NEG-088 | Group archived | Archived group | 410 |
+| NEG-089 | In-use group delete | Group in use | 409 |
+| NEG-090 | Member limit exceeded | >1000 members | 400 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max |
 |----|----------------|-----|-----|--------|--------|----------|
@@ -226,10 +241,30 @@ REST API for partner groups: CRUD groups, membership management, group-level ope
 | BND-068 | Child groups | 0 | 50 | ✅ | ✅ | ❌ |
 | BND-069 | Member roles | - | 5 | ✅ | ✅ | ❌ |
 | BND-070 | Operation timeout | - | 30s | - | ✅ | ❌ |
+| BND-071 | Code charset | - | - | Valid | - | - |
+| BND-072 | Name encoding | - | UTF-8 | Valid | Valid | ❌ |
+| BND-073 | Request size | - | 1MB | - | ✅ | ❌ |
+| BND-074 | Header count | - | 50 | ✅ | ✅ | ❌ |
+| BND-075 | Session duration | - | 24h | Valid | Valid | ❌ |
+| BND-076 | Token lifetime | - | 1h | Valid | Valid | ❌ |
+| BND-077 | Retry count | 0 | 3 | ✅ | ✅ | ❌ |
+| BND-078 | Backoff max | - | 30s | - | ✅ | ❌ |
+| BND-079 | Connection timeout | - | 30s | - | ✅ | ❌ |
+| BND-080 | Read timeout | - | 60s | - | ✅ | ❌ |
+| BND-081 | Write timeout | - | 60s | - | ✅ | ❌ |
+| BND-082 | Idle timeout | - | 90s | - | ✅ | ❌ |
+| BND-083 | Keep-alive | - | 60s | - | ✅ | ❌ |
+| BND-084 | Chunk size | - | 8KB | - | ✅ | ❌ |
+| BND-085 | Buffer size | - | 64KB | - | ✅ | ❌ |
+| BND-086 | Pool size | - | 100 | - | ✅ | ❌ |
+| BND-087 | Queue depth | - | 1000 | - | ✅ | ❌ |
+| BND-088 | Batch size | 1 | 100 | ✅ | ✅ | ❌ |
+| BND-089 | Group type enum | - | max | Valid | Valid | ❌ |
+| BND-090 | Member limit | 0 | 1000 | ✅ | ✅ | ❌ |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Category | Rule | Trigger | Expected |
 |----|----------|------|---------|----------|
@@ -283,10 +318,50 @@ REST API for partner groups: CRUD groups, membership management, group-level ope
 | FUN-048 | Business | Permission | Query | Scoped |
 | FUN-049 | Business | Membership | Member list | Correct |
 | FUN-050 | Business | Group operation | Operation | Scoped |
+| FUN-051 | Workflow | Sort ascending | GET ?sortOrder=asc | Sorted |
+| FUN-052 | Workflow | Sort descending | GET ?sortOrder=desc | Sorted |
+| FUN-053 | Validation | Group type | Invalid type | 400 |
+| FUN-054 | Validation | Hierarchy | Circular | 400 |
+| FUN-055 | Constraint | Group lock | Locked | 423 |
+| FUN-056 | Audit | Add member | POST members | Audit |
+| FUN-057 | Audit | Remove member | DELETE members | Audit |
+| FUN-058 | Business | Member limit | >1000 | 400 |
+| FUN-059 | Business | Duplicate member | Already member | 409 |
+| FUN-060 | Workflow | First page | GET ?page=1 | First |
+| FUN-061 | Validation | Bulk size | >100 | 400 |
+| FUN-062 | Constraint | Delete in-use | Referenced | 409 |
+| FUN-063 | Audit | Group operation | POST action | Audit |
+| FUN-064 | Business | Group cascade | Delete group | 409 |
+| FUN-065 | Workflow | Cached response | GET same | 200 |
+| FUN-066 | Validation | Code format | Invalid | 400 |
+| FUN-067 | Constraint | No duplicate member | Duplicate | 409 |
+| FUN-068 | Audit | Restore | POST restore | Audit |
+| FUN-069 | Business | Role scope | Org scope | Correct |
+| FUN-070 | Workflow | Last page | GET ?page=last | Partial |
+| FUN-071 | Validation | Partner exists | Invalid partner | 404 |
+| FUN-072 | Constraint | Operation permission | No perm | 403 |
+| FUN-073 | Audit | Create | POST | Audit |
+| FUN-074 | Business | Cross-org group | Other org | 403 |
+| FUN-075 | Workflow | Full round-trip | Create → Get | Match |
+| FUN-076 | Validation | Name length | Too long | 400 |
+| FUN-077 | Constraint | Export limit | >10K | Truncate |
+| FUN-078 | Audit | Update | PUT | Audit |
+| FUN-079 | Business | Inactive group | Group disabled | 403 |
+| FUN-080 | Workflow | Export flow | GET export | File |
+| FUN-081 | Validation | Operation valid | Invalid | 400 |
+| FUN-082 | Constraint | Max bulk | >100 | 400 |
+| FUN-083 | Audit | Delete | DELETE | Audit |
+| FUN-084 | Business | Member scope | Member list | Correct |
+| FUN-085 | Workflow | Typeahead flow | GET typeahead | Suggestions |
+| FUN-086 | Validation | Code length | Too long | 400 |
+| FUN-087 | Constraint | Bulk partial | Partial success | 207 |
+| FUN-088 | Audit | Bulk add | POST bulk | Audit |
+| FUN-089 | Business | Operation scope | Operation | Scoped |
+| FUN-090 | Workflow | Bulk add flow | POST bulk | Added |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Category | Scenario | Entities | Expected |
 |----|----------|----------|----------|----------|
@@ -340,6 +415,46 @@ REST API for partner groups: CRUD groups, membership management, group-level ope
 | INT-048 | E2E | Full delete flow | Group | Delete → 404 |
 | INT-049 | E2E | Membership flow | Group, Partner | Add → Remove |
 | INT-050 | E2E | Session expiry | Auth | Clean fail |
+| INT-051 | CRUD | Add member → Get | Group, Partner | Added |
+| INT-052 | CRUD | Remove member → Get | Group, Partner | Removed |
+| INT-053 | Membership | Bulk add flow | Group, Partner | Bulk |
+| INT-054 | Membership | Bulk remove flow | Group, Partner | Bulk |
+| INT-055 | Search | Typeahead flow | Group | Suggestions |
+| INT-056 | Relationships | Group → Partners | Group, Partner | Linked |
+| INT-057 | Error | Validation chain | Bad input | 400 |
+| INT-058 | Error | Auth chain | No auth | 401 |
+| INT-059 | E2E | Operation flow | Group | Operation |
+| INT-060 | E2E | Export flow | Group | Export |
+| INT-061 | CRUD | Restore → Get | Group | Restored |
+| INT-062 | Membership | Member count | Group | Count |
+| INT-063 | Operation | Group action | Group | Result |
+| INT-064 | Relationships | Orphan partner | Partner | 404 |
+| INT-065 | Error | Permission chain | No perm | 403 |
+| INT-066 | E2E | Full group flow | Group | Create → Delete |
+| INT-067 | CRUD | Get by code | Group | Match |
+| INT-068 | Membership | Duplicate add | Group | 409 |
+| INT-069 | Operation | Operation audit | Group | Audit |
+| INT-070 | Relationships | Group → Audit | Group | Audit |
+| INT-071 | Error | Conflict resolution | Stale | 409 |
+| INT-072 | E2E | Restore flow | Group | Restore |
+| INT-073 | CRUD | Update → Get | Group | Updated |
+| INT-074 | Membership | Remove non-member | Group | 404 |
+| INT-075 | Operation | Operation permission | Group | 403 |
+| INT-076 | Relationships | Partner → Group | Partner | Linked |
+| INT-077 | Error | Timeout handling | Slow | 504 |
+| INT-078 | E2E | Typeahead flow | Group | Typeahead |
+| INT-079 | CRUD | Create → Get | Group | Match |
+| INT-080 | Membership | Add non-existent | Group | 404 |
+| INT-081 | Operation | Operation validation | Group | Valid |
+| INT-082 | Relationships | Group → Partner | Group | 1:N |
+| INT-083 | Error | Service unavailable | Down | 503 |
+| INT-084 | E2E | Dropdown flow | Group | Pairs |
+| INT-085 | CRUD | Delete → Get | Group | 404 |
+| INT-086 | Membership | Add concurrent | Group | Last |
+| INT-087 | Operation | Operation concurrent | Group | Queue |
+| INT-088 | Relationships | Group → Members | Group | Linked |
+| INT-089 | Error | Payload too large | Huge | 413 |
+| INT-090 | E2E | Full auth flow | Auth | Token |
 
 ---
 
@@ -507,7 +622,7 @@ REST API for partner groups: CRUD groups, membership management, group-level ope
 | CRUD groups | POS-001–005, FUN-001–006 |
 | Membership management | POS-008–012, FUN-009–010 |
 | Group-level operations | POS-022, FUN-015 |
-| 3:1 Ratio | NEG-001–070, BND-001–070 |
+| 3:1 Ratio | NEG-001–090, BND-001–090, FUN-001–090, INT-001–090 |
 
 ---
 

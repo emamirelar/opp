@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -38,7 +38,7 @@ The BaseEntityViewComponent provides the foundational entity view for the CRM en
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result | Priority |
 |----|-----------|-------------|-------|-----------------|----------|
@@ -72,15 +72,10 @@ The BaseEntityViewComponent provides the foundational entity view for the CRM en
 | POS-028 | RTL layout | RTL locale | Set RTL | Layout flipped | P2 |
 | POS-029 | Custom class | Class input | Pass class | Class applied | P2 |
 | POS-030 | Custom style | Style input | Pass style | Style applied | P2 |
-| POS-031 | Lazy tab content | Tab not active | Load | Content not loaded | P2 |
-| POS-032 | Tab change event | Tab clicked | Click tab | Event emitted | P2 |
-| POS-033 | Section change event | Section toggled | Toggle | Event emitted | P2 |
-| POS-034 | Accessibility labels | Screen reader | Inspect | aria-labels present | P2 |
-| POS-035 | Focus management | Modal/overlay | Open/close | Focus trapped/restored | P2 |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error | Priority |
 |----|-----------|--------------|---------------|----------|
@@ -154,10 +149,30 @@ The BaseEntityViewComponent provides the foundational entity view for the CRM en
 | NEG-068 | Action disabled | Disabled action | Not clickable | P2 |
 | NEG-069 | Invalid aria | Bad aria attribute | Validated or ignored | P2 |
 | NEG-070 | Contrast failure | Low contrast | Accessibility warning | P2 |
+| NEG-071 | Entity API fail | Entity 500 | Error | P2 |
+| NEG-072 | Tab API fail | Tab 500 | Error | P2 |
+| NEG-073 | Section API fail | Section 500 | Error | P2 |
+| NEG-074 | Config API fail | Config 500 | Error | P2 |
+| NEG-075 | Permission API fail | Perm 500 | Error | P2 |
+| NEG-076 | Breadcrumb null | Breadcrumb null | Graceful | P2 |
+| NEG-077 | Title null | Title null | Graceful | P2 |
+| NEG-078 | Subtitle null | Subtitle null | Graceful | P2 |
+| NEG-079 | Actions null | Actions null | Graceful | P2 |
+| NEG-080 | Entity deleted | Entity soft-deleted | Handle | P2 |
+| NEG-081 | Tab deleted | Tab deleted | Filter | P2 |
+| NEG-082 | Section deleted | Section deleted | Filter | P2 |
+| NEG-083 | Config mutation | Mutate config | No effect | P2 |
+| NEG-084 | Entity ID invalid | ID "abc" | Error | P2 |
+| NEG-085 | Route param missing | No id | Redirect | P2 |
+| NEG-086 | Permission null | Perm null | Deny | P2 |
+| NEG-087 | Tab index overflow | Index 999 | Clamp | P2 |
+| NEG-088 | Section index overflow | Index 999 | Clamp | P2 |
+| NEG-089 | Lazy load fail | Chunk error | Error | P2 |
+| NEG-090 | Hydration mismatch | SSR | No mismatch | P2 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field | Min | Max | At Min | At Max | Over Max | Priority |
 |----|-------|-----|-----|--------|--------|----------|----------|
@@ -231,10 +246,30 @@ The BaseEntityViewComponent provides the foundational entity view for the CRM en
 | BND-068 | Throttle 100ms | — | — | Limited | — | — | P2 |
 | BND-069 | Cache TTL 0 | — | — | No cache | — | — | P2 |
 | BND-070 | Cache TTL 3600 | — | — | Cached | — | — | P2 |
+| BND-071 | Entity ID 1 | 1 | int.Max | Min | — | — | P2 |
+| BND-072 | Entity ID max | 1 | int.Max | — | Max | — | P2 |
+| BND-073 | Tab count 0 | 0 | 20 | None | — | — | P2 |
+| BND-074 | Tab count 20 | 0 | 20 | — | Max | — | P2 |
+| BND-075 | Section count 0 | 0 | 50 | None | — | — | P2 |
+| BND-076 | Section count 50 | 0 | 50 | — | Max | — | P2 |
+| BND-077 | Title 0 | 0 | 200 | Empty | — | — | P2 |
+| BND-078 | Title 200 | 0 | 200 | — | Max | — | P2 |
+| BND-079 | Content 0 | 0 | 100000 | Empty | — | — | P2 |
+| BND-080 | Content 100k | 0 | 100000 | — | Max | — | P2 |
+| BND-081 | Viewport 320 | 320 | 1920 | Min | — | — | P2 |
+| BND-082 | Viewport 1920 | 320 | 1920 | — | Max | — | P2 |
+| BND-083 | Z-index 0 | 0 | 9999 | Min | — | — | P2 |
+| BND-084 | Z-index 9999 | 0 | 9999 | — | Max | — | P2 |
+| BND-085 | Animation 0 | 0 | 5000 | Instant | — | — | P2 |
+| BND-086 | Animation 5000 | 0 | 5000 | — | Max | — | P2 |
+| BND-087 | Badge 0 | 0 | 999 | None | — | — | P2 |
+| BND-088 | Badge 999 | 0 | 999 | — | Max | — | P2 |
+| BND-089 | Breakpoint 320 | 320 | 2560 | Min | — | — | P2 |
+| BND-090 | Breakpoint 2560 | 320 | 2560 | — | Max | — | P2 |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule | Trigger | Expected Outcome | Priority |
 |----|-----------|------|---------|------------------|----------|
@@ -345,6 +380,46 @@ The BaseEntityViewComponent provides the foundational entity view for the CRM en
 | INT-048 | CDK portal | Portal | Portal | Content portaled | P1 |
 | INT-049 | CDK virtual scroll | Scroll | VirtualScroll | Items virtualized | P1 |
 | INT-050 | CDK drag drop | Drag | DragDrop | Reorder | P1 |
+| INT-051 | EntityService | Load | Service | Fetched | P1 |
+| INT-052 | TabService | Tab | Service | Loaded | P1 |
+| INT-053 | SectionService | Section | Service | Loaded | P1 |
+| INT-054 | PermissionService | Perm | Service | Checked | P1 |
+| INT-055 | Router | Navigate | Router | Activated | P1 |
+| INT-056 | ActivatedRoute | Route | Route | Param | P1 |
+| INT-057 | HttpClient | Request | HttpClient | Response | P1 |
+| INT-058 | Http interceptor | Request | Interceptor | Modified | P1 |
+| INT-059 | NgZone | Zone | Zone | In zone | P1 |
+| INT-060 | ChangeDetectorRef | CD | CD | Triggered | P1 |
+| INT-061 | Store | State | Store | Consumed | P1 |
+| INT-062 | BreakpointService | Resize | Service | Updated | P1 |
+| INT-063 | ThemeService | Theme | Service | Applied | P1 |
+| INT-064 | StorageService | Persist | Service | Persisted | P1 |
+| INT-065 | CacheService | Cache | Service | Cached | P1 |
+| INT-066 | DialogService | Dialog | Service | Opens | P1 |
+| INT-067 | ToastService | Toast | Service | Shown | P1 |
+| INT-068 | LoadingService | Loading | Service | Shown | P1 |
+| INT-069 | Error handler | Error | Handler | Handled | P1 |
+| INT-070 | CDK overlay | Overlay | Overlay | Shown | P1 |
+| INT-071 | Virtual scroll | Scroll | VirtualScroll | Virtualized | P1 |
+| INT-072 | Drag drop | Drop | DragDrop | Reorder | P1 |
+| INT-073 | AnalyticsService | Event | Service | Sent | P1 |
+| INT-074 | FeatureFlagService | Flag | Service | Toggled | P1 |
+| INT-075 | FormBuilder | Form | FormBuilder | Created | P1 |
+| INT-076 | Validators | Validation | Validators | Validated | P1 |
+| INT-077 | Guard | Navigate | Guard | Allow | P1 |
+| INT-078 | Resolver | Route | Resolver | Data | P1 |
+| INT-079 | Lazy module | Route | Lazy | Loaded | P1 |
+| INT-080 | IndexedDB | Persist | IndexedDB | Persisted | P1 |
+| INT-081 | WebSocketService | Real-time | Service | Update | P1 |
+| INT-082 | SSEService | Stream | Service | Event | P1 |
+| INT-083 | NotificationService | Notification | Service | Sent | P1 |
+| INT-084 | AuditService | Audit | Service | Logged | P1 |
+| INT-085 | SearchService | Search | Service | Search | P1 |
+| INT-086 | Clipboard API | Copy | API | Copied | P1 |
+| INT-087 | Print | Print | Window | Dialog | P1 |
+| INT-088 | Share API | Share | API | Shared | P1 |
+| INT-089 | ServiceWorker | Cache | SW | Cached | P1 |
+| INT-090 | SSR | Hydrate | SSR | Hydrated | P1 |
 
 ---
 

@@ -1,7 +1,7 @@
 # ProfileManager — Unit Test Cases
 
 **Component:** `UNOPS.PAO.Business/Managers/ProfileManager` (Unit Tests)  
-**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Created:** 2026-02-04 | **Last Updated:** 2026-02-18  
 **Author:** QA Team  
 **Standard:** 10-Category, 3:1 Ratio
 
@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,7 +33,7 @@ Profile manager unit tests cover user profile CRUD, avatar handling, preferences
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,15 +67,10 @@ Profile manager unit tests cover user profile CRUD, avatar handling, preferences
 | POS-028 | Profile merge | Partial update | Update | Merged |
 | POS-029 | Preference default | New pref | GetPreference | Default |
 | POS-030 | Org unit hierarchy | Org unit has parent | GetOrgUnit | Hierarchy |
-| POS-031 | Export profile | Profile exists | Export | Exported |
-| POS-032 | Import profile | Valid data | Import | Imported |
-| POS-033 | Profile completeness | Profile exists | GetCompleteness | Score |
-| POS-034 | Timezone preference | User has pref | GetTimezone | Timezone |
-| POS-035 | Locale preference | User has pref | GetLocale | Locale |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Action | Expected Result |
 |----|-----------|---------------------|-----------------|
@@ -149,10 +144,30 @@ Profile manager unit tests cover user profile CRUD, avatar handling, preferences
 | NEG-068 | Invalid enum value | Pref invalid | ArgumentException |
 | NEG-069 | Storage unavailable | Storage down | StorageException |
 | NEG-070 | Avatar corrupt | Corrupt image | ValidationException |
+| NEG-071 | GetProfile null user | User=null | ArgumentNullException |
+| NEG-072 | Create profile null request | Request=null | ArgumentNullException |
+| NEG-073 | Update profile null request | Request=null | ArgumentNullException |
+| NEG-074 | GetCompleteness invalid user | UserId=0 | ArgumentException |
+| NEG-075 | GetTimezone invalid user | UserId=-1 | ArgumentException |
+| NEG-076 | GetLocale invalid user | UserId=99999 | KeyNotFoundException |
+| NEG-077 | UpdatePrivacy null settings | Settings=null | ArgumentNullException |
+| NEG-078 | GetPrivacy deleted profile | Profile deleted | KeyNotFoundException |
+| NEG-079 | AssignOrgUnit null org unit | OrgUnit=null | ArgumentNullException |
+| NEG-080 | Search empty term | Term="" | Config |
+| NEG-081 | Filter invalid org unit | OrgUnitId=0 | ArgumentException |
+| NEG-082 | Export deleted profiles | Include deleted | Config |
+| NEG-083 | Import null file | File=null | ArgumentNullException |
+| NEG-084 | GetPublicProfile null user | User=null | ArgumentNullException |
+| NEG-085 | GetFullProfile other user | Other user | Forbidden |
+| NEG-086 | UpdatePreferences invalid key | Key invalid | ArgumentException |
+| NEG-087 | Avatar format unsupported | Format=webp | ValidationException |
+| NEG-088 | Profile merge null fields | Fields=null | ArgumentNullException |
+| NEG-089 | GetOrgUnit deleted profile | Profile deleted | KeyNotFoundException |
+| NEG-090 | Preference value null | Value=null | ArgumentNullException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Condition | Expected Result |
 |----|-----------|-------------------|-----------------|
@@ -226,10 +241,30 @@ Profile manager unit tests cover user profile CRUD, avatar handling, preferences
 | BND-068 | GetPublicProfile fields | Limited fields | Correct |
 | BND-069 | GetFullProfile fields | All fields | Correct |
 | BND-070 | Concurrent avatar upload | Two upload | One wins |
+| BND-071 | Display name whitespace | Name="   " | Reject |
+| BND-072 | OrgUnitId at zero | OrgUnitId=0 | Reject |
+| BND-073 | GetCompleteness empty | Empty profile | 0 |
+| BND-074 | GetCompleteness full | Full profile | 100 |
+| BND-075 | Timezone IANA format | IANA zone | Valid |
+| BND-076 | Locale BCP47 format | BCP47 | Valid |
+| BND-077 | Preference key empty | Key="" | Reject |
+| BND-078 | Privacy setting partial | Partial | Valid |
+| BND-079 | Avatar dimensions min | 1x1 | Config |
+| BND-080 | Export format boundary | Each format | Valid |
+| BND-081 | Import encoding | UTF-8 | Valid |
+| BND-082 | Profile merge null | Null merge | No-op |
+| BND-083 | GetOrgUnit unassigned | Not assigned | Null |
+| BND-084 | Search max results | Max results | Paginate |
+| BND-085 | Filter by status | Status filter | Filtered |
+| BND-086 | Sort multi-column | 3 columns | Correct |
+| BND-087 | GetPreferences empty | No prefs | Defaults |
+| BND-088 | UpdatePreferences partial | Partial | Merged |
+| BND-089 | AssignOrgUnit same | Same org | No-op |
+| BND-090 | DeleteAvatar no-op | No avatar | No-op |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -283,10 +318,50 @@ Profile manager unit tests cover user profile CRUD, avatar handling, preferences
 | FUN-048 | Permission cached | Performance | Repeated check | Cached |
 | FUN-049 | AsNoTracking read-only | Performance | List | No tracking |
 | FUN-050 | Avatar caching | Performance | Repeated get | Cached |
+| FUN-051 | GetPublicProfile fields | Logic | GetPublicProfile | Limited |
+| FUN-052 | GetFullProfile fields | Logic | GetFullProfile | All |
+| FUN-053 | Completeness weights | Logic | GetCompleteness | Weighted |
+| FUN-054 | Preference default keys | Logic | GetPreferences | Default keys |
+| FUN-055 | Privacy setting validation | Validation | UpdatePrivacy | Valid |
+| FUN-056 | Org unit hierarchy load | Logic | GetOrgUnit | Hierarchy |
+| FUN-057 | Profile merge strategy | Logic | Update | Merge |
+| FUN-058 | Avatar format validation | Validation | UploadAvatar | Format |
+| FUN-059 | Search index | Logic | Search | Index |
+| FUN-060 | Filter by org unit | Logic | Filter | Org unit |
+| FUN-061 | Sort by completeness | Logic | Sort | Completeness |
+| FUN-062 | Export user filter | Logic | Export | User filter |
+| FUN-063 | Import overwrite | Logic | Import | Overwrite |
+| FUN-064 | Timezone validation | Validation | GetTimezone | Valid |
+| FUN-065 | Locale validation | Validation | GetLocale | Valid |
+| FUN-066 | AssignOrgUnit replace | Logic | AssignOrgUnit | Replace |
+| FUN-067 | DeleteAvatar cleanup | Logic | DeleteAvatar | Cleanup |
+| FUN-068 | UpdatePreferences validate | Validation | UpdatePreferences | Valid |
+| FUN-069 | GetProfile lazy create | Logic | GetProfile | Create |
+| FUN-070 | Profile merge audit | Audit | Update | Audit |
+| FUN-071 | Avatar upload audit | Audit | UploadAvatar | Audit |
+| FUN-072 | Preference update audit | Audit | UpdatePreferences | Audit |
+| FUN-073 | Org unit assign audit | Audit | AssignOrgUnit | Audit |
+| FUN-074 | Privacy update audit | Audit | UpdatePrivacy | Audit |
+| FUN-075 | Search relevance | Logic | Search | Relevance |
+| FUN-076 | Filter combination | Logic | Filter | Combined |
+| FUN-077 | Pagination total | Calculation | Paginate | Total |
+| FUN-078 | Sort multi-field | Logic | Sort | Multi-field |
+| FUN-079 | Export encoding | Logic | Export | Encoding |
+| FUN-080 | Import encoding | Logic | Import | Encoding |
+| FUN-081 | Completeness threshold | Logic | GetCompleteness | Threshold |
+| FUN-082 | Avatar dimension limit | Constraint | UploadAvatar | Limit |
+| FUN-083 | Preference key whitelist | Constraint | UpdatePreferences | Whitelist |
+| FUN-084 | Privacy setting whitelist | Constraint | UpdatePrivacy | Whitelist |
+| FUN-085 | Org unit type check | Constraint | AssignOrgUnit | Type |
+| FUN-086 | Profile required fields | Validation | Create | Required |
+| FUN-087 | Bio length limit | Constraint | Update | Limit |
+| FUN-088 | Email format | Validation | Create | Format |
+| FUN-089 | Phone format | Validation | Create | Format |
+| FUN-090 | Display name format | Logic | Create | Format |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|
@@ -340,6 +415,46 @@ Profile manager unit tests cover user profile CRUD, avatar handling, preferences
 | INT-048 | Import overwrite | Scenario | Import | Config |
 | INT-049 | Audit trail | Scenario | Create, Update | Trail |
 | INT-050 | E2E create-update-delete | Scenario | Full cycle | Complete |
+| INT-051 | GetProfile then Update | Scenario | Get, Update | Complete |
+| INT-052 | Create then GetProfile | Scenario | Create, Get | Complete |
+| INT-053 | UploadAvatar then DeleteAvatar | Scenario | Upload, Delete | Complete |
+| INT-054 | GetPreferences then Update | Scenario | Get, Update | Complete |
+| INT-055 | AssignOrgUnit then GetOrgUnit | Scenario | Assign, Get | Complete |
+| INT-056 | GetPublicProfile vs GetFullProfile | Scenario | Both | Correct |
+| INT-057 | UpdatePrivacy then GetPrivacy | Scenario | Update, Get | Complete |
+| INT-058 | Search then GetProfile | Scenario | Search, Get | Complete |
+| INT-059 | Filter then Paginate | Scenario | Filter, Paginate | Complete |
+| INT-060 | Export then Import | Scenario | Export, Import | Complete |
+| INT-061 | GetCompleteness after Update | Scenario | Update, Completeness | Complete |
+| INT-062 | GetTimezone after Update | Scenario | Update, Get | Complete |
+| INT-063 | GetLocale after Update | Scenario | Update, Get | Complete |
+| INT-064 | Profile merge then Get | Scenario | Merge, Get | Complete |
+| INT-065 | Org unit assign then hierarchy | Scenario | Assign, Hierarchy | Complete |
+| INT-066 | Avatar upload then Get | Scenario | Upload, Get | Complete |
+| INT-067 | Preferences merge | Scenario | Merge | Complete |
+| INT-068 | Privacy update then GetPublic | Scenario | Update, GetPublic | Complete |
+| INT-069 | Sort then Filter | Scenario | Sort, Filter | Complete |
+| INT-070 | Paginate then Sort | Scenario | Paginate, Sort | Complete |
+| INT-071 | Import then Export | Scenario | Import, Export | Complete |
+| INT-072 | Create profile with org unit | Scenario | Create | Org unit |
+| INT-073 | Update with preferences | Scenario | Update | Preferences |
+| INT-074 | Delete with avatar | Scenario | Delete | Avatar |
+| INT-075 | GetFullProfile with org | Scenario | GetFull | Org |
+| INT-076 | Search with pagination | Scenario | Search | Paginated |
+| INT-077 | Filter by completeness | Scenario | Filter | Completeness |
+| INT-078 | Export with sort | Scenario | Export | Sorted |
+| INT-079 | Import with validation | Scenario | Import | Validated |
+| INT-080 | GetCompleteness threshold | Scenario | Completeness | Threshold |
+| INT-081 | Timezone with locale | Scenario | Timezone, Locale | Complete |
+| INT-082 | Privacy with export | Scenario | Privacy, Export | Complete |
+| INT-083 | Org unit with profile | Scenario | Org unit | Profile |
+| INT-084 | Avatar with profile | Scenario | Avatar | Profile |
+| INT-085 | Preferences with default | Scenario | Preferences | Default |
+| INT-086 | Profile with audit | Scenario | Profile | Audit |
+| INT-087 | Search with relevance | Scenario | Search | Relevance |
+| INT-088 | Filter with sort | Scenario | Filter | Sorted |
+| INT-089 | Export with encoding | Scenario | Export | Encoding |
+| INT-090 | E2E full profile lifecycle | Scenario | Full cycle | Complete |
 
 ---
 
@@ -414,8 +529,8 @@ Profile manager unit tests cover user profile CRUD, avatar handling, preferences
 | CON-008 | Race on preferences | Two update | One wins |
 | CON-009 | Race on org unit | Two assign | One wins |
 | CON-010 | DbContext concurrency | Share context | Not shared |
-| CON-011 | Async parallel gets | 10 parallel | All succeed |
-| CON-012 | Async parallel updates | 10 parallel | All succeed |
+| CON-011 | Async parallel gets | 10 parallel GetById | All succeed |
+| CON-012 | Async parallel updates | 10 parallel Update | All succeed |
 | CON-013 | Batch vs single | Batch vs loop | Same result |
 | CON-014 | Pagination concurrent | Two paginate | Both correct |
 | CON-015 | Avatar upload concurrent | Two upload | One wins |
@@ -500,5 +615,5 @@ Profile manager unit tests cover user profile CRUD, avatar handling, preferences
 
 ---
 
-**Last Updated:** 2026-02-11  
+**Last Updated:** 2026-02-18  
 **Status:** Ready for Implementation

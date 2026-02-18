@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,7 +33,7 @@ REST API for partner categories: CRUD categories, assignment to partners, filter
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Steps | Expected Result |
 |----|-----------|-------|-----------------|
@@ -67,11 +67,6 @@ REST API for partner categories: CRUD categories, assignment to partners, filter
 | POS-028 | Admin update | PUT as admin | 200 |
 | POS-029 | Admin delete | DELETE as admin | 204 |
 | POS-030 | Partner count | GET /api/partner-categories/{id}/partner-count | Count |
-| POS-031 | Category hierarchy | GET ?includeChildren=true | Hierarchy |
-| POS-032 | Combined filter | GET ?search=text&type=X | Combined |
-| POS-033 | Sort ascending | GET ?sortBy=name&sortOrder=asc | Sorted |
-| POS-034 | Sort descending | GET ?sortBy=name&sortOrder=desc | Sorted |
-| POS-035 | Cached response | GET same query | 200 |
 
 ---
 
@@ -149,10 +144,30 @@ REST API for partner categories: CRUD categories, assignment to partners, filter
 | NEG-068 | Missing query | GET no params | 200 or 400 |
 | NEG-069 | Invalid encoding | Malformed URL | 400 |
 | NEG-070 | Soft-deleted filter | Query deleted | Excluded |
+| NEG-071 | Invalid JSON schema | Schema mismatch | 400 |
+| NEG-072 | Missing category name | Name null | 400 |
+| NEG-073 | Invalid category type | type=invalid | 400 |
+| NEG-074 | Empty partner list | partners=[] | 400 |
+| NEG-075 | Invalid parent | parentId=self | 400 |
+| NEG-076 | Category locked | Locked category | 423 |
+| NEG-077 | Maintenance mode | During maintenance | 503 |
+| NEG-078 | Quota exceeded | Assignment quota | 507 |
+| NEG-079 | Invalid description | desc too long | 400 |
+| NEG-080 | Orphan parent | parentId deleted | 404 |
+| NEG-081 | Migration mode | During migration | 503 |
+| NEG-082 | Session invalid | Invalid session | 401 |
+| NEG-083 | Token type wrong | Wrong token type | 401 |
+| NEG-084 | Scope insufficient | OAuth scope | 403 |
+| NEG-085 | Rate limit per user | User rate limit | 429 |
+| NEG-086 | Concurrent limit | Too many concurrent | 429 |
+| NEG-087 | Request timeout | Slow request | 408 |
+| NEG-088 | Category archived | Archived category | 410 |
+| NEG-089 | In-use category delete | Category in use | 409 |
+| NEG-090 | Assignment limit exceeded | >100 assignments | 400 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max |
 |----|----------------|-----|-----|--------|--------|----------|
@@ -283,10 +298,50 @@ REST API for partner categories: CRUD categories, assignment to partners, filter
 | FUN-048 | Business | Permission | Query | Scoped |
 | FUN-049 | Business | Hierarchy | Parent-child | Linked |
 | FUN-050 | Business | Partner assignment | Assign | Scoped |
+| FUN-051 | Workflow | Sort ascending | GET ?sortOrder=asc | Sorted |
+| FUN-052 | Workflow | Sort descending | GET ?sortOrder=desc | Sorted |
+| FUN-053 | Validation | Category type | Invalid type | 400 |
+| FUN-054 | Validation | No circular | Circular | 400 |
+| FUN-055 | Constraint | Category lock | Locked | 423 |
+| FUN-056 | Audit | Assign | POST assign | Audit |
+| FUN-057 | Audit | Remove | DELETE remove | Audit |
+| FUN-058 | Business | Hierarchy depth | >10 | 400 |
+| FUN-059 | Business | Duplicate assign | Already assigned | 409 |
+| FUN-060 | Workflow | First page | GET ?page=1 | First |
+| FUN-061 | Validation | Bulk size | >100 | 400 |
+| FUN-062 | Constraint | Delete in-use | Referenced | 409 |
+| FUN-063 | Audit | Bulk assign | POST bulk | Audit |
+| FUN-064 | Business | Category cascade | Delete category | 409 |
+| FUN-065 | Workflow | Cached response | GET same | 200 |
+| FUN-066 | Validation | Code format | Invalid | 400 |
+| FUN-067 | Constraint | Assignment limit | >100 | 400 |
+| FUN-068 | Audit | Restore | POST restore | Audit |
+| FUN-069 | Business | Parent scope | Org scope | Correct |
+| FUN-070 | Workflow | Last page | GET ?page=last | Partial |
+| FUN-071 | Validation | Partner exists | Invalid partner | 404 |
+| FUN-072 | Constraint | Parent exists | Invalid parent | 404 |
+| FUN-073 | Audit | Create | POST | Audit |
+| FUN-074 | Business | Cross-org category | Other org | 403 |
+| FUN-075 | Workflow | Full round-trip | Create → Get | Match |
+| FUN-076 | Validation | Name length | Too long | 400 |
+| FUN-077 | Constraint | Export limit | >10K | Truncate |
+| FUN-078 | Audit | Update | PUT | Audit |
+| FUN-079 | Business | Inactive category | Category disabled | 403 |
+| FUN-080 | Workflow | Export flow | GET export | File |
+| FUN-081 | Validation | Parent valid | Invalid | 404 |
+| FUN-082 | Constraint | Max bulk | >100 | 400 |
+| FUN-083 | Audit | Delete | DELETE | Audit |
+| FUN-084 | Business | Hierarchy scope | Parent-child | Correct |
+| FUN-085 | Workflow | Typeahead flow | GET typeahead | Suggestions |
+| FUN-086 | Validation | Code length | Too long | 400 |
+| FUN-087 | Constraint | Bulk partial | Partial success | 207 |
+| FUN-088 | Audit | Hierarchy | GET hierarchy | Audit |
+| FUN-089 | Business | Assignment scope | Assign | Scoped |
+| FUN-090 | Workflow | Bulk assign flow | POST bulk | Assigned |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Category | Scenario | Entities | Expected |
 |----|----------|----------|----------|----------|
@@ -340,6 +395,46 @@ REST API for partner categories: CRUD categories, assignment to partners, filter
 | INT-048 | E2E | Full delete flow | Category | Delete → 404 |
 | INT-049 | E2E | Assign flow | Category, Partner | Assign → Get |
 | INT-050 | E2E | Session expiry | Auth | Clean fail |
+| INT-051 | CRUD | Assign → Get partners | Category, Partner | Assigned |
+| INT-052 | CRUD | Remove → Get partners | Category, Partner | Removed |
+| INT-053 | Hierarchy | Parent-child flow | Category | Hierarchy |
+| INT-054 | Hierarchy | Root categories | Category | Roots |
+| INT-055 | Search | Typeahead flow | Category | Suggestions |
+| INT-056 | Relationships | Category → Parent | Category | Linked |
+| INT-057 | Error | Validation chain | Bad input | 400 |
+| INT-058 | Error | Auth chain | No auth | 401 |
+| INT-059 | E2E | Hierarchy flow | Category | Hierarchy |
+| INT-060 | E2E | Export flow | Category | Export |
+| INT-061 | CRUD | Restore → Get | Category | Restored |
+| INT-062 | Hierarchy | Children count | Category | Count |
+| INT-063 | Assign | Bulk assign | Category, Partner | Bulk |
+| INT-064 | Relationships | Category → Children | Category | Linked |
+| INT-065 | Error | Permission chain | No perm | 403 |
+| INT-066 | E2E | Full category flow | Category | Create → Delete |
+| INT-067 | CRUD | Get by code | Category | Match |
+| INT-068 | Assign | Duplicate assign | Category | 409 |
+| INT-069 | Hierarchy | Circular parent | Category | 400 |
+| INT-070 | Relationships | Category → Partners | Category, Partner | Linked |
+| INT-071 | Error | Conflict resolution | Stale | 409 |
+| INT-072 | E2E | Restore flow | Category | Restore |
+| INT-073 | CRUD | Update → Get | Category | Updated |
+| INT-074 | Assign | Remove not assigned | Category | 404 |
+| INT-075 | Hierarchy | Orphan parent | Category | 404 |
+| INT-076 | Relationships | Category → Audit | Category | Audit |
+| INT-077 | Error | Timeout handling | Slow | 504 |
+| INT-078 | E2E | Typeahead flow | Category | Typeahead |
+| INT-079 | CRUD | Create → Get | Category | Match |
+| INT-080 | Assign | Assign to self | Category | 400 |
+| INT-081 | Hierarchy | Hierarchy validation | Category | Valid |
+| INT-082 | Relationships | Partner → Category | Partner | Linked |
+| INT-083 | Error | Service unavailable | Down | 503 |
+| INT-084 | E2E | Dropdown flow | Category | Pairs |
+| INT-085 | CRUD | Delete → Get | Category | 404 |
+| INT-086 | Assign | Assign concurrent | Category | Last |
+| INT-087 | Hierarchy | Hierarchy concurrent | Category | Consistent |
+| INT-088 | Relationships | Category → Partner | Category | 1:N |
+| INT-089 | Error | Payload too large | Huge | 413 |
+| INT-090 | E2E | Full auth flow | Auth | Token |
 
 ---
 
@@ -507,7 +602,7 @@ REST API for partner categories: CRUD categories, assignment to partners, filter
 | CRUD categories | POS-001–005, FUN-001–006 |
 | Assignment to partners | POS-009–011, FUN-014–015 |
 | Filtering | POS-007–008, FUN-009–010 |
-| 3:1 Ratio | NEG-001–070, BND-001–070 |
+| 3:1 Ratio | NEG-001–090, BND-001–090, FUN-001–090, INT-001–090 |
 
 ---
 

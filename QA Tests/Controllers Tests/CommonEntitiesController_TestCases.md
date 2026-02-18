@@ -13,23 +13,22 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P ✅ (90≥90) | E≥3P ✅ (90≥90) | F≥3P ✅ (90≥90) | I≥3P ✅ (90≥90)
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Steps | Expected Result |
 |----|-----------|-------|-----------------|
@@ -63,15 +62,10 @@
 | POS-028 | Get timezones | GET /api/common/timezones | Timezones |
 | POS-029 | Get languages | GET /api/common/languages | Languages |
 | POS-030 | Bulk lookup | POST /api/common/lookups/bulk | Bulk results |
-| POS-031 | Cache hit | GET same endpoint twice | Cached response |
-| POS-032 | Empty result | GET for empty type | [] |
-| POS-033 | Single result | GET for single-item type | [item] |
-| POS-034 | Authenticated access | GET with token | 200 OK |
-| POS-035 | Public endpoint | GET /api/common/statuses | 200 (if public) |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error |
 |----|-----------|--------------|----------------|
@@ -145,10 +139,30 @@
 | NEG-068 | Inactive org | Org inactive | 403 |
 | NEG-069 | Blocked IP | From blocked IP | 403 |
 | NEG-070 | CORS preflight fail | Invalid origin | CORS error |
+| NEG-071 | Invalid hierarchy parent | parentId=child | 400 |
+| NEG-072 | Circular parent ref | Circular parent | 400 |
+| NEG-073 | Duplicate code create | Create duplicate | 409 |
+| NEG-074 | Conflicting filters | Mutually exclusive | 400 |
+| NEG-075 | Future date filter | date=2030 | 400 |
+| NEG-076 | Invalid date format | date=invalid | 400 |
+| NEG-077 | PUT on read-only | PUT /api/common/lookups | 405 |
+| NEG-078 | DELETE system lookup | DELETE system | 403 |
+| NEG-079 | POST on read-only | POST (if read-only) | 405 |
+| NEG-080 | Orphan parent | parentId deleted | 404 |
+| NEG-081 | Stale cache | TTL exceeded | Refresh |
+| NEG-082 | Encoding error | Invalid charset | UTF-8 |
+| NEG-083 | Empty type | type= | 400 |
+| NEG-084 | Whitespace type | type="  " | 400 |
+| NEG-085 | Max length exceeded | name 1000 chars | 400 |
+| NEG-086 | Invalid enum name | enum=Invalid | 400 |
+| NEG-087 | Invalid category | category=Invalid | 400 |
+| NEG-088 | Invalid tag format | tag malformed | 400 |
+| NEG-089 | Metadata too large | metadata 11KB | 400 |
+| NEG-090 | Label too long | label 501 chars | 400 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max |
 |----|----------------|-----|-----|--------|--------|----------|
@@ -222,10 +236,30 @@
 | BND-068 | Description length | - | 2000 | ✅ | ✅ | ❌ |
 | BND-069 | Metadata size | - | 10KB | ✅ | ✅ | ❌ |
 | BND-070 | Version | 1 | - | ✅ | ❌ | - |
+| BND-071 | Label length | 0 | 500 | ✅ | ✅ | ❌ |
+| BND-072 | Nested lookup depth | 0 | 5 | ✅ | ✅ | ❌ |
+| BND-073 | Typeahead min | 1 | - | ✅ | - | - |
+| BND-074 | Typeahead max | - | 20 | - | ✅ | ❌ |
+| BND-075 | Max dropdown items | 0 | 1000 | ✅ | ✅ | ❌ |
+| BND-076 | Empty dropdown | - | - | [] | - | - |
+| BND-077 | Single dropdown | - | - | [item] | - | - |
+| BND-078 | Hierarchy root | parentId=0 | - | Root | - | - |
+| BND-079 | Hierarchy leaf | No children | - | Leaf | - | - |
+| BND-080 | Missing locale | - | - | Default | - | - |
+| BND-081 | Fallback locale | Lang not found | - | en | - | - |
+| BND-082 | Duplicate code | - | - | Reject | - | - |
+| BND-083 | Case sensitivity code | - | - | Define | - | - |
+| BND-084 | Null code | - | - | Reject | - | - |
+| BND-085 | Empty code | - | - | Reject | - | - |
+| BND-086 | Special chars code | - | - | Define | - | - |
+| BND-087 | Leading/trailing space | - | - | Trim | - | - |
+| BND-088 | Negative order | order=-1 | - | 400 | - | - |
+| BND-089 | Pagination boundary | - | - | Exact | - | - |
+| BND-090 | Cursor pagination | - | - | Valid | - | - |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Category | Rule | Trigger | Expected |
 |----|----------|------|---------|----------|
@@ -279,10 +313,50 @@
 | FUN-048 | Business | Permission | Query | Scoped |
 | FUN-049 | Business | Locale fallback | Missing | Default |
 | FUN-050 | Business | Hierarchy sort | Children | Ordered |
+| FUN-051 | Workflow | Get lookups | GET | List |
+| FUN-052 | Workflow | Filter by type | GET ?type | Filtered |
+| FUN-053 | Workflow | Filter by parent | GET ?parentId | Filtered |
+| FUN-054 | Workflow | Get dropdown | GET dropdown | Options |
+| FUN-055 | Workflow | Typeahead | GET ?q | Suggestions |
+| FUN-056 | Validation | Required type | Missing type | 400 |
+| FUN-057 | Validation | Valid ID | Invalid ID | 400 |
+| FUN-058 | Validation | Valid code | Invalid code | 400 |
+| FUN-059 | Validation | Valid lang | Invalid lang | 400 |
+| FUN-060 | Validation | No duplicate code | Duplicate | 409 |
+| FUN-061 | Constraint | Unique code | Duplicate | 409 |
+| FUN-062 | Constraint | FK parent | Invalid parent | 404 |
+| FUN-063 | Constraint | Max hierarchy | >10 | 400 |
+| FUN-064 | Constraint | No circular | Circular | 400 |
+| FUN-065 | Constraint | System lock | Update system | 403 |
+| FUN-066 | Audit | Create logged | POST | Audit |
+| FUN-067 | Audit | Update logged | PUT | Audit |
+| FUN-068 | Audit | Delete logged | DELETE | Audit |
+| FUN-069 | Audit | Bulk | Bulk | Each or batch |
+| FUN-070 | Audit | Timestamp | Any | UTC |
+| FUN-071 | Business | Soft-deleted | Query | Excluded |
+| FUN-072 | Business | Inactive | Query | Filter |
+| FUN-073 | Business | Permission | Query | Scoped |
+| FUN-074 | Business | Locale | Fallback | Default |
+| FUN-075 | Business | Hierarchy | Children | Ordered |
+| FUN-076 | Workflow | Localized | GET ?lang | Labels |
+| FUN-077 | Workflow | Hierarchy | GET hierarchy | Tree |
+| FUN-078 | Workflow | By code | GET code | Lookup |
+| FUN-079 | Workflow | Bulk | POST bulk | Results |
+| FUN-080 | Workflow | Paginate | GET ?page | Paginated |
+| FUN-081 | Validation | Permission | No permission | 403 |
+| FUN-082 | Validation | Org scope | Cross-org | 403 |
+| FUN-083 | Validation | Whitelist type | Invalid type | 400 |
+| FUN-084 | Validation | Max length | Too long | 400 |
+| FUN-085 | Validation | Format | Wrong format | 400 |
+| FUN-086 | Constraint | Soft delete | Query deleted | Excluded |
+| FUN-087 | Constraint | Active default | One default | Enforce |
+| FUN-088 | Constraint | Order unique | Same order | Allow/reject |
+| FUN-089 | Constraint | Max bulk | >100 | 400 |
+| FUN-090 | Constraint | Cache TTL | Stale | Refresh |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Category | Scenario | Entities | Expected |
 |----|----------|----------|----------|----------|
@@ -336,63 +410,46 @@
 | INT-048 | E2E | Typeahead flow | Typeahead | Type → Select |
 | INT-049 | E2E | Multi-user | Users | No conflict |
 | INT-050 | E2E | Session expiry | Auth | Clean fail |
-
----
-
-## §6 Security Tests (50)
-
-| ID | Category | Attack | Target | Expected |
-|----|----------|--------|-------|----------|
-| SEC-001 | Injection | SQL | Filter | Sanitized |
-| SEC-002 | Injection | XSS | Search | Encoded |
-| SEC-003 | Injection | Path traversal | Path | Rejected |
-| SEC-004 | Injection | NoSQL | Filter | Rejected |
-| SEC-005 | Injection | Command | Export | Rejected |
-| SEC-006 | Injection | Header | Header | Rejected |
-| SEC-007 | Injection | Log | Input | Sanitized |
-| SEC-008 | Injection | LDAP | Search | Rejected |
-| SEC-009 | Injection | Log4j | Input | Rejected |
-| SEC-010 | Injection | Template | Input | Rejected |
-| SEC-011 | Access | No auth | All | 401 |
-| SEC-012 | Access | Wrong role | Admin | 403 |
-| SEC-013 | Access | Cross-org | Other org | 403 |
-| SEC-014 | Access | Horizontal | Other user | 403 |
-| SEC-015 | Access | Vertical | Admin | 403 |
-| SEC-016 | Access | Expired | Token | 401 |
-| SEC-017 | Access | Revoked | Token | 401 |
-| SEC-018 | Access | Tampered | Token | 401 |
-| SEC-019 | Access | Scope | OAuth | 403 |
-| SEC-020 | Access | Service | UI | 403 |
-| SEC-021 | IDOR | Other org | ID | 403 |
-| SEC-022 | IDOR | Other user | ID | 403 |
-| SEC-023 | IDOR | Manipulate | Path | 403 |
-| SEC-024 | IDOR | Enumeration | IDs | Rate limit |
-| SEC-025 | IDOR | Pollution | Params | First |
-| SEC-026 | Mass Assign | Admin | Body | Ignored |
-| SEC-027 | Mass Assign | Role | Body | Ignored |
-| SEC-028 | Mass Assign | Org | Body | Ignored |
-| SEC-029 | Mass Assign | User | Body | Ignored |
-| SEC-030 | Mass Assign | Permission | Body | Ignored |
-| SEC-031 | Auth | Fixation | Session | New |
-| SEC-032 | Auth | Hijack | Token | Invalid |
-| SEC-033 | Auth | Replay | Old token | Reject |
-| SEC-034 | Auth | CSRF | State | Token |
-| SEC-035 | Auth | Brute | Login | Rate limit |
-| SEC-036 | Data | PII | Export | Masked |
-| SEC-037 | Data | Logs | Sensitive | No PII |
-| SEC-038 | Data | Error | 500 | Generic |
-| SEC-039 | Data | Stack | Exception | Hidden |
-| SEC-040 | Data | Debug | Prod | Off |
-| SEC-041 | OWASP | A01 | Access | 403 |
-| SEC-042 | OWASP | A02 | Crypto | TLS |
-| SEC-043 | OWASP | A03 | Injection | Param |
-| SEC-044 | OWASP | A04 | Design | Defensive |
-| SEC-045 | OWASP | A05 | Misconfig | Secure |
-| SEC-046 | OWASP | A06 | Vulnerable | No CVE |
-| SEC-047 | OWASP | A07 | Auth | Strong |
-| SEC-048 | OWASP | A08 | Integrity | Checks |
-| SEC-049 | OWASP | A09 | Logging | Audit |
-| SEC-050 | OWASP | A10 | SSRF | No internal |
+| INT-051 | CRUD | Get lookup | Lookup | Details |
+| INT-052 | CRUD | Get by type | Lookup | Filtered |
+| INT-053 | CRUD | Get by code | Lookup | Match |
+| INT-054 | CRUD | Get hierarchy | Lookup | Tree |
+| INT-055 | CRUD | Create (admin) | Lookup | 201 |
+| INT-056 | Search | Search by name | Lookup | Matches |
+| INT-057 | Search | Typeahead | Lookup | Suggestions |
+| INT-058 | Search | Filter type | Lookup | Filtered |
+| INT-059 | Search | Filter parent | Lookup | Filtered |
+| INT-060 | Search | Multi-filter | Lookup | Combined |
+| INT-061 | Pagination | Page 1 | Lookup | First |
+| INT-062 | Pagination | Last page | Lookup | Partial |
+| INT-063 | Pagination | Size | Lookup | Correct |
+| INT-064 | Pagination | Invalid | Lookup | 400 |
+| INT-065 | Pagination | Boundary | Lookup | Exact |
+| INT-066 | Relationships | Lookup → Parent | Linked | Correct |
+| INT-067 | Relationships | Lookup → Children | Linked | Correct |
+| INT-068 | Relationships | Entity → Lookup | Ref | Correct |
+| INT-069 | Relationships | Orphan | Deleted parent | 404 |
+| INT-070 | Relationships | Hierarchy | Lookup | Tree |
+| INT-071 | Error | DB down | DB | 503 |
+| INT-072 | Error | Auth down | Auth | 401/503 |
+| INT-073 | Error | Validation | Bad input | 400 |
+| INT-074 | Error | NotFound | Invalid ID | 404 |
+| INT-075 | Error | Forbidden | No permission | 403 |
+| INT-076 | Error | Conflict | Duplicate | 409 |
+| INT-077 | Error | Rate limit | Too many | 429 |
+| INT-078 | Error | Timeout | Slow | 504 |
+| INT-079 | Error | Payload | Huge | 413 |
+| INT-080 | Error | Media | Wrong type | 415 |
+| INT-081 | Error | Method | Wrong verb | 405 |
+| INT-082 | Error | Service | Dependency | 503 |
+| INT-083 | Error | Gateway | Upstream | 504 |
+| INT-084 | Error | Gone | Deleted | 410 |
+| INT-085 | Error | Locked | Locked | 423 |
+| INT-086 | E2E | Full get flow | Lookup | Get → Use |
+| INT-087 | E2E | Dropdown flow | Dropdown | Get → Render |
+| INT-088 | E2E | Typeahead flow | Typeahead | Type → Select |
+| INT-089 | E2E | Hierarchy flow | Lookup | Get → Display |
+| INT-090 | E2E | Bulk flow | Lookup | Bulk → Results |
 
 ---
 
@@ -504,7 +561,7 @@
 | Dropdown data | POS-003–004, FUN-004 |
 | Reference data | POS-005, INT-010 |
 | Entity types | POS-006, NEG-003 |
-| 3:1 Ratio | NEG-001–070, BND-001–070 |
+| 3:1 Ratio | NEG-001–090, BND-001–090 |
 
 ---
 

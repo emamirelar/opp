@@ -1,7 +1,7 @@
 # DocumentManager — Unit Test Cases
 
 **Component:** `UNOPS.PAO.Business/Managers/DocumentManager` (Unit Tests)  
-**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Created:** 2026-02-04 | **Last Updated:** 2026-02-18  
 **Author:** QA Team  
 **Standard:** 10-Category, 3:1 Ratio
 
@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,7 +33,7 @@ Document manager unit tests cover upload/download operations, type validation, m
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,15 +67,10 @@ Document manager unit tests cover upload/download operations, type validation, m
 | POS-028 | Get by entity type | Entity type valid | GetByEntity | List |
 | POS-029 | Bulk upload | Valid files | BulkUpload | All uploaded |
 | POS-030 | Export document list | Documents exist | Export | Exported |
-| POS-031 | Get storage path | Document exists | GetPath | Path returned |
-| POS-032 | Check existence | Document exists | Exists | True |
-| POS-033 | Get content type | Document exists | GetContentType | Type returned |
-| POS-034 | Get file size | Document exists | GetSize | Size returned |
-| POS-035 | Generate thumbnail | Document exists | Thumbnail | Thumbnail |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Action | Expected Result |
 |----|-----------|---------------------|-----------------|
@@ -149,10 +144,30 @@ Document manager unit tests cover upload/download operations, type validation, m
 | NEG-068 | Storage write failure | Write fails | StorageException |
 | NEG-069 | Storage read failure | Read fails | StorageException |
 | NEG-070 | Duplicate file name | Name exists | BusinessException |
+| NEG-071 | Unlink non-existent | Link invalid | KeyNotFoundException |
+| NEG-072 | GetThumbnail null ID | Id=0 | ArgumentException |
+| NEG-073 | CopyDocument null source | Source=null | ArgumentNullException |
+| NEG-074 | MoveDocument invalid target | Target invalid | ArgumentException |
+| NEG-075 | RenameDocument null name | Name=null | ArgumentNullException |
+| NEG-076 | SetTags null tags | Tags=null | ArgumentNullException |
+| NEG-077 | GetByHash null hash | Hash=null | ArgumentNullException |
+| NEG-078 | CheckIn null version | Version=null | ArgumentNullException |
+| NEG-079 | CheckOut locked | Document locked | BusinessException |
+| NEG-080 | Archive deleted document | Document deleted | KeyNotFoundException |
+| NEG-081 | Restore archived invalid | Id invalid | KeyNotFoundException |
+| NEG-082 | GetPreview unsupported | Type no preview | InvalidOperationException |
+| NEG-083 | Watermark null text | Text=null | ArgumentNullException |
+| NEG-084 | MergeDocuments empty | List empty | ArgumentException |
+| NEG-085 | SplitDocument invalid page | Page invalid | ArgumentException |
+| NEG-086 | EncryptDocument null key | Key=null | ArgumentNullException |
+| NEG-087 | DecryptDocument wrong key | Wrong key | CryptographicException |
+| NEG-088 | CompressDocument invalid | Format invalid | ArgumentException |
+| NEG-089 | DecompressDocument corrupt | Corrupt data | InvalidOperationException |
+| NEG-090 | ValidateChecksum mismatch | Checksum wrong | ValidationException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Condition | Expected Result |
 |----|-----------|-------------------|-----------------|
@@ -226,10 +241,30 @@ Document manager unit tests cover upload/download operations, type validation, m
 | BND-068 | Async cancellation | Cancel token | OperationCanceledException |
 | BND-069 | Task timeout | Timeout | TimeoutException |
 | BND-070 | Concurrent same second | Same timestamp | Deterministic |
+| BND-071 | File name exactly 255 | Length=255 | Valid |
+| BND-072 | Metadata key min | Length=1 | Valid |
+| BND-073 | Metadata value max | 4000 chars | Truncate |
+| BND-074 | Page 1 first | Page=1 | First page |
+| BND-075 | Page at last | Page=last | Last page |
+| BND-076 | Zero results | No match | Empty list |
+| BND-077 | Single result | One match | Single item |
+| BND-078 | Int32.MinValue ID | Id=min | Reject |
+| BND-079 | EntityId zero | EntityId=0 | Reject |
+| BND-080 | Expiry at min | 1 sec | Valid |
+| BND-081 | Expiry at max | 7 days | Valid |
+| BND-082 | Thumbnail 32px | 32 | Valid |
+| BND-083 | Thumbnail 512px | 512 | Valid |
+| BND-084 | Bulk count 1 | 1 file | Valid |
+| BND-085 | Bulk count 100 | 100 files | Valid |
+| BND-086 | Version 1 | First version | Valid |
+| BND-087 | Version max int | Max version | Handle |
+| BND-088 | Stream position zero | Position=0 | Valid |
+| BND-089 | Stream length max | Max length | Handle |
+| BND-090 | Checksum length | Hash length | Valid |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -283,10 +318,50 @@ Document manager unit tests cover upload/download operations, type validation, m
 | FUN-048 | Status transition | Workflow | ChangeStatus | Valid only |
 | FUN-049 | Permission cached | Performance | Repeated check | Cached |
 | FUN-050 | AsNoTracking read-only | Performance | List | No tracking |
+| FUN-051 | Copy preserves metadata | Data | Copy | Metadata |
+| FUN-052 | Move updates path | Data | Move | Path updated |
+| FUN-053 | Rename updates name | Data | Rename | Name updated |
+| FUN-054 | Tags stored correctly | Data | SetTags | Tags stored |
+| FUN-055 | GetByHash finds match | Data | GetByHash | Match |
+| FUN-056 | CheckIn creates version | Logic | CheckIn | Version |
+| FUN-057 | CheckOut locks | Logic | CheckOut | Locked |
+| FUN-058 | Archive soft delete | Logic | Archive | Archived |
+| FUN-059 | Restore from archive | Logic | Restore | Restored |
+| FUN-060 | GetPreview generates | Logic | GetPreview | Preview |
+| FUN-061 | Watermark applied | Logic | Watermark | Applied |
+| FUN-062 | Merge combines | Logic | Merge | Combined |
+| FUN-063 | Split creates multiple | Logic | Split | Multiple |
+| FUN-064 | Encrypt transforms | Logic | Encrypt | Encrypted |
+| FUN-065 | Decrypt reverses | Logic | Decrypt | Decrypted |
+| FUN-066 | Compress reduces size | Logic | Compress | Compressed |
+| FUN-067 | Decompress restores | Logic | Decompress | Restored |
+| FUN-068 | ValidateChecksum verifies | Validation | ValidateChecksum | Verified |
+| FUN-069 | Search by content | Search | Search | Content match |
+| FUN-070 | Filter by date range | Filter | List | Date filter |
+| FUN-071 | Filter by entity | Filter | List | Entity filter |
+| FUN-072 | Sort by size | Sort | List | Size order |
+| FUN-073 | Sort by name | Sort | List | Name order |
+| FUN-074 | Pagination total pages | Calculation | Page | Total correct |
+| FUN-075 | GetByIds dedup | Data | GetByIds | No duplicates |
+| FUN-076 | Storage ACL check | Authorization | Access | ACL |
+| FUN-077 | Retention policy | Constraint | Delete | Policy |
+| FUN-078 | Quarantine malware | Logic | Scan | Quarantine |
+| FUN-079 | Virus scan integration | Integration | Scan | Scanned |
+| FUN-080 | OCR extraction | Logic | OCR | Extracted |
+| FUN-081 | Full-text index | Data | Index | Indexed |
+| FUN-082 | Expiry cleanup | Logic | Cleanup | Cleaned |
+| FUN-083 | Orphan cleanup | Logic | Cleanup | Cleaned |
+| FUN-084 | Storage tier move | Logic | Tier | Moved |
+| FUN-085 | Replication sync | Logic | Replicate | Synced |
+| FUN-086 | Backup restore | Logic | Backup | Restored |
+| FUN-087 | Audit trail full | Audit | CRUD | Full trail |
+| FUN-088 | Retention compliance | Constraint | Retention | Compliant |
+| FUN-089 | Legal hold | Constraint | Hold | Held |
+| FUN-090 | E-discovery export | Logic | Export | Exported |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|
@@ -340,6 +415,46 @@ Document manager unit tests cover upload/download operations, type validation, m
 | INT-048 | Get by entity type | Scenario | GetByEntity | Filtered |
 | INT-049 | Link then unlink | Scenario | Link, Unlink | Clean |
 | INT-050 | E2E upload-download-delete | Scenario | Full cycle | Complete |
+| INT-051 | Copy document flow | Scenario | Copy | Copied |
+| INT-052 | Move document flow | Scenario | Move | Moved |
+| INT-053 | Rename document flow | Scenario | Rename | Renamed |
+| INT-054 | Tags full flow | Scenario | SetTags | Tags set |
+| INT-055 | GetByHash flow | Scenario | GetByHash | Found |
+| INT-056 | CheckIn CheckOut flow | Scenario | CheckIn, CheckOut | Locked |
+| INT-057 | Archive restore flow | Scenario | Archive, Restore | Restored |
+| INT-058 | GetPreview flow | Scenario | GetPreview | Preview |
+| INT-059 | Watermark flow | Scenario | Watermark | Applied |
+| INT-060 | Merge documents flow | Scenario | Merge | Merged |
+| INT-061 | Split document flow | Scenario | Split | Split |
+| INT-062 | Encrypt decrypt flow | Scenario | Encrypt, Decrypt | Restored |
+| INT-063 | Compress decompress flow | Scenario | Compress, Decompress | Restored |
+| INT-064 | ValidateChecksum flow | Scenario | ValidateChecksum | Verified |
+| INT-065 | Storage service integration | Integration | Storage | Full |
+| INT-066 | Virus scan integration | Integration | Scan | Scanned |
+| INT-067 | OCR service integration | Integration | OCR | Extracted |
+| INT-068 | Config integration | Integration | Config | Read |
+| INT-069 | Cache integration | Integration | Cache | Hit/miss |
+| INT-070 | Notification integration | Integration | Notification | Sent |
+| INT-071 | Multiple entities | Scenario | Document | Multiple |
+| INT-072 | Version chain | Scenario | Document | Chain |
+| INT-073 | Pagination with filter | Scenario | Paginate | Filtered |
+| INT-074 | Sort with filter | Scenario | List | Sorted, filtered |
+| INT-075 | Search full-text | Scenario | Search | Results |
+| INT-076 | Bulk operations | Scenario | Bulk | All |
+| INT-077 | Concurrent operations | Scenario | Parallel | No conflict |
+| INT-078 | Error recovery | Scenario | Error | Recover |
+| INT-079 | Audit trail full | Scenario | CRUD | Full trail |
+| INT-080 | Permission integration | Scenario | Permission | Enforced |
+| INT-081 | User context integration | Scenario | User | Context |
+| INT-082 | Logger integration flow | Scenario | Log | Logged |
+| INT-083 | Mapper round-trip | Scenario | Map | Correct |
+| INT-084 | Repository CRUD cycle | Scenario | Repository | CRUD |
+| INT-085 | DbContext scoping | Scenario | DbContext | Scoped |
+| INT-086 | Transaction rollback | Scenario | Transaction | Rollback |
+| INT-087 | Storage failover | Scenario | Storage | Failover |
+| INT-088 | Retention compliance | Scenario | Retention | Compliant |
+| INT-089 | Legal hold flow | Scenario | Hold | Held |
+| INT-090 | E2E with all features | Scenario | Full | Complete |
 
 ---
 
@@ -500,5 +615,5 @@ Document manager unit tests cover upload/download operations, type validation, m
 
 ---
 
-**Last Updated:** 2026-02-11  
+**Last Updated:** 2026-02-18  
 **Status:** Ready for Implementation

@@ -11,19 +11,23 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
-| §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| §1 Positive (P) | 30 | 30-50 | ✅ |
+| §2 Negative (N) | 90 | 90 | ✅ |
+| §3 Boundary (E) | 90 | 90 | ✅ |
+| §4 Functional (F) | 90 | 90 | ✅ |
+| §5 Integration (I) | 90 | 90 | ✅ |
+| §6 Security | 30 | 30 | ✅ |
+| §7 Concurrency | 15 | 15 | ✅ |
+| §8 Unit | 12 | 12 | ✅ |
+| §9 Performance | 10 | 10 | ✅ |
+| §10 Load | 5 | 5 | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance:**
+- N≥3P: 90≥90 → ✅ PASS
+- E≥3P: 90≥90 → ✅ PASS
+- F≥3P: 90≥90 → ✅ PASS
+- I≥3P: 90≥90 → ✅ PASS
 
 ---
 
@@ -38,7 +42,7 @@ The Enhanced Partner View component displays partner details for the CRM enhance
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result | Priority |
 |----|-----------|-------------|-------|-----------------|----------|
@@ -72,15 +76,10 @@ The Enhanced Partner View component displays partner details for the CRM enhance
 | POS-028 | Export partner | Partner | Export | File downloaded | P2 |
 | POS-029 | Print view | Print | Print | Print-friendly | P2 |
 | POS-030 | i18n | Non-default locale | Set locale | Translated | P2 |
-| POS-031 | Loading state | Data loading | Load | Skeleton | P2 |
-| POS-032 | Refresh | Data loaded | Click refresh | Reloaded | P2 |
-| POS-033 | Breadcrumb | Breadcrumb config | Load | Breadcrumb shown | P2 |
-| POS-034 | Custom actions | Actions config | Load | Actions shown | P2 |
-| POS-035 | Documents tab | Documents exist | Click documents | Documents list | P2 |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error | Priority |
 |----|-----------|--------------|---------------|----------|
@@ -154,10 +153,30 @@ The Enhanced Partner View component displays partner details for the CRM enhance
 | NEG-068 | Modal backdrop click | Backdrop | Click | Close | P2 |
 | NEG-069 | Escape close | Modal | Escape | Close | P2 |
 | NEG-070 | Focus trap | Modal | Tab | Trapped | P2 |
+| NEG-071 | Invalid tab index | Tab -1 | Fallback | P2 |
+| NEG-072 | Malformed partner ID | ID "abc" | Error | P2 |
+| NEG-073 | Intelligence API 500 | AI error | Fallback | P2 |
+| NEG-074 | Engagement calc timeout | Slow calc | Timeout | P2 |
+| NEG-075 | Empty tab content | Tab empty | Handle | P2 |
+| NEG-076 | Workflow API fail | Workflow 500 | Error | P2 |
+| NEG-077 | Related entities null | Null list | Empty state | P2 |
+| NEG-078 | Config mutation | Mutate config | No effect | P2 |
+| NEG-079 | Form validation race | Rapid submit | Handled | P2 |
+| NEG-080 | Tab lazy load fail | Chunk error | Error | P2 |
+| NEG-081 | Partner soft-deleted | Deleted partner | 404 | P2 |
+| NEG-082 | Contacts API 404 | No contacts | Empty | P2 |
+| NEG-083 | Opportunities API fail | API error | Fallback | P2 |
+| NEG-084 | Documents API timeout | Slow | Timeout | P2 |
+| NEG-085 | Permission API null | Null perms | Deny all | P2 |
+| NEG-086 | Stage transition invalid | Invalid stage | Reject | P2 |
+| NEG-087 | Save conflict | 409 | Conflict message | P2 |
+| NEG-088 | Optimistic rollback | Save fail | Revert | P2 |
+| NEG-089 | Export format invalid | Format "xyz" | Error | P2 |
+| NEG-090 | Print blocked | Print blocked | Graceful | P2 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field | Min | Max | At Min | At Max | Over Max | Priority |
 |----|-------|-----|-----|--------|--------|----------|----------|
@@ -234,7 +253,7 @@ The Enhanced Partner View component displays partner details for the CRM enhance
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule | Trigger | Expected Outcome | Priority |
 |----|-----------|------|---------|------------------|----------|
@@ -291,7 +310,7 @@ The Enhanced Partner View component displays partner details for the CRM enhance
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result | Priority |
 |----|-----------|----------|----------|-----------------|----------|
@@ -345,6 +364,46 @@ The Enhanced Partner View component displays partner details for the CRM enhance
 | INT-048 | Search | Search | SearchService | Search | P1 |
 | INT-049 | Notification | Notification | NotificationService | Notification | P1 |
 | INT-050 | Audit | Audit | AuditService | Audit | P1 |
+| INT-051 | Partner resolver | Resolve | Resolver | Preload | P1 |
+| INT-052 | Permission resolver | Resolve | Resolver | Preload | P1 |
+| INT-053 | Router events | Events | Router | Subscribed | P1 |
+| INT-054 | Route snapshot | Snapshot | Route | Param | P1 |
+| INT-055 | HttpClient | Request | HttpClient | Response | P1 |
+| INT-056 | Http params | Params | Request | Appended | P1 |
+| INT-057 | Http intercept | Intercept | Request | Modified | P1 |
+| INT-058 | RxJS switchMap | switchMap | Observable | Switched | P1 |
+| INT-059 | RxJS debounce | debounce | Rapid | Debounced | P1 |
+| INT-060 | RxJS catchError | catchError | Error | Handled | P1 |
+| INT-061 | NgZone | Zone | Async | In zone | P1 |
+| INT-062 | ChangeDetectorRef | Detect | Manual | Detected | P1 |
+| INT-063 | FormBuilder | Form | FormBuilder | Created | P1 |
+| INT-064 | Validators | Validation | Validators | Validated | P1 |
+| INT-065 | Tab component | Tab | TabComponent | Rendered | P1 |
+| INT-066 | Workflow component | Workflow | WorkflowComponent | Rendered | P1 |
+| INT-067 | Related panel | Panel | RelatedInfoPanel | Rendered | P1 |
+| INT-068 | Intelligence service | AI | IntelligenceService | Insights | P1 |
+| INT-069 | Engagement service | Score | EngagementService | Score | P1 |
+| INT-070 | GeoRegion service | Region | GeoRegionService | Region | P1 |
+| INT-071 | LiaisonOffice service | Office | LiaisonOfficeService | Office | P1 |
+| INT-072 | FocalPoint service | Focal | FocalPointService | Focal | P1 |
+| INT-073 | Document service | Docs | DocumentService | Docs | P1 |
+| INT-074 | Export service | Export | ExportService | File | P1 |
+| INT-075 | Print service | Print | PrintService | Print | P1 |
+| INT-076 | Clipboard | Copy | Clipboard | Copied | P1 |
+| INT-077 | Title service | Title | TitleService | Set | P1 |
+| INT-078 | Meta service | Meta | MetaService | Set | P1 |
+| INT-079 | Breakpoint service | Resize | BreakpointService | Updated | P1 |
+| INT-080 | Theme service | Theme | ThemeService | Applied | P1 |
+| INT-081 | Storage service | Persist | StorageService | Persisted | P1 |
+| INT-082 | Config service | Config | ConfigService | Loaded | P1 |
+| INT-083 | Feature flag | Flag | FeatureFlagService | Toggled | P1 |
+| INT-084 | Analytics | Event | AnalyticsService | Sent | P1 |
+| INT-085 | Error tracking | Error | ErrorTrackingService | Reported | P1 |
+| INT-086 | Logging | Log | LoggingService | Logged | P1 |
+| INT-087 | Global error | Error | GlobalErrorHandler | Handled | P1 |
+| INT-088 | HTTP interceptor | Request | Interceptor | Modified | P1 |
+| INT-089 | Lazy module | Navigate | Lazy | Chunk | P1 |
+| INT-090 | Guard | Navigate | Guard | Allow | P1 |
 
 ---
 

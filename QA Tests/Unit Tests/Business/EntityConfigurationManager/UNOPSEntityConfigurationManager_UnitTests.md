@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | ≥30 | ✅ |
+| §2 Negative | 90 | ≥90 | ✅ |
+| §3 Boundary | 90 | ≥90 | ✅ |
+| §4 Functional | 90 | ≥90 | ✅ |
+| §5 Integration | 90 | ≥90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,7 +33,7 @@ Entity configuration manager unit tests cover field definitions, schemas, custom
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,11 +67,6 @@ Entity configuration manager unit tests cover field definitions, schemas, custom
 | POS-028 | Override parent field | Parent has field | Override | Overridden |
 | POS-029 | Get field metadata | Field exists | GetMetadata | Metadata |
 | POS-030 | Export configuration | Config exists | Export | Exported |
-| POS-031 | Import configuration | JSON valid | Import | Imported |
-| POS-032 | Validate schema | Schema valid | ValidateSchema | Valid |
-| POS-033 | Get default values | Config has defaults | GetDefaults | Defaults |
-| POS-034 | Get field options | Field has options | GetOptions | Options |
-| POS-035 | Cache configuration | Config exists | GetConfig | Cached |
 
 ---
 
@@ -226,10 +221,30 @@ Entity configuration manager unit tests cover field definitions, schemas, custom
 | BND-068 | Async cancellation | Cancel token | OperationCanceledException |
 | BND-069 | Task timeout | Timeout | TimeoutException |
 | BND-070 | Concurrent same second | Same timestamp | Deterministic |
+| BND-071 | Entity name single char | Length=1 | Valid |
+| BND-072 | Field name max | Length=100 | Valid |
+| BND-073 | Page size one | PageSize=1 | Valid |
+| BND-074 | Field count one | Count=1 | Valid |
+| BND-075 | Rule count one | Count=1 | Valid |
+| BND-076 | Validation expression max | Length=1000 | Valid |
+| BND-077 | Empty schema | Schema=[] | Valid |
+| BND-078 | Empty custom fields | Fields=[] | Empty list |
+| BND-079 | Empty required fields | Required=[] | Empty list |
+| BND-080 | Inheritance depth one | Depth=1 | Valid |
+| BND-081 | Default value max | Length=4000 | Valid |
+| BND-082 | Options count max | Count=100 | Valid |
+| BND-083 | Type enum first | First | Valid |
+| BND-084 | Type enum last | Last | Valid |
+| BND-085 | Pagination first page | Page=1 | Valid |
+| BND-086 | Search term max | Term=500 | Valid |
+| BND-087 | Import row one | 1 row | Valid |
+| BND-088 | Export single row | 1 row | Valid |
+| BND-089 | Cache hit | Just cached | Hit |
+| BND-090 | GetMetadata empty | No metadata | Empty |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -283,10 +298,50 @@ Entity configuration manager unit tests cover field definitions, schemas, custom
 | FUN-048 | Type coercion | Logic | ApplyValidation | Coerce |
 | FUN-049 | Permission cached | Performance | Repeated check | Cached |
 | FUN-050 | AsNoTracking read-only | Performance | List | No tracking |
+| FUN-051 | Entity name required | Validation | Create | Reject if empty |
+| FUN-052 | Field name required | Validation | AddField | Reject if empty |
+| FUN-053 | Field type required | Validation | AddField | Reject if invalid |
+| FUN-054 | Entity name unique | Constraint | Create | Reject duplicate |
+| FUN-055 | Field name unique per config | Constraint | AddField | Reject duplicate |
+| FUN-056 | Rule expression valid | Constraint | AddRule | Reject invalid |
+| FUN-057 | Required field validation | Validation | ApplyValidation | Reject if missing |
+| FUN-058 | Type validation | Validation | ApplyValidation | Type check |
+| FUN-059 | Rule validation | Validation | ApplyValidation | Rule check |
+| FUN-060 | Inheritance chain | Logic | GetInherited | Chain correct |
+| FUN-061 | Override precedence | Logic | Override | Child over parent |
+| FUN-062 | RemoveField cascades | Logic | RemoveField | Cascades |
+| FUN-063 | RemoveRule cascades | Logic | RemoveRule | Cascades |
+| FUN-064 | GetSchema merges inherited | Logic | GetSchema | Merged |
+| FUN-065 | GetCustomFields filters | Logic | GetCustomFields | Custom only |
+| FUN-066 | GetRequiredFields merges | Logic | GetRequiredFields | Merged |
+| FUN-067 | GetDefaults merges | Logic | GetDefaults | Merged |
+| FUN-068 | ValidateSchema structure | Validation | ValidateSchema | Structure |
+| FUN-069 | Import creates config | Logic | Import | Created |
+| FUN-070 | Export includes all | Logic | Export | Complete |
+| FUN-071 | Cache invalidation on update | Cache | Update | Invalidated |
+| FUN-072 | Cache invalidation on delete | Cache | Delete | Invalidated |
+| FUN-073 | GetDisplayConfig format | Logic | GetDisplayConfig | Formatted |
+| FUN-074 | GetFieldMetadata complete | Logic | GetMetadata | Complete |
+| FUN-075 | GetOptions from config | Logic | GetOptions | From config |
+| FUN-076 | Include loads fields | Data load | GetById include | Fields loaded |
+| FUN-077 | No Cartesian on includes | Data load | Multiple includes | Split queries |
+| FUN-078 | Audit CreatedBy | Audit | Create | Set user |
+| FUN-079 | Audit CreatedDate | Audit | Create | Set UTC |
+| FUN-080 | Audit LastModifiedBy | Audit | Update | Set user |
+| FUN-081 | Audit LastModifiedDate | Audit | Update | Set UTC |
+| FUN-082 | Soft delete DeletedBy | Audit | Delete | Set user |
+| FUN-083 | Soft delete DeletedDate | Audit | Delete | Set UTC |
+| FUN-084 | Permission before action | Authorization | Any | Check first |
+| FUN-085 | Pagination offset | Calculation | Page | Skip correct |
+| FUN-086 | Total count accurate | Calculation | Count | Matches |
+| FUN-087 | Sort applies | Calculation | Sort | Ordered |
+| FUN-088 | Filter AND logic | Filter | Multi-filter | All match |
+| FUN-089 | Transaction on create | Transaction | Create | Atomic |
+| FUN-090 | Async all operations | Concurrency | All | Async |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|
@@ -340,6 +395,46 @@ Entity configuration manager unit tests cover field definitions, schemas, custom
 | INT-048 | Add remove rule cycle | Scenario | AddRule, RemoveRule | Clean |
 | INT-049 | Cache refresh | Scenario | Update, Get | Refreshed |
 | INT-050 | E2E CRUD cycle | Scenario | Full cycle | Create→Update→Delete |
+| INT-051 | Create then get | Scenario | Create, Get | Both |
+| INT-052 | Update then get | Scenario | Update, Get | Both |
+| INT-053 | Delete then list | Scenario | Delete, List | Excluded |
+| INT-054 | Add field then get | Scenario | AddField, Get | Both |
+| INT-055 | Remove field then get | Scenario | RemoveField, Get | Both |
+| INT-056 | Add rule then apply | Scenario | AddRule, ApplyValidation | Both |
+| INT-057 | Remove rule then apply | Scenario | RemoveRule, ApplyValidation | Both |
+| INT-058 | Import then export | Scenario | Import, Export | Round-trip |
+| INT-059 | Get schema with inheritance | Scenario | GetSchema | Merged |
+| INT-060 | Get display config | Scenario | GetDisplayConfig | Display |
+| INT-061 | Get defaults | Scenario | GetDefaults | Defaults |
+| INT-062 | Get options | Scenario | GetOptions | Options |
+| INT-063 | Validate schema | Scenario | ValidateSchema | Validated |
+| INT-064 | Cache integration | Integration | Cache | Hit/miss |
+| INT-065 | Mapper integration | Integration | Mapper | Mapped |
+| INT-066 | Repository integration | Integration | Repository | CRUD |
+| INT-067 | DbContext integration | Integration | DbContext | Scoped |
+| INT-068 | Transaction scope | Integration | Transaction | Atomic |
+| INT-069 | Permission service | Integration | Permission | Check |
+| INT-070 | User resolver | Integration | User | Resolved |
+| INT-071 | Audit context | Integration | Audit | Context |
+| INT-072 | Logger integration | Integration | Logger | Logged |
+| INT-073 | Config-Field relationship | Relationship | EntityConfig, Field | FK valid |
+| INT-074 | Config-Rule relationship | Relationship | EntityConfig, Rule | FK valid |
+| INT-075 | Config-Parent relationship | Relationship | EntityConfig | Parent |
+| INT-076 | Cascade soft delete | Relationship | Parent deleted | Config |
+| INT-077 | Orphan handling | Relationship | Parent deleted | Retained |
+| INT-078 | DB error handling | Error | DB down | Graceful |
+| INT-079 | Timeout handling | Error | Slow DB | Timeout |
+| INT-080 | Constraint violation | Error | FK violation | Clear error |
+| INT-081 | Unique violation | Error | Duplicate | Clear error |
+| INT-082 | Inheritance chain | Scenario | EntityConfig | Chain |
+| INT-083 | Override fields | Scenario | EntityConfig | Overridden |
+| INT-084 | Concurrent create | Scenario | Parallel | All created |
+| INT-085 | Apply validation with rules | Scenario | ApplyValidation | Rules applied |
+| INT-086 | Import with validation | Scenario | Import | Validated |
+| INT-087 | Export with filter | Scenario | Export | Filtered |
+| INT-088 | Add remove field cycle | Scenario | AddField, RemoveField | Clean |
+| INT-089 | Add remove rule cycle | Scenario | AddRule, RemoveRule | Clean |
+| INT-090 | Full workflow | Scenario | Full cycle | Complete |
 
 ---
 

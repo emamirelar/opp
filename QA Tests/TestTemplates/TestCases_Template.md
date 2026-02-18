@@ -12,18 +12,18 @@
 | Category | File/Section | Count | Minimum Required | Status |
 |----------|-------------|-------|-----------------|--------|
 | Positive Tests | §1 | P | 30-50 | ⬜ |
-| Negative Tests | §2 | N | Max(50, 2×P) | ⬜ |
-| Boundary Tests | §3 | B | Max(50, 2×P) | ⬜ |
-| Functional Tests | §4 | F | ≥50 | ⬜ |
-| Integration Tests | §5 | I | ≥50 | ⬜ |
+| Negative Tests | §2 | N | Max(50, 3×P) | ⬜ |
+| Boundary Tests | §3 | B | Max(50, 3×P) | ⬜ |
+| Functional Tests | §4 | F | Max(50, 3×P) | ⬜ |
+| Integration Tests | §5 | I | Max(50, 3×P) | ⬜ |
 | Security Tests | §6 | S | ≥50 | ⬜ |
 | Concurrency Tests | §7 | C | ≥25 | ⬜ |
 | Unit Tests | §8 | U | ≥21 | ⬜ |
 | Performance Tests | §9 | Pf | ≥16 | ⬜ |
 | Load Tests | §10 | L | ≥10 | ⬜ |
-| **TOTAL** | | **T** | **≥347** | ⬜ |
+| **TOTAL** | | **T** | **≥462** | ⬜ |
 
-**3:1 Ratio Check:** (N + B) = ___ ≥ 3 × P = ___ → ⬜
+**Ratio Compliance:** N≥3P: ___≥___ ⬜ | E≥3P: ___≥___ ⬜ | F≥3P: ___≥___ ⬜ | I≥3P: ___≥___ ⬜
 
 ---
 

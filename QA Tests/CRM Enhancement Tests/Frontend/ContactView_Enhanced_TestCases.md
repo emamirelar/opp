@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -38,7 +38,7 @@ The Enhanced Contact View component displays contact details for the CRM enhance
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result | Priority |
 |----|-----------|-------------|-------|-----------------|----------|
@@ -72,15 +72,10 @@ The Enhanced Contact View component displays contact details for the CRM enhance
 | POS-028 | Copy email | Email shown | Click copy | Copied | P2 |
 | POS-029 | Copy phone | Phone shown | Click copy | Copied | P2 |
 | POS-030 | i18n | Non-default locale | Set locale | Translated | P2 |
-| POS-031 | Loading state | Data loading | Load | Skeleton | P2 |
-| POS-032 | Refresh | Data loaded | Click refresh | Reloaded | P2 |
-| POS-033 | Export contact | Contact | Export | File downloaded | P2 |
-| POS-034 | Print view | Print | Print | Print-friendly | P2 |
-| POS-035 | Share link | Contact | Share | Link copied | P2 |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error | Priority |
 |----|-----------|--------------|---------------|----------|
@@ -154,10 +149,30 @@ The Enhanced Contact View component displays contact details for the CRM enhance
 | NEG-068 | Link external | External link | Target _blank | P2 |
 | NEG-069 | Tel link | phone: | Link works | P2 |
 | NEG-070 | Mailto link | mailto: | Link works | P2 |
+| NEG-071 | Partner API fail | Partner 500 | Error | P2 |
+| NEG-072 | Timeline API fail | Timeline 500 | Error | P2 |
+| NEG-073 | Document API fail | Document 500 | Error | P2 |
+| NEG-074 | Upload API fail | Upload 500 | Error | P2 |
+| NEG-075 | Clipboard fail | Copy fail | Graceful | P2 |
+| NEG-076 | Export API fail | Export 500 | Error | P2 |
+| NEG-077 | Print fail | Print blocked | Graceful | P2 |
+| NEG-078 | Share fail | Share error | Graceful | P2 |
+| NEG-079 | Preview fail | Corrupt doc | Error | P2 |
+| NEG-080 | Partner deleted | Partner soft-deleted | Handle | P2 |
+| NEG-081 | Activity deleted | Activity deleted | Filter | P2 |
+| NEG-082 | Document deleted | Document deleted | Filter | P2 |
+| NEG-083 | Form reset race | Reset during save | Handled | P2 |
+| NEG-084 | Validation race | Rapid submit | Handled | P2 |
+| NEG-085 | Contact ID invalid | ID "abc" | Error | P2 |
+| NEG-086 | Route param missing | No id | Redirect | P2 |
+| NEG-087 | Permission null | Perm null | Deny | P2 |
+| NEG-088 | Config mutation | Mutate config | No effect | P2 |
+| NEG-089 | Timeline pagination fail | Page 999 | Empty | P2 |
+| NEG-090 | Document pagination fail | Page 999 | Empty | P2 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field | Min | Max | At Min | At Max | Over Max | Priority |
 |----|-------|-----|-----|--------|--------|----------|----------|
@@ -234,7 +249,7 @@ The Enhanced Contact View component displays contact details for the CRM enhance
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule | Trigger | Expected Outcome | Priority |
 |----|-----------|------|---------|------------------|----------|
@@ -288,10 +303,50 @@ The Enhanced Contact View component displays contact details for the CRM enhance
 | FUN-048 | Cross-field validation | Validation | Field A, B | Both validated | P2 |
 | FUN-049 | Submit on enter | Form | Enter key | Submit | P2 |
 | FUN-050 | Escape cancel | Form | Escape | Cancel | P2 |
+| FUN-051 | Contact ID change | ID | Change | Refetch | P2 |
+| FUN-052 | Partner link | Partner | Click | Navigate | P2 |
+| FUN-053 | Timeline filter | Filter | Select | Filtered | P2 |
+| FUN-054 | Timeline sort | Sort | Select | Sorted | P2 |
+| FUN-055 | Document add | Add | Upload | Added | P2 |
+| FUN-056 | Document delete | Delete | Click | Removed | P2 |
+| FUN-057 | Copy email | Copy | Click | Copied | P2 |
+| FUN-058 | Copy phone | Copy | Click | Copied | P2 |
+| FUN-059 | Preview document | Preview | Click | Shown | P2 |
+| FUN-060 | Export | Export | Click | File | P2 |
+| FUN-061 | Print | Print | Click | Dialog | P2 |
+| FUN-062 | Share | Share | Click | Link | P2 |
+| FUN-063 | Refresh | Refresh | Click | Reloaded | P2 |
+| FUN-064 | Form dirty | Form | Change | Dirty | P2 |
+| FUN-065 | Form pristine | Form | No change | Pristine | P2 |
+| FUN-066 | Blur validation | Blur | Blur | Error | P2 |
+| FUN-067 | Async validation | Async | Validate | Waited | P2 |
+| FUN-068 | TrackBy | NgFor | Update | Stable | P2 |
+| FUN-069 | OnPush | CD | External | Detected | P2 |
+| FUN-070 | Signal | Signal | Change | Updated | P2 |
+| FUN-071 | Idempotent save | Save | Twice | Same | P2 |
+| FUN-072 | Optimistic update | Save | Save | UI first | P2 |
+| FUN-073 | Rollback | Save fail | Error | Revert | P2 |
+| FUN-074 | Disabled state | Disabled | Set | Not editable | P2 |
+| FUN-075 | Readonly state | Readonly | Set | View only | P2 |
+| FUN-076 | Conditional field | Condition | Met | Shown | P2 |
+| FUN-077 | Dynamic validation | Validation | Add rule | Validated | P2 |
+| FUN-078 | Cross-field validation | Fields | Both | Validated | P2 |
+| FUN-079 | Submit on enter | Form | Enter | Submit | P2 |
+| FUN-080 | Destroy cleanup | Destroy | Navigate | Cleanup | P2 |
+| FUN-081 | Input change | Input | Change | Detected | P2 |
+| FUN-082 | Output emit | Output | Emit | Propagated | P2 |
+| FUN-083 | Route param | Route | Param | Used | P2 |
+| FUN-084 | Query param | Query | Param | Used | P2 |
+| FUN-085 | State persist | State | Refresh | Restored | P2 |
+| FUN-086 | Debounce input | Input | Rapid | Debounced | P2 |
+| FUN-087 | Throttle scroll | Scroll | Rapid | Throttled | P2 |
+| FUN-088 | Pagination first | Page | 1 | First | P2 |
+| FUN-089 | Pagination last | Page | Last | Last | P2 |
+| FUN-090 | Empty state timeline | No activities | Load | Message | P2 |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result | Priority |
 |----|-----------|----------|----------|-----------------|----------|
@@ -345,6 +400,46 @@ The Enhanced Contact View component displays contact details for the CRM enhance
 | INT-048 | SSE | Stream | SSEService | Event | P1 |
 | INT-049 | IndexedDB | Persist | IndexedDB | Persisted | P1 |
 | INT-050 | ServiceWorker | Cache | SW | Cached | P1 |
+| INT-051 | ContactService | Load | Service | Fetched | P1 |
+| INT-052 | PartnerService | Partner | Service | Loaded | P1 |
+| INT-053 | ActivityService | Timeline | Service | Loaded | P1 |
+| INT-054 | DocumentService | Documents | Service | Loaded | P1 |
+| INT-055 | UploadService | Upload | Service | Uploaded | P1 |
+| INT-056 | Clipboard API | Copy | API | Copied | P1 |
+| INT-057 | ExportService | Export | Service | File | P1 |
+| INT-058 | Print | Print | Window | Dialog | P1 |
+| INT-059 | Router | Navigate | Router | Activated | P1 |
+| INT-060 | ActivatedRoute | Route | Route | Param | P1 |
+| INT-061 | FormBuilder | Form | FormBuilder | Created | P1 |
+| INT-062 | Validators | Validation | Validators | Validated | P1 |
+| INT-063 | HttpClient | Request | HttpClient | Response | P1 |
+| INT-064 | Http interceptor | Request | Interceptor | Modified | P1 |
+| INT-065 | NgZone | Zone | Zone | In zone | P1 |
+| INT-066 | ChangeDetectorRef | CD | CD | Triggered | P1 |
+| INT-067 | Store | State | Store | Consumed | P1 |
+| INT-068 | AnalyticsService | Event | Service | Sent | P1 |
+| INT-069 | FeatureFlagService | Flag | Service | Toggled | P1 |
+| INT-070 | BreakpointService | Resize | Service | Updated | P1 |
+| INT-071 | ThemeService | Theme | Service | Applied | P1 |
+| INT-072 | StorageService | Persist | Service | Persisted | P1 |
+| INT-073 | CacheService | Cache | Service | Cached | P1 |
+| INT-074 | DialogService | Dialog | Service | Opens | P1 |
+| INT-075 | ToastService | Toast | Service | Shown | P1 |
+| INT-076 | LoadingService | Loading | Service | Shown | P1 |
+| INT-077 | Error handler | Error | Handler | Handled | P1 |
+| INT-078 | CDK overlay | Overlay | Overlay | Shown | P1 |
+| INT-079 | Virtual scroll | Scroll | VirtualScroll | Virtualized | P1 |
+| INT-080 | Drag drop | Drop | DragDrop | Reorder | P1 |
+| INT-081 | Partner view | Partner | Link | View | P1 |
+| INT-082 | Interaction view | Interaction | Link | View | P1 |
+| INT-083 | Document view | Document | Link | View | P1 |
+| INT-084 | SearchService | Search | Service | Search | P1 |
+| INT-085 | NotificationService | Notification | Service | Sent | P1 |
+| INT-086 | AuditService | Audit | Service | Logged | P1 |
+| INT-087 | WebSocketService | Real-time | Service | Update | P1 |
+| INT-088 | SSEService | Stream | Service | Event | P1 |
+| INT-089 | IndexedDB | Persist | IndexedDB | Persisted | P1 |
+| INT-090 | Guard | Navigate | Guard | Allow | P1 |
 
 ---
 

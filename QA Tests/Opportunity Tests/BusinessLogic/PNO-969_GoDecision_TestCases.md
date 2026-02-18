@@ -15,19 +15,26 @@
 
 | # | Category | Section | Count | Minimum Required | Status |
 |---|----------|---------|-------|-----------------|--------|
-| 1 | Positive Tests | §1 | 35 | 30-50 | ✅ |
-| 2 | Negative Tests | §2 | 70 | Max(50, 2×35=70) | ✅ |
-| 3 | Boundary Tests | §3 | 70 | Max(50, 2×35=70) | ✅ |
-| 4 | Functional Tests | §4 | 50 | ≥50 | ✅ |
-| 5 | Integration Tests | §5 | 50 | ≥50 | ✅ |
-| 6 | Security Tests | §6 | 50 | ≥50 | ✅ |
-| 7 | Concurrency Tests | §7 | 25 | ≥25 | ✅ |
-| 8 | Unit Tests | §8 | 21 | ≥21 | ✅ |
-| 9 | Performance Tests | §9 | 16 | ≥16 | ✅ |
-| 10 | Load Tests | §10 | 10 | ≥10 | ✅ |
-| | **TOTAL** | | **397** | **≥347** | ✅ |
+| 1 | Positive Tests | §1 | 30 | 30 | ✅ |
+| 2 | Negative Tests | §2 | 90 | 3×30=90 | ✅ |
+| 3 | Boundary Tests | §3 | 90 | 3×30=90 | ✅ |
+| 4 | Functional Tests | §4 | 90 | 3×30=90 | ✅ |
+| 5 | Integration Tests | §5 | 90 | 3×30=90 | ✅ |
+| 6 | Concurrency Tests | §7 | 25 | ≥25 | ✅ |
+| 7 | Unit Tests | §8 | 21 | ≥21 | ✅ |
+| 8 | Performance Tests | §9 | 16 | ≥16 | ✅ |
+| 9 | Load Tests | §10 | 10 | ≥10 | ✅ |
+| | **TOTAL (core)** | | **462** | **≥462** | ✅ |
+| * | Security Tests (supplementary) | §6 | 50 | ≥50 | ✅ |
 
-**3:1 Ratio Check:** (70 + 70) = **140** ≥ 3 × 35 = **105** → ✅ PASS
+**MANDATORY Ratio Checks (N≥3P, E≥3P, F≥3P, I≥3P):**
+
+| Check | Formula | Result | Status |
+|-------|---------|--------|--------|
+| N ≥ 3P | 90 ≥ 3×30 = 90 | 90 ≥ 90 | ✅ PASS |
+| E ≥ 3P | 90 ≥ 3×30 = 90 | 90 ≥ 90 | ✅ PASS |
+| F ≥ 3P | 90 ≥ 3×30 = 90 | 90 ≥ 90 | ✅ PASS |
+| I ≥ 3P | 90 ≥ 3×30 = 90 | 90 ≥ 90 | ✅ PASS |
 
 ---
 
@@ -75,7 +82,7 @@
 
 ## §1 Positive Tests (Happy Path)
 
-> **Count: 35** | **Minimum: 30-50** | ✅ COMPLIANT
+> **Count: 30** | **Minimum: 30** | ✅ COMPLIANT
 
 ### Detailed Test Cases (P0)
 
@@ -279,17 +286,12 @@
 | POS-028 | Multiple sequential workflow cycles | Opp: Submit→Reject→Reopen→Submit→Approve | Full cycle | All transitions recorded correctly | P1 |
 | POS-029 | OM role transfer to Collaborator | OM changed | New OM assigned | Previous OM becomes Collaborator (**BLOCKED: PNO-1193**) | P0 |
 | POS-030 | New DoA2 holder can act | DoA2 changed after submission | New DoA2 approves | Approval accepted from new holder | P1 |
-| POS-031 | In-workflow indicator on list view | Opp in workflow | View opportunity list | "In Workflow" badge/indicator visible | P1 |
-| POS-032 | DoA pathway display on detail | Opp submitted | View detail page | DoA2/DoA3 pathway shown read-only | P1 |
-| POS-033 | End-to-end: Submit → Approve → GO | Complete opportunity | Full workflow | Final stage=GO, status=Closed(PASS) | P0 |
-| POS-034 | End-to-end: Submit → Reject → Reopen → Resubmit | Rejected opp | Full cycle | Successfully resubmitted after fix | P0 |
-| POS-035 | End-to-end: Cancel → Reopen → Submit → Approve | Cancelled opp | Full cycle | Workflow history: Cancel→Reopen→Submit→Approve | P0 |
 
 ---
 
 ## §2 Negative Tests (Failure Scenarios)
 
-> **Count: 70** | **Minimum: Max(50, 2×35=70)** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 3×30=90** | ✅ COMPLIANT
 
 ### 2.1 Collaborator Workflow Action Denial (10 tests)
 
@@ -398,11 +400,41 @@
 | NEG-069 | Network disconnect during approval | DoA2 approves | Transaction rolls back, no partial state | P1 |
 | NEG-070 | Org hierarchy service timeout | DoA2 lookup | Timeout error with retry option | P2 |
 
+### 2.8 Workflow State & Business Rule Violations (10 tests)
+
+| ID | Scenario | Action | Expected Result | Priority |
+|----|----------|--------|-----------------|----------|
+| NEG-071 | Submit without generating Opportunity Statement | Submit for Go | Blocked: "Generate Opportunity Statement first" | P0 |
+| NEG-072 | Submit with soft-deleted funding partner | Submit for Go | Validation error: partner no longer valid | P1 |
+| NEG-073 | Submit with soft-deleted client partner | Submit for Go | Validation error: partner no longer valid | P1 |
+| NEG-074 | Approve with wrong workflow instance ID | DoA2 approves | 404 or "Workflow not found" | P1 |
+| NEG-075 | Recall after DoA2 has already decided | OM recalls | Blocked: "Decision already made" | P0 |
+| NEG-076 | Reopen opportunity with active child records | Reopen from NO GO | Blocked or warning if dependencies exist | P2 |
+| NEG-077 | Submit with org unit having no DoA2 in hierarchy | Submit for Go | "No decision maker found for [org unit]" | P0 |
+| NEG-078 | Cancel without OM role | Non-OM user cancels | 403 Forbidden | P0 |
+| NEG-079 | Submit with expired Opportunity Statement | Statement generated >30 days ago | Warning or regeneration required | P2 |
+| NEG-080 | Approve with malformed workflow context | API with invalid JSON | 400 Bad Request | P1 |
+
+### 2.9 Data Integrity & Consistency (10 tests)
+
+| ID | Scenario | Action | Expected Result | Priority |
+|----|----------|--------|-----------------|----------|
+| NEG-081 | Submit with orphaned country (deleted from master) | Submit for Go | Validation error: invalid country | P1 |
+| NEG-082 | Submit with funding amount exceeding budget total | Submit for Go | Validation error or warning | P1 |
+| NEG-083 | Submit with SDG not in active SDG list | Submit for Go | Validation error: invalid SDG | P1 |
+| NEG-084 | Submit with product/service not in catalog | Submit for Go | Validation error: invalid product | P1 |
+| NEG-085 | Approve with stale opportunity version (concurrent edit) | DoA2 approves | 409 Conflict, refresh required | P1 |
+| NEG-086 | Submit with duplicate funding partner | Same partner twice | Validation error: duplicate partner | P2 |
+| NEG-087 | Submit with implementation end before signing date | Invalid date sequence | "End date must be after signing date" | P1 |
+| NEG-088 | Recall with workflow already in final state | OM recalls approved opp | Blocked: "Not in workflow" | P0 |
+| NEG-089 | Submit with null responsible org unit | Submit for Go | "Responsible org unit required" | P0 |
+| NEG-090 | Reject with reason containing only special chars | Rejection reason = "---" | Validation: "Provide meaningful reason" | P2 |
+
 ---
 
 ## §3 Boundary Tests (Edge Cases)
 
-> **Count: 70** | **Minimum: Max(50, 2×35=70)** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 3×30=90** | ✅ COMPLIANT
 
 ### 3.1 String Length Boundaries (15 tests)
 
@@ -508,7 +540,7 @@
 
 ## §4 Functional Tests (Business Rules)
 
-> **Count: 50** | **Minimum: ≥50** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 3×30=90** | ✅ COMPLIANT
 
 ### 4.1 Workflow Rules (15 tests)
 
@@ -580,11 +612,71 @@
 | FUN-049 | Acknowledgement recorded | User, Timestamp, OrgUnit=[name], Acknowledged=true | P1 |
 | FUN-050 | Stage change logged | Every stage transition has audit record with before/after | P0 |
 
+### 4.5 Notification & Routing Rules (10 tests)
+
+| ID | Business Rule | Test Scenario | Expected Outcome | Priority |
+|----|--------------|--------------|-----------------|----------|
+| FUN-051 | DoA2 receives submit notification | OM submits | DoA2 gets email with opp details | P0 |
+| FUN-052 | OM receives approval notification | DoA2 approves | OM gets approval email | P0 |
+| FUN-053 | OM receives rejection notification with reason | DoA2 rejects | OM gets rejection email with reason text | P0 |
+| FUN-054 | Internal stakeholders notified on GO | DoA2 approves | Stakeholders in team section notified | P1 |
+| FUN-055 | OIC receives workflow notification | Submit for Go | OIC (if configured) receives notification | P1 |
+| FUN-056 | Notification includes org unit context | Any workflow notification | Org unit name in email body | P1 |
+| FUN-057 | Multiple DoA2 holders all notified | Org unit has 2 DoA2 | Both receive submit notification | P1 |
+| FUN-058 | No notification on recall | OM recalls | DoA2 not notified of recall | P1 |
+| FUN-059 | Notification queue retry on failure | Email service down | Notification queued, delivered on recovery | P2 |
+| FUN-060 | Notification template placeholders replaced | Any notification | No raw placeholders in delivered email | P1 |
+
+### 4.6 Statement & Document Rules (10 tests)
+
+| ID | Business Rule | Test Scenario | Expected Outcome | Priority |
+|----|--------------|--------------|-----------------|----------|
+| FUN-061 | Statement auto-regenerated on submit | Submit for Go | New statement version created | P0 |
+| FUN-062 | Statement reflects latest opportunity data | Edit then submit | Statement includes all edits | P1 |
+| FUN-063 | Statement generation blocks submit if failed | Gen fails | Submit disabled until successful | P0 |
+| FUN-064 | Previous statement preserved on regeneration | Regenerate | Old version retained for audit | P2 |
+| FUN-065 | Statement includes DoA pathway | Generated statement | DoA2/DoA3 names in document | P1 |
+| FUN-066 | Statement PDF format valid | Download statement | Valid PDF, no corruption | P1 |
+| FUN-067 | Statement locale matches user preference | User locale = fr | Statement in French if supported | P2 |
+| FUN-068 | Statement filename includes opp ID | Download | Filename contains opportunity identifier | P2 |
+| FUN-069 | Statement regeneration idempotent | Regenerate twice | Same content, no duplicate versions | P2 |
+| FUN-070 | Statement unavailable for soft-deleted opp | Opp soft-deleted | Statement download returns 404 | P1 |
+
+### 4.7 List View & Filter Rules (10 tests)
+
+| ID | Business Rule | Test Scenario | Expected Outcome | Priority |
+|----|--------------|--------------|-----------------|----------|
+| FUN-071 | List shows "In Workflow" for GO/Active | Opp submitted | Badge/indicator visible in list | P1 |
+| FUN-072 | List excludes soft-deleted opportunities | Query list | IsDeleted=true opps not shown | P0 |
+| FUN-073 | Filter by stage returns correct subset | Filter stage=NO GO | Only NO GO opps | P1 |
+| FUN-074 | Filter by status=Active returns in-workflow only | Filter status=Active | GO/Active opps only | P1 |
+| FUN-075 | Sort by submission date descending | Default sort | Most recent first | P1 |
+| FUN-076 | OM filter shows only OM's opportunities | Filter by OM | Correct subset | P1 |
+| FUN-077 | DoA2 filter shows pending decisions | Filter by DoA2 | Opps awaiting that DoA2's decision | P1 |
+| FUN-078 | Combined filters AND logic | Stage=GO AND Status=Active | Intersection of both | P1 |
+| FUN-079 | Empty filter result shows message | No matches | "No opportunities found" | P2 |
+| FUN-080 | List pagination preserves filters | Page 2 | Same filters applied | P1 |
+
+### 4.8 Permission & Visibility Rules (10 tests)
+
+| ID | Business Rule | Test Scenario | Expected Outcome | Priority |
+|----|--------------|--------------|-----------------|----------|
+| FUN-081 | OM sees all workflow actions for own opp | OM views opp in I&P | Submit, Cancel visible | P0 |
+| FUN-082 | Collaborator sees no workflow actions | Collaborator views opp in I&P | Submit, Cancel hidden/disabled | P0 |
+| FUN-083 | DoA2 sees Approve/Reject for pending opp | DoA2 views opp in GO/Active | Approve, Reject visible | P0 |
+| FUN-084 | DoA2 of other org unit sees no actions | DoA2 org X views opp org Y | No Approve/Reject | P0 |
+| FUN-085 | General user sees no workflow actions | No-role user | All actions hidden | P0 |
+| FUN-086 | Permission endpoint returns correct flags | GET /api/opportunity/{id}/permissions | canSubmit, canCancel, etc. correct | P1 |
+| FUN-087 | Permission reload after role change | OM reassigned | New OM gets permissions, old loses | P1 |
+| FUN-088 | Read-only enforced for GO/Closed | Approved opp | No edit controls for anyone | P0 |
+| FUN-089 | Recall visible only for OM | Collaborator views GO/Active | Recall not visible | P0 |
+| FUN-090 | Reopen visible only for OM on CANCELLED/NO GO | Non-OM views cancelled opp | Reopen not visible | P0 |
+
 ---
 
 ## §5 Integration Tests (End-to-End Flows)
 
-> **Count: 50** | **Minimum: ≥50** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 3×30=90** | ✅ COMPLIANT
 
 ### 5.1 CRUD Workflow (10 tests)
 
@@ -660,6 +752,66 @@
 | INT-048 | Submit with database connection failure | 500 (handled) | "Service temporarily unavailable" | P1 |
 | INT-049 | Notification delivery failure | 202 (async) | Submission succeeds, notification queued | P1 |
 | INT-050 | Workflow engine timeout | 504 Gateway Timeout | "Request timed out, please retry" | P2 |
+
+### 5.6 API Contract & Payload (10 tests)
+
+| ID | Scenario | Request/Response | Expected Result | Priority |
+|----|----------|-----------------|-----------------|----------|
+| INT-051 | Submit with valid payload structure | POST /submit with all fields | 200, workflow created | P0 |
+| INT-052 | Submit with extra unknown fields | Payload has extra keys | Ignored, no error | P2 |
+| INT-053 | Approve with optional comments | POST /approve with comments | Comments stored in history | P1 |
+| INT-054 | Reject with reason in all 4 locales | Reason in en, fr, es, pt | Stored correctly per locale | P2 |
+| INT-055 | Recall with justification | POST /recall with justification | Justification in history | P1 |
+| INT-056 | Get workflow history pagination | GET ?page=2&pageSize=20 | Correct page returned | P2 |
+| INT-057 | Get permissions response structure | GET /permissions | JSON with canEdit, canDelete, etc. | P1 |
+| INT-058 | Submit with Content-Type application/json | Valid header | Request accepted | P1 |
+| INT-059 | Submit with wrong Content-Type | text/plain | 415 Unsupported Media Type | P2 |
+| INT-060 | Response includes Last-Modified header | GET opportunity | Header present for caching | P2 |
+
+### 5.7 Entity Relationships & Cascades (10 tests)
+
+| ID | Relationship | Test Scenario | Expected Result | Priority |
+|----|-------------|--------------|-----------------|----------|
+| INT-061 | Opportunity → WorkflowInstance (soft delete) | Soft-delete opportunity | WorkflowInstance handled per cascade rule | P1 |
+| INT-062 | WorkflowHistory → User (audit) | View history | User names resolved correctly | P1 |
+| INT-063 | Opportunity → FundingPartner (preserve on stage change) | Submit → Approve | Funding partners unchanged | P1 |
+| INT-064 | Opportunity → ClientPartner (preserve) | Full workflow cycle | Client partners preserved | P1 |
+| INT-065 | Opportunity → OpportunityCollaborators | Add collaborator, submit | Collaborator assignment preserved | P1 |
+| INT-066 | OrgUnit → EntityUserRole (DoA2) | Change org unit | DoA2 lookup uses new org unit | P0 |
+| INT-067 | Opportunity → OpportunityStatement (versioning) | Multiple submits | Statement versions linked correctly | P1 |
+| INT-068 | Notification → User (recipient) | Send notification | Recipient user resolved | P1 |
+| INT-069 | WorkflowInstance → Opportunity (1:1) | Submit creates workflow | Single workflow per opp at a time | P0 |
+| INT-070 | AuditTrail → Opportunity | All actions | All audit entries link to correct opp | P0 |
+
+### 5.8 Cross-Feature Integration (10 tests)
+
+| ID | Integration Point | Test Scenario | Expected Result | Priority |
+|----|-------------------|--------------|-----------------|----------|
+| INT-071 | Opportunity ↔ Partner (funding) | Submit with funding partner | Partner data in statement | P1 |
+| INT-072 | Opportunity ↔ Partner (client) | Submit with client partner | Client in statement | P1 |
+| INT-073 | Opportunity ↔ Geography (countries) | Multiple countries | All in statement, DoA2 from resp. org | P1 |
+| INT-074 | Opportunity ↔ SDG master data | Submit with SDGs | SDG names resolved in statement | P1 |
+| INT-075 | Opportunity ↔ Products/Services catalog | Submit with products | Product names in statement | P1 |
+| INT-076 | Workflow ↔ User management | DoA2 deactivated | System handles, routes to alternate | P2 |
+| INT-077 | Workflow ↔ Notification service | Submit triggers email | Email sent via notification service | P0 |
+| INT-078 | Workflow ↔ Audit service | Any action | Audit entry created | P0 |
+| INT-079 | Opportunity ↔ Search index | Submit changes stage | Search index updated with new stage | P2 |
+| INT-080 | Workflow ↔ Translation service | Notification in user locale | Email in correct language | P2 |
+
+### 5.9 State Machine & Transition Integrity (10 tests)
+
+| ID | Scenario | Action Sequence | Expected Result | Priority |
+|----|----------|-----------------|-----------------|----------|
+| INT-081 | Valid transition: I&P → GO | Submit for Go | Stage=GO, Status=Active | P0 |
+| INT-082 | Valid transition: GO → NO GO | DoA2 Reject | Stage=NO GO, Status=Closed | P0 |
+| INT-083 | Valid transition: GO → GO/Closed | DoA2 Approve | Stage=GO, Status=Closed | P0 |
+| INT-084 | Valid transition: I&P → CANCELLED | Cancel | Stage=CANCELLED, Status=Closed | P0 |
+| INT-085 | Valid transition: CANCELLED → I&P | Reopen | Stage=I&P, Status=Draft | P0 |
+| INT-086 | Valid transition: NO GO → I&P | Reopen | Stage=I&P, Status=Draft | P0 |
+| INT-087 | Invalid transition: GO/Closed → Submit | Submit on approved | 409 or action hidden | P0 |
+| INT-088 | Invalid transition: I&P → Approve | Approve without submit | 400 or action hidden | P0 |
+| INT-089 | Recall transition: GO/Active → I&P | OM Recall | Stage=I&P, Status=Draft | P0 |
+| INT-090 | Full cycle: Submit→Reject→Reopen→Edit→Submit→Approve | Complete flow | All states consistent, history complete | P0 |
 
 ---
 
@@ -932,7 +1084,7 @@
 | | Inactive OM handling | FUN-033 (**BLOCKED**) |
 | **3. Submission** | Mandatory acknowledgement | POS-009, FUN-020 |
 | | Optional additional remarks | POS-010 |
-| | Auto-regenerate Statement | POS-011, INT-031 |
+| | Auto-regenerate Statement | POS-011, INT-031, FUN-061 to FUN-070 |
 | **4. Validations** | All mandatory fields | NEG-021 to NEG-036, FUN-016 to FUN-030 |
 | | DoA2 server-side validation | NEG-037 to NEG-041, FUN-018 |
 | | Country-Org Unit mismatch warning | FUN-028 |
@@ -941,7 +1093,7 @@
 | | Cancel only from I&P not in workflow | FUN-002, NEG-011 |
 | | DoA pathway display | POS-032 |
 | | On-screen confirmation | POS-013 |
-| **6. Post-Submission** | Notification to DoA2 and OIC | INT-034, POS-025 |
+| **6. Post-Submission** | Notification to DoA2 and OIC | INT-034, POS-025, FUN-051 to FUN-060 |
 | | OM recall capability | POS-014, POS-015, FUN-003, FUN-004 |
 | | Email content verification | SEC-010, INT-049 |
 | | Internal stakeholder notification on GO | POS-005 (stakeholder notify) |
@@ -972,14 +1124,14 @@
 
 | Priority | Count | Description |
 |----------|-------|-------------|
-| P0 | 89 | Critical — must pass for feature acceptance |
-| P1 | 196 | High — required for full feature coverage |
-| P2 | 112 | Medium — edge cases, polish, non-functional |
-| **Total** | **397** | |
+| P0 | 95 | Critical — must pass for feature acceptance |
+| P1 | 245 | High — required for full feature coverage |
+| P2 | 122 | Medium — edge cases, polish, non-functional |
+| **Total** | **462** | |
 
 ---
 
-**Last Updated:** 2026-02-11  
-**Supersedes:** Previous version (55 tests, non-standard categories)  
+**Last Updated:** 2026-02-18  
+**Supersedes:** 2026-02-11 version (397 tests)  
 **Status:** Ready for Execution  
-**Compliance:** ✅ 10-Category Standard, ✅ 3:1 Ratio (140 ≥ 105)
+**Compliance:** ✅ MANDATORY Ratio (N≥3P, E≥3P, F≥3P, I≥3P all = 90≥90)

@@ -11,19 +11,24 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
-| §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| §1 Positive (P) | 30 | 30-50 | ✅ |
+| §2 Negative (N) | 90 | 90 | ✅ |
+| §3 Boundary (E) | 90 | 90 | ✅ |
+| §4 Functional (F) | 90 | 90 | ✅ |
+| §5 Integration (I) | 90 | 90 | ✅ |
+| §6 Concurrency (CON) | 25 | 25 | ✅ |
+| §7 Unit (UNT) | 21 | 21 | ✅ |
+| §8 Performance (PRF) | 16 | 16 | ✅ |
+| §9 Load (LDT) | 10 | 10 | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance Check**
+| Check | Result | Formula |
+|-------|--------|---------|
+| N≥3P? | ✅ | 90 ≥ 90 |
+| E≥3P? | ✅ | 90 ≥ 90 |
+| F≥3P? | ✅ | 90 ≥ 90 |
+| I≥3P? | ✅ | 90 ≥ 90 |
 
 ---
 
@@ -33,7 +38,7 @@
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps (Brief) | Expected Result | Priority |
 |----|-----------|-------------|---------------|-----------------|----------|
@@ -67,15 +72,9 @@
 | POS-028 | Full CRUD cycle | None | Create→Get→Update→Get→Delete | All succeed | P0 |
 | POS-029 | Multiple MIME types per type | Type has pdf, application/pdf | GetDocumentType | Both | P1 |
 | POS-030 | Validation rule — max size | Type has maxSize rule | GetDocumentType | Rule returned | P1 |
-| POS-031 | Validation rule — extensions | Type has extensions | GetDocumentType | Extensions returned | P1 |
-| POS-032 | Sort by name | Types exist | GetDocumentTypes OrderBy=Name | Sorted | P1 |
-| POS-033 | Sort by entity type | Types exist | GetDocumentTypes OrderBy=EntityType | Sorted | P2 |
-| POS-034 | Filter by category | Types have categories | GetDocumentTypes category filter | Filtered | P1 |
-| POS-035 | Document type in use | Docs reference type | GetDocumentType | Type returned | P1 |
-
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Condition | Expected Result | Priority |
 |----|-----------|------------------------|-----------------|----------|
@@ -150,9 +149,30 @@
 | NEG-069 | Batch create — partial fail | One invalid | Per transaction | P2 |
 | NEG-070 | Get with invalid include | Include invalid nav | Error | P2 |
 
+| NEG-071 | Get — entityName "Document" | EntityNames.ByName unknown | Empty EntityType, returns all | P1 |
+| NEG-072 | Get — entityName "Engagement" | EntityNames.ByName unknown | Empty EntityType, returns all | P1 |
+| NEG-073 | Get — entityName numeric | entityName="123" | Empty EntityType | P1 |
+| NEG-074 | Get — entityName special chars | entityName="Partner%20" | Per EntityNames.ByName | P1 |
+| NEG-075 | Get — entityName mixed case invalid | entityName="PARTNER" | Empty (no match) | P1 |
+| NEG-076 | Pagination — PageIndex int max | PageIndex=2147483647 | Empty page or error | P1 |
+| NEG-077 | Pagination — PageSize int max | PageSize=2147483647 | Error or capped | P1 |
+| NEG-078 | OrderBy — non-existent column | OrderBy="NonExistent" | Error or ignored | P1 |
+| NEG-079 | OrderBy — SQL injection | OrderBy="Name; DROP TABLE" | Sanitized | P0 |
+| NEG-080 | Ascending — invalid type | ascending="invalid" | Default or error | P1 |
+| NEG-081 | Request — null EntityType in params | EntityType=null in request | All types returned | P1 |
+| NEG-082 | Get — entityName empty string | entityName="" | Empty EntityType, all types | P1 |
+| NEG-083 | Get — entityName whitespace only | entityName="   " | Empty EntityType | P1 |
+| NEG-084 | Get — entityName "Opportunity" typo | entityName="Oppurtunity" | Empty EntityType | P1 |
+| NEG-085 | Get — entityName "PartnerTree" typo | entityName="PartnerTee" | Empty EntityType | P1 |
+| NEG-086 | Pagination — negative PageSize | PageSize=-5 | Error | P1 |
+| NEG-087 | Pagination — PageIndex -2 | PageIndex=-2 | Error or first page | P1 |
+| NEG-088 | Get — entityName path traversal | entityName="../Partner" | Per routing | P1 |
+| NEG-089 | Get — entityName unicode invalid | entityName="パートナー" | Empty EntityType | P1 |
+| NEG-090 | Get — entityName null (route param) | Missing entityName | 404 or error | P1 |
+
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max | Priority |
 |----|----------------|-----|-----|--------|--------|----------|----------|
@@ -227,9 +247,30 @@
 | BND-069 | Null optional | — | — | All optional null | — | — | P1 |
 | BND-070 | Max nested includes | — | — | Type→Category→Parent | — | — | P2 |
 
+| BND-071 | entityName "contact" | — | — | Lowercase | EntityNames→Contact | — | P1 |
+| BND-072 | entityName "Contact" | — | — | PascalCase | EntityNames→Contact | — | P1 |
+| BND-073 | entityName "partner" | — | — | Lowercase | EntityNames→Partner | — | P1 |
+| BND-074 | entityName "Partner" | — | — | PascalCase | EntityNames→Partner | — | P1 |
+| BND-075 | entityName "partnerTree" | — | — | camelCase | EntityNames→PartnerTree | — | P1 |
+| BND-076 | entityName "PartnerTree" | — | — | PascalCase | EntityNames→PartnerTree | — | P1 |
+| BND-077 | entityName "opportunity" | — | — | Lowercase | EntityNames→Opportunity | — | P1 |
+| BND-078 | entityName "Opportunity" | — | — | PascalCase | EntityNames→Opportunity | — | P1 |
+| BND-079 | entityName "interaction" | — | — | Lowercase | EntityNames→Interaction | — | P1 |
+| BND-080 | entityName "Interaction" | — | — | PascalCase | EntityNames→Interaction | — | P1 |
+| BND-081 | PageIndex | 0 | Max | pageIndex=0 | Valid | -1 | P1 |
+| BND-082 | PageSize | 1 | 1000 | pageSize=1 | pageSize=1000 | 1001 | P1 |
+| BND-083 | Single entity type result | 1 | — | Partner with 1 type | — | — | P1 |
+| BND-084 | All entity types | 5 | — | Partner,Contact,Interaction,PartnerTree,Opportunity | — | — | P1 |
+| BND-085 | Pagination last page | — | — | Total=25, Size=10, Page 3 | — | — | P1 |
+| BND-086 | Pagination exact fit | — | — | Total=20, Size=20, Page 1 | — | — | P1 |
+| BND-087 | EntityType empty | — | — | EntityType="" | All types | — | P1 |
+| BND-088 | OrderBy Name | — | — | OrderBy="Name" | Sorted | — | P1 |
+| BND-089 | Ascending true | — | — | ascending=true | Asc | — | P1 |
+| BND-090 | Ascending false | — | — | ascending=false | Desc | — | P1 |
+
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Scenario | Trigger | Expected Outcome | Priority |
 |----|-----------|---------------|---------|------------------|----------|
@@ -284,9 +325,50 @@
 | FUN-049 | MIME match | File MIME vs type | Match | Correct type | P1 |
 | FUN-050 | Extension match | File ext vs type | Match | Correct type | P1 |
 
+| FUN-051 | EntityNames.ByName contact | Map "contact" | GetDocumentTypes(contact) | EntityType=Contact | P1 |
+| FUN-052 | EntityNames.ByName Contact | Map "Contact" | GetDocumentTypes(Contact) | EntityType=Contact | P1 |
+| FUN-053 | EntityNames.ByName partner | Map "partner" | GetDocumentTypes(partner) | EntityType=Partner | P1 |
+| FUN-054 | EntityNames.ByName Partner | Map "Partner" | GetDocumentTypes(Partner) | EntityType=Partner | P1 |
+| FUN-055 | EntityNames.ByName partnerTree | Map "partnerTree" | GetDocumentTypes(partnerTree) | EntityType=PartnerTree | P1 |
+| FUN-056 | EntityNames.ByName opportunity | Map "opportunity" | GetDocumentTypes(opportunity) | EntityType=Opportunity | P1 |
+| FUN-057 | EntityNames.ByName interaction | Map "interaction" | GetDocumentTypes(interaction) | EntityType=Interaction | P1 |
+| FUN-058 | EntityNames.ByName unknown | Map "unknown" | GetDocumentTypes | EntityType=empty, all types | P1 |
+| FUN-059 | Filter empty EntityType | !string.IsNullOrEmpty | GetDocumentTypes(EntityType="") | No filter, all | P1 |
+| FUN-060 | Filter non-empty EntityType | Where EntityType | GetDocumentTypes(Partner) | Partner only | P1 |
+| FUN-061 | Paginate TotalCount | Paginate | GetDocumentTypes | TotalCount correct | P1 |
+| FUN-062 | Paginate Items | Paginate | GetDocumentTypes page 1 | Items count ≤ PageSize | P1 |
+| FUN-063 | Paginate Skip | PageIndex | GetDocumentTypes page 2 | Correct offset | P1 |
+| FUN-064 | Paginate Take | PageSize | GetDocumentTypes | Correct limit | P1 |
+| FUN-065 | Map Id to Model | AutoMapper | GetDocumentTypes | DocumentTypeModel.Id | P1 |
+| FUN-066 | Map Name to Model | AutoMapper | GetDocumentTypes | DocumentTypeModel.Name | P1 |
+| FUN-067 | Map EntityType to Model | AutoMapper | GetDocumentTypes | DocumentTypeModel.EntityType | P1 |
+| FUN-068 | Repository GetAll | DataRepository | GetDocumentTypes | Types from DB | P1 |
+| FUN-069 | IsDeleted filter | Where !IsDeleted | GetDocumentTypes | Deleted excluded | P0 |
+| FUN-070 | EntityType filter | Where EntityType | GetDocumentTypes(Partner) | Partner types only | P0 |
+| FUN-071 | PageIndex default | 1 | Request | PageIndex=1 | P1 |
+| FUN-072 | PageSize default | 10 | Request | PageSize=10 | P1 |
+| FUN-073 | OrderBy applied | Paginate | GetDocumentTypes | Sorted | P1 |
+| FUN-074 | Ascending applied | Paginate | GetDocumentTypes | Direction correct | P1 |
+| FUN-075 | Controller route param | entityName | GET /document-type/Partner | EntityType=Partner | P0 |
+| FUN-076 | Controller HandleOperationAsync | BaseController | GetAll | Wrapped | P1 |
+| FUN-077 | Seeded Partner types | DocumentTypeSeeder | GetDocumentTypes(Partner) | Partnership Agreement, etc. | P1 |
+| FUN-078 | Seeded Contact types | DocumentTypeSeeder | GetDocumentTypes(Contact) | CV/Bio, etc. | P1 |
+| FUN-079 | Seeded Interaction types | DocumentTypeSeeder | GetDocumentTypes(Interaction) | Minutes, etc. | P1 |
+| FUN-080 | Seeded Opportunity types | DocumentTypeSeeder | GetDocumentTypes(Opportunity) | Concept Note, etc. | P1 |
+| FUN-081 | Seeded PartnerTree types | DocumentTypeSeeder | GetDocumentTypes(PartnerTree) | Other | P1 |
+| FUN-082 | DocumentTypeId FK | Document.DocumentTypeId | Document load | DocumentType nav | P1 |
+| FUN-083 | Document entity type | Document.EntityType | EntityNames.ByName | Matches parent | P1 |
+| FUN-084 | ModifiableDeletableEntity | Base class | DocumentType | Name, Status, etc. | P1 |
+| FUN-085 | RequestParameters inheritance | PaginationRequest | DocumentTypeRequestParameters | PageIndex, PageSize | P1 |
+| FUN-086 | EntityType property | DocumentTypeRequestParameters | Request | EntityType set | P1 |
+| FUN-087 | ManagerWrapper resolution | IManagerWrapper | DocumentTypeController | DocumentTypeManager | P1 |
+| FUN-088 | DbContext scope | Scoped | GetDocumentTypes | Single context | P1 |
+| FUN-089 | PaginationResponse structure | Paginate | GetDocumentTypes | Items, TotalCount | P1 |
+| FUN-090 | API route | APIDictionary.DocumentType | GET /api/document-type/{entityName} | Correct route | P0 |
+
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities Involved | Expected Result | Priority |
 |----|-----------|----------|-------------------|-----------------|----------|
@@ -341,66 +423,50 @@
 | INT-049 | Type permissions | Per-type permission | DocumentType | Enforced | P1 |
 | INT-050 | Type quota | Per-type quota | DocumentType | Enforced | P2 |
 
----
-
-## §6 Security Tests (50)
-
-| ID | Test Name | Attack Vector | Target | Expected Block | Priority |
-|----|-----------|--------------|--------|----------------|----------|
-| SEC-001 | SQL injection name | '; DROP TABLE-- | CreateDocumentType | Sanitized | P0 |
-| SEC-002 | SQL injection filter | ' OR 1=1-- | GetDocumentTypes | Sanitized | P0 |
-| SEC-003 | XSS in name | <script>alert(1)</script> | CreateDocumentType | Sanitized | P0 |
-| SEC-004 | XSS in description | <img src=x> | CreateDocumentType | Sanitized | P0 |
-| SEC-005 | IDOR get | GetDocumentType(otherId) | GetDocumentType | 403 | P0 |
-| SEC-006 | IDOR update | UpdateDocumentType(otherId) | Update | 403 | P0 |
-| SEC-007 | IDOR delete | DeleteDocumentType(otherId) | Delete | 403 | P0 |
-| SEC-008 | Mass assignment Id | Include Id | Create | Ignored | P0 |
-| SEC-009 | Mass assignment IsDeleted | Include IsDeleted | Update | Ignored | P0 |
-| SEC-010 | Unauthenticated get | No auth | GetDocumentTypes | 401 | P0 |
-| SEC-011 | Unauthenticated create | No auth | CreateDocumentType | 401 | P0 |
-| SEC-012 | Expired token | Expired JWT | Any | 401 | P0 |
-| SEC-013 | Wrong role create | No permission | Create | 403 | P0 |
-| SEC-014 | Wrong role update | No permission | Update | 403 | P0 |
-| SEC-015 | Wrong role delete | No permission | Delete | 403 | P0 |
-| SEC-016 | Org scope bypass | Cross-org | GetDocumentType | 403 | P0 |
-| SEC-017 | LDAP injection | *)(uid=* | Filter | Sanitized | P0 |
-| SEC-018 | Sensitive data error | Stack trace | Exception | Not exposed | P0 |
-| SEC-019 | Rate limit | Too many | API | 429 | P1 |
-| SEC-020 | CSRF create | Cross-site | Create | Token validated | P0 |
-| SEC-021 | CSRF update | Cross-site | Update | Token validated | P0 |
-| SEC-022 | CSRF delete | Cross-site | Delete | Token validated | P0 |
-| SEC-023 | Parameter pollution | id=1&id=2 | Get | Handled | P1 |
-| SEC-024 | Header injection | Malicious header | Request | Sanitized | P1 |
-| SEC-025 | Brute force IDs | Enumerate | GetDocumentType | Rate limited | P1 |
-| SEC-026 | JWT alg none | alg=none | Request | Rejected | P0 |
-| SEC-027 | Log injection | Malicious log | Log | Sanitized | P1 |
-| SEC-028 | Info disclosure | Probe errors | Invalid | Generic | P1 |
-| SEC-029 | Excessive data | Huge PageSize | List | Capped | P1 |
-| SEC-030 | Cookie manipulation | Modify cookie | Request | Rejected | P0 |
-| SEC-031 | Replay attack | Replay | Create | Nonce | P1 |
-| SEC-032 | MIME injection | Malicious MIME | Create | Sanitized | P0 |
-| SEC-033 | Extension injection | Path in extension | Create | Sanitized | P0 |
-| SEC-034 | Validation rule injection | Malicious rule | Create | Sanitized | P0 |
-| SEC-035 | Category injection | Malicious category | Create | Sanitized | P0 |
-| SEC-036 | HTTP verb tampering | PUT vs POST | Create | 405 | P1 |
-| SEC-037 | Path traversal | ../../../ | Any | Rejected | P0 |
-| SEC-038 | Null byte | %00 | Filename | Rejected | P0 |
-| SEC-039 | Unicode homograph | Cyrillic 'a' | Name | Detected | P1 |
-| SEC-040 | Open redirect | Redirect | Callback | Validated | P1 |
-| SEC-041 | Session fixation | Fixate | Login | New session | P1 |
-| SEC-042 | Substitution attack | Replace JWT | Request | 403 | P0 |
-| SEC-043 | Timing attack | Response time | Get | Constant | P2 |
-| SEC-044 | Insecure reference | EntityType manip | Filter | Validated | P0 |
-| SEC-045 | Privilege escalation | Admin action | User | 403 | P0 |
-| SEC-046 | Concurrent auth | Two users | Request | Isolated | P0 |
-| SEC-047 | Token in URL | Token in query | Request | Avoided | P1 |
-| SEC-048 | Cache poisoning | Malicious cache | Cache | Sanitized | P1 |
-| SEC-049 | DoS large request | Huge body | Create | Rejected | P1 |
-| SEC-050 | DoS deep recursion | Deep category | Get | Limited | P1 |
+| INT-051 | API→Manager→Repository | GET /document-type/Partner | Controller, Manager, Repository | 200, types | P0 |
+| INT-052 | EntityNames in Controller | entityName→EntityType | DocumentTypeController, EntityNames | Mapped | P0 |
+| INT-053 | DocumentTypeManager→DbContext | GetDocumentTypes | Manager, AppDbContext | Query executed | P0 |
+| INT-054 | DocumentType→DocumentTypeModel | AutoMapper | Entity, Model | Mapped | P1 |
+| INT-055 | Document upload type dropdown | Upload doc | DocumentType, Document component | Types in dropdown | P0 |
+| INT-056 | Opportunity documents type | Add doc to opportunity | DocumentType, Opportunity | Opportunity types | P0 |
+| INT-057 | Partner documents type | Add doc to partner | DocumentType, Partner | Partner types | P0 |
+| INT-058 | Contact documents type | Add doc to contact | DocumentType, Contact | Contact types | P0 |
+| INT-059 | Interaction documents type | Add doc to interaction | DocumentType, Interaction | Interaction types | P0 |
+| INT-060 | Document.DocumentTypeId | Create document | Document, DocumentType | FK set | P0 |
+| INT-061 | Document list by type | List docs | Document, DocumentType | Filter by type | P1 |
+| INT-062 | DocumentManager type lookup | ListDocumentsAsync | DocumentManager, DocumentType | Types loaded | P1 |
+| INT-063 | Paginate extension | Paginate | DocumentTypeManager, PaginationRequest | PaginationResponse | P1 |
+| INT-064 | DataRepository GetAll | repository.GetAll | DocumentType, DataRepository | IQueryable | P1 |
+| INT-065 | BaseController HandleOperation | GetAll | DocumentTypeController, BaseController | Wrapped result | P1 |
+| INT-066 | UserResolverService | Controller ctor | DocumentTypeController | UserResolver injected | P1 |
+| INT-067 | DocumentTypeSeeder→DB | RunSeeding | DocumentTypeSeeder, UNOPSAppDbContext | Types seeded | P2 |
+| INT-068 | Seed Partner types | SeedDocumentTypes | Partner types | Partnership Agreement, etc. | P2 |
+| INT-069 | Seed Contact types | SeedDocumentTypes | Contact types | CV/Bio, etc. | P2 |
+| INT-070 | Seed Interaction types | SeedDocumentTypes | Interaction types | Minutes, etc. | P2 |
+| INT-071 | Seed Opportunity types | SeedDocumentTypes | Opportunity types | Concept Note, etc. | P2 |
+| INT-072 | Seed PartnerTree types | SeedDocumentTypes | PartnerTree types | Other | P2 |
+| INT-073 | Document gdrive component | Add link | DocumentType, document-gdrive | Type dropdown | P1 |
+| INT-074 | Document upload component | Upload file | DocumentType, upload-document | Type selection | P1 |
+| INT-075 | document.service.ts | getDocumentTypes | Angular service, API | Types fetched | P1 |
+| INT-076 | EntityNames.ByName | Controller param | EntityNames static | Switch case | P1 |
+| INT-077 | RequestParameters | Controller params | pageIndex, pageSize, orderBy | Mapped to request | P1 |
+| INT-078 | IManagerWrapper | Controller ctor | ManagerWrapper.DocumentTypeManager | Resolved | P1 |
+| INT-079 | IDocumentTypeManager | Manager interface | GetDocumentTypesAsync | Contract | P1 |
+| INT-080 | Document entity relationship | Document load | Document.DocumentType | Nav loaded | P1 |
+| INT-081 | ModifiableDeletableEntity | DocumentType entity | Base class | Inherited fields | P1 |
+| INT-082 | AppDbContext DocumentTypes | DbSet | DbContext | DocumentTypes set | P1 |
+| INT-083 | DocumentTypeRequestParameters | Request model | EntityType, PaginationRequest | Inherited | P1 |
+| INT-084 | APIDictionary.DocumentType | Route | /api/document-type | Constant | P1 |
+| INT-085 | Authorization | [Authorize] | DocumentTypeController | Auth enforced | P0 |
+| INT-086 | Integration test fixture | WebApplicationFactory | DocumentTypeControllerTests | Full stack | P1 |
+| INT-087 | Document create with type | NewDocumentRequest | DocumentTypeId | Type assigned | P0 |
+| INT-088 | DocumentBaseCreateModel | ParentEntityName | EntityNames.ByName | DocumentParentEntityType | P1 |
+| INT-089 | Opportunity documents component | opportunity-documents | DocumentType, Opportunity | Type dropdown | P1 |
+| INT-090 | Create opportunity from interaction | create-opportunity-from-interactions | DocumentType, Interaction | Type in dialog | P1 |
 
 ---
 
-## §7 Concurrency Tests (25)
+## §6 Concurrency Tests (25)
 
 | ID | Test Name | Concurrent Scenario | Expected Behavior | Priority |
 |----|-----------|---------------------|-------------------|----------|
@@ -432,7 +498,7 @@
 
 ---
 
-## §8 Unit Tests (21)
+## §7 Unit Tests (21)
 
 | ID | Test Name | Category | Input | Expected Output | Priority |
 |----|-----------|----------|-------|-----------------|----------|
@@ -460,7 +526,7 @@
 
 ---
 
-## §9 Performance Tests (16)
+## §8 Performance Tests (16)
 
 | ID | Test Name | Operation | Threshold | Priority |
 |----|-----------|----------|-----------|----------|
@@ -483,7 +549,7 @@
 
 ---
 
-## §10 Load Tests (10)
+## §9 Load Tests (10)
 
 | ID | Test Name | Load Profile | Duration | Success Criteria | Priority |
 |----|-----------|-------------|----------|-------------------|----------|

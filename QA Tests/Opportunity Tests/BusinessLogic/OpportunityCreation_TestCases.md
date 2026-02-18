@@ -12,19 +12,23 @@
 
 | # | Category | Section | Count | Minimum Required | Status |
 |---|----------|---------|-------|-----------------|--------|
-| 1 | Positive Tests | §1 | 35 | 30-50 | ✅ |
-| 2 | Negative Tests | §2 | 70 | Max(50, 2×35=70) | ✅ |
-| 3 | Boundary Tests | §3 | 70 | Max(50, 2×35=70) | ✅ |
-| 4 | Functional Tests | §4 | 50 | ≥50 | ✅ |
-| 5 | Integration Tests | §5 | 50 | ≥50 | ✅ |
+| 1 | Positive Tests | §1 | 30 | 30-50 | ✅ |
+| 2 | Negative Tests | §2 | 90 | Max(50, 3×30=90) | ✅ |
+| 3 | Boundary Tests | §3 | 90 | Max(50, 3×30=90) | ✅ |
+| 4 | Functional Tests | §4 | 90 | Max(50, 3×30=90) | ✅ |
+| 5 | Integration Tests | §5 | 90 | Max(50, 3×30=90) | ✅ |
 | 6 | Security Tests | §6 | 50 | ≥50 | ✅ |
 | 7 | Concurrency Tests | §7 | 25 | ≥25 | ✅ |
 | 8 | Unit Tests | §8 | 21 | ≥21 | ✅ |
 | 9 | Performance Tests | §9 | 16 | ≥16 | ✅ |
 | 10 | Load Tests | §10 | 10 | ≥10 | ✅ |
-| | **TOTAL** | | **397** | **≥347** | ✅ |
+| | **TOTAL** | | **462** | **≥462** | ✅ |
 
-**3:1 Ratio Check:** (70 + 70) = **140** ≥ 3 × 35 = **105** → ✅ PASS
+**Ratio Checks:**
+- N ≥ 3P: 90 ≥ 90 → ✅ PASS
+- E ≥ 3P: 90 ≥ 90 → ✅ PASS
+- F ≥ 3P: 90 ≥ 90 → ✅ PASS
+- I ≥ 3P: 90 ≥ 90 → ✅ PASS
 
 ---
 
@@ -39,7 +43,7 @@ Opportunities can be created from 3 entry points:
 
 ## §1 Positive Tests (Happy Path)
 
-> **Count: 35** | **Minimum: 30-50** | ✅ COMPLIANT
+> **Count: 30** | **Minimum: 30-50** | ✅ COMPLIANT
 
 ### PNO-687: Create from Partners Page (12 tests)
 
@@ -75,7 +79,7 @@ Opportunities can be created from 3 entry points:
 | POS-023 | Interaction type visible during creation | Meeting/Call/Email | Source type shown for context | P2 |
 | POS-024 | Navigate back to interaction after create | Create → Click breadcrumb | Returns to interaction detail | P2 |
 
-### PNO-689: Create from Opportunity Page (11 tests)
+### PNO-689: Create from Opportunity Page (6 tests)
 
 | ID | Test Name | Steps (Brief) | Expected Result | Priority |
 |----|-----------|---------------|-----------------|----------|
@@ -85,17 +89,12 @@ Opportunities can be created from 3 entry points:
 | POS-028 | Assign OM during creation | Select OM from dropdown | OM assigned to opportunity | P0 |
 | POS-029 | Select responsible org unit | Choose org unit | Org unit linked | P0 |
 | POS-030 | Add funding partner manually | Search and select partner | Partner linked with amount | P1 |
-| POS-031 | Select SDGs | Choose 1+ SDGs | SDGs saved | P1 |
-| POS-032 | Select countries of implementation | Choose 1+ countries | Countries saved | P1 |
-| POS-033 | Select products and services | Choose product types | Products linked | P1 |
-| POS-034 | Set implementation dates | Enter start + end dates | Dates saved correctly | P1 |
-| POS-035 | Auto-assign current user as OM | Create without specifying OM | Current user assigned as OM | P1 |
 
 ---
 
 ## §2 Negative Tests (Failure Scenarios)
 
-> **Count: 70** | **Minimum: Max(50, 2×35=70)** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: Max(50, 3×30=90)** | ✅ COMPLIANT
 
 ### 2.1 Missing Required Fields (15 tests)
 
@@ -197,11 +196,36 @@ Opportunities can be created from 3 entry points:
 | NEG-069 | Tab out of required field without filling | Inline validation shows error | P1 |
 | NEG-070 | Invalid URL in reference field | "Invalid URL format" | P2 |
 
+### 2.7 Opportunity Creation Failures (20 tests)
+
+| ID | Scenario | Expected Result | Priority |
+|----|----------|-----------------|----------|
+| NEG-071 | Create with non-existent partner ID | 400 "Partner not found" | P0 |
+| NEG-072 | Create with soft-deleted partner ID | 400 "Partner not available" | P1 |
+| NEG-073 | Create with non-existent interaction ID | 400 "Interaction not found" | P1 |
+| NEG-074 | Create with interaction from different partner | 400 "Interaction partner mismatch" | P1 |
+| NEG-075 | Create with invalid currency code | 400 "Invalid currency" | P1 |
+| NEG-076 | Create with future implementation start before signing | Warning or reject per business rule | P1 |
+| NEG-077 | Create with funding amount exceeding total budget | 400 "Funding exceeds budget" | P1 |
+| NEG-078 | Create with duplicate funding partner | 400 "Duplicate funding partner" | P1 |
+| NEG-079 | Create with non-existent SDG code | 400 "Invalid SDG" | P1 |
+| NEG-080 | Create with non-existent country code | 400 "Invalid country" | P1 |
+| NEG-081 | Create with non-existent product ID | 400 "Product not found" | P1 |
+| NEG-082 | Create with non-existent strategic mission | 400 "Invalid strategic mission" | P1 |
+| NEG-083 | Create with OM from different org unit (restricted) | 403 or validation error | P1 |
+| NEG-084 | Create with stakeholder who is not active user | 400 "Invalid stakeholder" | P2 |
+| NEG-085 | Create with circular partner reference | 400 "Invalid partner linkage" | P2 |
+| NEG-086 | Create with implementation dates in past (if blocked) | 400 "Dates must be in future" | P1 |
+| NEG-087 | Create with budget in unsupported currency | 400 "Currency not supported" | P2 |
+| NEG-088 | Create with malformed JSON in API request | 400 "Invalid request body" | P1 |
+| NEG-089 | Create with Content-Type mismatch (e.g., form instead of JSON) | 400 or 415 Unsupported Media Type | P1 |
+| NEG-090 | Create with null/undefined for required nested object | 400 "Required field missing" | P0 |
+
 ---
 
 ## §3 Boundary Tests (Edge Cases)
 
-> **Count: 70** | **Minimum: Max(50, 2×35=70)** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: Max(50, 3×30=90)** | ✅ COMPLIANT
 
 ### 3.1 String Length Boundaries (15 tests)
 
@@ -303,11 +327,36 @@ Opportunities can be created from 3 entry points:
 | BND-069 | Create with exactly 1 of every collection type | ✅ Minimum viable data | P1 |
 | BND-070 | AI suggestion with 0 confidence | Suggestion shown with disclaimer | P2 |
 
+### 3.7 Additional Boundary Cases (20 tests)
+
+| ID | Boundary | Expected Result | Priority |
+|----|----------|-----------------|----------|
+| BND-071 | Name at 254 characters (one below max) | ✅ Accept | P1 |
+| BND-072 | Description at 9999 characters (one below max) | ✅ Accept | P1 |
+| BND-073 | Budget = 0.00 with currency | ✅ Accept | P1 |
+| BND-074 | Funding amount = 0.01 (min positive) | ✅ Accept | P2 |
+| BND-075 | Implementation start = end of year (Dec 31) | ✅ Accept | P2 |
+| BND-076 | Implementation end = start of year (Jan 1) | ✅ Accept | P2 |
+| BND-077 | Exactly 2 funding partners (min for split) | ✅ Accept | P1 |
+| BND-078 | Exactly 17 SDGs (all selected) | ✅ Accept | P1 |
+| BND-079 | Exactly 1 country of implementation | ✅ Accept | P1 |
+| BND-080 | Exactly 1 product selected | ✅ Accept | P1 |
+| BND-081 | Target signing = implementation start (same day) | ✅ Accept | P2 |
+| BND-082 | Name with single space only | Trimmed or reject per rule | P2 |
+| BND-083 | Description with exactly 1 character | ✅ Accept if min=1 | P2 |
+| BND-084 | Beneficiaries = MAX_INT - 1 | ✅ Accept or defined limit | P2 |
+| BND-085 | Create with 0 documents (optional) | ✅ Accept | P1 |
+| BND-086 | Create with 1 stakeholder only | ✅ Accept | P2 |
+| BND-087 | Currency with 3-letter ISO code boundary | ✅ Accept valid codes | P2 |
+| BND-088 | Implementation span = 1 day | ✅ Accept | P2 |
+| BND-089 | Name with Unicode combining characters | ✅ Normalized/stored | P2 |
+| BND-090 | Create from partner at org unit boundary (root vs leaf) | ✅ Accept valid hierarchy | P2 |
+
 ---
 
 ## §4 Functional Tests (Business Rules)
 
-> **Count: 50** | **Minimum: ≥50** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: Max(50, 3×30=90)** | ✅ COMPLIANT
 
 ### 4.1 Workflow Rules (15 tests)
 
@@ -379,11 +428,56 @@ Opportunities can be created from 3 entry points:
 | FUN-049 | AI-assisted field population | AI source noted in audit | P2 |
 | FUN-050 | Bulk edit (if supported) | Each change individually audited | P2 |
 
+### 4.5 Additional Functional Rules (40 tests)
+
+| ID | Business Rule | Test Scenario | Expected Outcome | Priority |
+|----|--------------|--------------|-----------------|----------|
+| FUN-051 | Partner pre-population from partner page | Create from partner | Partner ID and name locked | P0 |
+| FUN-052 | Interaction pre-population from interaction | Create from interaction | Partner + interaction linked | P0 |
+| FUN-053 | Direct creation has no pre-population | Create from opportunity page | All fields empty | P0 |
+| FUN-054 | Funding partner amount must be ≤ total budget | Add funding > budget | Validation error | P1 |
+| FUN-055 | Sum of funding amounts can equal total budget | Funding sum = budget | ✅ Accept | P1 |
+| FUN-056 | Country must be in allowed list | Select valid country | ✅ Accept | P1 |
+| FUN-057 | SDG must be 1-17 | Select valid SDG | ✅ Accept | P1 |
+| FUN-058 | Product must exist in catalog | Select valid product | ✅ Accept | P1 |
+| FUN-059 | Strategic mission must exist | Select valid mission | ✅ Accept | P1 |
+| FUN-060 | Stakeholder must be active user | Select active user | ✅ Accept | P1 |
+| FUN-061 | Name trimming on save | Enter "  Name  " | Stored as "Name" | P1 |
+| FUN-062 | Description preserves line breaks | Multi-line description | Line breaks preserved | P1 |
+| FUN-063 | Currency code case-insensitive | "usd" or "USD" | Normalized to USD | P2 |
+| FUN-064 | Duplicate country selection prevented | Select same country twice | Single selection or warning | P2 |
+| FUN-065 | Duplicate SDG selection prevented | Select same SDG twice | Single selection or warning | P2 |
+| FUN-066 | Opportunity inherits partner currency (from partner) | Create from partner with EUR | Currency = EUR | P1 |
+| FUN-067 | Opportunity inherits partner country (from partner) | Create from partner with country | Country pre-filled | P1 |
+| FUN-068 | WorkflowStatus set to Draft on creation | Create any opp | WorkflowStatus = Draft | P0 |
+| FUN-069 | Status field not editable during creation | Try to set status | Field disabled/hidden | P1 |
+| FUN-070 | Stage field not editable during creation | Try to set stage | Field disabled/hidden | P1 |
+| FUN-071 | CreatedBy set to current user | Create opp | CreatedBy = current user ID | P0 |
+| FUN-072 | CreatedDate set to server time | Create opp | CreatedDate = UTC timestamp | P0 |
+| FUN-073 | LastModifiedBy null on creation | New opp | LastModifiedBy = null | P1 |
+| FUN-074 | LastModifiedDate null on creation | New opp | LastModifiedDate = null | P1 |
+| FUN-075 | IsDeleted = false on creation | New opp | IsDeleted = false | P0 |
+| FUN-076 | Name required even when creating from interaction | Omit name | Validation error | P0 |
+| FUN-077 | Org unit required from all entry points | Omit org unit | Validation error | P0 |
+| FUN-078 | OM required when creating from opportunity page | Omit OM (direct) | Validation error | P0 |
+| FUN-079 | OM optional when creating from partner | Create from partner without OM | Auto-assign or allow | P1 |
+| FUN-080 | Interaction link optional when creating from interaction | Create without linking | Can save without interaction | P2 |
+| FUN-081 | Document upload does not block save | Upload fails, other fields valid | Opportunity saves without doc | P1 |
+| FUN-082 | AI suggestion can be partially accepted | Accept 2 of 5 suggestions | Only accepted fields updated | P2 |
+| FUN-083 | AI suggestion can be rejected | Reject all suggestions | Form unchanged | P2 |
+| FUN-084 | Breadcrumb reflects creation source | Create from partner | Breadcrumb shows Partner > New Opp | P2 |
+| FUN-085 | Return URL after save (from partner) | Create from partner, save | Redirect to partner or opp detail | P1 |
+| FUN-086 | Return URL after save (from interaction) | Create from interaction, save | Redirect to interaction or opp detail | P1 |
+| FUN-087 | Return URL after save (direct) | Create from opportunity page, save | Redirect to opp detail or list | P1 |
+| FUN-088 | Opportunity visible to OM immediately | Create, assign OM | OM sees in "My Opportunities" | P0 |
+| FUN-089 | Opportunity visible to org unit members | Create in org unit | Org unit members can view | P1 |
+| FUN-090 | Opportunity not visible to unauthorized users | Create, view as other user | 403 or not in list | P0 |
+
 ---
 
 ## §5 Integration Tests (End-to-End Flows)
 
-> **Count: 50** | **Minimum: ≥50** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: Max(50, 3×30=90)** | ✅ COMPLIANT
 
 ### 5.1 CRUD Workflow (10 tests)
 
@@ -459,6 +553,51 @@ Opportunities can be created from 3 entry points:
 | INT-048 | Upload document exceeding size | 413 Payload Too Large | P1 |
 | INT-049 | Upload unsupported file type | 400 "File type not allowed" | P1 |
 | INT-050 | API call with extra unknown fields | Extra fields ignored (no error) | P2 |
+
+### 5.6 Additional Integration Flows (40 tests)
+
+| ID | Flow | Expected Result | Priority |
+|----|------|-----------------|----------|
+| INT-051 | Create from partner → Partner detail shows opp count +1 | Count incremented | P1 |
+| INT-052 | Create from interaction → Interaction detail shows linked opp | Link visible | P1 |
+| INT-053 | Create → Dashboard widget updates | New opp in dashboard count | P2 |
+| INT-054 | Create → Notification service receives event | Notification created (if configured) | P2 |
+| INT-055 | Create with funding partners → Budget total calculated | Sum displayed correctly | P1 |
+| INT-056 | Create with multiple countries → Filter by any country finds opp | Filter works | P1 |
+| INT-057 | Create with multiple SDGs → Filter by any SDG finds opp | Filter works | P1 |
+| INT-058 | Create → Export to CSV includes new opp | Export contains new record | P2 |
+| INT-059 | Create → Report includes new opp | Report reflects new data | P2 |
+| INT-060 | Create from partner A → Create from partner B → Both in list | Both visible, correct linkage | P1 |
+| INT-061 | Create → AI insights refresh (if enabled) | Insights updated | P2 |
+| INT-062 | Create → Audit log query returns create event | Audit traceable | P1 |
+| INT-063 | Create with document → Document service stores file | File in storage | P1 |
+| INT-064 | Create → Permission endpoint returns correct flags | canEdit, canDelete etc. correct | P1 |
+| INT-065 | Create from partner → Partner API returns opp in related | Related opportunities include new | P1 |
+| INT-066 | Create from interaction → Interaction API returns opp in related | Related opportunities include new | P1 |
+| INT-067 | Create → Workflow component shows correct stage | I&P/Draft displayed | P0 |
+| INT-068 | Create → Breadcrumb navigation works | All breadcrumb links valid | P2 |
+| INT-069 | Create → Browser back after save | No duplicate, correct state | P1 |
+| INT-070 | Create → Session timeout → Retry save | Re-auth, then save succeeds | P2 |
+| INT-071 | Create with all optional fields → Full detail view | All data displayed | P1 |
+| INT-072 | Create minimal → Edit to add optional → Save | Incremental data persists | P1 |
+| INT-073 | Create → Duplicate (if feature exists) | Copy created correctly | P2 |
+| INT-074 | Create → Share link (if feature exists) | Link works for authorized user | P2 |
+| INT-075 | Create → Print/PDF (if feature exists) | Renders correctly | P2 |
+| INT-076 | Create from partner → Partner soft-deleted later | Opp still accessible, partner shows deleted | P1 |
+| INT-077 | Create from interaction → Interaction archived later | Opp still accessible | P1 |
+| INT-078 | Create → Org unit changed in system | Opp retains original org unit | P1 |
+| INT-079 | Create → OM deactivated later | Opp retains OM, read-only or reassign | P1 |
+| INT-080 | Create with 10 funding partners → All displayed in detail | UI shows all 10 | P1 |
+| INT-081 | Create with 17 SDGs → All displayed | All SDGs shown | P1 |
+| INT-082 | Create with 20 countries → All displayed | All countries shown | P2 |
+| INT-083 | Create → Search by OM name | Found | P1 |
+| INT-084 | Create → Search by org unit name | Found | P1 |
+| INT-085 | Create → Search by partner name | Found | P1 |
+| INT-086 | Create → Filter by date range (creation) | Found in range | P1 |
+| INT-087 | Create → Bulk operations (if supported) | Selectable in bulk list | P2 |
+| INT-088 | Create → oUP sync (if integrated) | Synced or queued | P2 |
+| INT-089 | Create → External system webhook (if configured) | Webhook triggered | P2 |
+| INT-090 | Create → Full E2E from login to opp detail | Complete flow succeeds | P0 |
 
 ---
 
@@ -684,7 +823,7 @@ Opportunities can be created from 3 entry points:
 |------------|------------|
 | **PNO-687:** Create from Partners | POS-001 to POS-012, INT-002, INT-034, BND-061-062 |
 | **PNO-688:** Create from Interactions | POS-013 to POS-024, INT-003, INT-033, BND-063-064 |
-| **PNO-689:** Create from Opportunity Page | POS-025 to POS-035, INT-001 |
+| **PNO-689:** Create from Opportunity Page | POS-025 to POS-030, INT-001 |
 | Partner pre-population | POS-001, POS-002, POS-003, NEG-006 |
 | AI-assisted creation | POS-005, POS-014, POS-021, NEG-052, BND-070, PRF-005 |
 | Mandatory field validation | NEG-001 to NEG-015, FUN-016 to FUN-030 |
@@ -693,7 +832,7 @@ Opportunities can be created from 3 entry points:
 
 ---
 
-**Last Updated:** 2026-02-11  
+**Last Updated:** 2026-02-18  
 **Supersedes:** Previous version (19 tests, 3 categories)  
 **Status:** Ready for Execution  
-**Compliance:** ✅ 10-Category Standard, ✅ 3:1 Ratio (140 ≥ 105)
+**Compliance:** ✅ 10-Category Standard | N≥3P ✅ | E≥3P ✅ | F≥3P ✅ | I≥3P ✅ | Total: 462

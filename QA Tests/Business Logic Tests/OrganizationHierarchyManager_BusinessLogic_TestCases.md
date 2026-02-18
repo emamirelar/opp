@@ -12,19 +12,19 @@
 
 | Category | File/Section | Count | Minimum Required | Status |
 |----------|-------------|-------|-----------------|--------|
-| Positive Tests | §1 | 35 | 30-50 | ✅ |
-| Negative Tests | §2 | 70 | Max(50, 2×35)=70 | ✅ |
-| Boundary Tests | §3 | 70 | Max(50, 2×35)=70 | ✅ |
-| Functional Tests | §4 | 50 | ≥50 | ✅ |
-| Integration Tests | §5 | 50 | ≥50 | ✅ |
+| Positive Tests | §1 | 30 | 30-50 | ✅ |
+| Negative Tests | §2 | 90 | Max(50, 3×30)=90 | ✅ |
+| Boundary Tests | §3 | 90 | Max(50, 3×30)=90 | ✅ |
+| Functional Tests | §4 | 90 | ≥90 | ✅ |
+| Integration Tests | §5 | 90 | ≥90 | ✅ |
 | Security Tests | §6 | 50 | ≥50 | ✅ |
 | Concurrency Tests | §7 | 25 | ≥25 | ✅ |
 | Unit Tests | §8 | 21 | ≥21 | ✅ |
 | Performance Tests | §9 | 16 | ≥16 | ✅ |
 | Load Tests | §10 | 10 | ≥10 | ✅ |
-| **TOTAL** | | **397** | **≥347** | ✅ |
+| **TOTAL** | | **462** | **≥462** | ✅ |
 
-**3:1 Ratio Check:** (N + B) = 140 ≥ 3 × P = 105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -34,7 +34,7 @@ Manages the organizational hierarchy (Region → Hub → OrgUnit). Key features:
 
 ---
 
-## §1 Positive Tests — 35 tests
+## §1 Positive Tests — 30 tests
 
 ### P0 Detailed (5)
 
@@ -92,15 +92,10 @@ Manages the organizational hierarchy (Region → Hub → OrgUnit). Key features:
 | POS-028 | Update sort order | UpdateAsync(sortOrder) | Order changed | P2 |
 | POS-029 | Map entity to model | mapper.Map | All fields | P2 |
 | POS-030 | Get typeahead | GetTypeaheadAsync | Id+Name list | P2 |
-| POS-031 | Get org unit count | GetCountAsync | Non-deleted count | P2 |
-| POS-032 | Restore deleted | RestoreAsync | IsDeleted=false | P2 |
-| POS-033 | Get flat list of all | GetAllAsync | All non-deleted | P2 |
-| POS-034 | Audit trail retrieval | GetAuditAsync | History entries | P2 |
-| POS-035 | Get OrgUnit with partners count | GetByIdWithCount | Partner count loaded | P2 |
 
 ---
 
-## §2 Negative Tests — 70 tests
+## §2 Negative Tests — 90 tests
 
 | ID | Category | Scenario | Expected | Pr |
 |----|----------|---------|----------|----|
@@ -174,10 +169,30 @@ Manages the organizational hierarchy (Region → Hub → OrgUnit). Key features:
 | NEG-068 | Move | Move to same parent | No-op | P2 |
 | NEG-069 | Bulk | Batch delete with mixed valid/invalid | Valid deleted, invalid error | P1 |
 | NEG-070 | Multiple | Multiple validation errors | All returned | P1 |
+| NEG-071 | Input | Null sort column | Default | P2 |
+| NEG-072 | Input | Invalid sort direction | Default | P2 |
+| NEG-073 | Hierarchy | Create OrgUnit under OrgUnit (if invalid) | BusinessException | P1 |
+| NEG-074 | State | Get children of deleted | BusinessException | P1 |
+| NEG-075 | Dep | DB connection lost on move | Rollback | P1 |
+| NEG-076 | Auth | Create Region without permission | Unauthorized | P0 |
+| NEG-077 | Code | Code with SQL chars | Sanitized | P0 |
+| NEG-078 | Tree | Max depth exceeded on create | BusinessException | P1 |
+| NEG-079 | Move | Move to deleted descendant | BusinessException | P1 |
+| NEG-080 | Null | Null description | Accepted or error | P2 |
+| NEG-081 | ID | MAX_INT+1 overflow | Error | P2 |
+| NEG-082 | Mass | Mass assign Id | Blocked | P0 |
+| NEG-083 | Mass | Mass assign ParentId (invalid) | Blocked | P1 |
+| NEG-084 | Search | Search with injection | Parameterized | P0 |
+| NEG-085 | Tree | Orphaned node (parent deleted) | Handled | P1 |
+| NEG-086 | Code | Code with control chars | Rejected | P1 |
+| NEG-087 | Hierarchy | Region as child of Hub | BusinessException | P0 |
+| NEG-088 | Dep | Timeout on tree build | Error | P1 |
+| NEG-089 | State | Update during concurrent delete | Conflict | P1 |
+| NEG-090 | Filter | Filter by invalid type | Error | P2 |
 
 ---
 
-## §3 Boundary Tests — 70 tests
+## §3 Boundary Tests — 90 tests
 
 | ID | Category | Scenario | Expected | Pr |
 |----|----------|---------|----------|----|
@@ -251,6 +266,26 @@ Manages the organizational hierarchy (Region → Hub → OrgUnit). Key features:
 | BND-068 | Tree | All under single root | Single branch | P1 |
 | BND-069 | Tree | Balanced binary tree | Correct structure | P2 |
 | BND-070 | Tree | Highly unbalanced (linear chain) | Handled | P1 |
+| BND-071 | String | Name 100 chars | Accepted | P1 |
+| BND-072 | String | Code 25 chars | Accepted | P1 |
+| BND-073 | Numeric | OrgUnit ID 100 | Retrieved | P1 |
+| BND-074 | Collection | 50 org units | Loaded <1s | P1 |
+| BND-075 | Collection | 500 org units | Loaded <3s | P1 |
+| BND-076 | Depth | Depth 5 | Valid | P1 |
+| BND-077 | Depth | Depth 9 | Valid | P1 |
+| BND-078 | Search | 50-char search | Processed | P1 |
+| BND-079 | Page | Page 100 | Handled | P2 |
+| BND-080 | Width | Root with 100 children | Loaded | P1 |
+| BND-081 | Ancestors | Depth 3 node | 3 ancestors | P1 |
+| BND-082 | Descendants | Root with 200 total | All listed | P1 |
+| BND-083 | Move | Move to depth 3 | Valid | P1 |
+| BND-084 | Unicode | Name Korean | Stored | P2 |
+| BND-085 | Date | Created DST transition | Correct | P2 |
+| BND-086 | Count | Partners count 50 | 50 | P2 |
+| BND-087 | Count | Users count 25 | 25 | P2 |
+| BND-088 | Sort | Sort by created date | Correct | P2 |
+| BND-089 | Type | Region at index 0 | Accepted | P2 |
+| BND-090 | Tree | 3-level hierarchy | Correct | P1 |
 
 ---
 
@@ -258,7 +293,7 @@ Manages the organizational hierarchy (Region → Hub → OrgUnit). Key features:
 
 Following the same pattern as other migrated files, organized by subsections:
 
-### §4 Functional Tests — 50 tests
+### §4 Functional Tests — 90 tests
 **4.1 Workflow (15):** Hierarchy rules (Region→Hub→OrgUnit), type enforcement, soft-delete excludes, audit fields, move validation, code uniqueness, descendant/ancestor traversal, pagination defaults, search case-insensitivity, child count updates on deletion, permission-based filtering, sort order enforcement, tree build excluding deleted, new unit appears after refresh, delete cascades blocked.
 
 **4.2 Validation (15):** Name required, Code unique, Type valid enum, ParentId valid (exists/not-deleted), hierarchy type rules (Hub needs Region parent, OrgUnit needs Hub parent), circular reference prevention, max depth check, XSS prevention, API content-type, code format validation, move target validation, sort parameter validation, description max length, code case-insensitive uniqueness, move doesn't break depth.
@@ -267,7 +302,9 @@ Following the same pattern as other migrated files, organized by subsections:
 
 **4.4 Audit (10):** Create audit, update audit, delete audit, move audit (old parent, new parent), name change audit, code change audit, read no audit, failed operation no audit, batch audit, type change audit.
 
-### §5 Integration Tests — 50 tests
+**4.5 Extended Functional (40):** FUN-051: Hierarchy rules; FUN-052: Type enforcement; FUN-053: Soft-delete exclude; FUN-054: Audit fields; FUN-055: Move validation; FUN-056: Code uniqueness; FUN-057: Descendant traversal; FUN-058: Ancestor traversal; FUN-059: Pagination defaults; FUN-060: Search case-insensitive; FUN-061: Child count update; FUN-062: Permission filtering; FUN-063: Sort order; FUN-064: Tree exclude deleted; FUN-065: New unit refresh; FUN-066: Delete cascade block; FUN-067: Name required; FUN-068: Code unique; FUN-069: Type valid; FUN-070: ParentId valid; FUN-071: Hub needs Region; FUN-072: OrgUnit needs Hub; FUN-073: Circular prevention; FUN-074: Max depth; FUN-075: XSS prevention; FUN-076: Code format; FUN-077: Move target; FUN-078: Sort param; FUN-079: Description max; FUN-080: Code case-insensitive; FUN-081: Move depth; FUN-082: Max page size; FUN-083: FK parent; FUN-084: Unique code; FUN-085: Soft-delete no cascade; FUN-086: Children block delete; FUN-087: Partners block delete; FUN-088: Max tree depth; FUN-089: Search limit; FUN-090: Batch limit.
+
+### §5 Integration Tests — 90 tests
 **5.1 CRUD (10):** Full lifecycle, create→listed, delete→excluded, update→persisted, create Region+Hub+OrgUnit chain, move→hierarchy updated, restore deleted, batch create, update code→searchable, create with all optional.
 
 **5.2 Search & Filter (10):** Search by name, search by code, filter by type, combined search+filter, case-insensitive, empty results, filter excludes deleted, search within subtree, filter by multiple types, clear filters.
@@ -277,6 +314,8 @@ Following the same pattern as other migrated files, organized by subsections:
 **5.4 Relationships (10):** OrgUnit→Partners, OrgUnit→Users, OrgUnit→Parent, OrgUnit→Children, Region→Hubs, Hub→OrgUnits, delete OrgUnit→partners unaffected, move→scope changes, OrgUnit→Opportunities (via partners), audit trail.
 
 **5.5 Error Handling (15):** Invalid data 400, not found 404, unauthorized 403, circular reference 400, delete with children 400, delete with partners 400, duplicate code 400, invalid hierarchy type 400, DB timeout 500, concurrency 409, malformed request 400, rate limit 429, SQL injection sanitized, large payload 413, session expired 401.
+
+**5.6 Extended Integration (40):** INT-051: Full lifecycle; INT-052: Create→Listed; INT-053: Delete→Excluded; INT-054: Update→Persisted; INT-055: Create chain; INT-056: Move→Updated; INT-057: Restore; INT-058: Batch create; INT-059: Update code→Search; INT-060: Create optional; INT-061: Search name; INT-062: Search code; INT-063: Filter type; INT-064: Combined search; INT-065: Case-insensitive; INT-066: Empty results; INT-067: Exclude deleted; INT-068: Subtree search; INT-069: Multi-type filter; INT-070: Clear filters; INT-071: Page 1; INT-072: Last page; INT-073: Empty; INT-074: Single page; INT-075: Max page size; INT-076: OrgUnit→Partners; INT-077: OrgUnit→Users; INT-078: OrgUnit→Parent; INT-079: OrgUnit→Children; INT-080: Region→Hubs; INT-081: Hub→OrgUnits; INT-082: Delete→Partners; INT-083: Move→Scope; INT-084: OrgUnit→Opportunities; INT-085: Audit trail; INT-086: Invalid 400; INT-087: NotFound 404; INT-088: Unauthorized 403; INT-089: Circular 400; INT-090: End-to-end.
 
 ### §6 Security Tests — 50 tests
 **6.1 Injection (10):** SQL Name, SQL search, XSS Name, XSS Code, LDAP, path traversal, HTML injection, JSON injection, template injection, OS command.

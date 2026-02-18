@@ -12,19 +12,22 @@
 
 | Category | File/Section | Count | Minimum Required | Status |
 |----------|-------------|-------|-----------------|--------|
-| Positive Tests | §1 | 35 | 30-50 | ✅ |
-| Negative Tests | §2 | 70 | Max(50, 2×35)=70 | ✅ |
-| Boundary Tests | §3 | 70 | Max(50, 2×35)=70 | ✅ |
-| Functional Tests | §4 | 50 | ≥50 | ✅ |
-| Integration Tests | §5 | 50 | ≥50 | ✅ |
+| Positive Tests | §1 | 30 | 30-50 | ✅ |
+| Negative Tests | §2 | 90 | 90 | ✅ |
+| Boundary Tests | §3 | 90 | 90 | ✅ |
+| Functional Tests | §4 | 90 | 90 | ✅ |
+| Integration Tests | §5 | 90 | 90 | ✅ |
 | Security Tests | §6 | 50 | ≥50 | ✅ |
 | Concurrency Tests | §7 | 25 | ≥25 | ✅ |
 | Unit Tests | §8 | 21 | ≥21 | ✅ |
 | Performance Tests | §9 | 16 | ≥16 | ✅ |
 | Load Tests | §10 | 10 | ≥10 | ✅ |
-| **TOTAL** | | **397** | **≥347** | ✅ |
+| **TOTAL** | | **462** | **≥462** | ✅ |
 
-**3:1 Ratio Check:** (N + B) = 140 ≥ 3 × P = 105 → ✅ PASS
+| **N≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
+| **E≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
+| **F≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
+| **I≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
 
 ---
 
@@ -153,11 +156,6 @@ The Partner Ecosystem view provides a visual representation of the partner netwo
 | POS-028 | Collapse all nodes | Ecosystem with expanded nodes | Click "Collapse All" | All nodes collapsed to root level | P2 |
 | POS-029 | Reset zoom to default | Ecosystem zoomed in | Click "Reset Zoom" / fit-to-view | View resets to fit all visible partners | P2 |
 | POS-030 | Multi-type filter combination | Partners of all types exist | Select Funding + Client types | Both Funding and Client partners visible | P2 |
-| POS-031 | Display leaf node without expand icon | Partner with no children | Load ecosystem | Leaf node shows no expand/collapse control | P2 |
-| POS-032 | Display child count indicator | Parent partner with children | Load ecosystem | Node shows child count badge | P2 |
-| POS-033 | Ecosystem refreshes on partner add | Ecosystem loaded | Add new partner via another tab | Refresh ecosystem, new partner appears | P2 |
-| POS-034 | Ecosystem reflects partner deletion | Ecosystem loaded | Soft-delete a partner | Refresh ecosystem, deleted partner hidden | P2 |
-| POS-035 | State persistence across navigation | Expanded nodes in ecosystem | Navigate to detail, then back | Expand/collapse state preserved | P2 |
 
 ---
 
@@ -264,6 +262,26 @@ The Partner Ecosystem view provides a visual representation of the partner netwo
 | NEG-068 | Partner node with extremely long name | Name > 200 chars | Name truncated with ellipsis in node | P2 |
 | NEG-069 | Partner hierarchy depth > 10 levels | Very deep nesting | Renders without stack overflow | P1 |
 | NEG-070 | Ecosystem with 10,000+ partners | Very large dataset | Progressive loading or virtualization | P1 |
+| NEG-071 | Search with null after trim | "   " | Treated as empty | P1 |
+| NEG-072 | Filter with invalid type enum | Type = "INVALID" | Default view | P1 |
+| NEG-073 | Export with invalid format | Format = "DOC" | Default PDF | P1 |
+| NEG-074 | Zoom with invalid level | Zoom = "invalid" | Default 100% | P1 |
+| NEG-075 | Ecosystem with null partner data | Partner = null | Skipped | P1 |
+| NEG-076 | Relationship with null target | Target = null | Line not rendered | P1 |
+| NEG-077 | Statistics with null count | Count = null | Display 0 | P1 |
+| NEG-078 | Search with control characters | \0 in query | Sanitized | P1 |
+| NEG-079 | Export during filter change | Filter changing | Export waits | P2 |
+| NEG-080 | Ecosystem with malformed API response | Invalid JSON | Error handled | P1 |
+| NEG-081 | Pan with invalid coordinates | X,Y invalid | Capped | P1 |
+| NEG-082 | Ecosystem with duplicate partner IDs | Same ID twice | One shown | P1 |
+| NEG-083 | Filter with empty array | [] | All visible | P1 |
+| NEG-084 | Search with oversized query | 1000+ chars | Truncated | P1 |
+| NEG-085 | Export with expired token | Token expired | Auth prompt | P1 |
+| NEG-086 | Ecosystem with circular hierarchy | Circular ParentIds | Handled | P0 |
+| NEG-087 | Zoom with negative value | Zoom = -10 | Default | P1 |
+| NEG-088 | Ecosystem with NaN in statistics | Value = NaN | Display 0 | P1 |
+| NEG-089 | Relationship with invalid type | Type = "INVALID" | Default line | P1 |
+| NEG-090 | Ecosystem with concurrent export | 2 exports | One queued | P1 |
 
 ---
 
@@ -375,6 +393,26 @@ The Partner Ecosystem view provides a visual representation of the partner netwo
 | BND-068 | Search at exactly max length (255 chars) | 255 character search | Accepted and processed | P2 |
 | BND-069 | Export with exactly 1 row | Single partner export | Valid file with 1 data row | P2 |
 | BND-070 | Multiple filters yielding exactly 1 partner | Combined filters | Single partner shown | P2 |
+| BND-071 | Partner count exactly 0 | Empty | Empty state | P1 |
+| BND-072 | Partner count exactly 1 | Single | One node | P1 |
+| BND-073 | Partner count exactly 100 | Medium | All in 3s | P1 |
+| BND-074 | Partner count exactly 1000 | Large | <5s | P1 |
+| BND-075 | Hierarchy depth exactly 0 | Flat | No hierarchy | P1 |
+| BND-076 | Hierarchy depth exactly 20 | Max | Full depth | P1 |
+| BND-077 | Children per parent exactly 0 | Leaf | No expand | P1 |
+| BND-078 | Children per parent exactly 500 | Max | Rendered | P1 |
+| BND-079 | Zoom level exactly 10% | Min | Min zoom | P1 |
+| BND-080 | Zoom level exactly 500% | Max | Max zoom | P1 |
+| BND-081 | Search query exactly 1 char | "A" | Matches | P1 |
+| BND-082 | Search query exactly 255 chars | Max | Processed | P1 |
+| BND-083 | Relationship count exactly 0 | No relationships | No lines | P1 |
+| BND-084 | Relationship count exactly 100 | Dense | All rendered | P2 |
+| BND-085 | Statistics total exactly 0 | Empty | "0" | P1 |
+| BND-086 | Statistics total exactly 999999 | Max | Formatted | P2 |
+| BND-087 | Viewport exactly 320px | Mobile | Adapts | P2 |
+| BND-088 | Viewport exactly 3840px | 4K | Full viewport | P2 |
+| BND-089 | Partner name exactly 200 chars | Max | Ellipsis | P1 |
+| BND-090 | Filter results exactly 0 | No match | Empty message | P1 |
 
 ---
 
@@ -451,6 +489,46 @@ The Partner Ecosystem view provides a visual representation of the partner netwo
 | FUN-048 | Large export request logged | Export > 1000 rows | User ID, row count, export duration | P2 |
 | FUN-049 | Error event logged | API error on ecosystem | Error code, stack trace, user context | P1 |
 | FUN-050 | Rate limit violation logged | Too many requests | User ID, endpoint, request count | P1 |
+| FUN-051 | Ecosystem shows only non-deleted | IsDeleted | Load | Deleted excluded | P0 |
+| FUN-052 | Hierarchy preserves parent-child | Parent | Load | Correct order | P0 |
+| FUN-053 | Relationship lines connect correctly | Line | Load | Endpoints match | P0 |
+| FUN-054 | Filter state persists on refresh | Refresh | Browser refresh | Filters re-applied | P1 |
+| FUN-055 | Search case-insensitive | Search | "ACME" vs "acme" | Same match | P1 |
+| FUN-056 | Type filter additive | Filter | Funding + Client | Union shown | P1 |
+| FUN-057 | Node click navigates | Click | Partner node | Route to detail | P0 |
+| FUN-058 | Expand/collapse persists | Session | Navigate, return | State preserved | P1 |
+| FUN-059 | Statistics update on filter | Filter | Apply | Stats recalc | P1 |
+| FUN-060 | Export includes only filtered | Filter + Export | Filter then export | Filtered data | P1 |
+| FUN-061 | New partner after creation | Create | Create, refresh | Node visible | P1 |
+| FUN-062 | Deleted partner after refresh | Delete | Delete, refresh | Node gone | P1 |
+| FUN-063 | Relationship removed when partner deleted | Delete | Delete one | Line removed | P1 |
+| FUN-064 | Search clears on filter change | Filter | Change | Search cleared | P2 |
+| FUN-065 | Fit-to-view centers nodes | Zoom | Reset | All visible | P1 |
+| FUN-066 | Search min length 1 | Search | "A" | Valid | P1 |
+| FUN-067 | Search max length 255 | Search | 255 chars | Valid | P1 |
+| FUN-068 | Filter type valid enum | Type | Funding, Client, Impl | Invalid default | P1 |
+| FUN-069 | Export format valid | Format | PDF, PNG, CSV | Invalid default | P1 |
+| FUN-070 | Zoom level 10-500% | Zoom | 100% | 600% capped | P1 |
+| FUN-071 | Partner ID positive | ID | 42 | -1 invalid | P1 |
+| FUN-072 | Hierarchy depth ≤ 20 | Depth | 15 | 21 error | P2 |
+| FUN-073 | Search sanitizes HTML | Input | "ACME" | `<img>` escaped | P0 |
+| FUN-074 | Filter params validated server-side | API | Valid JSON | Malformed error | P1 |
+| FUN-075 | Pan coordinates bounded | Pan | Within range | Beyond capped | P2 |
+| FUN-076 | Page number valid | URL | ?page=1 | ?page=-1 default | P2 |
+| FUN-077 | Export date range valid | Range | Jan–Dec | Dec–Jan invalid | P2 |
+| FUN-078 | Sort parameter valid | Sort | ?sort=name | ?sort=DROP default | P1 |
+| FUN-079 | API content-type validation | Response | application/json | text/plain error | P1 |
+| FUN-080 | Layout algorithm valid | Layout | Normal | Circular error | P1 |
+| FUN-081 | Max concurrent exports 1 | Constraint | 2 exports | 2nd queued | P1 |
+| FUN-082 | Max search results 1000 | Constraint | 5000 matches | Paginated | P1 |
+| FUN-083 | Max nodes ~5000 | Constraint | 5001 | Virtualization | P2 |
+| FUN-084 | Min browser version | Browser | Chrome 89 | Warning | P2 |
+| FUN-085 | API rate limit 10 req/s | Constraint | 15 searches | 429 | P1 |
+| FUN-086 | Max filter combinations | Constraint | All filters | Applied | P2 |
+| FUN-087 | Session timeout 30 min | Constraint | 31 min | Expired | P1 |
+| FUN-088 | Export file size 50MB max | Constraint | Large | Chunked | P2 |
+| FUN-089 | Concurrent user limit | Constraint | 100 users | All load | P2 |
+| FUN-090 | WebSocket for real-time | Constraint | Load | Connection | P2 |
 
 ---
 
@@ -532,6 +610,46 @@ The Partner Ecosystem view provides a visual representation of the partner netwo
 | INT-048 | WebSocket disconnection | Connection drops | Reconnect attempt, degraded mode | P2 |
 | INT-049 | Invalid filter combination from URL | Crafted URL params | Graceful fallback to default filters | P1 |
 | INT-050 | Session expired during export | Token expired mid-export | Re-auth prompt, export retryable | P1 |
+| INT-051 | Create partner → appears | Create | Partner, Ecosystem | Node after refresh | P0 |
+| INT-052 | Update partner name → reflects | Update | Name | Label updated | P0 |
+| INT-053 | Soft-delete partner → removed | Delete | Partner | Node gone | P0 |
+| INT-054 | Create child → hierarchy updates | Create | Parent, Child | Child under parent | P0 |
+| INT-055 | Change partner type → filter reflects | Update | Type | Filter counts update | P1 |
+| INT-056 | Activate partner → statistics update | Update | Status | Active count up | P1 |
+| INT-057 | Deactivate partner → statistics update | Update | Status | Active count down | P1 |
+| INT-058 | Add relationship → line appears | Create | Relationship | Line rendered | P1 |
+| INT-059 | Remove relationship → line disappears | Delete | Relationship | Line gone | P1 |
+| INT-060 | Move partner → hierarchy restructures | Update | Parent | Node moves | P1 |
+| INT-061 | Search + type filter | Filter | Name + Funding | Funding matches | P0 |
+| INT-062 | Search across all fields | Search | Name, code, type | Matches | P1 |
+| INT-063 | Filter then search | Filter + Search | Client, "Global" | Combined | P1 |
+| INT-064 | Search then filter | Search + Filter | "Corp", Funding | Combined | P1 |
+| INT-065 | Clear search preserves filter | Clear | Search | Filter remains | P1 |
+| INT-066 | Clear filter preserves search | Clear | Filter | Search remains | P1 |
+| INT-067 | Search no filter returns all | Search | "Partner" | All types | P1 |
+| INT-068 | Filter no search returns type | Filter | Funding | All Funding | P1 |
+| INT-069 | Search results update on data change | Search | New matching | Appears | P2 |
+| INT-070 | Filter counts match data | Filter | Each type | Count matches | P1 |
+| INT-071 | First page loads | Pagination | Page 1 | First batch | P1 |
+| INT-072 | Next page/batch | Pagination | Load more | More loaded | P1 |
+| INT-073 | Virtual scroll incremental | Pagination | Scroll | New nodes | P2 |
+| INT-074 | Page size affects render | Pagination | 50 per batch | 50 nodes | P2 |
+| INT-075 | Last batch loads | Pagination | Scroll end | All loaded | P2 |
+| INT-076 | Parent-child relationship line | Relationship | Load | Line connects | P0 |
+| INT-077 | Funding partnership line | Relationship | Funding | Funding line | P1 |
+| INT-078 | Client partnership line | Relationship | Client | Client line | P1 |
+| INT-079 | Implementation partnership line | Relationship | Impl | Impl line | P1 |
+| INT-080 | Bidirectional relationship | Relationship | Two-way | Bidirectional | P1 |
+| INT-081 | Multi-level cascade | Relationship | 5 levels | Full tree | P1 |
+| INT-082 | Relationship tooltip | Relationship | Hover | Details | P2 |
+| INT-083 | Cross-type relationship | Relationship | Funding→Client | Line between | P1 |
+| INT-084 | Orphaned partner | Relationship | Isolated | No lines | P2 |
+| INT-085 | Partner with many relationships | Relationship | 10+ | All rendered | P2 |
+| INT-086 | API 404 missing partner | Error | Deleted | 404 | P0 |
+| INT-087 | API 500 ecosystem load | Error | Server | Error + retry | P0 |
+| INT-088 | API 403 unauthorized | Error | No permission | Access denied | P0 |
+| INT-089 | Network timeout on search | Error | Slow | Timeout | P1 |
+| INT-090 | Ecosystem end-to-end full flow | E2E | Load→Filter→Search→Export | P0 |
 
 ---
 

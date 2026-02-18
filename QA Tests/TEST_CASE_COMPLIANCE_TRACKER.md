@@ -13,18 +13,18 @@
 | # | Category | Minimum | Formula |
 |---|----------|---------|---------|
 | 1 | Positive | 30-50 (P) | Baseline |
-| 2 | Negative | Max(50, 2×P) | ≥50 AND ≥2×Positive |
-| 3 | Boundary | Max(50, 2×P) | ≥50 AND ≥2×Positive |
-| 4 | Functional | ≥50 | Fixed: workflow(15), validation(15), constraint(10), audit(10) |
-| 5 | Integration | ≥50 | Fixed: CRUD(10), search(10), pagination(5), relationships(10), errors(15) |
+| 2 | Negative | Max(50, 3×P) | ≥50 AND ≥3×Positive |
+| 3 | Boundary | Max(50, 3×P) | ≥50 AND ≥3×Positive |
+| 4 | Functional | Max(50, 3×P) | ≥50 AND ≥3×Positive |
+| 5 | Integration | Max(50, 3×P) | ≥50 AND ≥3×Positive |
 | 6 | Security | ≥50 | Fixed: OWASP Top 10, injection, authz, IDOR, mass assignment |
 | 7 | Concurrency | ≥25 | Fixed: race conditions, deadlocks, double submit |
 | 8 | Unit | ≥21 | Fixed: validation(5), formatting(3), calculations(5), status(5), collections(3) |
 | 9 | Performance | ≥16 | Fixed: single(2), bulk(3), search(5), concurrent(3), memory(3) |
 | 10 | Load | ≥10 | Fixed: sustained(3), spike(2), stress(3), recovery(2) |
-| | **Grand Total** | **≥347** | |
+| | **Grand Total** | **≥462** | |
 
-**3:1 Ratio:** (Negative + Boundary) ≥ 3 × Positive
+**Ratio Compliance:** N≥3P | E≥3P | F≥3P | I≥3P (each category individually ≥ 3 × Positive)
 
 ---
 
@@ -32,12 +32,12 @@
 
 | Metric | Value |
 |--------|-------|
-| **Total Files** | ~121 |
-| **Fully Compliant (✅)** | ~121 |
+| **Total Files** | ~131 |
+| **Fully Compliant (✅)** | ~131 |
 | **Partially Compliant (🟡)** | 0 |
 | **Non-Compliant (❌)** | 0 |
-| **Tests Per File** | 397 |
-| **Total Tests Across All Files** | ~48,037 |
+| **Tests Per File** | 397–462 |
+| **Total Tests Across All Files** | ~52,843 |
 | **Migration Completion** | 100% |
 
 ---
@@ -46,7 +46,7 @@
 
 | Symbol | Meaning |
 |--------|---------|
-| ✅ | Fully compliant — all 10 categories, minimum counts met, 3:1 ratio passes |
+| ✅ | Fully compliant — all 10 categories, minimum counts met, N/E/F/I each ≥3×P |
 | 🟡 | Partially compliant — some categories present, counts below minimum |
 | ❌ | Non-compliant — categories missing or no standard structure |
 
@@ -56,7 +56,7 @@
 
 | # | File | Tests | Categories | 3:1 Ratio | Status |
 |---|------|-------|-----------|-----------|--------|
-| 1 | `PNO-969_GoDecision_TestCases.md` | 397 | 10/10 | ✅ 140≥105 | ✅ Exemplar |
+| 1 | `PNO-969_GoDecision_TestCases.md` | 397 | 10/10 | ✅ N/E/F/I≥3P | ✅ Exemplar |
 | 2 | `OpportunityCreation_TestCases.md` | 397 | 10/10 | ✅ | ✅ |
 | 3 | `OpportunitySections_TestCases.md` | 397 | 10/10 | ✅ | ✅ |
 | 4 | `OpportunityWorkflow_TestCases.md` | 397 | 10/10 | ✅ | ✅ |
@@ -179,7 +179,7 @@
 
 ---
 
-## Priority 8: Edge Cases & Security Tests (6 files) — ✅ COMPLETE
+## Priority 8: Edge Cases & Security Tests (8 files) — ✅ COMPLETE
 
 | # | File | Tests | Status |
 |---|------|-------|--------|
@@ -189,6 +189,8 @@
 | 4 | `DataIntegrity_TestCases.md` | 397 | ✅ |
 | 5 | `ErrorRecovery_Resilience_TestCases.md` | 397 | ✅ |
 | 6 | `Security_Authorization_TestCases.md` | 397 | ✅ |
+| 7 | `AIIntegration_EdgeCases_TestCases.md` | 462 | ✅ |
+| 8 | `CrossEntityWorkflow_EdgeCases_TestCases.md` | 462 | ✅ |
 
 ---
 
@@ -283,11 +285,41 @@
 
 ---
 
+## Priority 13: Expanded Business Logic Tests (6 files) — ✅ COMPLETE
+
+| # | File | Tests | Status |
+|---|------|-------|--------|
+| 1 | `WorkflowManager_BusinessLogic_TestCases.md` | 462 | ✅ |
+| 2 | `GeminiManager_BusinessLogic_TestCases.md` | 462 | ✅ |
+| 3 | `NotificationManager_BusinessLogic_TestCases.md` | 462 | ✅ |
+| 4 | `PartnerTreeManager_BusinessLogic_TestCases.md` | 462 | ✅ |
+| 5 | `LinkManager_BusinessLogic_TestCases.md` | 462 | ✅ |
+| 6 | `GmailAddonManager_BusinessLogic_TestCases.md` | 462 | ✅ |
+
+---
+
+## Priority 14: Expanded Unit Tests (1 file) — ✅ COMPLETE
+
+| # | File | Tests | Status |
+|---|------|-------|--------|
+| 1 | `ComprehensiveUnitTests_Expansion.md` | 474 | ✅ |
+
+---
+
+## Priority 15: Additional Edge Case Suites (2 files) — ✅ COMPLETE
+
+| # | File | Tests | Status |
+|---|------|-------|--------|
+| 1 | `AIIntegration_EdgeCases_TestCases.md` | 462 | ✅ |
+| 2 | `CrossEntityWorkflow_EdgeCases_TestCases.md` | 462 | ✅ |
+
+---
+
 ## Enforcement Rules
 
 1. **New test case documents** MUST use `TestCases_Template.md` as the starting point
 2. **All 10 categories** must be present with minimum counts
-3. **3:1 ratio** must pass: (Negative + Boundary) ≥ 3 × Positive
+3. **Ratio compliance** must pass: N≥3P, E≥3P, F≥3P, I≥3P (each individually)
 4. **Compliance Summary table** must be at the top of every file
 5. **PR reviews** should verify compliance before merge
 6. **This tracker** must be updated when files are added or modified

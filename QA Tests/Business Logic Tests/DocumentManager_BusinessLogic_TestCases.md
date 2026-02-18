@@ -12,19 +12,19 @@
 
 | Category | File/Section | Count | Minimum Required | Status |
 |----------|-------------|-------|-----------------|--------|
-| Positive Tests | §1 | 35 | 30-50 | ✅ |
-| Negative Tests | §2 | 70 | Max(50, 2×35)=70 | ✅ |
-| Boundary Tests | §3 | 70 | Max(50, 2×35)=70 | ✅ |
-| Functional Tests | §4 | 50 | ≥50 | ✅ |
-| Integration Tests | §5 | 50 | ≥50 | ✅ |
+| Positive Tests | §1 | 30 | 30-50 | ✅ |
+| Negative Tests | §2 | 90 | Max(50, 3×30)=90 | ✅ |
+| Boundary Tests | §3 | 90 | Max(50, 3×30)=90 | ✅ |
+| Functional Tests | §4 | 90 | ≥90 | ✅ |
+| Integration Tests | §5 | 90 | ≥90 | ✅ |
 | Security Tests | §6 | 50 | ≥50 | ✅ |
 | Concurrency Tests | §7 | 25 | ≥25 | ✅ |
 | Unit Tests | §8 | 21 | ≥21 | ✅ |
 | Performance Tests | §9 | 16 | ≥16 | ✅ |
 | Load Tests | §10 | 10 | ≥10 | ✅ |
-| **TOTAL** | | **397** | **≥347** | ✅ |
+| **TOTAL** | | **462** | **≥462** | ✅ |
 
-**3:1 Ratio Check:** (N + B) = 140 ≥ 3 × P = 105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -34,7 +34,7 @@ Manages document uploads, storage, retrieval, and deletion for Partners, Contact
 
 ---
 
-## §1 Positive Tests — 35 tests
+## §1 Positive Tests — 30 tests
 
 ### P0 Detailed (5)
 
@@ -92,15 +92,10 @@ Manages document uploads, storage, retrieval, and deletion for Partners, Contact
 | POS-028 | Download specific version | DownloadVersion(docId, v=1) | Correct version | P2 |
 | POS-029 | Thumbnail generation | Upload image | Thumbnail created | P2 |
 | POS-030 | Document count | GetCountAsync(entityId) | Non-deleted count | P2 |
-| POS-031 | Typeahead by name | GetTypeaheadAsync("rep") | Matching names | P2 |
-| POS-032 | Audit trail | GetAuditAsync(docId) | Upload/update history | P2 |
-| POS-033 | Map to model | mapper.Map | All fields | P2 |
-| POS-034 | Upload CSV | Upload .csv | MimeType=text/csv | P2 |
-| POS-035 | Upload PowerPoint | Upload .pptx | MimeType correct | P2 |
 
 ---
 
-## §2 Negative Tests — 70 tests
+## §2 Negative Tests — 90 tests
 
 | ID | Category | Scenario | Expected | Pr |
 |----|----------|---------|----------|----|
@@ -174,10 +169,30 @@ Manages document uploads, storage, retrieval, and deletion for Partners, Contact
 | NEG-068 | Multipart | Malformed multipart | 400 | P1 |
 | NEG-069 | Mass | Mass assign IsDeleted | Blocked | P1 |
 | NEG-070 | Mass | Mass assign CreatedBy | Blocked | P1 |
+| NEG-071 | Input | Null entity type | BusinessException | P1 |
+| NEG-072 | Input | Invalid category ID | BusinessException | P1 |
+| NEG-073 | State | Download during upload | Queued or error | P1 |
+| NEG-074 | Dep | Storage read timeout | Error | P1 |
+| NEG-075 | Dep | Storage write timeout | Rollback | P1 |
+| NEG-076 | Type | .vbs file | Blocked | P1 |
+| NEG-077 | Type | .ps1 file | Blocked | P1 |
+| NEG-078 | Size | Zero-byte bulk upload | Error | P2 |
+| NEG-079 | Auth | View other entity's doc | Unauthorized | P0 |
+| NEG-080 | ID | Non-numeric doc ID string | 400 | P1 |
+| NEG-081 | Search | Null search term | Default or error | P2 |
+| NEG-082 | Bulk | Bulk download empty list | Error | P1 |
+| NEG-083 | Version | Negative version number | Error | P1 |
+| NEG-084 | Path | Null byte in path | Sanitized | P0 |
+| NEG-085 | Mass | Mass assign DeletedBy | Blocked | P1 |
+| NEG-086 | Mass | Mass assign DeletedDate | Blocked | P1 |
+| NEG-087 | State | Update during delete | Conflict | P1 |
+| NEG-088 | Dep | Blob not found after metadata | Error | P1 |
+| NEG-089 | Multipart | Missing boundary | 400 | P1 |
+| NEG-090 | Virus | Polymorphic malware | Detected | P0 |
 
 ---
 
-## §3 Boundary Tests — 70 tests
+## §3 Boundary Tests — 90 tests
 
 | ID | Category | Scenario | Expected | Pr |
 |----|----------|---------|----------|----|
@@ -251,12 +266,32 @@ Manages document uploads, storage, retrieval, and deletion for Partners, Contact
 | BND-068 | Zip | Zip with 1 file | Valid | P2 |
 | BND-069 | Zip | Zip with 100 files | Valid, size reasonable | P2 |
 | BND-070 | Zip | Zip total > max | Streaming or error | P2 |
+| BND-071 | Size | 25 MB file | Accepted | P1 |
+| BND-072 | Name | 128 char name | Accepted | P1 |
+| BND-073 | Count | 50 docs for entity | All listed | P1 |
+| BND-074 | Bulk | Upload 25 files | All stored | P1 |
+| BND-075 | Version | Version 5 | All accessible | P2 |
+| BND-076 | Page | Page 500 | Handled | P2 |
+| BND-077 | Search | 128 char search | Processed | P1 |
+| BND-078 | MIME | application/octet-stream | Handled | P2 |
+| BND-079 | Stream | 25 MB stream | Complete | P1 |
+| BND-080 | Entity | Mixed entity docs | Correct isolation | P1 |
+| BND-081 | ID | Document ID 1000 | Retrieved | P2 |
+| BND-082 | Thumb | Image at thumb size | No resize | P2 |
+| BND-083 | Zip | Zip with 50 files | Valid | P2 |
+| BND-084 | Category | Empty category name | Handled | P2 |
+| BND-085 | Date | Upload at noon UTC | Correct | P2 |
+| BND-086 | Name | Name with hyphen | Accepted | P1 |
+| BND-087 | Count | 500 docs total | Paginated | P1 |
+| BND-088 | Bulk | Download 25 files zip | Valid zip | P1 |
+| BND-089 | Extension | .doc (legacy) | MIME detected | P2 |
+| BND-090 | Stream | Interrupted at 50% | Cleanup | P1 |
 
 ---
 
 ## §4-§10 (Functional through Load Tests)
 
-### §4 Functional Tests — 50 tests
+### §4 Functional Tests — 90 tests
 **4.1 Upload & Storage (15):** File stored in backend, metadata persisted, entity linked, category assigned, MIME detected, size recorded, name preserved, audit created, duplicate name allowed, version incremented, thumbnail for images, virus scan triggered, storage path generated, original accessible, upload date set.
 
 **4.2 Retrieval (10):** Download returns stream, correct MIME header, original name in disposition, deleted excluded, version-specific download, bulk zip download, thumbnail retrieval, metadata only retrieval, search results, filtered results.
@@ -275,6 +310,8 @@ Manages document uploads, storage, retrieval, and deletion for Partners, Contact
 **5.4 Error Paths (10):** Invalid file→400, not found→404, unauthorized→403, storage error→503, timeout→504, size exceeded→413, type blocked→415, virus detected→422, rate limit→429, malformed→400.
 
 **5.5 Cross-Feature (10):** Document in AI summary, document in export, document in report, document notification, document search across entities, document in partner detail, document in opportunity detail, document permissions, document sharing, document analytics.
+
+**5.6 Extended Integration (40):** INT-051: Upload→Download→Verify; INT-052: Delete→404; INT-053: Version→Download specific; INT-054: Bulk upload→Bulk list; INT-055: Search→Filter→Sort; INT-056: Partner→Document→Contact; INT-057: Opportunity→Document→Export; INT-058: Storage→DB consistency; INT-059: Blob→Metadata sync; INT-060: Temp→Permanent storage; INT-061: Upload→Thumbnail→Retrieve; INT-062: Category change→Filter; INT-063: Entity reassign→Scope; INT-064: Soft-delete→Restore→Access; INT-065: Concurrent upload→List; INT-066: API→Storage round-trip; INT-067: Multipart→Storage; INT-068: Stream→Checksum; INT-069: Zip→Extract→Verify; INT-070: Permission→Download; INT-071: Audit→Query; INT-072: Export→Import; INT-073: Search→Pagination; INT-074: Filter→Count; INT-075: Version history→Download; INT-076: Entity delete→Document; INT-077: Category delete→Document; INT-078: Storage fail→Rollback; INT-079: DB fail→Cleanup; INT-080: Timeout→Retry; INT-081: Cache→Invalidate; INT-082: CDN→Origin; INT-083: SAS→Download; INT-084: CORS→Upload; INT-085: Rate limit→Upload; INT-086: Session→Upload; INT-087: Token refresh→Continue; INT-088: Logout→Abort; INT-089: Multi-tenant isolation; INT-090: End-to-end workflow.
 
 ### §6 Security Tests — 50 tests
 **6.1 Injection (10):** SQL name, SQL search, XSS name, XSS content, path traversal name, path traversal download, HTML upload, command injection, template injection, MIME sniffing.

@@ -923,7 +923,10 @@ namespace $namespace
 
 ### 3:1 Ratio Requirement
 ``````
-(Negative + Boundary) >= 3 × Positive
+Negative >= 3 × Positive
+Edge/Boundary >= 3 × Positive
+Functional >= 3 × Positive
+Integration >= 3 × Positive
 ``````
 
 ## Validation

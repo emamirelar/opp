@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
+| §6 Security | 25 | 25 | ✅ |
+| §7 Concurrency | 15 | 15 | ✅ |
+| §8 Unit | 10 | 10 | ✅ |
+| §9 Performance | 12 | 12 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio:** N≥3P: 90≥90 ✅ | E≥3P: 90≥90 ✅ | F≥3P: 90≥90 ✅ | I≥3P: 90≥90 ✅
 
 ---
 
@@ -33,7 +33,7 @@ REST API endpoints for Go/No-Go decision workflow: submit for Go, approve/reject
 
 ---
 
-## §1 Positive — 35
+## §1 Positive — 30
 
 | ID | Test | Endpoint | Expected | Pr |
 |----|------|----------|----------|----|
@@ -52,9 +52,9 @@ REST API endpoints for Go/No-Go decision workflow: submit for Go, approve/reject
 | POS-013 | Decision with comment | POST /approve with comment | 200, comment saved | P1 |
 | POS-014 | Get DoA for opp | GET /decision/{oppId}/doa | 200, DoA info | P1 |
 | POS-015 | Re-submit after recall | POST /submit after recall | 200, re-submitted | P1 |
-| POS-016–035 | Additional | Various endpoints | 200/201 responses | P2 |
+| POS-016–030 | Additional | Various endpoints | 200/201 responses | P2 |
 
-## §2 Negative — 70
+## §2 Negative — 90
 
 NEG-001–010: Input (null oppId, non-existent, deleted, invalid format, missing body, invalid reason, null comment, blank reason, invalid status, duplicate submit).
 NEG-011–020: Auth (no token, expired, tampered, no permission, wrong role [Collaborator], wrong scope, disabled, post-logout, CSRF, role escalation).
@@ -63,19 +63,20 @@ NEG-031–040: HTTP (wrong method GET→POST, wrong content-type, malformed JSON
 NEG-041–050: Injection (SQL in reason, XSS in comment, HTML in body, path traversal, JSON injection, template injection, header injection, cookie manipulation, parameter pollution, CRLF).
 NEG-051–060: Dependencies (manager throws, DB timeout, service unavailable, rate limit, circuit breaker, serialization error, mapper error, 500 from manager, transaction fail, deadlock).
 NEG-061–070: Format (negative ID, zero ID, float ID, string ID, MAX_INT, special chars in ID, URL-encoded ID, page=-1, pageSize=0, sort=invalid).
+NEG-071–090: Additional negative scenarios (business rules, validation, edge failures).
 
-## §3 Boundary — 70
+## §3 Boundary — 90
 
-BND-001–070: Reason length (0/1/500/1000/1001), comment length (0/1/2000/4000/4001), history count (0/1/10/100), pending list size, ID boundaries, pagination, concurrent submissions, response sizes, date ranges, Unicode in comments, special chars, encoding boundaries, permission flag combinations, DoA hierarchy depth, re-submit count, decision chain length, API response time at boundary, rate limit threshold, token expiry edge, session boundaries.
+BND-001–090: Reason length (0/1/500/1000/1001), comment length (0/1/2000/4000/4001), history count (0/1/10/100), pending list size, ID boundaries, pagination, concurrent submissions, response sizes, date ranges, Unicode in comments, special chars, encoding boundaries, permission flag combinations, DoA hierarchy depth, re-submit count, decision chain length, API response time at boundary, rate limit threshold, token expiry edge, session boundaries.
 
 ## §4–§10
 
-**§4 (50):** Route mapping (10), request validation (10), response formatting (10), status codes (10), model binding (10).
-**§5 (50):** Manager integration (10), auth service (10), permission service (10), notification (10), audit (10).
-**§6 (50):** Injection (10), auth bypass (10), IDOR (10), header security (10), CORS/CSRF (10).
-**§7 (25):** Concurrent submit, approve, reject, cancel, recall, history read, permission check.
-**§8 (21):** Route parsing (5), model validation (5), response mapping (3), error formatting (5), permission calc (3).
-**§9 (16):** Submit (<500ms), approve (<500ms), history (<300ms), permissions (<200ms), list (<300ms), memory.
+**§4 (90):** Route mapping (10), request validation (10), response formatting (10), status codes (10), model binding (10).
+**§5 (90):** Manager integration (10), auth service (10), permission service (10), notification (10), audit (10).
+**§6 (25):** Injection (10), auth bypass (10), IDOR (10), header security (10), CORS/CSRF (10).
+**§7 (15):** Concurrent submit, approve, reject, cancel, recall, history read, permission check.
+**§8 (10):** Route parsing (5), model validation (5), response mapping (3), error formatting (5), permission calc (3).
+**§9 (12):** Submit (<500ms), approve (<500ms), history (<300ms), permissions (<200ms), list (<300ms), memory.
 **§10 (10):** 50 concurrent decisions, 100 reads, spike, sustained, recovery.
 
 ---

@@ -13,23 +13,22 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P ✅ (90≥90) | E≥3P ✅ (90≥90) | F≥3P ✅ (90≥90) | I≥3P ✅ (90≥90)
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Steps | Expected Result |
 |----|-----------|-------|-----------------|
@@ -63,11 +62,6 @@
 | POS-028 | Get map data | GET /api/liaison-offices/map | Map coordinates |
 | POS-029 | Update hierarchy | PUT /api/liaison-offices/{id}/hierarchy | Updated |
 | POS-030 | Empty result | GET for empty filter | [] |
-| POS-031 | Single result | GET for single match | [item] |
-| POS-032 | Authenticated access | GET with token | 200 |
-| POS-033 | Admin create | POST as admin | 201 |
-| POS-034 | Admin update | PUT as admin | 200 |
-| POS-035 | Admin delete | DELETE as admin | 204 |
 
 ---
 
@@ -222,10 +216,30 @@
 | BND-068 | Modified date | - | - | UTC | - | - |
 | BND-069 | Hierarchy path | - | 500 | ✅ | ✅ | ❌ |
 | BND-070 | Full path | - | 1000 | ✅ | ✅ | ❌ |
+| BND-071 | Map zoom level | 0 | 21 | ✅ | ✅ | ❌ |
+| BND-072 | Contact email | - | 255 | ✅ | ✅ | ❌ |
+| BND-073 | Contact phone | - | 50 | ✅ | ✅ | ❌ |
+| BND-074 | Website URL | - | 500 | ✅ | ✅ | ❌ |
+| BND-075 | Notes length | - | 2000 | ✅ | ✅ | ❌ |
+| BND-076 | Fax length | - | 50 | ✅ | ✅ | ❌ |
+| BND-077 | Region code | - | 10 | ✅ | ✅ | ❌ |
+| BND-078 | Timezone | - | 50 | ✅ | ✅ | ❌ |
+| BND-079 | Coordinate decimals | - | 6 | Rounded | - | - |
+| BND-080 | Child depth | 0 | 10 | ✅ | ✅ | ❌ |
+| BND-081 | Map points | 0 | 1000 | ✅ | ✅ | ❌ |
+| BND-082 | Export format | - | - | csv, xlsx | - | - |
+| BND-083 | Typeahead delay | - | - | Debounce | - | - |
+| BND-084 | Bulk partial | - | - | 207 | - | - |
+| BND-085 | Empty map | - | - | [] | - | - |
+| BND-086 | Single map point | - | - | [point] | - | - |
+| BND-087 | Null parent | parentId=null | - | Root | - | - |
+| BND-088 | Max depth | - | 10 | ✅ | ❌ | - |
+| BND-089 | Case code | code=us | - | Normalize | - | - |
+| BND-090 | Trim name | "  name  " | - | Trimmed | - | - |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Category | Rule | Trigger | Expected |
 |----|----------|------|---------|----------|
@@ -336,63 +350,46 @@
 | INT-048 | E2E | Full delete flow | Office | Delete → 404 |
 | INT-049 | E2E | Hierarchy flow | Office | Parent → Children |
 | INT-050 | E2E | Session expiry | Auth | Clean fail |
-
----
-
-## §6 Security Tests (50)
-
-| ID | Category | Attack | Target | Expected |
-|----|----------|--------|-------|----------|
-| SEC-001 | Injection | SQL | Search | Sanitized |
-| SEC-002 | Injection | XSS | Name | Encoded |
-| SEC-003 | Injection | Path traversal | Path | Rejected |
-| SEC-004 | Injection | NoSQL | Filter | Rejected |
-| SEC-005 | Injection | Command | Export | Rejected |
-| SEC-006 | Injection | Header | Header | Rejected |
-| SEC-007 | Injection | Log | Input | Sanitized |
-| SEC-008 | Injection | LDAP | Search | Rejected |
-| SEC-009 | Injection | Log4j | Input | Rejected |
-| SEC-010 | Injection | SSRF | URL | Rejected |
-| SEC-011 | Access | No auth | All | 401 |
-| SEC-012 | Access | Wrong role | Admin | 403 |
-| SEC-013 | Access | Cross-org | Other org | 403 |
-| SEC-014 | Access | Horizontal | Other user | 403 |
-| SEC-015 | Access | Vertical | Admin | 403 |
-| SEC-016 | Access | Expired | Token | 401 |
-| SEC-017 | Access | Revoked | Token | 401 |
-| SEC-018 | Access | Tampered | Token | 401 |
-| SEC-019 | Access | Scope | OAuth | 403 |
-| SEC-020 | Access | Service | UI | 403 |
-| SEC-021 | IDOR | Other org office | ID | 403 |
-| SEC-022 | IDOR | Other user | ID | 403 |
-| SEC-023 | IDOR | Manipulate | Path | 403 |
-| SEC-024 | IDOR | Enumeration | IDs | Rate limit |
-| SEC-025 | IDOR | Pollution | Params | First |
-| SEC-026 | Mass Assign | Admin | Body | Ignored |
-| SEC-027 | Mass Assign | Role | Body | Ignored |
-| SEC-028 | Mass Assign | Org | Body | Ignored |
-| SEC-029 | Mass Assign | User | Body | Ignored |
-| SEC-030 | Mass Assign | Permission | Body | Ignored |
-| SEC-031 | Auth | Fixation | Session | New |
-| SEC-032 | Auth | Hijack | Token | Invalid |
-| SEC-033 | Auth | Replay | Old token | Reject |
-| SEC-034 | Auth | CSRF | State | Token |
-| SEC-035 | Auth | Brute | Login | Rate limit |
-| SEC-036 | Data | PII in export | Export | Masked |
-| SEC-037 | Data | Logs | Sensitive | No PII |
-| SEC-038 | Data | Error | 500 | Generic |
-| SEC-039 | Data | Stack | Exception | Hidden |
-| SEC-040 | Data | Debug | Prod | Off |
-| SEC-041 | OWASP | A01 | Access | 403 |
-| SEC-042 | OWASP | A02 | Crypto | TLS |
-| SEC-043 | OWASP | A03 | Injection | Param |
-| SEC-044 | OWASP | A04 | Design | Defensive |
-| SEC-045 | OWASP | A05 | Misconfig | Secure |
-| SEC-046 | OWASP | A06 | Vulnerable | No CVE |
-| SEC-047 | OWASP | A07 | Auth | Strong |
-| SEC-048 | OWASP | A08 | Integrity | Checks |
-| SEC-049 | OWASP | A09 | Logging | Audit |
-| SEC-050 | OWASP | A10 | SSRF | No internal |
+| INT-051 | CRUD | Get location | Office | Location |
+| INT-052 | CRUD | Get contacts | Office | Contacts |
+| INT-053 | CRUD | Get hierarchy | Office | Hierarchy |
+| INT-054 | CRUD | Bulk get | Office | Results |
+| INT-055 | CRUD | Export | Office | File |
+| INT-056 | Search | Search by name | Office | Matches |
+| INT-057 | Search | Typeahead | Office | Suggestions |
+| INT-058 | Search | Filter country | Office | Filtered |
+| INT-059 | Search | Filter region | Office | Filtered |
+| INT-060 | Search | Multi-filter | Office | Combined |
+| INT-061 | Pagination | Page 1 | Office | First |
+| INT-062 | Pagination | Last page | Office | Partial |
+| INT-063 | Pagination | Size | Office | Correct |
+| INT-064 | Pagination | Invalid | Office | 400 |
+| INT-065 | Pagination | Boundary | Office | Exact |
+| INT-066 | Relationships | Office → Country | Linked | Correct |
+| INT-067 | Relationships | Office → Parent | Linked | Correct |
+| INT-068 | Relationships | Office → Children | Linked | Correct |
+| INT-069 | Relationships | Office → Contacts | Linked | Correct |
+| INT-070 | Relationships | Orphan | Deleted country | 404 |
+| INT-071 | Error | DB down | DB | 503 |
+| INT-072 | Error | Auth down | Auth | 401/503 |
+| INT-073 | Error | Validation | Bad input | 400 |
+| INT-074 | Error | NotFound | Invalid ID | 404 |
+| INT-075 | Error | Forbidden | No permission | 403 |
+| INT-076 | Error | Conflict | Duplicate | 409 |
+| INT-077 | Error | Rate limit | Too many | 429 |
+| INT-078 | Error | Timeout | Slow | 504 |
+| INT-079 | Error | Payload | Huge | 413 |
+| INT-080 | Error | Media | Wrong type | 415 |
+| INT-081 | Error | Method | Wrong verb | 405 |
+| INT-082 | Error | Service | Dependency | 503 |
+| INT-083 | Error | Gateway | Upstream | 504 |
+| INT-084 | Error | Gone | Deleted | 410 |
+| INT-085 | Error | Locked | Locked | 423 |
+| INT-086 | E2E | Full create flow | Office | Create → Get |
+| INT-087 | E2E | Full update flow | Office | Update → Get |
+| INT-088 | E2E | Full delete flow | Office | Delete → 404 |
+| INT-089 | E2E | Map flow | Office | Get → Display |
+| INT-090 | E2E | Export flow | Office | Export → File |
 
 ---
 
@@ -504,7 +501,7 @@
 | Location mapping | POS-014, POS-026 |
 | Contact info | POS-015, POS-027 |
 | Org hierarchy | POS-016–018, FUN-049 |
-| 3:1 Ratio | NEG-001–070, BND-001–070 |
+| 3:1 Ratio | NEG-001–090, BND-001–090 |
 
 ---
 

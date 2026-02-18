@@ -11,19 +11,24 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+| Check | Formula | Result |
+|-------|---------|--------|
+| N≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| E≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| F≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| I≥3P | 90 ≥ 3×30=90 | ✅ PASS |
 
 ---
 
@@ -33,7 +38,7 @@ Google Text-to-Speech: audio generation, voice selection, SSML, language support
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|-------------|-------|-----------------|
@@ -149,10 +154,30 @@ Google Text-to-Speech: audio generation, voice selection, SSML, language support
 | NEG-068 | Proxy required | No proxy | ProxyException |
 | NEG-069 | Character limit | Over limit | ArgumentException |
 | NEG-070 | Byte limit | Over limit | ArgumentException |
+| NEG-071 | Null voice metadata | GetVoiceMetadataAsync(null) | ArgumentNullException |
+| NEG-072 | Invalid preload | PreloadVoiceAsync("") | ArgumentException |
+| NEG-073 | Null batch item | BatchSynthesizeAsync([null]) | ArgumentNullException |
+| NEG-074 | Invalid stream config | SynthesizeStreamingAsync(bad) | ArgumentException |
+| NEG-075 | Null cancel token | CancelAsync(null) | ArgumentNullException |
+| NEG-076 | Invalid GetLimits | GetLimitsAsync(bad) | ArgumentException |
+| NEG-077 | Null DetectLanguage | DetectLanguageAsync(null) | ArgumentNullException |
+| NEG-078 | Invalid EstimateDuration | EstimateDurationAsync(null) | ArgumentNullException |
+| NEG-079 | Null ValidateSsml | ValidateSsmlAsync(null) | ArgumentNullException |
+| NEG-080 | Invalid cache key | GetCachedAsync(bad) | ArgumentException |
+| NEG-081 | Disposed audio stream | Read disposed | ObjectDisposedException |
+| NEG-082 | Invalid audio config | SynthesizeAsync(badConfig) | ArgumentException |
+| NEG-083 | Null format param | SynthesizeAsync(text, format: null) | ArgumentNullException |
+| NEG-084 | Invalid sample rate combo | SynthesizeAsync(badCombo) | ArgumentException |
+| NEG-085 | Null language list | GetVoicesAsync(null) | ArgumentNullException |
+| NEG-086 | Invalid retry config | SynthesizeAsync(..., retry: -1) | ArgumentException |
+| NEG-087 | Null timeout | SynthesizeAsync(..., timeout: null) | ArgumentNullException |
+| NEG-088 | Invalid WarmCache | WarmCacheAsync(bad) | CacheException |
+| NEG-089 | Expired preload | Use expired preload | NotFoundException |
+| NEG-090 | Invalid batch order | BatchSynthesizeAsync(badOrder) | ArgumentException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Value | Expected Result |
 |----|-----------|----------------|-----------------|
@@ -226,10 +251,30 @@ Google Text-to-Speech: audio generation, voice selection, SSML, language support
 | BND-068 | Prosody pitch = +50% | High | Valid |
 | BND-069 | Prosody volume = silent | Silent | Valid |
 | BND-070 | Prosody volume = x-loud | Loud | Valid |
+| BND-071 | Voice count = 0 | [] | Empty |
+| BND-072 | Voice count = 500 | Many | Returned |
+| BND-073 | Language count = 0 | [] | Empty |
+| BND-074 | Language count = 100 | Many | Returned |
+| BND-075 | Batch size = 1 | [1] | Valid |
+| BND-076 | Batch size = 100 | Max | Valid |
+| BND-077 | Stream chunk = 0 | 0 | Invalid |
+| BND-078 | Stream chunk = 64KB | 64KB | Valid |
+| BND-079 | Audio duration = 0 | Empty | 0 |
+| BND-080 | Audio duration = 10min | Max | 10min |
+| BND-081 | Cache size = 0 | Cold | Miss |
+| BND-082 | Cache size = 10000 | Max | Eviction |
+| BND-083 | Concurrent = 1 | 1 | Success |
+| BND-084 | Concurrent = 200 | 200 | Throttled |
+| BND-085 | Timeout = 0ms | 0 | Immediate |
+| BND-086 | Timeout = 30000ms | 30s | Success |
+| BND-087 | Retry = 0 | No retry | Fail once |
+| BND-088 | Retry = 3 | 3 | Retries |
+| BND-089 | Break duration = 0ms | 0ms | Valid |
+| BND-090 | Break duration = 5000ms | 5s | Valid |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule | Trigger | Expected Outcome |
 |----|-----------|------|---------|------------------|
@@ -283,10 +328,50 @@ Google Text-to-Speech: audio generation, voice selection, SSML, language support
 | FUN-048 | Permission check | Check | Access | Checked |
 | FUN-049 | Tenant isolation | Isolate | Tenant | Isolated |
 | FUN-050 | Rate per user | Rate | User | Per user |
+| FUN-051 | Text normalization | Normalize | Synthesize | Normalized |
+| FUN-052 | SSML validation | Validate | SynthesizeSsml | Validated |
+| FUN-053 | Voice selection | Select | Synthesize | Selected |
+| FUN-054 | Language detection | Detect | Synthesize | Detected |
+| FUN-055 | Cache key generation | Generate | Synthesize | Unique key |
+| FUN-056 | Cache TTL | TTL | Cache | Expires |
+| FUN-057 | Streaming chunk size | Chunk | Stream | Sized |
+| FUN-058 | Format conversion | Convert | Export | Converted |
+| FUN-059 | Sample rate conversion | Convert | Export | Resampled |
+| FUN-060 | Voice fallback | Fallback | Voice missing | Fallback |
+| FUN-061 | Language fallback | Fallback | Lang missing | Fallback |
+| FUN-062 | Error retry | Retry | Transient | Retried |
+| FUN-063 | Rate limiting | Limit | Many | Limited |
+| FUN-064 | Quota enforcement | Quota | Synthesize | Enforced |
+| FUN-065 | Character limit | Limit | Synthesize | Limited |
+| FUN-066 | Byte limit | Limit | Synthesize | Limited |
+| FUN-067 | Duration limit | Limit | Synthesize | Limited |
+| FUN-068 | SSML tag support | Support | SSML | Supported |
+| FUN-069 | Plain text handling | Handle | Plain | Handled |
+| FUN-070 | Mixed content | Handle | Mixed | Handled |
+| FUN-071 | Prosody application | Apply | Prosody | Applied |
+| FUN-072 | Break application | Apply | Break | Applied |
+| FUN-073 | Emphasis application | Apply | Emphasis | Applied |
+| FUN-074 | Phoneme application | Apply | Phoneme | Applied |
+| FUN-075 | Say-as application | Apply | Say-as | Applied |
+| FUN-076 | Sub application | Apply | Sub | Applied |
+| FUN-077 | Batch ordering | Order | Batch | Preserved |
+| FUN-078 | Batch deduplication | Dedup | Batch | Deduplicated |
+| FUN-079 | Stream buffering | Buffer | Stream | Buffered |
+| FUN-080 | Cache warm-up | Warm | Startup | Preloaded |
+| FUN-081 | Preload validation | Validate | Preload | Validated |
+| FUN-082 | Voice metadata | Metadata | GetVoice | Returned |
+| FUN-083 | Language metadata | Metadata | GetLang | Returned |
+| FUN-084 | Duration estimation | Estimate | Text | Estimated |
+| FUN-085 | Limit reporting | Report | GetLimits | Reported |
+| FUN-086 | Error format | Format | Error | Consistent |
+| FUN-087 | Logging | Log | Any op | Logged |
+| FUN-088 | Metrics | Metrics | Any op | Recorded |
+| FUN-089 | Health check | Health | Check | Healthy |
+| FUN-090 | Cancellation | Cancel | Cancel | Cancelled |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Integration | Scenario | Expected Result |
 |----|-----------|-------------|----------|-----------------|

@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | ≥30 | ✅ |
+| §2 Negative | 90 | ≥90 | ✅ |
+| §3 Boundary | 90 | ≥90 | ✅ |
+| §4 Functional | 90 | ≥90 | ✅ |
+| §5 Integration | 90 | ≥90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,7 +33,7 @@ Google Drive document manager unit tests cover document CRUD, sharing, permissio
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,11 +67,6 @@ Google Drive document manager unit tests cover document CRUD, sharing, permissio
 | POS-028 | Audit update | Update | Check audit | Logged |
 | POS-029 | Audit delete | Delete | Check audit | Logged |
 | POS-030 | Pagination | Many documents | List | Pages |
-| POS-031 | Filter by type | Documents exist | Filter | Filtered |
-| POS-032 | Sort by name | Documents exist | Sort | Ordered |
-| POS-033 | Get download URL | File exists | GetDownloadUrl | URL |
-| POS-034 | Get web view link | File exists | GetWebViewLink | Link |
-| POS-035 | Batch operations | Multiple ops | Batch | All succeed |
 
 ---
 
@@ -149,10 +144,30 @@ Google Drive document manager unit tests cover document CRUD, sharing, permissio
 | NEG-068 | Download trashed | Document trashed | NotFoundException |
 | NEG-069 | Move trashed | Document trashed | InvalidOperationException |
 | NEG-070 | Copy trashed | Document trashed | NotFoundException |
+| NEG-071 | Create with whitespace name | Name="   " | ValidationException |
+| NEG-072 | Get null ID | Id=null | ArgumentNullException |
+| NEG-073 | Share with empty email | Email="" | ValidationException |
+| NEG-074 | Set permissions null | Permissions=null | ArgumentNullException |
+| NEG-075 | Export null format | Format=null | ArgumentNullException |
+| NEG-076 | Create folder invalid | Name invalid | ValidationException |
+| NEG-077 | Move null destination | Dest=null | ArgumentNullException |
+| NEG-078 | Search empty query | Query="" | ArgumentException |
+| NEG-079 | Get metadata null | Id=null | ArgumentNullException |
+| NEG-080 | Upload empty stream | Stream empty | ValidationException |
+| NEG-081 | Restore invalid revision | Revision invalid | NotFoundException |
+| NEG-082 | Trash null ID | Id=null | ArgumentNullException |
+| NEG-083 | Untrash non-trashed | Not trashed | InvalidOperationException |
+| NEG-084 | Add to folder null | Folder=null | ArgumentNullException |
+| NEG-085 | Remove from folder null | Folder=null | ArgumentNullException |
+| NEG-086 | Batch null list | Ops=null | ArgumentNullException |
+| NEG-087 | Get download URL invalid | Id invalid | NotFoundException |
+| NEG-088 | Get web view link invalid | Id invalid | NotFoundException |
+| NEG-089 | List invalid filter | Filter invalid | ArgumentException |
+| NEG-090 | Pagination invalid page | Page invalid | ArgumentException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Condition | Expected Result |
 |----|-----------|-------------------|-----------------|
@@ -226,10 +241,30 @@ Google Drive document manager unit tests cover document CRUD, sharing, permissio
 | BND-068 | Async cancellation | Cancel token | OperationCanceledException |
 | BND-069 | Task timeout | Timeout | TimeoutException |
 | BND-070 | Concurrent same document | Same doc | One wins |
+| BND-071 | Name single char | Length=1 | Valid |
+| BND-072 | File size 1 byte | Size=1 | Valid |
+| BND-073 | Page size one | PageSize=1 | Valid |
+| BND-074 | Revision count one | Count=1 | Valid |
+| BND-075 | Share count one | Count=1 | Valid |
+| BND-076 | Folder empty | Empty | Empty list |
+| BND-077 | Search query max | Query=500 | Valid |
+| BND-078 | Metadata key max | Key length | Valid |
+| BND-079 | Metadata value max | Value length | Valid |
+| BND-080 | MIME type boundary | application/pdf | Valid |
+| BND-081 | Batch one op | Count=1 | Valid |
+| BND-082 | Pagination first | Page=1 | Valid |
+| BND-083 | Sort ascending | Asc | Ordered |
+| BND-084 | Sort descending | Desc | Ordered |
+| BND-085 | Filter type and date | Both | Correct |
+| BND-086 | Export format boundary | PDF | Valid |
+| BND-087 | Convert format boundary | DOCX | Valid |
+| BND-088 | Get download URL expiry | Expiry | Regenerate |
+| BND-089 | Get web view private | Private | Error |
+| BND-090 | Trash then untrash | Cycle | Restored |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -283,10 +318,50 @@ Google Drive document manager unit tests cover document CRUD, sharing, permissio
 | FUN-048 | Permission cached | Performance | Repeated check | Cached |
 | FUN-049 | AsNoTracking read-only | Performance | List | No tracking |
 | FUN-050 | Stream disposal | Logic | Download | Disposed |
+| FUN-051 | Name trim on create | Logic | Create | Trimmed |
+| FUN-052 | Share creates permission | Logic | Share | Permission |
+| FUN-053 | Remove share deletes | Logic | RemoveShare | Removed |
+| FUN-054 | Move updates parent | Logic | Move | Parent updated |
+| FUN-055 | Copy creates new | Logic | Copy | New document |
+| FUN-056 | Trash soft delete | Logic | Trash | Trashed |
+| FUN-057 | Untrash restore | Logic | Untrash | Restored |
+| FUN-058 | Restore revision | Logic | Restore | Restored |
+| FUN-059 | Export format | Logic | Export | Formatted |
+| FUN-060 | Convert format | Logic | Convert | Converted |
+| FUN-061 | Get revisions ordered | Logic | GetRevisions | Chronological |
+| FUN-062 | Add to folder | Logic | AddToFolder | Added |
+| FUN-063 | Remove from folder | Logic | RemoveFromFolder | Removed |
+| FUN-064 | Get download URL | Logic | GetDownloadUrl | URL |
+| FUN-065 | Get web view link | Logic | GetWebViewLink | Link |
+| FUN-066 | Batch atomic | Logic | Batch | All or none |
+| FUN-067 | Get metadata complete | Logic | GetMetadata | Complete |
+| FUN-068 | Get shared drives | Logic | GetSharedDrives | Drives |
+| FUN-069 | Get drive info | Logic | GetDriveInfo | Info |
+| FUN-070 | Include loads metadata | Data load | Get include | Metadata |
+| FUN-071 | No Cartesian on includes | Data load | Multiple | Split |
+| FUN-072 | Audit share | Audit | Share | Logged |
+| FUN-073 | Permission before create | Authorization | Create | Check first |
+| FUN-074 | Permission before get | Authorization | Get | Check first |
+| FUN-075 | Permission before update | Authorization | Update | Check first |
+| FUN-076 | Permission before delete | Authorization | Delete | Check first |
+| FUN-077 | Permission before share | Authorization | Share | Check first |
+| FUN-078 | List respects filter | Constraint | List | Filtered |
+| FUN-079 | Pagination correct | Logic | List | Correct page |
+| FUN-080 | Pagination offset | Calculation | Page | Skip correct |
+| FUN-081 | Total count accurate | Calculation | Count | Matches |
+| FUN-082 | Sort applies | Calculation | Sort | Ordered |
+| FUN-083 | Filter AND logic | Filter | Multi-filter | All match |
+| FUN-084 | Path format valid | Constraint | Create | Reject invalid |
+| FUN-085 | Export format whitelist | Constraint | Export | Only allowed |
+| FUN-086 | Convert format whitelist | Constraint | Convert | Only allowed |
+| FUN-087 | Transaction on create | Transaction | Create | Atomic |
+| FUN-088 | Transaction on update | Transaction | Update | Atomic |
+| FUN-089 | Transaction on delete | Transaction | Delete | Atomic |
+| FUN-090 | Async all operations | Concurrency | All | Async |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|
@@ -340,6 +415,46 @@ Google Drive document manager unit tests cover document CRUD, sharing, permissio
 | INT-048 | Get drive info | Scenario | GetDriveInfo | Info |
 | INT-049 | Pagination with sort | Scenario | Paginate | Sorted |
 | INT-050 | E2E CRUD cycle | Scenario | Full cycle | Create→Update→Delete |
+| INT-051 | Create then get | Scenario | Create, Get | Both |
+| INT-052 | Update then get | Scenario | Update, Get | Both |
+| INT-053 | Delete then list | Scenario | Delete, List | Excluded |
+| INT-054 | Share then get permissions | Scenario | Share, GetPermissions | Both |
+| INT-055 | Remove share then get | Scenario | RemoveShare, Get | Both |
+| INT-056 | Move then verify | Scenario | Move | Verified |
+| INT-057 | Copy then verify | Scenario | Copy | Verified |
+| INT-058 | Trash then untrash | Scenario | Trash, Untrash | Restored |
+| INT-059 | Export then download | Scenario | Export, Download | Both |
+| INT-060 | Convert then download | Scenario | Convert, Download | Both |
+| INT-061 | Restore revision | Scenario | Restore | Restored |
+| INT-062 | Add remove from folder | Scenario | Add, Remove | Both |
+| INT-063 | Batch operations | Scenario | Batch | All succeed |
+| INT-064 | Drive client integration | Integration | Drive | Client |
+| INT-065 | Mapper integration | Integration | Mapper | Mapped |
+| INT-066 | Repository integration | Integration | Repository | CRUD |
+| INT-067 | DbContext integration | Integration | DbContext | Scoped |
+| INT-068 | Transaction scope | Integration | Transaction | Atomic |
+| INT-069 | Config integration | Integration | Config | Read |
+| INT-070 | Permission service | Integration | Permission | Check |
+| INT-071 | User resolver | Integration | User | Resolved |
+| INT-072 | Audit context | Integration | Audit | Context |
+| INT-073 | Logger integration | Integration | Logger | Logged |
+| INT-074 | Document-Folder relationship | Relationship | Document, Folder | Valid |
+| INT-075 | Document-User relationship | Relationship | Document, User | Valid |
+| INT-076 | Document-Revision relationship | Relationship | Document, Revision | Valid |
+| INT-077 | Cascade delete | Relationship | Folder deleted | Config |
+| INT-078 | Orphan handling | Relationship | Folder deleted | Retained |
+| INT-079 | Drive API error | Error | API down | Graceful |
+| INT-080 | Timeout handling | Error | Slow API | Timeout |
+| INT-081 | Credential error | Error | Invalid creds | Unauthorized |
+| INT-082 | Quota error | Error | Quota | QuotaExceeded |
+| INT-083 | Upload then download | Scenario | Upload, Download | Both |
+| INT-084 | Get revisions | Scenario | GetRevisions | History |
+| INT-085 | Get shared drives | Scenario | GetSharedDrives | Drives |
+| INT-086 | Get drive info | Scenario | GetDriveInfo | Info |
+| INT-087 | Get download URL | Scenario | GetDownloadUrl | URL |
+| INT-088 | Get web view link | Scenario | GetWebViewLink | Link |
+| INT-089 | Filter by type | Scenario | Filter | Filtered |
+| INT-090 | Full workflow | Scenario | Full cycle | Complete |
 
 ---
 

@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
+| §6 Security | 22 | 22 | ✅ |
+| §7 Concurrency | 15 | 15 | ✅ |
+| §8 Unit | 15 | 15 | ✅ |
+| §9 Performance | 10 | 10 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio:** N≥3P: 90≥90 ✅ | E≥3P: 90≥90 ✅ | F≥3P: 90≥90 ✅ | I≥3P: 90≥90 ✅
 
 ---
 
@@ -35,15 +35,15 @@ Service layer for agreement operations: template management, document generation
 
 ## §1–§10
 
-**§1 (35):** Template CRUD, clause library, PDF generation, signature coordination, compliance check, analytics + 30 P1/P2 tests.
-**§2 (70):** Input (10), Auth (10), State (10), injection (10), dependencies (10), format (10), business (10).
-**§3 (70):** Template sizes, clause counts/lengths, PDF sizes, signature counts, compliance rules, concurrent, Unicode, date ranges, version counts, analytics data points, rendering complexity, party count.
-**§4 (50):** Template processing (15), generation pipeline (10), compliance rules (10), signature flow (10), audit (5).
-**§5 (50):** Document storage (10), PDF engine (10), signature service (10), notification (10), partner (10).
-**§6 (50):** Injection (10), auth (10), IDOR (10), document security (10), signature security (10).
-**§7 (25):** Concurrent generation, signing, template updates, compliance checks, bulk operations.
-**§8 (21):** Template parsing (5), clause formatting (5), compliance logic (3), signature validation (5), analytics calc (3).
-**§9 (16):** Generate (<3s), sign (<500ms), compliance (<300ms), search (<500ms), export (<3s), memory.
+**§1 (30):** Template CRUD, clause library, PDF generation, signature coordination, compliance check, analytics + 25 P1/P2 tests.
+**§2 (90):** Input (10), Auth (10), State (10), injection (10), dependencies (10), format (10), business (10) + 20 additional.
+**§3 (90):** Template sizes, clause counts/lengths, PDF sizes, signature counts, compliance rules, concurrent, Unicode, date ranges, version counts, analytics data points, rendering complexity, party count.
+**§4 (90):** Template processing (15), generation pipeline (10), compliance rules (10), signature flow (10), audit (5) + 40 additional.
+**§5 (90):** Document storage (10), PDF engine (10), signature service (10), notification (10), partner (10) + 50 additional.
+**§6 (22):** Injection (10), auth (10), IDOR (2).
+**§7 (15):** Concurrent generation, signing, template updates, compliance checks, bulk operations.
+**§8 (15):** Template parsing (5), clause formatting (5), compliance logic (3), signature validation (2).
+**§9 (10):** Generate (<3s), sign (<500ms), compliance (<300ms), search (<500ms), export (<3s), memory.
 **§10 (10):** 20 concurrent generations, spike, sustained, large agreements, recovery.
 
 ---

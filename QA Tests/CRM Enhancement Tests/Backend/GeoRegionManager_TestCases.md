@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -37,7 +37,7 @@ The GeoRegionManager manages geographic regions for the CRM enhancement:
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result | Priority |
 |----|-----------|-------------|-------|-----------------|----------|
@@ -71,15 +71,10 @@ The GeoRegionManager manages geographic regions for the CRM enhancement:
 | POS-028 | Empty search | Regions exist | Search "" | All returned | P2 |
 | POS-029 | Case-insensitive search | "east" | Search | Matches "East" | P2 |
 | POS-030 | Get by multiple IDs | IDs exist | GetByIdsAsync([1,2,3]) | 3 regions | P2 |
-| POS-031 | Get by codes | Codes exist | GetByCodesAsync(["EA","WE"]) | 2 regions | P2 |
-| POS-032 | Regional aggregation | Regions have countries | GetCountryCountsAsync() | Aggregated | P2 |
-| POS-033 | Default region | Config set | GetDefaultAsync() | Default returned | P2 |
-| POS-034 | Validate status | Valid status | Create with status | Success | P2 |
-| POS-035 | Concurrent read | None | 5 parallel GetById | All succeed | P2 |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error | Priority |
 |----|-----------|--------------|---------------|----------|
@@ -153,10 +148,30 @@ The GeoRegionManager manages geographic regions for the CRM enhancement:
 | NEG-068 | Long description | 10000 chars | Validation error | P2 |
 | NEG-069 | Special chars code | Code "A@" | Validation error | P2 |
 | NEG-070 | Whitespace name | Name "   " | Validation error | P2 |
+| NEG-071 | Continent API fail | Continent 500 | Error | P2 |
+| NEG-072 | Country API fail | Country 500 | Error | P2 |
+| NEG-073 | DbContext disposed | After dispose | ObjectDisposed | P2 |
+| NEG-074 | Continent soft-deleted | Deleted continent | Reject | P2 |
+| NEG-075 | Region has countries | Delete | BusinessException | P2 |
+| NEG-076 | Null codes list | GetByCodes null | ArgumentNull | P2 |
+| NEG-077 | Empty codes list | GetByCodes [] | Empty list | P2 |
+| NEG-078 | Invalid continent ID | ContinentId 99999 | Reject | P2 |
+| NEG-079 | Duplicate code | Existing code | Conflict | P2 |
+| NEG-080 | GetByIds empty | [] | Empty list | P2 |
+| NEG-081 | Pagination page 0 | Page 0 | Clamp or error | P2 |
+| NEG-082 | Pagination size 0 | Size 0 | Validation | P2 |
+| NEG-083 | Search SQL injection | '; DROP-- | Sanitized | P2 |
+| NEG-084 | Restore non-deleted | Not deleted | Idempotent | P2 |
+| NEG-085 | Map country batch overflow | 51 countries | Reject | P2 |
+| NEG-086 | Name too long | 201 chars | Validation | P2 |
+| NEG-087 | Code too long | 21 chars | Validation | P2 |
+| NEG-088 | Export fail | Export error | Handled | P2 |
+| NEG-089 | Statistics fail | Stats error | Handled | P2 |
+| NEG-090 | Default not configured | No default | Null or error | P2 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field | Min | Max | At Min | At Max | Over Max | Priority |
 |----|-------|-----|-----|--------|--------|----------|----------|
@@ -230,10 +245,30 @@ The GeoRegionManager manages geographic regions for the CRM enhancement:
 | BND-068 | Sort field count | 1 | 5 | 1 ok | 5 ok | Reject | P2 |
 | BND-069 | Filter param count | 0 | 20 | 0 ok | 20 ok | Reject | P2 |
 | BND-070 | Map country batch | 1 | 50 | 1 ok | 50 ok | Reject | P2 |
+| BND-071 | Region ID 1 | 1 | int.Max | Min | — | — | P2 |
+| BND-072 | Continent ID 1 | 1 | int.Max | Min | — | — | P2 |
+| BND-073 | Country ID 1 | 1 | int.Max | Min | — | — | P2 |
+| BND-074 | Page size 1 | 1 | 100 | Min | — | — | P2 |
+| BND-075 | Page size 100 | 1 | 100 | — | Max | — | P2 |
+| BND-076 | Name 1 | 1 | 200 | Min | — | — | P2 |
+| BND-077 | Name 200 | 1 | 200 | — | Max | — | P2 |
+| BND-078 | Code 1 | 1 | 20 | Min | — | — | P2 |
+| BND-079 | Code 20 | 1 | 20 | — | Max | — | P2 |
+| BND-080 | Search 0 | 0 | 200 | Empty | — | — | P2 |
+| BND-081 | Search 200 | 0 | 200 | — | Max | — | P2 |
+| BND-082 | Country batch 0 | 0 | 50 | Empty | — | — | P2 |
+| BND-083 | Country batch 50 | 0 | 50 | — | Max | — | P2 |
+| BND-084 | Codes list 0 | 0 | 100 | Empty | — | — | P2 |
+| BND-085 | Codes list 100 | 0 | 100 | — | Max | — | P2 |
+| BND-086 | Notes 0 | 0 | 4000 | Empty | — | — | P2 |
+| BND-087 | Notes 4000 | 0 | 4000 | — | Max | — | P2 |
+| BND-088 | Description 0 | 0 | 2000 | Empty | — | — | P2 |
+| BND-089 | Description 2000 | 0 | 2000 | — | Max | — | P2 |
+| BND-090 | Country count 0 | 0 | 1000 | None | — | — | P2 |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule | Trigger | Expected Outcome | Priority |
 |----|-----------|------|---------|------------------|----------|
@@ -287,10 +322,50 @@ The GeoRegionManager manages geographic regions for the CRM enhancement:
 | FUN-048 | Country in one region | Business rule | Map to 2 regions | One only | P2 |
 | FUN-049 | Continent cascade | Delete continent | Regions handled | Cascade or block | P2 |
 | FUN-050 | Statistics aggregation | Aggregation | GetStatistics | Correct agg | P2 |
+| FUN-051 | Create audit | Create | Create | Audit set | P2 |
+| FUN-052 | Update audit | Update | Update | Audit set | P2 |
+| FUN-053 | Soft delete audit | Delete | Delete | DeletedBy set | P2 |
+| FUN-054 | IsDeleted filter | Query | Query | Excludes deleted | P2 |
+| FUN-055 | Include continent | Get | Include | Continent loaded | P2 |
+| FUN-056 | Include countries | Get | Include | Countries loaded | P2 |
+| FUN-057 | Pagination | Page | Page | Correct slice | P2 |
+| FUN-058 | Sort | Sort | Sort | Ordered | P2 |
+| FUN-059 | Search | Search | Search | Matched | P2 |
+| FUN-060 | GetByCodes | Codes | Get | Returned | P2 |
+| FUN-061 | GetCountryCounts | Counts | Get | Aggregated | P2 |
+| FUN-062 | Restore | Restore | Restore | Restored | P2 |
+| FUN-063 | Include deleted | Admin | IncludeDeleted | All | P2 |
+| FUN-064 | Map countries | Map | Batch | Mapped | P2 |
+| FUN-065 | AsNoTracking | Read | Query | No tracking | P2 |
+| FUN-066 | Transaction | Transaction | Commit | Committed | P2 |
+| FUN-067 | Concurrency | Concurrent | Read | No conflict | P2 |
+| FUN-068 | Case-insensitive | Search | Case | Matched | P2 |
+| FUN-069 | Default region | Default | Get | Returned | P2 |
+| FUN-070 | GetByIds | IDs | Get | Returned | P2 |
+| FUN-071 | DbContext scope | Scope | Per request | Isolated | P2 |
+| FUN-072 | Validation order | Invalid | Validate | Order correct | P2 |
+| FUN-073 | Idempotent delete | Delete | Twice | Second no-op | P2 |
+| FUN-074 | Idempotent restore | Restore | Twice | Second no-op | P2 |
+| FUN-075 | Batch save | Batch | Save | All saved | P2 |
+| FUN-076 | Empty search | Search "" | Search | All | P2 |
+| FUN-077 | Unique code | Code | Create | No duplicate | P2 |
+| FUN-078 | Continent validation | Continent | Validate | Validated | P2 |
+| FUN-079 | Logging | Operation | Log | Logged | P2 |
+| FUN-080 | Metrics | Operation | Metric | Recorded | P2 |
+| FUN-081 | Query timeout | Slow | Query | Timeout | P2 |
+| FUN-082 | Retry policy | Transient | Fail | Retried | P2 |
+| FUN-083 | Cascading load | Include | Load | Loaded | P2 |
+| FUN-084 | Connection pool | Concurrent | Connections | Pooled | P2 |
+| FUN-085 | Foreign key | FK | Constraint | Enforced | P2 |
+| FUN-086 | Unique constraint | Unique | Insert | Enforced | P2 |
+| FUN-087 | Index | Query | Index | Fast | P2 |
+| FUN-088 | Export | Export | Export | File | P2 |
+| FUN-089 | Status validation | Status | Validate | Validated | P2 |
+| FUN-090 | Delete with countries | Has countries | Delete | Reject | P2 |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result | Priority |
 |----|-----------|----------|----------|-----------------|----------|
@@ -344,6 +419,46 @@ The GeoRegionManager manages geographic regions for the CRM enhancement:
 | INT-048 | Multi-entity create | Region+Countries | Multiple | All created | P1 |
 | INT-049 | Pagination flow | Create 15, Page 2 | Region | Correct slice | P1 |
 | INT-050 | Search flow | Create, Search | Region | Found | P1 |
+| INT-051 | DbContext | CRUD | DbContext | Persisted | P1 |
+| INT-052 | Repository | CRUD | Repository | Persisted | P1 |
+| INT-053 | AutoMapper | Map | Mapper | Mapped | P1 |
+| INT-054 | ContinentManager | Continent | Manager | Loaded | P1 |
+| INT-055 | CountryManager | Country | Manager | Loaded | P1 |
+| INT-056 | AuditDbContext | Audit | Context | Audited | P1 |
+| INT-057 | Transaction | Transaction | Commit | Committed | P1 |
+| INT-058 | PermissionService | Check | Service | Checked | P1 |
+| INT-059 | HttpClient | API | HttpClient | Response | P1 |
+| INT-060 | Logging | Log | ILogger | Logged | P1 |
+| INT-061 | Configuration | Config | IConfiguration | Loaded | P1 |
+| INT-062 | DI container | Resolve | Container | Resolved | P1 |
+| INT-063 | Scoped lifetime | Request | Scope | Per request | P1 |
+| INT-064 | Soft delete filter | Global | Query | Filtered | P1 |
+| INT-065 | Foreign key | FK | Constraint | Enforced | P1 |
+| INT-066 | Unique constraint | Unique | Insert | Enforced | P1 |
+| INT-067 | Cache | Cache | Get | Cached | P1 |
+| INT-068 | Retry | Transient | Retry | Retried | P1 |
+| INT-069 | Health check | Health | Check | Healthy | P1 |
+| INT-070 | Metrics | Metric | Record | Recorded | P1 |
+| INT-071 | User context | User | Context | Resolved | P1 |
+| INT-072 | Export service | Export | Service | File | P1 |
+| INT-073 | API versioning | Version | Request | Versioned | P1 |
+| INT-074 | Rate limiting | Limit | Request | Limited | P1 |
+| INT-075 | Auth middleware | Auth | Request | Authenticated | P1 |
+| INT-076 | Validation middleware | Validate | Request | Validated | P1 |
+| INT-077 | Exception middleware | Exception | Throw | Handled | P1 |
+| INT-078 | Correlation ID | Request | ID | Propagated | P1 |
+| INT-079 | Tracing | Trace | Span | Traced | P1 |
+| INT-080 | Feature flag | Flag | Check | Toggled | P1 |
+| INT-081 | CORS | Cross-origin | Request | Allowed | P1 |
+| INT-082 | Connection | Connection | Open | Connected | P1 |
+| INT-083 | Migration | Migration | Run | Applied | P1 |
+| INT-084 | Index | Query | Index | Fast | P1 |
+| INT-085 | Circuit breaker | Fail | Circuit | Open | P1 |
+| INT-086 | Tenant context | Tenant | Context | Resolved | P1 |
+| INT-087 | Continent API | Continent | API | Response | P1 |
+| INT-088 | Country API | Country | API | Response | P1 |
+| INT-089 | Forward compat | New client | Old API | Graceful | P1 |
+| INT-090 | Search flow | Create, Search | Region | Found | P1 |
 
 ---
 

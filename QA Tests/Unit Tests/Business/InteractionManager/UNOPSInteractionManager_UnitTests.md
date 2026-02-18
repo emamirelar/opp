@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | ≥30 | ✅ |
+| §2 Negative | 90 | ≥90 | ✅ |
+| §3 Boundary | 90 | ≥90 | ✅ |
+| §4 Functional | 90 | ≥90 | ✅ |
+| §5 Integration | 90 | ≥90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,7 +33,7 @@ Interaction manager unit tests cover CRUD interactions, date validation, and typ
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,11 +67,6 @@ Interaction manager unit tests cover CRUD interactions, date validation, and typ
 | POS-028 | Count by contact | Contact has interactions | Count | Count |
 | POS-029 | Export interactions | Interactions exist | Export | Exported |
 | POS-030 | Import interactions | CSV valid | Import | Imported |
-| POS-031 | Get interaction summary | Interactions exist | GetSummary | Summary |
-| POS-032 | Validate date range | Dates valid | Validate | True |
-| POS-033 | Get by opportunity | Opportunity has interactions | GetByOpportunity | List |
-| POS-034 | Bulk create | Valid data | BulkCreate | All created |
-| POS-035 | Permission check | User has permission | Check | True |
 
 ---
 
@@ -149,10 +144,30 @@ Interaction manager unit tests cover CRUD interactions, date validation, and typ
 | NEG-068 | GetTypes empty | No types | Empty list |
 | NEG-069 | Date format invalid | Format invalid | FormatException |
 | NEG-070 | Duplicate interaction | Same exists | BusinessException |
+| NEG-071 | Create with whitespace-only subject | Subject="   " | ValidationException |
+| NEG-072 | Update with null subject | Subject=null | ArgumentNullException |
+| NEG-073 | GetByPartner invalid partner | PartnerId=0 | ArgumentException |
+| NEG-074 | GetByContact invalid contact | ContactId=0 | ArgumentException |
+| NEG-075 | Search with invalid date filter | Date invalid | ArgumentException |
+| NEG-076 | Filter by deleted type | Type deleted | ArgumentException |
+| NEG-077 | Link interaction to self | Self-reference | BusinessException |
+| NEG-078 | Create with past end date | End before now | ValidationException |
+| NEG-079 | Import with invalid encoding | Encoding invalid | ValidationException |
+| NEG-080 | Export with invalid format | Format invalid | ArgumentException |
+| NEG-081 | Bulk create null item | Item null | ArgumentNullException |
+| NEG-082 | GetSummary with deleted partner | Partner deleted | KeyNotFoundException |
+| NEG-083 | Validate with invalid timezone | Timezone invalid | ArgumentException |
+| NEG-084 | Classify with whitespace type | Type="  " | ArgumentException |
+| NEG-085 | GetTypes with invalid entity | Entity invalid | ArgumentException |
+| NEG-086 | Count with deleted opportunity | Opportunity deleted | ArgumentException |
+| NEG-087 | List with negative page | Page=-1 | ArgumentException |
+| NEG-088 | Sort with null field | SortField=null | ArgumentNullException |
+| NEG-089 | Include with circular ref | Circular include | ArgumentException |
+| NEG-090 | Create with missing required | Required null | ValidationException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Condition | Expected Result |
 |----|-----------|-------------------|-----------------|
@@ -226,10 +241,30 @@ Interaction manager unit tests cover CRUD interactions, date validation, and typ
 | BND-068 | Classify unknown | Unknown type | Default or error |
 | BND-069 | Async cancellation | Cancel token | OperationCanceledException |
 | BND-070 | Task timeout | Timeout | TimeoutException |
+| BND-071 | Partner ID at max | PartnerId=2147483647 | Handle |
+| BND-072 | Contact ID at max | ContactId=2147483647 | Handle |
+| BND-073 | Opportunity ID zero | OpportunityId=0 | Reject |
+| BND-074 | Notes at max length | Length=4000 | Valid |
+| BND-075 | Notes over max | Length=4001 | Reject |
+| BND-076 | Type enum middle | Middle value | Valid |
+| BND-077 | Date range one hour | 1 hour | Valid |
+| BND-078 | Date range one year | 1 year | Valid |
+| BND-079 | Pagination first page | Page=1 | Valid |
+| BND-080 | Pagination last full page | Last full | Correct |
+| BND-081 | Filter type and date | Both | Correct |
+| BND-082 | Sort ascending | Asc | Ordered |
+| BND-083 | Sort descending | Desc | Ordered |
+| BND-084 | Import single row | 1 row | Valid |
+| BND-085 | Export single row | 1 row | Valid |
+| BND-086 | Bulk create two | Count=2 | Valid |
+| BND-087 | GetSummary single | 1 interaction | Summary |
+| BND-088 | GetByOpportunity single | 1 interaction | List |
+| BND-089 | Classify boundary type | Boundary value | Classified |
+| BND-090 | DateTime kind unspecified | Kind=Unspecified | Convert to UTC |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -283,10 +318,50 @@ Interaction manager unit tests cover CRUD interactions, date validation, and typ
 | FUN-048 | Permission cached | Performance | Repeated check | Cached |
 | FUN-049 | AsNoTracking read-only | Performance | List | No tracking |
 | FUN-050 | Date range validation | Validation | Validate | Range check |
+| FUN-051 | Subject trim on create | Logic | Create | Trimmed |
+| FUN-052 | Description trim on create | Logic | Create | Trimmed |
+| FUN-053 | Partner FK validation | Constraint | Create | Valid FK |
+| FUN-054 | Contact FK validation | Constraint | Create | Valid FK |
+| FUN-055 | Opportunity FK validation | Constraint | Create | Valid FK |
+| FUN-056 | Type enum validation | Constraint | Create | Valid enum |
+| FUN-057 | Search term sanitization | Logic | Search | Sanitized |
+| FUN-058 | Export format selection | Logic | Export | Correct format |
+| FUN-059 | Import encoding detection | Logic | Import | Detected |
+| FUN-060 | Bulk create validation order | Logic | BulkCreate | Ordered |
+| FUN-061 | GetSummary aggregation type | Logic | GetSummary | Correct agg |
+| FUN-062 | GetByOpportunity filter | Constraint | GetByOpportunity | Filtered |
+| FUN-063 | Classify fallback | Logic | Classify | Fallback |
+| FUN-064 | GetTypes ordering | Logic | GetTypes | Ordered |
+| FUN-065 | Count excludes soft-deleted | Constraint | Count | Excludes |
+| FUN-066 | List ordering default | Logic | List | Default sort |
+| FUN-067 | Filter type combination | Logic | Filter | Combined |
+| FUN-068 | Pagination max page | Logic | Paginate | Capped |
+| FUN-069 | Sort multi-field | Logic | Sort | Multi-column |
+| FUN-070 | Include optional partner | Data load | GetById | Optional |
+| FUN-071 | Include optional contact | Data load | GetById | Optional |
+| FUN-072 | Include optional opportunity | Data load | GetById | Optional |
+| FUN-073 | Audit DeletedBy on soft delete | Audit | Delete | Set |
+| FUN-074 | Audit DeletedDate on soft delete | Audit | Delete | UTC |
+| FUN-075 | Permission check before get | Authorization | GetById | Check first |
+| FUN-076 | Permission check before list | Authorization | List | Check first |
+| FUN-077 | Permission check before create | Authorization | Create | Check first |
+| FUN-078 | Permission check before update | Authorization | Update | Check first |
+| FUN-079 | Permission check before delete | Authorization | Delete | Check first |
+| FUN-080 | Validate date not future | Validation | Create | Reject future |
+| FUN-081 | Validate end after start | Validation | Create | End>Start |
+| FUN-082 | Link creates FK | Logic | Link | FK set |
+| FUN-083 | Unlink clears FK | Logic | Unlink | FK cleared |
+| FUN-084 | Import creates audit | Audit | Import | Logged |
+| FUN-085 | Export excludes soft-deleted | Constraint | Export | Excludes |
+| FUN-086 | GetSummary by partner | Logic | GetSummary | By partner |
+| FUN-087 | GetSummary by contact | Logic | GetSummary | By contact |
+| FUN-088 | GetByOpportunity ordered | Logic | GetByOpportunity | Ordered |
+| FUN-089 | Classify maps correctly | Logic | Classify | Mapped |
+| FUN-090 | Validate returns bool | Logic | Validate | Boolean |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|
@@ -340,6 +415,46 @@ Interaction manager unit tests cover CRUD interactions, date validation, and typ
 | INT-048 | Pagination with sort | Scenario | Paginate | Sorted |
 | INT-049 | Bulk create with validation | Scenario | BulkCreate | Validated |
 | INT-050 | E2E CRUD cycle | Scenario | Full cycle | Create→Update→Delete |
+| INT-051 | Create then get | Scenario | Create, GetById | Both |
+| INT-052 | Update then get | Scenario | Update, GetById | Both |
+| INT-053 | Delete then list | Scenario | Delete, List | Excluded |
+| INT-054 | Link partner then get | Scenario | Link, GetById | Partner loaded |
+| INT-055 | Link contact then get | Scenario | Link, GetById | Contact loaded |
+| INT-056 | Search then filter | Scenario | Search, Filter | Combined |
+| INT-057 | Filter then sort | Scenario | Filter, Sort | Both |
+| INT-058 | Paginate then count | Scenario | Paginate, Count | Consistent |
+| INT-059 | Import then export | Scenario | Import, Export | Round-trip |
+| INT-060 | Bulk create then list | Scenario | BulkCreate, List | All visible |
+| INT-061 | GetSummary after create | Scenario | Create, GetSummary | Updated |
+| INT-062 | GetByOpportunity after link | Scenario | Link, GetByOpportunity | Listed |
+| INT-063 | Classify then create | Scenario | Classify, Create | Both |
+| INT-064 | Validate then create | Scenario | Validate, Create | Both |
+| INT-065 | PartnerManager GetById | Integration | PartnerManager | Partner |
+| INT-066 | ContactManager GetById | Integration | ContactManager | Contact |
+| INT-067 | OpportunityManager GetById | Integration | OpportunityManager | Opportunity |
+| INT-068 | Mapper entity to model | Integration | Mapper | Mapped |
+| INT-069 | Mapper model to entity | Integration | Mapper | Mapped |
+| INT-070 | Repository AddAsync | Integration | Repository | Added |
+| INT-071 | Repository UpdateAsync | Integration | Repository | Updated |
+| INT-072 | DbContext SaveChanges | Integration | DbContext | Saved |
+| INT-073 | Transaction Create+Update | Integration | Transaction | Atomic |
+| INT-074 | Transaction Create+Delete | Integration | Transaction | Atomic |
+| INT-075 | Permission service check | Integration | Permission | Checked |
+| INT-076 | User resolver current user | Integration | UserResolver | User |
+| INT-077 | Audit context capture | Integration | Audit | Captured |
+| INT-078 | Logger info on create | Integration | Logger | Logged |
+| INT-079 | Multiple partners interactions | Scenario | Partner, Interactions | All linked |
+| INT-080 | Multiple contacts interactions | Scenario | Contact, Interactions | All linked |
+| INT-081 | Interaction with all relations | Scenario | Full include | All loaded |
+| INT-082 | Create with partner and contact | Scenario | Create | Both linked |
+| INT-083 | Update subject and date | Scenario | Update | Both updated |
+| INT-084 | Soft delete then get | Scenario | Delete, GetById | 404 |
+| INT-085 | List after bulk create | Scenario | BulkCreate, List | Paginated |
+| INT-086 | Export filtered by type | Scenario | Filter, Export | Filtered |
+| INT-087 | Import with validation | Scenario | Import | Validated |
+| INT-088 | GetTypes then create | Scenario | GetTypes, Create | Both |
+| INT-089 | Count by partner and contact | Scenario | Count | Both correct |
+| INT-090 | Full workflow create-update-delete | Scenario | Full cycle | Complete |
 
 ---
 

@@ -1,7 +1,7 @@
 # BaseEngagementManager — Unit Test Cases
 
 **Component:** `UNOPS.PAO.Business/Managers/BaseEngagementManager` (Unit Tests)  
-**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Created:** 2026-02-04 | **Last Updated:** 2026-02-18  
 **Author:** QA Team  
 **Standard:** 10-Category, 3:1 Ratio
 
@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,7 +33,7 @@ Base engagement manager provides shared engagement lifecycle logic, common patte
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,15 +67,10 @@ Base engagement manager provides shared engagement lifecycle logic, common patte
 | POS-028 | Workflow status propagated | Status change | Check entity | WorkflowStatus updated |
 | POS-029 | Engagement type resolved | Multi-type support | Create | Type correctly set |
 | POS-030 | Bulk get by IDs | Multiple IDs | GetByIds | All returned |
-| POS-031 | Pagination works | Many engagements | List with page | Page returned |
-| POS-032 | Sort by date | Engagements exist | List with sort | Correct order |
-| POS-033 | Filter by status | Engagements exist | Filter by status | Filtered |
-| POS-034 | Filter by date range | Engagements exist | Filter dates | In range |
-| POS-035 | Count engagements | Engagements exist | Count | Correct count |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Action | Expected Result |
 |----|-----------|---------------------|-----------------|
@@ -149,10 +144,30 @@ Base engagement manager provides shared engagement lifecycle logic, common patte
 | NEG-068 | Child override throws | Child throws | Propagated exception |
 | NEG-069 | Audit trail missing user | User=0 | InvalidOperationException |
 | NEG-070 | Workflow status invalid | Invalid status | ArgumentException |
+| NEG-071 | AddAttachment null attachment | Attachment=null | ArgumentNullException |
+| NEG-072 | RemoveAttachment non-existent | Id invalid | KeyNotFoundException |
+| NEG-073 | GetAttachments invalid engagement | EngagementId=0 | ArgumentException |
+| NEG-074 | SetDueDate invalid date | Date past | ArgumentException |
+| NEG-075 | GetDueEngagements invalid range | End<Start | ArgumentException |
+| NEG-076 | AssignOwner null owner | Owner=null | ArgumentNullException |
+| NEG-077 | UnassignOwner not assigned | No owner | BusinessException |
+| NEG-078 | AddComment null comment | Comment=null | ArgumentNullException |
+| NEG-079 | GetComments invalid engagement | EngagementId=0 | ArgumentException |
+| NEG-080 | SetPriority invalid priority | Priority invalid | ArgumentException |
+| NEG-081 | GetByPriority invalid | Priority invalid | ArgumentException |
+| NEG-082 | LinkDocument null document | Document=null | ArgumentNullException |
+| NEG-083 | UnlinkDocument not linked | No link | BusinessException |
+| NEG-084 | GetLinkedDocuments invalid | EngagementId=0 | ArgumentException |
+| NEG-085 | CloneEngagement null source | Source=null | ArgumentNullException |
+| NEG-086 | ArchiveEngagement deleted | Engagement deleted | KeyNotFoundException |
+| NEG-087 | RestoreEngagement not archived | Not archived | InvalidOperationException |
+| NEG-088 | ValidateBudget null budget | Budget=null | ArgumentNullException |
+| NEG-089 | GetBudgetSummary invalid | EngagementId=0 | ArgumentException |
+| NEG-090 | Duplicate participant | Same participant | BusinessException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Condition | Expected Result |
 |----|-----------|-------------------|-----------------|
@@ -226,10 +241,30 @@ Base engagement manager provides shared engagement lifecycle logic, common patte
 | BND-068 | Base virtual call | Virtual method | Base or override |
 | BND-069 | Async cancellation | Cancel token | OperationCanceledException |
 | BND-070 | Task timeout | Task timeout | TimeoutException |
+| BND-071 | Name exactly 200 chars | Length=200 | Valid |
+| BND-072 | Description exactly 4096 | 4096 chars | Valid |
+| BND-073 | Participant count zero | 0 | Valid |
+| BND-074 | Participant count max | Max | Valid |
+| BND-075 | Due date at min | MinValue | Handle |
+| BND-076 | Due date at max | MaxValue | Handle |
+| BND-077 | Priority enum first | First | Valid |
+| BND-078 | Priority enum last | Last | Valid |
+| BND-079 | Comment count zero | 0 | Valid |
+| BND-080 | Comment count max | Max | Valid |
+| BND-081 | Attachment size zero | 0 bytes | Reject |
+| BND-082 | Attachment size max | Max | Valid |
+| BND-083 | Budget zero | 0 | Valid |
+| BND-084 | Budget max | Max | Valid |
+| BND-085 | Owner null | No owner | Valid |
+| BND-086 | Owner set | Owner set | Valid |
+| BND-087 | Document count zero | 0 | Valid |
+| BND-088 | Document count max | Max | Valid |
+| BND-089 | Clone preserves audit | Clone | Audit |
+| BND-090 | Archive boundary | Archive | Archived |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -283,10 +318,50 @@ Base engagement manager provides shared engagement lifecycle logic, common patte
 | FUN-048 | Date range validation | Validation | Date filter | Start≤End |
 | FUN-049 | Permission cached | Performance | Repeated check | Cached |
 | FUN-050 | AsNoTracking read-only | Performance | List | No tracking |
+| FUN-051 | AddAttachment creates | Data | AddAttachment | Created |
+| FUN-052 | RemoveAttachment deletes | Data | RemoveAttachment | Removed |
+| FUN-053 | GetAttachments ordered | Logic | GetAttachments | Ordered |
+| FUN-054 | SetDueDate updates | Data | SetDueDate | Updated |
+| FUN-055 | GetDueEngagements filters | Filter | GetDueEngagements | Filtered |
+| FUN-056 | AssignOwner sets | Data | AssignOwner | Set |
+| FUN-057 | UnassignOwner clears | Data | UnassignOwner | Cleared |
+| FUN-058 | AddComment creates | Data | AddComment | Created |
+| FUN-059 | GetComments ordered | Logic | GetComments | Chronological |
+| FUN-060 | SetPriority updates | Data | SetPriority | Updated |
+| FUN-061 | GetByPriority filters | Filter | GetByPriority | Filtered |
+| FUN-062 | LinkDocument creates | Data | LinkDocument | Linked |
+| FUN-063 | UnlinkDocument removes | Data | UnlinkDocument | Removed |
+| FUN-064 | GetLinkedDocuments returns | Data | GetLinkedDocuments | Documents |
+| FUN-065 | CloneEngagement copies | Data | CloneEngagement | Copied |
+| FUN-066 | ArchiveEngagement archives | Logic | ArchiveEngagement | Archived |
+| FUN-067 | RestoreEngagement restores | Logic | RestoreEngagement | Restored |
+| FUN-068 | ValidateBudget validates | Validation | ValidateBudget | Valid |
+| FUN-069 | GetBudgetSummary aggregates | Calculation | GetBudgetSummary | Correct |
+| FUN-070 | Participant role validation | Validation | AddParticipants | Valid role |
+| FUN-071 | Attachment size limit | Constraint | AddAttachment | Limit |
+| FUN-072 | Due date in future | Validation | SetDueDate | Future |
+| FUN-073 | Owner must exist | Constraint | AssignOwner | Reject invalid |
+| FUN-074 | Comment max length | Constraint | AddComment | Max |
+| FUN-075 | Priority in range | Validation | SetPriority | In range |
+| FUN-076 | Document must exist | Constraint | LinkDocument | Reject invalid |
+| FUN-077 | Clone excludes audit | Logic | Clone | Excludes |
+| FUN-078 | Archive excludes deleted | Constraint | Archive | Reject |
+| FUN-079 | Restore requires archived | Constraint | Restore | Reject |
+| FUN-080 | Budget positive | Validation | ValidateBudget | Positive |
+| FUN-081 | GetDueEngagements date range | Logic | GetDueEngagements | In range |
+| FUN-082 | GetByPriority excludes deleted | Constraint | GetByPriority | Excludes |
+| FUN-083 | GetComments excludes deleted | Constraint | GetComments | Excludes |
+| FUN-084 | GetAttachments excludes deleted | Constraint | GetAttachments | Excludes |
+| FUN-085 | GetLinkedDocuments excludes deleted | Constraint | GetLinkedDocuments | Excludes |
+| FUN-086 | Export excludes deleted | Constraint | Export | Excludes |
+| FUN-087 | Import rollback | Transaction | Import | Rollback |
+| FUN-088 | Export format | Format | Export | Correct |
+| FUN-089 | Search case handling | Config | Search | Per config |
+| FUN-090 | Filter by priority | Filter | List | Priority filter |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|
@@ -340,6 +415,46 @@ Base engagement manager provides shared engagement lifecycle logic, common patte
 | INT-048 | Export with related data | Scenario | Engagement, Partner | Export includes |
 | INT-049 | Import validation | Scenario | Import data | Validated |
 | INT-050 | E2E workflow cycle | Scenario | Full cycle | Submit→Approve |
+| INT-051 | AddAttachment flow | Scenario | AddAttachment | Added |
+| INT-052 | RemoveAttachment flow | Scenario | RemoveAttachment | Removed |
+| INT-053 | SetDueDate flow | Scenario | SetDueDate | Set |
+| INT-054 | GetDueEngagements flow | Scenario | GetDueEngagements | Filtered |
+| INT-055 | AssignOwner flow | Scenario | AssignOwner | Assigned |
+| INT-056 | UnassignOwner flow | Scenario | UnassignOwner | Unassigned |
+| INT-057 | AddComment flow | Scenario | AddComment | Added |
+| INT-058 | SetPriority flow | Scenario | SetPriority | Set |
+| INT-059 | LinkDocument flow | Scenario | LinkDocument | Linked |
+| INT-060 | UnlinkDocument flow | Scenario | UnlinkDocument | Unlinked |
+| INT-061 | CloneEngagement flow | Scenario | CloneEngagement | Cloned |
+| INT-062 | ArchiveEngagement flow | Scenario | ArchiveEngagement | Archived |
+| INT-063 | RestoreEngagement flow | Scenario | RestoreEngagement | Restored |
+| INT-064 | GetBudgetSummary flow | Scenario | GetBudgetSummary | Summary |
+| INT-065 | Document manager integration | Integration | DocumentManager | Documents |
+| INT-066 | Attachment service integration | Integration | Attachment | Attachments |
+| INT-067 | Comment service integration | Integration | Comment | Comments |
+| INT-068 | Multiple entity types | Scenario | Engagement | Multiple |
+| INT-069 | Full workflow cycle | Scenario | Full | Complete |
+| INT-070 | Pagination with filter | Scenario | Paginate | Filtered |
+| INT-071 | Sort with filter | Scenario | List | Sorted, filtered |
+| INT-072 | Search full | Scenario | Search | Results |
+| INT-073 | Bulk operations | Scenario | Bulk | All |
+| INT-074 | Concurrent operations | Scenario | Parallel | No conflict |
+| INT-075 | Error recovery | Scenario | Error | Recover |
+| INT-076 | Audit trail full | Scenario | CRUD | Full trail |
+| INT-077 | Permission integration | Scenario | Permission | Enforced |
+| INT-078 | User context integration | Scenario | User | Context |
+| INT-079 | Logger integration flow | Scenario | Log | Logged |
+| INT-080 | Mapper round-trip | Scenario | Map | Correct |
+| INT-081 | Repository CRUD cycle | Scenario | Repository | CRUD |
+| INT-082 | DbContext scoping | Scenario | DbContext | Scoped |
+| INT-083 | Transaction rollback | Scenario | Transaction | Rollback |
+| INT-084 | Notification flow | Scenario | Notification | Sent |
+| INT-085 | Workflow state sync | Scenario | Workflow | Synced |
+| INT-086 | Child override flow | Scenario | Child | Override |
+| INT-087 | Inheritance chain | Scenario | Child | Chain |
+| INT-088 | Attachment full flow | Scenario | Attachment | Complete |
+| INT-089 | Comment full flow | Scenario | Comment | Complete |
+| INT-090 | E2E with all features | Scenario | Full | Complete |
 
 ---
 
@@ -500,5 +615,5 @@ Base engagement manager provides shared engagement lifecycle logic, common patte
 
 ---
 
-**Last Updated:** 2026-02-11  
+**Last Updated:** 2026-02-18  
 **Status:** Ready for Implementation

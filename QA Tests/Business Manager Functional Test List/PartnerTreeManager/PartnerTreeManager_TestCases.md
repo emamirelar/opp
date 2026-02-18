@@ -1,7 +1,7 @@
 # PartnerTreeManager — Test Cases
 
 **Component:** `UNOPS.PAO.Business/Managers/PartnerTreeManager`  
-**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Created:** 2026-02-18 | **Last Updated:** 2026-02-18  
 **Author:** QA Team  
 **Standard:** 10-Category, 3:1 Ratio
 
@@ -11,335 +11,463 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive (P) | 30 | 30-50 | ✅ |
+| §2 Negative (N) | 90 | 90 | ✅ |
+| §3 Boundary (E) | 90 | 90 | ✅ |
+| §4 Functional (F) | 90 | 90 | ✅ |
+| §5 Integration (I) | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
+
+### 3:1 Ratio Compliance Check
+| Category | Count | Tests |
+|----------|-------|-------|
+| Positive (P) | 30 | POS-001 through POS-030 |
+| Negative (N) | 90 | NEG-001 through NEG-090 |
+| Edge/Boundary (E) | 90 | BND-001 through BND-090 |
+| Functional (F) | 90 | FUN-001 through FUN-090 |
+| Integration (I) | 90 | INT-001 through INT-090 |
+| **N ≥ 3P?** | ✅ | 90 ≥ 90 |
+| **E ≥ 3P?** | ✅ | 90 ≥ 90 |
+| **F ≥ 3P?** | ✅ | 90 ≥ 90 |
+| **I ≥ 3P?** | ✅ | 90 ≥ 90 |
 
 ---
 
 ## Feature Overview
 
-**PartnerTreeManager** manages hierarchy display, parent-child, expand/collapse, search within tree, and context menu. Key responsibilities: partner tree structure, child trees recursive, descendant trees, category hierarchy.
+**PartnerTreeManager** manages partner category and group hierarchy structure using Code/Parent string matching (not FK). Key responsibilities: CRUD operations (CreatePartnerTreeAsync, UpdatePartnerTreeAsync, DeletePartnerTreeAsync), hierarchical tree building (BuildHierarchy), category vs group distinction (PartnerCategoryEditable, PartnerGroupEditable), recursive descendants (GetAllDescendantsAsync), sorting (sortBy, ascending), permissions, AI integration (GetBasicPartnerCategoryDetailsAsync, GetBasicPartnerGroupDetailsAsync, GetPartnerCategoryNewsDetailsAsync, GetPartnerGroupNewsDetailsAsync), partner assignments to groups, categorization overview, and partner filtering by group/category.
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps (Brief) | Expected Result | Priority |
 |----|-----------|-------------|---------------|-----------------|----------|
-| POS-001 | Test 1 | Precondition 1 | Step 1 | Result 1 | P0 |
-| POS-002 | Test 2 | Precondition 2 | Step 2 | Result 2 | P0 |
-| POS-003 | Test 3 | Precondition 3 | Step 3 | Result 3 | P0 |
-| POS-004 | Test 4 | Precondition 4 | Step 4 | Result 4 | P0 |
-| POS-005 | Test 5 | Precondition 5 | Step 5 | Result 5 | P0 |
-| POS-006 | Test 6 | Precondition 6 | Step 6 | Result 6 | P1 |
-| POS-007 | Test 7 | Precondition 7 | Step 7 | Result 7 | P1 |
-| POS-008 | Test 8 | Precondition 8 | Step 8 | Result 8 | P1 |
-| POS-009 | Test 9 | Precondition 9 | Step 9 | Result 9 | P1 |
-| POS-010 | Test 10 | Precondition 10 | Step 10 | Result 10 | P1 |
-| POS-011 | Test 11 | Precondition 11 | Step 11 | Result 11 | P1 |
-| POS-012 | Test 12 | Precondition 12 | Step 12 | Result 12 | P1 |
-| POS-013 | Test 13 | Precondition 13 | Step 13 | Result 13 | P1 |
-| POS-014 | Test 14 | Precondition 14 | Step 14 | Result 14 | P1 |
-| POS-015 | Test 15 | Precondition 15 | Step 15 | Result 15 | P1 |
-| POS-016 | Test 16 | Precondition 16 | Step 16 | Result 16 | P1 |
-| POS-017 | Test 17 | Precondition 17 | Step 17 | Result 17 | P1 |
-| POS-018 | Test 18 | Precondition 18 | Step 18 | Result 18 | P1 |
-| POS-019 | Test 19 | Precondition 19 | Step 19 | Result 19 | P1 |
-| POS-020 | Test 20 | Precondition 20 | Step 20 | Result 20 | P1 |
-| POS-021 | Test 21 | Precondition 21 | Step 21 | Result 21 | P1 |
-| POS-022 | Test 22 | Precondition 22 | Step 22 | Result 22 | P1 |
-| POS-023 | Test 23 | Precondition 23 | Step 23 | Result 23 | P1 |
-| POS-024 | Test 24 | Precondition 24 | Step 24 | Result 24 | P1 |
-| POS-025 | Test 25 | Precondition 25 | Step 25 | Result 25 | P1 |
-| POS-026 | Test 26 | Precondition 26 | Step 26 | Result 26 | P1 |
-| POS-027 | Test 27 | Precondition 27 | Step 27 | Result 27 | P1 |
-| POS-028 | Test 28 | Precondition 28 | Step 28 | Result 28 | P1 |
-| POS-029 | Test 29 | Precondition 29 | Step 29 | Result 29 | P1 |
-| POS-030 | Test 30 | Precondition 30 | Step 30 | Result 30 | P1 |
-| POS-031 | Test 31 | Precondition 31 | Step 31 | Result 31 | P1 |
-| POS-032 | Test 32 | Precondition 32 | Step 32 | Result 32 | P1 |
-| POS-033 | Test 33 | Precondition 33 | Step 33 | Result 33 | P1 |
-| POS-034 | Test 34 | Precondition 34 | Step 34 | Result 34 | P1 |
-| POS-035 | Test 35 | Precondition 35 | Step 35 | Result 35 | P1 |
+| POS-001 | Create partner category | User has create permission | CreatePartnerTreeAsync(ClaimsPrincipal, model with Code="NGO", Type="Level_1", Parent="") | Partner tree created with ID, Name, Code | P0 |
+| POS-002 | Create partner group under category | Category "GOV" exists | CreatePartnerTreeAsync(model with Code="GOV-001", Type="Level_2", Parent="GOV") | Group created under GOV category | P0 |
+| POS-003 | Get partner trees hierarchical | Trees exist | GetPartnerTreesAsync(user, "Name", true) | Hierarchical tree returned | P0 |
+| POS-004 | Get partner tree by ID | Tree exists | GetPartnerTreeAsync(user, 5) | PartnerTreeModel returned | P0 |
+| POS-005 | Update partner tree | Tree exists | UpdatePartnerTreeAsync(user, model with Id=5, Description="Updated") | Tree updated | P0 |
+| POS-006 | Delete partner tree | Tree exists, no partners assigned | DeletePartnerTreeAsync(user, 5) | Tree soft-deleted | P0 |
+| POS-007 | Get posted partner trees | Trees exist | GetPostedPartnerTrees() | ExternalPartnerTreeModel list | P1 |
+| POS-008 | Get posted partner tree by ID | Tree exists | GetPostedPartnerTree(5) | ExternalPartnerTreeModel with EligibleEntities | P1 |
+| POS-009 | Get category and group structure | Trees exist | GetCategoryAndGroupStructureAsync(user) | Categories with children groups | P0 |
+| POS-010 | Sort by Name ascending | Trees exist | GetPartnerTreesAsync(user, "Name", true) | Sorted A→Z | P1 |
+| POS-011 | Sort by Name descending | Trees exist | GetPartnerTreesAsync(user, "Name", false) | Sorted Z→A | P1 |
+| POS-012 | Sort by Code ascending | Trees exist | GetPartnerTreesAsync(user, "Code", true) | Sorted by Code | P1 |
+| POS-013 | API POST create | Auth | POST /api/partner-tree with valid body | 201 Created | P0 |
+| POS-014 | API GET list | Auth | GET /api/partner-tree | 200 with hierarchical list | P0 |
+| POS-015 | API GET by ID | Auth | GET /api/partner-tree/5 | 200 with tree | P0 |
+| POS-016 | API PUT update | Auth | PUT /api/partner-tree with valid body | 200 with updated | P0 |
+| POS-017 | API DELETE | Auth | DELETE /api/partner-tree/5 | 204 No Content | P0 |
+| POS-018 | API GET permissions | Auth | GET /api/partner-tree/5/permissions | 200 with canRead, canUpdate, canDelete | P0 |
+| POS-019 | API GET structure | Auth | GET /api/partner-tree-structure | 200 with category/group | P0 |
+| POS-020 | API GET partners by group ID | Auth | GET /api/partner-tree/by-partner-group-id/5 | 200 with paginated partners | P1 |
+| POS-021 | API GET partners by category code | Auth | GET /api/partner-tree/by-partner-category-code/GOV | 200 with paginated partners | P1 |
+| POS-022 | API GET categories-summary | Auth | GET /api/partner-tree/categories-summary | 200 with totalCategories, categories | P1 |
+| POS-023 | API GET groups-summary | Auth | GET /api/partner-tree/groups-summary | 200 with totalGroups, groups | P1 |
+| POS-024 | API GET categorization-overview | Auth | GET /api/partner-tree/categorization-overview | 200 with summary, categories, groups | P1 |
+| POS-025 | API GET describe | Auth | GET /api/partner-tree/describe | 200 with entity config | P1 |
+| POS-026 | PartnerTreeService GetPartnerTreeByIdAsync | Tree exists | GetPartnerTreeByIdAsync(5) | UNOPSPartnerTree returned | P1 |
+| POS-027 | PartnerTreeService GetPartnerTreeByCodeAsync | Code "GOV" exists | GetPartnerTreeByCodeAsync("GOV") | Tree returned | P1 |
+| POS-028 | PartnerTreeService GetPartnerCategoryByPartnerGroupCodeAsync | Group under category | GetPartnerCategoryByPartnerGroupCodeAsync("GOV-001") | Parent category | P1 |
+| POS-029 | PartnerTreeService GetAllDescendantsAsync | Category with 3 groups | GetAllDescendantsAsync("GOV") | List of 3 group IDs | P1 |
+| POS-030 | BuildHierarchy with null parent | Trees with Parent="" | BuildHierarchy(lookup, "") | Top-level items | P0 |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Condition | Expected Result | Priority |
 |----|-----------|------------------------|-----------------|----------|
-| NEG-001 | Negative 1 | Invalid input 1 | Error 1 | P0 |
-| NEG-002 | Negative 2 | Invalid input 2 | Error 2 | P0 |
-| NEG-003 | Negative 3 | Invalid input 3 | Error 3 | P0 |
-| NEG-004 | Negative 4 | Invalid input 4 | Error 4 | P0 |
-| NEG-005 | Negative 5 | Invalid input 5 | Error 5 | P0 |
-| NEG-006 | Negative 6 | Invalid input 6 | Error 6 | P0 |
-| NEG-007 | Negative 7 | Invalid input 7 | Error 7 | P0 |
-| NEG-008 | Negative 8 | Invalid input 8 | Error 8 | P0 |
-| NEG-009 | Negative 9 | Invalid input 9 | Error 9 | P0 |
-| NEG-010 | Negative 10 | Invalid input 10 | Error 10 | P0 |
-| NEG-011 | Negative 11 | Invalid input 11 | Error 11 | P1 |
-| NEG-012 | Negative 12 | Invalid input 12 | Error 12 | P1 |
-| NEG-013 | Negative 13 | Invalid input 13 | Error 13 | P1 |
-| NEG-014 | Negative 14 | Invalid input 14 | Error 14 | P1 |
-| NEG-015 | Negative 15 | Invalid input 15 | Error 15 | P1 |
-| NEG-016 | Negative 16 | Invalid input 16 | Error 16 | P1 |
-| NEG-017 | Negative 17 | Invalid input 17 | Error 17 | P1 |
-| NEG-018 | Negative 18 | Invalid input 18 | Error 18 | P1 |
-| NEG-019 | Negative 19 | Invalid input 19 | Error 19 | P1 |
-| NEG-020 | Negative 20 | Invalid input 20 | Error 20 | P1 |
-| NEG-021 | Negative 21 | Invalid input 21 | Error 21 | P1 |
-| NEG-022 | Negative 22 | Invalid input 22 | Error 22 | P1 |
-| NEG-023 | Negative 23 | Invalid input 23 | Error 23 | P1 |
-| NEG-024 | Negative 24 | Invalid input 24 | Error 24 | P1 |
-| NEG-025 | Negative 25 | Invalid input 25 | Error 25 | P1 |
-| NEG-026 | Negative 26 | Invalid input 26 | Error 26 | P1 |
-| NEG-027 | Negative 27 | Invalid input 27 | Error 27 | P1 |
-| NEG-028 | Negative 28 | Invalid input 28 | Error 28 | P1 |
-| NEG-029 | Negative 29 | Invalid input 29 | Error 29 | P1 |
-| NEG-030 | Negative 30 | Invalid input 30 | Error 30 | P1 |
-| NEG-031 | Negative 31 | Invalid input 31 | Error 31 | P1 |
-| NEG-032 | Negative 32 | Invalid input 32 | Error 32 | P1 |
-| NEG-033 | Negative 33 | Invalid input 33 | Error 33 | P1 |
-| NEG-034 | Negative 34 | Invalid input 34 | Error 34 | P1 |
-| NEG-035 | Negative 35 | Invalid input 35 | Error 35 | P1 |
-| NEG-036 | Negative 36 | Invalid input 36 | Error 36 | P1 |
-| NEG-037 | Negative 37 | Invalid input 37 | Error 37 | P1 |
-| NEG-038 | Negative 38 | Invalid input 38 | Error 38 | P1 |
-| NEG-039 | Negative 39 | Invalid input 39 | Error 39 | P1 |
-| NEG-040 | Negative 40 | Invalid input 40 | Error 40 | P1 |
-| NEG-041 | Negative 41 | Invalid input 41 | Error 41 | P1 |
-| NEG-042 | Negative 42 | Invalid input 42 | Error 42 | P1 |
-| NEG-043 | Negative 43 | Invalid input 43 | Error 43 | P1 |
-| NEG-044 | Negative 44 | Invalid input 44 | Error 44 | P1 |
-| NEG-045 | Negative 45 | Invalid input 45 | Error 45 | P1 |
-| NEG-046 | Negative 46 | Invalid input 46 | Error 46 | P1 |
-| NEG-047 | Negative 47 | Invalid input 47 | Error 47 | P1 |
-| NEG-048 | Negative 48 | Invalid input 48 | Error 48 | P1 |
-| NEG-049 | Negative 49 | Invalid input 49 | Error 49 | P1 |
-| NEG-050 | Negative 50 | Invalid input 50 | Error 50 | P1 |
-| NEG-051 | Negative 51 | Invalid input 51 | Error 51 | P1 |
-| NEG-052 | Negative 52 | Invalid input 52 | Error 52 | P1 |
-| NEG-053 | Negative 53 | Invalid input 53 | Error 53 | P1 |
-| NEG-054 | Negative 54 | Invalid input 54 | Error 54 | P1 |
-| NEG-055 | Negative 55 | Invalid input 55 | Error 55 | P1 |
-| NEG-056 | Negative 56 | Invalid input 56 | Error 56 | P1 |
-| NEG-057 | Negative 57 | Invalid input 57 | Error 57 | P1 |
-| NEG-058 | Negative 58 | Invalid input 58 | Error 58 | P1 |
-| NEG-059 | Negative 59 | Invalid input 59 | Error 59 | P1 |
-| NEG-060 | Negative 60 | Invalid input 60 | Error 60 | P1 |
-| NEG-061 | Negative 61 | Invalid input 61 | Error 61 | P1 |
-| NEG-062 | Negative 62 | Invalid input 62 | Error 62 | P1 |
-| NEG-063 | Negative 63 | Invalid input 63 | Error 63 | P1 |
-| NEG-064 | Negative 64 | Invalid input 64 | Error 64 | P1 |
-| NEG-065 | Negative 65 | Invalid input 65 | Error 65 | P1 |
-| NEG-066 | Negative 66 | Invalid input 66 | Error 66 | P1 |
-| NEG-067 | Negative 67 | Invalid input 67 | Error 67 | P1 |
-| NEG-068 | Negative 68 | Invalid input 68 | Error 68 | P1 |
-| NEG-069 | Negative 69 | Invalid input 69 | Error 69 | P1 |
-| NEG-070 | Negative 70 | Invalid input 70 | Error 70 | P1 |
+| NEG-001 | Create with duplicate code | Code already exists | BusinessException | P0 |
+| NEG-002 | Create with null model | model=null | ArgumentNullException | P0 |
+| NEG-003 | Create with empty Code | Code="" | Validation or error | P0 |
+| NEG-004 | Create with null Name | Name=null | Validation error | P0 |
+| NEG-005 | Get by non-existent ID | GetPartnerTreeAsync(user, 99999) | null | P0 |
+| NEG-006 | Get by ID zero | GetPartnerTreeAsync(user, 0) | null or error | P1 |
+| NEG-007 | Get by ID negative | GetPartnerTreeAsync(user, -1) | null or error | P1 |
+| NEG-008 | Update non-existent | UpdatePartnerTreeAsync(model.Id=99999) | BusinessException | P0 |
+| NEG-009 | Update with null model | model=null | ArgumentNullException | P0 |
+| NEG-010 | Delete non-existent | DeletePartnerTreeAsync(user, 99999) | Graceful | P1 |
+| NEG-011 | Delete already deleted | Tree IsDeleted=true | Graceful | P1 |
+| NEG-012 | GetPostedPartnerTree non-existent | GetPostedPartnerTree(99999) | BusinessException | P0 |
+| NEG-013 | Invalid sortBy | GetPartnerTreesAsync(user, "InvalidField", true) | Error or fallback | P1 |
+| NEG-014 | Parent references non-existent | Create with Parent="NONEXISTENT" | Error or orphan | P1 |
+| NEG-015 | Circular parent reference | Parent=A, A.Parent=B, B.Parent=A | Infinite loop prevented | P0 |
+| NEG-016 | API POST without auth | No token | 401 | P0 |
+| NEG-017 | API POST without create permission | User lacks create | 403 | P0 |
+| NEG-018 | API GET without auth | No token | 401 | P0 |
+| NEG-019 | API GET without read permission | User lacks read | 403 | P0 |
+| NEG-020 | API PUT without update permission | User lacks update | 403 | P0 |
+| NEG-021 | API DELETE without delete permission | User lacks delete | 403 | P0 |
+| NEG-022 | API GET by invalid ID | GET /api/partner-tree/abc | 400 | P0 |
+| NEG-023 | API GET by ID not found | GET /api/partner-tree/99999 | 404 | P0 |
+| NEG-024 | API POST malformed JSON | Invalid JSON body | 400 | P0 |
+| NEG-025 | API POST missing required fields | Body without Code | 400 | P0 |
+| NEG-026 | GetPartnerTreeByCodeAsync non-existent | GetPartnerTreeByCodeAsync("NONEXISTENT") | null | P1 |
+| NEG-027 | GetPartnerCategoryByPartnerGroupCodeAsync invalid | Code="NONEXISTENT" | null | P1 |
+| NEG-028 | GetAllDescendantsAsync non-existent code | GetAllDescendantsAsync("NONEXISTENT") | Empty list | P1 |
+| NEG-029 | GetBasicPartnerCategoryDetailsAsync non-existent | entityId=99999 | Error object | P1 |
+| NEG-030 | GetBasicPartnerGroupDetailsAsync non-existent | entityId=99999 | Error object | P1 |
+| NEG-031 | GetPartnerCategoryNewsDetailsAsync non-existent | entityId=99999 | Error object | P1 |
+| NEG-032 | GetPartnerGroupNewsDetailsAsync non-existent | entityId=99999 | Error object | P1 |
+| NEG-033 | Create Level_1 with special code | Code="MULTILATERAL" | PartnerCategoryCode handled per rule | P1 |
+| NEG-034 | Create Level_1 with special code | Code="GOVERNMENT" | PartnerCategoryCode handled per rule | P1 |
+| NEG-035 | Update without CanModifyPartnerCategoryCode | Non-editable category | PartnerCategoryCode not updated | P1 |
+| NEG-036 | Update without CanModifyPartnerGroupCode | Non-editable group | PartnerGroupCode not updated | P1 |
+| NEG-037 | API by-partner-group-id invalid | id=99999 | 400 or empty | P1 |
+| NEG-038 | API by-partner-category-code empty | code="" | 400 or empty | P1 |
+| NEG-039 | API by-partner-category-code non-existent | code="NONEXISTENT" | Empty | P1 |
+| NEG-040 | Expired JWT | Expired token | 401 | P0 |
+| NEG-041 | Tampered JWT | Modified token | 401 | P0 |
+| NEG-042 | SQL injection in sortBy | sortBy="Name; DROP TABLE" | Sanitized | P0 |
+| NEG-043 | SQL injection in Code | Code="'; DROP TABLE--" | Error | P0 |
+| NEG-044 | XSS in Name | Name="<script>alert(1)</script>" | Sanitized | P0 |
+| NEG-045 | XSS in Description | Description with script | Sanitized | P0 |
+| NEG-046 | IDOR GetPartnerTree | User A requests User B's tree | 403 or filtered | P0 |
+| NEG-047 | IDOR Update | User A updates User B's tree | 403 | P0 |
+| NEG-048 | IDOR Delete | User A deletes User B's tree | 403 | P0 |
+| NEG-049 | Mass assignment Id on create | Include Id in POST | Ignored | P0 |
+| NEG-050 | Mass assignment CreatedBy | Include in request | Ignored | P0 |
+| NEG-051 | Null ClaimsPrincipal | CreatePartnerTreeAsync(null, model) | Error | P1 |
+| NEG-052 | Empty parent | Parent="" | Normalized to empty string | P1 |
+| NEG-053 | Whitespace parent | Parent="   " | Normalized to empty | P1 |
+| NEG-054 | Type mismatch | Type="Invalid" | Error or fallback | P1 |
+| NEG-055 | API PUT empty array | PUT [] | Empty result | P1 |
+| NEG-056 | API PUT partial failure | One invalid in array | Per design | P1 |
+| NEG-057 | GetPartnerCategoryByPartnerGroupCodeAsync top-level | Code of category | null | P1 |
+| NEG-058 | GetAllDescendantsAsync leaf node | Code of leaf | Empty list | P1 |
+| NEG-059 | Cache invalidation | PartnerTreeService cache | After update/delete | P1 |
+| NEG-060 | BuildHierarchy visitedCodes | Circular reference | Prevent infinite loop | P0 |
+| NEG-061 | ProcessAllLevelsForCategories null nodes | nodes=null | No exception | P1 |
+| NEG-062 | CollectAllEditableGroups null | nodes=null | Handled | P1 |
+| NEG-063 | MapEntityToModel null entity | entity=null | Error | P1 |
+| NEG-064 | API pagination invalid pageIndex | pageIndex=-1 | 400 | P1 |
+| NEG-065 | API pagination invalid pageSize | pageSize=0 | 400 | P1 |
+| NEG-066 | GetPartnersByPartnerGroupAsync no permission | User lacks read | 403 | P0 |
+| NEG-067 | GetPartnersByCategoryAsync no permission | User lacks read | 403 | P0 |
+| NEG-068 | Describe entity config error | Entity config fails | 500 | P1 |
+| NEG-069 | Create with Name empty | Name="" | Per ModifiableDeletableEntity | P1 |
+| NEG-070 | Update with invalid Id | model.Id=0 | Error | P1 |
+| NEG-071 | Delete with partners assigned | Tree has Partners | Per cascade rule | P0 |
+| NEG-072 | GetPartnerTreeByCodeIncludingDeleted | Code of deleted | Returns entity | P1 |
+| NEG-073 | CanModifyPartnerCategoryCode Level_2 non-special | Type=Level_2, Parent not special | false | P1 |
+| NEG-074 | CanModifyPartnerGroupCode no parent | Parent=null | false | P1 |
+| NEG-075 | CanModifyPartnerGroupCode parent not found | Parent code not in list | false | P1 |
+| NEG-076 | API permissions for non-existent | GET /permissions/99999 | 404 | P0 |
+| NEG-077 | GetPartnerTreeAsync with deleted | Entity IsDeleted | null | P0 |
+| NEG-078 | LoadPartnerTreesAsync cache miss | Cache empty | Load from DB | P1 |
+| NEG-079 | CreatePartnerTreeAsync cache invalidation | After create | Cache cleared | P1 |
+| NEG-080 | UpdatePartnerTreeAsync entity null | entity=null | ArgumentNullException | P0 |
+| NEG-081 | UpdatePartnerTreeAsync entity deleted | existing.IsDeleted | false | P1 |
+| NEG-082 | DeletePartnerTreeAsync code not found | Code not in DB | false | P1 |
+| NEG-083 | GetParentCategory null parent | Parent not found | null | P1 |
+| NEG-084 | GetPartnerCategoryByPartnerGroupCodeAsync null tree | GetPartnerTreeByCode returns null | null | P1 |
+| NEG-085 | GetDescendantsRecursive empty children | No children | Empty descendants | P1 |
+| NEG-086 | API categories-summary exception | PartnerManager error | 400 | P1 |
+| NEG-087 | API groups-summary exception | PartnerManager error | 400 | P1 |
+| NEG-088 | API categorization-overview exception | PartnerManager error | 400 | P1 |
+| NEG-089 | GetBasicEntityAsync null user | user=null | Fallback to entity | P1 |
+| NEG-090 | GetBasicEntityAsync null entity | entityId not found | null | P1 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max | Priority |
 |----|----------------|-----|-----|--------|--------|----------|----------|
-| BND-001 | Field 1 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-002 | Field 2 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-003 | Field 3 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-004 | Field 4 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-005 | Field 5 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-006 | Field 6 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-007 | Field 7 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-008 | Field 8 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-009 | Field 9 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-010 | Field 10 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-011 | Field 11 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-012 | Field 12 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-013 | Field 13 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-014 | Field 14 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-015 | Field 15 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-016 | Field 16 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-017 | Field 17 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-018 | Field 18 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-019 | Field 19 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-020 | Field 20 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-021 | Field 21 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-022 | Field 22 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-023 | Field 23 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-024 | Field 24 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-025 | Field 25 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-026 | Field 26 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-027 | Field 27 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-028 | Field 28 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-029 | Field 29 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-030 | Field 30 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-031 | Field 31 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-032 | Field 32 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-033 | Field 33 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-034 | Field 34 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-035 | Field 35 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-036 | Field 36 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-037 | Field 37 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-038 | Field 38 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-039 | Field 39 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-040 | Field 40 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-041 | Field 41 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-042 | Field 42 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-043 | Field 43 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-044 | Field 44 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-045 | Field 45 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-046 | Field 46 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-047 | Field 47 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-048 | Field 48 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-049 | Field 49 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-050 | Field 50 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-051 | Field 51 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-052 | Field 52 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-053 | Field 53 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-054 | Field 54 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-055 | Field 55 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-056 | Field 56 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-057 | Field 57 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-058 | Field 58 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-059 | Field 59 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-060 | Field 60 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-061 | Field 61 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-062 | Field 62 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-063 | Field 63 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-064 | Field 64 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-065 | Field 65 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-066 | Field 66 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-067 | Field 67 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-068 | Field 68 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-069 | Field 69 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-070 | Field 70 | Min | Max | At Min | At Max | Over Max | P1 |
+| BND-001 | Code length | 1 | 255 | "A" | 255 chars | 256 chars | P1 |
+| BND-002 | Name length | 1 | 255 | "A" | 255 chars | 256 chars | P1 |
+| BND-003 | Description length | 0 | 4000 | "" | 4000 chars | 4001 chars | P1 |
+| BND-004 | Parent length | 0 | 255 | "" | 255 chars | 256 chars | P1 |
+| BND-005 | Type | — | — | "Level_1" | "Level_2" | "Level_3" | P1 |
+| BND-006 | Id | 1 | 2147483647 | 1 | Max int | Overflow | P1 |
+| BND-007 | Parent null vs empty | — | — | null | "" | — | P1 |
+| BND-008 | Code empty string | — | — | Code="" | — | — | P1 |
+| BND-009 | Code single char | — | — | "X" | — | — | P1 |
+| BND-010 | Code with special chars | — | — | "GOV-001" | — | — | P1 |
+| BND-011 | Code Unicode | — | — | "政府" | — | — | P1 |
+| BND-012 | Parent empty | — | — | Parent="" | — | — | P1 |
+| BND-013 | Parent null | — | — | Parent=null | — | — | P1 |
+| BND-014 | Hierarchy depth | 1 | 10 | 1 level | 10 levels | 11 levels | P1 |
+| BND-015 | Children count | 0 | 1000 | 0 | 1000 | 1001 | P1 |
+| BND-016 | sortBy | — | — | "Name" | "Code" | — | P1 |
+| BND-017 | ascending true | — | — | true | — | — | P1 |
+| BND-018 | ascending false | — | — | false | — | — | P1 |
+| BND-019 | PartnerCategoryCode null | — | — | null | — | — | P1 |
+| BND-020 | PartnerGroupCode null | — | — | null | — | — | P1 |
+| BND-021 | PartnerCategoryEditable | — | — | true | false | — | P1 |
+| BND-022 | PartnerGroupEditable | — | — | true | false | — | P1 |
+| BND-023 | specialCategoryCodes | — | — | "MULTILATERAL" | "GOVERNMENT" | — | P1 |
+| BND-024 | Level_1 not special | — | — | Type=Level_1, Code not special | — | — | P1 |
+| BND-025 | Level_2 child of special | — | — | Parent="MULTILATERAL" | — | — | P1 |
+| BND-026 | GetAllDescendantsAsync empty | — | — | No children | — | — | P1 |
+| BND-027 | GetAllDescendantsAsync single | — | — | 1 child | — | — | P1 |
+| BND-028 | GetAllDescendantsAsync many | — | — | 50 descendants | — | — | P1 |
+| BND-029 | BuildHierarchy empty lookup | — | — | lookup.Empty | — | — | P1 |
+| BND-030 | BuildHierarchy single root | — | — | 1 top-level | — | — | P1 |
+| BND-031 | visitedCodes | — | — | Empty | — | — | P1 |
+| BND-032 | Lookup key empty | — | — | "" | — | — | P1 |
+| BND-033 | Lookup key null | — | — | null→"" | — | — | P1 |
+| BND-034 | ProcessAllLevelsForCategories empty | — | — | nodes=[] | — | — | P1 |
+| BND-035 | CollectAllEditableGroups empty | — | — | nodes=[] | — | — | P1 |
+| BND-036 | tree.Data null | — | — | tree.Data=null | — | — | P1 |
+| BND-037 | tree.Children null | — | — | tree.Children=null | — | — | P1 |
+| BND-038 | tree.Children empty | — | — | tree.Children=[] | — | — | P1 |
+| BND-039 | Pagination pageIndex | 0 | Max | 0 | Valid | -1 | P1 |
+| BND-040 | Pagination pageSize | 1 | 1000 | 1 | 1000 | 1001 | P1 |
+| BND-041 | Partner count per group | 0 | 10000 | 0 | 10000 | — | P1 |
+| BND-042 | Category count | 0 | 100 | 0 | 100 | — | P1 |
+| BND-043 | Group count | 0 | 500 | 0 | 500 | — | P1 |
+| BND-044 | API id path param | 1 | 2147483647 | 1 | Max | — | P1 |
+| BND-045 | API code path param | 1 | 255 | "A" | 255 chars | — | P1 |
+| BND-046 | Cache expiry | — | — | 1 hour sliding | 2 hour absolute | — | P1 |
+| BND-047 | Cache key | — | — | CACHE_KEY | — | — | P1 |
+| BND-048 | GetDescendantsRecursive deleted | — | — | Child IsDeleted | — | — | P1 |
+| BND-049 | GetDescendantsRecursive not deleted | — | — | Child !IsDeleted | — | — | P1 |
+| BND-050 | existingCategory | — | — | partnerCategoryId already in list | — | — | P1 |
+| BND-051 | existingGroup | — | — | partnerGroupId already in groupList | — | — | P1 |
+| BND-052 | PartnerGroupCode fallback | — | — | node.Data.PartnerGroupCode null | Use Code | — | P1 |
+| BND-053 | PartnerGroupName fallback | — | — | node.Data.PartnerGroupName null | Use Name | — | P1 |
+| BND-054 | PartnerCategoryCode null on create | — | — | CanModifyPartnerCategoryCode false | — | — | P1 |
+| BND-055 | PartnerGroupCode null on create | — | — | CanModifyPartnerGroupCode false | — | — | P1 |
+| BND-056 | UpdatePartnerTreeAsync Parent whitespace | — | — | Parent="   " | Normalized to "" | — | P1 |
+| BND-057 | CreatePartnerTreeAsync Parent whitespace | — | — | Parent="   " | Normalized to "" | — | P1 |
+| BND-058 | GetDescendantsRecursive parentCode | — | — | parentCode="" | — | — | P1 |
+| BND-059 | GetDescendantsRecursive parentCode non-existent | — | — | No children | Empty | — | P1 |
+| BND-060 | MapEntityToModel PartnerGroupCode | — | — | PartnerGroupCode set | PartnerGroupName resolved | — | P1 |
+| BND-061 | MapEntityToModel PartnerCategoryCode | — | — | PartnerCategoryCode set | PartnerCategoryName resolved | — | P1 |
+| BND-062 | MapEntityToModel both null | — | — | Both null | — | — | P1 |
+| BND-063 | GetBasicPartnerCategoryDetailsAsync 30 days | — | — | recentInteractions | Date >= thirtyDaysAgo | — | P1 |
+| BND-064 | GetBasicPartnerGroupDetailsAsync partners | — | — | PartnerGroupId match | — | — | P1 |
+| BND-065 | GetPartnerCategoryNewsDetailsAsync partnerGroupIds | — | — | GetAllDescendantsAsync | — | — | P1 |
+| BND-066 | GetPartnerGroupNewsDetailsAsync direct | — | — | PartnerGroupId == entityId | — | — | P1 |
+| BND-067 | EligibleEntities | — | — | GetPostedPartnerTree include | — | — | P1 |
+| BND-068 | Update array single | — | — | PUT [one item] | — | — | P1 |
+| BND-069 | Update array multiple | — | — | PUT [5 items] | — | — | P1 |
+| BND-070 | Update array max | — | — | PUT [100 items] | — | — | P1 |
+| BND-071 | Id zero | — | — | Id=0 | — | — | P1 |
+| BND-072 | Status | — | — | Active | Inactive | — | P1 |
+| BND-073 | IsDeleted | — | — | false | true | — | P1 |
+| BND-074 | CreatedDate | — | — | Min/Max DateTime | — | — | P2 |
+| BND-075 | LastModifiedDate | — | — | null | Set | — | P1 |
+| BND-076 | PartnerCategoryId | — | — | null | int | — | P1 |
+| BND-077 | PartnerGroupId | — | — | null | int | — | P1 |
+| BND-078 | PartnerGroupId.Value | — | — | partnerGroupIds.Contains | — | — | P1 |
+| BND-079 | orgUnitCodes | — | — | Empty | Multiple | — | P1 |
+| BND-080 | orgUnitLookup | — | — | Empty | Populated | — | P1 |
+| BND-081 | recentInteractions | — | — | 0 | Many | — | P1 |
+| BND-082 | allInteractions | — | — | 0 | Many | — | P1 |
+| BND-083 | interactionPartners | — | — | Empty | Populated | — | P1 |
+| BND-084 | interactionContacts | — | — | Empty | Populated | — | P1 |
+| BND-085 | interactionUsers | — | — | Empty | Populated | — | P1 |
+| BND-086 | searchContext focusAreas | — | — | Array | — | — | P1 |
+| BND-087 | searchContext newsSources | — | — | Array | — | — | P1 |
+| BND-088 | summary totalPartners | — | — | 0 | N | — | P1 |
+| BND-089 | metadata generatedAt | — | — | DateTime.UtcNow | — | — | P1 |
+| BND-090 | GetBasicEntityAsync entityId | — | — | 0 | Valid | — | P1 |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Scenario | Trigger | Expected Outcome | Priority |
 |----|-----------|---------------|---------|------------------|----------|
-| FUN-001 | Functional 1 | Rule 1 | Trigger 1 | Outcome 1 | P0 |
-| FUN-002 | Functional 2 | Rule 2 | Trigger 2 | Outcome 2 | P0 |
-| FUN-003 | Functional 3 | Rule 3 | Trigger 3 | Outcome 3 | P0 |
-| FUN-004 | Functional 4 | Rule 4 | Trigger 4 | Outcome 4 | P0 |
-| FUN-005 | Functional 5 | Rule 5 | Trigger 5 | Outcome 5 | P0 |
-| FUN-006 | Functional 6 | Rule 6 | Trigger 6 | Outcome 6 | P1 |
-| FUN-007 | Functional 7 | Rule 7 | Trigger 7 | Outcome 7 | P1 |
-| FUN-008 | Functional 8 | Rule 8 | Trigger 8 | Outcome 8 | P1 |
-| FUN-009 | Functional 9 | Rule 9 | Trigger 9 | Outcome 9 | P1 |
-| FUN-010 | Functional 10 | Rule 10 | Trigger 10 | Outcome 10 | P1 |
-| FUN-011 | Functional 11 | Rule 11 | Trigger 11 | Outcome 11 | P1 |
-| FUN-012 | Functional 12 | Rule 12 | Trigger 12 | Outcome 12 | P1 |
-| FUN-013 | Functional 13 | Rule 13 | Trigger 13 | Outcome 13 | P1 |
-| FUN-014 | Functional 14 | Rule 14 | Trigger 14 | Outcome 14 | P1 |
-| FUN-015 | Functional 15 | Rule 15 | Trigger 15 | Outcome 15 | P1 |
-| FUN-016 | Functional 16 | Rule 16 | Trigger 16 | Outcome 16 | P1 |
-| FUN-017 | Functional 17 | Rule 17 | Trigger 17 | Outcome 17 | P1 |
-| FUN-018 | Functional 18 | Rule 18 | Trigger 18 | Outcome 18 | P1 |
-| FUN-019 | Functional 19 | Rule 19 | Trigger 19 | Outcome 19 | P1 |
-| FUN-020 | Functional 20 | Rule 20 | Trigger 20 | Outcome 20 | P1 |
-| FUN-021 | Functional 21 | Rule 21 | Trigger 21 | Outcome 21 | P1 |
-| FUN-022 | Functional 22 | Rule 22 | Trigger 22 | Outcome 22 | P1 |
-| FUN-023 | Functional 23 | Rule 23 | Trigger 23 | Outcome 23 | P1 |
-| FUN-024 | Functional 24 | Rule 24 | Trigger 24 | Outcome 24 | P1 |
-| FUN-025 | Functional 25 | Rule 25 | Trigger 25 | Outcome 25 | P1 |
-| FUN-026 | Functional 26 | Rule 26 | Trigger 26 | Outcome 26 | P1 |
-| FUN-027 | Functional 27 | Rule 27 | Trigger 27 | Outcome 27 | P1 |
-| FUN-028 | Functional 28 | Rule 28 | Trigger 28 | Outcome 28 | P1 |
-| FUN-029 | Functional 29 | Rule 29 | Trigger 29 | Outcome 29 | P1 |
-| FUN-030 | Functional 30 | Rule 30 | Trigger 30 | Outcome 30 | P1 |
-| FUN-031 | Functional 31 | Rule 31 | Trigger 31 | Outcome 31 | P1 |
-| FUN-032 | Functional 32 | Rule 32 | Trigger 32 | Outcome 32 | P1 |
-| FUN-033 | Functional 33 | Rule 33 | Trigger 33 | Outcome 33 | P1 |
-| FUN-034 | Functional 34 | Rule 34 | Trigger 34 | Outcome 34 | P1 |
-| FUN-035 | Functional 35 | Rule 35 | Trigger 35 | Outcome 35 | P1 |
-| FUN-036 | Functional 36 | Rule 36 | Trigger 36 | Outcome 36 | P1 |
-| FUN-037 | Functional 37 | Rule 37 | Trigger 37 | Outcome 37 | P1 |
-| FUN-038 | Functional 38 | Rule 38 | Trigger 38 | Outcome 38 | P1 |
-| FUN-039 | Functional 39 | Rule 39 | Trigger 39 | Outcome 39 | P1 |
-| FUN-040 | Functional 40 | Rule 40 | Trigger 40 | Outcome 40 | P1 |
-| FUN-041 | Functional 41 | Rule 41 | Trigger 41 | Outcome 41 | P1 |
-| FUN-042 | Functional 42 | Rule 42 | Trigger 42 | Outcome 42 | P1 |
-| FUN-043 | Functional 43 | Rule 43 | Trigger 43 | Outcome 43 | P1 |
-| FUN-044 | Functional 44 | Rule 44 | Trigger 44 | Outcome 44 | P1 |
-| FUN-045 | Functional 45 | Rule 45 | Trigger 45 | Outcome 45 | P1 |
-| FUN-046 | Functional 46 | Rule 46 | Trigger 46 | Outcome 46 | P1 |
-| FUN-047 | Functional 47 | Rule 47 | Trigger 47 | Outcome 47 | P1 |
-| FUN-048 | Functional 48 | Rule 48 | Trigger 48 | Outcome 48 | P1 |
-| FUN-049 | Functional 49 | Rule 49 | Trigger 49 | Outcome 49 | P1 |
-| FUN-050 | Functional 50 | Rule 50 | Trigger 50 | Outcome 50 | P1 |
+| FUN-001 | BuildHierarchy uses Code/Parent | Hierarchy not FK | BuildHierarchy with lookup | Parent matches children | P0 |
+| FUN-002 | Null/empty Parent normalized | Parent null or "" | Lookup key | Both map to "" | P0 |
+| FUN-003 | visitedCodes prevents cycles | Circular reference | BuildHierarchy | No infinite loop | P0 |
+| FUN-004 | PartnerCategoryEditable Level_1 | Type=Level_1, Code not special | CanModifyPartnerCategoryCode | true | P0 |
+| FUN-005 | PartnerCategoryEditable Level_2 special child | Type=Level_2, Parent=GOVERNMENT | CanModifyPartnerCategoryCode | true | P0 |
+| FUN-006 | PartnerCategoryEditable false for MULTILATERAL | Code=MULTILATERAL | CanModifyPartnerCategoryCode | false | P0 |
+| FUN-007 | PartnerCategoryEditable false for GOVERNMENT | Code=GOVERNMENT | CanModifyPartnerCategoryCode | false | P0 |
+| FUN-008 | PartnerGroupEditable requires parent | Parent=null | CanModifyPartnerGroupCode | false | P0 |
+| FUN-009 | PartnerGroupEditable child of category | Parent is category | CanModifyPartnerGroupCode | true | P0 |
+| FUN-010 | PartnerGroupEditable recursive | Parent is group | CanModifyPartnerGroupCode | Recursive check | P0 |
+| FUN-011 | Code uniqueness | Create | CreatePartnerTreeAsync | Duplicate code rejected | P0 |
+| FUN-012 | Soft delete | Delete | DeletePartnerTreeAsync | IsDeleted=true | P0 |
+| FUN-013 | Deleted excluded from list | GetPartnerTrees | LoadPartnerTreesAsync | !IsDeleted filter | P0 |
+| FUN-014 | Cache invalidation on create | Create | CreatePartnerTreeAsync | Cache removed | P0 |
+| FUN-015 | Cache invalidation on update | Update | UpdatePartnerTreeAsync | Cache removed | P0 |
+| FUN-016 | Cache invalidation on delete | Delete | DeletePartnerTreeAsync | Cache removed | P0 |
+| FUN-017 | GetAllDescendantsAsync recursive | Category with nested groups | GetAllDescendantsAsync | All descendant IDs | P0 |
+| FUN-018 | GetPartnerCategoryByPartnerGroupCodeAsync | Group under category | GetPartnerCategoryByPartnerGroupCodeAsync | Parent category | P0 |
+| FUN-019 | GetParentCategory recursive | Multi-level | GetParentCategory | Traverse to category | P0 |
+| FUN-020 | GetCategoryAndGroupStructureAsync | PartnerCategoryEditable | ProcessAllLevelsForCategories | Categories only | P0 |
+| FUN-021 | CollectAllEditableGroups | PartnerGroupEditable | CollectAllEditableGroups | Groups only | P0 |
+| FUN-022 | MapEntityToModel PartnerGroupCode | PartnerGroupCode set | MapEntityToModel | PartnerGroupName resolved | P0 |
+| FUN-023 | MapEntityToModel PartnerCategoryCode | PartnerCategoryCode set | MapEntityToModel | PartnerCategoryName resolved | P0 |
+| FUN-024 | MapEntityToModel PartnerCategoryEditable | Category | MapEntityToModel | PartnerCategoryEditable=true | P0 |
+| FUN-025 | MapEntityToModel PartnerGroupEditable | Group | MapEntityToModel | PartnerGroupEditable=true | P0 |
+| FUN-026 | Permission on create | Permission check | CreatePartnerTreeAsync | RBAC enforced | P0 |
+| FUN-027 | Permission on update | Permission check | UpdatePartnerTreeAsync | RBAC enforced | P0 |
+| FUN-028 | Permission on delete | Permission check | DeletePartnerTreeAsync | RBAC enforced | P0 |
+| FUN-029 | Permission on read | Permission check | GetPartnerTreeAsync | RBAC enforced | P0 |
+| FUN-030 | AccessControlled create | POST | Create | [AccessControlled] | P0 |
+| FUN-031 | AccessControlled read | GET | GetAll | [AccessControlled] | P0 |
+| FUN-032 | AccessControlled update | PUT | Update | [AccessControlled] | P0 |
+| FUN-033 | AccessControlled delete | DELETE | Delete | [AccessControlled] | P0 |
+| FUN-034 | GetEntityPermissionsAsync | Permissions endpoint | GetEntityPermissionsAsync | canRead, canUpdate, canDelete | P0 |
+| FUN-035 | HandleOperationAsync | Controller | All endpoints | Consistent error handling | P0 |
+| FUN-036 | Update array iteration | PUT array | Update | Each item updated | P0 |
+| FUN-037 | Update null result | Update non-existent | UpdatePartnerTreeAsync | Null not added | P0 |
+| FUN-038 | GetBasicPartnerCategoryDetailsAsync structure | Partners, interactions | GetBasicPartnerCategoryDetailsAsync | Correct JSON | P0 |
+| FUN-039 | GetBasicPartnerGroupDetailsAsync structure | Partners, interactions | GetBasicPartnerGroupDetailsAsync | Correct JSON | P0 |
+| FUN-040 | GetPartnerCategoryNewsDetailsAsync | News context | GetPartnerCategoryNewsDetailsAsync | searchContext | P0 |
+| FUN-041 | GetPartnerGroupNewsDetailsAsync | News context | GetPartnerGroupNewsDetailsAsync | searchContext | P0 |
+| FUN-042 | GetBasicPartnerCategoryDetailsAsync descendants | GetAllDescendantsAsync | GetBasicPartnerCategoryDetailsAsync | Correct partnerGroupIds | P0 |
+| FUN-043 | GetBasicPartnerGroupDetailsAsync direct | PartnerGroupId match | GetBasicPartnerGroupDetailsAsync | Direct partners | P0 |
+| FUN-044 | GetUserProfileForAIAsync | AI context | GetBasicPartnerCategoryDetailsAsync | userProfile included | P1 |
+| FUN-045 | auditInfo | Audit | GetBasicPartnerCategoryDetailsAsync | createdDate, lastModifiedDate | P1 |
+| FUN-046 | summary statistics | Stats | GetBasicPartnerCategoryDetailsAsync | totalInteractions, recentInteractions | P1 |
+| FUN-047 | mostActivePartners | Top 3 | GetBasicPartnerCategoryDetailsAsync | Take(3) | P1 |
+| FUN-048 | commonInteractionTypes | Top 3 | GetBasicPartnerCategoryDetailsAsync | Take(3) | P1 |
+| FUN-049 | thirtyDaysAgo filter | Recent | recentInteractions | Date >= thirtyDaysAgo | P1 |
+| FUN-050 | Split query optimization | Load | GetBasicPartnerCategoryDetailsAsync | Separate queries | P1 |
+| FUN-051 | AsNoTracking | Read-only | All queries | AsNoTracking | P1 |
+| FUN-052 | categories-summary | PartnerManager | GetPartnersAsync | GroupBy PartnerCategoryCode | P1 |
+| FUN-053 | groups-summary | PartnerManager | GetPartnersAsync | GroupBy PartnerGroupId | P1 |
+| FUN-054 | categorization-overview | PartnerManager | GetPartnersAsync | Both categories and groups | P1 |
+| FUN-055 | GetPartnersByPartnerGroupAsync | PartnerManager | GetPartnersByPartnerGroupAsync | Paginated | P1 |
+| FUN-056 | GetPartnersByCategoryAsync | PartnerManager | GetPartnersByCategoryAsync | Paginated | P1 |
+| FUN-057 | Describe entity config | EntityConfigurationManager | GetEntityConfigurationDetailsAsync | PartnerTree config | P1 |
+| FUN-058 | CreatePartnerTreeAsync Name | ModifiableDeletableEntity | Create | Name required | P1 |
+| FUN-059 | UpdatePartnerTreeAsync Description | Update | UpdatePartnerTreeAsync | Description updated | P1 |
+| FUN-060 | UpdatePartnerTreeAsync Type | Update | UpdatePartnerTreeAsync | Type updated | P1 |
+| FUN-061 | UpdatePartnerTreeAsync Parent | Update | UpdatePartnerTreeAsync | Parent normalized | P1 |
+| FUN-062 | CreatePartnerTreeAsync second pass | PartnerGroupCode | Create | After AddAsync, UpdateAsync | P1 |
+| FUN-063 | LoadPartnerTreesAsync cache | Cache hit | LoadPartnerTreesAsync | No DB call | P1 |
+| FUN-064 | LoadPartnerTreesAsync cache miss | Cache empty | LoadPartnerTreesAsync | DB call | P1 |
+| FUN-065 | CanModifyPartnerCategoryCode Level_2 non-special parent | Parent not special | CanModifyPartnerCategoryCode | false | P1 |
+| FUN-066 | CanModifyPartnerGroupCode parent not category | Parent is group | CanModifyPartnerGroupCode | Recursive | P1 |
+| FUN-067 | GetDescendantsRecursive | Children | GetDescendantsRecursive | Children added | P1 |
+| FUN-068 | GetDescendantsRecursive nested | Grandchildren | GetDescendantsRecursive | All levels | P1 |
+| FUN-069 | ProcessAllLevelsForCategories nested | Children have categories | ProcessAllLevelsForCategories | Categories collected | P1 |
+| FUN-070 | CollectAllEditableGroups nested | Group has children | CollectAllEditableGroups | All groups | P1 |
+| FUN-071 | existingCategory check | partnerCategoryId | ProcessAllLevelsForCategories | Reuse children list | P1 |
+| FUN-072 | existingGroup check | partnerGroupId | CollectAllEditableGroups | Skip duplicate | P1 |
+| FUN-073 | GetPostedPartnerTree EligibleEntities | Include | GetPostedPartnerTree | EligibleEntities loaded | P1 |
+| FUN-074 | GetBasicEntityAsync with user | user | GetBasicEntityAsync | GetPartnerTreeAsync | P1 |
+| FUN-075 | GetBasicEntityAsync without user | user=null | GetBasicEntityAsync | MapEntityToModel | P1 |
+| FUN-076 | GetPartnerTreeByCode legacy | GetPartnerTreeByCode | Legacy method | Returns model | P1 |
+| FUN-077 | Base controller HandleOperationAsync | 201 | Create | 201 on success | P0 |
+| FUN-078 | Base controller HandleOperationAsync | 200 | Get | 200 on success | P0 |
+| FUN-079 | GetCategoryAndGroupStructureAsync structure | ProcessAllLevelsForCategories | GetCategoryAndGroupStructureAsync | Categories with children | P0 |
+| FUN-080 | Partner.PartnerGroupId | FK | Partner | PartnerGroupId | P1 |
+| FUN-081 | Partner inverse | Partners | PartnerTree | InverseProperty | P1 |
+| FUN-082 | DeletePartnerTreeAsync code | Delete by code | DeletePartnerTreeAsync | GetPartnerTreeByCodeIncludingDeleted | P1 |
+| FUN-083 | UpdatePartnerTreeAsync existing | GetByIdAsync | UpdatePartnerTreeAsync | Existing entity | P1 |
+| FUN-084 | CreatePartnerTreeAsync Status | EntityStatus | Create | Status=Active | P1 |
+| FUN-085 | CreatePartnerTreeAsync Parent | Parent | Create | Normalized | P1 |
+| FUN-086 | MapEntityToModelWithPermissionsAsync | Permissions | MapEntityToModelWithPermissionsAsync | Permissions set | P1 |
+| FUN-087 | GetEntityPermissionsAsync PartnerTree | Entity type | GetEntityPermissionsAsync | PartnerTree permissions | P1 |
+| FUN-088 | BusinessException on create fail | Create returns null | Create | BusinessException | P0 |
+| FUN-089 | BusinessException on not found | Get returns null | Get | BusinessException | P0 |
+| FUN-090 | GetPartnerTreeAsync null | Entity not found | GetPartnerTreeAsync | null | P0 |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities Involved | Expected Result | Priority |
 |----|-----------|----------|-------------------|-----------------|----------|
-| INT-001 | Integration 1 | Op 1 | Entities 1 | Result 1 | P0 |
-| INT-002 | Integration 2 | Op 2 | Entities 2 | Result 2 | P0 |
-| INT-003 | Integration 3 | Op 3 | Entities 3 | Result 3 | P0 |
-| INT-004 | Integration 4 | Op 4 | Entities 4 | Result 4 | P0 |
-| INT-005 | Integration 5 | Op 5 | Entities 5 | Result 5 | P0 |
-| INT-006 | Integration 6 | Op 6 | Entities 6 | Result 6 | P1 |
-| INT-007 | Integration 7 | Op 7 | Entities 7 | Result 7 | P1 |
-| INT-008 | Integration 8 | Op 8 | Entities 8 | Result 8 | P1 |
-| INT-009 | Integration 9 | Op 9 | Entities 9 | Result 9 | P1 |
-| INT-010 | Integration 10 | Op 10 | Entities 10 | Result 10 | P1 |
-| INT-011 | Integration 11 | Op 11 | Entities 11 | Result 11 | P1 |
-| INT-012 | Integration 12 | Op 12 | Entities 12 | Result 12 | P1 |
-| INT-013 | Integration 13 | Op 13 | Entities 13 | Result 13 | P1 |
-| INT-014 | Integration 14 | Op 14 | Entities 14 | Result 14 | P1 |
-| INT-015 | Integration 15 | Op 15 | Entities 15 | Result 15 | P1 |
-| INT-016 | Integration 16 | Op 16 | Entities 16 | Result 16 | P1 |
-| INT-017 | Integration 17 | Op 17 | Entities 17 | Result 17 | P1 |
-| INT-018 | Integration 18 | Op 18 | Entities 18 | Result 18 | P1 |
-| INT-019 | Integration 19 | Op 19 | Entities 19 | Result 19 | P1 |
-| INT-020 | Integration 20 | Op 20 | Entities 20 | Result 20 | P1 |
-| INT-021 | Integration 21 | Op 21 | Entities 21 | Result 21 | P1 |
-| INT-022 | Integration 22 | Op 22 | Entities 22 | Result 22 | P1 |
-| INT-023 | Integration 23 | Op 23 | Entities 23 | Result 23 | P1 |
-| INT-024 | Integration 24 | Op 24 | Entities 24 | Result 24 | P1 |
-| INT-025 | Integration 25 | Op 25 | Entities 25 | Result 25 | P1 |
-| INT-026 | Integration 26 | Op 26 | Entities 26 | Result 26 | P1 |
-| INT-027 | Integration 27 | Op 27 | Entities 27 | Result 27 | P1 |
-| INT-028 | Integration 28 | Op 28 | Entities 28 | Result 28 | P1 |
-| INT-029 | Integration 29 | Op 29 | Entities 29 | Result 29 | P1 |
-| INT-030 | Integration 30 | Op 30 | Entities 30 | Result 30 | P1 |
-| INT-031 | Integration 31 | Op 31 | Entities 31 | Result 31 | P1 |
-| INT-032 | Integration 32 | Op 32 | Entities 32 | Result 32 | P1 |
-| INT-033 | Integration 33 | Op 33 | Entities 33 | Result 33 | P1 |
-| INT-034 | Integration 34 | Op 34 | Entities 34 | Result 34 | P1 |
-| INT-035 | Integration 35 | Op 35 | Entities 35 | Result 35 | P1 |
-| INT-036 | Integration 36 | Op 36 | Entities 36 | Result 36 | P1 |
-| INT-037 | Integration 37 | Op 37 | Entities 37 | Result 37 | P1 |
-| INT-038 | Integration 38 | Op 38 | Entities 38 | Result 38 | P1 |
-| INT-039 | Integration 39 | Op 39 | Entities 39 | Result 39 | P1 |
-| INT-040 | Integration 40 | Op 40 | Entities 40 | Result 40 | P1 |
-| INT-041 | Integration 41 | Op 41 | Entities 41 | Result 41 | P1 |
-| INT-042 | Integration 42 | Op 42 | Entities 42 | Result 42 | P1 |
-| INT-043 | Integration 43 | Op 43 | Entities 43 | Result 43 | P1 |
-| INT-044 | Integration 44 | Op 44 | Entities 44 | Result 44 | P1 |
-| INT-045 | Integration 45 | Op 45 | Entities 45 | Result 45 | P1 |
-| INT-046 | Integration 46 | Op 46 | Entities 46 | Result 46 | P1 |
-| INT-047 | Integration 47 | Op 47 | Entities 47 | Result 47 | P1 |
-| INT-048 | Integration 48 | Op 48 | Entities 48 | Result 48 | P1 |
-| INT-049 | Integration 49 | Op 49 | Entities 49 | Result 49 | P1 |
-| INT-050 | Integration 50 | Op 50 | Entities 50 | Result 50 | P1 |
+| INT-001 | Full CRUD flow | Create→Get→Update→Delete | PartnerTree | All succeed | P0 |
+| INT-002 | Create then GetPartnerTrees | Create | PartnerTree | New tree in hierarchy | P0 |
+| INT-003 | Create category then group | Create category, create group | PartnerTree | Group under category | P0 |
+| INT-004 | GetCategoryAndGroupStructure | After create | PartnerTree | New category/group in structure | P0 |
+| INT-005 | Update then Get | Update | PartnerTree | Updated data returned | P0 |
+| INT-006 | Delete then Get | Delete | PartnerTree | null or 404 | P0 |
+| INT-007 | API POST→GET | POST then GET | PartnerTree | Created tree returned | P0 |
+| INT-008 | API GET→PUT→GET | Get, update, get | PartnerTree | Updated data | P0 |
+| INT-009 | API GET→DELETE→GET | Get, delete, get | PartnerTree | 404 | P0 |
+| INT-010 | Permissions after create | Create then permissions | PartnerTree | Permissions returned | P0 |
+| INT-011 | PartnerTreeManager→PartnerTreeService | Create | PartnerTree, PartnerTreeService | Service.CreatePartnerTreeAsync | P0 |
+| INT-012 | PartnerTreeService→Repository | Create | PartnerTreeService, DataRepository | AddAsync | P0 |
+| INT-013 | PartnerTreeManager→PartnerManager | by-partner-group-id | PartnerTreeController, PartnerManager | GetPartnersByPartnerGroupAsync | P0 |
+| INT-014 | PartnerTreeManager→PartnerManager | by-partner-category-code | PartnerTreeController, PartnerManager | GetPartnersByCategoryAsync | P0 |
+| INT-015 | PartnerTreeManager→PartnerManager | categories-summary | PartnerTreeController, PartnerManager | GetPartnersAsync | P0 |
+| INT-016 | PartnerTreeManager→PartnerManager | groups-summary | PartnerTreeController, PartnerManager | GetPartnersAsync | P0 |
+| INT-017 | PartnerTreeManager→PartnerManager | categorization-overview | PartnerTreeController, PartnerManager | GetPartnersAsync | P0 |
+| INT-018 | PartnerTreeManager→EntityConfigurationManager | describe | PartnerTreeController | GetEntityConfigurationDetailsAsync | P0 |
+| INT-019 | PartnerTree→Partner | FK | PartnerTree, Partner | Partners collection | P0 |
+| INT-020 | GetPartnersByPartnerGroup | Partner.PartnerGroupId | Partner, PartnerTree | Partners filtered | P0 |
+| INT-021 | GetPartnersByCategory | Partner.PartnerCategoryCode | Partner, PartnerTree | Partners filtered | P0 |
+| INT-022 | GetBasicPartnerCategoryDetailsAsync→Partners | Category | PartnerTree, Partner | Partners in category | P0 |
+| INT-023 | GetBasicPartnerCategoryDetailsAsync→Interactions | Category | PartnerTree, Partner, Interaction | recentInteractions | P0 |
+| INT-024 | GetBasicPartnerGroupDetailsAsync→Partners | Group | PartnerTree, Partner | Partners in group | P0 |
+| INT-025 | GetBasicPartnerGroupDetailsAsync→Interactions | Group | PartnerTree, Partner, Interaction | recentInteractions | P0 |
+| INT-026 | GetPartnerCategoryNewsDetailsAsync→Partners | Category | PartnerTree, Partner | Partners for news | P0 |
+| INT-027 | GetPartnerGroupNewsDetailsAsync→Partners | Group | PartnerTree, Partner | Partners for news | P0 |
+| INT-028 | GetAllDescendantsAsync→Partner | PartnerGroupId | PartnerTreeService, Partner | PartnerGroupId in list | P0 |
+| INT-029 | GetPartnerCategoryByPartnerGroupCodeAsync | Group→Category | PartnerTreeService | Parent category | P0 |
+| INT-030 | MapEntityToModel→PartnerTreeService | PartnerGroupCode | UNOPSPartnerTreeManager, PartnerTreeService | GetPartnerTreeByCodeAsync | P0 |
+| INT-031 | MapEntityToModel→PartnerTreeService | PartnerCategoryCode | UNOPSPartnerTreeManager, PartnerTreeService | GetPartnerTreeByCodeAsync | P0 |
+| INT-032 | MapEntityToModel→PartnerTreeService | GetPartnerCategoryByPartnerGroupCodeAsync | UNOPSPartnerTreeManager, PartnerTreeService | Category resolved | P0 |
+| INT-033 | Cache→PartnerTreeService | LoadPartnerTreesAsync | PartnerTreeService, MemoryCache | Cache | P0 |
+| INT-034 | Cache invalidation→Create | Create | PartnerTreeService | Cache removed | P0 |
+| INT-035 | Cache invalidation→Update | Update | PartnerTreeService | Cache removed | P0 |
+| INT-036 | Cache invalidation→Delete | Delete | PartnerTreeService | Cache removed | P0 |
+| INT-037 | Controller→ManagerWrapper | Manager | PartnerTreeController | _managerWrapper.PartnerTreeManager | P0 |
+| INT-038 | Controller→User | User | PartnerTreeController | UserResolverService | P0 |
+| INT-039 | Controller→AuthorizationService | Authorization | PartnerTreeController | GetEntityPermissionsAsync | P0 |
+| INT-040 | BaseController HandleOperationAsync | All endpoints | PartnerTreeController | Error handling | P0 |
+| INT-041 | AccessControlled→EntityTypes | EntityTypes.PartnerTree | PartnerTreeController | create, read, update, delete | P0 |
+| INT-042 | PartnerTreeAuthorizationHandler | Authorization | PartnerTreeAuthorizationHandler | PartnerTreeModel | P0 |
+| INT-043 | UNOPSPartnerTreeManager→BaseUNOPSManager | Base | UNOPSPartnerTreeManager | BaseUNOPSManager | P0 |
+| INT-044 | UNOPSPartnerTreeManager→PermissionService | Permission | UNOPSPartnerTreeManager | IPermissionService | P0 |
+| INT-045 | GetBasicPartnerCategoryDetailsAsync→OrganizationHierarchy | orgUnitLookup | UNOPSPartnerTreeManager | OrganizationHierarchies | P0 |
+| INT-046 | GetBasicPartnerGroupDetailsAsync→OrganizationHierarchy | orgUnitLookup | UNOPSPartnerTreeManager | OrganizationHierarchies | P0 |
+| INT-047 | InteractionPartner→Partner | Include | GetBasicPartnerCategoryDetailsAsync | InteractionPartner.Partner | P0 |
+| INT-048 | InteractionContact→Contact | Include | GetBasicPartnerCategoryDetailsAsync | InteractionContact.Contact | P0 |
+| INT-049 | InteractionUser→User | Include | GetBasicPartnerCategoryDetailsAsync | InteractionUser.User | P0 |
+| INT-050 | User→UserProfile | ThenInclude | GetBasicPartnerCategoryDetailsAsync | User.UserProfile | P0 |
+| INT-051 | Partner→PartnerGroup | Include | GetBasicPartnerCategoryDetailsAsync | Partner.PartnerGroup | P0 |
+| INT-052 | Partner→LiaisonOffice | Include | GetBasicPartnerCategoryDetailsAsync | Partner.LiaisonOffice | P0 |
+| INT-053 | PaginationRequest | by-partner-group-id | PartnerTreeController | PaginationRequest | P0 |
+| INT-054 | PaginationRequest | by-partner-category-code | PartnerTreeController | PaginationRequest | P0 |
+| INT-055 | PaginationResponse | Pagination | PartnerManager | PaginationResponse | P0 |
+| INT-056 | AutoMapper PartnerTree→PartnerTreeDataModel | Map | UNOPSPartnerTreeManager | mapper.Map | P0 |
+| INT-057 | AutoMapper PartnerTreeDataModel→UNOPSPartnerTree | Map | UNOPSPartnerTreeManager | mapper.Map | P0 |
+| INT-058 | AutoMapper UNOPSPartnerTree→ExternalPartnerTreeModel | Map | UNOPSPartnerTreeManager | mapper.Map | P0 |
+| INT-059 | UNOPSPartnerTree→PartnerTree | Inherit | UNOPSPartnerTree | PartnerTree | P0 |
+| INT-060 | ModifiableDeletableEntity | Base | PartnerTree | ModifiableDeletableEntity | P0 |
+| INT-061 | PartnerTree.Name | Required | ModifiableDeletableEntity | Name required | P0 |
+| INT-062 | PartnerTree.Partners | InverseProperty | Partner | PartnerGroup | P0 |
+| INT-063 | DataRepository GetAllSortedAsync | Sort | PartnerTreeService | GetAllSortedAsync("Type") | P0 |
+| INT-064 | DataRepository GetByIdAsync | Get | PartnerTreeService | GetByIdAsync | P0 |
+| INT-065 | DataRepository AddAsync | Create | PartnerTreeService | AddAsync | P0 |
+| INT-066 | DataRepository UpdateAsync | Update | PartnerTreeService | UpdateAsync | P0 |
+| INT-067 | DataRepository Delete | Delete | PartnerTreeService | Delete | P0 |
+| INT-068 | GetDescendantsRecursive→GetDescendantsRecursive | Recursive | PartnerTreeService | Recursive call | P0 |
+| INT-069 | GetParentCategory→GetPartnerTreeByCodeAsync | Recursive | PartnerTreeService | GetPartnerTreeByCodeAsync(Parent) | P0 |
+| INT-070 | GetParentCategory→GetParentCategory | Recursive | PartnerTreeService | Recursive until category | P0 |
+| INT-071 | BuildHierarchy→BuildHierarchy | Recursive | UNOPSPartnerTreeManager | Recursive | P0 |
+| INT-072 | ProcessAllLevelsForCategories→ProcessAllLevelsForCategories | Recursive | UNOPSPartnerTreeManager | Recursive | P0 |
+| INT-073 | CollectAllEditableGroups→CollectAllEditableGroups | Recursive | UNOPSPartnerTreeManager | Recursive | P0 |
+| INT-074 | PartnerTreeDataModel | DTO | PartnerTreeController | Request/response | P0 |
+| INT-075 | PartnerTreeModel | Model | PartnerTreeController | Response | P0 |
+| INT-076 | ExternalPartnerTreeModel | Model | GetPostedPartnerTree | Response | P0 |
+| INT-077 | APIDictionary.PartnerTree | Route | PartnerTreeController | /api/partner-tree | P0 |
+| INT-078 | APIDictionary.PartnerTree + "-structure" | Route | PartnerTreeController | /api/partner-tree-structure | P0 |
+| INT-079 | IAP authentication | Auth | PartnerTreeController | [Authorize(AuthenticationSchemes = "IAP")] | P0 |
+| INT-080 | BusinessException handling | Create | PartnerTreeController | 400 | P0 |
+| INT-081 | UnauthorizedAccessException | Get | PartnerTreeController | 403 | P0 |
+| INT-082 | Exception handling | GetAll | PartnerTreeController | 500 | P0 |
+| INT-083 | GetPartnersByPartnerGroupAsync exception | PartnerManager | PartnerTreeController | 400 | P0 |
+| INT-084 | GetPartnersByCategoryAsync exception | PartnerManager | PartnerTreeController | 400 | P0 |
+| INT-085 | Describe exception | EntityConfigurationManager | PartnerTreeController | 500 | P0 |
+| INT-086 | GetBasicEntityAsync | AI | UNOPSPartnerTreeManager | GetPartnerTreeAsync or MapEntityToModel | P0 |
+| INT-087 | GetBasicPartnerCategoryDetailsAsync | AI | UNOPSPartnerTreeManager | Full partner details | P0 |
+| INT-088 | GetBasicPartnerGroupDetailsAsync | AI | UNOPSPartnerTreeManager | Full partner details | P0 |
+| INT-089 | GetPartnerCategoryNewsDetailsAsync | AI | UNOPSPartnerTreeManager | News context | P0 |
+| INT-090 | GetPartnerGroupNewsDetailsAsync | AI | UNOPSPartnerTreeManager | News context | P0 |
 
 ---
 
@@ -347,56 +475,56 @@
 
 | ID | Test Name | Attack Vector | Target | Expected Block | Priority |
 |----|-----------|--------------|--------|----------------|----------|
-| SEC-001 | Security 1 | Attack 1 | Target 1 | Block 1 | P0 |
-| SEC-002 | Security 2 | Attack 2 | Target 2 | Block 2 | P0 |
-| SEC-003 | Security 3 | Attack 3 | Target 3 | Block 3 | P0 |
-| SEC-004 | Security 4 | Attack 4 | Target 4 | Block 4 | P0 |
-| SEC-005 | Security 5 | Attack 5 | Target 5 | Block 5 | P0 |
-| SEC-006 | Security 6 | Attack 6 | Target 6 | Block 6 | P0 |
-| SEC-007 | Security 7 | Attack 7 | Target 7 | Block 7 | P0 |
-| SEC-008 | Security 8 | Attack 8 | Target 8 | Block 8 | P0 |
-| SEC-009 | Security 9 | Attack 9 | Target 9 | Block 9 | P0 |
-| SEC-010 | Security 10 | Attack 10 | Target 10 | Block 10 | P0 |
-| SEC-011 | Security 11 | Attack 11 | Target 11 | Block 11 | P1 |
-| SEC-012 | Security 12 | Attack 12 | Target 12 | Block 12 | P1 |
-| SEC-013 | Security 13 | Attack 13 | Target 13 | Block 13 | P1 |
-| SEC-014 | Security 14 | Attack 14 | Target 14 | Block 14 | P1 |
-| SEC-015 | Security 15 | Attack 15 | Target 15 | Block 15 | P1 |
-| SEC-016 | Security 16 | Attack 16 | Target 16 | Block 16 | P1 |
-| SEC-017 | Security 17 | Attack 17 | Target 17 | Block 17 | P1 |
-| SEC-018 | Security 18 | Attack 18 | Target 18 | Block 18 | P1 |
-| SEC-019 | Security 19 | Attack 19 | Target 19 | Block 19 | P1 |
-| SEC-020 | Security 20 | Attack 20 | Target 20 | Block 20 | P1 |
-| SEC-021 | Security 21 | Attack 21 | Target 21 | Block 21 | P1 |
-| SEC-022 | Security 22 | Attack 22 | Target 22 | Block 22 | P1 |
-| SEC-023 | Security 23 | Attack 23 | Target 23 | Block 23 | P1 |
-| SEC-024 | Security 24 | Attack 24 | Target 24 | Block 24 | P1 |
-| SEC-025 | Security 25 | Attack 25 | Target 25 | Block 25 | P1 |
-| SEC-026 | Security 26 | Attack 26 | Target 26 | Block 26 | P1 |
-| SEC-027 | Security 27 | Attack 27 | Target 27 | Block 27 | P1 |
-| SEC-028 | Security 28 | Attack 28 | Target 28 | Block 28 | P1 |
-| SEC-029 | Security 29 | Attack 29 | Target 29 | Block 29 | P1 |
-| SEC-030 | Security 30 | Attack 30 | Target 30 | Block 30 | P1 |
-| SEC-031 | Security 31 | Attack 31 | Target 31 | Block 31 | P1 |
-| SEC-032 | Security 32 | Attack 32 | Target 32 | Block 32 | P1 |
-| SEC-033 | Security 33 | Attack 33 | Target 33 | Block 33 | P1 |
-| SEC-034 | Security 34 | Attack 34 | Target 34 | Block 34 | P1 |
-| SEC-035 | Security 35 | Attack 35 | Target 35 | Block 35 | P1 |
-| SEC-036 | Security 36 | Attack 36 | Target 36 | Block 36 | P1 |
-| SEC-037 | Security 37 | Attack 37 | Target 37 | Block 37 | P1 |
-| SEC-038 | Security 38 | Attack 38 | Target 38 | Block 38 | P1 |
-| SEC-039 | Security 39 | Attack 39 | Target 39 | Block 39 | P1 |
-| SEC-040 | Security 40 | Attack 40 | Target 40 | Block 40 | P1 |
-| SEC-041 | Security 41 | Attack 41 | Target 41 | Block 41 | P1 |
-| SEC-042 | Security 42 | Attack 42 | Target 42 | Block 42 | P1 |
-| SEC-043 | Security 43 | Attack 43 | Target 43 | Block 43 | P1 |
-| SEC-044 | Security 44 | Attack 44 | Target 44 | Block 44 | P1 |
-| SEC-045 | Security 45 | Attack 45 | Target 45 | Block 45 | P1 |
-| SEC-046 | Security 46 | Attack 46 | Target 46 | Block 46 | P1 |
-| SEC-047 | Security 47 | Attack 47 | Target 47 | Block 47 | P1 |
-| SEC-048 | Security 48 | Attack 48 | Target 48 | Block 48 | P1 |
-| SEC-049 | Security 49 | Attack 49 | Target 49 | Block 49 | P1 |
-| SEC-050 | Security 50 | Attack 50 | Target 50 | Block 50 | P1 |
+| SEC-001 | SQL injection in Code | Code="'; DROP TABLE--" | CreatePartnerTreeAsync | Error | P0 |
+| SEC-002 | SQL injection in sortBy | sortBy="Name; DROP TABLE" | GetPartnerTreesAsync | Sanitized | P0 |
+| SEC-003 | SQL injection in Name | Name with SQL | CreatePartnerTreeAsync | Sanitized | P0 |
+| SEC-004 | XSS in Name | Name="<script>alert(1)</script>" | CreatePartnerTreeAsync | Sanitized | P0 |
+| SEC-005 | XSS in Description | Description with script | CreatePartnerTreeAsync | Sanitized | P0 |
+| SEC-006 | Unauthorized create | No create permission | POST /api/partner-tree | 403 | P0 |
+| SEC-007 | Unauthorized read | No read permission | GET /api/partner-tree | 403 | P0 |
+| SEC-008 | Unauthorized update | No update permission | PUT /api/partner-tree | 403 | P0 |
+| SEC-009 | Unauthorized delete | No delete permission | DELETE /api/partner-tree/5 | 403 | P0 |
+| SEC-010 | Unauthenticated | No token | All endpoints | 401 | P0 |
+| SEC-011 | IDOR GetPartnerTree | User A gets User B's tree | GetPartnerTreeAsync | 403 or filtered | P0 |
+| SEC-012 | IDOR Update | User A updates User B's tree | UpdatePartnerTreeAsync | 403 | P0 |
+| SEC-013 | IDOR Delete | User A deletes User B's tree | DeletePartnerTreeAsync | 403 | P0 |
+| SEC-014 | IDOR Permissions | User A gets User B's permissions | GET /permissions | 403 | P0 |
+| SEC-015 | Mass assignment Id | Include Id in POST | Create | Ignored | P0 |
+| SEC-016 | Mass assignment CreatedBy | Include in request | Create | Ignored | P0 |
+| SEC-017 | Mass assignment CreatedDate | Include in request | Create | Ignored | P0 |
+| SEC-018 | Path traversal in code | Code="../../../etc" | CreatePartnerTreeAsync | Error | P0 |
+| SEC-019 | LDAP injection in Code | Code="*)(uid=*" | CreatePartnerTreeAsync | Sanitized | P0 |
+| SEC-020 | Command injection | Code="; rm -rf" | CreatePartnerTreeAsync | Sanitized | P0 |
+| SEC-021 | Expired JWT | Expired token | All endpoints | 401 | P0 |
+| SEC-022 | Tampered JWT | Modified token | All endpoints | 401 | P0 |
+| SEC-023 | Wrong JWT audience | Wrong audience | All endpoints | 401 | P0 |
+| SEC-024 | CSRF | Cross-site request | POST | Token validation | P0 |
+| SEC-025 | Broken access control structure | No read | GET /structure | 403 | P0 |
+| SEC-026 | Broken access control by-group | No read | GET /by-partner-group-id | 403 | P0 |
+| SEC-027 | Broken access control by-category | No read | GET /by-partner-category-code | 403 | P0 |
+| SEC-028 | Broken access control categories-summary | No read | GET /categories-summary | 403 | P0 |
+| SEC-029 | Broken access control groups-summary | No read | GET /groups-summary | 403 | P0 |
+| SEC-030 | Broken access control categorization-overview | No read | GET /categorization-overview | 403 | P0 |
+| SEC-031 | Broken access control describe | No read | GET /describe | 403 | P0 |
+| SEC-032 | Data exposure | Sensitive data in response | PartnerTree | No secrets | P0 |
+| SEC-033 | Information disclosure | Stack trace | Exception | No stack trace | P0 |
+| SEC-034 | Rate limiting | Too many requests | All endpoints | 429 | P1 |
+| SEC-035 | Input length DoS | Very long Code | CreatePartnerTreeAsync | Rejected | P0 |
+| SEC-036 | Input length DoS | Very long Name | CreatePartnerTreeAsync | Rejected | P0 |
+| SEC-037 | Null byte injection | Code="valid%00" | CreatePartnerTreeAsync | Rejected | P0 |
+| SEC-038 | Unicode normalization | Code with homoglyphs | CreatePartnerTreeAsync | Normalized | P1 |
+| SEC-039 | Authorization handler | PartnerTreeAuthorizationHandler | PartnerTreeModel | Handler invoked | P0 |
+| SEC-040 | AccessControlled attribute | Attribute | All endpoints | Enforced | P0 |
+| SEC-041 | Entity permission check | GetEntityPermissionsAsync | PartnerTree | Correct permissions | P0 |
+| SEC-042 | Row-level security | Entity-level | GetPartnerTreeAsync | Filtered by user | P0 |
+| SEC-043 | Partner data isolation | GetPartnersByPartnerGroup | PartnerManager | User-scoped | P0 |
+| SEC-044 | Partner data isolation | GetPartnersByCategory | PartnerManager | User-scoped | P0 |
+| SEC-045 | AI context security | GetBasicPartnerCategoryDetailsAsync | User | User-scoped | P0 |
+| SEC-046 | AI context security | GetBasicPartnerGroupDetailsAsync | User | User-scoped | P0 |
+| SEC-047 | Session fixation | Session | Auth | New session | P1 |
+| SEC-048 | Privilege escalation | Role manipulation | Request | Rejected | P0 |
+| SEC-049 | Horizontal privilege | Access other org | GetPartnerTree | 403 | P0 |
+| SEC-050 | Vertical privilege | User accesses admin | Admin endpoint | 403 | P0 |
 
 ---
 
@@ -404,31 +532,31 @@
 
 | ID | Test Name | Concurrent Scenario | Expected Behavior | Priority |
 |----|-----------|---------------------|-------------------|----------|
-| CON-001 | Concurrency 1 | Scenario 1 | Behavior 1 | P0 |
-| CON-002 | Concurrency 2 | Scenario 2 | Behavior 2 | P0 |
-| CON-003 | Concurrency 3 | Scenario 3 | Behavior 3 | P0 |
-| CON-004 | Concurrency 4 | Scenario 4 | Behavior 4 | P0 |
-| CON-005 | Concurrency 5 | Scenario 5 | Behavior 5 | P0 |
-| CON-006 | Concurrency 6 | Scenario 6 | Behavior 6 | P1 |
-| CON-007 | Concurrency 7 | Scenario 7 | Behavior 7 | P1 |
-| CON-008 | Concurrency 8 | Scenario 8 | Behavior 8 | P1 |
-| CON-009 | Concurrency 9 | Scenario 9 | Behavior 9 | P1 |
-| CON-010 | Concurrency 10 | Scenario 10 | Behavior 10 | P1 |
-| CON-011 | Concurrency 11 | Scenario 11 | Behavior 11 | P1 |
-| CON-012 | Concurrency 12 | Scenario 12 | Behavior 12 | P1 |
-| CON-013 | Concurrency 13 | Scenario 13 | Behavior 13 | P1 |
-| CON-014 | Concurrency 14 | Scenario 14 | Behavior 14 | P1 |
-| CON-015 | Concurrency 15 | Scenario 15 | Behavior 15 | P1 |
-| CON-016 | Concurrency 16 | Scenario 16 | Behavior 16 | P1 |
-| CON-017 | Concurrency 17 | Scenario 17 | Behavior 17 | P1 |
-| CON-018 | Concurrency 18 | Scenario 18 | Behavior 18 | P1 |
-| CON-019 | Concurrency 19 | Scenario 19 | Behavior 19 | P1 |
-| CON-020 | Concurrency 20 | Scenario 20 | Behavior 20 | P1 |
-| CON-021 | Concurrency 21 | Scenario 21 | Behavior 21 | P1 |
-| CON-022 | Concurrency 22 | Scenario 22 | Behavior 22 | P1 |
-| CON-023 | Concurrency 23 | Scenario 23 | Behavior 23 | P1 |
-| CON-024 | Concurrency 24 | Scenario 24 | Behavior 24 | P1 |
-| CON-025 | Concurrency 25 | Scenario 25 | Behavior 25 | P1 |
+| CON-001 | Concurrent create same code | 2 users create Code="X" | One succeeds, one BusinessException | P0 |
+| CON-002 | Concurrent update same tree | 2 users update same tree | Last-write-wins or conflict | P1 |
+| CON-003 | Concurrent delete same tree | 2 users delete same tree | One succeeds, one graceful | P1 |
+| CON-004 | Concurrent read during update | Read while update | Consistent read | P1 |
+| CON-005 | Cache invalidation race | Update and read | Cache invalidated | P1 |
+| CON-006 | LoadPartnerTreesAsync concurrent | 2 threads LoadPartnerTreesAsync | No corruption | P1 |
+| CON-007 | BuildHierarchy concurrent | 2 threads BuildHierarchy | No shared state | P1 |
+| CON-008 | GetAllDescendantsAsync concurrent | 2 threads same code | Correct results | P1 |
+| CON-009 | CreatePartnerTreeAsync concurrent | 2 threads create different | Both succeed | P1 |
+| CON-010 | UpdatePartnerTreeAsync concurrent | 2 threads update different | Both succeed | P1 |
+| CON-011 | DeletePartnerTreeAsync concurrent | 2 threads delete different | Both succeed | P1 |
+| CON-012 | GetPartnerTreesAsync concurrent | 10 threads | All return correct | P1 |
+| CON-013 | GetCategoryAndGroupStructureAsync concurrent | 5 threads | All return correct | P1 |
+| CON-014 | Cache read during write | Read while cache populate | No deadlock | P1 |
+| CON-015 | MemoryCache concurrent | Multiple cache operations | Thread-safe | P1 |
+| CON-016 | visitedCodes in BuildHierarchy | Concurrent BuildHierarchy | Separate HashSet | P1 |
+| CON-017 | DbContext concurrent | Multiple EF operations | Per-request scope | P1 |
+| CON-018 | API concurrent POST | 5 concurrent POST | All succeed or conflict | P1 |
+| CON-019 | API concurrent GET | 20 concurrent GET | All return 200 | P1 |
+| CON-020 | API concurrent PUT | 3 concurrent PUT same | Last-write-wins | P1 |
+| CON-021 | API concurrent DELETE | 2 concurrent DELETE same | One 204, one 404 | P1 |
+| CON-022 | GetBasicPartnerCategoryDetailsAsync concurrent | 5 threads | All return correct | P1 |
+| CON-023 | GetBasicPartnerGroupDetailsAsync concurrent | 5 threads | All return correct | P1 |
+| CON-024 | MapEntityToModel concurrent | Multiple threads | No shared state | P1 |
+| CON-025 | GetDescendantsRecursive concurrent | 2 threads | Independent execution | P1 |
 
 ---
 
@@ -436,27 +564,27 @@
 
 | ID | Test Name | Category | Input | Expected Output | Priority |
 |----|-----------|----------|-------|-----------------|----------|
-| UNT-001 | Unit 1 | Validation | Input 1 | Output 1 | P0 |
-| UNT-002 | Unit 2 | Validation | Input 2 | Output 2 | P0 |
-| UNT-003 | Unit 3 | Validation | Input 3 | Output 3 | P0 |
-| UNT-004 | Unit 4 | Validation | Input 4 | Output 4 | P0 |
-| UNT-005 | Unit 5 | Validation | Input 5 | Output 5 | P0 |
-| UNT-006 | Unit 6 | Validation | Input 6 | Output 6 | P1 |
-| UNT-007 | Unit 7 | Validation | Input 7 | Output 7 | P1 |
-| UNT-008 | Unit 8 | Validation | Input 8 | Output 8 | P1 |
-| UNT-009 | Unit 9 | Validation | Input 9 | Output 9 | P1 |
-| UNT-010 | Unit 10 | Validation | Input 10 | Output 10 | P1 |
-| UNT-011 | Unit 11 | Validation | Input 11 | Output 11 | P1 |
-| UNT-012 | Unit 12 | Validation | Input 12 | Output 12 | P1 |
-| UNT-013 | Unit 13 | Validation | Input 13 | Output 13 | P1 |
-| UNT-014 | Unit 14 | Validation | Input 14 | Output 14 | P1 |
-| UNT-015 | Unit 15 | Validation | Input 15 | Output 15 | P1 |
-| UNT-016 | Unit 16 | Validation | Input 16 | Output 16 | P1 |
-| UNT-017 | Unit 17 | Validation | Input 17 | Output 17 | P1 |
-| UNT-018 | Unit 18 | Validation | Input 18 | Output 18 | P1 |
-| UNT-019 | Unit 19 | Validation | Input 19 | Output 19 | P1 |
-| UNT-020 | Unit 20 | Validation | Input 20 | Output 20 | P1 |
-| UNT-021 | Unit 21 | Validation | Input 21 | Output 21 | P1 |
+| UNT-001 | CanModifyPartnerCategoryCode Level_1 | Validation | Type=Level_1, Code not special | true | P0 |
+| UNT-002 | CanModifyPartnerCategoryCode Level_2 special | Validation | Type=Level_2, Parent=GOVERNMENT | true | P0 |
+| UNT-003 | CanModifyPartnerCategoryCode MULTILATERAL | Validation | Code=MULTILATERAL | false | P0 |
+| UNT-004 | CanModifyPartnerCategoryCode GOVERNMENT | Validation | Code=GOVERNMENT | false | P0 |
+| UNT-005 | CanModifyPartnerGroupCode no parent | Validation | Parent=null | false | P0 |
+| UNT-006 | CanModifyPartnerGroupCode parent category | Validation | Parent is category | true | P0 |
+| UNT-007 | CanModifyPartnerGroupCode parent group | Validation | Parent is group | CanModifyPartnerGroupCode(parent) | P0 |
+| UNT-008 | BuildHierarchy lookup empty | Logic | lookup[""] empty | Empty sequence | P1 |
+| UNT-009 | BuildHierarchy single root | Logic | 1 item with Parent="" | 1 item | P1 |
+| UNT-010 | BuildHierarchy parent-child | Logic | Parent="A", Child Parent="A" | Child under parent | P1 |
+| UNT-011 | BuildHierarchy visitedCodes | Logic | Circular reference | No duplicate | P1 |
+| UNT-012 | Parent normalization | Formatting | Parent="   " | "" | P1 |
+| UNT-013 | Parent null | Formatting | Parent=null | "" | P1 |
+| UNT-014 | GetAllDescendantsAsync empty | Logic | No children | Empty list | P1 |
+| UNT-015 | GetAllDescendantsAsync one level | Logic | 1 child | List with 1 ID | P1 |
+| UNT-016 | GetAllDescendantsAsync multi level | Logic | 3 levels | All IDs | P1 |
+| UNT-017 | GetParentCategory direct | Logic | Parent is category | Parent | P1 |
+| UNT-018 | GetParentCategory recursive | Logic | Parent is group | Traverse up | P1 |
+| UNT-019 | ProcessAllLevelsForCategories PartnerCategoryEditable | Logic | PartnerCategoryEditable=true | Category added | P1 |
+| UNT-020 | CollectAllEditableGroups PartnerGroupEditable | Logic | PartnerGroupEditable=true | Group added | P1 |
+| UNT-021 | Lookup key empty | Logic | Parent null | "" | P1 |
 
 ---
 
@@ -464,22 +592,22 @@
 
 | ID | Test Name | Operation | Threshold | Priority |
 |----|-----------|----------|-----------|----------|
-| PRF-001 | Perf 1 | Operation 1 | < 500ms | P0 |
-| PRF-002 | Perf 2 | Operation 2 | < 500ms | P0 |
-| PRF-003 | Perf 3 | Operation 3 | < 500ms | P0 |
-| PRF-004 | Perf 4 | Operation 4 | < 500ms | P0 |
-| PRF-005 | Perf 5 | Operation 5 | < 500ms | P0 |
-| PRF-006 | Perf 6 | Operation 6 | < 500ms | P1 |
-| PRF-007 | Perf 7 | Operation 7 | < 500ms | P1 |
-| PRF-008 | Perf 8 | Operation 8 | < 500ms | P1 |
-| PRF-009 | Perf 9 | Operation 9 | < 500ms | P1 |
-| PRF-010 | Perf 10 | Operation 10 | < 500ms | P1 |
-| PRF-011 | Perf 11 | Operation 11 | < 500ms | P1 |
-| PRF-012 | Perf 12 | Operation 12 | < 500ms | P1 |
-| PRF-013 | Perf 13 | Operation 13 | < 500ms | P1 |
-| PRF-014 | Perf 14 | Operation 14 | < 500ms | P1 |
-| PRF-015 | Perf 15 | Operation 15 | < 500ms | P1 |
-| PRF-016 | Perf 16 | Operation 16 | < 500ms | P1 |
+| PRF-001 | GetPartnerTreesAsync | 100 trees | < 500ms | P0 |
+| PRF-002 | GetPartnerTreeAsync | Single get | < 100ms | P0 |
+| PRF-003 | CreatePartnerTreeAsync | Create | < 200ms | P0 |
+| PRF-004 | UpdatePartnerTreeAsync | Update | < 200ms | P0 |
+| PRF-005 | DeletePartnerTreeAsync | Delete | < 200ms | P0 |
+| PRF-006 | GetCategoryAndGroupStructureAsync | Structure | < 500ms | P0 |
+| PRF-007 | GetAllDescendantsAsync | 50 descendants | < 100ms | P1 |
+| PRF-008 | BuildHierarchy | 100 nodes | < 100ms | P1 |
+| PRF-009 | GetBasicPartnerCategoryDetailsAsync | Full load | < 2s | P1 |
+| PRF-010 | GetBasicPartnerGroupDetailsAsync | Full load | < 2s | P1 |
+| PRF-011 | LoadPartnerTreesAsync cache hit | Cached | < 50ms | P1 |
+| PRF-012 | LoadPartnerTreesAsync cache miss | Uncached | < 500ms | P1 |
+| PRF-013 | API GET list | Full list | < 500ms | P1 |
+| PRF-014 | API GET by-partner-group-id | Paginated | < 500ms | P1 |
+| PRF-015 | API GET categorization-overview | Overview | < 500ms | P1 |
+| PRF-016 | MapEntityToModel | Single model | < 50ms | P1 |
 
 ---
 
@@ -487,18 +615,18 @@
 
 | ID | Test Name | Load Profile | Duration | Success Criteria | Priority |
 |----|-----------|-------------|----------|-------------------|----------|
-| LDT-001 | Load 1 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-002 | Load 2 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-003 | Load 3 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-004 | Load 4 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-005 | Load 5 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-006 | Load 6 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-007 | Load 7 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-008 | Load 8 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-009 | Load 9 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-010 | Load 10 | 20 req/s | 5 min | 95% < 500ms | P0 |
+| LDT-001 | GET /api/partner-tree | 20 req/s | 5 min | 95% < 500ms | P0 |
+| LDT-002 | GET /api/partner-tree/{id} | 20 req/s | 5 min | 95% < 200ms | P0 |
+| LDT-003 | GET /api/partner-tree-structure | 10 req/s | 5 min | 95% < 500ms | P0 |
+| LDT-004 | POST /api/partner-tree | 5 req/s | 5 min | 95% < 500ms | P0 |
+| LDT-005 | PUT /api/partner-tree | 5 req/s | 5 min | 95% < 500ms | P0 |
+| LDT-006 | DELETE /api/partner-tree/{id} | 5 req/s | 5 min | 95% < 500ms | P0 |
+| LDT-007 | GET /api/partner-tree/{id}/permissions | 20 req/s | 5 min | 95% < 200ms | P0 |
+| LDT-008 | GET /api/partner-tree/by-partner-group-id | 15 req/s | 5 min | 95% < 500ms | P0 |
+| LDT-009 | GET /api/partner-tree/categorization-overview | 10 req/s | 5 min | 95% < 500ms | P0 |
+| LDT-010 | Mixed GET/POST/PUT/DELETE | 20 req/s total | 5 min | 95% < 500ms | P0 |
 
 ---
 
-**Last Updated:** 2026-02-11  
+**Last Updated:** 2026-02-18  
 **Status:** Ready for Execution

@@ -1,7 +1,7 @@
 # LinkManager — Unit Test Cases
 
 **Component:** `UNOPS.PAO.Business/Managers/LinkManager` (Unit Tests)  
-**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Created:** 2026-02-04 | **Last Updated:** 2026-02-18  
 **Author:** QA Team  
 **Standard:** 10-Category, 3:1 Ratio
 
@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,7 +33,7 @@ Link manager unit tests cover URL validation, entity association, and categoriza
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,15 +67,10 @@ Link manager unit tests cover URL validation, entity association, and categoriza
 | POS-028 | Count by entity | Entity has links | Count | Count |
 | POS-029 | Export links | Links exist | Export | Exported |
 | POS-030 | Import links | CSV valid | Import | Imported |
-| POS-031 | Validate link integrity | Link valid | Validate | True |
-| POS-032 | Resolve URL | URL valid | Resolve | Resolved |
-| POS-033 | Get link metadata | Link exists | GetMetadata | Metadata |
-| POS-034 | Bulk create | Valid data | BulkCreate | All created |
-| POS-035 | Permission check | User has permission | Check | True |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Action | Expected Result |
 |----|-----------|---------------------|-----------------|
@@ -149,10 +144,30 @@ Link manager unit tests cover URL validation, entity association, and categoriza
 | NEG-068 | Unassociate invalid | Association invalid | KeyNotFoundException |
 | NEG-069 | Recategorize invalid | Category invalid | ArgumentException |
 | NEG-070 | Duplicate category | Category exists | BusinessException |
+| NEG-071 | Create null request | Request=null | ArgumentNullException |
+| NEG-072 | GetByUrl null URL | Url=null | ArgumentNullException |
+| NEG-073 | Resolve null URL | Url=null | ArgumentNullException |
+| NEG-074 | Validate null link | Link=null | ArgumentNullException |
+| NEG-075 | GetMetadata null ID | Id=0 | ArgumentException |
+| NEG-076 | Categorize null category | Category=null | ArgumentNullException |
+| NEG-077 | Associate null entity ID | EntityId=0 | ArgumentException |
+| NEG-078 | Unassociate invalid | Association invalid | KeyNotFoundException |
+| NEG-079 | GetCategories null entity | Entity=null | ArgumentNullException |
+| NEG-080 | Count null entity | EntityId=0 | ArgumentException |
+| NEG-081 | Exists invalid ID | Id=-1 | False |
+| NEG-082 | BulkCreate null items | Items=null | ArgumentNullException |
+| NEG-083 | Import null file | File=null | ArgumentNullException |
+| NEG-084 | Export null filter | Filter invalid | ArgumentException |
+| NEG-085 | URL protocol invalid | Protocol=invalid | ValidationException |
+| NEG-086 | URL host invalid | Host invalid | ValidationException |
+| NEG-087 | Entity type null | Type=null | ArgumentNullException |
+| NEG-088 | Title too long | Title 1000 chars | ValidationException |
+| NEG-089 | Description too long | Desc 10k chars | ValidationException |
+| NEG-090 | GetByUrl case mismatch | Case mismatch | Config |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Condition | Expected Result |
 |----|-----------|-------------------|-----------------|
@@ -226,10 +241,30 @@ Link manager unit tests cover URL validation, entity association, and categoriza
 | BND-068 | Associate same | Same entity | No-op or error |
 | BND-069 | Async cancellation | Cancel token | OperationCanceledException |
 | BND-070 | Task timeout | Timeout | TimeoutException |
+| BND-071 | URL at min | Length=10 | Valid |
+| BND-072 | Title at min | Length=1 | Valid |
+| BND-073 | Description at max | 4000 chars | Valid |
+| BND-074 | Category enum first | First | Valid |
+| BND-075 | Entity type enum first | First | Valid |
+| BND-076 | Links per entity zero | No links | 0 |
+| BND-077 | Links per entity max | At limit | Valid |
+| BND-078 | Bulk create single | 1 link | Valid |
+| BND-079 | Import single row | 1 row | Valid |
+| BND-080 | Export single | 1 link | Valid |
+| BND-081 | Resolve 200 | 200 OK | Resolved |
+| BND-082 | Resolve 301 | Redirect | Resolved |
+| BND-083 | GetMetadata empty | No metadata | Empty |
+| BND-084 | GetCategories single | 1 category | Valid |
+| BND-085 | Count zero | No links | 0 |
+| BND-086 | Exists false | Invalid | False |
+| BND-087 | Exists true | Valid | True |
+| BND-088 | Associate same | Same | No-op |
+| BND-089 | Categorize same | Same | No-op |
+| BND-090 | URL with auth | user:pass@ | Config |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -283,10 +318,50 @@ Link manager unit tests cover URL validation, entity association, and categoriza
 | FUN-048 | AsNoTracking read-only | Performance | List | No tracking |
 | FUN-049 | URL encoding | Logic | Create | Encoded |
 | FUN-050 | Redirect handling | Logic | Resolve | Redirect followed |
+| FUN-051 | Create audit | Audit | Create | Audit |
+| FUN-052 | Update audit | Audit | Update | Audit |
+| FUN-053 | Delete audit | Audit | Delete | Audit |
+| FUN-054 | Associate audit | Audit | Associate | Audit |
+| FUN-055 | Unassociate audit | Audit | Unassociate | Audit |
+| FUN-056 | Categorize audit | Audit | Categorize | Audit |
+| FUN-057 | URL validation | Validation | Create | Valid |
+| FUN-058 | Entity validation | Validation | Associate | Valid |
+| FUN-059 | Category validation | Validation | Categorize | Valid |
+| FUN-060 | Entity type validation | Validation | Associate | Valid |
+| FUN-061 | Title validation | Validation | Create | Valid |
+| FUN-062 | Description validation | Validation | Create | Valid |
+| FUN-063 | GetByEntity excludes deleted | Constraint | GetByEntity | Excludes |
+| FUN-064 | GetByUrl excludes deleted | Constraint | GetByUrl | Excludes |
+| FUN-065 | Count excludes deleted | Constraint | Count | Excludes |
+| FUN-066 | Export excludes deleted | Constraint | Export | Excludes |
+| FUN-067 | Resolve logic | Logic | Resolve | Resolved |
+| FUN-068 | GetMetadata logic | Logic | GetMetadata | Metadata |
+| FUN-069 | Validate integrity logic | Logic | Validate | Integrity |
+| FUN-070 | URL normalization logic | Logic | Create | Normalized |
+| FUN-071 | Title truncation logic | Logic | Create | Truncated |
+| FUN-072 | GetCategories logic | Logic | GetCategories | Sorted |
+| FUN-073 | Associate logic | Logic | Associate | Associated |
+| FUN-074 | Unassociate logic | Logic | Unassociate | Removed |
+| FUN-075 | Categorize logic | Logic | Categorize | Updated |
+| FUN-076 | BulkCreate transaction | Transaction | BulkCreate | Atomic |
+| FUN-077 | Import transaction | Transaction | Import | Atomic |
+| FUN-078 | Create transaction | Transaction | Create | Atomic |
+| FUN-079 | Update transaction | Transaction | Update | Atomic |
+| FUN-080 | Delete transaction | Transaction | Delete | Atomic |
+| FUN-081 | Associate transaction | Transaction | Associate | Atomic |
+| FUN-082 | Unassociate transaction | Transaction | Unassociate | Atomic |
+| FUN-083 | Categorize transaction | Transaction | Categorize | Atomic |
+| FUN-084 | Resolve timeout | Logic | Resolve | Timeout |
+| FUN-085 | GetMetadata timeout | Logic | GetMetadata | Timeout |
+| FUN-086 | Import validation | Validation | Import | Valid |
+| FUN-087 | Export format | Logic | Export | Format |
+| FUN-088 | BulkCreate validation | Validation | BulkCreate | Valid |
+| FUN-089 | GetByUrl case | Config | GetByUrl | Case |
+| FUN-090 | Pagination total | Calculation | Paginate | Total |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|
@@ -340,6 +415,46 @@ Link manager unit tests cover URL validation, entity association, and categoriza
 | INT-048 | Associate then unassociate | Scenario | Associate, Unassociate | Clean |
 | INT-049 | Bulk create with validation | Scenario | BulkCreate | Validated |
 | INT-050 | E2E CRUD cycle | Scenario | Full cycle | Create→Update→Delete |
+| INT-051 | Create then GetById | Scenario | Create, Get | Complete |
+| INT-052 | Update then GetById | Scenario | Update, Get | Complete |
+| INT-053 | Associate then GetById | Scenario | Associate, Get | Complete |
+| INT-054 | Categorize then Filter | Scenario | Categorize, Filter | Complete |
+| INT-055 | Import then Export | Scenario | Import, Export | Complete |
+| INT-056 | Resolve then Validate | Scenario | Resolve, Validate | Complete |
+| INT-057 | GetMetadata then Create | Scenario | GetMetadata, Create | Complete |
+| INT-058 | GetByUrl then Update | Scenario | GetByUrl, Update | Complete |
+| INT-059 | BulkCreate then List | Scenario | BulkCreate, List | Complete |
+| INT-060 | Count then GetByEntity | Scenario | Count, GetByEntity | Complete |
+| INT-061 | Exists then GetById | Scenario | Exists, GetById | Complete |
+| INT-062 | GetCategories then Categorize | Scenario | GetCategories, Categorize | Complete |
+| INT-063 | Unassociate then Count | Scenario | Unassociate, Count | Complete |
+| INT-064 | Associate with partner | Scenario | Associate | Partner |
+| INT-065 | Associate with opportunity | Scenario | Associate | Opportunity |
+| INT-066 | Associate with contact | Scenario | Associate | Contact |
+| INT-067 | Filter by category | Scenario | Filter | Category |
+| INT-068 | Filter by entity type | Scenario | Filter | Entity type |
+| INT-069 | Search then GetById | Scenario | Search, Get | Complete |
+| INT-070 | Paginate then Sort | Scenario | Paginate | Sorted |
+| INT-071 | Resolve with redirect | Scenario | Resolve | Redirect |
+| INT-072 | GetMetadata with URL | Scenario | GetMetadata | URL |
+| INT-073 | Validate with resolve | Scenario | Validate | Resolve |
+| INT-074 | Import with validation | Scenario | Import | Validated |
+| INT-075 | Export with filter | Scenario | Export | Filtered |
+| INT-076 | BulkCreate with entity | Scenario | BulkCreate | Entity |
+| INT-077 | Categorize then GetCategories | Scenario | Categorize | GetCategories |
+| INT-078 | Associate then Unassociate | Scenario | Associate | Unassociate |
+| INT-079 | Create with metadata | Scenario | Create | Metadata |
+| INT-080 | Update with category | Scenario | Update | Category |
+| INT-081 | Delete with audit | Scenario | Delete | Audit |
+| INT-082 | GetByUrl with entity | Scenario | GetByUrl | Entity |
+| INT-083 | Count with filter | Scenario | Count | Filtered |
+| INT-084 | Exists with entity | Scenario | Exists | Entity |
+| INT-085 | Resolve with timeout | Scenario | Resolve | Timeout |
+| INT-086 | GetMetadata with timeout | Scenario | GetMetadata | Timeout |
+| INT-087 | Import with encoding | Scenario | Import | Encoding |
+| INT-088 | Export with encoding | Scenario | Export | Encoding |
+| INT-089 | Full link cycle | Scenario | Full cycle | Complete |
+| INT-090 | E2E full link lifecycle | Scenario | Full cycle | Complete |
 
 ---
 

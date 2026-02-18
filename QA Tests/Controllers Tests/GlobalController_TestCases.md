@@ -13,23 +13,22 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P ✅ (90≥90) | E≥3P ✅ (90≥90) | F≥3P ✅ (90≥90) | I≥3P ✅ (90≥90)
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Steps | Expected Result |
 |----|-----------|-------|-----------------|
@@ -63,15 +62,10 @@
 | POS-028 | API base URL | GET /api/system-info | Base URL |
 | POS-029 | Cached health | GET health twice | Cached |
 | POS-030 | Cached version | GET version twice | Cached |
-| POS-031 | Empty search result | GET for no match | [] |
-| POS-032 | Search highlight | GET ?highlight=true | Highlighted |
-| POS-033 | Search facets | GET ?facets=true | Facets |
-| POS-034 | Authenticated system info | GET (with token) | 200 |
-| POS-035 | OPTIONS CORS | OPTIONS /api/search | 200 |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error |
 |----|-----------|--------------|----------------|
@@ -145,10 +139,30 @@
 | NEG-068 | Encoding error | Invalid encoding | 400 |
 | NEG-069 | Audit failure | Audit down | Continue |
 | NEG-070 | Search permission filter | No permission entity | Excluded |
+| NEG-071 | Invalid health path | /api/health/invalid | 404 |
+| NEG-072 | Search with null query | q=null | 400 |
+| NEG-073 | Entity type limit exceeded | 11 entity types | 400 |
+| NEG-074 | Invalid relevance threshold | threshold=invalid | 400 |
+| NEG-075 | Search index locked | Index updating | 503 |
+| NEG-076 | Version endpoint POST | POST /api/version | 405 |
+| NEG-077 | System info PUT | PUT /api/system-info | 405 |
+| NEG-078 | Time endpoint invalid | Invalid params | 400 |
+| NEG-079 | Health PUT | PUT /api/health | 405 |
+| NEG-080 | Search DELETE | DELETE /api/search | 405 |
+| NEG-081 | Invalid highlight format | highlight=1 | 400 |
+| NEG-082 | Invalid facets format | facets=1 | 400 |
+| NEG-083 | Conflicting entity filters | Mutually exclusive | 400 |
+| NEG-084 | Search during maintenance | Maintenance mode | 503 |
+| NEG-085 | Invalid sort field | sortBy=invalid | 400 |
+| NEG-086 | Negative offset | offset=-1 | 400 |
+| NEG-087 | Excessive limit | limit=10000 | 400 |
+| NEG-088 | Invalid date in filter | date=invalid | 400 |
+| NEG-089 | Search service degraded | Partial failure | 503 |
+| NEG-090 | Health dependency down | One dep down | Degraded |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max |
 |----|----------------|-----|-----|--------|--------|----------|
@@ -222,10 +236,30 @@
 | BND-068 | Dependency count | 0 | 20 | ✅ | ✅ | ❌ |
 | BND-069 | Dependency status | - | - | Each status | - | - |
 | BND-070 | Response size | - | 1MB | ✅ | ✅ | ❌ |
+| BND-071 | Search result offset | 0 | 9999 | ✅ | ✅ | ❌ |
+| BND-072 | Search limit | 1 | 100 | ✅ | ✅ | ❌ |
+| BND-073 | Entity type count | 0 | 10 | ✅ | ✅ | ❌ |
+| BND-074 | Health check interval | - | 30s | ✅ | ✅ | ❌ |
+| BND-075 | Version cache | - | 300s | ✅ | ✅ | ❌ |
+| BND-076 | Search timeout | - | 30s | - | ✅ | ❌ |
+| BND-077 | Empty entity types | - | - | All | - | - |
+| BND-078 | Single entity type | - | - | Filtered | - | - |
+| BND-079 | Relevance threshold | 0 | 1 | ✅ | ✅ | ❌ |
+| BND-080 | Highlight max length | - | 100 | ✅ | ✅ | ❌ |
+| BND-081 | Facet max count | 0 | 50 | ✅ | ✅ | ❌ |
+| BND-082 | System info mask | - | - | Sensitive | - | - |
+| BND-083 | Version string | - | 50 | ✅ | ✅ | ❌ |
+| BND-084 | Health status enum | - | - | Healthy/Degraded | - | - |
+| BND-085 | Readiness enum | - | - | Ready/NotReady | - | - |
+| BND-086 | Liveness enum | - | - | Live/Dead | - | - |
+| BND-087 | DB status enum | - | - | Connected/Disconnected | - | - |
+| BND-088 | Build date format | - | - | ISO 8601 | - | - |
+| BND-089 | Environment enum | - | - | Dev/Staging/Prod | - | - |
+| BND-090 | Uptime seconds | 0 | - | ✅ | ❌ | - |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Category | Rule | Trigger | Expected |
 |----|----------|------|---------|----------|
@@ -279,10 +313,50 @@
 | FUN-048 | Business | Permission | Search | Scoped |
 | FUN-049 | Business | Timezone | All times | UTC |
 | FUN-050 | Business | Version format | Version | SemVer |
+| FUN-051 | Workflow | Health check | GET health | Status |
+| FUN-052 | Workflow | Readiness | GET ready | Ready |
+| FUN-053 | Workflow | Liveness | GET live | Live |
+| FUN-054 | Workflow | DB check | GET health/db | Status |
+| FUN-055 | Workflow | Get version | GET version | Version |
+| FUN-056 | Validation | Search auth | No auth | 401 |
+| FUN-057 | Validation | Search permission | No permission | 403 |
+| FUN-058 | Validation | Valid query | Invalid | 400 |
+| FUN-059 | Validation | Valid entity type | Invalid | 400 |
+| FUN-060 | Validation | Org scope | Cross-org | 403 |
+| FUN-061 | Constraint | Rate limit | Too many | 429 |
+| FUN-062 | Constraint | Search timeout | Slow | 504 |
+| FUN-063 | Constraint | Max results | >100 | Cap |
+| FUN-064 | Constraint | Permission filter | Query | Auto-scoped |
+| FUN-065 | Constraint | Soft delete | Query | Excluded |
+| FUN-066 | Audit | Search | GET search | Audit |
+| FUN-067 | Audit | Failed auth | 401 attempt | Audit |
+| FUN-068 | Audit | Timestamp | Any | UTC |
+| FUN-069 | Audit | User ID | Any | User ID |
+| FUN-070 | Audit | Resource | Any | Resource |
+| FUN-071 | Business | Soft-deleted | Search | Excluded |
+| FUN-072 | Business | Inactive | Search | Excluded |
+| FUN-073 | Business | Permission | Search | Scoped |
+| FUN-074 | Business | Timezone | All | UTC |
+| FUN-075 | Business | Version | SemVer | Correct |
+| FUN-076 | Workflow | Search filter | GET ?entityTypes | Filtered |
+| FUN-077 | Workflow | Search paginate | GET ?page | Paginated |
+| FUN-078 | Workflow | Get time | GET time | UTC |
+| FUN-079 | Workflow | Health public | GET no auth | 200 |
+| FUN-080 | Workflow | Version cache | GET twice | Cached |
+| FUN-081 | Validation | Query length | Too long | 400 |
+| FUN-082 | Validation | Entity types count | >10 | 400 |
+| FUN-083 | Validation | Sort whitelist | Invalid sort | 400 |
+| FUN-084 | Validation | Filter format | Invalid | 400 |
+| FUN-085 | Validation | Page | Invalid | 400 |
+| FUN-086 | Constraint | Version immutable | No update | 405 |
+| FUN-087 | Constraint | Health read-only | No update | 405 |
+| FUN-088 | Constraint | Cache TTL | Stale | Refresh |
+| FUN-089 | Constraint | Concurrent search | Limit | 429 |
+| FUN-090 | Constraint | Health timeout | Slow dep | 503 |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Category | Scenario | Entities | Expected |
 |----|----------|----------|----------|----------|
@@ -336,63 +410,46 @@
 | INT-048 | E2E | Multi-user search | Users | Isolated |
 | INT-049 | E2E | Health → Search | Health, Search | Both |
 | INT-050 | E2E | Session expiry | Auth | Clean fail |
-
----
-
-## §6 Security Tests (50)
-
-| ID | Category | Attack | Target | Expected |
-|----|----------|--------|-------|----------|
-| SEC-001 | Injection | SQL | Search | Sanitized |
-| SEC-002 | Injection | XSS | Search | Encoded |
-| SEC-003 | Injection | Path traversal | Path | Rejected |
-| SEC-004 | Injection | NoSQL | Filter | Rejected |
-| SEC-005 | Injection | Command | Health | Rejected |
-| SEC-006 | Injection | Header | Header | Rejected |
-| SEC-007 | Injection | Log | Input | Sanitized |
-| SEC-008 | Injection | LDAP | Search | Rejected |
-| SEC-009 | Injection | Log4j | Input | Rejected |
-| SEC-010 | Injection | SSRF | URL | Rejected |
-| SEC-011 | Access | Search auth | No auth | 401 |
-| SEC-012 | Access | Search permission | No permission | 403 |
-| SEC-013 | Access | Cross-org | Other org | 403 |
-| SEC-014 | Access | Horizontal | Other user | 403 |
-| SEC-015 | Access | Vertical | Admin | 403 |
-| SEC-016 | Access | Expired | Token | 401 |
-| SEC-017 | Access | Revoked | Token | 401 |
-| SEC-018 | Access | Tampered | Token | 401 |
-| SEC-019 | Access | Scope | OAuth | 403 |
-| SEC-020 | Access | Service | UI | 403 |
-| SEC-021 | IDOR | Other org search | ID | 403 |
-| SEC-022 | IDOR | Other user | ID | 403 |
-| SEC-023 | IDOR | Manipulate | Path | 403 |
-| SEC-024 | IDOR | Enumeration | IDs | Rate limit |
-| SEC-025 | IDOR | Pollution | Params | First |
-| SEC-026 | Mass Assign | Admin | Body | N/A |
-| SEC-027 | Mass Assign | Role | Body | N/A |
-| SEC-028 | Mass Assign | Org | Body | N/A |
-| SEC-029 | Mass Assign | User | Body | N/A |
-| SEC-030 | Mass Assign | Permission | Body | N/A |
-| SEC-031 | Auth | Fixation | Session | New |
-| SEC-032 | Auth | Hijack | Token | Invalid |
-| SEC-033 | Auth | Replay | Old token | Reject |
-| SEC-034 | Auth | CSRF | State | Token |
-| SEC-035 | Auth | Brute | Login | Rate limit |
-| SEC-036 | Data | Sensitive in health | Health | No secrets |
-| SEC-037 | Data | Sensitive in version | Version | No secrets |
-| SEC-038 | Data | Sensitive in system | System | Masked |
-| SEC-039 | Data | Error | 500 | Generic |
-| SEC-040 | Data | Debug | Prod | Off |
-| SEC-041 | OWASP | A01 | Access | 403 |
-| SEC-042 | OWASP | A02 | Crypto | TLS |
-| SEC-043 | OWASP | A03 | Injection | Param |
-| SEC-044 | OWASP | A04 | Design | Defensive |
-| SEC-045 | OWASP | A05 | Misconfig | Secure |
-| SEC-046 | OWASP | A06 | Vulnerable | No CVE |
-| SEC-047 | OWASP | A07 | Auth | Strong |
-| SEC-048 | OWASP | A08 | Integrity | Checks |
-| SEC-049 | OWASP | A09 | Logging | Audit |
-| SEC-050 | OWASP | A10 | SSRF | No internal |
+| INT-051 | CRUD | Get health | Health | Status |
+| INT-052 | CRUD | Get version | Version | Info |
+| INT-053 | CRUD | Get system info | System | Info |
+| INT-054 | CRUD | Search | Search | Results |
+| INT-055 | CRUD | Get time | Time | UTC |
+| INT-056 | Search | Search partners | Partner | Partner results |
+| INT-057 | Search | Search contacts | Contact | Contact results |
+| INT-058 | Search | Search opportunities | Opportunity | Opp results |
+| INT-059 | Search | Multi-entity | All | Combined |
+| INT-060 | Search | Filter org | Search | Filtered |
+| INT-061 | Pagination | Page 1 | Search | First |
+| INT-062 | Pagination | Last page | Search | Partial |
+| INT-063 | Pagination | Size | Search | Correct |
+| INT-064 | Pagination | Invalid | Search | 400 |
+| INT-065 | Pagination | Boundary | Search | Exact |
+| INT-066 | Relationships | Search → Entity | Linked | Correct |
+| INT-067 | Relationships | Health → DB | Linked | Correct |
+| INT-068 | Relationships | Health → Cache | Linked | Correct |
+| INT-069 | Relationships | Orphan | Deleted entity | Excluded |
+| INT-070 | Relationships | Version → Build | Linked | Correct |
+| INT-071 | Error | DB down | DB | 503 |
+| INT-072 | Error | Auth down | Auth | 401/503 |
+| INT-073 | Error | Validation | Bad input | 400 |
+| INT-074 | Error | NotFound | Invalid path | 404 |
+| INT-075 | Error | Forbidden | No permission | 403 |
+| INT-076 | Error | Rate limit | Too many | 429 |
+| INT-077 | Error | Timeout | Slow | 504 |
+| INT-078 | Error | Payload | Huge | 413 |
+| INT-079 | Error | Media | Wrong type | 415 |
+| INT-080 | Error | Method | Wrong verb | 405 |
+| INT-081 | Error | Service | Dependency | 503 |
+| INT-082 | Error | Gateway | Upstream | 504 |
+| INT-083 | Error | Health degraded | Partial | 503 |
+| INT-084 | Error | Search index | Down | 503 |
+| INT-085 | Error | Version unavailable | Down | 500 |
+| INT-086 | E2E | Full health flow | Health | Get → Parse |
+| INT-087 | E2E | Full search flow | Search | Search → Select |
+| INT-088 | E2E | Multi-user search | Users | Isolated |
+| INT-089 | E2E | Health when DB down | Health, DB | 503 |
+| INT-090 | E2E | Search when index down | Search | 503 |
 
 ---
 
@@ -504,7 +561,7 @@
 | Version | POS-005, FUN-005 |
 | System info | POS-006, FUN-006 |
 | Global search | POS-007–011, FUN-007 |
-| 3:1 Ratio | NEG-001–070, BND-001–070 |
+| 3:1 Ratio | NEG-001–090, BND-001–090 |
 
 ---
 

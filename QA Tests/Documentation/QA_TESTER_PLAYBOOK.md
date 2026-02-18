@@ -978,7 +978,11 @@ This ensures failure scenarios receive MORE attention than happy paths.
 ### 9.3 Ratio Verification
 
 ```
-REQUIREMENT: (Negative + Boundary) ≥ 3 × Positive Tests
+REQUIREMENT: Each category individually ≥ 3 × Positive Tests
+- Negative ≥ 3 × Positive
+- Edge/Boundary ≥ 3 × Positive
+- Functional ≥ 3 × Positive
+- Integration ≥ 3 × Positive
 ```
 
 #### Example: 85 Positive Tests
@@ -996,7 +1000,7 @@ REQUIREMENT: (Negative + Boundary) ≥ 3 × Positive Tests
 | Performance | 16 | Per coverage areas | ✅ |
 | Load | 10 | Per coverage areas | ✅ |
 | **Total** | **647** | - | - |
-| **3:1 Check** | - | (170+170) = 340 ≥ 3×85 = 255 | ✅ |
+| **3:1 Check** | - | N≥3P, E≥3P, F≥3P, I≥3P (each individually) | ✅ |
 
 ### 9.4 Category Checklist
 
@@ -2494,7 +2498,7 @@ test.describe('[Feature Name] E2E Tests', () => {
 │  │ Load Tests:      10 (FIXED)                             │    │
 │  └─────────────────────────────────────────────────────────┘    │
 │                                                                  │
-│  VERIFY: (Negative + Edge) ≥ 3 × P                              │
+│  VERIFY: N≥3P, E≥3P, F≥3P, I≥3P (each individually)             │
 │                                                                  │
 │  ─────────────────────────────────────────────────────────────  │
 │  EXAMPLES (Core only):                                           │

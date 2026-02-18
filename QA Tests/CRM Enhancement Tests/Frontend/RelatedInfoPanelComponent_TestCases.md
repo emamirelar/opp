@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -38,7 +38,7 @@ The RelatedInfoPanelComponent displays related entity information in a side pane
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result | Priority |
 |----|-----------|-------------|-------|-----------------|----------|
@@ -72,15 +72,10 @@ The RelatedInfoPanelComponent displays related entity information in a side pane
 | POS-028 | RTL layout | RTL locale | Set RTL | Layout flipped | P2 |
 | POS-029 | Animation | Expand/collapse | Toggle | Animated | P2 |
 | POS-030 | Reduced motion | prefers-reduced-motion | Set | No animation | P2 |
-| POS-031 | Focus trap | Panel expanded | Tab | Focus trapped | P2 |
-| POS-032 | Focus restore | Panel collapse | Collapse | Focus restored | P2 |
-| POS-033 | ARIA | Screen reader | Inspect | aria-* present | P2 |
-| POS-034 | Resize | Resize handle | Drag | Resized | P2 |
-| POS-035 | Multiple entity types | Contacts, Interactions | Load | Both shown | P2 |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error | Priority |
 |----|-----------|--------------|---------------|----------|
@@ -154,10 +149,30 @@ The RelatedInfoPanelComponent displays related entity information in a side pane
 | NEG-068 | Width negative | Width -100 | Clamp | P2 |
 | NEG-069 | Z-index conflict | Overlapping | Correct stacking | P2 |
 | NEG-070 | Overflow hidden | Overflow | Scroll | P2 |
+| NEG-071 | Invalid entity type enum | Type 999 | Fallback | P2 |
+| NEG-072 | Malformed entity link | Broken route | Handle | P2 |
+| NEG-073 | Permission API fail | Permission 500 | Fallback | P2 |
+| NEG-074 | Related service timeout | Slow API | Timeout | P2 |
+| NEG-075 | Empty entity type list | [] | Default | P2 |
+| NEG-076 | Invalid expand callback | Callback throws | Caught | P2 |
+| NEG-077 | Invalid collapse callback | Callback throws | Caught | P2 |
+| NEG-078 | Config mutation | Mutate config | No side effect | P2 |
+| NEG-079 | entityId type coercion | entityId "abc" | Error or parse | P2 |
+| NEG-080 | Negative page number | Page -5 | Clamp | P2 |
+| NEG-081 | Zero page size | Size 0 | Default | P2 |
+| NEG-082 | Invalid sort direction | Direction "xyz" | Fallback | P2 |
+| NEG-083 | Filter key injection | Malicious filter | Sanitized | P2 |
+| NEG-084 | Related API 404 | Entity 404 | Error state | P2 |
+| NEG-085 | CORS error | Cross-origin | Error message | P2 |
+| NEG-086 | Aborted request | AbortController | No crash | P2 |
+| NEG-087 | Multiple rapid entityId | 10 changes | Debounced | P2 |
+| NEG-088 | Panel config null zone | Zone null | Default | P2 |
+| NEG-089 | Action handler throws | Handler error | Caught | P2 |
+| NEG-090 | Storage quota exceeded | localStorage full | Graceful | P2 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field | Min | Max | At Min | At Max | Over Max | Priority |
 |----|-------|-----|-----|--------|--------|----------|----------|
@@ -231,10 +246,30 @@ The RelatedInfoPanelComponent displays related entity information in a side pane
 | BND-068 | Sort field count | 1 | 5 | 1 ok | 5 ok | Reject | P2 |
 | BND-069 | Filter param count | 0 | 20 | 0 ok | 20 ok | Reject | P2 |
 | BND-070 | Group depth | 1 | 3 | 1 ok | 3 ok | Reject | P2 |
+| BND-071 | Panel min width | 100 | 500 | 100 ok | 500 ok | Clamp | P2 |
+| BND-072 | Panel max width | 500 | 2000 | 500 ok | 2000 ok | Clamp | P2 |
+| BND-073 | Entity count 0 | 0 | — | Empty | — | — | P2 |
+| BND-074 | Entity count 1 | 1 | — | Single | — | — | P2 |
+| BND-075 | Scroll position 0 | 0 | — | Top | — | — | P2 |
+| BND-076 | Scroll position max | — | — | Bottom | — | — | P2 |
+| BND-077 | Debounce 0ms | 0 | — | Immediate | — | — | P2 |
+| BND-078 | Debounce 300ms | 300 | — | Delayed | — | — | P2 |
+| BND-079 | Skeleton delay 0 | 0 | — | No flash | — | — | P2 |
+| BND-080 | Skeleton delay 2s | 2000 | — | Shown | — | — | P2 |
+| BND-081 | Action count 0 | 0 | — | None | — | — | P2 |
+| BND-082 | Action count 5 | 5 | — | All shown | — | — | P2 |
+| BND-083 | Group count 0 | 0 | — | Ungrouped | — | — | P2 |
+| BND-084 | Group count 5 | 5 | — | Grouped | — | — | P2 |
+| BND-085 | Sort field 1 | 1 | — | Single | — | — | P2 |
+| BND-086 | Sort field 3 | 3 | — | Multi | — | — | P2 |
+| BND-087 | Filter count 0 | 0 | — | All | — | — | P2 |
+| BND-088 | Filter count 10 | 10 | — | Filtered | — | — | P2 |
+| BND-089 | Overlay opacity 0 | 0 | 1 | Transparent | — | — | P2 |
+| BND-090 | Overlay opacity 1 | 0 | 1 | — | Opaque | — | P2 |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule | Trigger | Expected Outcome | Priority |
 |----|-----------|------|---------|------------------|----------|

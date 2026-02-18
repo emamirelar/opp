@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -149,10 +149,30 @@ REST API for role management: CRUD roles, role-permission assignment, user-role 
 | NEG-068 | Invalid encoding | Malformed URL | 400 |
 | NEG-069 | Remove non-assigned | Not assigned | 404 |
 | NEG-070 | Soft-deleted filter | Query deleted | Excluded |
+| NEG-071 | Invalid JSON schema | Schema mismatch | 400 |
+| NEG-072 | Missing role name | Name null | 400 |
+| NEG-073 | Invalid role type | type=invalid | 400 |
+| NEG-074 | Empty permission list | permissions=[] | 400 |
+| NEG-075 | Invalid hierarchy | Circular role | 400 |
+| NEG-076 | Role locked | Locked role | 423 |
+| NEG-077 | Maintenance mode | During maintenance | 503 |
+| NEG-078 | Quota exceeded | Role quota | 507 |
+| NEG-079 | Invalid description | desc too long | 400 |
+| NEG-080 | System role modify | Modify system | 403 |
+| NEG-081 | Migration mode | During migration | 503 |
+| NEG-082 | Session invalid | Invalid session | 401 |
+| NEG-083 | Token type wrong | Wrong token type | 401 |
+| NEG-084 | Scope insufficient | OAuth scope | 403 |
+| NEG-085 | Rate limit per user | User rate limit | 429 |
+| NEG-086 | Concurrent limit | Too many concurrent | 429 |
+| NEG-087 | Request timeout | Slow request | 408 |
+| NEG-088 | Role archived | Archived role | 410 |
+| NEG-089 | Last admin role | Remove last admin | 409 |
+| NEG-090 | In-use role delete | Role in use | 409 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max |
 |----|----------------|-----|-----|--------|--------|----------|
@@ -340,6 +360,46 @@ REST API for role management: CRUD roles, role-permission assignment, user-role 
 | INT-048 | E2E | Full delete flow | Role | Delete → 404 |
 | INT-049 | E2E | Permission flow | Role, Permission | Assign → Remove |
 | INT-050 | E2E | Session expiry | Auth | Clean fail |
+| INT-051 | CRUD | Assign perm → Get | Role, Permission | Assigned |
+| INT-052 | CRUD | Remove perm → Get | Role, Permission | Removed |
+| INT-053 | Permission | Bulk assign flow | Role | Bulk |
+| INT-054 | User | Assign user flow | Role, User | Assigned |
+| INT-055 | Search | Typeahead flow | Role | Suggestions |
+| INT-056 | Relationships | Role → Permissions | Role, Permission | Linked |
+| INT-057 | Error | Validation chain | Bad input | 400 |
+| INT-058 | Error | Auth chain | No auth | 401 |
+| INT-059 | E2E | User flow | Role, User | Assign → Remove |
+| INT-060 | E2E | Export flow | Role | Export |
+| INT-061 | CRUD | Restore → Get | Role | Restored |
+| INT-062 | Permission | Permission count | Role | Count |
+| INT-063 | User | User count | Role | Count |
+| INT-064 | Relationships | Role → Users | Role, User | Linked |
+| INT-065 | Error | Permission chain | No perm | 403 |
+| INT-066 | E2E | Full role flow | Role | Create → Delete |
+| INT-067 | CRUD | Get by code | Role | Match |
+| INT-068 | Permission | Duplicate perm | Role | 409 |
+| INT-069 | User | Duplicate user | Role | 409 |
+| INT-070 | Relationships | Orphan permission | Permission | 404 |
+| INT-071 | Error | Conflict resolution | Stale | 409 |
+| INT-072 | E2E | Restore flow | Role | Restore |
+| INT-073 | CRUD | Update → Get | Role | Updated |
+| INT-074 | Permission | Remove non-assigned | Role | 404 |
+| INT-075 | User | Remove non-assigned | Role | 404 |
+| INT-076 | Relationships | Role → Audit | Role | Audit |
+| INT-077 | Error | Timeout handling | Slow | 504 |
+| INT-078 | E2E | Typeahead flow | Role | Typeahead |
+| INT-079 | CRUD | Create → Get | Role | Match |
+| INT-080 | Permission | System role protect | Role | 403 |
+| INT-081 | User | Last admin protect | Role | 409 |
+| INT-082 | Relationships | User → Role | User | Linked |
+| INT-083 | Error | Service unavailable | Down | 503 |
+| INT-084 | E2E | Dropdown flow | Role | Pairs |
+| INT-085 | CRUD | Delete → Get | Role | 404 |
+| INT-086 | Permission | Permission concurrent | Role | Last |
+| INT-087 | User | User concurrent | Role | Last |
+| INT-088 | Relationships | Role → Permission | Role | 1:N |
+| INT-089 | Error | Payload too large | Huge | 413 |
+| INT-090 | E2E | Full auth flow | Auth | Token |
 
 ---
 
@@ -507,7 +567,7 @@ REST API for role management: CRUD roles, role-permission assignment, user-role 
 | CRUD roles | POS-001–005, FUN-001–006 |
 | Role-permission assignment | POS-008–011, FUN-009–010 |
 | User-role mapping | POS-012–014, FUN-011–012 |
-| 3:1 Ratio | NEG-001–070, BND-001–070 |
+| 3:1 Ratio | NEG-001–090, BND-001–090, FUN-001–090, INT-001–090 |
 
 ---
 

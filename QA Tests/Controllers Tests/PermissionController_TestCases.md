@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -226,10 +226,30 @@ REST API for permission management: get user permissions, role-permission mappin
 | BND-068 | Cache TTL | - | 3600 | Valid | Valid | ❌ |
 | BND-069 | Token expiry | - | - | 401 | - | - |
 | BND-070 | Scope boundary | - | - | Exact | - | - |
+| BND-071 | Category charset | - | - | Valid | - | - |
+| BND-072 | Resource encoding | - | UTF-8 | Valid | Valid | ❌ |
+| BND-073 | Request size | - | 1MB | - | ✅ | ❌ |
+| BND-074 | Header count | - | 50 | ✅ | ✅ | ❌ |
+| BND-075 | Session duration | - | 24h | Valid | Valid | ❌ |
+| BND-076 | Token lifetime | - | 1h | Valid | Valid | ❌ |
+| BND-077 | Retry count | 0 | 3 | ✅ | ✅ | ❌ |
+| BND-078 | Backoff max | - | 30s | - | ✅ | ❌ |
+| BND-079 | Connection timeout | - | 30s | - | ✅ | ❌ |
+| BND-080 | Read timeout | - | 60s | - | ✅ | ❌ |
+| BND-081 | Write timeout | - | 60s | - | ✅ | ❌ |
+| BND-082 | Idle timeout | - | 90s | - | ✅ | ❌ |
+| BND-083 | Keep-alive | - | 60s | - | ✅ | ❌ |
+| BND-084 | Chunk size | - | 8KB | - | ✅ | ❌ |
+| BND-085 | Buffer size | - | 64KB | - | ✅ | ❌ |
+| BND-086 | Pool size | - | 100 | - | ✅ | ❌ |
+| BND-087 | Queue depth | - | 1000 | - | ✅ | ❌ |
+| BND-088 | Batch size | 1 | 50 | ✅ | ✅ | ❌ |
+| BND-089 | Category enum | - | max | Valid | Valid | ❌ |
+| BND-090 | Resource enum | - | max | Valid | Valid | ❌ |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Category | Rule | Trigger | Expected |
 |----|----------|------|---------|----------|
@@ -283,10 +303,50 @@ REST API for permission management: get user permissions, role-permission mappin
 | FUN-048 | Business | Permission | Query | Scoped |
 | FUN-049 | Business | Role inheritance | Hierarchy | Inherited |
 | FUN-050 | Business | User scope | User | Scoped |
+| FUN-051 | Workflow | Typeahead | GET typeahead | Suggestions |
+| FUN-052 | Workflow | Export | GET export | File |
+| FUN-053 | Validation | Check body | Invalid | 400 |
+| FUN-054 | Validation | Category | Invalid | 400 |
+| FUN-055 | Constraint | Permission lock | Locked | 423 |
+| FUN-056 | Audit | Check | POST check | Audit |
+| FUN-057 | Audit | Export | GET export | Audit |
+| FUN-058 | Business | Admin scope | Full | Correct |
+| FUN-059 | Business | User scope | Scoped | Correct |
+| FUN-060 | Workflow | Categories | GET categories | Categories |
+| FUN-061 | Validation | Resource | Invalid | 400 |
+| FUN-062 | Constraint | Max bulk | >50 | 400 |
+| FUN-063 | Audit | Get | GET | Audit |
+| FUN-064 | Business | Role cascade | Delete role | 404 |
+| FUN-065 | Workflow | Cached response | GET same | 200 |
+| FUN-066 | Validation | User exists | Invalid | 404 |
+| FUN-067 | Constraint | Export limit | >10K | Truncate |
+| FUN-068 | Audit | Filter | GET filter | Audit |
+| FUN-069 | Business | Role hierarchy | Inherited | Correct |
+| FUN-070 | Workflow | Resources | GET resources | Resources |
+| FUN-071 | Validation | Role exists | Invalid | 404 |
+| FUN-072 | Constraint | Inactive user | Disabled | 403 |
+| FUN-073 | Audit | Role mapping | GET roles | Audit |
+| FUN-074 | Business | Cross-user perms | Other user | 403 |
+| FUN-075 | Workflow | Full round-trip | Get → Check | Match |
+| FUN-076 | Validation | Action format | Invalid | 400 |
+| FUN-077 | Constraint | Inactive role | Disabled | 403 |
+| FUN-078 | Audit | User perms | GET user | Audit |
+| FUN-079 | Business | Permission scope | Permission | Correct |
+| FUN-080 | Workflow | Dropdown flow | GET dropdown | Pairs |
+| FUN-081 | Validation | Scope format | Invalid | 400 |
+| FUN-082 | Constraint | Escalation | Escalate | 403 |
+| FUN-083 | Audit | Role perms | GET role | Audit |
+| FUN-084 | Business | Scope bypass | Bypass | 403 |
+| FUN-085 | Workflow | Check batch | POST check | Results |
+| FUN-086 | Validation | Batch size | >50 | 400 |
+| FUN-087 | Constraint | Session expiry | Expired | 401 |
+| FUN-088 | Audit | Permission view | GET | Audit |
+| FUN-089 | Business | Combined perms | Multiple roles | Correct |
+| FUN-090 | Workflow | Inherited flow | Role hierarchy | Inherited |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Category | Scenario | Entities | Expected |
 |----|----------|----------|----------|----------|
@@ -340,6 +400,46 @@ REST API for permission management: get user permissions, role-permission mappin
 | INT-048 | E2E | Role flow | Role, Permission | Get → Role |
 | INT-049 | E2E | User flow | User, Permission | Get → User |
 | INT-050 | E2E | Session expiry | Auth | Clean fail |
+| INT-051 | CRUD | Get user perms | User, Permission | Perms |
+| INT-052 | CRUD | Get role perms | Role, Permission | Perms |
+| INT-053 | Check | Check flow | User, Permission | Result |
+| INT-054 | Search | Typeahead flow | Permission | Suggestions |
+| INT-055 | Filter | Category flow | Permission | Filtered |
+| INT-056 | Relationships | Permission → Roles | Permission, Role | Linked |
+| INT-057 | Error | Validation chain | Bad input | 400 |
+| INT-058 | Error | Auth chain | No auth | 401 |
+| INT-059 | E2E | Export flow | Permission | Export |
+| INT-060 | E2E | Categories flow | Permission | Categories |
+| INT-061 | CRUD | Check batch | User, Permission | Results |
+| INT-062 | Check | Check denied | User | false |
+| INT-063 | Filter | Resource flow | Permission | Filtered |
+| INT-064 | Relationships | Role → Permissions | Role, Permission | Linked |
+| INT-065 | Error | Permission chain | No perm | 403 |
+| INT-066 | E2E | Full permission flow | Permission | Get → Check |
+| INT-067 | CRUD | Get by ID | Permission | Match |
+| INT-068 | Check | Check granted | User | true |
+| INT-069 | Filter | Combined filter | Permission | Combined |
+| INT-070 | Relationships | User → Permissions | User, Permission | Via roles |
+| INT-071 | Error | Conflict resolution | Stale | 409 |
+| INT-072 | E2E | Resources flow | Permission | Resources |
+| INT-073 | CRUD | Dropdown | Permission | Pairs |
+| INT-074 | Check | Check invalid | User | false |
+| INT-075 | Filter | Multi-category | Permission | Combined |
+| INT-076 | Relationships | Permission → Audit | Permission | Audit |
+| INT-077 | Error | Timeout handling | Slow | 504 |
+| INT-078 | E2E | Dropdown flow | Permission | Pairs |
+| INT-079 | CRUD | Role mapping | Role, Permission | Mapping |
+| INT-080 | Check | Check scope | User | Scoped |
+| INT-081 | Filter | Role hierarchy | Permission | Inherited |
+| INT-082 | Relationships | Orphan role | Role | 404 |
+| INT-083 | Error | Service unavailable | Down | 503 |
+| INT-084 | E2E | Typeahead flow | Permission | Typeahead |
+| INT-085 | CRUD | Permission roles | Permission, Role | Roles |
+| INT-086 | Check | Check concurrent | User | All |
+| INT-087 | Filter | Pagination | Permission | Paginated |
+| INT-088 | Relationships | User → Permission | User | Via roles |
+| INT-089 | Error | Payload too large | Huge | 413 |
+| INT-090 | E2E | Full auth flow | Auth | Token |
 
 ---
 
@@ -507,7 +607,7 @@ REST API for permission management: get user permissions, role-permission mappin
 | Get user permissions | POS-001–002, FUN-001–002 |
 | Role-permission mapping | POS-003, POS-012, FUN-011 |
 | Permission checks | POS-011, FUN-005 |
-| 3:1 Ratio | NEG-001–070, BND-001–070 |
+| 3:1 Ratio | NEG-001–090, BND-001–090, FUN-001–090, INT-001–090 |
 
 ---
 

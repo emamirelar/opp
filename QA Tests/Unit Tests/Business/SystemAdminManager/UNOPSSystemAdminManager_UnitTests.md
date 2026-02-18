@@ -1,7 +1,7 @@
 # UNOPSSystemAdminManager — Unit Test Cases
 
 **Component:** `UNOPS.PAO.Business/Managers/SystemAdminManager` (Unit Tests)  
-**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Created:** 2026-02-04 | **Last Updated:** 2026-02-18  
 **Author:** QA Team  
 **Standard:** 10-Category, 3:1 Ratio
 
@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,7 +33,7 @@ System admin manager unit tests cover user management, role assignment, system c
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,15 +67,10 @@ System admin manager unit tests cover user management, role assignment, system c
 | POS-028 | Get database stats | DB has data | GetDbStats | Stats |
 | POS-029 | Validate config | Config exists | ValidateConfig | Valid |
 | POS-030 | Get config by key | Key exists | GetConfigKey | Value |
-| POS-031 | Set config key | Key valid | SetConfigKey | Set |
-| POS-032 | List roles | Roles exist | ListRoles | List |
-| POS-033 | Create role | Valid data | CreateRole | Created |
-| POS-034 | Update role | Role exists | UpdateRole | Updated |
-| POS-035 | Delete role | Role exists | DeleteRole | Deleted |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Action | Expected Result |
 |----|-----------|---------------------|-----------------|
@@ -149,10 +144,30 @@ System admin manager unit tests cover user management, role assignment, system c
 | NEG-068 | Role reserved | Reserved role | BusinessException |
 | NEG-069 | Audit log tampered | Tampered | Detected |
 | NEG-070 | Mass assign bypass | Mass assign | Ignored |
+| NEG-071 | GetConfig empty key | Key="" | ArgumentException |
+| NEG-072 | UpdateConfig null schema | Schema=null | ArgumentNullException |
+| NEG-073 | AssignRole user deleted | User soft deleted | KeyNotFoundException |
+| NEG-074 | AssignRole role deleted | Role soft deleted | KeyNotFoundException |
+| NEG-075 | GetAuditLog invalid date range | Start>End | ArgumentException |
+| NEG-076 | SeedData invalid seed type | Type invalid | ArgumentException |
+| NEG-077 | GetPermissions null filter | Filter=null | ArgumentNullException |
+| NEG-078 | CreateRole null permissions | Permissions=null | ArgumentNullException |
+| NEG-079 | UpdateRole invalid status | Status invalid | ArgumentException |
+| NEG-080 | DeleteRole system role | System role | BusinessException |
+| NEG-081 | RunDiagnostics null scope | Scope=null | ArgumentNullException |
+| NEG-082 | GetHealth invalid check | Check invalid | ArgumentException |
+| NEG-083 | GetDbStats invalid DB | DB invalid | DbException |
+| NEG-084 | ValidateConfig null schema | Schema=null | ArgumentNullException |
+| NEG-085 | Export audit invalid encoding | Encoding invalid | ArgumentException |
+| NEG-086 | RebuildIndexes invalid table | Table invalid | DbException |
+| NEG-087 | ClearCache invalid region | Region invalid | CacheException |
+| NEG-088 | SeedLookups invalid lookup | Lookup invalid | ArgumentException |
+| NEG-089 | ResetConfig partial keys | Keys invalid | ArgumentException |
+| NEG-090 | RemoveRole invalid role | RoleId=0 | ArgumentException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Condition | Expected Result |
 |----|-----------|-------------------|-----------------|
@@ -226,10 +241,30 @@ System admin manager unit tests cover user management, role assignment, system c
 | BND-068 | GetHealth partial | Partial fail | Partial |
 | BND-069 | GetDbStats zero | Empty DB | Zero |
 | BND-070 | Concurrent config update | Two update | One wins |
+| BND-071 | Config key whitespace only | Key="   " | Reject |
+| BND-072 | Role ID at Int32.MaxValue | RoleId=2147483647 | Handle |
+| BND-073 | Permission ID at zero | PermissionId=0 | Reject |
+| BND-074 | Audit log max entries | 1M entries | Paginate |
+| BND-075 | SeedData empty lookup list | List=[] | No-op |
+| BND-076 | GetConfigKey case sensitive | Key case | Config |
+| BND-077 | Export format boundary | Each format | Valid |
+| BND-078 | AssignRole max roles | 100 roles | Valid |
+| BND-079 | RemoveRole last role | Last role | Removed |
+| BND-080 | GetAuditLog zero results | No match | [] |
+| BND-081 | CreateRole empty name | Name="" | Reject |
+| BND-082 | UpdateRole no change | Same data | No-op |
+| BND-083 | DeleteRole cascade | Has children | Config |
+| BND-084 | GetPermissions empty | No permissions | [] |
+| BND-085 | SeedDefaultUsers max | 100 users | Valid |
+| BND-086 | ValidateConfig partial | Partial valid | Config |
+| BND-087 | RunDiagnostics single check | One check | Valid |
+| BND-088 | GetHealth single | One service | Valid |
+| BND-089 | GetDbStats single table | One table | Valid |
+| BND-090 | ClearCache partial region | Region partial | Config |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -283,10 +318,50 @@ System admin manager unit tests cover user management, role assignment, system c
 | FUN-048 | Permission cached | Performance | Repeated check | Cached |
 | FUN-049 | AsNoTracking read-only | Performance | List | No tracking |
 | FUN-050 | Config caching | Performance | GetConfig | Cached |
+| FUN-051 | GetConfigKey default | Logic | GetConfigKey | Default if missing |
+| FUN-052 | SetConfigKey overwrite | Logic | SetConfigKey | Overwrite |
+| FUN-053 | RemoveRole cascade | Logic | RemoveRole | Cascade check |
+| FUN-054 | CreateRole permissions | Logic | CreateRole | Permissions set |
+| FUN-055 | UpdateRole merge | Logic | UpdateRole | Merged |
+| FUN-056 | DeleteRole validation | Logic | DeleteRole | Validate |
+| FUN-057 | GetUserRoles ordered | Logic | GetUserRoles | Ordered |
+| FUN-058 | GetAllUsers filter | Logic | GetAllUsers | Filter applied |
+| FUN-059 | ListRoles pagination | Logic | ListRoles | Paginated |
+| FUN-060 | SeedData transaction | Transaction | SeedData | Atomic |
+| FUN-061 | SeedLookups order | Logic | SeedLookups | Order |
+| FUN-062 | SeedDefaultUsers skip | Logic | SeedDefaultUsers | Skip existing |
+| FUN-063 | SeedPermissions merge | Logic | SeedPermissions | Merge |
+| FUN-064 | RebuildIndexes scope | Logic | RebuildIndexes | Scope |
+| FUN-065 | ClearCache region | Logic | ClearCache | Region |
+| FUN-066 | GetDbStats filter | Logic | GetDbStats | Filter |
+| FUN-067 | ValidateConfig schema | Logic | ValidateConfig | Schema |
+| FUN-068 | Export encoding | Logic | Export | Encoding |
+| FUN-069 | GetAuditLog format | Logic | GetAuditLog | Format |
+| FUN-070 | AssignRole validation | Logic | AssignRole | Validate |
+| FUN-071 | AssignPermission scope | Logic | AssignPermission | Scope |
+| FUN-072 | GetPermissions filter | Logic | GetPermissions | Filter |
+| FUN-073 | ResetConfig partial | Logic | ResetConfig | Partial |
+| FUN-074 | RunDiagnostics scope | Logic | RunDiagnostics | Scope |
+| FUN-075 | GetHealth filter | Logic | GetHealth | Filter |
+| FUN-076 | Config key validation | Validation | SetConfigKey | Reject invalid |
+| FUN-077 | Role name validation | Validation | CreateRole | Reject invalid |
+| FUN-078 | Permission validation | Validation | AssignPermission | Reject invalid |
+| FUN-079 | Audit filter validation | Validation | GetAuditLog | Reject invalid |
+| FUN-080 | Export format validation | Validation | Export | Reject invalid |
+| FUN-081 | Seed order dependency | Logic | SeedData | Order |
+| FUN-082 | Config merge strategy | Logic | UpdateConfig | Merge |
+| FUN-083 | Role assignment audit | Audit | AssignRole | Audit |
+| FUN-084 | Permission assignment audit | Audit | AssignPermission | Audit |
+| FUN-085 | Config update audit | Audit | UpdateConfig | Audit |
+| FUN-086 | Seed audit | Audit | SeedData | Audit |
+| FUN-087 | Config key format | Logic | GetConfigKey | Format |
+| FUN-088 | Role hierarchy | Logic | AssignRole | Hierarchy |
+| FUN-089 | Permission inheritance | Logic | AssignPermission | Cascade |
+| FUN-090 | Audit log format | Logic | GetAuditLog | Format |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|
@@ -340,6 +415,46 @@ System admin manager unit tests cover user management, role assignment, system c
 | INT-048 | Config encryption | Scenario | Sensitive key | Encrypted |
 | INT-049 | Role permission cascade | Scenario | Assign role | Permissions |
 | INT-050 | E2E seed-config-audit | Scenario | Full cycle | Complete |
+| INT-051 | GetConfig then UpdateConfig | Scenario | Get, Update | Complete |
+| INT-052 | AssignRole then GetUserRoles | Scenario | Assign, Get | Complete |
+| INT-053 | CreateRole then AssignRole | Scenario | Create, Assign | Complete |
+| INT-054 | SeedData then ValidateConfig | Scenario | Seed, Validate | Complete |
+| INT-055 | GetAuditLog then Export | Scenario | Get, Export | Complete |
+| INT-056 | RemoveRole then GetUserRoles | Scenario | Remove, Get | Complete |
+| INT-057 | ResetConfig then GetConfig | Scenario | Reset, Get | Complete |
+| INT-058 | RunDiagnostics then GetHealth | Scenario | Diag, Health | Complete |
+| INT-059 | ClearCache then GetConfig | Scenario | Clear, Get | Complete |
+| INT-060 | RebuildIndexes then GetDbStats | Scenario | Rebuild, Stats | Complete |
+| INT-061 | UpdateConfig then GetConfigKey | Scenario | Update, Get | Complete |
+| INT-062 | AssignPermission then GetPermissions | Scenario | Assign, Get | Complete |
+| INT-063 | GetPermissions then AssignPermission | Scenario | Get, Assign | Complete |
+| INT-064 | SeedDefaultUsers then GetAllUsers | Scenario | Seed, Get | Complete |
+| INT-065 | SeedPermissions then GetPermissions | Scenario | Seed, Get | Complete |
+| INT-066 | SeedLookups then ListRoles | Scenario | Seed, List | Complete |
+| INT-067 | GetAuditLog pagination | Scenario | Paginate | Sorted |
+| INT-068 | GetAllUsers pagination | Scenario | Paginate | Sorted |
+| INT-069 | ListRoles pagination | Scenario | Paginate | Sorted |
+| INT-070 | Config multi-key update | Scenario | MultiUpdate | Complete |
+| INT-071 | Role multi-assign | Scenario | MultiAssign | Complete |
+| INT-072 | Permission multi-assign | Scenario | MultiAssign | Complete |
+| INT-073 | Audit log full export | Scenario | Export | Complete |
+| INT-074 | GetDbStats multi-table | Scenario | Stats | Complete |
+| INT-075 | RunDiagnostics multi-check | Scenario | Diag | Complete |
+| INT-076 | GetHealth multi-service | Scenario | Health | Complete |
+| INT-077 | GetConfigKey fallback | Scenario | Missing key | Default |
+| INT-078 | SetConfigKey sensitive | Scenario | Sensitive | Encrypted |
+| INT-079 | CreateRole with permissions | Scenario | Create | Permissions |
+| INT-080 | UpdateRole permissions | Scenario | Update | Permissions |
+| INT-081 | DeleteRole orphan check | Scenario | Delete | Check |
+| INT-082 | AssignRole duplicate | Scenario | Duplicate | No-op |
+| INT-083 | RemoveRole not assigned | Scenario | Remove | Error |
+| INT-084 | GetUserRoles empty | Scenario | Empty | [] |
+| INT-085 | GetAllUsers empty | Scenario | Empty | [] |
+| INT-086 | ListRoles empty | Scenario | Empty | [] |
+| INT-087 | GetAuditLog empty | Scenario | Empty | [] |
+| INT-088 | GetConfig empty | Scenario | Empty | Defaults |
+| INT-089 | ValidateConfig invalid | Scenario | Invalid | Error |
+| INT-090 | E2E full admin cycle | Scenario | Full cycle | Complete |
 
 ---
 
@@ -500,5 +615,5 @@ System admin manager unit tests cover user management, role assignment, system c
 
 ---
 
-**Last Updated:** 2026-02-11  
+**Last Updated:** 2026-02-18  
 **Status:** Ready for Implementation

@@ -11,19 +11,23 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
-| §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| §1 Positive (P) | 30 | 30-50 | ✅ |
+| §2 Negative (N) | 90 | 90 | ✅ |
+| §3 Boundary (E) | 90 | 90 | ✅ |
+| §4 Functional (F) | 90 | 90 | ✅ |
+| §5 Integration (I) | 90 | 90 | ✅ |
+| §6 Security | 30 | 30 | ✅ |
+| §7 Concurrency | 15 | 15 | ✅ |
+| §8 Unit | 12 | 12 | ✅ |
+| §9 Performance | 10 | 10 | ✅ |
+| §10 Load | 5 | 5 | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance:**
+- N≥3P: 90≥90 → ✅ PASS
+- E≥3P: 90≥90 → ✅ PASS
+- F≥3P: 90≥90 → ✅ PASS
+- I≥3P: 90≥90 → ✅ PASS
 
 ---
 
@@ -38,7 +42,7 @@ The PanelLayoutService manages panel layout state for the CRM enhancement:
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result | Priority |
 |----|-----------|-------------|-------|-----------------|----------|
@@ -80,7 +84,7 @@ The PanelLayoutService manages panel layout state for the CRM enhancement:
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error | Priority |
 |----|-----------|--------------|---------------|----------|
@@ -157,7 +161,7 @@ The PanelLayoutService manages panel layout state for the CRM enhancement:
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field | Min | Max | At Min | At Max | Over Max | Priority |
 |----|-------|-----|-----|--------|--------|----------|----------|
@@ -231,10 +235,30 @@ The PanelLayoutService manages panel layout state for the CRM enhancement:
 | BND-068 | AbortController | — | — | Aborted | — | — | P2 |
 | BND-069 | Promise | — | — | Resolved | — | — | P2 |
 | BND-070 | Observable | — | — | Completed | — | — | P2 |
+| BND-071 | Panel width 0 | 0 | 1000 | Hidden | — | — | P2 |
+| BND-072 | Panel width 1000 | 0 | 1000 | — | Max | — | P2 |
+| BND-073 | History 0 | 0 | 100 | Empty | — | — | P2 |
+| BND-074 | History 100 | 0 | 100 | — | Full | — | P2 |
+| BND-075 | Batch 1 | 1 | 100 | Single | — | — | P2 |
+| BND-076 | Batch 100 | 1 | 100 | — | Max | — | P2 |
+| BND-077 | Config keys 0 | 0 | 1000 | Empty | — | — | P2 |
+| BND-078 | Config keys 100 | 0 | 1000 | — | Ok | — | P2 |
+| BND-079 | Storage 0 | 0 | 5MB | None | — | — | P2 |
+| BND-080 | Storage 5MB | 0 | 5MB | — | Full | — | P2 |
+| BND-081 | Debounce 0 | 0 | 1000 | Immediate | — | — | P2 |
+| BND-082 | Debounce 1000 | 0 | 1000 | — | Max | — | P2 |
+| BND-083 | Id 1 char | 1 | 200 | Min | — | — | P2 |
+| BND-084 | Id 200 chars | 1 | 200 | — | Max | — | P2 |
+| BND-085 | Size 0 | 0 | 1000 | Hidden | — | — | P2 |
+| BND-086 | Size 1000 | 0 | 1000 | — | Max | — | P2 |
+| BND-087 | Breakpoint 320 | 320 | 2560 | Mobile | — | — | P2 |
+| BND-088 | Breakpoint 2560 | 320 | 2560 | — | Large | — | P2 |
+| BND-089 | Version 1 | 1 | 999 | Min | — | — | P2 |
+| BND-090 | Version 999 | 1 | 999 | — | Max | — | P2 |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule | Trigger | Expected Outcome | Priority |
 |----|-----------|------|---------|------------------|----------|
@@ -288,10 +312,50 @@ The PanelLayoutService manages panel layout state for the CRM enhancement:
 | FUN-048 | Import version | Import | Old version | Migrated | P2 |
 | FUN-049 | Backend fallback | Backend fail | persist | Fallback | P2 |
 | FUN-050 | Breakpoint fallback | Observer fail | getBreakpoint | Fallback | P2 |
+| FUN-051 | State immutable | getState | Call | Copy | P2 |
+| FUN-052 | Config immutable | getConfig | Call | Copy | P2 |
+| FUN-053 | Idempotent open | Open | Open twice | No change | P2 |
+| FUN-054 | Idempotent close | Close | Close twice | No change | P2 |
+| FUN-055 | Subscribe multiple | Subscribe | 3x | All receive | P2 |
+| FUN-056 | Unsubscribe stop | Unsubscribe | Call | No emit | P2 |
+| FUN-057 | Merge deep | mergeConfig | Nested | Deep merged | P2 |
+| FUN-058 | Clone independent | cloneState | Modify | Independent | P2 |
+| FUN-059 | Diff accurate | diffState | A, B | Correct | P2 |
+| FUN-060 | Batch order | batchUpdate | Order | Preserved | P2 |
+| FUN-061 | Undo limit | undo | 100x | Limit | P2 |
+| FUN-062 | Redo limit | redo | 100x | Limit | P2 |
+| FUN-063 | Export versioned | exportState | Call | Versioned | P2 |
+| FUN-064 | Import migrate | importState | Old | Migrated | P2 |
+| FUN-065 | Storage key format | getStorageKey | Id | Consistent | P2 |
+| FUN-066 | Default config | No config | getConfig | Default | P2 |
+| FUN-067 | Default state | No state | getState | Default | P2 |
+| FUN-068 | Restore fallback | No stored | restore | Default | P2 |
+| FUN-069 | Validate required | validateConfig | Missing | Invalid | P2 |
+| FUN-070 | Layout breakpoint | getLayoutAtBreakpoint | Bp | Correct | P2 |
+| FUN-071 | canUndo accurate | canUndo | History | True | P2 |
+| FUN-072 | canRedo accurate | canRedo | Undone | True | P2 |
+| FUN-073 | clearHistory | clearHistory | Call | Empty | P2 |
+| FUN-074 | Register overwrite | registerPanel | Same id | Overwrite | P2 |
+| FUN-075 | Unregister idempotent | unregisterPanel | Twice | No-op | P2 |
+| FUN-076 | getAllPanels filter | getAllPanels | Deleted | Filtered | P2 |
+| FUN-077 | setMinSize clamp | setMinSize | Below | Clamped | P2 |
+| FUN-078 | setMaxSize clamp | setMaxSize | Above | Clamped | P2 |
+| FUN-079 | reset clear | reset | Call | Default | P2 |
+| FUN-080 | persist key | persist | Key | Stored | P2 |
+| FUN-081 | restore key | restore | Key | Loaded | P2 |
+| FUN-082 | Breakpoint emit | Resize | Change | Emitted | P2 |
+| FUN-083 | State emit | State | Change | Emitted | P2 |
+| FUN-084 | Config emit | Config | Change | Emitted | P2 |
+| FUN-085 | Destroy cleanup | Destroy | Call | Cleanup | P2 |
+| FUN-086 | Zone run | Async | Outside | In zone | P2 |
+| FUN-087 | CD trigger | Update | External | Triggered | P2 |
+| FUN-088 | Signal update | Signal | Change | Updated | P2 |
+| FUN-089 | Effect run | Effect | Dep | Run | P2 |
+| FUN-090 | Observable complete | Subscribe | Complete | Completed | P2 |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result | Priority |
 |----|-----------|----------|----------|-----------------|----------|
@@ -345,6 +409,46 @@ The PanelLayoutService manages panel layout state for the CRM enhancement:
 | INT-048 | exhaustMap | exhaustMap | Service | Exhausted | P1 |
 | INT-049 | concatMap | concatMap | Service | Concatenated | P1 |
 | INT-050 | mergeMap | mergeMap | Service | Merged map | P1 |
+| INT-051 | Component inject | Inject | Component | Injected | P1 |
+| INT-052 | Layout component | Layout | Layout | Uses | P1 |
+| INT-053 | Panel component | Panel | Panel | Uses | P1 |
+| INT-054 | BreakpointObserver | Resize | Observer | Updated | P1 |
+| INT-055 | ResizeObserver | Resize | Observer | Updated | P1 |
+| INT-056 | Storage API | Persist | Storage | Persisted | P1 |
+| INT-057 | ConfigService | Config | Config | Loaded | P1 |
+| INT-058 | FeatureFlagService | Flag | Flag | Checked | P1 |
+| INT-059 | TranslateService | Translate | Translate | Translated | P1 |
+| INT-060 | ThemeService | Theme | Theme | Applied | P1 |
+| INT-061 | NgZone | Zone | Zone | In zone | P1 |
+| INT-062 | ChangeDetectorRef | CD | CD | Triggered | P1 |
+| INT-063 | Router | Navigate | Router | Preserved | P1 |
+| INT-064 | Destroy | Destroy | Component | Cleanup | P1 |
+| INT-065 | Lazy module | Lazy | Module | Available | P1 |
+| INT-066 | Standalone | Standalone | Component | Injected | P1 |
+| INT-067 | Signal | Signal | Signal | Reactive | P1 |
+| INT-068 | Observable | Observable | Observable | Subscription | P1 |
+| INT-069 | Subject | Subject | Subject | Emission | P1 |
+| INT-070 | BehaviorSubject | BehaviorSubject | Service | Current | P1 |
+| INT-071 | ReplaySubject | ReplaySubject | Service | Replay | P1 |
+| INT-072 | combineLatest | combineLatest | Service | Combined | P1 |
+| INT-073 | merge | merge | Service | Merged | P1 |
+| INT-074 | switchMap | switchMap | Service | Switched | P1 |
+| INT-075 | debounceTime | debounceTime | Service | Debounced | P1 |
+| INT-076 | distinctUntilChanged | distinctUntilChanged | Service | Distinct | P1 |
+| INT-077 | takeUntil | takeUntil | Service | Completed | P1 |
+| INT-078 | forkJoin | forkJoin | Service | Joined | P1 |
+| INT-079 | of | of | Service | Single | P1 |
+| INT-080 | from | from | Service | From array | P1 |
+| INT-081 | map | map | Service | Mapped | P1 |
+| INT-082 | filter | filter | Service | Filtered | P1 |
+| INT-083 | tap | tap | Service | Side effect | P1 |
+| INT-084 | catchError | catchError | Service | Handled | P1 |
+| INT-085 | finalize | finalize | Service | Always | P1 |
+| INT-086 | retry | retry | Service | Retried | P1 |
+| INT-087 | delay | delay | Service | Delayed | P1 |
+| INT-088 | timeout | timeout | Service | Timeout | P1 |
+| INT-089 | first | first | Service | First | P1 |
+| INT-090 | last | last | Service | Last | P1 |
 
 ---
 

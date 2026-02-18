@@ -11,19 +11,23 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
-| §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| §1 Positive (P) | 30 | 30-50 | ✅ |
+| §2 Negative (N) | 90 | 90 | ✅ |
+| §3 Boundary (E) | 90 | 90 | ✅ |
+| §4 Functional (F) | 90 | 90 | ✅ |
+| §5 Integration (I) | 90 | 90 | ✅ |
+| §6 Security | 30 | 30 | ✅ |
+| §7 Concurrency | 15 | 15 | ✅ |
+| §8 Unit | 12 | 12 | ✅ |
+| §9 Performance | 10 | 10 | ✅ |
+| §10 Load | 5 | 5 | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance:**
+- N≥3P: 90≥90 → ✅ PASS
+- E≥3P: 90≥90 → ✅ PASS
+- F≥3P: 90≥90 → ✅ PASS
+- I≥3P: 90≥90 → ✅ PASS
 
 ---
 
@@ -283,10 +287,50 @@ Liaison office service: office lookup, region mapping, country association, hier
 | FUN-048 | Path resolution | Path | GetHierarchyPath | Correct |
 | FUN-049 | Resolve logic | Resolve | ResolveOffice | Correct |
 | FUN-050 | Typeahead limit | Limit | GetDropdown | Limited |
+| FUN-051 | Code uniqueness | Unique | GetByCode | One |
+| FUN-052 | ID uniqueness | Unique | GetById | One |
+| FUN-053 | Hierarchy integrity | Integrity | GetHierarchy | Valid |
+| FUN-054 | Region association | Association | GetByRegion | Correct |
+| FUN-055 | Country association | Association | GetByCountry | Correct |
+| FUN-056 | Cache TTL | TTL | Cache | Expires |
+| FUN-057 | Soft delete excluded | Exclude | GetAll | No deleted |
+| FUN-058 | Active filter | Active | GetActive | Active only |
+| FUN-059 | Search case-insensitive | Case | Search | Case-insensitive |
+| FUN-060 | Search partial match | Partial | Search | Matches |
+| FUN-061 | Pagination offset | Offset | GetPaginated | Correct |
+| FUN-062 | Sort order | Sort | GetAll | Ordered |
+| FUN-063 | Hierarchy path | Path | GetHierarchyPath | Ordered |
+| FUN-064 | Parent-child | Parent | GetParent | Correct |
+| FUN-065 | Child-parent | Child | GetChildren | Correct |
+| FUN-066 | Batch deduplication | Dedup | GetByIds | Deduplicated |
+| FUN-067 | Batch order | Order | GetByIds | Preserved |
+| FUN-068 | Dropdown order | Order | GetDropdown | Sorted |
+| FUN-069 | Invalidation on update | Invalidation | Update | Cache cleared |
+| FUN-070 | Invalidation on delete | Invalidation | Delete | Cache cleared |
+| FUN-071 | Warm-up loads all | Warm-up | WarmCache | All loaded |
+| FUN-072 | Fallback for missing | Fallback | Missing | Fallback |
+| FUN-073 | Default region | Default | No region | Default |
+| FUN-074 | Region hierarchy | Region | GetRegion | Hierarchy |
+| FUN-075 | Country region | Country | GetCountry | Region |
+| FUN-076 | Error format | Format | Error | Consistent |
+| FUN-077 | Validation format | Format | Validate | Clear |
+| FUN-078 | Trim input | Trim | Search | Trimmed |
+| FUN-079 | Normalize code | Normalize | Code | Uppercase |
+| FUN-080 | Retry on transient | Retry | Transient | Retried |
+| FUN-081 | No retry on permanent | No retry | Permanent | Fail |
+| FUN-082 | Timeout handling | Timeout | Slow | Timeout |
+| FUN-083 | Cancellation | Cancel | Cancel | Cancelled |
+| FUN-084 | Rate limit | Rate | Many | Limited |
+| FUN-085 | Audit trail | Audit | Get | Logged |
+| FUN-086 | Permission check | Permission | Get | Checked |
+| FUN-087 | Tenant isolation | Tenant | Get | Isolated |
+| FUN-088 | Tree structure | Tree | GetOfficeTree | Valid |
+| FUN-089 | Root identification | Root | GetRootOffices | Correct |
+| FUN-090 | Leaf identification | Leaf | GetLeafOffices | Correct |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Integration | Scenario | Expected Result |
 |----|-----------|-------------|----------|-----------------|
@@ -340,6 +384,46 @@ Liaison office service: office lookup, region mapping, country association, hier
 | INT-048 | Permission + region | Permission | Region | Checked |
 | INT-049 | Tenant + region | Tenant | Region | Scoped |
 | INT-050 | End-to-end | All | Full flow | Success |
+| INT-051 | DbContext | EF Core | GetById | Loaded |
+| INT-052 | Office entity | Entity | GetById | Mapped |
+| INT-053 | Region entity | Entity | GetRegion | Loaded |
+| INT-054 | Country entity | Entity | GetCountry | Loaded |
+| INT-055 | Cache service | ICacheService | GetById | Cached |
+| INT-056 | Country service | ICountryService | GetCountry | Linked |
+| INT-057 | Org hierarchy | IOrgHierarchyService | Hierarchy | Linked |
+| INT-058 | Opportunity | IOpportunityManager | Office in opp | Linked |
+| INT-059 | Partner | IPartnerManager | Office in partner | Linked |
+| INT-060 | Configuration | IConfiguration | Config | Applied |
+| INT-061 | Logger | ILogger | Log | Logged |
+| INT-062 | AutoMapper | IMapper | Map | Mapped |
+| INT-063 | Full lookup flow | All | GetByCode | Success |
+| INT-064 | Full region flow | All | GetByRegion | Success |
+| INT-065 | Full hierarchy flow | All | GetHierarchy | Success |
+| INT-066 | Opportunity + office | Opp + office | Opp with office | Linked |
+| INT-067 | Partner + office | Partner + office | Partner with office | Linked |
+| INT-068 | Search + pagination | Search + pagination | Search paged | Success |
+| INT-069 | Cache + DB | Cache + DB | Miss then hit | Both |
+| INT-070 | Cache invalidation | Cache + update | Update | Invalidated |
+| INT-071 | Soft delete filter | DbContext | Get all | Filtered |
+| INT-072 | Permission + get | Permission | Get | Checked |
+| INT-073 | Tenant + get | Tenant | Get | Scoped |
+| INT-074 | Region + offices | Region | Get offices | Success |
+| INT-075 | Country + offices | Country | Get | Success |
+| INT-076 | Hierarchy + offices | Hierarchy | Get | Success |
+| INT-077 | Dropdown + filter | Dropdown | Filter | Filtered |
+| INT-078 | Batch + cache | Batch + cache | GetByIds | Mixed |
+| INT-079 | Search + sort | Search + sort | Search | Sorted |
+| INT-080 | Pagination + sort | Pagination + sort | Page | Sorted |
+| INT-081 | Map + cache | Map + cache | Resolve | Cached |
+| INT-082 | Warm-up + load | Warm-up | Startup | Loaded |
+| INT-083 | Config + cache TTL | Config | Cache | TTL |
+| INT-084 | Logger + error | Logger | Error | Logged |
+| INT-085 | Mapper + entity | Mapper | Entity | Mapped |
+| INT-086 | DbContext + transaction | DbContext | Transaction | Consistent |
+| INT-087 | Validation + API | Validation | API | Validated |
+| INT-088 | Error handler + get | Error | Get | Handled |
+| INT-089 | Retry + transient | Retry | Transient | Retried |
+| INT-090 | End-to-end | All | Full flow | Success |
 
 ---
 

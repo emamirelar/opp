@@ -24,9 +24,9 @@ namespace UNOPS.PAO.Business.Tests.Core
     /// 
     /// Required: 30-50 tests (Baseline P = 50)
     /// This establishes the baseline for ratio calculations:
-    /// - Negative >= 2 × P = 100
-    /// - Boundary >= 2 × P = 100
-    /// - (Negative + Boundary) >= 3 × P = 150
+    /// - N≥3P, E≥3P, F≥3P, I≥3P (each category individually ≥ 3 × P)
+    /// - Negative >= 3 × P
+    /// - Boundary >= 3 × P
     /// </summary>
     public class PositiveTests
     {

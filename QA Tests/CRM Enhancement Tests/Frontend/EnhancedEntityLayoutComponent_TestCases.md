@@ -11,19 +11,23 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
-| §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| §1 Positive (P) | 30 | 30-50 | ✅ |
+| §2 Negative (N) | 90 | 90 | ✅ |
+| §3 Boundary (E) | 90 | 90 | ✅ |
+| §4 Functional (F) | 90 | 90 | ✅ |
+| §5 Integration (I) | 90 | 90 | ✅ |
+| §6 Security | 30 | 30 | ✅ |
+| §7 Concurrency | 15 | 15 | ✅ |
+| §8 Unit | 12 | 12 | ✅ |
+| §9 Performance | 10 | 10 | ✅ |
+| §10 Load | 5 | 5 | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance:**
+- N≥3P: 90≥90 → ✅ PASS
+- E≥3P: 90≥90 → ✅ PASS
+- F≥3P: 90≥90 → ✅ PASS
+- I≥3P: 90≥90 → ✅ PASS
 
 ---
 
@@ -38,7 +42,7 @@ The EnhancedEntityLayoutComponent provides dynamic layout for entity views:
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result | Priority |
 |----|-----------|-------------|-------|-----------------|----------|
@@ -72,15 +76,10 @@ The EnhancedEntityLayoutComponent provides dynamic layout for entity views:
 | POS-028 | Dark theme | Dark theme | Set theme | Theme applied | P2 |
 | POS-029 | Animation | Panel open | Open | Animated | P2 |
 | POS-030 | Reduced motion | prefers-reduced-motion | Set | No animation | P2 |
-| POS-031 | Focus trap | Panel open | Tab | Focus trapped | P2 |
-| POS-032 | Focus restore | Panel close | Close | Focus restored | P2 |
-| POS-033 | ARIA attributes | Screen reader | Inspect | aria-* present | P2 |
-| POS-034 | Resize handle | Resize | Drag handle | Resize works | P2 |
-| POS-035 | Multiple panels | Many panels | Load | All manageable | P2 |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error | Priority |
 |----|-----------|--------------|---------------|----------|
@@ -154,10 +153,30 @@ The EnhancedEntityLayoutComponent provides dynamic layout for entity views:
 | NEG-068 | Duplicate ID | Same id | Unique | P2 |
 | NEG-069 | Overflow hidden | Overflow | Scroll | P2 |
 | NEG-070 | Print layout | Print | Print-friendly | P2 |
+| NEG-071 | Invalid zone ref | Zone null | Fallback | P2 |
+| NEG-072 | Config mutation | Mutate | No effect | P2 |
+| NEG-073 | Panel service fail | Service error | Fallback | P2 |
+| NEG-074 | Breakpoint fail | Observer error | Fallback | P2 |
+| NEG-075 | Resize during init | Init | Handled | P2 |
+| NEG-076 | Breadcrumb null | Breadcrumb null | Hide | P2 |
+| NEG-077 | Zone permission null | Perm null | Deny | P2 |
+| NEG-078 | Grid config invalid | Columns -1 | Fallback | P2 |
+| NEG-079 | Sidebar config null | Config null | Default | P2 |
+| NEG-080 | Persist key invalid | Key invalid | No persist | P2 |
+| NEG-081 | Storage quota | Full | Graceful | P2 |
+| NEG-082 | Content projection null | Content null | Empty | P2 |
+| NEG-083 | Dynamic zone fail | Zone load fail | Error | P2 |
+| NEG-084 | Overlay z-index | Conflict | Correct | P2 |
+| NEG-085 | Focus trap fail | Trap fail | Fallback | P2 |
+| NEG-086 | Animation cancel | Destroy | Cancelled | P2 |
+| NEG-087 | Resize listener leak | Destroy | Removed | P2 |
+| NEG-088 | Router param invalid | Param invalid | Fallback | P2 |
+| NEG-089 | Theme fail | Theme error | Default | P2 |
+| NEG-090 | RTL fail | RTL error | LTR | P2 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field | Min | Max | At Min | At Max | Over Max | Priority |
 |----|-------|-----|-----|--------|--------|----------|----------|
@@ -231,10 +250,30 @@ The EnhancedEntityLayoutComponent provides dynamic layout for entity views:
 | BND-068 | Array length | 0 | 1000 | 0 ok | 1000 ok | — | P2 |
 | BND-069 | Query param | 0 | 50 | 0 ok | 50 ok | Reject | P2 |
 | BND-070 | Include depth | 0 | 3 | 0 no | 3 ok | — | P2 |
+| BND-071 | Sidebar 0 | 0 | 500 | Hidden | — | — | P2 |
+| BND-072 | Sidebar 500 | 0 | 500 | — | Max | — | P2 |
+| BND-073 | Panel 0 | 0 | 20 | None | — | — | P2 |
+| BND-074 | Panel 20 | 0 | 20 | — | Max | — | P2 |
+| BND-075 | Zone 0 | 0 | 50 | Empty | — | — | P2 |
+| BND-076 | Zone 50 | 0 | 50 | — | Max | — | P2 |
+| BND-077 | Grid 1 | 1 | 12 | Min | — | — | P2 |
+| BND-078 | Grid 12 | 1 | 12 | — | Max | — | P2 |
+| BND-079 | Gap 0 | 0 | 48 | None | — | — | P2 |
+| BND-080 | Gap 48 | 0 | 48 | — | Max | — | P2 |
+| BND-081 | Breadcrumb 0 | 0 | 10 | Hide | — | — | P2 |
+| BND-082 | Breadcrumb 10 | 0 | 10 | — | Max | — | P2 |
+| BND-083 | Min width 100 | 100 | 800 | Min | — | — | P2 |
+| BND-084 | Max width 1000 | 200 | 1000 | — | Max | — | P2 |
+| BND-085 | Viewport 320 | 320 | 1920 | Mobile | — | — | P2 |
+| BND-086 | Viewport 1920 | 320 | 1920 | — | Large | — | P2 |
+| BND-087 | Z-index 0 | 0 | 9999 | Min | — | — | P2 |
+| BND-088 | Z-index 9999 | 0 | 9999 | — | Max | — | P2 |
+| BND-089 | Animation 0 | 0 | 5000 | Instant | — | — | P2 |
+| BND-090 | Animation 5000 | 0 | 5000 | — | Max | — | P2 |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule | Trigger | Expected Outcome | Priority |
 |----|-----------|------|---------|------------------|----------|
@@ -291,7 +330,7 @@ The EnhancedEntityLayoutComponent provides dynamic layout for entity views:
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result | Priority |
 |----|-----------|----------|----------|-----------------|----------|

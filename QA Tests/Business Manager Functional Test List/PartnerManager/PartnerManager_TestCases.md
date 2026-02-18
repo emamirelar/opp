@@ -1,7 +1,12 @@
 # PartnerManager — Test Cases
 
 **Component:** `UNOPS.PAO.Business/Managers/PartnerManager`  
-**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Interface:** `UNOPS.PAO.Business/Interfaces/IPartnerManager.cs`  
+**Base:** `UNOPS.PAO.Business/Managers/PartnerManager.cs`  
+**Override:** `UNOPS.PAO.UNOPSBusiness/Managers/UNOPSPartnerManager.cs`  
+**Controller:** `UNOPS.PAO.Presentation/Controllers/Partners/PartnerController.cs`  
+**Entity:** `UNOPS.PAO.Domain/Entities/Partner.cs` (inherits ModifiableDeletableEntity)  
+**Created:** 2026-02-18 | **Last Updated:** 2026-02-18  
 **Author:** QA Team  
 **Standard:** 10-Category, 3:1 Ratio
 
@@ -11,335 +16,462 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive (P) | 30 | 30-50 | ✅ |
+| §2 Negative (N) | 90 | 90 | ✅ |
+| §3 Boundary (E) | 90 | 90 | ✅ |
+| §4 Functional (F) | 90 | 90 | ✅ |
+| §5 Integration (I) | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance Check**
+
+| Category | Count | Tests |
+|----------|-------|-------|
+| Positive (P) | 30 | POS-001 through POS-030 |
+| Negative (N) | 90 | NEG-001 through NEG-090 |
+| Edge/Boundary (E) | 90 | BND-001 through BND-090 |
+| Functional (F) | 90 | FUN-001 through FUN-090 |
+| Integration (I) | 90 | INT-001 through INT-090 |
+| **N ≥ 3P?** | ✅ | 90 ≥ 90 |
+| **E ≥ 3P?** | ✅ | 90 ≥ 90 |
+| **F ≥ 3P?** | ✅ | 90 ≥ 90 |
+| **I ≥ 3P?** | ✅ | 90 ≥ 90 |
 
 ---
 
 ## Feature Overview
 
-**PartnerManager** manages CRUD partners, approval workflow, ERP dim value, status lifecycle, and categories. Key responsibilities: partner lifecycle, org unit relationships, logo upload, partner group/category filtering, permission-based access.
+**PartnerManager** manages partner organizations including CRUD, approval workflow, ERP dimension value assignment, status lifecycle (Draft→Active→Closed→Archived), partner groups/categories, organization unit relationships, logo upload, duplicate detection, smart search, bulk upload, Gmail addon integration, and opportunity linkage. Key responsibilities: partner lifecycle, soft-delete (IsDeleted), audit trail, permission-based access (HasPermissionAsync), and UNOPS-specific overrides via UNOPSPartner.
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps (Brief) | Expected Result | Priority |
 |----|-----------|-------------|---------------|-----------------|----------|
-| POS-001 | Test 1 | Precondition 1 | Step 1 | Result 1 | P0 |
-| POS-002 | Test 2 | Precondition 2 | Step 2 | Result 2 | P0 |
-| POS-003 | Test 3 | Precondition 3 | Step 3 | Result 3 | P0 |
-| POS-004 | Test 4 | Precondition 4 | Step 4 | Result 4 | P0 |
-| POS-005 | Test 5 | Precondition 5 | Step 5 | Result 5 | P0 |
-| POS-006 | Test 6 | Precondition 6 | Step 6 | Result 6 | P1 |
-| POS-007 | Test 7 | Precondition 7 | Step 7 | Result 7 | P1 |
-| POS-008 | Test 8 | Precondition 8 | Step 8 | Result 8 | P1 |
-| POS-009 | Test 9 | Precondition 9 | Step 9 | Result 9 | P1 |
-| POS-010 | Test 10 | Precondition 10 | Step 10 | Result 10 | P1 |
-| POS-011 | Test 11 | Precondition 11 | Step 11 | Result 11 | P1 |
-| POS-012 | Test 12 | Precondition 12 | Step 12 | Result 12 | P1 |
-| POS-013 | Test 13 | Precondition 13 | Step 13 | Result 13 | P1 |
-| POS-014 | Test 14 | Precondition 14 | Step 14 | Result 14 | P1 |
-| POS-015 | Test 15 | Precondition 15 | Step 15 | Result 15 | P1 |
-| POS-016 | Test 16 | Precondition 16 | Step 16 | Result 16 | P1 |
-| POS-017 | Test 17 | Precondition 17 | Step 17 | Result 17 | P1 |
-| POS-018 | Test 18 | Precondition 18 | Step 18 | Result 18 | P1 |
-| POS-019 | Test 19 | Precondition 19 | Step 19 | Result 19 | P1 |
-| POS-020 | Test 20 | Precondition 20 | Step 20 | Result 20 | P1 |
-| POS-021 | Test 21 | Precondition 21 | Step 21 | Result 21 | P1 |
-| POS-022 | Test 22 | Precondition 22 | Step 22 | Result 22 | P1 |
-| POS-023 | Test 23 | Precondition 23 | Step 23 | Result 23 | P1 |
-| POS-024 | Test 24 | Precondition 24 | Step 24 | Result 24 | P1 |
-| POS-025 | Test 25 | Precondition 25 | Step 25 | Result 25 | P1 |
-| POS-026 | Test 26 | Precondition 26 | Step 26 | Result 26 | P1 |
-| POS-027 | Test 27 | Precondition 27 | Step 27 | Result 27 | P1 |
-| POS-028 | Test 28 | Precondition 28 | Step 28 | Result 28 | P1 |
-| POS-029 | Test 29 | Precondition 29 | Step 29 | Result 29 | P1 |
-| POS-030 | Test 30 | Precondition 30 | Step 30 | Result 30 | P1 |
-| POS-031 | Test 31 | Precondition 31 | Step 31 | Result 31 | P1 |
-| POS-032 | Test 32 | Precondition 32 | Step 32 | Result 32 | P1 |
-| POS-033 | Test 33 | Precondition 33 | Step 33 | Result 33 | P1 |
-| POS-034 | Test 34 | Precondition 34 | Step 34 | Result 34 | P1 |
-| POS-035 | Test 35 | Precondition 35 | Step 35 | Result 35 | P1 |
+| POS-001 | Create partner with valid minimal data | User has CanCreatePartners, LiaisonOffice exists | POST /api/partner with Name, PartnerShortDescription, PartnerCategoryId, PartnerGroupId, LiaisonOfficeId | 201 Created, partner returned with Id, Status=Draft | P0 |
+| POS-002 | Create partner with all optional fields | User has permissions | POST /api/partner with full PartnerRequest (website, phone, address, OrgUnitRelationships, etc.) | Partner created with all fields persisted | P0 |
+| POS-003 | Get partner by ID — exists | Partner 123 exists, not deleted | GET /api/partner/123 | PartnerModel returned with Id, Name, Status | P0 |
+| POS-004 | Get partner with contacts and interactions | Partner 123 has 5 contacts, 20 interactions | GetPartnerWithContactsAndInteractionsAsync(123) | Partner with Contacts and Interactions loaded | P0 |
+| POS-005 | Update partner basic fields | Partner 123 exists, user has edit permission | PUT /api/partner with Id=123, new Name, PartnerShortDescription | Changes persisted, LastModifiedDate updated | P0 |
+| POS-006 | Soft delete partner | Partner 123 exists, user has delete permission | DELETE /api/partner/123 | IsDeleted=true, DeletedBy/DeletedDate set, 200 OK | P0 |
+| POS-007 | List partners — paginated | 100 partners exist | GET /api/partner?pageIndex=1&pageSize=20 | PaginationResponse with 20 items, TotalCount=100 | P0 |
+| POS-008 | Search partners — smart search | Partners "UNICEF", "UNHCR" exist | GET /api/partner/search?q=UN | Partners matching "UN" returned, ranked by relevance | P1 |
+| POS-009 | Advanced search with filters | Partners in various groups | GET /api/partner/advanced-search with PartnerGroupId, Status filters | Filtered results returned | P1 |
+| POS-010 | Get partners by partner group | PartnerGroup 5 has 12 partners | GET /api/partner/by-partner-group-id/5 | 12 partners returned | P1 |
+| POS-011 | Get partners by category code | Category "GOV" has 8 partners | GET /api/partner/by-partner-category-code/GOV | 8 partners returned | P1 |
+| POS-012 | Activate partner — Draft to Active | Partner in Draft with all mandatory fields | POST /api/partner/123/activate | Status=Active, 200 OK | P0 |
+| POS-013 | Close partner — Active to Closed | Partner in Active status | POST /api/partner/123/close with StatusChangeRequest | Status=Closed | P1 |
+| POS-014 | Archive partner — Closed to Archived | Partner in Closed status | POST /api/partner/123/archive | Status=Archived | P1 |
+| POS-015 | Approve partner — admin workflow | Partner Active, user has admin permission | POST /api/partner/123/approve with UpdatePartnerRequest | PartnerApprovalStatus=Approved, ErpDimValue assigned, CanCreateNewOpportunities=true | P0 |
+| POS-016 | Unapprove partner | Partner Approved | POST /api/partner/123/unapprove | PartnerApprovalStatus=NotApproved, CanCreateNewOpportunities=false | P1 |
+| POS-017 | Get partner permissions | Partner exists, user authenticated | GET /api/partner/123/permissions | canView, canEdit, canDelete returned | P0 |
+| POS-018 | Upload partner logo | Partner exists, valid JPG file | POST /api/partner/123/logo with IFormFile | LogoUrl updated, 200 OK | P1 |
+| POS-019 | Get partner interactions | Partner has contacts with interactions | GET /api/partner/123/interactions | Interactions list returned | P1 |
+| POS-020 | Get categories summary | Partners in multiple categories | GET /api/partner/categories-summary | Summary with counts per category | P1 |
+| POS-021 | Get groups summary | Partners in multiple groups | GET /api/partner/groups-summary | Summary with counts per group | P1 |
+| POS-022 | Get categorization overview | Partners exist | GET /api/partner/categorization-overview | Overview data returned | P1 |
+| POS-023 | Detect duplicates — no duplicates | New partner "Acme Corp" | POST /api/partner/detect-duplicates with PartnerRequest | No duplicates found, create allowed | P1 |
+| POS-024 | Create opportunity from partner | Partner 123 exists | POST /api/partner/123/create-opportunity | Opportunity created, linked to partner | P1 |
+| POS-025 | Get partner opportunities | Partner 123 has 3 opportunities | GET /api/partner/123/opportunities | 3 opportunities returned | P1 |
+| POS-026 | Get partner opportunities search | Partner has opportunities | GET /api/partner/123/opportunities/search?q=project | Filtered opportunities | P1 |
+| POS-027 | Get partner by name | Partner "UNICEF" exists | GetPartnerByNameAsync(user, "UNICEF") | PartnerModel returned | P1 |
+| POS-028 | Get partners for Gmail addon | Gmail request with partner-related emails | GetPartnersForGmailAddon(request, user) | Matching partners returned | P1 |
+| POS-029 | Get total partner count | 50 partners exist | GetTotalPartnerCountAsync(user) | 50 returned | P1 |
+| POS-030 | Get sample partner names | Partners exist | GetSamplePartnerNamesAsync(user, 5) | 5 partner names returned | P1 |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Condition | Expected Result | Priority |
 |----|-----------|------------------------|-----------------|----------|
-| NEG-001 | Negative 1 | Invalid input 1 | Error 1 | P0 |
-| NEG-002 | Negative 2 | Invalid input 2 | Error 2 | P0 |
-| NEG-003 | Negative 3 | Invalid input 3 | Error 3 | P0 |
-| NEG-004 | Negative 4 | Invalid input 4 | Error 4 | P0 |
-| NEG-005 | Negative 5 | Invalid input 5 | Error 5 | P0 |
-| NEG-006 | Negative 6 | Invalid input 6 | Error 6 | P0 |
-| NEG-007 | Negative 7 | Invalid input 7 | Error 7 | P0 |
-| NEG-008 | Negative 8 | Invalid input 8 | Error 8 | P0 |
-| NEG-009 | Negative 9 | Invalid input 9 | Error 9 | P0 |
-| NEG-010 | Negative 10 | Invalid input 10 | Error 10 | P0 |
-| NEG-011 | Negative 11 | Invalid input 11 | Error 11 | P1 |
-| NEG-012 | Negative 12 | Invalid input 12 | Error 12 | P1 |
-| NEG-013 | Negative 13 | Invalid input 13 | Error 13 | P1 |
-| NEG-014 | Negative 14 | Invalid input 14 | Error 14 | P1 |
-| NEG-015 | Negative 15 | Invalid input 15 | Error 15 | P1 |
-| NEG-016 | Negative 16 | Invalid input 16 | Error 16 | P1 |
-| NEG-017 | Negative 17 | Invalid input 17 | Error 17 | P1 |
-| NEG-018 | Negative 18 | Invalid input 18 | Error 18 | P1 |
-| NEG-019 | Negative 19 | Invalid input 19 | Error 19 | P1 |
-| NEG-020 | Negative 20 | Invalid input 20 | Error 20 | P1 |
-| NEG-021 | Negative 21 | Invalid input 21 | Error 21 | P1 |
-| NEG-022 | Negative 22 | Invalid input 22 | Error 22 | P1 |
-| NEG-023 | Negative 23 | Invalid input 23 | Error 23 | P1 |
-| NEG-024 | Negative 24 | Invalid input 24 | Error 24 | P1 |
-| NEG-025 | Negative 25 | Invalid input 25 | Error 25 | P1 |
-| NEG-026 | Negative 26 | Invalid input 26 | Error 26 | P1 |
-| NEG-027 | Negative 27 | Invalid input 27 | Error 27 | P1 |
-| NEG-028 | Negative 28 | Invalid input 28 | Error 28 | P1 |
-| NEG-029 | Negative 29 | Invalid input 29 | Error 29 | P1 |
-| NEG-030 | Negative 30 | Invalid input 30 | Error 30 | P1 |
-| NEG-031 | Negative 31 | Invalid input 31 | Error 31 | P1 |
-| NEG-032 | Negative 32 | Invalid input 32 | Error 32 | P1 |
-| NEG-033 | Negative 33 | Invalid input 33 | Error 33 | P1 |
-| NEG-034 | Negative 34 | Invalid input 34 | Error 34 | P1 |
-| NEG-035 | Negative 35 | Invalid input 35 | Error 35 | P1 |
-| NEG-036 | Negative 36 | Invalid input 36 | Error 36 | P1 |
-| NEG-037 | Negative 37 | Invalid input 37 | Error 37 | P1 |
-| NEG-038 | Negative 38 | Invalid input 38 | Error 38 | P1 |
-| NEG-039 | Negative 39 | Invalid input 39 | Error 39 | P1 |
-| NEG-040 | Negative 40 | Invalid input 40 | Error 40 | P1 |
-| NEG-041 | Negative 41 | Invalid input 41 | Error 41 | P1 |
-| NEG-042 | Negative 42 | Invalid input 42 | Error 42 | P1 |
-| NEG-043 | Negative 43 | Invalid input 43 | Error 43 | P1 |
-| NEG-044 | Negative 44 | Invalid input 44 | Error 44 | P1 |
-| NEG-045 | Negative 45 | Invalid input 45 | Error 45 | P1 |
-| NEG-046 | Negative 46 | Invalid input 46 | Error 46 | P1 |
-| NEG-047 | Negative 47 | Invalid input 47 | Error 47 | P1 |
-| NEG-048 | Negative 48 | Invalid input 48 | Error 48 | P1 |
-| NEG-049 | Negative 49 | Invalid input 49 | Error 49 | P1 |
-| NEG-050 | Negative 50 | Invalid input 50 | Error 50 | P1 |
-| NEG-051 | Negative 51 | Invalid input 51 | Error 51 | P1 |
-| NEG-052 | Negative 52 | Invalid input 52 | Error 52 | P1 |
-| NEG-053 | Negative 53 | Invalid input 53 | Error 53 | P1 |
-| NEG-054 | Negative 54 | Invalid input 54 | Error 54 | P1 |
-| NEG-055 | Negative 55 | Invalid input 55 | Error 55 | P1 |
-| NEG-056 | Negative 56 | Invalid input 56 | Error 56 | P1 |
-| NEG-057 | Negative 57 | Invalid input 57 | Error 57 | P1 |
-| NEG-058 | Negative 58 | Invalid input 58 | Error 58 | P1 |
-| NEG-059 | Negative 59 | Invalid input 59 | Error 59 | P1 |
-| NEG-060 | Negative 60 | Invalid input 60 | Error 60 | P1 |
-| NEG-061 | Negative 61 | Invalid input 61 | Error 61 | P1 |
-| NEG-062 | Negative 62 | Invalid input 62 | Error 62 | P1 |
-| NEG-063 | Negative 63 | Invalid input 63 | Error 63 | P1 |
-| NEG-064 | Negative 64 | Invalid input 64 | Error 64 | P1 |
-| NEG-065 | Negative 65 | Invalid input 65 | Error 65 | P1 |
-| NEG-066 | Negative 66 | Invalid input 66 | Error 66 | P1 |
-| NEG-067 | Negative 67 | Invalid input 67 | Error 67 | P1 |
-| NEG-068 | Negative 68 | Invalid input 68 | Error 68 | P1 |
-| NEG-069 | Negative 69 | Invalid input 69 | Error 69 | P1 |
-| NEG-070 | Negative 70 | Invalid input 70 | Error 70 | P1 |
+| NEG-001 | Create — missing Name | PartnerRequest with Name=null or empty | 400 Bad Request, "Name is required" | P0 |
+| NEG-002 | Create — PartnerLevyStatus DoesNotApply without ReasonForLevy | PartnerLevyStatus="DoesNotApply", ReasonForLevy=null | 400 Bad Request, validation error | P0 |
+| NEG-003 | Create — PartnerLevyStatus PotentiallyNotApplied without ReasonForLevy | PartnerLevyStatus="PotentiallyNotApplied", ReasonForLevy=null | 400 Bad Request | P0 |
+| NEG-004 | Create — invalid PartnerGroupId | PartnerGroupId=99999 (non-existent) | BusinessException or 400 | P0 |
+| NEG-005 | Create — invalid PartnerCategoryId | PartnerCategoryId=99999 (non-existent) | FK violation or BusinessException | P0 |
+| NEG-006 | Create — invalid LiaisonOfficeId | LiaisonOfficeId=99999 (non-existent) | FK violation or BusinessException | P0 |
+| NEG-007 | Create — user without create permission | User lacks CanCreatePartners | 403 Forbidden | P0 |
+| NEG-008 | Get partner — ID zero | GET /api/partner/0 | 404 or 400 | P1 |
+| NEG-009 | Get partner — ID negative | GET /api/partner/-1 | 404 or 400 | P1 |
+| NEG-010 | Get partner — non-existent ID | GET /api/partner/99999 | 404 Not Found | P0 |
+| NEG-011 | Get partner — soft-deleted partner | Partner IsDeleted=true | 404 or not returned | P0 |
+| NEG-012 | Update — non-existent ID | PUT /api/partner with Id=99999 | 404 or null | P0 |
+| NEG-013 | Update — user without edit permission | User lacks CanEditPartners | 403 Forbidden | P0 |
+| NEG-014 | Update — missing Id in UpdatePartnerRequest | UpdatePartnerRequest with Id=0 | Validation error | P0 |
+| NEG-015 | Delete — non-existent ID | DELETE /api/partner/99999 | 404 or graceful handling | P1 |
+| NEG-016 | Delete — already soft-deleted partner | Partner IsDeleted=true | Idempotent or 404 | P1 |
+| NEG-017 | Delete — user without delete permission | User lacks CanDeletePartners | 403 Forbidden | P0 |
+| NEG-018 | Activate — partner not in Draft | Partner Status=Active | 400, "Only Draft partners can be activated" | P0 |
+| NEG-019 | Activate — missing mandatory fields | Partner missing PartnerShortDescription | 400, GetMissingMandatoryFieldsForActivation | P0 |
+| NEG-020 | Activate — missing PartnerGroupId | Partner has no PartnerGroupId | Activation fails with missing fields | P0 |
+| NEG-021 | Activate — missing LiaisonOfficeId | Partner has no LiaisonOfficeId | Activation fails | P0 |
+| NEG-022 | Activate — user without permission | User lacks update permission | 403 Forbidden | P0 |
+| NEG-023 | Close — partner not Active | Partner Status=Draft | 400, "Only Active partners can be closed" | P0 |
+| NEG-024 | Archive — partner in Draft | Partner Status=Draft | 400, "Only Active or Closed can be archived" | P0 |
+| NEG-025 | Approve — partner not Active | Partner Status=Draft | 400, "Only Active partners can be approved" | P0 |
+| NEG-026 | Unapprove — partner not Approved | Partner PartnerApprovalStatus=NotApproved | 400, "Only approved partners can be unapproved" | P0 |
+| NEG-027 | Unapprove — partner not Active | Partner Status=Closed | 400 | P0 |
+| NEG-028 | Logo upload — non-existent partner | POST /api/partner/99999/logo | 404 | P1 |
+| NEG-029 | Logo upload — invalid file type | IFormFile with .exe extension | 400, file type rejected | P0 |
+| NEG-030 | Logo upload — file too large | IFormFile > 5MB | 400, size limit exceeded | P1 |
+| NEG-031 | Pagination — PageIndex negative | GET /api/partner?pageIndex=-1 | 400 or default to 1 | P1 |
+| NEG-032 | Pagination — PageSize zero | GET /api/partner?pageSize=0 | 400 or default | P1 |
+| NEG-033 | Pagination — PageSize excessive | GET /api/partner?pageSize=100000 | Capped or 400 | P1 |
+| NEG-034 | Get by partner group — invalid group ID | GET /api/partner/by-partner-group-id/99999 | Empty list or 404 | P1 |
+| NEG-035 | Get by category — invalid code | GET /api/partner/by-partner-category-code/INVALID | Empty list or 404 | P1 |
+| NEG-036 | Smart search — empty search text | PerformSmartSearchAsync(user, "") | Empty or validation error | P1 |
+| NEG-037 | Smart search — null search text | PerformSmartSearchAsync(user, null) | ArgumentNullException or handled | P1 |
+| NEG-038 | GetPartnerByName — non-existent name | GetPartnerByNameAsync(user, "NonExistentPartnerXYZ") | null returned | P1 |
+| NEG-039 | GetPartnerByName — empty string | GetPartnerByNameAsync(user, "") | null or validation error | P1 |
+| NEG-040 | Create — null PartnerRequest | CreatePartnerAsync(user, null) | ArgumentNullException | P0 |
+| NEG-041 | Update — null UpdatePartnerRequest | UpdatePartnerAsync(user, null) | ArgumentNullException | P0 |
+| NEG-042 | HasPermissionAsync — invalid userId | HasPermissionAsync(-1, 123, "Read") | false or error | P1 |
+| NEG-043 | HasPermissionAsync — invalid partnerId | HasPermissionAsync(userId, 99999, "Read") | false | P1 |
+| NEG-044 | HasPermissionAsync — invalid operation | HasPermissionAsync(userId, 123, "InvalidOp") | false | P1 |
+| NEG-045 | GetPartnersForGmailAddon — null request | GetPartnersForGmailAddon(null, user) | ArgumentNullException | P1 |
+| NEG-046 | Bulk upload — invalid file format | POST /api/partner/bulk-upload with .txt file | 400, invalid format | P1 |
+| NEG-047 | Bulk upload — malformed CSV | CSV with wrong columns | 400, validation error | P1 |
+| NEG-048 | Detect duplicates — null request | POST /api/partner/detect-duplicates with null body | 400 | P1 |
+| NEG-049 | Create opportunity — non-existent partner | POST /api/partner/99999/create-opportunity | 404 | P1 |
+| NEG-050 | Get opportunities — non-existent partner | GET /api/partner/99999/opportunities | 404 or empty | P1 |
+| NEG-051 | Create — SQL injection in Name | Name="'; DROP TABLE Partner--" | Sanitized or rejected | P0 |
+| NEG-052 | Create — XSS in PartnerLongDescription | PartnerLongDescription="<script>alert(1)</script>" | Sanitized or rejected | P0 |
+| NEG-053 | Update — FK to deleted PartnerGroup | PartnerGroupId=5 (IsDeleted=true) | Error or handled | P1 |
+| NEG-054 | Update — FK to deleted LiaisonOffice | LiaisonOfficeId=3 (deleted) | Error | P1 |
+| NEG-055 | Get — expired auth token | Request with expired JWT | 401 Unauthorized | P0 |
+| NEG-056 | Get — no auth token | Request without Authorization header | 401 Unauthorized | P0 |
+| NEG-057 | GetPartnersWithSpecification — null specification | GetPartnersWithSpecificationAsync(user, null, request) | ArgumentNullException | P1 |
+| NEG-058 | GetPartnersWithSpecification — null pagination | GetPartnersWithSpecificationAsync(user, spec, null) | ArgumentNullException or default | P1 |
+| NEG-059 | Create — duplicate detection blocks (no confirm) | Partner "UNICEF" exists, create same without ConfirmDuplicateCreation | 200 with action=duplicateConfirmation | P1 |
+| NEG-060 | Analyse file — invalid file | POST /api/partner/analyse-file with corrupt file | 400 | P1 |
+| NEG-061 | Scan data — invalid input | POST /api/partner/scan-data with malformed data | 400 | P1 |
+| NEG-062 | Get metadata info — unauthorized | User without read permission | 403 | P1 |
+| NEG-063 | Create — ErpDimValue manually set (should be auto) | PartnerRequest with ErpDimValue=12345 | May be overwritten on approve | P2 |
+| NEG-064 | Update — change Status directly (bypass workflow) | UpdatePartnerRequest with Status=Archived | Workflow validation or allowed per design | P1 |
+| NEG-065 | Get partner — user from different org unit | User from OrgUnit B, partner in OrgUnit A | 403 or filtered out | P0 |
+| NEG-066 | Activate — invalid ActivatePartnerRequest | ActivatePartnerAsync with null request | Handled (Notes optional) | P2 |
+| NEG-067 | Close — invalid StatusChangeRequest | StatusChangeRequest with Status=null | Validation error | P1 |
+| NEG-068 | Get sample names — count negative | GetSamplePartnerNamesAsync(user, -1) | 0 or default count | P1 |
+| NEG-069 | Get sample names — count zero | GetSamplePartnerNamesAsync(user, 0) | Empty list | P1 |
+| NEG-070 | PerformSmartSearch — maxResults zero | maxResults=0 | Empty or default 50 | P1 |
+| NEG-071 | PerformSmartSearch — maxResults negative | maxResults=-1 | Default or error | P1 |
+| NEG-072 | Create — PartnerFocalPointUserId invalid | PartnerFocalPointUserId=99999 (non-existent user) | FK error or handled | P1 |
+| NEG-073 | Update — DueDiligenceExpiryDate in past | DueDiligenceExpiryDate=2020-01-01 | Accepted (data only) or validation | P2 |
+| NEG-074 | Get partners — filterActive=false with no inactive | All partners active | Same as filterActive=true | P2 |
+| NEG-075 | Create — OrganizationHierarchyIds invalid | List contains 99999 (non-existent) | Error or partial success | P1 |
+| NEG-076 | Update — remove required Name | UpdatePartnerRequest with Name=null | Validation error | P0 |
+| NEG-077 | Create — whitespace-only Name | Name="   " | Validation error | P1 |
+| NEG-078 | Create — Name exceeds max length | Name with 500+ chars | Validation error (MaxLength) | P1 |
+| NEG-079 | Update — concurrent modification | Two users update same partner | Optimistic concurrency or last-write-wins | P1 |
+| NEG-080 | Delete — partner with active opportunities | Partner has 3 active opportunities | Soft delete succeeds, opportunities preserved | P1 |
+| NEG-081 | Delete — partner with contacts | Partner has 10 contacts | Soft delete, contacts handling per design | P1 |
+| NEG-082 | Get — ID max int | GET /api/partner/2147483647 | 404 or handled | P2 |
+| NEG-083 | Create — malformed JSON | POST with invalid JSON body | 400 Bad Request | P1 |
+| NEG-084 | Update — malformed JSON | PUT with invalid JSON | 400 Bad Request | P1 |
+| NEG-085 | Get partners by group — user no permission | User lacks read for that group | 403 or filtered | P0 |
+| NEG-086 | Get categorization overview — no partners | Empty database | Empty overview | P1 |
+| NEG-087 | Get total count — user restricted scope | User has org filter | Count reflects scope | P1 |
+| NEG-088 | Create — duplicate UniqueKey (system generated) | N/A — system assigns | No user input | P2 |
+| NEG-089 | Logo upload — path traversal filename | Filename="../../../etc/passwd" | Rejected | P0 |
+| NEG-090 | Create — rate limit exceeded | Too many create requests | 429 Too Many Requests | P2 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max | Priority |
-|----|----------------|-----|-----|--------|--------|----------|----------|
-| BND-001 | Field 1 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-002 | Field 2 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-003 | Field 3 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-004 | Field 4 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-005 | Field 5 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-006 | Field 6 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-007 | Field 7 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-008 | Field 8 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-009 | Field 9 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-010 | Field 10 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-011 | Field 11 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-012 | Field 12 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-013 | Field 13 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-014 | Field 14 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-015 | Field 15 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-016 | Field 16 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-017 | Field 17 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-018 | Field 18 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-019 | Field 19 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-020 | Field 20 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-021 | Field 21 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-022 | Field 22 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-023 | Field 23 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-024 | Field 24 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-025 | Field 25 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-026 | Field 26 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-027 | Field 27 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-028 | Field 28 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-029 | Field 29 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-030 | Field 30 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-031 | Field 31 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-032 | Field 32 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-033 | Field 33 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-034 | Field 34 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-035 | Field 35 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-036 | Field 36 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-037 | Field 37 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-038 | Field 38 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-039 | Field 39 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-040 | Field 40 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-041 | Field 41 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-042 | Field 42 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-043 | Field 43 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-044 | Field 44 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-045 | Field 45 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-046 | Field 46 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-047 | Field 47 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-048 | Field 48 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-049 | Field 49 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-050 | Field 50 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-051 | Field 51 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-052 | Field 52 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-053 | Field 53 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-054 | Field 54 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-055 | Field 55 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-056 | Field 56 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-057 | Field 57 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-058 | Field 58 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-059 | Field 59 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-060 | Field 60 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-061 | Field 61 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-062 | Field 62 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-063 | Field 63 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-064 | Field 64 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-065 | Field 65 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-066 | Field 66 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-067 | Field 67 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-068 | Field 68 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-069 | Field 69 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-070 | Field 70 | Min | Max | At Min | At Max | Over Max | P1 |
+|----|---------------|-----|-----|--------|--------|----------|----------|
+| BND-001 | Partner Name | 1 | 255 | "A" | 255 chars | 256 chars rejected | P1 |
+| BND-002 | PartnerShortDescription | 0 | 100 | "" | 100 chars | 101 chars rejected | P1 |
+| BND-003 | PartnerLongDescription | 0 | 4000 | "" | 4000 chars | 4001 rejected | P1 |
+| BND-004 | PartnerApprovalReference | 0 | 500 | "" | 500 chars | 501 rejected | P1 |
+| BND-005 | ReasonForLevy | 0 | 500 | "" | 500 chars | 501 rejected | P1 |
+| BND-006 | LevyTreatment | 0 | 500 | "" | 500 chars | 501 rejected | P1 |
+| BND-007 | ReasonForNoNewOpportunity | 0 | 500 | "" | 500 chars | 501 rejected | P1 |
+| BND-008 | Partner Id | 1 | 2147483647 | 1 | Max int | Overflow handled | P1 |
+| BND-009 | PartnerGroupId | 1 | 2147483647 | 1 | Valid FK | 0 = null | P1 |
+| BND-010 | PartnerCategoryId | 1 | 2147483647 | 1 | Valid FK | 0 = null | P1 |
+| BND-011 | LiaisonOfficeId | 1 | 2147483647 | 1 | Valid FK | 0 = null | P1 |
+| BND-012 | ErpDimValue | 0 | 2147483647 | 0 | Max | Negative rejected | P1 |
+| BND-013 | PartnerFocalPointUserId | 0 | 2147483647 | 0 (null) | Valid | Invalid FK | P1 |
+| BND-014 | PageIndex | 1 | Max | 1 | Valid | 0 or negative | P1 |
+| BND-015 | PageSize | 1 | 1000 | 1 | 1000 | 1001 capped/rejected | P1 |
+| BND-016 | Pagination TotalCount | 0 | 2147483647 | 0 | Large | — | P2 |
+| BND-017 | Smart search maxResults | 1 | 100 | 1 | 100 | 101 capped | P1 |
+| BND-018 | Logo file size | 0 | 5MB | 0 bytes | 5MB | 5MB+1 rejected | P1 |
+| BND-019 | Contacts per partner | 0 | 10000 | 0 | 10000 | — | P2 |
+| BND-020 | Interactions per partner | 0 | 100000 | 0 | Large | — | P2 |
+| BND-021 | OrganizationUnitRelationships | 0 | 100 | 0 | 100 | 101 | P1 |
+| BND-022 | Documents per partner | 0 | 1000 | 0 | 1000 | — | P2 |
+| BND-023 | Opportunities per partner | 0 | 10000 | 0 | Large | — | P2 |
+| BND-024 | Partner list — empty DB | 0 | 0 | — | Empty list | — | P1 |
+| BND-025 | Partner list — single record | 1 | 1 | 1 item | 1 item | — | P1 |
+| BND-026 | Last page partial | Page 5 of 103 items, PageSize=20 | 3 items | 3 items | — | P1 |
+| BND-027 | DueDiligenceExpiryDate | MinValue | MaxValue | Past | Future | — | P2 |
+| BND-028 | DueDiligenceApprovalDate | MinValue | MaxValue | Past | Now | — | P2 |
+| BND-029 | PartnerApprovalDate | — | — | Set on approve | — | — | P1 |
+| BND-030 | Unicode in Name | — | — | "UNICEF" | "日本国連" | Emoji | P2 |
+| BND-031 | Unicode in PartnerShortDescription | — | — | "UN" | "联合国" | — | P2 |
+| BND-032 | Special chars in Name | — | — | "O'Brien" | "Smith & Co." | — | P2 |
+| BND-033 | Empty search result | PerformSmartSearch "zzznonexistent" | 0 results | Empty list | — | P1 |
+| BND-034 | Search — single match | One partner "UNICEF" | 1 result | 1 item | — | P1 |
+| BND-035 | Filter by group — no partners | PartnerGroupId with 0 partners | Empty list | [] | — | P1 |
+| BND-036 | Filter by category — no partners | Category with 0 partners | Empty list | [] | — | P1 |
+| BND-037 | GetPartnerByName — case insensitive | "unicef" vs "UNICEF" | Match | Same partner | — | P1 |
+| BND-038 | GetPartnerByName — exact match | "UNICEF" | 1 | Partner | — | P1 |
+| BND-039 | Status Draft | — | — | New partner | Status=Draft | — | P0 |
+| BND-040 | Status Active | — | — | After activate | Status=Active | — | P0 |
+| BND-041 | Status Closed | — | — | After close | Status=Closed | — | P1 |
+| BND-042 | Status Archived | — | — | After archive | Status=Archived | — | P1 |
+| BND-043 | PartnerApprovalStatus NotApproved | — | — | Default | NotApproved | — | P1 |
+| BND-044 | PartnerApprovalStatus Approved | — | — | After approve | Approved | — | P1 |
+| BND-045 | Soft delete — IsDeleted boundary | false | true | false | true | — | P0 |
+| BND-046 | CreatedDate | — | — | On create | UtcNow | — | P1 |
+| BND-047 | LastModifiedDate | — | — | On create | On update | — | P1 |
+| BND-048 | DeletedDate | — | — | null when active | Set on delete | — | P1 |
+| BND-049 | UniqueKey Guid | — | — | NewGuid on create | Valid | — | P2 |
+| BND-050 | PartnerKey Guid | — | — | NewGuid | Valid | — | P2 |
+| BND-051 | Bulk upload — empty file | 0 rows | — | Empty CSV | 0 created | — | P1 |
+| BND-052 | Bulk upload — single row | 1 row | — | 1 partner | 1 created | — | P1 |
+| BND-053 | Bulk upload — max rows | 100 | 1000 | 100 | 1000 | Config limit | P1 |
+| BND-054 | Gmail addon — empty email list | 0 emails | — | [] | Empty result | — | P1 |
+| BND-055 | Gmail addon — single email | 1 email | — | 1 match | 1 partner | — | P1 |
+| BND-056 | GetSamplePartnerNames — count 1 | 1 | — | 1 | 1 name | — | P1 |
+| BND-057 | GetSamplePartnerNames — count 5 | 5 | — | 5 | 5 names | — | P1 |
+| BND-058 | GetSamplePartnerNames — more than exist | 10 requested, 3 exist | 3 | 3 returned | — | P1 |
+| BND-059 | OrderBy — Name ascending | — | — | A-Z | Correct order | — | P1 |
+| BND-060 | OrderBy — Name descending | — | — | Z-A | Correct order | — | P1 |
+| BND-061 | OrderBy — CreatedDate | — | — | Oldest first | Newest first | — | P1 |
+| BND-062 | Export — pageSize max | export=true | int.MaxValue | All records | — | P1 |
+| BND-063 | filterActive=false | Include inactive | — | Inactive included | — | P1 |
+| BND-064 | filterActive=true (default) | Exclude inactive | — | Active only | — | P1 |
+| BND-065 | PartnerGroupId filter in list | null | Valid ID | All groups | Filtered | — | P1 |
+| BND-066 | CanCreateNewOpportunities — false | Unapproved | — | false | — | P1 |
+| BND-067 | CanCreateNewOpportunities — true | Approved | — | true | — | P1 |
+| BND-068 | UNAndStateEntity — false | Default | — | false | — | P2 |
+| BND-069 | UNAndStateEntity — true | UN entity | — | true | — | P2 |
+| BND-070 | KeyGlobalPartner — false/true | — | — | false | true | — | P2 |
+| BND-071 | PooledFund — false/true | — | — | false | true | — | P2 |
+| BND-072 | DueDiligenceRequired — null/Required | — | — | null | Required | — | P2 |
+| BND-073 | PartnerLevyStatus — DoesNotApply | — | — | — | With ReasonForLevy | — | P1 |
+| BND-074 | PartnerLevyStatus — PotentiallyApplied | — | — | — | No ReasonForLevy required | — | P1 |
+| BND-075 | OrganizationHierarchyIds — empty list | [] | — | No org units | — | — | P1 |
+| BND-076 | OrganizationHierarchyIds — single | [5] | — | 1 org unit | — | — | P1 |
+| BND-077 | OrganizationHierarchyIds — multiple | [5,6,7] | — | 3 org units | — | — | P1 |
+| BND-078 | GetPartnerWithContactsAndInteractions — no contacts | 0 contacts | — | Empty collections | — | — | P1 |
+| BND-079 | GetPartnerWithContactsAndInteractions — no interactions | Contacts, 0 interactions | — | Empty interactions | — | — | P1 |
+| BND-080 | IncludeInactive in smart search — false | Default | — | Active only | — | — | P1 |
+| BND-081 | IncludeInactive in smart search — true | includeInactive=true | — | All partners | — | — | P1 |
+| BND-082 | Create opportunity — partner with 0 opps | 0 existing | — | 1 created | — | — | P1 |
+| BND-083 | Create opportunity — partner with many opps | 50 existing | — | 51 total | — | — | P1 |
+| BND-084 | Logo — PNG format | — | — | image/png | Accepted | — | P1 |
+| BND-085 | Logo — JPEG format | — | — | image/jpeg | Accepted | — | P1 |
+| BND-086 | Logo — WebP format | — | — | image/webp | Accepted or rejected per config | P2 |
+| BND-087 | Duplicate detection — threshold 0.5 | — | — | 0.5 | Low confidence | — | P2 |
+| BND-088 | Duplicate detection — threshold 1.0 | — | — | 1.0 | Exact match | — | P2 |
+| BND-089 | ConfirmDuplicateCreation — true | Bypass duplicate check | — | Create proceeds | — | — | P1 |
+| BND-090 | GetTotalPartnerCount — 0 partners | Empty DB | — | 0 | — | — | P1 |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Scenario | Trigger | Expected Outcome | Priority |
 |----|-----------|---------------|---------|------------------|----------|
-| FUN-001 | Functional 1 | Rule 1 | Trigger 1 | Outcome 1 | P0 |
-| FUN-002 | Functional 2 | Rule 2 | Trigger 2 | Outcome 2 | P0 |
-| FUN-003 | Functional 3 | Rule 3 | Trigger 3 | Outcome 3 | P0 |
-| FUN-004 | Functional 4 | Rule 4 | Trigger 4 | Outcome 4 | P0 |
-| FUN-005 | Functional 5 | Rule 5 | Trigger 5 | Outcome 5 | P0 |
-| FUN-006 | Functional 6 | Rule 6 | Trigger 6 | Outcome 6 | P1 |
-| FUN-007 | Functional 7 | Rule 7 | Trigger 7 | Outcome 7 | P1 |
-| FUN-008 | Functional 8 | Rule 8 | Trigger 8 | Outcome 8 | P1 |
-| FUN-009 | Functional 9 | Rule 9 | Trigger 9 | Outcome 9 | P1 |
-| FUN-010 | Functional 10 | Rule 10 | Trigger 10 | Outcome 10 | P1 |
-| FUN-011 | Functional 11 | Rule 11 | Trigger 11 | Outcome 11 | P1 |
-| FUN-012 | Functional 12 | Rule 12 | Trigger 12 | Outcome 12 | P1 |
-| FUN-013 | Functional 13 | Rule 13 | Trigger 13 | Outcome 13 | P1 |
-| FUN-014 | Functional 14 | Rule 14 | Trigger 14 | Outcome 14 | P1 |
-| FUN-015 | Functional 15 | Rule 15 | Trigger 15 | Outcome 15 | P1 |
-| FUN-016 | Functional 16 | Rule 16 | Trigger 16 | Outcome 16 | P1 |
-| FUN-017 | Functional 17 | Rule 17 | Trigger 17 | Outcome 17 | P1 |
-| FUN-018 | Functional 18 | Rule 18 | Trigger 18 | Outcome 18 | P1 |
-| FUN-019 | Functional 19 | Rule 19 | Trigger 19 | Outcome 19 | P1 |
-| FUN-020 | Functional 20 | Rule 20 | Trigger 20 | Outcome 20 | P1 |
-| FUN-021 | Functional 21 | Rule 21 | Trigger 21 | Outcome 21 | P1 |
-| FUN-022 | Functional 22 | Rule 22 | Trigger 22 | Outcome 22 | P1 |
-| FUN-023 | Functional 23 | Rule 23 | Trigger 23 | Outcome 23 | P1 |
-| FUN-024 | Functional 24 | Rule 24 | Trigger 24 | Outcome 24 | P1 |
-| FUN-025 | Functional 25 | Rule 25 | Trigger 25 | Outcome 25 | P1 |
-| FUN-026 | Functional 26 | Rule 26 | Trigger 26 | Outcome 26 | P1 |
-| FUN-027 | Functional 27 | Rule 27 | Trigger 27 | Outcome 27 | P1 |
-| FUN-028 | Functional 28 | Rule 28 | Trigger 28 | Outcome 28 | P1 |
-| FUN-029 | Functional 29 | Rule 29 | Trigger 29 | Outcome 29 | P1 |
-| FUN-030 | Functional 30 | Rule 30 | Trigger 30 | Outcome 30 | P1 |
-| FUN-031 | Functional 31 | Rule 31 | Trigger 31 | Outcome 31 | P1 |
-| FUN-032 | Functional 32 | Rule 32 | Trigger 32 | Outcome 32 | P1 |
-| FUN-033 | Functional 33 | Rule 33 | Trigger 33 | Outcome 33 | P1 |
-| FUN-034 | Functional 34 | Rule 34 | Trigger 34 | Outcome 34 | P1 |
-| FUN-035 | Functional 35 | Rule 35 | Trigger 35 | Outcome 35 | P1 |
-| FUN-036 | Functional 36 | Rule 36 | Trigger 36 | Outcome 36 | P1 |
-| FUN-037 | Functional 37 | Rule 37 | Trigger 37 | Outcome 37 | P1 |
-| FUN-038 | Functional 38 | Rule 38 | Trigger 38 | Outcome 38 | P1 |
-| FUN-039 | Functional 39 | Rule 39 | Trigger 39 | Outcome 39 | P1 |
-| FUN-040 | Functional 40 | Rule 40 | Trigger 40 | Outcome 40 | P1 |
-| FUN-041 | Functional 41 | Rule 41 | Trigger 41 | Outcome 41 | P1 |
-| FUN-042 | Functional 42 | Rule 42 | Trigger 42 | Outcome 42 | P1 |
-| FUN-043 | Functional 43 | Rule 43 | Trigger 43 | Outcome 43 | P1 |
-| FUN-044 | Functional 44 | Rule 44 | Trigger 44 | Outcome 44 | P1 |
-| FUN-045 | Functional 45 | Rule 45 | Trigger 45 | Outcome 45 | P1 |
-| FUN-046 | Functional 46 | Rule 46 | Trigger 46 | Outcome 46 | P1 |
-| FUN-047 | Functional 47 | Rule 47 | Trigger 47 | Outcome 47 | P1 |
-| FUN-048 | Functional 48 | Rule 48 | Trigger 48 | Outcome 48 | P1 |
-| FUN-049 | Functional 49 | Rule 49 | Trigger 49 | Outcome 49 | P1 |
-| FUN-050 | Functional 50 | Rule 50 | Trigger 50 | Outcome 50 | P1 |
+| FUN-001 | Create sets Status=Draft | New partners must start as Draft | CreatePartnerAsync | Status=Draft | P0 |
+| FUN-002 | Create sets CreatedBy | Audit trail | CreatePartnerAsync | CreatedBy=currentUserId | P0 |
+| FUN-003 | Create sets CreatedDate | Audit trail | CreatePartnerAsync | CreatedDate=UtcNow | P0 |
+| FUN-004 | Update sets LastModifiedBy | Audit trail | UpdatePartnerAsync | LastModifiedBy=currentUserId | P0 |
+| FUN-005 | Update sets LastModifiedDate | Audit trail | UpdatePartnerAsync | LastModifiedDate=UtcNow | P0 |
+| FUN-006 | Soft delete sets IsDeleted | Soft delete pattern | DeletePartnerAsync | IsDeleted=true | P0 |
+| FUN-007 | Soft delete sets DeletedBy | Audit trail | DeletePartnerAsync | DeletedBy=currentUserId | P0 |
+| FUN-008 | Soft delete sets DeletedDate | Audit trail | DeletePartnerAsync | DeletedDate=UtcNow | P0 |
+| FUN-009 | Queries filter IsDeleted | Deleted partners excluded | GetPartners, GetPartner | !IsDeleted in filter | P0 |
+| FUN-010 | Activate requires Name | HasMandatoryFieldsForActivation | Activate with Name=null | Fails | P0 |
+| FUN-011 | Activate requires PartnerShortDescription | HasMandatoryFieldsForActivation | Activate without short desc | Fails | P0 |
+| FUN-012 | Activate requires PartnerGroupId | HasMandatoryFieldsForActivation | Activate without group | Fails | P0 |
+| FUN-013 | Activate requires LiaisonOfficeId | HasMandatoryFieldsForActivation | Activate without liaison | Fails | P0 |
+| FUN-014 | Activate requires PartnerCategoryId | HasMandatoryFieldsForActivation | Activate without category | Fails | P0 |
+| FUN-015 | Activate sets Status=Active | Workflow | ActivatePartnerAsync | Status=Active | P0 |
+| FUN-016 | Close requires Status=Active | Only Active can close | Close from Draft | Fails | P0 |
+| FUN-017 | Close sets Status=Closed | Workflow | ClosePartnerAsync | Status=Closed | P0 |
+| FUN-018 | Archive requires Active or Closed | Workflow | Archive from Draft | Fails | P0 |
+| FUN-019 | Archive sets Status=Archived | Workflow | ArchivePartnerAsync | Status=Archived | P0 |
+| FUN-020 | Approve requires Status=Active | Only Active can approve | Approve from Draft | Fails | P0 |
+| FUN-021 | Approve sets PartnerApprovalStatus | Workflow | ApprovePartnerAsync | PartnerApprovalStatus=Approved | P0 |
+| FUN-022 | Approve assigns ErpDimValue | Auto-assign if null | ApprovePartnerAsync | ErpDimValue set | P0 |
+| FUN-023 | Approve sets CanCreateNewOpportunities=true | Business rule | ApprovePartnerAsync | CanCreateNewOpportunities=true | P0 |
+| FUN-024 | Approve sets PartnerApprovalDate | Audit | ApprovePartnerAsync | PartnerApprovalDate=UtcNow | P0 |
+| FUN-025 | Approve sets PartnerApprovedBy | Audit trail | ApprovePartnerAsync | PartnerApprovedBy contains approver | P0 |
+| FUN-026 | Unapprove requires Approved status | Workflow | Unapprove from NotApproved | Fails | P0 |
+| FUN-027 | Unapprove sets CanCreateNewOpportunities=false | Business rule | UnapprovePartnerAsync | CanCreateNewOpportunities=false | P0 |
+| FUN-028 | Unapprove clears PartnerApprovalStatus | Workflow | UnapprovePartnerAsync | PartnerApprovalStatus=NotApproved | P0 |
+| FUN-029 | Name required for creation | Validation | Create with Name=null | Fails | P0 |
+| FUN-030 | PartnerLevy ReasonForLevy when DoesNotApply | Validation | PartnerLevyStatus=DoesNotApply, no ReasonForLevy | Fails | P0 |
+| FUN-031 | PartnerLevy ReasonForLevy when PotentiallyNotApplied | Validation | Same as above | Fails | P0 |
+| FUN-032 | HasPermissionAsync checks Read | Permission | HasPermissionAsync(userId, id, "Read") | true/false per role | P0 |
+| FUN-033 | HasPermissionAsync checks Update | Permission | HasPermissionAsync(userId, id, "Update") | true/false per role | P0 |
+| FUN-034 | HasPermissionAsync checks Delete | Permission | HasPermissionAsync(userId, id, "Delete") | true/false per role | P0 |
+| FUN-035 | GetPartners respects user scope | RBAC | GetPartners(userId) | Filtered by org/role | P0 |
+| FUN-036 | GetPartner respects user scope | RBAC | GetPartner(userId, id) | 403 if no access | P0 |
+| FUN-037 | Specification filters applied | Filtering | GetPartnersWithSpecificationAsync | Specification filters results | P0 |
+| FUN-038 | Pagination returns correct page | Pagination | Page 2, PageSize 20 | Items 21-40 | P0 |
+| FUN-039 | Pagination TotalCount accurate | Pagination | 103 total | TotalCount=103 | P0 |
+| FUN-040 | Smart search ranks by relevance | Search | PerformSmartSearchAsync | Ranked results | P1 |
+| FUN-041 | Smart search includes partner name | Search | Search "UN" | Partners with "UN" in name | P1 |
+| FUN-042 | Smart search includes contacts | Search | Search contact name | Partner via contact | P1 |
+| FUN-043 | Smart search includeInactive | Search | includeInactive=true | Deleted/inactive included | P1 |
+| FUN-044 | GetPartnersByPartnerGroup filters | Filtering | GetPartnersByPartnerGroupAsync | Only partners in group | P1 |
+| FUN-045 | GetPartnersByCategory filters | Filtering | GetPartnersByCategoryAsync | Only partners in category | P1 |
+| FUN-046 | UpdatePartnerLogoAsync updates LogoUrl | Logo | Upload valid image | LogoUrl set | P1 |
+| FUN-047 | GetPartnerWithContactsAndInteractions loads Contacts | Eager load | GetPartnerWithContactsAndInteractionsAsync | Contacts populated | P1 |
+| FUN-048 | GetPartnerWithContactsAndInteractions loads Interactions | Eager load | Same | Interactions via contacts | P1 |
+| FUN-049 | GetPartnerByName case-insensitive | Search | GetPartnerByNameAsync("unicef") | Matches "UNICEF" | P1 |
+| FUN-050 | GetPartnersForGmailAddon filters by email | Gmail | Emails in request | Partners with matching contacts | P1 |
+| FUN-051 | Create assigns UniqueKey | System | CreatePartnerAsync | UniqueKey=NewGuid | P1 |
+| FUN-052 | Create assigns PartnerKey | System | CreatePartnerAsync | PartnerKey=NewGuid | P1 |
+| FUN-053 | OrganizationHierarchyIds applied | Org units | Create/Update with OrganizationHierarchyIds | OrganizationUnitRelationships created | P1 |
+| FUN-054 | Duplicate detection on create | Duplicate | Create similar partner | duplicateConfirmation or block | P1 |
+| FUN-055 | ConfirmDuplicateCreation bypasses | Duplicate | Create with ConfirmDuplicateCreation=true | Creation proceeds | P1 |
+| FUN-056 | Create opportunity links partner | Integration | create-opportunity | Opportunity.PartnerId=partnerId | P1 |
+| FUN-057 | Get opportunities filters by partner | Integration | GET opportunities | Only partner's opportunities | P1 |
+| FUN-058 | Categories summary aggregates | Summary | GET categories-summary | Count per category | P1 |
+| FUN-059 | Groups summary aggregates | Summary | GET groups-summary | Count per group | P1 |
+| FUN-060 | Categorization overview combines | Summary | GET categorization-overview | Combined view | P1 |
+| FUN-061 | Metadata info returns schema | Metadata | GET metadata-info | Field info | P1 |
+| FUN-062 | Detect duplicates returns matches | Duplicate | POST detect-duplicates | Duplicate candidates | P1 |
+| FUN-063 | Bulk upload creates multiple | Bulk | POST bulk-upload with CSV | All valid rows created | P1 |
+| FUN-064 | Scan data parses input | Scan | POST scan-data | Parsed data | P1 |
+| FUN-065 | Analyse file extracts data | Analyse | POST analyse-file | Extracted partner data | P1 |
+| FUN-066 | GetTotalPartnerCount excludes deleted | Count | GetTotalPartnerCountAsync | Only !IsDeleted | P1 |
+| FUN-067 | GetSamplePartnerNames excludes deleted | Sample | GetSamplePartnerNamesAsync | Only active partners | P1 |
+| FUN-068 | OrderBy applied | Sorting | orderBy=Name, ascending=true | Sorted results | P1 |
+| FUN-069 | filterActive excludes inactive | Filter | filterActive=true | Only active | P1 |
+| FUN-070 | Export removes pagination limit | Export | export=true | PageSize=int.MaxValue | P1 |
+| FUN-071 | Permissions endpoint returns flags | Permissions | GET permissions | canView, canEdit, canDelete | P0 |
+| FUN-072 | Permissions respect entity state | Permissions | Partner Closed | canEdit may be false | P1 |
+| FUN-073 | Permissions respect user role | Permissions | Different roles | Different flags | P0 |
+| FUN-074 | ErpDimValue not overwritten if set | Approve | Partner has ErpDimValue, Approve | Keeps existing value | P1 |
+| FUN-075 | Approve overwrites ErpDimValue if null | Approve | Partner ErpDimValue=null, Approve | Assigns next value | P1 |
+| FUN-076 | CanBeActivated checks fields | Validation | Partner.CanBeActivated() | true if all mandatory | P1 |
+| FUN-077 | GetMissingMandatoryFieldsForActivation | Validation | Partner missing fields | List of missing | P1 |
+| FUN-078 | HasMinimumFieldsForCreation | Validation | Name only | true if Name set | P1 |
+| FUN-079 | IsApproved property | Computed | PartnerApprovalStatus=Approved | IsApproved=true | P1 |
+| FUN-080 | IsDueDiligenceExpiring | Computed | Expiry within 6 months | true | P1 |
+| FUN-081 | GetPrimaryOrgUnitId | Org units | First active relationship | OrganizationHierarchyId | P1 |
+| FUN-082 | GetAllOrgUnitIds | Org units | All active relationships | List of IDs | P1 |
+| FUN-083 | AddOrganizationUnitRelationship | Org units | AddOrganizationUnitRelationship(org) | Relationship added | P1 |
+| FUN-084 | RemoveOrganizationUnitRelationship | Org units | RemoveOrganizationUnitRelationship(id) | Relationship removed | P1 |
+| FUN-085 | GetRecentInteractions | Interactions | GetRecentInteractions(10) | Last 10 | P1 |
+| FUN-086 | GetInteractionsByContact | Interactions | GetInteractionsByContact() | Grouped by contact | P1 |
+| FUN-087 | GetTotalInteractionsCount | Interactions | Partner with 15 interactions | 15 | P1 |
+| FUN-088 | GetLastInteractionDate | Interactions | Partner with interactions | Most recent date | P1 |
+| FUN-089 | First5ContactsByDate | Contacts | Partner with 10 contacts | First 5 by date | P1 |
+| FUN-090 | PartnerOrgUnit computed | Org units | Partner with org relationships | Comma-separated names | P1 |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities Involved | Expected Result | Priority |
 |----|-----------|----------|-------------------|-----------------|----------|
-| INT-001 | Integration 1 | Op 1 | Entities 1 | Result 1 | P0 |
-| INT-002 | Integration 2 | Op 2 | Entities 2 | Result 2 | P0 |
-| INT-003 | Integration 3 | Op 3 | Entities 3 | Result 3 | P0 |
-| INT-004 | Integration 4 | Op 4 | Entities 4 | Result 4 | P0 |
-| INT-005 | Integration 5 | Op 5 | Entities 5 | Result 5 | P0 |
-| INT-006 | Integration 6 | Op 6 | Entities 6 | Result 6 | P1 |
-| INT-007 | Integration 7 | Op 7 | Entities 7 | Result 7 | P1 |
-| INT-008 | Integration 8 | Op 8 | Entities 8 | Result 8 | P1 |
-| INT-009 | Integration 9 | Op 9 | Entities 9 | Result 9 | P1 |
-| INT-010 | Integration 10 | Op 10 | Entities 10 | Result 10 | P1 |
-| INT-011 | Integration 11 | Op 11 | Entities 11 | Result 11 | P1 |
-| INT-012 | Integration 12 | Op 12 | Entities 12 | Result 12 | P1 |
-| INT-013 | Integration 13 | Op 13 | Entities 13 | Result 13 | P1 |
-| INT-014 | Integration 14 | Op 14 | Entities 14 | Result 14 | P1 |
-| INT-015 | Integration 15 | Op 15 | Entities 15 | Result 15 | P1 |
-| INT-016 | Integration 16 | Op 16 | Entities 16 | Result 16 | P1 |
-| INT-017 | Integration 17 | Op 17 | Entities 17 | Result 17 | P1 |
-| INT-018 | Integration 18 | Op 18 | Entities 18 | Result 18 | P1 |
-| INT-019 | Integration 19 | Op 19 | Entities 19 | Result 19 | P1 |
-| INT-020 | Integration 20 | Op 20 | Entities 20 | Result 20 | P1 |
-| INT-021 | Integration 21 | Op 21 | Entities 21 | Result 21 | P1 |
-| INT-022 | Integration 22 | Op 22 | Entities 22 | Result 22 | P1 |
-| INT-023 | Integration 23 | Op 23 | Entities 23 | Result 23 | P1 |
-| INT-024 | Integration 24 | Op 24 | Entities 24 | Result 24 | P1 |
-| INT-025 | Integration 25 | Op 25 | Entities 25 | Result 25 | P1 |
-| INT-026 | Integration 26 | Op 26 | Entities 26 | Result 26 | P1 |
-| INT-027 | Integration 27 | Op 27 | Entities 27 | Result 27 | P1 |
-| INT-028 | Integration 28 | Op 28 | Entities 28 | Result 28 | P1 |
-| INT-029 | Integration 29 | Op 29 | Entities 29 | Result 29 | P1 |
-| INT-030 | Integration 30 | Op 30 | Entities 30 | Result 30 | P1 |
-| INT-031 | Integration 31 | Op 31 | Entities 31 | Result 31 | P1 |
-| INT-032 | Integration 32 | Op 32 | Entities 32 | Result 32 | P1 |
-| INT-033 | Integration 33 | Op 33 | Entities 33 | Result 33 | P1 |
-| INT-034 | Integration 34 | Op 34 | Entities 34 | Result 34 | P1 |
-| INT-035 | Integration 35 | Op 35 | Entities 35 | Result 35 | P1 |
-| INT-036 | Integration 36 | Op 36 | Entities 36 | Result 36 | P1 |
-| INT-037 | Integration 37 | Op 37 | Entities 37 | Result 37 | P1 |
-| INT-038 | Integration 38 | Op 38 | Entities 38 | Result 38 | P1 |
-| INT-039 | Integration 39 | Op 39 | Entities 39 | Result 39 | P1 |
-| INT-040 | Integration 40 | Op 40 | Entities 40 | Result 40 | P1 |
-| INT-041 | Integration 41 | Op 41 | Entities 41 | Result 41 | P1 |
-| INT-042 | Integration 42 | Op 42 | Entities 42 | Result 42 | P1 |
-| INT-043 | Integration 43 | Op 43 | Entities 43 | Result 43 | P1 |
-| INT-044 | Integration 44 | Op 44 | Entities 44 | Result 44 | P1 |
-| INT-045 | Integration 45 | Op 45 | Entities 45 | Result 45 | P1 |
-| INT-046 | Integration 46 | Op 46 | Entities 46 | Result 46 | P1 |
-| INT-047 | Integration 47 | Op 47 | Entities 47 | Result 47 | P1 |
-| INT-048 | Integration 48 | Op 48 | Entities 48 | Result 48 | P1 |
-| INT-049 | Integration 49 | Op 49 | Entities 49 | Result 49 | P1 |
-| INT-050 | Integration 50 | Op 50 | Entities 50 | Result 50 | P1 |
+| INT-001 | Full CRUD lifecycle | Create→Get→Update→Delete | Partner | All operations succeed | P0 |
+| INT-002 | Create then Get by ID | Create, GetPartner | Partner | Created partner returned | P0 |
+| INT-003 | Create then Update | Create, Update | Partner | Updated fields persisted | P0 |
+| INT-004 | Create then Soft Delete | Create, Delete | Partner | IsDeleted=true, Get returns 404 | P0 |
+| INT-005 | List with pagination through pages | GetPartners pages 1,2,3 | Partner, Pagination | Correct items per page | P0 |
+| INT-006 | Search then Get detail | PerformSmartSearch, GetPartner | Partner | Detail matches search hit | P0 |
+| INT-007 | Filter by group then update | GetPartnersByPartnerGroup, Update | Partner, PartnerTree | Update succeeds | P1 |
+| INT-008 | Filter by category then activate | GetPartnersByCategory, Activate | Partner, PartnerCategory | Activation succeeds | P1 |
+| INT-009 | Activate then Approve | ActivatePartner, ApprovePartner | Partner | Status=Active, Approved | P0 |
+| INT-010 | Approve then Create Opportunity | Approve, create-opportunity | Partner, Opportunity | Opportunity created | P0 |
+| INT-011 | Partner with Contacts and Interactions | Create partner, add contacts, add interactions, GetPartnerWithContactsAndInteractions | Partner, Contact, Interaction | Full graph loaded | P0 |
+| INT-012 | Partner with OrganizationUnitRelationships | Create with OrganizationHierarchyIds | Partner, OrganizationUnitRelationship, OrganizationHierarchy | Relationships created | P0 |
+| INT-013 | Partner with LiaisonOffice | Create with LiaisonOfficeId | Partner, LiaisonOffice | LiaisonOffice loaded | P1 |
+| INT-014 | Partner with PartnerGroup | Create with PartnerGroupId | Partner, PartnerTree | PartnerGroup loaded | P1 |
+| INT-015 | Partner with PartnerCategory | Create with PartnerCategoryId | Partner, PartnerCategory | Category loaded | P1 |
+| INT-016 | Partner with Documents | Create partner, add documents | Partner, Document | Documents associated | P1 |
+| INT-017 | Partner with PartnerFocalPointUser | Create with PartnerFocalPointUserId | Partner, PAOUser | User loaded | P1 |
+| INT-018 | Upload logo then Get | Upload logo, GetPartner | Partner, Storage | LogoUrl in response | P1 |
+| INT-019 | Create opportunity from partner | create-opportunity | Partner, Opportunity | Opportunity.PartnerId set | P1 |
+| INT-020 | Get partner opportunities | GET opportunities | Partner, Opportunity | Partner's opportunities | P1 |
+| INT-021 | Get partner opportunities search | GET opportunities/search | Partner, Opportunity | Filtered opportunities | P1 |
+| INT-022 | Duplicate detection then create with confirm | detect-duplicates, create with ConfirmDuplicateCreation | Partner, AiContextualService | Second partner created | P1 |
+| INT-023 | Bulk upload then list | bulk-upload, GetPartners | Partner | All created visible | P1 |
+| INT-024 | Scan data then create | scan-data, create | Partner | Data from scan used | P1 |
+| INT-025 | Analyse file then create | analyse-file, create | Partner, File | Extracted data used | P1 |
+| INT-026 | Get permissions then conditional update | GET permissions, if canEdit then PUT | Partner, Authorization | Update only if permitted | P0 |
+| INT-027 | Get interactions via partner | GET partner/123/interactions | Partner, Contact, Interaction | All interactions | P1 |
+| INT-028 | Categories summary with real data | Create partners in categories, GET summary | Partner, PartnerCategory | Correct counts | P1 |
+| INT-029 | Groups summary with real data | Create partners in groups, GET summary | Partner, PartnerTree | Correct counts | P1 |
+| INT-030 | Categorization overview with data | Create partners, GET overview | Partner, Category, Group | Overview correct | P1 |
+| INT-031 | Gmail addon flow | GetPartnersForGmailAddon with emails | Partner, Contact, GmailRelatedRecordsRequest | Matching partners | P1 |
+| INT-032 | GetPartnerByName then Update | GetPartnerByNameAsync, UpdatePartnerAsync | Partner | Update by name lookup | P1 |
+| INT-033 | GetTotalPartnerCount after create | Create, GetTotalPartnerCount | Partner | Count incremented | P1 |
+| INT-034 | GetSamplePartnerNames after create | Create "TestPartner", GetSamplePartnerNames | Partner | "TestPartner" in sample | P1 |
+| INT-035 | Advanced search with multiple filters | new-advanced-search with filters | Partner, Specification | Filtered results | P1 |
+| INT-036 | Search fields endpoint | GET search-fields | Partner, EntityConfiguration | Search fields returned | P1 |
+| INT-037 | Metadata info for create form | GET metadata-info | Partner, EntityConfiguration | Schema for UI | P1 |
+| INT-038 | Detect duplicates with existing | Create "UNICEF", detect with similar | Partner, AiContextualService | Duplicates found | P1 |
+| INT-039 | Close then Archive | Close, Archive | Partner | Status=Archived | P1 |
+| INT-040 | Unapprove then Approve again | Unapprove, Approve | Partner | Re-approved | P1 |
+| INT-041 | Partner with multiple contacts | Create, add 5 contacts | Partner, Contact | 5 contacts | P1 |
+| INT-042 | Partner with multiple org units | Create with [1,2,3] | Partner, OrganizationUnitRelationship | 3 relationships | P1 |
+| INT-043 | Soft delete partner with contacts | Delete partner, contacts exist | Partner, Contact | Partner deleted, contacts handling per design | P1 |
+| INT-044 | Soft delete partner with opportunities | Delete partner, opportunities exist | Partner, Opportunity | Partner deleted, opportunities per design | P1 |
+| INT-045 | Update org unit relationships | Update with new OrganizationHierarchyIds | Partner, OrganizationUnitRelationship | Relationships updated | P1 |
+| INT-046 | Update PartnerGroup | Update PartnerGroupId | Partner, PartnerTree | Group changed | P1 |
+| INT-047 | Update LiaisonOffice | Update LiaisonOfficeId | Partner, LiaisonOffice | Office changed | P1 |
+| INT-048 | Update PartnerCategory | Update PartnerCategoryId | Partner, PartnerCategory | Category changed | P1 |
+| INT-049 | API Create→Controller→Manager→DB | POST /api/partner full stack | Controller, Manager, DbContext, Partner | 201, DB record | P0 |
+| INT-050 | API Get→Manager→DB | GET /api/partner/123 | Controller, Manager, DbContext | 200, PartnerModel | P0 |
+| INT-051 | API Update→Manager→DB | PUT /api/partner | Controller, Manager, DbContext | 200, updated | P0 |
+| INT-052 | API Delete→Manager→DB | DELETE /api/partner/123 | Controller, Manager, DbContext | 200, soft delete | P0 |
+| INT-053 | API List with pagination | GET /api/partner?pageIndex=2&pageSize=10 | Controller, Manager | PaginationResponse | P0 |
+| INT-054 | API Search | GET /api/partner/search?q=UN | Controller, Manager, SearchService | Search results | P1 |
+| INT-055 | API Activate | POST /api/partner/123/activate | Controller, Manager | Status=Active | P0 |
+| INT-056 | API Close | POST /api/partner/123/close | Controller, Manager | Status=Closed | P1 |
+| INT-057 | API Archive | POST /api/partner/123/archive | Controller, Manager | Status=Archived | P1 |
+| INT-058 | API Approve | POST /api/partner/123/approve | Controller, Manager | Approved | P0 |
+| INT-059 | API Unapprove | POST /api/partner/123/unapprove | Controller, Manager | NotApproved | P1 |
+| INT-060 | API Permissions | GET /api/partner/123/permissions | Controller, AuthorizationService | Permission flags | P0 |
+| INT-061 | API Logo upload | POST /api/partner/123/logo | Controller, Manager, Storage | LogoUrl updated | P1 |
+| INT-062 | API By group | GET /api/partner/by-partner-group-id/5 | Controller, Manager | Filtered list | P1 |
+| INT-063 | API By category | GET /api/partner/by-partner-category-code/GOV | Controller, Manager | Filtered list | P1 |
+| INT-064 | API Categories summary | GET /api/partner/categories-summary | Controller, Manager | Summary | P1 |
+| INT-065 | API Groups summary | GET /api/partner/groups-summary | Controller, Manager | Summary | P1 |
+| INT-066 | API Categorization overview | GET /api/partner/categorization-overview | Controller, Manager | Overview | P1 |
+| INT-067 | API Detect duplicates | POST /api/partner/detect-duplicates | Controller, AiContextualService | Duplicate result | P1 |
+| INT-068 | API Bulk upload | POST /api/partner/bulk-upload | Controller, Manager | Bulk create | P1 |
+| INT-069 | API Create opportunity | POST /api/partner/123/create-opportunity | Controller, PartnerManager, OpportunityManager | Opportunity created | P1 |
+| INT-070 | API Get opportunities | GET /api/partner/123/opportunities | Controller, OpportunityManager | Opportunities list | P1 |
+| INT-071 | UNOPS override — UNOPSPartnerManager | IsUNOPSOverride=true | UNOPSPartnerManager, UNOPSPartner | UNOPS logic applied | P1 |
+| INT-072 | UNOPS override — UNOPSPartner entity | Create partner | UNOPSPartner extends Partner | UNOPS fields available | P1 |
+| INT-073 | Specification with composite filters | PartnerCompositeSpecification | Partner, Specification | Combined filters | P1 |
+| INT-074 | Export flow | GET with export=true | Partner, Export | Full dataset | P1 |
+| INT-075 | filterActive=false flow | GET with filterActive=false | Partner | Inactive included | P1 |
+| INT-076 | PartnerGroupId query param | GET ?partnerGroupId=5 | Partner | Filtered | P1 |
+| INT-077 | OrderBy and Ascending params | GET ?orderBy=Name&ascending=true | Partner | Sorted | P1 |
+| INT-078 | Audit log on create | Create partner | Partner, AuditLog | Audit entry created | P1 |
+| INT-079 | Audit log on update | Update partner | Partner, AuditLog | Audit entry | P1 |
+| INT-080 | Audit log on delete | Delete partner | Partner, AuditLog | Audit entry | P1 |
+| INT-081 | Audit log on approve | Approve partner | Partner, AuditLog | Audit entry | P1 |
+| INT-082 | AccessControlled attribute | Request without permission | Controller, AccessControlled | 403 | P0 |
+| INT-083 | IAP authentication | Request without token | Controller, Auth | 401 | P0 |
+| INT-084 | PartnerFilterRequest mapping | PartnerFilterRequest to Specification | PartnerFilterRequest, Specification | Correct filters | P1 |
+| INT-085 | PartnerRequest to Entity mapping | Create PartnerRequest | AutoMapper, Partner | Entity populated | P0 |
+| INT-086 | Partner to PartnerModel mapping | GetPartner | AutoMapper, PartnerModel | Model populated | P0 |
+| INT-087 | UpdatePartnerRequest to Entity | Update | AutoMapper, Partner | Entity updated | P0 |
+| INT-088 | Error handling — BusinessException | Invalid operation | Manager | 400 with message | P1 |
+| INT-089 | Error handling — KeyNotFoundException | Get non-existent | Manager | 404 | P1 |
+| INT-090 | Error handling — UnauthorizedAccessException | No permission | Authorization | 403 | P0 |
 
 ---
 
@@ -347,56 +479,56 @@
 
 | ID | Test Name | Attack Vector | Target | Expected Block | Priority |
 |----|-----------|--------------|--------|----------------|----------|
-| SEC-001 | Security 1 | Attack 1 | Target 1 | Block 1 | P0 |
-| SEC-002 | Security 2 | Attack 2 | Target 2 | Block 2 | P0 |
-| SEC-003 | Security 3 | Attack 3 | Target 3 | Block 3 | P0 |
-| SEC-004 | Security 4 | Attack 4 | Target 4 | Block 4 | P0 |
-| SEC-005 | Security 5 | Attack 5 | Target 5 | Block 5 | P0 |
-| SEC-006 | Security 6 | Attack 6 | Target 6 | Block 6 | P0 |
-| SEC-007 | Security 7 | Attack 7 | Target 7 | Block 7 | P0 |
-| SEC-008 | Security 8 | Attack 8 | Target 8 | Block 8 | P0 |
-| SEC-009 | Security 9 | Attack 9 | Target 9 | Block 9 | P0 |
-| SEC-010 | Security 10 | Attack 10 | Target 10 | Block 10 | P0 |
-| SEC-011 | Security 11 | Attack 11 | Target 11 | Block 11 | P1 |
-| SEC-012 | Security 12 | Attack 12 | Target 12 | Block 12 | P1 |
-| SEC-013 | Security 13 | Attack 13 | Target 13 | Block 13 | P1 |
-| SEC-014 | Security 14 | Attack 14 | Target 14 | Block 14 | P1 |
-| SEC-015 | Security 15 | Attack 15 | Target 15 | Block 15 | P1 |
-| SEC-016 | Security 16 | Attack 16 | Target 16 | Block 16 | P1 |
-| SEC-017 | Security 17 | Attack 17 | Target 17 | Block 17 | P1 |
-| SEC-018 | Security 18 | Attack 18 | Target 18 | Block 18 | P1 |
-| SEC-019 | Security 19 | Attack 19 | Target 19 | Block 19 | P1 |
-| SEC-020 | Security 20 | Attack 20 | Target 20 | Block 20 | P1 |
-| SEC-021 | Security 21 | Attack 21 | Target 21 | Block 21 | P1 |
-| SEC-022 | Security 22 | Attack 22 | Target 22 | Block 22 | P1 |
-| SEC-023 | Security 23 | Attack 23 | Target 23 | Block 23 | P1 |
-| SEC-024 | Security 24 | Attack 24 | Target 24 | Block 24 | P1 |
-| SEC-025 | Security 25 | Attack 25 | Target 25 | Block 25 | P1 |
-| SEC-026 | Security 26 | Attack 26 | Target 26 | Block 26 | P1 |
-| SEC-027 | Security 27 | Attack 27 | Target 27 | Block 27 | P1 |
-| SEC-028 | Security 28 | Attack 28 | Target 28 | Block 28 | P1 |
-| SEC-029 | Security 29 | Attack 29 | Target 29 | Block 29 | P1 |
-| SEC-030 | Security 30 | Attack 30 | Target 30 | Block 30 | P1 |
-| SEC-031 | Security 31 | Attack 31 | Target 31 | Block 31 | P1 |
-| SEC-032 | Security 32 | Attack 32 | Target 32 | Block 32 | P1 |
-| SEC-033 | Security 33 | Attack 33 | Target 33 | Block 33 | P1 |
-| SEC-034 | Security 34 | Attack 34 | Target 34 | Block 34 | P1 |
-| SEC-035 | Security 35 | Attack 35 | Target 35 | Block 35 | P1 |
-| SEC-036 | Security 36 | Attack 36 | Target 36 | Block 36 | P1 |
-| SEC-037 | Security 37 | Attack 37 | Target 37 | Block 37 | P1 |
-| SEC-038 | Security 38 | Attack 38 | Target 38 | Block 38 | P1 |
-| SEC-039 | Security 39 | Attack 39 | Target 39 | Block 39 | P1 |
-| SEC-040 | Security 40 | Attack 40 | Target 40 | Block 40 | P1 |
-| SEC-041 | Security 41 | Attack 41 | Target 41 | Block 41 | P1 |
-| SEC-042 | Security 42 | Attack 42 | Target 42 | Block 42 | P1 |
-| SEC-043 | Security 43 | Attack 43 | Target 43 | Block 43 | P1 |
-| SEC-044 | Security 44 | Attack 44 | Target 44 | Block 44 | P1 |
-| SEC-045 | Security 45 | Attack 45 | Target 45 | Block 45 | P1 |
-| SEC-046 | Security 46 | Attack 46 | Target 46 | Block 46 | P1 |
-| SEC-047 | Security 47 | Attack 47 | Target 47 | Block 47 | P1 |
-| SEC-048 | Security 48 | Attack 48 | Target 48 | Block 48 | P1 |
-| SEC-049 | Security 49 | Attack 49 | Target 49 | Block 49 | P1 |
-| SEC-050 | Security 50 | Attack 50 | Target 50 | Block 50 | P1 |
+| SEC-001 | SQL injection in Name | `'; DROP TABLE Partner--` | Create Name | Sanitized/Rejected | P0 |
+| SEC-002 | SQL injection in search | `' OR 1=1--` | Search text | Sanitized | P0 |
+| SEC-003 | SQL injection in PartnerLongDescription | `'; DELETE FROM Partner WHERE 1=1--` | Create | Sanitized | P0 |
+| SEC-004 | XSS in Name | `<script>alert(1)</script>` | Create/Display | Sanitized | P0 |
+| SEC-005 | XSS in PartnerShortDescription | `<img src=x onerror=alert(1)>` | Create | Sanitized | P0 |
+| SEC-006 | XSS in Notes/ReasonForLevy | `<script>document.cookie</script>` | Create | Sanitized | P0 |
+| SEC-007 | Create without auth | No JWT | POST /api/partner | 401 Unauthorized | P0 |
+| SEC-008 | Create without permission | User lacks create | POST /api/partner | 403 Forbidden | P0 |
+| SEC-009 | Get without auth | No JWT | GET /api/partner/123 | 401 Unauthorized | P0 |
+| SEC-010 | Get without permission | User lacks read | GET /api/partner/123 | 403 Forbidden | P0 |
+| SEC-011 | Update without permission | User lacks update | PUT /api/partner | 403 Forbidden | P0 |
+| SEC-012 | Delete without permission | User lacks delete | DELETE /api/partner/123 | 403 Forbidden | P0 |
+| SEC-013 | IDOR — access other user's partner | Change ID in URL | GET /api/partner/456 (user owns 123) | 403 or 404 | P0 |
+| SEC-014 | IDOR — update other's partner | PUT with Id=456 | Update | 403 | P0 |
+| SEC-015 | IDOR — delete other's partner | DELETE /api/partner/456 | Delete | 403 | P0 |
+| SEC-016 | IDOR — get permissions other's partner | GET /api/partner/456/permissions | Permissions | 403 | P0 |
+| SEC-017 | IDOR — upload logo other's partner | POST /api/partner/456/logo | Logo | 403 | P0 |
+| SEC-018 | IDOR — activate other's partner | POST /api/partner/456/activate | Activate | 403 | P0 |
+| SEC-019 | IDOR — approve other's partner | POST /api/partner/456/approve | Approve | 403 | P0 |
+| SEC-020 | Mass assignment — ErpDimValue | Include ErpDimValue in create | PartnerRequest | Ignored or overwritten | P1 |
+| SEC-021 | Mass assignment — CreatedBy | Include CreatedBy | Create | Ignored | P1 |
+| SEC-022 | Mass assignment — IsDeleted | Include IsDeleted=false | Update | Ignored | P1 |
+| SEC-023 | Mass assignment — UniqueKey | Include UniqueKey | Create | Ignored | P1 |
+| SEC-024 | Path traversal in logo filename | `../../../etc/passwd` | Logo upload | Rejected | P0 |
+| SEC-025 | Logo — executable file | .exe as image | Logo upload | Rejected | P0 |
+| SEC-026 | Logo — oversized file | 100MB file | Logo upload | Rejected | P0 |
+| SEC-027 | Expired token | Expired JWT | Any endpoint | 401 | P0 |
+| SEC-028 | Tampered token | Modified JWT signature | Any endpoint | 401 | P0 |
+| SEC-029 | Token from wrong issuer | Token from other system | Any endpoint | 401 | P0 |
+| SEC-030 | Role escalation — add admin claim | Forge admin role in token | Create | 403 or validated | P0 |
+| SEC-031 | Horizontal privilege escalation | User A accesses User B's org data | GetPartners | Filtered by scope | P0 |
+| SEC-032 | Vertical privilege escalation | Standard user approves | Approve | 403 | P0 |
+| SEC-033 | Bulk upload — malicious CSV | CSV with script in cells | bulk-upload | Sanitized | P1 |
+| SEC-034 | Analyse file — malicious file | File with embedded executable | analyse-file | Rejected | P1 |
+| SEC-035 | Detect duplicates — injection in request | Malicious PartnerRequest | detect-duplicates | Sanitized | P1 |
+| SEC-036 | Create opportunity — IDOR | partnerId=456 (other's) | create-opportunity | 403 | P0 |
+| SEC-037 | Get opportunities — IDOR | partnerId=456 | GET opportunities | 403 | P0 |
+| SEC-038 | Get interactions — IDOR | id=456 | GET interactions | 403 | P0 |
+| SEC-039 | By group — scope bypass | by-partner-group-id for unauthorized group | GET | 403 or filtered | P0 |
+| SEC-040 | By category — scope bypass | by-partner-category-code | GET | 403 or filtered | P0 |
+| SEC-041 | Sensitive data in error message | Trigger error | Response | No stack trace, no internal details | P1 |
+| SEC-042 | PartnerApprovedBy — user info exposure | Approve | PartnerApprovedBy | Contains approver, no sensitive data | P1 |
+| SEC-043 | ErpDimValue — business data exposure | Get partner | Response | Only if user has access | P0 |
+| SEC-044 | Rate limiting — create flood | 1000 POST /api/partner in 1 min | Create | 429 or throttled | P1 |
+| SEC-045 | Rate limiting — search flood | 1000 searches in 1 min | Search | 429 or throttled | P1 |
+| SEC-046 | CSRF — state-changing without token | POST from external site | Create | 401/403 | P0 |
+| SEC-047 | HTTP verb tampering | GET for delete | DELETE | 405 Method Not Allowed | P1 |
+| SEC-048 | Content-Type bypass | application/xml for JSON endpoint | Create | 400 or rejected | P1 |
+| SEC-049 | Parameter pollution | id=123&id=456 | GET | First or validation | P1 |
+| SEC-050 | Authorization handler — PartnerAuthorizationHandler | All operations | AuthorizationContextWrapper | Handler invoked | P0 |
 
 ---
 
@@ -404,31 +536,31 @@
 
 | ID | Test Name | Concurrent Scenario | Expected Behavior | Priority |
 |----|-----------|---------------------|-------------------|----------|
-| CON-001 | Concurrency 1 | Scenario 1 | Behavior 1 | P0 |
-| CON-002 | Concurrency 2 | Scenario 2 | Behavior 2 | P0 |
-| CON-003 | Concurrency 3 | Scenario 3 | Behavior 3 | P0 |
-| CON-004 | Concurrency 4 | Scenario 4 | Behavior 4 | P0 |
-| CON-005 | Concurrency 5 | Scenario 5 | Behavior 5 | P0 |
-| CON-006 | Concurrency 6 | Scenario 6 | Behavior 6 | P1 |
-| CON-007 | Concurrency 7 | Scenario 7 | Behavior 7 | P1 |
-| CON-008 | Concurrency 8 | Scenario 8 | Behavior 8 | P1 |
-| CON-009 | Concurrency 9 | Scenario 9 | Behavior 9 | P1 |
-| CON-010 | Concurrency 10 | Scenario 10 | Behavior 10 | P1 |
-| CON-011 | Concurrency 11 | Scenario 11 | Behavior 11 | P1 |
-| CON-012 | Concurrency 12 | Scenario 12 | Behavior 12 | P1 |
-| CON-013 | Concurrency 13 | Scenario 13 | Behavior 13 | P1 |
-| CON-014 | Concurrency 14 | Scenario 14 | Behavior 14 | P1 |
-| CON-015 | Concurrency 15 | Scenario 15 | Behavior 15 | P1 |
-| CON-016 | Concurrency 16 | Scenario 16 | Behavior 16 | P1 |
-| CON-017 | Concurrency 17 | Scenario 17 | Behavior 17 | P1 |
-| CON-018 | Concurrency 18 | Scenario 18 | Behavior 18 | P1 |
-| CON-019 | Concurrency 19 | Scenario 19 | Behavior 19 | P1 |
-| CON-020 | Concurrency 20 | Scenario 20 | Behavior 20 | P1 |
-| CON-021 | Concurrency 21 | Scenario 21 | Behavior 21 | P1 |
-| CON-022 | Concurrency 22 | Scenario 22 | Behavior 22 | P1 |
-| CON-023 | Concurrency 23 | Scenario 23 | Behavior 23 | P1 |
-| CON-024 | Concurrency 24 | Scenario 24 | Behavior 24 | P1 |
-| CON-025 | Concurrency 25 | Scenario 25 | Behavior 25 | P1 |
+| CON-001 | Two users create same name | User A and B create "UNICEF" simultaneously | Both succeed or duplicate detection | P1 |
+| CON-002 | Two users update same partner | User A and B update partner 123 | Last write wins or optimistic lock | P1 |
+| CON-003 | Update and delete same partner | User A updates, User B deletes | One succeeds, other gets 404 or conflict | P1 |
+| CON-004 | Activate and Update same partner | User A activates, User B updates | Consistent final state | P1 |
+| CON-005 | Approve and Unapprove same partner | User A approves, User B unapproves | One succeeds, consistent state | P1 |
+| CON-006 | Concurrent logo uploads | Two users upload logo to same partner | Last upload wins | P1 |
+| CON-007 | Concurrent bulk uploads | Two users bulk upload | Both complete, no corruption | P1 |
+| CON-008 | Create and Get same partner | User A creates, User B gets by ID | Get may return 404 until committed | P1 |
+| CON-009 | Delete and Get | User A deletes, User B gets | Get returns 404 | P1 |
+| CON-010 | Update and Get | User A updates, User B gets | Get returns latest or previous | P1 |
+| CON-011 | Concurrent list requests | 10 users GET /api/partner simultaneously | All succeed, correct data | P1 |
+| CON-012 | Concurrent search requests | 10 users search simultaneously | All succeed | P1 |
+| CON-013 | Create opportunity concurrent | Two users create opportunity from same partner | Both succeed, two opportunities | P1 |
+| CON-014 | GetTotalPartnerCount during create | User A creates, User B gets count | Count may be N or N+1 | P1 |
+| CON-015 | ErpDimValue assignment race | Two users approve different partners | Unique ErpDimValue per partner | P1 |
+| CON-016 | Pagination during create | User A creates, User B pages | New partner may appear on last page | P1 |
+| CON-017 | Soft delete and list | User A deletes, User B lists | Deleted not in list | P1 |
+| CON-018 | Update org relationships concurrent | Two users update OrganizationHierarchyIds | Consistent final state | P1 |
+| CON-019 | Close and Archive concurrent | User A closes, User B archives | One may fail (wrong state) | P1 |
+| CON-020 | Transaction isolation — create rollback | Create fails mid-transaction | No partial partner | P1 |
+| CON-021 | Transaction isolation — update rollback | Update fails | Original data preserved | P1 |
+| CON-022 | Double submit — create | User double-clicks create | One partner created or duplicate handling | P1 |
+| CON-023 | Double submit — update | User double-clicks save | One update applied | P1 |
+| CON-024 | Cache poisoning — stale partner | Partner updated, cached get | Cache invalidated or TTL | P2 |
+| CON-025 | DbContext concurrency | Parallel queries | No DbContext disposed errors | P1 |
 
 ---
 
@@ -436,27 +568,27 @@
 
 | ID | Test Name | Category | Input | Expected Output | Priority |
 |----|-----------|----------|-------|-----------------|----------|
-| UNT-001 | Unit 1 | Validation | Input 1 | Output 1 | P0 |
-| UNT-002 | Unit 2 | Validation | Input 2 | Output 2 | P0 |
-| UNT-003 | Unit 3 | Validation | Input 3 | Output 3 | P0 |
-| UNT-004 | Unit 4 | Validation | Input 4 | Output 4 | P0 |
-| UNT-005 | Unit 5 | Validation | Input 5 | Output 5 | P0 |
-| UNT-006 | Unit 6 | Validation | Input 6 | Output 6 | P1 |
-| UNT-007 | Unit 7 | Validation | Input 7 | Output 7 | P1 |
-| UNT-008 | Unit 8 | Validation | Input 8 | Output 8 | P1 |
-| UNT-009 | Unit 9 | Validation | Input 9 | Output 9 | P1 |
-| UNT-010 | Unit 10 | Validation | Input 10 | Output 10 | P1 |
-| UNT-011 | Unit 11 | Validation | Input 11 | Output 11 | P1 |
-| UNT-012 | Unit 12 | Validation | Input 12 | Output 12 | P1 |
-| UNT-013 | Unit 13 | Validation | Input 13 | Output 13 | P1 |
-| UNT-014 | Unit 14 | Validation | Input 14 | Output 14 | P1 |
-| UNT-015 | Unit 15 | Validation | Input 15 | Output 15 | P1 |
-| UNT-016 | Unit 16 | Validation | Input 16 | Output 16 | P1 |
-| UNT-017 | Unit 17 | Validation | Input 17 | Output 17 | P1 |
-| UNT-018 | Unit 18 | Validation | Input 18 | Output 18 | P1 |
-| UNT-019 | Unit 19 | Validation | Input 19 | Output 19 | P1 |
-| UNT-020 | Unit 20 | Validation | Input 20 | Output 20 | P1 |
-| UNT-021 | Unit 21 | Validation | Input 21 | Output 21 | P1 |
+| UNT-001 | Partner.HasMinimumFieldsForCreation — Name set | Validation | Partner with Name="X" | true | P1 |
+| UNT-002 | Partner.HasMinimumFieldsForCreation — Name null | Validation | Partner with Name=null | false | P1 |
+| UNT-003 | Partner.CanBeActivated — all fields set | Validation | Partner with all mandatory | true | P1 |
+| UNT-004 | Partner.CanBeActivated — missing PartnerShortDescription | Validation | Partner without short desc | false | P1 |
+| UNT-005 | Partner.CanBeActivated — missing LiaisonOfficeId | Validation | Partner without liaison | false | P1 |
+| UNT-006 | Partner.GetMissingMandatoryFieldsForActivation | Validation | Partner missing Name, Group | ["Name","Partner Group"] | P1 |
+| UNT-007 | Partner.IsApproved — Approved status | Status | PartnerApprovalStatus=Approved | true | P1 |
+| UNT-008 | Partner.IsApproved — NotApproved status | Status | PartnerApprovalStatus=NotApproved | false | P1 |
+| UNT-009 | Partner.IsDueDiligenceExpiring — 5 months to expiry | Computed | DueDiligenceExpiryDate=now+5mo | true | P1 |
+| UNT-010 | Partner.IsDueDiligenceExpiring — 7 months to expiry | Computed | DueDiligenceExpiryDate=now+7mo | false | P1 |
+| UNT-011 | Partner.GetPrimaryOrgUnitId — has relationship | Org units | 1 active relationship | OrganizationHierarchyId | P1 |
+| UNT-012 | Partner.GetPrimaryOrgUnitId — no relationship | Org units | 0 relationships | null | P1 |
+| UNT-013 | Partner.GetAllOrgUnitIds | Org units | 3 relationships | [1,2,3] | P1 |
+| UNT-014 | Partner.GetTotalInteractionsCount | Interactions | 5 contacts, 3+2+4 interactions | 9 | P1 |
+| UNT-015 | Partner.GetLastInteractionDate | Interactions | Interactions with dates | Most recent | P1 |
+| UNT-016 | Partner.GetRecentInteractions(5) | Interactions | 10 interactions | 5 returned | P1 |
+| UNT-017 | PartnerLevyValidationAttribute — DoesNotApply no Reason | Validation | PartnerLevyStatus=DoesNotApply, Reason=null | Invalid | P1 |
+| UNT-018 | PartnerLevyValidationAttribute — DoesNotApply with Reason | Validation | PartnerLevyStatus=DoesNotApply, Reason="X" | Valid | P1 |
+| UNT-019 | PartnerLevyValidationAttribute — PotentiallyApplied | Validation | PartnerLevyStatus=PotentiallyApplied | Valid (no Reason required) | P1 |
+| UNT-020 | Partner.ActivatePartner — from Draft | Workflow | Status=Draft, all fields | Status=Active | P1 |
+| UNT-021 | Partner.ApprovePartner — sets ErpDimValue | Workflow | ErpDimValue=null, ApprovePartner(1,"Admin",100) | ErpDimValue=100 | P1 |
 
 ---
 
@@ -464,22 +596,22 @@
 
 | ID | Test Name | Operation | Threshold | Priority |
 |----|-----------|----------|-----------|----------|
-| PRF-001 | Perf 1 | Operation 1 | < 500ms | P0 |
-| PRF-002 | Perf 2 | Operation 2 | < 500ms | P0 |
-| PRF-003 | Perf 3 | Operation 3 | < 500ms | P0 |
-| PRF-004 | Perf 4 | Operation 4 | < 500ms | P0 |
-| PRF-005 | Perf 5 | Operation 5 | < 500ms | P0 |
-| PRF-006 | Perf 6 | Operation 6 | < 500ms | P1 |
-| PRF-007 | Perf 7 | Operation 7 | < 500ms | P1 |
-| PRF-008 | Perf 8 | Operation 8 | < 500ms | P1 |
-| PRF-009 | Perf 9 | Operation 9 | < 500ms | P1 |
-| PRF-010 | Perf 10 | Operation 10 | < 500ms | P1 |
-| PRF-011 | Perf 11 | Operation 11 | < 500ms | P1 |
-| PRF-012 | Perf 12 | Operation 12 | < 500ms | P1 |
-| PRF-013 | Perf 13 | Operation 13 | < 500ms | P1 |
-| PRF-014 | Perf 14 | Operation 14 | < 500ms | P1 |
-| PRF-015 | Perf 15 | Operation 15 | < 500ms | P1 |
-| PRF-016 | Perf 16 | Operation 16 | < 500ms | P1 |
+| PRF-001 | GetPartner by ID | GET /api/partner/123 | < 200ms | P0 |
+| PRF-002 | List partners — 20 per page | GET /api/partner?pageSize=20 | < 500ms | P0 |
+| PRF-003 | List partners — 100 per page | GET /api/partner?pageSize=100 | < 1000ms | P1 |
+| PRF-004 | Search — simple query | GET /api/partner/search?q=UN | < 1000ms | P0 |
+| PRF-005 | Smart search — 50 results | PerformSmartSearchAsync, maxResults=50 | < 2000ms | P1 |
+| PRF-006 | GetPartnerWithContactsAndInteractions | Partner with 10 contacts, 50 interactions | < 1000ms | P1 |
+| PRF-007 | Get partners by group | GET by-partner-group-id/5 | < 500ms | P1 |
+| PRF-008 | Get partners by category | GET by-partner-category-code/GOV | < 500ms | P1 |
+| PRF-009 | Categories summary | GET categories-summary | < 500ms | P1 |
+| PRF-010 | Groups summary | GET groups-summary | < 500ms | P1 |
+| PRF-011 | Create partner | POST /api/partner | < 500ms | P0 |
+| PRF-012 | Update partner | PUT /api/partner | < 500ms | P0 |
+| PRF-013 | Logo upload | POST logo | < 2000ms | P1 |
+| PRF-014 | Detect duplicates | POST detect-duplicates | < 3000ms | P1 |
+| PRF-015 | Bulk upload — 50 rows | POST bulk-upload | < 10000ms | P1 |
+| PRF-016 | GetTotalPartnerCount | GetTotalPartnerCountAsync | < 500ms | P1 |
 
 ---
 
@@ -487,18 +619,51 @@
 
 | ID | Test Name | Load Profile | Duration | Success Criteria | Priority |
 |----|-----------|-------------|----------|-------------------|----------|
-| LDT-001 | Load 1 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-002 | Load 2 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-003 | Load 3 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-004 | Load 4 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-005 | Load 5 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-006 | Load 6 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-007 | Load 7 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-008 | Load 8 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-009 | Load 9 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-010 | Load 10 | 20 req/s | 5 min | 95% < 500ms | P0 |
+| LDT-001 | List partners sustained | 20 req/s | 5 min | 95% < 500ms, 0% errors | P0 |
+| LDT-002 | Get partner by ID sustained | 50 req/s | 5 min | 95% < 200ms, 0% errors | P0 |
+| LDT-003 | Search sustained | 10 req/s | 5 min | 95% < 1000ms, 0% errors | P0 |
+| LDT-004 | Create partners sustained | 5 req/s | 5 min | 95% < 500ms, 0% errors | P0 |
+| LDT-005 | Mixed read workload | 30 req/s (list+get+search) | 5 min | 95% < 500ms | P0 |
+| LDT-006 | Spike — list 2x | 40 req/s for 1 min | 1 min | No errors, recovery | P1 |
+| LDT-007 | Spike — get 3x | 150 req/s for 30 sec | 30 sec | No errors | P1 |
+| LDT-008 | Stress — find limit | Ramp to 100 req/s | Until failure | Document limit | P1 |
+| LDT-009 | Endurance — 1 hour | 10 req/s mixed | 1 hour | No memory leak, stable latency | P1 |
+| LDT-010 | Recovery after load | 50 req/s for 2 min, then 0 | 5 min | Latency returns to baseline | P1 |
 
 ---
 
-**Last Updated:** 2026-02-11  
+## Traceability Matrix
+
+| Requirement / Area | Test Cases Covering |
+|--------------------|---------------------|
+| CRUD operations | POS-001 to POS-006, INT-001 to INT-005 |
+| Search & filtering | POS-007 to POS-011, FUN-037 to FUN-045 |
+| Workflow (Activate/Close/Archive) | POS-012 to POS-016, FUN-010 to FUN-028 |
+| Approve/Unapprove | POS-015, POS-016, FUN-020 to FUN-028 |
+| Permissions | POS-017, FUN-032 to FUN-036, SEC-007 to SEC-012 |
+| Logo upload | POS-018, FUN-046, INT-018 |
+| Soft delete | POS-006, FUN-006 to FUN-009 |
+| Org unit relationships | INT-012, FUN-053, FUN-081 to FUN-084 |
+| Duplicate detection | POS-023, NEG-059, FUN-054 to FUN-055 |
+| Bulk upload | NEG-046, NEG-047, INT-023, INT-068 |
+| Gmail addon | POS-028, INT-031, NEG-045 |
+| Opportunities linkage | POS-024 to POS-026, INT-019 to INT-021 |
+| Pagination | POS-007, FUN-038 to FUN-039, BND-014 to BND-016 |
+| UNOPS override | INT-071, INT-072 |
+
+---
+
+## Test Environment Setup
+
+**Prerequisites:**
+- PostgreSQL database with Partner, Contact, Interaction, Opportunity, PartnerTree, PartnerCategory, LiaisonOffice, OrganizationHierarchy entities
+- Test user with appropriate permissions (CanCreatePartners, CanEditPartners, CanDeletePartners, CanViewPartners)
+- Admin user for Approve/Unapprove tests
+- Valid LiaisonOffice, PartnerGroup, PartnerCategory for create/activate
+- File storage configured for logo upload
+- IAP authentication configured
+
+---
+
+**Last Updated:** 2026-02-18  
 **Status:** Ready for Execution

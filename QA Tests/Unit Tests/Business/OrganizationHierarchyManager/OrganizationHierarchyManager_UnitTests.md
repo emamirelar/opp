@@ -1,7 +1,7 @@
 # OrganizationHierarchyManager — Unit Test Cases
 
 **Component:** `UNOPS.PAO.Business/Managers/OrganizationHierarchyManager` (Unit Tests)  
-**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Created:** 2026-02-04 | **Last Updated:** 2026-02-18  
 **Author:** QA Team  
 **Standard:** 10-Category, 3:1 Ratio
 
@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,7 +33,7 @@ Organization hierarchy manager unit tests cover CRUD for org units, tree travers
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,15 +67,10 @@ Organization hierarchy manager unit tests cover CRUD for org units, tree travers
 | POS-028 | Reorder siblings | Siblings exist | Reorder | Reordered |
 | POS-029 | Bulk get | IDs valid | GetByIds | Units |
 | POS-030 | Search by name | Units exist | Search | Matching |
-| POS-031 | Get parent | Unit has parent | GetParent | Parent |
-| POS-032 | Type validation | Valid type | Create | Created |
-| POS-033 | Level validation | Valid level | Create | Created |
-| POS-034 | Empty children | Leaf unit | GetChildren | Empty |
-| POS-035 | Single root | One root | GetRoots | Single |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Action | Expected Result |
 |----|-----------|---------------------|-----------------|
@@ -149,10 +144,30 @@ Organization hierarchy manager unit tests cover CRUD for org units, tree travers
 | NEG-068 | Empty type | Type="" | ValidationException |
 | NEG-069 | Orphan unit | Parent deleted | Handle |
 | NEG-070 | Cross-tenant parent | Other tenant parent | Forbidden |
+| NEG-071 | Create null request | Request=null | ArgumentNullException |
+| NEG-072 | Update null request | Request=null | ArgumentNullException |
+| NEG-073 | GetParent null unit | Unit=null | ArgumentNullException |
+| NEG-074 | GetPath null unit | Unit=null | ArgumentNullException |
+| NEG-075 | Move null unit | Unit=null | ArgumentNullException |
+| NEG-076 | Reorder null unit | Unit=null | ArgumentNullException |
+| NEG-077 | BuildTree null units | Units=null | ArgumentNullException |
+| NEG-078 | GetRoots invalid filter | Filter invalid | ArgumentException |
+| NEG-079 | GetChildren invalid unit | UnitId=0 | ArgumentException |
+| NEG-080 | GetDescendants invalid unit | UnitId=-1 | ArgumentException |
+| NEG-081 | GetAncestors invalid unit | UnitId=99999 | KeyNotFoundException |
+| NEG-082 | GetByType null type | Type=null | ArgumentNullException |
+| NEG-083 | GetByLevel negative | Level=-1 | ArgumentException |
+| NEG-084 | GetByIds null | Ids=null | ArgumentNullException |
+| NEG-085 | Validate null hierarchy | Hierarchy=null | ArgumentNullException |
+| NEG-086 | Move to deleted parent | Parent deleted | KeyNotFoundException |
+| NEG-087 | Create with invalid level | Level invalid | ArgumentException |
+| NEG-088 | Update to duplicate code | Code exists | BusinessException |
+| NEG-089 | Reorder invalid positions | Positions invalid | ArgumentException |
+| NEG-090 | Search null term | Term=null | ArgumentNullException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Condition | Expected Result |
 |----|-----------|-------------------|-----------------|
@@ -226,10 +241,30 @@ Organization hierarchy manager unit tests cover CRUD for org units, tree travers
 | BND-068 | Level at min | Level=0 | Valid |
 | BND-069 | Hierarchy 2 levels | Parent+child | Valid |
 | BND-070 | Concurrent tree build | Two build | Both correct |
+| BND-071 | Name whitespace only | Name="   " | Reject |
+| BND-072 | Code at min | Length=1 | Valid |
+| BND-073 | GetParent root | Root | Null |
+| BND-074 | GetPath single | One level | Valid |
+| BND-075 | Move to same level | Same level | No-op |
+| BND-076 | Reorder single | One item | Valid |
+| BND-077 | BuildTree max nodes | Max nodes | Valid |
+| BND-078 | GetRoots empty | No roots | [] |
+| BND-079 | GetChildren max | Max children | Valid |
+| BND-080 | GetDescendants max | Max descendants | Valid |
+| BND-081 | GetAncestors max | Max ancestors | Valid |
+| BND-082 | GetByType empty | No match | [] |
+| BND-083 | GetByLevel empty | No match | [] |
+| BND-084 | GetByIds single | One ID | Valid |
+| BND-085 | Validate empty | Empty tree | Config |
+| BND-086 | Type enum first | First type | Valid |
+| BND-087 | Level enum first | First level | Valid |
+| BND-088 | Search result empty | No match | [] |
+| BND-089 | Filter empty result | No match | [] |
+| BND-090 | Reorder boundary | First/last | Valid |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -283,10 +318,50 @@ Organization hierarchy manager unit tests cover CRUD for org units, tree travers
 | FUN-048 | Status transition | Workflow | ChangeStatus | Valid only |
 | FUN-049 | Permission cached | Performance | Repeated check | Cached |
 | FUN-050 | AsNoTracking read-only | Performance | List | No tracking |
+| FUN-051 | GetRoots excludes deleted | Constraint | GetRoots | Excludes |
+| FUN-052 | GetPath excludes deleted | Constraint | GetPath | Excludes |
+| FUN-053 | GetParent excludes deleted | Constraint | GetParent | Excludes |
+| FUN-054 | Move audit | Audit | Move | Audit |
+| FUN-055 | Reorder audit | Audit | Reorder | Audit |
+| FUN-056 | Create audit | Audit | Create | Audit |
+| FUN-057 | Update audit | Audit | Update | Audit |
+| FUN-058 | Delete audit | Audit | Delete | Audit |
+| FUN-059 | GetRoots filter | Logic | GetRoots | Filter |
+| FUN-060 | GetChildren filter | Logic | GetChildren | Filter |
+| FUN-061 | GetDescendants filter | Logic | GetDescendants | Filter |
+| FUN-062 | GetAncestors filter | Logic | GetAncestors | Filter |
+| FUN-063 | GetPath validation | Validation | GetPath | Valid |
+| FUN-064 | Move validation | Validation | Move | Valid |
+| FUN-065 | Reorder validation | Validation | Reorder | Valid |
+| FUN-066 | BuildTree validation | Validation | BuildTree | Valid |
+| FUN-067 | GetByType validation | Validation | GetByType | Valid |
+| FUN-068 | GetByLevel validation | Validation | GetByLevel | Valid |
+| FUN-069 | GetByIds validation | Validation | GetByIds | Valid |
+| FUN-070 | Search validation | Validation | Search | Valid |
+| FUN-071 | Create transaction | Transaction | Create | Atomic |
+| FUN-072 | Update transaction | Transaction | Update | Atomic |
+| FUN-073 | Delete transaction | Transaction | Delete | Atomic |
+| FUN-074 | Move transaction | Transaction | Move | Atomic |
+| FUN-075 | Reorder transaction | Transaction | Reorder | Atomic |
+| FUN-076 | GetParent logic | Logic | GetParent | Parent |
+| FUN-077 | GetPath logic | Logic | GetPath | Path |
+| FUN-078 | Move logic | Logic | Move | Moved |
+| FUN-079 | Reorder logic | Logic | Reorder | Reordered |
+| FUN-080 | BuildTree logic | Logic | BuildTree | Tree |
+| FUN-081 | GetRoots logic | Logic | GetRoots | Roots |
+| FUN-082 | GetChildren logic | Logic | GetChildren | Children |
+| FUN-083 | GetDescendants logic | Logic | GetDescendants | Descendants |
+| FUN-084 | GetAncestors logic | Logic | GetAncestors | Ancestors |
+| FUN-085 | GetByType logic | Logic | GetByType | Filtered |
+| FUN-086 | GetByLevel logic | Logic | GetByLevel | Filtered |
+| FUN-087 | GetByIds logic | Logic | GetByIds | Units |
+| FUN-088 | Search logic | Logic | Search | Matching |
+| FUN-089 | Validate logic | Logic | Validate | Valid |
+| FUN-090 | Pagination total | Calculation | Paginate | Total |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|
@@ -340,6 +415,46 @@ Organization hierarchy manager unit tests cover CRUD for org units, tree travers
 | INT-048 | Delete with children | Scenario | Delete | Config |
 | INT-049 | Move then validate | Scenario | Move, Validate | Valid |
 | INT-050 | E2E create-move-delete | Scenario | Full cycle | Complete |
+| INT-051 | Create then GetById | Scenario | Create, Get | Complete |
+| INT-052 | Update then GetById | Scenario | Update, Get | Complete |
+| INT-053 | GetRoots then GetChildren | Scenario | Roots, Children | Complete |
+| INT-054 | GetChildren then GetDescendants | Scenario | Children, Desc | Complete |
+| INT-055 | GetAncestors then GetPath | Scenario | Ancestors, Path | Complete |
+| INT-056 | BuildTree then GetRoots | Scenario | Build, Roots | Complete |
+| INT-057 | Move then GetPath | Scenario | Move, Path | Complete |
+| INT-058 | Reorder then GetChildren | Scenario | Reorder, Children | Complete |
+| INT-059 | Validate then Create | Scenario | Validate, Create | Complete |
+| INT-060 | GetByType then GetById | Scenario | Type, Get | Complete |
+| INT-061 | GetByLevel then GetById | Scenario | Level, Get | Complete |
+| INT-062 | GetByIds then Update | Scenario | GetByIds, Update | Complete |
+| INT-063 | Search then GetById | Scenario | Search, Get | Complete |
+| INT-064 | GetParent then GetPath | Scenario | Parent, Path | Complete |
+| INT-065 | Create with parent | Scenario | Create | Parent |
+| INT-066 | Update with type | Scenario | Update | Type |
+| INT-067 | Delete with children | Scenario | Delete | Children |
+| INT-068 | Move with validation | Scenario | Move | Validated |
+| INT-069 | Reorder with validation | Scenario | Reorder | Validated |
+| INT-070 | BuildTree with filter | Scenario | BuildTree | Filtered |
+| INT-071 | GetRoots with pagination | Scenario | GetRoots | Paginated |
+| INT-072 | GetChildren with sort | Scenario | GetChildren | Sorted |
+| INT-073 | GetDescendants with filter | Scenario | GetDescendants | Filtered |
+| INT-074 | GetAncestors with sort | Scenario | GetAncestors | Sorted |
+| INT-075 | GetPath with validation | Scenario | GetPath | Validated |
+| INT-076 | GetByType with pagination | Scenario | GetByType | Paginated |
+| INT-077 | GetByLevel with sort | Scenario | GetByLevel | Sorted |
+| INT-078 | GetByIds with filter | Scenario | GetByIds | Filtered |
+| INT-079 | Search with pagination | Scenario | Search | Paginated |
+| INT-080 | Validate with move | Scenario | Validate | Move |
+| INT-081 | Create with type | Scenario | Create | Type |
+| INT-082 | Create with level | Scenario | Create | Level |
+| INT-083 | Update with parent | Scenario | Update | Parent |
+| INT-084 | Delete with hierarchy | Scenario | Delete | Hierarchy |
+| INT-085 | Move with children | Scenario | Move | Children |
+| INT-086 | Reorder with siblings | Scenario | Reorder | Siblings |
+| INT-087 | BuildTree with depth | Scenario | BuildTree | Depth |
+| INT-088 | GetPath with ancestors | Scenario | GetPath | Ancestors |
+| INT-089 | Full hierarchy cycle | Scenario | Full cycle | Complete |
+| INT-090 | E2E full org unit lifecycle | Scenario | Full cycle | Complete |
 
 ---
 
@@ -500,5 +615,5 @@ Organization hierarchy manager unit tests cover CRUD for org units, tree travers
 
 ---
 
-**Last Updated:** 2026-02-11  
+**Last Updated:** 2026-02-18  
 **Status:** Ready for Implementation

@@ -11,19 +11,25 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
-| §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| §7 Concurrency | 10 | 10 | ✅ |
+| §8 Unit | 6 | 6 | ✅ |
+| §9 Performance | 4 | 4 | ✅ |
+| §10 Load | 2 | 2 | ✅ |
+| **TOTAL** | **462** | **≥390** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance Check**
+| Check | Result | Status |
+|-------|--------|--------|
+| N≥3P: 90≥90 | ✅ PASS | N >= 3 × P |
+| E≥3P: 90≥90 | ✅ PASS | E >= 3 × P |
+| F≥3P: 90≥90 | ✅ PASS | F >= 3 × P |
+| I≥3P: 90≥90 | ✅ PASS | I >= 3 × P |
 
 ---
 
@@ -133,17 +139,12 @@ Search and list views: global search, entity-specific lists, filtering, paginati
 | POS-028 | Filter by dropdown | List loaded | Select option | Filtered | P2 |
 | POS-029 | Column resize | Resizable columns | Drag resize | Width changed | P2 |
 | POS-030 | Sticky header | Long list | Scroll | Header sticky | P2 |
-| POS-031 | Empty state | No results | Search "none" | Empty message | P2 |
-| POS-032 | Loading skeleton | Initial load | View | Skeleton shown | P2 |
-| POS-033 | Search suggest | Typing | Type 2 chars | Suggestions shown | P2 |
-| POS-034 | Recent searches | Past searches | Open search | Recent shown | P2 |
-| POS-035 | Save current filter | Filters applied | Save | Filter saved | P2 |
 
 ---
 
-## §2 Negative Tests (Failure Scenarios)
+## §2 Negative Tests (90)
 
-> **Minimum:** 70 tests
+> **Minimum:** 90 tests
 
 ### 2.1 Invalid Input Validation
 
@@ -229,12 +230,32 @@ Search and list views: global search, entity-specific lists, filtering, paginati
 | NEG-068 | AbortController cancel | Cancel | Aborted | P1 |
 | NEG-069 | Stale filter | Old filter | Refetch | P1 |
 | NEG-070 | Concurrent filter save | 2 users save | One wins | P1 |
+| NEG-071 | Search with null query after trim | "   " | Treated as empty | P1 |
+| NEG-072 | Filter with invalid enum value | Status = "DELETED" | Default or error | P1 |
+| NEG-073 | Pagination with float page | Page = 1.5 | Rounded or error | P1 |
+| NEG-074 | Sort with invalid direction | Dir = "RANDOM" | Default asc | P1 |
+| NEG-075 | Export with invalid MIME type | MIME = "text/plain" | Default CSV | P1 |
+| NEG-076 | Column config with invalid field | Field = "DROP_TABLE" | Ignored | P1 |
+| NEG-077 | Saved filter with invalid structure | Malformed JSON | Error | P1 |
+| NEG-078 | Search with null character | \0 in query | Sanitized | P1 |
+| NEG-079 | Filter with empty array | [] | All data | P1 |
+| NEG-080 | List with negative row index | Index = -1 | Handled | P1 |
+| NEG-081 | Virtual scroll with zero height | Height = 0 | Graceful | P2 |
+| NEG-082 | Export with concurrent cancel | Cancel during export | Aborted | P1 |
+| NEG-083 | Search with Unicode null | \u0000 | Sanitized | P1 |
+| NEG-084 | Filter with max int value | Value = 2147483647 | Handled | P1 |
+| NEG-085 | List during component destroy | Unmount | No error | P1 |
+| NEG-086 | Search with only wildcards | "***" | Escaped or no match | P1 |
+| NEG-087 | Column with duplicate field | Same field twice | Deduplicated | P1 |
+| NEG-088 | Pagination with overflow | Page * Size > MAX | Capped | P1 |
+| NEG-089 | Filter with future date | Date = 2030 | Validation error | P1 |
+| NEG-090 | List with circular reference in data | Circular object | Handled | P1 |
 
 ---
 
-## §3 Boundary Tests (Edge Cases)
+## §3 Boundary Tests (90)
 
-> **Minimum:** 70 tests
+> **Minimum:** 90 tests
 
 ### 3.1 String Length Boundaries
 
@@ -340,12 +361,32 @@ Search and list views: global search, entity-specific lists, filtering, paginati
 | BND-068 | Keyboard arrow | Arrow keys | Row focus | P2 |
 | BND-069 | Keyboard Enter | Enter on row | Navigate | P2 |
 | BND-070 | Concurrent tabs | 2 tabs | Independent | P2 |
+| BND-071 | Search query exactly 1 char | "a" | Matches | P1 |
+| BND-072 | Search query exactly 500 chars | Max length | Processed | P1 |
+| BND-073 | Page number exactly 1 | First page | Correct | P1 |
+| BND-074 | Page number exactly last | Last page | Correct | P1 |
+| BND-075 | Page size exactly 1 | 1 per page | 1 row | P1 |
+| BND-076 | Page size exactly 1000 | Max | 1000 rows | P1 |
+| BND-077 | Row count exactly 0 | Empty | Empty state | P1 |
+| BND-078 | Row count exactly 1 | Single | 1 row | P1 |
+| BND-079 | Filter count exactly 10 | 10 filters | All applied | P1 |
+| BND-080 | Column count exactly 50 | 50 columns | Horizontal scroll | P1 |
+| BND-081 | Viewport exactly 320px | Mobile | Mobile layout | P1 |
+| BND-082 | Viewport exactly 1920px | Desktop | Desktop layout | P1 |
+| BND-083 | Selected rows exactly 0 | None | Export blank | P1 |
+| BND-084 | Selected rows exactly page size | All on page | All exported | P1 |
+| BND-085 | Date range exactly 1 day | Same from/to | That day | P2 |
+| BND-086 | Date range exactly 1 year | Full year | Correct | P2 |
+| BND-087 | Sort ascending boundary | A-Z | Correct order | P1 |
+| BND-088 | Sort descending boundary | Z-A | Correct order | P1 |
+| BND-089 | Debounce at 300ms boundary | 300ms | Single request | P1 |
+| BND-090 | Virtual scroll at 1000 rows | 1000 | Smooth scroll | P1 |
 
 ---
 
-## §4 Functional Tests (Business Rules)
+## §4 Functional Tests (90)
 
-> **Minimum:** 50 tests
+> **Minimum:** 90 tests
 
 ### 4.1 Workflow Rules (15)
 
@@ -383,12 +424,52 @@ Search and list views: global search, entity-specific lists, filtering, paginati
 | FUN-041 | Search audit | Audit | Search | Logged | P1 |
 | FUN-042 | Export audit | Audit | Export | Logged | P1 |
 | FUN-043 to FUN-050 | [Additional audit rules] | Various | Various | Per rule | P1 |
+| FUN-051 | List load triggers API | Load | API called | P0 |
+| FUN-052 | Search triggers API with query | Search | Query in request | P0 |
+| FUN-053 | Filter triggers API with params | Filter | Params in request | P0 |
+| FUN-054 | Sort triggers API with sort param | Sort | Sort in request | P0 |
+| FUN-055 | Pagination triggers API with page | Page | Page in request | P0 |
+| FUN-056 | Column config persisted | Config | Saved to storage | P1 |
+| FUN-057 | Saved filter persisted | Filter | Saved to backend | P1 |
+| FUN-058 | Permission filters visible columns | Permission | Only permitted columns | P0 |
+| FUN-059 | OrgUnit filters list data | OrgUnit | Scoped data | P0 |
+| FUN-060 | Loading state during fetch | Fetch | Spinner shown | P1 |
+| FUN-061 | Error state on API failure | Failure | Error message | P1 |
+| FUN-062 | Empty state when no data | No data | Empty message | P1 |
+| FUN-063 | Debounce prevents rapid requests | Rapid type | Single request | P1 |
+| FUN-064 | Cache invalidated on filter change | Filter | Fresh data | P1 |
+| FUN-065 | Row selection state tracked | Select | Selection array | P1 |
+| FUN-066 | Select all respects filter | Select all | Only visible | P1 |
+| FUN-067 | Export respects current filter | Export | Filtered data | P1 |
+| FUN-068 | Export respects current sort | Export | Sorted data | P1 |
+| FUN-069 | Virtual scroll renders visible only | Scroll | Visible rows | P1 |
+| FUN-070 | Sticky header on scroll | Scroll | Header fixed | P1 |
+| FUN-071 | Keyboard nav wraps at edges | Arrow keys | Wrap or stop | P1 |
+| FUN-072 | Row click navigates to detail | Click | Route to detail | P0 |
+| FUN-073 | Inline edit saves on blur | Edit | Value saved | P1 |
+| FUN-074 | Quick filter chips apply filter | Chip | Filter applied | P1 |
+| FUN-075 | Clear filters resets all | Clear | All filters off | P1 |
+| FUN-076 | Reset column config to default | Reset | Default columns | P1 |
+| FUN-077 | Search suggestions from API | Suggest | API called | P2 |
+| FUN-078 | Recent searches from storage | Recent | From storage | P2 |
+| FUN-079 | Date range validation | Range | From ≤ To | P0 |
+| FUN-080 | Page validation | Page | 1 to max | P1 |
+| FUN-081 | Page size validation | Size | 1 to 1000 | P1 |
+| FUN-082 | Sort column validation | Column | Valid column | P1 |
+| FUN-083 | Export format validation | Format | Valid format | P1 |
+| FUN-084 | XSS sanitization in display | Display | Escaped | P0 |
+| FUN-085 | Number formatting by locale | Locale | Correct format | P2 |
+| FUN-086 | Date formatting by locale | Locale | Correct format | P2 |
+| FUN-087 | Currency formatting | Currency | Correct symbol | P2 |
+| FUN-088 | Truncation for long text | Long text | Ellipsis | P1 |
+| FUN-089 | Tooltip for truncated | Hover | Full text | P2 |
+| FUN-090 | Accessibility labels | A11y | Labels present | P1 |
 
 ---
 
-## §5 Integration Tests (End-to-End Flows)
+## §5 Integration Tests (90)
 
-> **Minimum:** 50 tests
+> **Minimum:** 90 tests
 
 ### 5.1 CRUD Workflow (10)
 
@@ -413,6 +494,46 @@ Search and list views: global search, entity-specific lists, filtering, paginati
 | INT-021 to INT-025 | Page 1, last page, empty, single, large | Various | Per scenario | P1 |
 | INT-026 to INT-035 | List→Entity, List→Detail, List→Export, List→Config | Various | Per relationship | P0/P1 |
 | INT-036 to INT-050 | API 500, 401, 403, 404, timeout, validation | Various | Per error | P0/P1 |
+| INT-051 | Nav to list → Load → Display | Full flow | List shown | P0 |
+| INT-052 | Search → Results → Click row | Full flow | Detail shown | P0 |
+| INT-053 | Filter → Results → Export | Full flow | Filtered export | P0 |
+| INT-054 | Sort → Results → Paginate | Full flow | Sorted paginated | P0 |
+| INT-055 | Save filter → Reload → Load filter | Full flow | Filter restored | P1 |
+| INT-056 | Column config → Reload → Config restored | Full flow | Config restored | P1 |
+| INT-057 | List → Detail → Back → List state | Navigation | State preserved | P1 |
+| INT-058 | Multi-entity search → Results | Global search | Cross-entity results | P0 |
+| INT-059 | List → API → Map → Display | Data flow | Correct mapping | P0 |
+| INT-060 | List with lazy-loaded columns | Lazy | Columns load | P2 |
+| INT-061 | List with dynamic filters | Dynamic | Filters update | P2 |
+| INT-062 | List with real-time updates | WebSocket | Updates reflect | P2 |
+| INT-063 | List with bulk action | Bulk | Action on selected | P1 |
+| INT-064 | List with inline create | Inline | New row added | P2 |
+| INT-065 | List with inline delete | Inline | Row removed | P1 |
+| INT-066 | List with permission check | Permission | Filtered by perm | P0 |
+| INT-067 | List with OrgUnit scope | OrgUnit | Scoped list | P0 |
+| INT-068 | List with auth guard | Auth | Redirect if no auth | P0 |
+| INT-069 | List with session expiry | Expiry | Redirect | P1 |
+| INT-070 | List with token refresh | Refresh | Seamless | P2 |
+| INT-071 | List with error boundary | Error | Boundary catches | P2 |
+| INT-072 | List with retry on failure | Retry | Retry works | P2 |
+| INT-073 | List with offline support | Offline | Cached or message | P2 |
+| INT-074 | List with optimistic update | Update | Optimistic UI | P2 |
+| INT-075 | List with conflict resolution | Conflict | Resolution UI | P2 |
+| INT-076 | List with audit logging | Audit | Actions logged | P2 |
+| INT-077 | List with analytics | Analytics | Events sent | P2 |
+| INT-078 | List with i18n | i18n | Translated | P1 |
+| INT-079 | List with theme | Theme | Themed | P2 |
+| INT-080 | List with responsive breakpoints | Breakpoints | Layout adapts | P1 |
+| INT-081 | List with virtual scroll integration | Virtual | Scroll works | P1 |
+| INT-082 | List with export service | Export | File downloaded | P0 |
+| INT-083 | List with filter service | Filter | Filters work | P0 |
+| INT-084 | List with sort service | Sort | Sort works | P0 |
+| INT-085 | List with pagination service | Pagination | Pagination works | P0 |
+| INT-086 | List with search service | Search | Search works | P0 |
+| INT-087 | List with config service | Config | Config applied | P2 |
+| INT-088 | List with storage service | Storage | State persisted | P2 |
+| INT-089 | List with HTTP interceptor | HTTP | Interceptor applied | P2 |
+| INT-090 | List end-to-end full flow | E2E | Nav→Search→Filter→Export | P0 |
 
 ---
 

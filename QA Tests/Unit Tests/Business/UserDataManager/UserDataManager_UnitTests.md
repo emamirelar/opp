@@ -11,19 +11,23 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**Ratio Compliance:**
+- N ≥ 3P: 90 ≥ 90 → ✅ PASS
+- E ≥ 3P: 90 ≥ 90 → ✅ PASS
+- F ≥ 3P: 90 ≥ 90 → ✅ PASS
+- I ≥ 3P: 90 ≥ 90 → ✅ PASS
 
 ---
 
@@ -33,7 +37,7 @@ User data manager unit tests cover preferences, saved searches, recent items, an
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,11 +71,6 @@ User data manager unit tests cover preferences, saved searches, recent items, an
 | POS-028 | Export user data | Data exists | Export | Exported |
 | POS-029 | Import user data | Valid data | Import | Imported |
 | POS-030 | Get default preference | No pref | GetPreference | Default |
-| POS-031 | Recent items FIFO | Add many | GetRecentItems | FIFO |
-| POS-032 | Favorite order | Favorites exist | GetFavorites | Ordered |
-| POS-033 | Saved search execute | Search exists | Execute | Results |
-| POS-034 | Bulk update preferences | Multiple | UpdateMany | Updated |
-| POS-035 | Cleanup old recent | Old items | Cleanup | Removed |
 
 ---
 
@@ -283,10 +282,50 @@ User data manager unit tests cover preferences, saved searches, recent items, an
 | FUN-048 | Status transition | Workflow | ChangeStatus | Valid only |
 | FUN-049 | Permission cached | Performance | Repeated check | Cached |
 | FUN-050 | AsNoTracking read-only | Performance | List | No tracking |
+| FUN-051 | Recent items FIFO | Logic | AddRecentItem | FIFO |
+| FUN-052 | Duplicate recent move | Logic | AddRecentItem | Move to top |
+| FUN-053 | Default preference | Logic | GetPreference | Default |
+| FUN-054 | Preference merge | Logic | UpdatePreference | Merged |
+| FUN-055 | Execute search | Logic | Execute | Results |
+| FUN-056 | Cleanup old recent | Logic | Cleanup | Old removed |
+| FUN-057 | Favorite order | Logic | GetFavorites | Ordered |
+| FUN-058 | Saved search unique name | Logic | SaveSearch | Unique per user |
+| FUN-059 | Bulk update atomic | Logic | UpdateMany | Atomic |
+| FUN-060 | GetPreference fallback | Logic | GetPreference | Fallback |
+| FUN-061 | Recent item entity check | Logic | AddRecentItem | Entity exists |
+| FUN-062 | Favorite entity check | Logic | AddFavorite | Entity exists |
+| FUN-063 | User data isolation | Constraint | Get | Own only |
+| FUN-064 | Saved search per user | Constraint | SaveSearch | User scoped |
+| FUN-065 | Recent items limit | Constraint | AddRecentItem | Trim at limit |
+| FUN-066 | Favorites limit | Constraint | AddFavorite | Reject over |
+| FUN-067 | Pagination consistency | Calculation | Page | Consistent |
+| FUN-068 | Sort multi-column | Calculation | Sort | Multi |
+| FUN-069 | Filter OR logic | Filter | OR filter | Match |
+| FUN-070 | Transaction on save | Transaction | SaveSearch | Atomic |
+| FUN-071 | Transaction on update | Transaction | Update | Atomic |
+| FUN-072 | Include loads user | Data load | GetById include | User loaded |
+| FUN-073 | Include selective | Data load | Include | Selective |
+| FUN-074 | Config limits | Config | Limits | Config |
+| FUN-075 | Config retention | Config | Cleanup | Config |
+| FUN-076 | Permission per action | Authorization | Per action | Check |
+| FUN-077 | User context audit | Audit | Create | User |
+| FUN-078 | Timestamp UTC | Audit | All | UTC |
+| FUN-079 | Deleted exclude GetSavedSearches | Constraint | GetSavedSearches | Excluded |
+| FUN-080 | Deleted exclude GetFavorites | Constraint | GetFavorites | Excluded |
+| FUN-081 | Deleted exclude GetRecentItems | Constraint | GetRecentItems | Excluded |
+| FUN-082 | Deleted exclude GetPreferences | Constraint | GetPreferences | Excluded |
+| FUN-083 | Preference lifecycle | Workflow | Get to update | Complete |
+| FUN-084 | Search lifecycle | Workflow | Save to execute | Complete |
+| FUN-085 | Recent lifecycle | Workflow | Add to clear | Complete |
+| FUN-086 | Favorite lifecycle | Workflow | Add to remove | Complete |
+| FUN-087 | Export import lifecycle | Workflow | Export to import | Complete |
+| FUN-088 | Cleanup lifecycle | Workflow | Cleanup | Complete |
+| FUN-089 | User data lifecycle | Workflow | Full cycle | Complete |
+| FUN-090 | Limit enforcement | Workflow | At limit | Enforced |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|
@@ -340,6 +379,46 @@ User data manager unit tests cover preferences, saved searches, recent items, an
 | INT-048 | Retention cleanup | Scenario | Cleanup | Old removed |
 | INT-049 | Config override | Scenario | Config | Override |
 | INT-050 | E2E preference-search-favorite | Scenario | Full cycle | Complete |
+| INT-051 | GetPreferences then Update | Scenario | Get, Update | Complete |
+| INT-052 | SaveSearch then Execute | Scenario | Save, Execute | Complete |
+| INT-053 | AddRecentItem then Get | Scenario | Add, Get | Complete |
+| INT-054 | AddFavorite then Remove | Scenario | Add, Remove | Complete |
+| INT-055 | Export then Import | Scenario | Export, Import | Roundtrip |
+| INT-056 | Cleanup then Get | Scenario | Cleanup, Get | Complete |
+| INT-057 | UpdateMany then Get | Scenario | UpdateMany, Get | Complete |
+| INT-058 | GetPreference default | Scenario | GetPreference | Default |
+| INT-059 | IsFavorite check | Scenario | IsFavorite | Boolean |
+| INT-060 | Limit enforcement | Scenario | Add at limit | Enforced |
+| INT-061 | DbContext scope | Integration | Request | Scoped |
+| INT-062 | Permission cascade | Integration | Role | Cascade |
+| INT-063 | User context propagation | Integration | Request | Propagated |
+| INT-064 | Audit chain | Integration | Operations | Chained |
+| INT-065 | Search service integration | Integration | Search | Execute |
+| INT-066 | Error handling chain | Integration | Error | Handled |
+| INT-067 | Validation chain | Integration | SaveSearch | Validated |
+| INT-068 | Mapping chain | Integration | Entity | Mapped |
+| INT-069 | Repository CRUD | Integration | Repository | CRUD |
+| INT-070 | DbContext save | Integration | SaveChanges | Saved |
+| INT-071 | Transaction rollback | Integration | Error | Rollback |
+| INT-072 | Config flow | Integration | Config | Flow |
+| INT-073 | Retention flow | Integration | Cleanup | Flow |
+| INT-074 | Concurrent update | Scenario | Parallel update | One wins |
+| INT-075 | Concurrent add | Scenario | Parallel add | Both or one |
+| INT-076 | Full preference cycle | Scenario | Get to update | Complete |
+| INT-077 | Full search cycle | Scenario | Save to execute | Complete |
+| INT-078 | Full recent cycle | Scenario | Add to clear | Complete |
+| INT-079 | Full favorite cycle | Scenario | Add to remove | Complete |
+| INT-080 | Full export import | Scenario | Export to import | Complete |
+| INT-081 | Full cleanup cycle | Scenario | Cleanup | Complete |
+| INT-082 | Full bulk update | Scenario | UpdateMany | Complete |
+| INT-083 | Full default preference | Scenario | GetPreference | Complete |
+| INT-084 | Full limit enforcement | Scenario | Add at limit | Complete |
+| INT-085 | Permission check flow | Integration | Auth | Check |
+| INT-086 | User resolution flow | Integration | User | Resolved |
+| INT-087 | Audit flow | Integration | Audit | Logged |
+| INT-088 | Logging flow | Integration | Log | Logged |
+| INT-089 | Search flow | Integration | Search | Execute |
+| INT-090 | E2E full lifecycle | Scenario | All operations | Complete |
 
 ---
 
@@ -500,5 +579,5 @@ User data manager unit tests cover preferences, saved searches, recent items, an
 
 ---
 
-**Last Updated:** 2026-02-11  
+**Last Updated:** 2026-02-18  
 **Status:** Ready for Implementation

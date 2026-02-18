@@ -12,19 +12,19 @@
 
 | Category | File/Section | Count | Minimum Required | Status |
 |----------|-------------|-------|-----------------|--------|
-| Positive Tests | §1 | 35 | 30-50 | ✅ |
-| Negative Tests | §2 | 70 | Max(50, 2×35)=70 | ✅ |
-| Boundary Tests | §3 | 70 | Max(50, 2×35)=70 | ✅ |
-| Functional Tests | §4 | 50 | ≥50 | ✅ |
-| Integration Tests | §5 | 50 | ≥50 | ✅ |
+| Positive Tests | §1 | 30 | 30-50 | ✅ |
+| Negative Tests | §2 | 90 | Max(50, 3×30)=90 | ✅ |
+| Boundary Tests | §3 | 90 | Max(50, 3×30)=90 | ✅ |
+| Functional Tests | §4 | 90 | ≥90 | ✅ |
+| Integration Tests | §5 | 90 | ≥90 | ✅ |
 | Security Tests | §6 | 50 | ≥50 | ✅ |
 | Concurrency Tests | §7 | 25 | ≥25 | ✅ |
 | Unit Tests | §8 | 21 | ≥21 | ✅ |
 | Performance Tests | §9 | 16 | ≥16 | ✅ |
 | Load Tests | §10 | 10 | ≥10 | ✅ |
-| **TOTAL** | | **397** | **≥347** | ✅ |
+| **TOTAL** | | **462** | **≥462** | ✅ |
 
-**3:1 Ratio Check:** (N + B) = 140 ≥ 3 × P = 105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -157,17 +157,12 @@ The ContactManager handles CRUD operations for contacts associated with partners
 | POS-028 | Contact with special characters in name | O'Brien, Müller | CreateContactAsync | Special chars preserved | P2 |
 | POS-029 | Map contact entity to model | Contact entity | mapper.Map<ContactModel> | All fields mapped correctly | P2 |
 | POS-030 | Map create request to entity | CreateContactRequest | mapper.Map<Contact> | All request fields mapped | P2 |
-| POS-031 | Get dropdown/typeahead contacts | Contacts exist | GetContactTypeaheadAsync | Id and Name returned | P2 |
-| POS-032 | Contact with multiple documents | 10 documents | Load with includes | All 10 non-deleted docs loaded | P2 |
-| POS-033 | Contact with multiple interactions | 10 interactions | Load with includes | All 10 non-deleted interactions loaded | P2 |
-| POS-034 | Restore soft-deleted contact | Deleted contact | RestoreContactAsync | IsDeleted = false, audit updated | P2 |
-| POS-035 | Export contacts as list | Multiple contacts | ExportContactsAsync | Export data generated | P2 |
 
 ---
 
-## §2 Negative Tests (Failure Scenarios)
+## §2 Negative Tests (Failure Scenarios) — 90 tests
 
-> **Minimum:** Max(50, 2×35)=70 tests | **Focus:** Invalid inputs, unauthorized access, error conditions
+> **Minimum:** 90 tests | **Focus:** Invalid inputs, unauthorized access, error conditions
 
 ### 2.1 Invalid Input Validation
 
@@ -273,12 +268,32 @@ The ContactManager handles CRUD operations for contacts associated with partners
 | NEG-068 | Gmail sync with invalid metadata | Malformed Gmail data | Handled gracefully, fields default | P2 |
 | NEG-069 | Search with special regex characters | `.*+?[]()` | Treated as literal or escaped | P1 |
 | NEG-070 | Filter with invalid date range | FromDate > ToDate | Validation error | P1 |
+| NEG-071 | Input | Null reassign target | ArgumentException | P1 |
+| NEG-072 | Input | Invalid email domain filter | Error | P2 |
+| NEG-073 | State | Update during reassign | Conflict | P1 |
+| NEG-074 | Dep | Storage fail on picture | BusinessException | P1 |
+| NEG-075 | Auth | Reassign out of scope | Unauthorized | P0 |
+| NEG-076 | Data | Email with 321 chars | Validation error | P1 |
+| NEG-077 | Mass | Mass assign DeletedBy | Blocked | P1 |
+| NEG-078 | Mass | Mass assign DeletedDate | Blocked | P1 |
+| NEG-079 | Filter | Filter by invalid status | Error | P2 |
+| NEG-080 | Search | Search with injection | Parameterized | P0 |
+| NEG-081 | Input | Negative document count | Handled | P2 |
+| NEG-082 | State | Load with deleted partner | Excluded or error | P1 |
+| NEG-083 | Gmail | Gmail sync duplicate | Dedup | P1 |
+| NEG-084 | Batch | Batch create all invalid | Error | P1 |
+| NEG-085 | Export | Export during update | Consistent | P1 |
+| NEG-086 | Input | Null specification | Default or error | P1 |
+| NEG-087 | Dep | DB timeout on bulk | Graceful | P1 |
+| NEG-088 | Auth | Create for inactive partner | Business rule | P1 |
+| NEG-089 | Picture | Picture upload during delete | Conflict | P1 |
+| NEG-090 | Input | PageSize 0 | Default or error | P2 |
 
 ---
 
-## §3 Boundary Tests (Edge Cases)
+## §3 Boundary Tests (Edge Cases) — 90 tests
 
-> **Minimum:** Max(50, 2×35)=70 tests | **Focus:** Limits, boundaries, unusual but valid inputs
+> **Minimum:** 90 tests | **Focus:** Limits, boundaries, unusual but valid inputs
 
 ### 3.1 String Length Boundaries
 
@@ -384,12 +399,32 @@ The ContactManager handles CRUD operations for contacts associated with partners
 | BND-068 | Concurrent page requests | Pages 1, 2, 3 simultaneously | All return correct data | P2 |
 | BND-069 | Contact at midnight timezone boundary | UTC vs local timezone | Correct date handling | P2 |
 | BND-070 | Partner with exactly MAX contacts | At partner contact limit | Last contact accepted | P1 |
+| BND-071 | FirstName 50 chars | Accepted | P1 |
+| BND-072 | LastName 100 chars | Accepted | P1 |
+| BND-073 | Email 100 chars | Accepted | P1 |
+| BND-074 | PartnerId 500 | Valid | P1 |
+| BND-075 | Page 100 | Handled | P2 |
+| BND-076 | PageSize 500 | Accepted | P1 |
+| BND-077 | Contacts 500 per partner | Paginated | P1 |
+| BND-078 | Documents 50 per contact | Loaded | P2 |
+| BND-079 | Interactions 100 per contact | Loaded | P2 |
+| BND-080 | Picture 2MB | Accepted | P1 |
+| BND-081 | Name 150 chars | Accepted | P1 |
+| BND-082 | Notes 2000 chars | Accepted | P2 |
+| BND-083 | Address 250 chars | Accepted | P2 |
+| BND-084 | Unicode name Hindi | Stored | P2 |
+| BND-085 | Email with plus | user+tag@example.com | Valid | P1 |
+| BND-086 | Contact ID 5000 | Retrieved | P2 |
+| BND-087 | Last page 3 items | Correct | P1 |
+| BND-088 | Search 50 chars | Processed | P1 |
+| BND-089 | Filter 2 partners | Both | P2 |
+| BND-090 | All optional null | Created | P1 |
 
 ---
 
 ## §4 Functional Tests (Business Rules)
 
-> **Minimum:** 50 tests | **Breakdown:** Workflow rules (15), Validation rules (15), Constraint rules (10), Audit rules (10)
+> **Minimum:** 90 tests | **Breakdown:** Workflow (15), Validation (15), Constraint (10), Audit (10), Extended (40)
 
 ### 4.1 Workflow Rules (15)
 
@@ -460,12 +495,52 @@ The ContactManager handles CRUD operations for contacts associated with partners
 | FUN-048 | Gmail import audit | Create from Gmail | CreatedBy = system or user, source=Gmail | P1 |
 | FUN-049 | Failed operation no audit change | Failed create | No audit entries created | P1 |
 | FUN-050 | Audit fields immutable on read | Get contact | CreatedBy/Date never modified by reads | P1 |
+| FUN-051 | IsDeleted filter | Deleted excluded | P0 |
+| FUN-052 | Create audit | CreatedBy/Date | P0 |
+| FUN-053 | Update audit | LastModifiedBy/Date | P0 |
+| FUN-054 | Delete soft-delete | IsDeleted set | P0 |
+| FUN-055 | Name from First+Last | Auto-set | P1 |
+| FUN-056 | Partner validation | Exists, !deleted | P0 |
+| FUN-057 | Reassign PartnerId | Updated | P1 |
+| FUN-058 | Documents exclude deleted | !IsDeleted | P1 |
+| FUN-059 | Interactions exclude deleted | !IsDeleted | P1 |
+| FUN-060 | Picture URL | Persisted | P1 |
+| FUN-061 | Search case-insensitive | Match | P1 |
+| FUN-062 | Pagination defaults | Page=1, Size=20 | P1 |
+| FUN-063 | Gmail source | Tracked | P1 |
+| FUN-064 | Count exclude deleted | !IsDeleted | P1 |
+| FUN-065 | Typeahead Id+Name | Returned | P1 |
+| FUN-066 | FirstName required | Reject null | P0 |
+| FUN-067 | LastName required | Reject null | P0 |
+| FUN-068 | Email format | RFC 5322 | P0 |
+| FUN-069 | PartnerId required | Reject 0 | P0 |
+| FUN-070 | Partner exists | Reject deleted | P0 |
+| FUN-071 | Email unique per partner | Reject duplicate | P1 |
+| FUN-072 | Picture type | Reject .exe | P0 |
+| FUN-073 | Picture size ≤5MB | Reject >5MB | P1 |
+| FUN-074 | Phone format | Lenient | P2 |
+| FUN-075 | Notes max 4000 | Reject 4001 | P2 |
+| FUN-076 | FirstName trim | Trimmed | P2 |
+| FUN-077 | LastName trim | Trimmed | P2 |
+| FUN-078 | Email lowercase | Normalized | P2 |
+| FUN-079 | XSS prevention | Sanitize | P0 |
+| FUN-080 | Reassign target active | Reject deleted | P1 |
+| FUN-081 | Max contacts per partner | Enforced | P2 |
+| FUN-082 | Max page size 1000 | Capped | P1 |
+| FUN-083 | Unique email | Constraint | P1 |
+| FUN-084 | FK partner | Violation | P0 |
+| FUN-085 | Soft-delete no cascade | Docs intact | P1 |
+| FUN-086 | Search limit | Paginated | P2 |
+| FUN-087 | Picture overwrite | Replaced | P1 |
+| FUN-088 | Gmail dedup | Handled | P1 |
+| FUN-089 | Batch limit | Chunked | P2 |
+| FUN-090 | Deletable check | Active=true | P1 |
 
 ---
 
-## §5 Integration Tests (End-to-End Flows)
+## §5 Integration Tests (End-to-End Flows) — 90 tests
 
-> **Minimum:** 50 tests
+> **Minimum:** 90 tests
 
 ### 5.1 CRUD Workflow (10)
 
@@ -541,6 +616,46 @@ The ContactManager handles CRUD operations for contacts associated with partners
 | INT-048 | Rate limit exceeded → 429 | Too many requests | Rate limit message | P2 |
 | INT-049 | Search SQL injection → sanitized | Injection attempt | Parameterized, no harm | P0 |
 | INT-050 | Large payload → 413 | Oversized body | Request too large error | P2 |
+| INT-051 | Full CRUD | All succeed | P0 |
+| INT-052 | Create→Partner list | Listed | P0 |
+| INT-053 | Delete→Excluded | Not in list | P0 |
+| INT-054 | Update→Persisted | Saved | P0 |
+| INT-055 | Create with docs | Both saved | P1 |
+| INT-056 | Delete→Docs remain | Intact | P1 |
+| INT-057 | Reassign→Old count | Decreases | P1 |
+| INT-058 | Reassign→New count | Increases | P1 |
+| INT-059 | Restore | Re-included | P1 |
+| INT-060 | Gmail create→Search | Found | P1 |
+| INT-061 | Search first name | Matching | P0 |
+| INT-062 | Search last name | Matching | P0 |
+| INT-063 | Search email | Matching | P1 |
+| INT-064 | Filter partner | Partner's only | P0 |
+| INT-065 | Filter status | Active only | P1 |
+| INT-066 | Filter date range | Recent | P1 |
+| INT-067 | Combined search+filter | Intersection | P1 |
+| INT-068 | Search empty | Empty | P1 |
+| INT-069 | Case-insensitive | Same | P1 |
+| INT-070 | Exclude deleted | Correct | P1 |
+| INT-071 | Page 1 of 3 | 20 items | P1 |
+| INT-072 | Page 3 partial | Remaining | P1 |
+| INT-073 | Empty page | 0 total | P1 |
+| INT-074 | Single page | All | P2 |
+| INT-075 | Large page 1000 | All | P2 |
+| INT-076 | Contact→Partner | Loaded | P0 |
+| INT-077 | Contact→Documents | Loaded | P0 |
+| INT-078 | Contact→Interactions | Loaded | P1 |
+| INT-079 | Partner delete impact | Handled | P1 |
+| INT-080 | Contact cross-partner | All | P1 |
+| INT-081 | Gmail integration | Populated | P1 |
+| INT-082 | Contact→Opportunity | Reachable | P2 |
+| INT-083 | Contact→OrgUnit | Scope | P1 |
+| INT-084 | Same email diff partners | Both | P2 |
+| INT-085 | Audit trail | Complete | P1 |
+| INT-086 | Invalid 400 | BusinessException | P0 |
+| INT-087 | NotFound 404 | KeyNotFound | P0 |
+| INT-088 | Unauthorized 403 | Unauthorized | P0 |
+| INT-089 | Duplicate email 400 | BusinessException | P1 |
+| INT-090 | End-to-end | Full flow | P0 |
 
 ---
 

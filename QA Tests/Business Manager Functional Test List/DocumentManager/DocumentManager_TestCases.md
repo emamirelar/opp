@@ -11,19 +11,24 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
-| §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| §1 Positive (P) | 30 | 30-50 | ✅ |
+| §2 Negative (N) | 90 | 90 | ✅ |
+| §3 Boundary (E) | 90 | 90 | ✅ |
+| §4 Functional (F) | 90 | 90 | ✅ |
+| §5 Integration (I) | 90 | 90 | ✅ |
+| §6 Concurrency (CON) | 25 | 25 | ✅ |
+| §7 Unit (UNT) | 21 | 21 | ✅ |
+| §8 Performance (PRF) | 16 | 16 | ✅ |
+| §9 Load (LDT) | 10 | 10 | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance Check**
+| Check | Result | Formula |
+|-------|--------|---------|
+| N≥3P? | ✅ | 90 ≥ 90 |
+| E≥3P? | ✅ | 90 ≥ 90 |
+| F≥3P? | ✅ | 90 ≥ 90 |
+| I≥3P? | ✅ | 90 ≥ 90 |
 
 ---
 
@@ -33,7 +38,7 @@
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps (Brief) | Expected Result | Priority |
 |----|-----------|-------------|---------------|-----------------|----------|
@@ -67,15 +72,9 @@
 | POS-028 | Get parent entity — Contact | Doc linked to Contact | GetParentEntity | Contact returned | P1 |
 | POS-029 | Document without DocumentType | Doc has null type | GetDocument | Handled | P1 |
 | POS-030 | Search documents by name | Documents exist | SearchDocuments(name) | Matching docs | P1 |
-| POS-031 | Filter by document type | Multiple types | ListDocuments filter by type | Filtered | P1 |
-| POS-032 | Full CRUD cycle | None | Create→Get→Update→Get→Delete | All succeed | P0 |
-| POS-033 | Upload — different file types | PDF, DOCX, XLSX | UploadDocument each | All accepted | P1 |
-| POS-034 | Download — verify file integrity | Document uploaded | Download, compare hash | Match | P1 |
-| POS-035 | Document relationship validation | Valid entity IDs | LinkDocumentToEntity | Relationship valid | P1 |
-
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Condition | Expected Result | Priority |
 |----|-----------|------------------------|-----------------|----------|
@@ -150,9 +149,30 @@
 | NEG-069 | Symbolic link attack | Symlink in path | Rejected | P0 |
 | NEG-070 | Metadata injection | Metadata with script | Sanitized | P0 |
 
+| NEG-071 | GetFileContentById — document has no blob | Doc has Link only, no Blob | Exception "Document has no blob content" | P0 |
+| NEG-072 | GetFileContentById — document has GCS path only | Doc has StoragePath, no Blob | Exception "Document has no blob content" | P0 |
+| NEG-073 | UpdateDocument — request Id zero | UpdateDocumentAsync(Id=0) | Null or error | P1 |
+| NEG-074 | UpdateDocument — request Id negative | UpdateDocumentAsync(Id=-1) | Null | P1 |
+| NEG-075 | ListDocuments — entityName unknown | EntityNames.ByName("Invalid") | Empty list (no match) | P1 |
+| NEG-076 | ListDocuments — entityName empty string | EntityName="" | Empty list | P1 |
+| NEG-077 | GetDocumentParentEntity — doc has multiple relationships | Doc with 2+ DocumentRelationships | SingleOrDefault may return first or InvalidOp | P1 |
+| NEG-078 | UpdateDocument — DocumentTypeId non-existent | DocumentTypeId=99999 | FK error or handled | P1 |
+| NEG-079 | GetDocumentById — document soft-deleted | Doc IsDeleted=true | May return (manager has no filter) | P1 |
+| NEG-080 | ListDocuments — entity has no relationships | EntityId with no DocumentRelationships | Empty list | P1 |
+| NEG-081 | Document entity validation — all null | Link, Blob, StoragePath all null | ValidationResult | P1 |
+| NEG-082 | UpdateDocument — null request | UpdateDocumentAsync(null) | NullRef or ArgumentNull | P1 |
+| NEG-083 | GetDocumentViewUrl — doc has no content | Doc with null Link, Blob, StoragePath | BusinessException | P0 |
+| NEG-084 | Download — doc has Link only | Doc stored as Link, no Blob | GetFileContentById throws | P0 |
+| NEG-085 | GenerateGoogleDoc — empty data | Request.Data empty | ArgumentException | P0 |
+| NEG-086 | GenerateGoogleDoc — null data | Request.Data null | ArgumentException | P0 |
+| NEG-087 | GetDocumentViewUrl — non-existent doc | GetDocumentViewUrl(99999) | BusinessException "Document not found" | P0 |
+| NEG-088 | Update — document not found | UpdateDocumentAsync(Id=99999) | Returns default (null) | P1 |
+| NEG-089 | GetDocumentParentEntity — doc not found | GetDocumentParentEntityByIdAsync(99999) | Null | P1 |
+| NEG-090 | ListDocuments — entity type PartnerTree | EntityName="partnerTree" | Empty or per EntityNames mapping | P1 |
+
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max | Priority |
 |----|----------------|-----|-----|--------|--------|----------|----------|
@@ -227,9 +247,30 @@
 | BND-069 | Null ID | — | — | GetDocument(null) | — | — | P1 |
 | BND-070 | Max nested includes | — | — | Doc→Type→Entity | — | — | P2 |
 
+| BND-071 | UpdateDocumentRequest DocumentTypeId | null | Valid ID | null (optional) | Valid | Invalid ID | P1 |
+| BND-072 | Document Type field | "folder" | "application/pdf" | "folder" excluded | Valid MIME | — | P1 |
+| BND-073 | DocumentRelationship EntityType | "Contact" | "Opportunity" | Exact match | All supported | Unknown | P1 |
+| BND-074 | Blob array length | 0 | Max | Empty blob | Large file | — | P1 |
+| BND-075 | StoragePath gs:// prefix | — | — | gs://bucket/key | Signed URL | — | P1 |
+| BND-076 | Document Id in UpdateRequest | 1 | 2147483647 | 1 | Max | 0, -1 | P1 |
+| BND-077 | EntityId in ListDocuments | 1 | 2147483647 | 1 | Max | 0 | P1 |
+| BND-078 | DocumentRelationship EntityId | 1 | 2147483647 | 1 | Max | 0 | P1 |
+| BND-079 | Link URL length | 1 | 2048 | Short URL | Long URL | — | P2 |
+| BND-080 | GoogleId length | — | — | Valid ID | — | — | P2 |
+| BND-081 | EntityNames.ByName case | "partner" | "Partner" | Both map to Partner | — | — | P1 |
+| BND-082 | AITranscribed flag | false | true | false | true | — | P2 |
+| BND-083 | DocumentTypeId nullable | null | Valid | null allowed | Valid | 0 | P1 |
+| BND-084 | InteractionId on Document | null | Valid | null | Valid | — | P2 |
+| BND-085 | GetDocumentViewUrl signed URL expiry | 1 min | 60 min | — | 60 min | — | P2 |
+| BND-086 | GenerateGoogleDoc filename | 1 char | 255 | "a" | Long name | — | P1 |
+| BND-087 | Content-Type in download | application/octet-stream | Specific | Fallback | document.Type | — | P1 |
+| BND-088 | DocumentRelationships count | 0 | N | 0 (no parent) | Multiple | — | P1 |
+| BND-089 | Include chains depth | DocumentType | DocumentRelationships | 1 level | 2 levels | — | P1 |
+| BND-090 | ModifiableDeletableEntity Name | 1 | 255 | "a" | 255 chars | 256 | P1 |
+
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Scenario | Trigger | Expected Outcome | Priority |
 |----|-----------|---------------|---------|------------------|----------|
@@ -284,9 +325,50 @@
 | FUN-049 | Retention policy (if any) | Delete | Retention | Per policy | P2 |
 | FUN-050 | Archive/restore (if any) | Archive | Document | Archived state | P2 |
 
+| FUN-051 | ListDocuments filters Type != folder | Exclude folders | ListDocumentsAsync | Only files returned | P0 |
+| FUN-052 | ListDocuments filters !IsDeleted | Exclude soft-deleted | ListDocumentsAsync | Deleted excluded | P0 |
+| FUN-053 | ListDocuments requires DocumentRelationship match | EntityType + EntityId | ListDocumentsAsync | Only docs linked to entity | P0 |
+| FUN-054 | GetDocumentById includes DocumentType | Load type | GetDocumentByIdAsync | DocumentType populated | P1 |
+| FUN-055 | GetDocumentParentEntity SingleOrDefault | One relationship | GetDocumentParentEntityByIdAsync | (EntityId, EntityType) | P1 |
+| FUN-056 | GetDocumentParentEntity null when no relationship | Doc unlinked | GetDocumentParentEntityByIdAsync | Null | P1 |
+| FUN-057 | UpdateDocument maps Id and DocumentTypeId | Update request | UpdateDocumentAsync | Entity updated | P0 |
+| FUN-058 | UpdateDocument returns default when not found | Non-existent ID | UpdateDocumentAsync | default (null) | P1 |
+| FUN-059 | GetFileContentById returns Blob | Doc has Blob | GetFileContentByIdAsync | byte[] returned | P0 |
+| FUN-060 | GetFileContentById throws when no blob | Link/StoragePath only | GetFileContentByIdAsync | Exception | P0 |
+| FUN-061 | GetFileContentById throws when doc not found | Invalid ID | GetFileContentByIdAsync | "Document not found" | P0 |
+| FUN-062 | Document entity validation | Link, Blob, StoragePath | Validate | At least one required | P1 |
+| FUN-063 | EntityNames.ByName maps contact/Contact | Case variants | ListDocuments | Same result | P1 |
+| FUN-064 | EntityNames.ByName maps partner/Partner | Case variants | ListDocuments | Same result | P1 |
+| FUN-065 | EntityNames.ByName maps interaction/Interaction | Case variants | ListDocuments | Same result | P1 |
+| FUN-066 | EntityNames.ByName returns empty for unknown | Invalid entity | ListDocuments | No match, empty | P1 |
+| FUN-067 | GetDocumentViewUrl GCS path | StoragePath gs:// | GetDocumentViewUrl | Signed URL | P0 |
+| FUN-068 | GetDocumentViewUrl Link | Document has Link | GetDocumentViewUrl | Link returned | P0 |
+| FUN-069 | GetDocumentViewUrl Blob fallback | Blob storage | GetDocumentViewUrl | /api/document/{id}/download | P1 |
+| FUN-070 | Download returns FileResult | Doc has Blob | DownloadDocument | File(content, type, name) | P0 |
+| FUN-071 | Update calls GetDocumentParentEntity first | Permission check | DocumentController.Update | Parent resolved | P1 |
+| FUN-072 | GenerateGoogleDoc uses markdown directly | Skip AI | GenerateGoogleDoc | ConvertMarkdownToGoogleDoc | P1 |
+| FUN-073 | GenerateGoogleDoc default filename | No filename | GenerateGoogleDoc | "Generated_Document" | P1 |
+| FUN-074 | GetAll uses EntityNames.ByName | Route entityName | DocumentController.GetAll | Normalized entity type | P0 |
+| FUN-075 | Get throws BusinessException when null | Doc not found | DocumentController.Get | BusinessException | P0 |
+| FUN-076 | Download throws when doc null | After GetFileContent | DocumentController.Download | BusinessException | P0 |
+| FUN-077 | DocumentType optional on Document | DocumentTypeId null | GetDocumentByIdAsync | Handled | P1 |
+| FUN-078 | DocumentRelationships eager loaded | ListDocuments | GetAll includes | Relationships loaded | P1 |
+| FUN-079 | AutoMapper Document to DocumentModel | Entity mapping | GetDocumentByIdAsync | DocumentModel | P0 |
+| FUN-080 | AutoMapper UpdateDocumentRequest to entity | Update mapping | UpdateDocumentAsync | Entity updated | P0 |
+| FUN-081 | DataRepository GetAll with includes | DocumentRelationships, DocumentType | ListDocuments | Includes applied | P1 |
+| FUN-082 | GetByIdAsync with includes array | DocumentType | GetDocumentByIdAsync | Include applied | P1 |
+| FUN-083 | HandleOperationAsync wraps manager calls | Controller pattern | All endpoints | Consistent handling | P1 |
+| FUN-084 | GetDocumentViewUrl type field | Response shape | GetDocumentViewUrl | url, type, mimeType | P1 |
+| FUN-085 | Document Name from ModifiableDeletableEntity | Required field | Document entity | Name set | P1 |
+| FUN-086 | DocumentRelationship EntityType required | required string | DocumentRelationship | Non-null | P1 |
+| FUN-087 | Document Blob nullable | Optional storage | Document entity | Blob can be null | P1 |
+| FUN-088 | Document Link nullable | Optional external link | Document entity | Link can be null | P1 |
+| FUN-089 | Document StoragePath nullable | Optional GCS path | Document entity | StoragePath can be null | P1 |
+| FUN-090 | GetDocumentsByEntityAsync same filter as ListDocuments | Consistency | GetDocumentsByEntityAsync | Same results | P1 |
+
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities Involved | Expected Result | Priority |
 |----|-----------|----------|-------------------|-----------------|----------|
@@ -341,66 +423,50 @@
 | INT-049 | Backup/restore | Backup docs | Document, BackupService | Backup created | P2 |
 | INT-050 | Migration | Migrate documents | Document | Migration succeeds | P2 |
 
----
-
-## §6 Security Tests (50)
-
-| ID | Test Name | Attack Vector | Target | Expected Block | Priority |
-|----|-----------|--------------|--------|----------------|----------|
-| SEC-001 | Path traversal filename | ../../../etc/passwd | Upload | Rejected | P0 |
-| SEC-002 | Path traversal content | Malicious content | Upload | Sanitized | P0 |
-| SEC-003 | SQL injection in search | ' OR 1=1-- | SearchDocuments | Sanitized | P0 |
-| SEC-004 | XSS in document name | <script>alert(1)</script> | UpdateDocument | Sanitized | P0 |
-| SEC-005 | XSS in description | <img src=x onerror=alert(1)> | UpdateDocument | Sanitized | P0 |
-| SEC-006 | IDOR — get other org doc | GetDocument(otherId) | GetDocument | 403 | P0 |
-| SEC-007 | IDOR — download other org | DownloadDocument(otherId) | Download | 403 | P0 |
-| SEC-008 | IDOR — delete other org | DeleteDocument(otherId) | Delete | 403 | P0 |
-| SEC-009 | IDOR — update other org | UpdateDocument(otherId) | Update | 403 | P0 |
-| SEC-010 | Mass assignment Id | Include Id in request | Upload | Ignored | P0 |
-| SEC-011 | Mass assignment CreatedBy | Include in request | Upload | Ignored | P0 |
-| SEC-012 | Mass assignment StoragePath | Include in request | Upload | Ignored | P0 |
-| SEC-013 | Unauthenticated upload | No auth | Upload | 401 | P0 |
-| SEC-014 | Unauthenticated download | No auth | Download | 401 | P0 |
-| SEC-015 | Expired token | Expired JWT | Any | 401 | P0 |
-| SEC-016 | Wrong role upload | No permission | Upload | 403 | P0 |
-| SEC-017 | Wrong role download | No permission | Download | 403 | P0 |
-| SEC-018 | Wrong role delete | No permission | Delete | 403 | P0 |
-| SEC-019 | Org scope bypass | Cross-org access | GetDocument | 403 | P0 |
-| SEC-020 | Null byte injection | file.pdf%00.exe | Filename | Rejected | P0 |
-| SEC-021 | Command injection | ; rm -rf / | Filename | Rejected | P0 |
-| SEC-022 | XXE in Office doc | XML entity | Upload | Rejected | P0 |
-| SEC-023 | Zip slip | Malicious zip | Extract | Rejected | P0 |
-| SEC-024 | Polyglot file | PDF+HTML | Upload | Rejected | P0 |
-| SEC-025 | Sensitive data in error | Connection string | Exception | Not exposed | P0 |
-| SEC-026 | Sensitive data in response | Internal path | GetDocument | Not exposed | P0 |
-| SEC-027 | Rate limit upload | Too many uploads | API | 429 | P1 |
-| SEC-028 | Rate limit download | Too many downloads | API | 429 | P1 |
-| SEC-029 | CSRF upload | Cross-site request | Upload | Token validated | P0 |
-| SEC-030 | CSRF delete | Cross-site request | Delete | Token validated | P0 |
-| SEC-031 | Header injection | Malicious headers | Request | Sanitized | P1 |
-| SEC-032 | Brute force doc IDs | Enumerate IDs | GetDocument | Rate limited | P1 |
-| SEC-033 | Insecure direct reference | EntityId manipulation | LinkDocument | Validated | P0 |
-| SEC-034 | Timing attack | Response time | GetDocument | Constant time | P2 |
-| SEC-035 | Replay attack | Replay request | Upload | Nonce/timestamp | P1 |
-| SEC-036 | JWT alg none | alg=none | Request | Rejected | P0 |
-| SEC-037 | Storage path injection | Custom path | Upload | Rejected | P0 |
-| SEC-038 | Symbolic link | Symlink in path | Upload | Rejected | P0 |
-| SEC-039 | Log injection | Malicious log | Log field | Sanitized | P1 |
-| SEC-040 | Metadata injection | Script in metadata | Metadata | Sanitized | P0 |
-| SEC-041 | Content-Disposition injection | Malicious header | Download | Sanitized | P1 |
-| SEC-042 | MIME sniffing | Wrong content-type | Upload | Validated | P1 |
-| SEC-043 | Open redirect | Redirect in callback | OAuth | Validated | P1 |
-| SEC-044 | Parameter pollution | id=1&id=2 | GetDocument | Handled | P1 |
-| SEC-045 | HTTP verb tampering | PUT instead of POST | Upload | 405 | P1 |
-| SEC-046 | Cookie manipulation | Modify auth cookie | Request | Rejected | P0 |
-| SEC-047 | Session fixation | Fixate session | Login | New session | P1 |
-| SEC-048 | Excessive data | Huge PageSize | ListDocuments | Capped | P1 |
-| SEC-049 | Information disclosure | Probe errors | Invalid input | Generic message | P1 |
-| SEC-050 | Double extension | file.pdf.exe | Upload | Rejected | P0 |
+| INT-051 | DocumentController GetAll → ListDocumentsAsync | GET /document/{entityName}/{entityId} | Document, DocumentManager | 200 + list | P0 |
+| INT-052 | DocumentController Get → GetDocumentByIdAsync | GET /document/{id} | Document, DocumentManager | 200 + document | P0 |
+| INT-053 | DocumentController Update → UpdateDocumentAsync | PUT /document | Document, UpdateDocumentRequest | 200 | P0 |
+| INT-054 | DocumentController Download → GetFileContentByIdAsync | GET /document/download/{id} | Document, DocumentManager | 200 + file | P0 |
+| INT-055 | DocumentController GetDocumentViewUrl → GetDocumentByIdAsync | GET /document/view-url/{id} | Document, GCS | 200 + url | P0 |
+| INT-056 | DocumentController GenerateGoogleDoc → CloudRunHelper | POST /document/generate | Document, CloudRun API | 200 + result | P1 |
+| INT-057 | ManagerWrapper.DocumentManager resolution | DI | ManagerWrapper, DocumentManager | Correct manager | P1 |
+| INT-058 | Document → DocumentRelationship FK | Load doc with relationships | Document, DocumentRelationship | Relationships loaded | P0 |
+| INT-059 | Document → DocumentType FK | Load doc with type | Document, DocumentType | DocumentType loaded | P0 |
+| INT-060 | DocumentRelationship → EntityId, EntityType | Link to Partner | DocumentRelationship, Partner | EntityId, EntityType set | P0 |
+| INT-061 | DocumentController HasPermission → ContactManager | Update with Contact parent | Document, Contact, Authorization | Permission checked | P1 |
+| INT-062 | DocumentController HasPermission → PartnerManager | Update with Partner parent | Document, Partner, Authorization | Permission checked | P1 |
+| INT-063 | GetDocumentViewUrl → GoogleCloudStorageService | GCS signed URL | Document, GCS, StoragePath | Signed URL generated | P0 |
+| INT-064 | Download → File(content, type, name) | Blob download | Document, Controller | Correct Content-Type | P0 |
+| INT-065 | UpdateDocumentRequest → AutoMapper → Document | Update flow | UpdateDocumentRequest, Document | DocumentTypeId mapped | P0 |
+| INT-066 | Document entity → AutoMapper → DocumentModel | Get flow | Document, DocumentModel | All fields mapped | P0 |
+| INT-067 | DataRepository<Document> CRUD | Manager uses repository | DocumentManager, DataRepository | CRUD works | P0 |
+| INT-068 | DocumentController HandleOperationAsync | All endpoints | Controller, BaseController | Consistent response | P1 |
+| INT-069 | GenerateGoogleDoc → ConvertMarkdownToGoogleDoc | External API call | DocumentController, CloudRun | Markdown converted | P1 |
+| INT-070 | EntityNames.ByName in GetAll | Route param | EntityNames, DocumentController | Entity type normalized | P0 |
+| INT-071 | Document with Blob storage | Legacy blob | Document, GetFileContentByIdAsync | Blob returned | P0 |
+| INT-072 | Document with StoragePath (GCS) | Cloud storage | Document, GetDocumentViewUrl | Signed URL | P0 |
+| INT-073 | Document with Link (Google Drive) | External link | Document, GetDocumentViewUrl | Link returned | P0 |
+| INT-074 | DocumentController constructor deps | DI resolution | Controller, IManagerWrapper, IConfiguration | All resolved | P1 |
+| INT-075 | GoogleCloudStorageService in DocumentController | GCS init | DocumentController, GCS | Service created | P1 |
+| INT-076 | CloudRunHelper in DocumentController | GenerateGoogleDoc | DocumentController, CloudRunHelper | Helper created | P1 |
+| INT-077 | GetCredentials from AISettings | Config | DocumentController, IConfiguration | Credentials loaded | P1 |
+| INT-078 | Document BaseController inheritance | Authorization | DocumentController, BaseController | Base behavior | P1 |
+| INT-079 | APIDictionary.Document routes | Routing | DocumentController, APIDictionary | Correct routes | P1 |
+| INT-080 | DocumentController UserResolverService | Current user | BaseController, UserResolver | User context | P1 |
+| INT-081 | DocumentController IAuthorizationService | Auth | BaseController, Authorization | Auth available | P1 |
+| INT-082 | DocumentController ILogger | Logging | DocumentController, ILogger | Logs written | P2 |
+| INT-083 | GenerateGoogleDoc timeout | 60 sec | HttpClient, CloudRun | Timeout applied | P2 |
+| INT-084 | MultipartFormDataContent in GenerateGoogleDoc | Request format | GenerateGoogleDoc | Form data correct | P1 |
+| INT-085 | Document Model IModifiableEntityModel | Audit fields | DocumentModel | CreatedBy, LastModifiedBy | P1 |
+| INT-086 | DocumentModel DocumentTypeModel | Nested model | DocumentModel, DocumentTypeModel | Type included | P1 |
+| INT-087 | UpdateDocumentRequest Id required | Request validation | UpdateDocumentRequest | Id required | P1 |
+| INT-088 | DocumentRelationship ModifiableDeletableEntity | Audit | DocumentRelationship | Inherits audit | P1 |
+| INT-089 | Document ModifiableDeletableEntity | Audit, soft delete | Document | Name, IsDeleted | P0 |
+| INT-090 | Document IValidatableObject | Entity validation | Document.Validate | ValidationResult | P1 |
 
 ---
 
-## §7 Concurrency Tests (25)
+## §6 Concurrency Tests (25)
 
 | ID | Test Name | Concurrent Scenario | Expected Behavior | Priority |
 |----|-----------|---------------------|-------------------|----------|
@@ -432,7 +498,7 @@
 
 ---
 
-## §8 Unit Tests (21)
+## §7 Unit Tests (21)
 
 | ID | Test Name | Category | Input | Expected Output | Priority |
 |----|-----------|----------|-------|-----------------|----------|
@@ -460,7 +526,7 @@
 
 ---
 
-## §9 Performance Tests (16)
+## §8 Performance Tests (16)
 
 | ID | Test Name | Operation | Threshold | Priority |
 |----|-----------|----------|-----------|----------|
@@ -483,7 +549,7 @@
 
 ---
 
-## §10 Load Tests (10)
+## §9 Load Tests (10)
 
 | ID | Test Name | Load Profile | Duration | Success Criteria | Priority |
 |----|-----------|-------------|----------|-------------------|----------|

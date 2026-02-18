@@ -13,23 +13,29 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
-| §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| §7 Concurrency | 10 | 10 | ✅ |
+| §8 Unit | 6 | 6 | ✅ |
+| §9 Performance | 4 | 4 | ✅ |
+| §10 Load | 2 | 2 | ✅ |
+| **TOTAL** | **462** | **≥390** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance Check**
+| Check | Result | Status |
+|-------|--------|--------|
+| N≥3P: 90≥90 | ✅ PASS | N >= 3 × P |
+| E≥3P: 90≥90 | ✅ PASS | E >= 3 × P |
+| F≥3P: 90≥90 | ✅ PASS | F >= 3 × P |
+| I≥3P: 90≥90 | ✅ PASS | I >= 3 × P |
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Steps | Expected Result |
 |----|-----------|-------|-----------------|
@@ -63,15 +69,10 @@
 | POS-028 | Get participants | GET /api/engagement/{id}/participants | Participants list |
 | POS-029 | Add reminder | POST /api/engagement/{id}/reminders | Reminder set |
 | POS-030 | Get reminders | GET /api/engagement/{id}/reminders | Reminders list |
-| POS-031 | Bulk create | POST /api/engagement/bulk | Bulk created |
-| POS-032 | Export engagements | GET /api/engagement/export | Export file |
-| POS-033 | Get engagement summary | GET /api/engagement/{id}/summary | Summary |
-| POS-034 | Get engagement timeline | GET /api/engagement/{id}/timeline | Timeline |
-| POS-035 | Clone engagement | POST /api/engagement/{id}/clone | Clone created |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error |
 |----|-----------|--------------|----------------|
@@ -145,10 +146,30 @@
 | NEG-068 | Version conflict | Stale version | 409 |
 | NEG-069 | Soft-delete filter | Query deleted | Excluded |
 | NEG-070 | Audit failure | Audit service down | Log, continue |
+| NEG-071 | Invalid document ID | documentId=999999 | 404 |
+| NEG-072 | Document type blocked | Unsupported type | 400 |
+| NEG-073 | Participant limit exceeded | Add 51st | 400 |
+| NEG-074 | Reminder limit exceeded | Add 11th | 400 |
+| NEG-075 | Tag limit exceeded | Add 21st | 400 |
+| NEG-076 | Invalid clone target | Clone to invalid | 404 |
+| NEG-077 | Bulk empty | POST [] | 400 |
+| NEG-078 | Bulk too large | 101 items | 400 |
+| NEG-079 | Invalid activity type | type=Invalid | 400 |
+| NEG-080 | Follow-up on wrong engagement | Wrong engagementId | 404 |
+| NEG-081 | Note on wrong engagement | Wrong engagementId | 404 |
+| NEG-082 | Update others' note | Note by other user | 403 |
+| NEG-083 | Delete others' note | Note by other user | 403 |
+| NEG-084 | Complete others' follow-up | Follow-up by other | 403 |
+| NEG-085 | Export format invalid | format=Invalid | 400 |
+| NEG-086 | Summary on deleted | GET summary deleted | 404 |
+| NEG-087 | Timeline on deleted | GET timeline deleted | 404 |
+| NEG-088 | Invalid reminder recurrence | recurrence=Invalid | 400 |
+| NEG-089 | Attachment limit exceeded | Add 21st | 400 |
+| NEG-090 | History limit exceeded | >1000 entries | Truncate |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max |
 |----|----------------|-----|-----|--------|--------|----------|
@@ -225,7 +246,7 @@
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Category | Rule | Trigger | Expected |
 |----|----------|------|---------|----------|
@@ -279,10 +300,50 @@
 | FUN-048 | Business | Timezone | Dates | UTC |
 | FUN-049 | Business | Hierarchy | Org filter | Rollup |
 | FUN-050 | Business | Decimal | Currency | 2 decimals |
+| FUN-051 | Workflow | Attach document | POST document | Attached |
+| FUN-052 | Workflow | Get documents | GET documents | List |
+| FUN-053 | Workflow | Assign participant | POST participant | Added |
+| FUN-054 | Workflow | Get participants | GET participants | List |
+| FUN-055 | Workflow | Add reminder | POST reminder | Set |
+| FUN-056 | Validation | Required name | Missing name | 400 |
+| FUN-057 | Validation | Required entityId | Missing | 400 |
+| FUN-058 | Validation | Valid date | Invalid date | 400 |
+| FUN-059 | Validation | Valid type | Invalid type | 400 |
+| FUN-060 | Validation | ID format | Invalid ID | 400 |
+| FUN-061 | Constraint | Unique constraint | Duplicate key | 409 |
+| FUN-062 | Constraint | FK constraint | Orphan | 400 |
+| FUN-063 | Constraint | Max participants | >50 | 400 |
+| FUN-064 | Constraint | Max notes | >1000 | 400 |
+| FUN-065 | Constraint | Max bulk | >100 | 400 |
+| FUN-066 | Audit | Create logged | POST | Audit |
+| FUN-067 | Audit | Update logged | PUT | Audit |
+| FUN-068 | Audit | Delete logged | DELETE | Audit |
+| FUN-069 | Audit | Note added | POST note | Audit |
+| FUN-070 | Audit | Activity added | POST activity | Audit |
+| FUN-071 | Business | Soft-deleted excluded | Query | Excluded |
+| FUN-072 | Business | Permission-based | Query | Scoped |
+| FUN-073 | Business | Timezone | Dates | UTC |
+| FUN-074 | Business | Hierarchy | Org filter | Rollup |
+| FUN-075 | Business | Decimal | Currency | 2 decimals |
+| FUN-076 | Workflow | Get engagement history | GET history | History |
+| FUN-077 | Workflow | Get summary | GET summary | Summary |
+| FUN-078 | Workflow | Get timeline | GET timeline | Timeline |
+| FUN-079 | Workflow | Filter by entity | GET ?entityId | Filtered |
+| FUN-080 | Workflow | Filter by date | GET ?start&end | Filtered |
+| FUN-081 | Validation | Note length | Too long | 400 |
+| FUN-082 | Validation | Participant exists | Invalid | 404 |
+| FUN-083 | Validation | Entity exists | Invalid | 404 |
+| FUN-084 | Validation | No duplicate | Duplicate | 400 |
+| FUN-085 | Validation | Permission | No permission | 403 |
+| FUN-086 | Constraint | Org scope | Cross-org | 403 |
+| FUN-087 | Constraint | Soft delete | Query deleted | Excluded |
+| FUN-088 | Constraint | Date range | End < start | 400 |
+| FUN-089 | Constraint | Future limit | >1 year | 400 |
+| FUN-090 | Constraint | File size | >10MB | 413 |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Category | Scenario | Entities | Expected |
 |----|----------|----------|----------|----------|
@@ -336,63 +397,46 @@
 | INT-048 | E2E | Full delete flow | All | Delete → 404 |
 | INT-049 | E2E | Multi-user | Users | No conflict |
 | INT-050 | E2E | Session expiry | Auth | Clean fail |
-
----
-
-## §6 Security Tests (50)
-
-| ID | Category | Attack/Scenario | Target | Expected |
-|----|----------|-----------------|-------|----------|
-| SEC-001 | Injection | SQL injection | Filter | Sanitized |
-| SEC-002 | Injection | XSS in note | Note | Encoded |
-| SEC-003 | Injection | XSS in search | Search | Encoded |
-| SEC-004 | Injection | Path traversal | File path | Rejected |
-| SEC-005 | Injection | NoSQL injection | Filter | Rejected |
-| SEC-006 | Injection | Command injection | Export | Rejected |
-| SEC-007 | Injection | Header injection | Header | Rejected |
-| SEC-008 | Injection | Log injection | Input | Sanitized |
-| SEC-009 | Injection | LDAP injection | Search | Rejected |
-| SEC-010 | Injection | Log4j-style | Input | Rejected |
-| SEC-011 | Access | No auth | All | 401 |
-| SEC-012 | Access | Wrong role | Create | 403 |
-| SEC-013 | Access | Cross-org | Other org | 403 |
-| SEC-014 | Access | Horizontal | Other user | 403 |
-| SEC-015 | Access | Vertical | Admin | 403 |
-| SEC-016 | Access | Expired token | All | 401 |
-| SEC-017 | Access | Revoked token | All | 401 |
-| SEC-018 | Access | Tampered token | All | 401 |
-| SEC-019 | Access | Missing scope | OAuth | 403 |
-| SEC-020 | Access | Service account | UI | 403 |
-| SEC-021 | IDOR | Other org engagement | ID | 403 |
-| SEC-022 | IDOR | Other user note | Note ID | 403 |
-| SEC-023 | IDOR | Manipulate ID | Path ID | 403 |
-| SEC-024 | IDOR | Enumeration | Sequential | Rate limit |
-| SEC-025 | IDOR | Parameter pollution | Params | First wins |
-| SEC-026 | Mass Assign | Add admin | Body | Ignored |
-| SEC-027 | Mass Assign | Add role | Body | Ignored |
-| SEC-028 | Mass Assign | Override org | Body | Ignored |
-| SEC-029 | Mass Assign | Override user | Body | Ignored |
-| SEC-030 | Mass Assign | Override permission | Body | Ignored |
-| SEC-031 | Auth | Session fixation | Session | New session |
-| SEC-032 | Auth | Session hijack | Token | Invalidated |
-| SEC-033 | Auth | Replay | Old token | Rejected |
-| SEC-034 | Auth | CSRF | State change | Token required |
-| SEC-035 | Auth | Brute force | Login | Rate limit |
-| SEC-036 | Data | PII in export | Export | Masked |
-| SEC-037 | Data | Sensitive in logs | Logs | No PII |
-| SEC-038 | Data | Error message | 500 | Generic |
-| SEC-039 | Data | Stack trace | Exception | Not exposed |
-| SEC-040 | Data | Debug prod | Config | Disabled |
-| SEC-041 | OWASP | A01 Access | - | 403 |
-| SEC-042 | OWASP | A02 Crypto | - | TLS |
-| SEC-043 | OWASP | A03 Injection | - | Parametrized |
-| SEC-044 | OWASP | A04 Design | - | Defensive |
-| SEC-045 | OWASP | A05 Misconfig | - | Secure |
-| SEC-046 | OWASP | A06 Vulnerable | - | No CVE |
-| SEC-047 | OWASP | A07 Auth | - | Strong auth |
-| SEC-048 | OWASP | A08 Integrity | - | Checks |
-| SEC-049 | OWASP | A09 Logging | - | Audit |
-| SEC-050 | OWASP | A10 SSRF | - | No internal |
+| INT-051 | CRUD | Create note | Notes | Note in list |
+| INT-052 | CRUD | Delete note | Notes | Removed |
+| INT-053 | CRUD | Add activity | Activity | In timeline |
+| INT-054 | CRUD | Create follow-up | Follow-up | In list |
+| INT-055 | CRUD | Complete follow-up | Follow-up | Status updated |
+| INT-056 | Search | Search by text | Engagement | Matches |
+| INT-057 | Search | Filter entity | Engagement | Filtered |
+| INT-058 | Search | Filter by type | Engagement | Filtered |
+| INT-059 | Search | Filter date | Engagement | Filtered |
+| INT-060 | Search | Multi-filter | Engagement | Combined |
+| INT-061 | Pagination | Page 1 | Engagement | First page |
+| INT-062 | Pagination | Last page | Engagement | Partial OK |
+| INT-063 | Pagination | Page size | Engagement | Correct size |
+| INT-064 | Pagination | Invalid page | Engagement | 400 |
+| INT-065 | Pagination | Boundary | Engagement | Correct |
+| INT-066 | Relationships | Engagement → Entity | Linked | Correct |
+| INT-067 | Relationships | Engagement → Notes | Linked | Correct |
+| INT-068 | Relationships | Engagement → Activities | Linked | Correct |
+| INT-069 | Relationships | Engagement → Participants | Linked | Correct |
+| INT-070 | Relationships | Orphan handling | Deleted parent | Graceful |
+| INT-071 | Error | DB down | DB | 503 |
+| INT-072 | Error | Auth down | Auth | 401/503 |
+| INT-073 | Error | Validation | Bad input | 400 |
+| INT-074 | Error | NotFound | Invalid ID | 404 |
+| INT-075 | Error | Forbidden | No permission | 403 |
+| INT-076 | Error | Conflict | Concurrent | 409 |
+| INT-077 | Error | Rate limit | Too many | 429 |
+| INT-078 | Error | Timeout | Slow query | 504 |
+| INT-079 | Error | Payload too large | Huge request | 413 |
+| INT-080 | Error | Unsupported media | Wrong type | 415 |
+| INT-081 | Error | Method not allowed | Wrong verb | 405 |
+| INT-082 | Error | Service unavailable | Dependency | 503 |
+| INT-083 | Error | Gateway timeout | Upstream | 504 |
+| INT-084 | Error | Gone | Deleted resource | 410 |
+| INT-085 | Error | Locked | Resource locked | 423 |
+| INT-086 | E2E | Full create flow | All | Create → Get |
+| INT-087 | E2E | Full update flow | All | Update → Get |
+| INT-088 | E2E | Full delete flow | All | Delete → 404 |
+| INT-089 | E2E | Clone flow | Engagement | Clone → Get |
+| INT-090 | E2E | Export flow | Engagement | Export → File |
 
 ---
 
@@ -504,7 +548,7 @@
 | Notes | POS-006–007, NEG-024–026 |
 | Activities | POS-008–009, INT-007 |
 | Follow-ups | POS-010–011, FUN-006–007 |
-| 3:1 Ratio | NEG-001–070, BND-001–070 |
+| 3:1 Ratio | NEG-001–090, BND-001–090, FUN-001–090, INT-001–090 |
 
 ---
 

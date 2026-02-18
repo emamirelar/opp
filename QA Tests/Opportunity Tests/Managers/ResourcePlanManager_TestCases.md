@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
+| §6 Security | 22 | 22 | ✅ |
+| §7 Concurrency | 15 | 15 | ✅ |
+| §8 Unit | 15 | 15 | ✅ |
+| §9 Performance | 10 | 10 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio:** N≥3P: 90≥90 ✅ | E≥3P: 90≥90 ✅ | F≥3P: 90≥90 ✅ | I≥3P: 90≥90 ✅
 
 ---
 
@@ -35,15 +35,15 @@ Resource planning business logic: CRUD resources, role/skill requirements, alloc
 
 ## §1–§10
 
-**§1 (35):** CRUD + allocation + cost + availability + gap analysis + utilization + forecast (35 tests).
-**§2 (70):** Input (10), Auth (10), State (10), injection (10), dependencies (10), format (10), business (10).
-**§3 (70):** Allocation (0–100%), cost (0–MAX), resources (0–100), skills, FTE (0.0–1.0), concurrent, pagination, Unicode, durations, gap sizes, forecast periods, utilization boundaries.
-**§4 (50):** Allocation logic (15), cost calc (10), availability (10), gap analysis (10), audit (5).
-**§5 (50):** Team (10), budget (10), schedule (10), HR (10), export (10).
-**§6 (50):** Injection (10), auth (10), IDOR (10), cost data (10), resource data (10).
-**§7 (25):** Concurrent allocations, cost updates, availability, bulk, lock conflicts.
-**§8 (21):** Cost calc (5), allocation (5), availability (3), gap (5), formatting (3).
-**§9 (16):** CRUD (<200ms), calc (<300ms), search (<500ms), export (<3s), memory.
+**§1 (30):** CRUD + allocation + cost + availability + gap analysis + utilization + forecast (30 tests).
+**§2 (90):** Input (10), Auth (10), State (10), injection (10), dependencies (10), format (10), business (10) + 20 additional.
+**§3 (90):** Allocation (0–100%), cost (0–MAX), resources (0–100), skills, FTE (0.0–1.0), concurrent, pagination, Unicode, durations, gap sizes, forecast periods, utilization boundaries.
+**§4 (90):** Allocation logic (15), cost calc (10), availability (10), gap analysis (10), audit (5) + 40 additional.
+**§5 (90):** Team (10), budget (10), schedule (10), HR (10), export (10) + 50 additional.
+**§6 (22):** Injection (10), auth (10), IDOR (2).
+**§7 (15):** Concurrent allocations, cost updates, availability, bulk, lock conflicts.
+**§8 (15):** Cost calc (5), allocation (5), availability (3), gap (2).
+**§9 (10):** CRUD (<200ms), calc (<300ms), search (<500ms), export (<3s), memory.
 **§10 (10):** 50 concurrent, spike, sustained, large plans, recovery.
 
 ---

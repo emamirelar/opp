@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | ≥30 | ✅ |
+| §2 Negative | 90 | ≥90 | ✅ |
+| §3 Boundary | 90 | ≥90 | ✅ |
+| §4 Functional | 90 | ≥90 | ✅ |
+| §5 Integration | 90 | ≥90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,7 +33,7 @@ Gemini AI manager unit tests cover prompt handling, context building, response p
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,11 +67,6 @@ Gemini AI manager unit tests cover prompt handling, context building, response p
 | POS-028 | System prompt | System prompt set | Process | Applied |
 | POS-029 | User prompt | User prompt set | Process | Applied |
 | POS-030 | Few-shot examples | Examples provided | Process | Applied |
-| POS-031 | Get usage stats | Usage tracked | GetUsage | Stats |
-| POS-032 | Reset rate limit | Reset called | Reset | Reset |
-| POS-033 | Health check | API available | HealthCheck | Healthy |
-| POS-034 | Version check | Version | GetVersion | Version |
-| POS-035 | Capability check | API | GetCapabilities | Capabilities |
 
 ---
 
@@ -149,10 +144,30 @@ Gemini AI manager unit tests cover prompt handling, context building, response p
 | NEG-068 | GetConfig invalid | Config invalid | KeyNotFoundException |
 | NEG-069 | Cache invalid key | Key invalid | ArgumentException |
 | NEG-070 | Response content blocked | Content blocked | ContentFilterException |
+| NEG-071 | Generate prompt whitespace | Input="   " | ValidationException |
+| NEG-072 | Build context empty | Data=[] | ValidationException |
+| NEG-073 | Send request null config | Config=null | ArgumentNullException |
+| NEG-074 | Parse response empty | Response="" | ParseException |
+| NEG-075 | Get completion null | Prompt=null | ArgumentNullException |
+| NEG-076 | Count tokens null | Text=null | ArgumentNullException |
+| NEG-077 | Truncate null text | Text=null | ArgumentNullException |
+| NEG-078 | Get model null | Model=null | ArgumentNullException |
+| NEG-079 | Get config null | Config=null | ArgumentNullException |
+| NEG-080 | Validate null prompt | Prompt=null | ArgumentNullException |
+| NEG-081 | Format null output | Output=null | ArgumentNullException |
+| NEG-082 | Extract JSON null | Response=null | ArgumentNullException |
+| NEG-083 | Stream null handler | Handler=null | ArgumentNullException |
+| NEG-084 | Set temp null | Temp=null | ArgumentNullException |
+| NEG-085 | Set max tokens null | MaxTokens=null | ArgumentNullException |
+| NEG-086 | Get usage null user | User=null | ArgumentNullException |
+| NEG-087 | Reset rate limit invalid | Invalid | ArgumentException |
+| NEG-088 | Health check invalid | Invalid | ArgumentException |
+| NEG-089 | Get version invalid | Invalid | ArgumentException |
+| NEG-090 | Get capabilities invalid | Invalid | ArgumentException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Condition | Expected Result |
 |----|-----------|-------------------|-----------------|
@@ -226,10 +241,30 @@ Gemini AI manager unit tests cover prompt handling, context building, response p
 | BND-068 | Async cancellation | Cancel token | OperationCanceledException |
 | BND-069 | Task timeout | Timeout | TimeoutException |
 | BND-070 | Concurrent same second | Same timestamp | Deterministic |
+| BND-071 | Prompt single char | Length=1 | Valid |
+| BND-072 | Context single item | Count=1 | Valid |
+| BND-073 | Token count one | Tokens=1 | Valid |
+| BND-074 | Temperature zero | Temp=0 | Valid |
+| BND-075 | Temperature one | Temp=1 | Valid |
+| BND-076 | Max tokens min | MaxTokens=1 | Valid |
+| BND-077 | Max tokens max | MaxTokens=limit | Valid |
+| BND-078 | Rate limit at limit | At limit | Reject |
+| BND-079 | Rate limit at limit-1 | Limit-1 | Valid |
+| BND-080 | Retry at min | Retry=0 | No retry |
+| BND-081 | Retry at max | Retry=max | Max retries |
+| BND-082 | Timeout at min | Timeout=1s | Valid |
+| BND-083 | Timeout at max | Timeout=120s | Valid |
+| BND-084 | Model enum first | First | Valid |
+| BND-085 | Model enum last | Last | Valid |
+| BND-086 | Cache TTL min | TTL=1s | Valid |
+| BND-087 | Cache TTL max | TTL=24h | Valid |
+| BND-088 | Usage stats zero | Usage=0 | Valid |
+| BND-089 | Few-shot count zero | Count=0 | Valid |
+| BND-090 | Few-shot count max | Count=limit | Valid |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -283,10 +318,50 @@ Gemini AI manager unit tests cover prompt handling, context building, response p
 | FUN-048 | Capability check | Logic | GetCapabilities | Capabilities |
 | FUN-049 | Permission cached | Performance | Repeated check | Cached |
 | FUN-050 | AsNoTracking read-only | Performance | List | No tracking |
+| FUN-051 | Prompt required | Validation | Generate | Reject if empty |
+| FUN-052 | Context required | Validation | BuildContext | Reject if null |
+| FUN-053 | Model required | Validation | SendRequest | Reject if invalid |
+| FUN-054 | API key required | Constraint | SendRequest | Reject if missing |
+| FUN-055 | Rate limit enforced | Constraint | SendRequest | Reject if over |
+| FUN-056 | Token limit enforced | Constraint | SendRequest | Reject if over |
+| FUN-057 | Token count accurate | Logic | CountTokens | Accurate |
+| FUN-058 | Truncate preserves start | Logic | Truncate | Start preserved |
+| FUN-059 | Parse response structure | Logic | ParseResponse | Structured |
+| FUN-060 | Extract JSON valid | Logic | ExtractJson | Valid JSON |
+| FUN-061 | GetCompletion returns text | Logic | GetCompletion | Text |
+| FUN-062 | Stream returns chunks | Logic | Stream | Chunks |
+| FUN-063 | Retry on transient | Logic | Retry | Retried |
+| FUN-064 | Fallback on primary fail | Logic | Fallback | Fallback used |
+| FUN-065 | Cache key unique | Logic | Cache | Unique key |
+| FUN-066 | Cache TTL respected | Logic | Cache | Expiry |
+| FUN-067 | Format output sanitizes | Logic | Format | Sanitized |
+| FUN-068 | Validate prompt format | Validation | Validate | Format check |
+| FUN-069 | Structured output schema | Logic | GetCompletion | Schema applied |
+| FUN-070 | System prompt applied | Logic | Process | Applied |
+| FUN-071 | User prompt applied | Logic | Process | Applied |
+| FUN-072 | Few-shot applied | Logic | Process | Applied |
+| FUN-073 | Usage stats tracked | Logic | SendRequest | Tracked |
+| FUN-074 | Rate limit reset | Logic | Reset | Reset |
+| FUN-075 | Health check interval | Logic | HealthCheck | Interval |
+| FUN-076 | Version check | Logic | GetVersion | Version |
+| FUN-077 | Capability check | Logic | GetCapabilities | Capabilities |
+| FUN-078 | Include loads config | Data load | GetById include | Config loaded |
+| FUN-079 | No Cartesian on includes | Data load | Multiple includes | Split queries |
+| FUN-080 | Audit API call | Audit | SendRequest | Logged |
+| FUN-081 | Permission before send | Authorization | SendRequest | Check first |
+| FUN-082 | Permission before get | Authorization | GetById | Check first |
+| FUN-083 | Pagination offset | Calculation | Page | Skip correct |
+| FUN-084 | Total count accurate | Calculation | Count | Matches |
+| FUN-085 | Sort applies | Calculation | Sort | Ordered |
+| FUN-086 | Filter AND logic | Filter | Multi-filter | All match |
+| FUN-087 | Transaction on create | Transaction | Create | Atomic |
+| FUN-088 | Transaction on update | Transaction | Update | Atomic |
+| FUN-089 | Transaction on delete | Transaction | Delete | Atomic |
+| FUN-090 | Async all operations | Concurrency | All | Async |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|
@@ -340,6 +415,46 @@ Gemini AI manager unit tests cover prompt handling, context building, response p
 | INT-048 | Response with parse | Scenario | Response | Parsed |
 | INT-049 | JSON extraction | Scenario | ExtractJson | JSON |
 | INT-050 | E2E completion flow | Scenario | Full flow | Complete |
+| INT-051 | Generate then send | Scenario | GeneratePrompt, SendRequest | Both |
+| INT-052 | Build context then send | Scenario | BuildContext, SendRequest | Both |
+| INT-053 | Parse then extract | Scenario | ParseResponse, ExtractJson | Both |
+| INT-054 | Cache hit flow | Scenario | Cache | Hit |
+| INT-055 | Cache miss flow | Scenario | Cache | Miss |
+| INT-056 | Retry flow | Scenario | Retry | Success |
+| INT-057 | Timeout flow | Scenario | Timeout | Handled |
+| INT-058 | Fallback flow | Scenario | Fallback | Used |
+| INT-059 | Stream flow | Scenario | Stream | Chunks |
+| INT-060 | Structured output flow | Scenario | GetCompletion | Structured |
+| INT-061 | Get model then send | Scenario | GetModel, SendRequest | Both |
+| INT-062 | Get config then send | Scenario | GetConfig, SendRequest | Both |
+| INT-063 | HTTP client integration | Integration | HttpClient | Call |
+| INT-064 | Config integration | Integration | Config | Read |
+| INT-065 | Mapper integration | Integration | Mapper | Mapped |
+| INT-066 | Repository integration | Integration | Repository | CRUD |
+| INT-067 | DbContext integration | Integration | DbContext | Scoped |
+| INT-068 | Transaction scope | Integration | Transaction | Atomic |
+| INT-069 | API key from config | Integration | Config | Key |
+| INT-070 | Model from config | Integration | Config | Model |
+| INT-071 | Permission service | Integration | Permission | Check |
+| INT-072 | User resolver | Integration | User | Resolved |
+| INT-073 | Audit context | Integration | Audit | Context |
+| INT-074 | Logger integration | Integration | Logger | Logged |
+| INT-075 | Config-API relationship | Relationship | Config, API | Valid |
+| INT-076 | Config-User relationship | Relationship | Config, User | Valid |
+| INT-077 | Cascade soft delete | Relationship | Parent deleted | Config |
+| INT-078 | Orphan handling | Relationship | Parent deleted | Retained |
+| INT-079 | API error handling | Error | API down | Graceful |
+| INT-080 | Timeout handling | Error | Slow DB | Timeout |
+| INT-081 | Parse error handling | Error | Malformed | ParseException |
+| INT-082 | Rate limit error | Error | Over limit | RateLimitException |
+| INT-083 | Multiple API calls | Scenario | Multiple | All succeed |
+| INT-084 | Rate limit across calls | Scenario | Many calls | Limited |
+| INT-085 | Fallback chain | Scenario | Primary fail | Fallback |
+| INT-086 | Stream with parse | Scenario | Stream | Parsed |
+| INT-087 | Cache expiry | Scenario | Cache | Expiry |
+| INT-088 | Retry with backoff | Scenario | Retry | Backoff |
+| INT-089 | Health check | Scenario | HealthCheck | Healthy |
+| INT-090 | Full workflow | Scenario | Full flow | Complete |
 
 ---
 

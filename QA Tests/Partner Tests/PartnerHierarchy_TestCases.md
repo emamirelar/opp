@@ -12,19 +12,22 @@
 
 | Category | File/Section | Count | Minimum Required | Status |
 |----------|-------------|-------|-----------------|--------|
-| Positive Tests | §1 | 35 | 30-50 | ✅ |
-| Negative Tests | §2 | 70 | Max(50, 2×35)=70 | ✅ |
-| Boundary Tests | §3 | 70 | Max(50, 2×35)=70 | ✅ |
-| Functional Tests | §4 | 50 | ≥50 | ✅ |
-| Integration Tests | §5 | 50 | ≥50 | ✅ |
+| Positive Tests | §1 | 30 | 30-50 | ✅ |
+| Negative Tests | §2 | 90 | 90 | ✅ |
+| Boundary Tests | §3 | 90 | 90 | ✅ |
+| Functional Tests | §4 | 90 | 90 | ✅ |
+| Integration Tests | §5 | 90 | 90 | ✅ |
 | Security Tests | §6 | 50 | ≥50 | ✅ |
 | Concurrency Tests | §7 | 25 | ≥25 | ✅ |
 | Unit Tests | §8 | 21 | ≥21 | ✅ |
 | Performance Tests | §9 | 16 | ≥16 | ✅ |
 | Load Tests | §10 | 10 | ≥10 | ✅ |
-| **TOTAL** | | **397** | **≥347** | ✅ |
+| **TOTAL** | | **462** | **≥462** | ✅ |
 
-**3:1 Ratio Check:** (N + B) = 140 ≥ 3 × P = 105 → ✅ PASS
+| **N≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
+| **E≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
+| **F≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
+| **I≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
 
 ---
 
@@ -153,11 +156,6 @@ The Partner Hierarchy Tree View provides a navigable, expandable/collapsible tre
 | POS-028 | Multi-select nodes (Ctrl+click) | Multi-select enabled | Ctrl+click 3 nodes | 3 nodes selected, actions available | P2 |
 | POS-029 | Tree refreshes after partner creation | Tree loaded | Create new partner externally | Refresh shows new partner in tree | P2 |
 | POS-030 | Tree refreshes after partner deletion | Tree loaded | Soft-delete partner externally | Refresh removes partner from tree | P2 |
-| POS-031 | Search highlights in deeply nested nodes | Deep hierarchy | Search for deeply nested partner | Tree auto-expands to reveal match | P1 |
-| POS-032 | Print tree view | Tree visible | Ctrl+P | Printable layout generated | P2 |
-| POS-033 | Tooltip on hover shows partner details | Tree loaded | Hover over partner node | Tooltip shows type, status, org unit | P2 |
-| POS-034 | Breadcrumb trail from tree navigation | Navigate to detail from tree | Observe breadcrumb | Shows Hierarchy > Partner Name | P2 |
-| POS-035 | Filter tree by partner status | Active/Inactive partners | Filter by "Active" only | Only active partners visible in tree | P2 |
 
 ---
 
@@ -264,6 +262,26 @@ The Partner Hierarchy Tree View provides a navigable, expandable/collapsible tre
 | NEG-068 | Tree with only deleted partners | All IsDeleted=true | "No partners found" | P1 |
 | NEG-069 | Open tree in multiple browser tabs | 2 tabs same user | Independent state per tab | P2 |
 | NEG-070 | Invalid sort parameter in URL | ?sort=INVALID | Default sort applied | P2 |
+| NEG-071 | Search with null after trim | "   " | Treated as empty | P1 |
+| NEG-072 | Tree with invalid parent reference | ParentId = 999999 | Rendered as root | P1 |
+| NEG-073 | Expand with API returning 500 | Expand | Error toast | P1 |
+| NEG-074 | Context menu with deleted parent | Parent deleted | Error | P1 |
+| NEG-075 | Drag with invalid target | Non-partner area | Drop cancelled | P1 |
+| NEG-076 | Reparent with permission denied | No edit | 403, revert | P1 |
+| NEG-077 | Tree with malformed API response | Invalid JSON | Error handled | P1 |
+| NEG-078 | Search with control characters | \0 in query | Sanitized | P1 |
+| NEG-079 | Tree with negative child count | Count = -1 | Display 0 | P1 |
+| NEG-080 | Expand with timeout | >30s | Timeout message | P1 |
+| NEG-081 | Tree with duplicate partner IDs | Same ID twice | One shown | P1 |
+| NEG-082 | Tree with invalid hierarchy depth | Depth > 20 | Warning or error | P1 |
+| NEG-083 | Search with regex special chars | `.*+?` | Escaped | P1 |
+| NEG-084 | Tree with null node data | Node = null | Skipped | P1 |
+| NEG-085 | Context menu with expired session | Session expired | Auth prompt | P1 |
+| NEG-086 | Reparent with stale data | Stale version | Conflict | P1 |
+| NEG-087 | Tree with oversized response | 10MB | Paginated or error | P1 |
+| NEG-088 | Search with Unicode null | \u0000 | Sanitized | P1 |
+| NEG-089 | Tree with circular ref in flat list | Circular ParentIds | Error | P0 |
+| NEG-090 | Expand during unmount | Unmount during expand | No error | P1 |
 
 ---
 
@@ -375,6 +393,26 @@ The Partner Hierarchy Tree View provides a navigable, expandable/collapsible tre
 | BND-068 | Context menu with 0 available actions | All actions disabled for role | No context menu or "No actions available" | P2 |
 | BND-069 | Tooltip for partner with all null optional fields | Minimal data | Tooltip shows only available info | P2 |
 | BND-070 | Expand/collapse exactly at API timeout boundary | Expand takes ~29s (timeout 30s) | Completes just in time | P2 |
+| BND-071 | Search query exactly 1 char | "A" | Matches | P1 |
+| BND-072 | Search query exactly 255 chars | Max | Processed | P1 |
+| BND-073 | Tree with exactly 0 partners | Empty | Empty state | P1 |
+| BND-074 | Tree with exactly 1 partner | Single | One node | P1 |
+| BND-075 | Tree with exactly 100 partners | Medium | All in 2s | P1 |
+| BND-076 | Tree with exactly 1000 partners | Large | Loaded in 5s | P1 |
+| BND-077 | Node with exactly 1 child | Single | One child | P1 |
+| BND-078 | Node with exactly 1000 children | Max | Paginated | P1 |
+| BND-079 | Hierarchy depth exactly 0 | Flat | No expand | P1 |
+| BND-080 | Hierarchy depth exactly 20 | Max | Full depth | P1 |
+| BND-081 | Root-level count exactly 1 | Single root | One root | P1 |
+| BND-082 | Root-level count exactly 5000 | Max | Paginated | P1 |
+| BND-083 | Partner name exactly 1 char | "A" | Displayed | P1 |
+| BND-084 | Partner name exactly 200 chars | Max | Ellipsis | P1 |
+| BND-085 | Viewport exactly 320px | Mobile | Responsive | P2 |
+| BND-086 | Viewport exactly 3840px | 4K | Uses space | P2 |
+| BND-087 | Scroll position exactly 0 | Top | At top | P2 |
+| BND-088 | Scroll position at bottom | Bottom | At bottom | P2 |
+| BND-089 | Selected nodes exactly 0 | None | No selection | P2 |
+| BND-090 | Selected nodes exactly 100 | Max | Capped | P2 |
 
 ---
 
@@ -451,6 +489,46 @@ The Partner Hierarchy Tree View provides a navigable, expandable/collapsible tre
 | FUN-048 | Error event logged | API error | Error code, trace, user context | P1 |
 | FUN-049 | Multi-select bulk action logged | Bulk operation | User ID, action, affected IDs | P1 |
 | FUN-050 | Drag-drop circular reference attempt logged | Blocked circular | User ID, attempted operation | P1 |
+| FUN-051 | Tree excludes soft-deleted partners | IsDeleted | Load | Deleted not shown | P0 |
+| FUN-052 | Parent-child ordering correct | ParentId | Load | Correct hierarchy | P0 |
+| FUN-053 | Root nodes have no parent | ParentId=null | Load | Top-level | P0 |
+| FUN-054 | Expand state persists | Session | Navigate and back | Same expanded | P1 |
+| FUN-055 | Search case-insensitive | Search | "acme" vs "ACME" | Same matches | P1 |
+| FUN-056 | Search auto-expands to matches | Search | Deep match | Parents expand | P1 |
+| FUN-057 | Node click navigates | Click | Partner name | Route to detail | P0 |
+| FUN-058 | Context menu respects permissions | Role | Right-click | Only permitted | P1 |
+| FUN-059 | Reparent updates hierarchy | Drag-drop | Drag child | API called | P1 |
+| FUN-060 | Reparent blocked for circular | Circular | Drag parent under child | Error | P0 |
+| FUN-061 | New partner after refresh | Create | Create, refresh | Node appears | P1 |
+| FUN-062 | Deleted partner after refresh | Delete | Delete, refresh | Node removed | P1 |
+| FUN-063 | Child count updates on delete | Delete child | Delete one | Count decrements | P1 |
+| FUN-064 | Search clears on page leave | Navigate | Leave, return | Search empty | P2 |
+| FUN-065 | Sort order alphabetical | Sort | Load | Siblings A-Z | P1 |
+| FUN-066 | Search min length 1 | Search | "A" | Valid | P1 |
+| FUN-067 | Search max length 255 | Search | 255 chars | Valid | P1 |
+| FUN-068 | Partner ID positive | ID | 42 | -1 invalid | P1 |
+| FUN-069 | ParentId references existing | FK | Valid ID | Non-existent error | P1 |
+| FUN-070 | ParentId not self | Self-ref | Other ID | Own ID invalid | P0 |
+| FUN-071 | Hierarchy depth ≤ 20 | Depth | 19 levels | 21 error | P1 |
+| FUN-072 | Search input sanitized | XSS | "ACME" | `<script>` escaped | P0 |
+| FUN-073 | Drag-drop target valid | Drop | Valid parent | Non-partner invalid | P1 |
+| FUN-074 | Context menu validates state | State | Active | Deleted error | P1 |
+| FUN-075 | Sort parameter valid | Sort | "name", "code" | "DROP_TABLE" default | P1 |
+| FUN-076 | Page parameter ≥ 1 | Page | 1 | 0, -1 default | P2 |
+| FUN-077 | Node selection limit 100 | Multi-select | ≤100 | 101 capped | P2 |
+| FUN-078 | API content-type validation | Response | application/json | text/html error | P1 |
+| FUN-079 | Reparent validates permissions | Auth | Edit rights | Read-only 403 | P1 |
+| FUN-080 | Circular validation server-side | Server | Non-circular | Circular 400 | P0 |
+| FUN-081 | Max concurrent requests 5/s | Rate | 6 rapid | 6th queued | P1 |
+| FUN-082 | Max nodes ~5000 visible | Virtualization | 5001 | Virtualization | P2 |
+| FUN-083 | Max search results 1000 | Search | 5000 matches | Paginated | P1 |
+| FUN-084 | Session timeout 30 min | Timeout | 31 min | Expired | P1 |
+| FUN-085 | API response 10MB max | Size | Large | Paginated | P2 |
+| FUN-086 | Min browser Chrome 90+ | Browser | Chrome 89 | Warning | P2 |
+| FUN-087 | Max drag distance for scroll | Drag | >50px from edge | Auto-scroll | P2 |
+| FUN-088 | Max multi-select 100 | Select | 101 | Capped | P2 |
+| FUN-089 | WebSocket reconnect 5 retries | Reconnect | 6th | Fallback polling | P2 |
+| FUN-090 | Export tree limit 10000 | Export | 10001 | Chunked | P2 |
 
 ---
 

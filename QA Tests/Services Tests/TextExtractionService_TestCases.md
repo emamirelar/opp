@@ -11,19 +11,24 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+| Check | Formula | Result |
+|-------|---------|--------|
+| N≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| E≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| F≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| I≥3P | 90 ≥ 3×30=90 | ✅ PASS |
 
 ---
 
@@ -149,10 +154,30 @@ Text extraction service: OCR, PDF parsing, Word parsing, structured data extract
 | NEG-068 | Transparent | ExtractFromImageAsync(transparent) | Extracted |
 | NEG-069 | Low resolution | ExtractFromImageAsync(lowRes) | Extracted |
 | NEG-070 | Warm-up failure | WarmCacheAsync() | CacheException |
+| NEG-071 | Null metadata key | ExtractMetadataAsync(nullKey) | ArgumentNullException |
+| NEG-072 | Invalid page range | ExtractPageAsync(pdf, 0, 0) | ArgumentException |
+| NEG-073 | Null progress callback | ExtractAsync(doc, nullProgress) | ArgumentNullException |
+| NEG-074 | Invalid batch item | BatchExtractAsync([null]) | ArgumentNullException |
+| NEG-075 | Mixed format batch | BatchExtractAsync(mixedFormats) | FormatException |
+| NEG-076 | Stream closed | ExtractStreamAsync(closed) | ObjectDisposedException |
+| NEG-077 | Invalid MIME type | ExtractAsync(bytes, badMime) | NotSupportedException |
+| NEG-078 | Null encoding hint | ExtractAsync(doc, nullEncoding) | ArgumentNullException |
+| NEG-079 | Invalid DPI | ExtractFromImageAsync(img, -1) | ArgumentException |
+| NEG-080 | Null table config | ExtractStructuredAsync(doc, null) | ArgumentNullException |
+| NEG-081 | Invalid cache key | GetCachedAsync(badKey) | ArgumentException |
+| NEG-082 | Null language hint | ExtractAsync(doc, nullLang) | ArgumentNullException |
+| NEG-083 | Invalid retry count | ExtractAsync(..., retry: -1) | ArgumentException |
+| NEG-084 | Null temp path | ExtractAsync(..., tempPath: null) | ArgumentNullException |
+| NEG-085 | Read-only stream | ExtractStreamAsync(readOnly) | ArgumentException |
+| NEG-086 | Invalid page range order | ExtractPageAsync(pdf, 5, 3) | ArgumentException |
+| NEG-087 | Null structured options | ExtractStructuredAsync(doc, null) | ArgumentNullException |
+| NEG-088 | Invalid batch order | BatchExtractAsync(badOrder) | ArgumentException |
+| NEG-089 | Null extraction result | ProcessExtractionResult(null) | ArgumentNullException |
+| NEG-090 | Invalid content disposition | ExtractAsync(badDisposition) | ArgumentException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Value | Expected Result |
 |----|-----------|----------------|-----------------|

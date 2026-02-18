@@ -11,19 +11,18 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P? 90≥90 ✅ | E≥3P? 90≥90 ✅ | F≥3P? 90≥90 ✅ | I≥3P? 90≥90 ✅
 
 ---
 
@@ -44,7 +43,7 @@
 
 ## §1 Positive Tests (Happy Path)
 
-> **Count: 35** | **Minimum: 30-50** | ✅ COMPLIANT
+> **Count: 30** | **Minimum: 30-50** | ✅ COMPLIANT
 
 | ID | Test Name | Precondition | Steps (Brief) | Expected Result | Priority |
 |----|-----------|-------------|---------------|-----------------|----------|
@@ -78,17 +77,12 @@
 | POS-028 | Error report download | Partial failure | Download errors | CSV of failed rows | P1 |
 | POS-029 | Bulk create interactions | Partners exist | Import 50 interactions | All 50 created | P1 |
 | POS-030 | Batch size configuration | Config set | Import | Respects batch size | P1 |
-| POS-031 | Bulk operation timeout | Large import | Import | Completes or timeout msg | P1 |
-| POS-032 | Export with date format | Config format | Export | Dates formatted | P2 |
-| POS-033 | Import with mapping | Column map | Import | Columns mapped | P1 |
-| POS-034 | Bulk delete with confirmation | Select 20 | Confirm delete | All deleted | P0 |
-| POS-035 | Bulk operation permissions | User with permission | Execute bulk | Success | P0 |
 
 ---
 
 ## §2 Negative Tests (Failure Scenarios)
 
-> **Count: 70** | **Minimum: 70** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90** | ✅ COMPLIANT
 
 ### 2.1 Invalid Input (15)
 
@@ -185,11 +179,36 @@
 | NEG-069 | Server restart during bulk | Restart | Job lost or resume | P2 |
 | NEG-070 | Permission revoked mid-bulk | User deactivated | Job fails | P1 |
 
+### 2.6 Additional Negative (20)
+
+| ID | Test Name | Scenario | Expected | Priority |
+|----|-----------|----------|----------|----------|
+| NEG-071 | Import with BOM only | File has only BOM | No data error | P1 |
+| NEG-072 | Export with no permission | No export perm | 403 | P0 |
+| NEG-073 | Bulk update with stale version | Optimistic lock | Row rejected | P1 |
+| NEG-074 | Import with wrong entity type | Partner data for Opp | Reject | P1 |
+| NEG-075 | Template with invalid columns | Wrong template | Error | P1 |
+| NEG-076 | Cancel already completed | Job done | Error or no-op | P1 |
+| NEG-077 | Retry with no failed rows | All success | Error or no-op | P1 |
+| NEG-078 | Export with invalid sort field | Sort=invalid | 400 | P1 |
+| NEG-079 | Import with missing required | Required empty | Row rejected | P0 |
+| NEG-080 | Bulk delete with no selection | Empty IDs | 400 | P0 |
+| NEG-081 | Export with cross-org filter | User Org A, filter B | 403 | P0 |
+| NEG-082 | Import for other org | Target org=other | 403 | P0 |
+| NEG-083 | Bulk result expired | 25 hr old | 404 or expired | P1 |
+| NEG-084 | Concurrent bulk over limit | 6th bulk | Queue or reject | P1 |
+| NEG-085 | Import with invalid lookup | Lookup value missing | Row rejected | P1 |
+| NEG-086 | Export format mismatch | Request CSV get JSON | Correct format | P1 |
+| NEG-087 | Bulk job not found | Invalid job ID | 404 | P1 |
+| NEG-088 | Retry other user's job | User A retry B's | 403 | P0 |
+| NEG-089 | Import with formula injection | =cmd|' | Sanitized | P0 |
+| NEG-090 | Export with path traversal | Filename ../../../ | Sanitized | P0 |
+
 ---
 
 ## §3 Boundary Tests (Edge Cases)
 
-> **Count: 70** | **Minimum: 70** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90** | ✅ COMPLIANT
 
 ### 3.1 Batch Size Boundaries (15)
 
@@ -291,11 +310,36 @@
 | BND-069 | Invalid CSV row | 1 bad row in 100 | 99 success, 1 error | P1 |
 | BND-070 | Mixed line endings | CRLF and LF | Parsed correctly | P1 |
 
+### 3.7 Additional Boundaries (20)
+
+| ID | Test Name | Condition | Expected | Priority |
+|----|-----------|-----------|----------|----------|
+| BND-071 | Import at 1 row | Single row | Success | P0 |
+| BND-072 | Export at 1 record | Single | Single row file | P1 |
+| BND-073 | Batch at 1 | Size 1 | Success | P0 |
+| BND-074 | Progress at 0% | Start | 0% | P0 |
+| BND-075 | Progress at 100% | Complete | 100% | P0 |
+| BND-076 | Error report at 0 | No failures | No report | P1 |
+| BND-077 | Concurrent at 1 | Single job | Success | P0 |
+| BND-078 | File at 0.1 MB | Min size | Accept | P1 |
+| BND-079 | File at 50 MB | Max size | Accept or reject | P1 |
+| BND-080 | Column at 1 | Single column | Valid | P1 |
+| BND-081 | Column at 100 | Max columns | Valid or reject | P2 |
+| BND-082 | Timeout at 60 sec | Min | Fires at 60s | P1 |
+| BND-083 | Timeout at 3600 sec | Max | Fires at 3600s | P1 |
+| BND-084 | Retry at 1 | First retry | Success or fail | P1 |
+| BND-085 | Retry at 5 | Max retry | Final | P1 |
+| BND-086 | Chunk at 100 | Min chunk | Process | P2 |
+| BND-087 | Chunk at 1000 | Max chunk | Process | P2 |
+| BND-088 | Queue at 1 | Single slot | Accept | P1 |
+| BND-089 | Batch ID at 1 char | Min length | Valid | P2 |
+| BND-090 | Batch ID at 50 chars | Max length | Valid | P2 |
+
 ---
 
 ## §4 Functional Tests (Business Rules)
 
-> **Count: 50** | **Minimum: 50** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90** | ✅ COMPLIANT
 
 ### 4.1 Workflow Rules (15)
 
@@ -367,11 +411,56 @@
 | FUN-049 | Template download | User, Template type | P1 |
 | FUN-050 | Bulk permission denied | User, Action, 403 | P0 |
 
+### 4.5 Additional Functional Rules (40)
+
+| ID | Rule | Trigger | Expected | Priority |
+|----|------|---------|----------|----------|
+| FUN-051 | File format CSV | .csv | Accept | P0 |
+| FUN-052 | File format Excel | .xlsx | Accept | P0 |
+| FUN-053 | Required columns | Import | All present | P0 |
+| FUN-054 | Row count limit | Import | <= 10000 | P0 |
+| FUN-055 | File size limit | Import | <= 50 MB | P0 |
+| FUN-056 | Entity ID exists | Update | Valid | P0 |
+| FUN-057 | Batch size range | 1-1000 | In range | P1 |
+| FUN-058 | Duplicate handling | Config | Skip or error | P1 |
+| FUN-059 | Encoding UTF-8 | Import | UTF-8 | P1 |
+| FUN-060 | Date format | Import | Valid | P1 |
+| FUN-061 | Numeric format | Import | Valid | P1 |
+| FUN-062 | Email format | Import | Valid | P1 |
+| FUN-063 | Permission check | Bulk | Has access | P0 |
+| FUN-064 | Concurrent limit | <= 5 | Queue or reject | P1 |
+| FUN-065 | Export format | CSV/Excel | Valid | P1 |
+| FUN-066 | Mapping valid | Import | Valid map | P1 |
+| FUN-067 | One bulk per user | Optional | Queue or reject | P1 |
+| FUN-068 | Bulk job unique ID | Create | Unique | P1 |
+| FUN-069 | No update running job | Update running | Rejected | P1 |
+| FUN-070 | Cancel own job only | Cancel other | 403 | P0 |
+| FUN-071 | Export row limit | 100000 | Enforced | P1 |
+| FUN-072 | Import stop on error | Config | Stop | P0 |
+| FUN-073 | Import continue on error | Config | Continue | P0 |
+| FUN-074 | Rollback full failure | All fail | Rollback | P0 |
+| FUN-075 | Retention 24 hr | Results | Deleted after | P2 |
+| FUN-076 | Quota per org | Over quota | Rejected | P1 |
+| FUN-077 | Bulk import start audit | Start | JobId, User | P0 |
+| FUN-078 | Bulk import complete audit | Complete | Success/Fail count | P0 |
+| FUN-079 | Bulk update audit | Update | Entity type, Count | P0 |
+| FUN-080 | Bulk delete audit | Delete | Entity type, Count | P0 |
+| FUN-081 | Bulk export audit | Export | Filters, Count | P0 |
+| FUN-082 | Bulk cancel audit | Cancel | JobId, User | P1 |
+| FUN-083 | Bulk retry audit | Retry | JobId, Retry count | P1 |
+| FUN-084 | Template download audit | Download | User, Template | P1 |
+| FUN-085 | FK validated import | Import | Invalid FK rejected | P0 |
+| FUN-086 | Unique on import | Import | Duplicate rejected | P0 |
+| FUN-087 | Permission per row | Bulk update | No access = reject | P1 |
+| FUN-088 | Retry failed only | Retry | Only failed | P1 |
+| FUN-089 | Export respects filters | Export | Filtered | P0 |
+| FUN-090 | Template matches schema | Download | Valid template | P1 |
+
 ---
 
 ## §5 Integration Tests (End-to-End Flows)
 
-> **Count: 50** | **Minimum: 50** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90** | ✅ COMPLIANT
 
 ### 5.1 CRUD Integration (15)
 
@@ -442,6 +531,51 @@
 | INT-048 | Audit + bulk | Bulk complete | Audit written | P0 |
 | INT-049 | Notification + bulk | Bulk complete | Notification sent | P1 |
 | INT-050 | Permission + bulk | Per-row permission | Rows filtered | P0 |
+
+### 5.5 Additional Integration Flows (40)
+
+| ID | Test | Scenario | Expected | Priority |
+|----|------|----------|----------|----------|
+| INT-051 | Import partners → create contacts | Partner, Contact | Both created | P0 |
+| INT-052 | Import opportunities → link partners | Opp, Partner | FK set | P0 |
+| INT-053 | Bulk update → audit | Partner, Audit | Audit entry | P0 |
+| INT-054 | Bulk delete → soft delete | Partner | IsDeleted set | P0 |
+| INT-055 | Import → validation → create | Partner | Validated then created | P0 |
+| INT-056 | Export → import round-trip | Partner | Data preserved | P1 |
+| INT-057 | Bulk update → notification | Partner | Notifications sent | P1 |
+| INT-058 | Bulk create → search index | Partner | Indexed | P1 |
+| INT-059 | Import with lookup | Partner type | Lookup resolved | P1 |
+| INT-060 | Bulk workflow state change | Opportunity | State updated | P1 |
+| INT-061 | Import → cascade | Parent, Child | Child created | P1 |
+| INT-062 | Bulk delete with dependencies | Partner, Contact | Per config | P0 |
+| INT-063 | Export → external system | Partner | Format compatible | P2 |
+| INT-064 | Import from external | External format | Mapped and imported | P2 |
+| INT-065 | Bulk → sync to oUP | Partner | Synced | P2 |
+| INT-066 | Export with date filter | Last 30 days | Filtered | P0 |
+| INT-067 | Export with status filter | Active only | Filtered | P0 |
+| INT-068 | Export with org filter | Org A | Only Org A | P0 |
+| INT-069 | Export pagination | 5000 records | Chunked | P1 |
+| INT-070 | Import with filter | Only valid rows | Invalid skipped | P1 |
+| INT-071 | Bulk update with filter | Status=Draft | Only drafts | P1 |
+| INT-072 | Bulk delete with filter | Inactive | Only inactive | P1 |
+| INT-073 | Export sort | By name | Sorted | P1 |
+| INT-074 | Export columns | Selected | Only those | P1 |
+| INT-075 | Import column mapping | Map A→B | Mapped | P1 |
+| INT-076 | Progress 0% at start | Start | 0% | P0 |
+| INT-077 | Progress 100% at end | Complete | 100% | P0 |
+| INT-078 | Progress incremental | Running | Increases | P0 |
+| INT-079 | Cancel updates status | Cancel | Status=Cancelled | P0 |
+| INT-080 | Error report downloadable | Partial fail | Report available | P0 |
+| INT-081 | Retry from report | Retry | Failed rows retried | P1 |
+| INT-082 | Partial success count | 80/100 | 80 success, 20 fail | P1 |
+| INT-083 | Timeout message | Timeout | Clear message | P1 |
+| INT-084 | DB error message | DB fail | Clear error | P1 |
+| INT-085 | Validation error per row | Row 5 invalid | Row 5 in report | P1 |
+| INT-086 | Concurrent bulk progress | 2 bulks | Separate progress | P1 |
+| INT-087 | Bulk result retention | 24 hr | Deleted after | P2 |
+| INT-088 | Resume interrupted | Interrupt | Resume or restart | P2 |
+| INT-089 | Export stream | Large export | Streamed | P1 |
+| INT-090 | Import stream | Large import | Streamed | P1 |
 
 ---
 

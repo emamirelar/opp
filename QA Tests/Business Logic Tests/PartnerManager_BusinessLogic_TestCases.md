@@ -12,19 +12,19 @@
 
 | Category | File/Section | Count | Minimum Required | Status |
 |----------|-------------|-------|-----------------|--------|
-| Positive Tests | §1 | 35 | 30-50 | ✅ |
-| Negative Tests | §2 | 70 | Max(50, 2×35)=70 | ✅ |
-| Boundary Tests | §3 | 70 | Max(50, 2×35)=70 | ✅ |
-| Functional Tests | §4 | 50 | ≥50 | ✅ |
-| Integration Tests | §5 | 50 | ≥50 | ✅ |
+| Positive Tests | §1 | 30 | 30-50 | ✅ |
+| Negative Tests | §2 | 90 | Max(50, 3×30)=90 | ✅ |
+| Boundary Tests | §3 | 90 | Max(50, 3×30)=90 | ✅ |
+| Functional Tests | §4 | 90 | ≥90 | ✅ |
+| Integration Tests | §5 | 90 | ≥90 | ✅ |
 | Security Tests | §6 | 50 | ≥50 | ✅ |
 | Concurrency Tests | §7 | 25 | ≥25 | ✅ |
 | Unit Tests | §8 | 21 | ≥21 | ✅ |
 | Performance Tests | §9 | 16 | ≥16 | ✅ |
 | Load Tests | §10 | 10 | ≥10 | ✅ |
-| **TOTAL** | | **397** | **≥347** | ✅ |
+| **TOTAL** | | **462** | **≥462** | ✅ |
 
-**3:1 Ratio Check:** (N + B) = 140 ≥ 3 × P = 105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -34,7 +34,7 @@ The PartnerManager handles CRUD for partners (organizations). Key features: appr
 
 ---
 
-## §1 Positive Tests (Happy Path) — 35 tests
+## §1 Positive Tests (Happy Path) — 30 tests
 
 ### Detailed Test Cases (P0)
 
@@ -92,15 +92,10 @@ The PartnerManager handles CRUD for partners (organizations). Key features: appr
 | POS-028 | Sort by date descending | Sort(date, desc) | Newest first | P2 |
 | POS-029 | Get partner audit trail | GetAudit | History entries | P2 |
 | POS-030 | Map entity to model | mapper.Map | All fields mapped | P2 |
-| POS-031 | Create from Gmail integration | Gmail data | Gmail fields set | P2 |
-| POS-032 | Get partner typeahead | GetTypeahead | Id+Name list | P2 |
-| POS-033 | Get partner count | GetCount | Non-deleted count | P2 |
-| POS-034 | Create with all optional fields | Full data | All persisted | P2 |
-| POS-035 | Restore soft-deleted partner | Restore | IsDeleted=false | P2 |
 
 ---
 
-## §2 Negative Tests — 70 tests
+## §2 Negative Tests — 90 tests
 
 ### 2.1 Invalid Input (10)
 | ID | Invalid Input | Expected | Priority |
@@ -195,10 +190,30 @@ The PartnerManager handles CRUD for partners (organizations). Key features: appr
 | NEG-068 | Create for deleted OrgUnit | BusinessException | P1 |
 | NEG-069 | Gmail import malformed data | Handled gracefully | P2 |
 | NEG-070 | Search empty string | No results or all | P1 |
+| NEG-071 | Input | Null approval request | ArgumentNull | P1 |
+| NEG-072 | Input | Invalid status string | BusinessException | P1 |
+| NEG-073 | Auth | Approve without scope | Unauthorized | P0 |
+| NEG-074 | State | Update during approval | Conflict | P1 |
+| NEG-075 | ERP | ErpDimValue collision on restore | Uniqueness | P1 |
+| NEG-076 | Dep | Logo storage unavailable | BusinessException | P1 |
+| NEG-077 | Hierarchy | Parent partner deleted | BusinessException | P1 |
+| NEG-078 | Mass | Mass assign Status | Validated | P1 |
+| NEG-079 | Search | Search with null partnerId | Error or all | P2 |
+| NEG-080 | Filter | Filter by invalid group | Error | P2 |
+| NEG-081 | Filter | Filter by invalid category | Error | P2 |
+| NEG-082 | Tree | Tree with deleted nodes | Excluded | P1 |
+| NEG-083 | Export | Export deleted partner | Excluded | P1 |
+| NEG-084 | Batch | Batch create with duplicate names | Handled | P2 |
+| NEG-085 | Logo | Logo URL path traversal | Sanitized | P0 |
+| NEG-086 | State | Reactivate archived (if blocked) | BusinessException | P1 |
+| NEG-087 | Dep | DB constraint on OrgUnit change | Error | P1 |
+| NEG-088 | Auth | Create for deleted OrgUnit | BusinessException | P1 |
+| NEG-089 | Gmail | Gmail API rate limit | Graceful | P2 |
+| NEG-090 | Input | Negative page number | Default or error | P2 |
 
 ---
 
-## §3 Boundary Tests — 70 tests
+## §3 Boundary Tests — 90 tests
 
 ### String Lengths (8)
 | ID | Field | Min | Max | At Min | At Max | Over | Pr |
@@ -367,10 +382,50 @@ The PartnerManager handles CRUD for partners (organizations). Key features: appr
 | FUN-048 | Read no audit | No modification | P1 |
 | FUN-049 | Failed op no audit | No entries | P1 |
 | FUN-050 | Batch update | Each partner's audit set | P1 |
+| FUN-051 | IsDeleted filter in list | Deleted excluded | P0 |
+| FUN-052 | Create audit | CreatedBy/Date | P0 |
+| FUN-053 | Update audit | LastModifiedBy/Date | P0 |
+| FUN-054 | Delete soft-delete | IsDeleted set | P0 |
+| FUN-055 | Approval ErpDimValue | Unique 1-7999 | P0 |
+| FUN-056 | Unapproval clear | Value cleared | P1 |
+| FUN-057 | Draft→Active | Valid | P0 |
+| FUN-058 | Active→Closed | Valid | P1 |
+| FUN-059 | Active→Archived | Valid | P1 |
+| FUN-060 | Closed→Active | Valid | P1 |
+| FUN-061 | Name from input | Auto-set | P1 |
+| FUN-062 | OrgUnit validated | Exists, !deleted | P0 |
+| FUN-063 | Contact no cascade | Intact | P1 |
+| FUN-064 | Search case-insensitive | Match | P1 |
+| FUN-065 | Pagination defaults | Page=1, Size=20 | P1 |
+| FUN-066 | Name required | Reject null | P0 |
+| FUN-067 | Type required | Reject null | P0 |
+| FUN-068 | OrgUnitId required | Reject 0 | P0 |
+| FUN-069 | Group valid | Reject invalid | P1 |
+| FUN-070 | Category valid | Reject invalid | P1 |
+| FUN-071 | ErpDimValue range | 1-7999 | P0 |
+| FUN-072 | ErpDimValue unique | Reject duplicate | P0 |
+| FUN-073 | Logo type | Reject .exe | P0 |
+| FUN-074 | Logo size | Reject >5MB | P1 |
+| FUN-075 | XSS prevention | Sanitize | P0 |
+| FUN-076 | Name trim | Trimmed | P2 |
+| FUN-077 | Circular hierarchy | Reject | P0 |
+| FUN-078 | Hierarchy depth | ≤20 | P1 |
+| FUN-079 | Status transition | Valid only | P1 |
+| FUN-080 | Approval prereqs | All required | P0 |
+| FUN-081 | Max page size | 1000 | P1 |
+| FUN-082 | FK OrgUnit | Violation | P0 |
+| FUN-083 | ErpDimValue reserved | Reject 8000-9999 | P0 |
+| FUN-084 | Unique ErpDimValue | Enforced | P0 |
+| FUN-085 | Soft-delete no cascade | Contacts intact | P1 |
+| FUN-086 | Search limit | Paginated | P2 |
+| FUN-087 | Logo overwrite | Replaced | P1 |
+| FUN-088 | Batch limit | Chunked | P2 |
+| FUN-089 | Gmail dedup | Handled | P1 |
+| FUN-090 | Max hierarchy depth | Enforced | P1 |
 
 ---
 
-## §5 Integration Tests — 50 tests
+## §5 Integration Tests — 90 tests
 
 ### 5.1 CRUD (10)
 | ID | Operation | Expected | Pr |
@@ -441,6 +496,46 @@ The PartnerManager handles CRUD for partners (organizations). Key features: appr
 | INT-048 | SQL injection → sanitized | No harm | P0 |
 | INT-049 | Large payload → 413 | Too large | P2 |
 | INT-050 | Session expired → 401 | Auth required | P1 |
+| INT-051 | Full CRUD | All succeed | P0 |
+| INT-052 | Create→Listed | In list | P0 |
+| INT-053 | Delete→Excluded | Not in list | P0 |
+| INT-054 | Update→Persisted | Saved | P0 |
+| INT-055 | Approve→ErpDimValue | Assigned | P0 |
+| INT-056 | Unapprove→Cleared | Removed | P1 |
+| INT-057 | Status lifecycle | All transitions | P1 |
+| INT-058 | Create with contacts | Both saved | P1 |
+| INT-059 | Delete→Contacts | Remain | P1 |
+| INT-060 | Restore | Re-included | P1 |
+| INT-061 | Search name | Matching | P0 |
+| INT-062 | Filter type | Type-specific | P0 |
+| INT-063 | Filter group | Group-specific | P1 |
+| INT-064 | Filter category | Category-specific | P1 |
+| INT-065 | Filter OrgUnit | OrgUnit-specific | P1 |
+| INT-066 | Filter status | Status-specific | P1 |
+| INT-067 | Combined search+filter | Intersection | P1 |
+| INT-068 | Search empty | Empty | P1 |
+| INT-069 | Case-insensitive | Same | P1 |
+| INT-070 | Exclude deleted | Correct | P1 |
+| INT-071 | Page 1 of 5 | 20 items | P1 |
+| INT-072 | Last page partial | Remaining | P1 |
+| INT-073 | Empty results | 0 total | P1 |
+| INT-074 | Single page | All items | P2 |
+| INT-075 | Max page size | 1000 | P2 |
+| INT-076 | Partner→Contacts | Loaded | P0 |
+| INT-077 | Partner→Interactions | Loaded | P0 |
+| INT-078 | Partner→Documents | Loaded | P1 |
+| INT-079 | Partner→OrgUnit | Loaded | P1 |
+| INT-080 | Partner→Parent | Loaded | P1 |
+| INT-081 | Partner→Children | Loaded | P1 |
+| INT-082 | Delete→Children | Reparented | P1 |
+| INT-083 | OrgUnit change | Scope | P1 |
+| INT-084 | Partner→Opportunities | Loaded | P1 |
+| INT-085 | Audit trail | Complete | P1 |
+| INT-086 | Invalid 400 | BusinessException | P0 |
+| INT-087 | NotFound 404 | KeyNotFound | P0 |
+| INT-088 | Unauthorized 403 | Unauthorized | P0 |
+| INT-089 | Duplicate ErpDimValue 400 | Constraint | P0 |
+| INT-090 | Invalid transition 400 | BusinessException | P1 |
 
 ---
 

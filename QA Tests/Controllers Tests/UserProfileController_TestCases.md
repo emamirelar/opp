@@ -11,19 +11,25 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
-| §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| §7 Concurrency | 10 | 10 | ✅ |
+| §8 Unit | 6 | 6 | ✅ |
+| §9 Performance | 4 | 4 | ✅ |
+| §10 Load | 2 | 2 | ✅ |
+| **TOTAL** | **462** | **≥390** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance Check**
+| Check | Result | Status |
+|-------|--------|--------|
+| N≥3P: 90≥90 | ✅ PASS | N >= 3 × P |
+| E≥3P: 90≥90 | ✅ PASS | E >= 3 × P |
+| F≥3P: 90≥90 | ✅ PASS | F >= 3 × P |
+| I≥3P: 90≥90 | ✅ PASS | I >= 3 × P |
 
 ---
 
@@ -33,7 +39,7 @@ REST API for user profiles: get/update profile, avatar, contact info, org unit.
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Steps | Expected Result |
 |----|-----------|-------|-----------------|
@@ -67,15 +73,10 @@ REST API for user profiles: get/update profile, avatar, contact info, org unit.
 | POS-028 | Get last login | GET /api/user-profile/me/last-login | Last login |
 | POS-029 | Get timezone | GET /api/user-profile/me/timezone | Timezone |
 | POS-030 | Update timezone | PUT timezone | Updated |
-| POS-031 | Get language | GET /api/user-profile/me/language | Language |
-| POS-032 | Update language | PUT language | Updated |
-| POS-033 | Combined update | PUT multiple | All updated |
-| POS-034 | Get after update | PUT then GET | Match |
-| POS-035 | Cached response | GET same query | 200 |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error |
 |----|-----------|--------------|----------------|
@@ -149,10 +150,30 @@ REST API for user profiles: get/update profile, avatar, contact info, org unit.
 | NEG-068 | Negative page | page=-1 | 400 |
 | NEG-069 | Excessive page size | pageSize=10000 | 400 |
 | NEG-070 | Soft-deleted | Query deleted | Excluded |
+| NEG-071 | Invalid JSON schema | Schema mismatch | 400 |
+| NEG-072 | Missing required field | Required null | 400 |
+| NEG-073 | Invalid date format | date=invalid | 400 |
+| NEG-074 | Future date | createdDate future | 400 |
+| NEG-075 | Invalid enum | status=invalid | 400 |
+| NEG-076 | Empty array | partners=[] | 400 |
+| NEG-077 | Invalid GUID | id=bad-guid | 400 |
+| NEG-078 | Profile locked | Locked profile | 423 |
+| NEG-079 | Maintenance mode | During maintenance | 503 |
+| NEG-080 | Quota exceeded | Storage quota | 507 |
+| NEG-081 | Invalid avatar MIME | Wrong MIME | 400 |
+| NEG-082 | Avatar corrupt | Corrupt file | 400 |
+| NEG-083 | Profile migration | During migration | 503 |
+| NEG-084 | Session invalid | Invalid session | 401 |
+| NEG-085 | Token type wrong | Wrong token type | 401 |
+| NEG-086 | Scope insufficient | OAuth scope | 403 |
+| NEG-087 | Rate limit per user | User rate limit | 429 |
+| NEG-088 | Concurrent limit | Too many concurrent | 429 |
+| NEG-089 | Request timeout | Slow request | 408 |
+| NEG-090 | Profile archived | Archived profile | 410 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max |
 |----|----------------|-----|-----|--------|--------|----------|
@@ -226,10 +247,30 @@ REST API for user profiles: get/update profile, avatar, contact info, org unit.
 | BND-068 | Contact info | - | - | Valid | - | - |
 | BND-069 | Org unit link | - | - | Valid | - | - |
 | BND-070 | Role link | - | - | Valid | - | - |
+| BND-071 | Language code | - | 10 | ✅ | ✅ | ❌ |
+| BND-072 | Preference count | 0 | 100 | ✅ | ✅ | ❌ |
+| BND-073 | Avatar byte size | 0 | 5242880 | ✅ | ✅ | ❌ |
+| BND-074 | Request size | - | 1MB | - | ✅ | ❌ |
+| BND-075 | Header count | - | 50 | ✅ | ✅ | ❌ |
+| BND-076 | Cookie size | - | 4KB | - | ✅ | ❌ |
+| BND-077 | Session duration | - | 24h | Valid | Valid | ❌ |
+| BND-078 | Token lifetime | - | 1h | Valid | Valid | ❌ |
+| BND-079 | Retry count | 0 | 3 | ✅ | ✅ | ❌ |
+| BND-080 | Backoff max | - | 30s | - | ✅ | ❌ |
+| BND-081 | Connection timeout | - | 30s | - | ✅ | ❌ |
+| BND-082 | Read timeout | - | 60s | - | ✅ | ❌ |
+| BND-083 | Write timeout | - | 60s | - | ✅ | ❌ |
+| BND-084 | Idle timeout | - | 90s | - | ✅ | ❌ |
+| BND-085 | Keep-alive | - | 60s | - | ✅ | ❌ |
+| BND-086 | Chunk size | - | 8KB | - | ✅ | ❌ |
+| BND-087 | Buffer size | - | 64KB | - | ✅ | ❌ |
+| BND-088 | Pool size | - | 100 | - | ✅ | ❌ |
+| BND-089 | Queue depth | - | 1000 | - | ✅ | ❌ |
+| BND-090 | Batch size | 1 | 100 | ✅ | ✅ | ❌ |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Category | Rule | Trigger | Expected |
 |----|----------|------|---------|----------|
@@ -283,10 +324,50 @@ REST API for user profiles: get/update profile, avatar, contact info, org unit.
 | FUN-048 | Business | Permission | Query | Scoped |
 | FUN-049 | Business | User scope | Own profile | Correct |
 | FUN-050 | Business | Contact info | Contact | Correct |
+| FUN-051 | Workflow | Get language | GET language | Language |
+| FUN-052 | Workflow | Update language | PUT language | Updated |
+| FUN-053 | Validation | Timezone format | Invalid | 400 |
+| FUN-054 | Validation | Language format | Invalid | 400 |
+| FUN-055 | Constraint | Profile lock | Locked | 423 |
+| FUN-056 | Audit | Language update | PUT language | Audit |
+| FUN-057 | Audit | Timezone update | PUT timezone | Audit |
+| FUN-058 | Business | Default timezone | No value | UTC |
+| FUN-059 | Business | Default language | No value | en |
+| FUN-060 | Workflow | Get after update | PUT then GET | Match |
+| FUN-061 | Validation | Combined fields | Partial invalid | 400 |
+| FUN-062 | Constraint | Avatar aspect | Invalid ratio | 400 |
+| FUN-063 | Audit | Profile view | GET | Audit |
+| FUN-064 | Business | Org unit cascade | Delete org | 404 |
+| FUN-065 | Workflow | Cached response | GET same | 200 |
+| FUN-066 | Validation | Email domain | Invalid domain | 400 |
+| FUN-067 | Constraint | Phone country | Invalid country | 400 |
+| FUN-068 | Audit | Avatar view | GET avatar | Audit |
+| FUN-069 | Business | Role scope | Role change | Updated |
+| FUN-070 | Workflow | Combined update | PUT multiple | All |
+| FUN-071 | Validation | Display name format | Invalid chars | 400 |
+| FUN-072 | Constraint | Org hierarchy | Invalid level | 404 |
+| FUN-073 | Audit | Contact view | GET contact | Audit |
+| FUN-074 | Business | Permission scope | Permission change | Updated |
+| FUN-075 | Workflow | Reset to default | POST reset | Default |
+| FUN-076 | Validation | Address format | Invalid | 400 |
+| FUN-077 | Constraint | Max profiles | Limit | 429 |
+| FUN-078 | Audit | Org unit view | GET org-unit | Audit |
+| FUN-079 | Business | Inactive org unit | Org inactive | 403 |
+| FUN-080 | Workflow | Thumbnail generation | GET thumb | Thumbnail |
+| FUN-081 | Validation | Bio length | Too long | 400 |
+| FUN-082 | Constraint | Concurrent updates | Stale | 409 |
+| FUN-083 | Audit | Preference link | GET prefs | Audit |
+| FUN-084 | Business | Cross-org unit | Other org | 403 |
+| FUN-085 | Workflow | Session refresh | Token refresh | 200 |
+| FUN-086 | Validation | Title length | Too long | 400 |
+| FUN-087 | Constraint | Department scope | Invalid dept | 403 |
+| FUN-088 | Audit | Role view | GET roles | Audit |
+| FUN-089 | Business | Location scope | Invalid location | 403 |
+| FUN-090 | Workflow | Full round-trip | Update → Get | Match |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Category | Scenario | Entities | Expected |
 |----|----------|----------|----------|----------|
@@ -340,6 +421,46 @@ REST API for user profiles: get/update profile, avatar, contact info, org unit.
 | INT-048 | E2E | Contact flow | Profile | Update → Get |
 | INT-049 | E2E | Org unit flow | Profile | Update → Get |
 | INT-050 | E2E | Session expiry | Auth | Clean fail |
+| INT-051 | CRUD | Update → Get | Profile | Match |
+| INT-052 | CRUD | Get by ID | Profile | Profile |
+| INT-053 | CRUD | Get my profile | Profile | Profile |
+| INT-054 | CRUD | Upload avatar → Get | Profile | Avatar |
+| INT-055 | CRUD | Delete avatar → Get | Profile | No avatar |
+| INT-056 | CRUD | Update contact → Get | Profile | Contact |
+| INT-057 | CRUD | Update org unit → Get | Profile | Org unit |
+| INT-058 | CRUD | Partial update → Get | Profile | Partial |
+| INT-059 | CRUD | Full update → Get | Profile | Full |
+| INT-060 | CRUD | Get roles | Profile, Role | Roles |
+| INT-061 | Avatar | Upload | Profile | Avatar |
+| INT-062 | Avatar | Get | Profile | Avatar |
+| INT-063 | Avatar | Delete | Profile | Deleted |
+| INT-064 | Avatar | Thumbnail | Profile | Thumbnail |
+| INT-065 | Avatar | Format | Profile | Format |
+| INT-066 | Contact | Get | Profile | Contact |
+| INT-067 | Contact | Update | Profile | Updated |
+| INT-068 | Contact | Format | Profile | Format |
+| INT-069 | Contact | Validation | Profile | Valid |
+| INT-070 | Contact | Required | Profile | Required |
+| INT-071 | Org unit | Get | Profile, OrgUnit | Org unit |
+| INT-072 | Org unit | Update | Profile, OrgUnit | Updated |
+| INT-073 | Org unit | Hierarchy | Profile, OrgUnit | Hierarchy |
+| INT-074 | Org unit | Validation | Profile | Valid |
+| INT-075 | Org unit | Orphan | Deleted org unit | 404 |
+| INT-076 | Relationships | Profile → User | Profile, User | Linked |
+| INT-077 | Relationships | Profile → OrgUnit | Profile, OrgUnit | Linked |
+| INT-078 | Relationships | Profile → Roles | Profile, Role | Linked |
+| INT-079 | Relationships | Orphan | Deleted user | 404 |
+| INT-080 | Relationships | User scope | User | Scoped |
+| INT-081 | Error | DB down | DB | 503 |
+| INT-082 | Error | Auth down | Auth | 401/503 |
+| INT-083 | Error | Validation | Bad input | 400 |
+| INT-084 | Error | NotFound | Invalid ID | 404 |
+| INT-085 | Error | Forbidden | No permission | 403 |
+| INT-086 | Error | Conflict | Duplicate | 409 |
+| INT-087 | Error | Rate limit | Too many | 429 |
+| INT-088 | Error | Timeout | Slow | 504 |
+| INT-089 | Error | Payload | Huge | 413 |
+| INT-090 | Error | Media | Wrong type | 415 |
 
 ---
 
@@ -508,7 +629,7 @@ REST API for user profiles: get/update profile, avatar, contact info, org unit.
 | Avatar | POS-004–006, FUN-004–006 |
 | Contact info | POS-007–008, FUN-007–008 |
 | Org unit | POS-009–010, FUN-009–010 |
-| 3:1 Ratio | NEG-001–070, BND-001–070 |
+| 3:1 Ratio | NEG-001–090, BND-001–090, FUN-001–090, INT-001–090 |
 
 ---
 

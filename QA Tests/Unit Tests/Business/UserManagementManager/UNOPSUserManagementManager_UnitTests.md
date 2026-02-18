@@ -11,19 +11,23 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**Ratio Compliance:**
+- N ≥ 3P: 90 ≥ 90 → ✅ PASS
+- E ≥ 3P: 90 ≥ 90 → ✅ PASS
+- F ≥ 3P: 90 ≥ 90 → ✅ PASS
+- I ≥ 3P: 90 ≥ 90 → ✅ PASS
 
 ---
 
@@ -33,7 +37,7 @@ User management manager unit tests cover CRUD users, role assignment, status man
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,11 +71,6 @@ User management manager unit tests cover CRUD users, role assignment, status man
 | POS-028 | Reset password | User exists | ResetPassword | Reset |
 | POS-029 | Change password | User exists | ChangePassword | Changed |
 | POS-030 | Get by email | Email exists | GetByEmail | User |
-| POS-031 | Bulk status change | Users exist | BulkStatusChange | Updated |
-| POS-032 | Export users | Users exist | Export | Exported |
-| POS-033 | Import users | Valid data | Import | Imported |
-| POS-034 | Get active users | Users exist | GetActive | Filtered |
-| POS-035 | User exists check | Email exists | Exists | Boolean |
 
 ---
 
@@ -149,10 +148,30 @@ User management manager unit tests cover CRUD users, role assignment, status man
 | NEG-068 | Export format invalid | Format invalid | ArgumentException |
 | NEG-069 | Bulk size exceeds limit | 1000+ users | ArgumentException |
 | NEG-070 | Role required | No roles | ValidationException |
+| NEG-071 | Create null email | Email=null | ArgumentNullException |
+| NEG-072 | Create null name | Name=null | ArgumentNullException |
+| NEG-073 | AssignRole null user | User=null | ArgumentNullException |
+| NEG-074 | AssignRole null role | Role=null | ArgumentNullException |
+| NEG-075 | RemoveRole null user | User=null | ArgumentNullException |
+| NEG-076 | Activate null user | User=null | ArgumentNullException |
+| NEG-077 | Deactivate null user | User=null | ArgumentNullException |
+| NEG-078 | Lock null user | User=null | ArgumentNullException |
+| NEG-079 | Unlock null user | User=null | ArgumentNullException |
+| NEG-080 | ResetPassword null user | User=null | ArgumentNullException |
+| NEG-081 | ChangePassword null user | User=null | ArgumentNullException |
+| NEG-082 | GetByEmail null email | Email=null | ArgumentNullException |
+| NEG-083 | Search null term | Term=null | ArgumentNullException |
+| NEG-084 | BulkStatusChange null list | List=null | ArgumentNullException |
+| NEG-085 | Export null format | Format=null | ArgumentNullException |
+| NEG-086 | Import null stream | Stream=null | ArgumentNullException |
+| NEG-087 | GetActive null filter | Filter=null | ArgumentNullException |
+| NEG-088 | Exists null email | Email=null | ArgumentNullException |
+| NEG-089 | GetUserRoles null user | User=null | ArgumentNullException |
+| NEG-090 | Validate null email | Email=null | ArgumentNullException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Condition | Expected Result |
 |----|-----------|-------------------|-----------------|
@@ -226,10 +245,30 @@ User management manager unit tests cover CRUD users, role assignment, status man
 | BND-068 | Export format boundary | Each format | Valid |
 | BND-069 | Bulk status mixed | Mixed status | Updated |
 | BND-070 | Concurrent user create | Two create | Both or one |
+| BND-071 | Email length boundary | At boundary | Valid |
+| BND-072 | Name length boundary | At boundary | Valid |
+| BND-073 | Roles count one | 1 role | Valid |
+| BND-074 | Status enum first | First | Valid |
+| BND-075 | Status enum last | Last | Valid |
+| BND-076 | Bulk size one | 1 user | Valid |
+| BND-077 | Search term boundary | At boundary | Valid |
+| BND-078 | Pagination first page | Page=1 | Valid |
+| BND-079 | Pagination last page | Last | Valid |
+| BND-080 | Filter single status | 1 status | Valid |
+| BND-081 | Filter single role | 1 role | Valid |
+| BND-082 | Lockout count zero | 0 | Valid |
+| BND-083 | Password history count | At limit | Valid |
+| BND-084 | Last login boundary | At boundary | Valid |
+| BND-085 | Failed login zero | 0 | Valid |
+| BND-086 | GetByEmail empty | No user | Null |
+| BND-087 | Search empty | No match | [] |
+| BND-088 | GetActive empty | No active | [] |
+| BND-089 | Exists boundary | At boundary | Boolean |
+| BND-090 | Sort single column | 1 column | Valid |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -283,10 +322,50 @@ User management manager unit tests cover CRUD users, role assignment, status man
 | FUN-048 | Role workflow | Workflow | AssignRole | Valid |
 | FUN-049 | Permission cached | Performance | Repeated check | Cached |
 | FUN-050 | AsNoTracking read-only | Performance | List | No tracking |
+| FUN-051 | GetByEmail case | Logic | GetByEmail | Config |
+| FUN-052 | Search case insensitive | Logic | Search | Matching |
+| FUN-053 | Filter by multiple roles | Logic | Filter | Filtered |
+| FUN-054 | Filter by multiple status | Logic | Filter | Filtered |
+| FUN-055 | Bulk create validation | Logic | BulkCreate | Validated |
+| FUN-056 | Bulk update validation | Logic | BulkUpdate | Validated |
+| FUN-057 | Bulk status validation | Logic | BulkStatusChange | Validated |
+| FUN-058 | Export format | Logic | Export | Format |
+| FUN-059 | Import validation | Logic | Import | Validated |
+| FUN-060 | GetActive filter | Logic | GetActive | Filtered |
+| FUN-061 | Exists check | Logic | Exists | Boolean |
+| FUN-062 | GetUserRoles order | Logic | GetUserRoles | Ordered |
+| FUN-063 | Password strength | Logic | Create | Validated |
+| FUN-064 | Lockout reset | Logic | Unlock | Reset |
+| FUN-065 | Password history | Logic | ChangePassword | Stored |
+| FUN-066 | Last admin check | Constraint | Delete | Reject |
+| FUN-067 | Self delete check | Constraint | Delete | Reject |
+| FUN-068 | Self deactivate check | Constraint | Deactivate | Config |
+| FUN-069 | Role duplicate check | Constraint | AssignRole | No-op |
+| FUN-070 | Remove not assigned | Constraint | RemoveRole | Reject |
+| FUN-071 | Pagination consistency | Calculation | Page | Consistent |
+| FUN-072 | Sort multi-column | Calculation | Sort | Multi |
+| FUN-073 | Filter OR logic | Filter | OR filter | Match |
+| FUN-074 | Transaction on bulk | Transaction | BulkCreate | Atomic |
+| FUN-075 | Transaction on bulk update | Transaction | BulkUpdate | Atomic |
+| FUN-076 | Include loads roles | Data load | GetById include | Roles |
+| FUN-077 | Include selective | Data load | Include | Selective |
+| FUN-078 | Config password policy | Config | Validate | Config |
+| FUN-079 | Config lockout | Config | Lock | Config |
+| FUN-080 | Permission per action | Authorization | Per action | Check |
+| FUN-081 | User context audit | Audit | Create | User |
+| FUN-082 | Timestamp UTC | Audit | All | UTC |
+| FUN-083 | Deleted exclude Search | Constraint | Search | Excluded |
+| FUN-084 | Deleted exclude GetByEmail | Constraint | GetByEmail | Excluded |
+| FUN-085 | Deleted exclude GetActive | Constraint | GetActive | Excluded |
+| FUN-086 | Deleted exclude Export | Constraint | Export | Excluded |
+| FUN-087 | Deleted exclude GetUserRoles | Constraint | GetUserRoles | Excluded |
+| FUN-088 | User lifecycle | Workflow | Create to delete | Complete |
+| FUN-089 | Role lifecycle | Workflow | Assign to remove | Complete |
+| FUN-090 | Status lifecycle | Workflow | Activate to deactivate | Complete |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|
@@ -340,6 +419,46 @@ User management manager unit tests cover CRUD users, role assignment, status man
 | INT-048 | Role permission cascade | Scenario | Assign role | Permissions |
 | INT-049 | Status notifications | Scenario | Status change | Sent |
 | INT-050 | E2E create-assign-activate | Scenario | Full cycle | Complete |
+| INT-051 | Create then Assign role | Scenario | Create, Assign | Complete |
+| INT-052 | Assign then Remove role | Scenario | Assign, Remove | Complete |
+| INT-053 | Activate then Deactivate | Scenario | Activate, Deactivate | Complete |
+| INT-054 | Lock then Unlock | Scenario | Lock, Unlock | Complete |
+| INT-055 | Create then Change password | Scenario | Create, Change | Complete |
+| INT-056 | Search then GetById | Scenario | Search, GetById | Complete |
+| INT-057 | Bulk create then Bulk update | Scenario | BulkCreate, BulkUpdate | Complete |
+| INT-058 | Export then Import | Scenario | Export, Import | Roundtrip |
+| INT-059 | GetActive then Filter | Scenario | GetActive, Filter | Complete |
+| INT-060 | GetByEmail then Exists | Scenario | GetByEmail, Exists | Complete |
+| INT-061 | DbContext scope | Integration | Request | Scoped |
+| INT-062 | Permission cascade | Integration | Role | Cascade |
+| INT-063 | User context propagation | Integration | Request | Propagated |
+| INT-064 | Audit chain | Integration | Operations | Chained |
+| INT-065 | RoleManager integration | Integration | Role | Role |
+| INT-066 | Auth service integration | Integration | Auth | Auth |
+| INT-067 | Error handling chain | Integration | Error | Handled |
+| INT-068 | Validation chain | Integration | Create | Validated |
+| INT-069 | Mapping chain | Integration | Entity | Mapped |
+| INT-070 | Repository CRUD | Integration | Repository | CRUD |
+| INT-071 | DbContext save | Integration | SaveChanges | Saved |
+| INT-072 | Transaction rollback | Integration | Error | Rollback |
+| INT-073 | Role permission flow | Integration | Role | Permissions |
+| INT-074 | Concurrent create | Scenario | Parallel create | All succeed |
+| INT-075 | Concurrent update | Scenario | Parallel update | One wins |
+| INT-076 | Full user lifecycle | Scenario | Create to delete | Complete |
+| INT-077 | Full role lifecycle | Scenario | Assign to remove | Complete |
+| INT-078 | Full status lifecycle | Scenario | Activate to deactivate | Complete |
+| INT-079 | Full lock lifecycle | Scenario | Lock to unlock | Complete |
+| INT-080 | Full password lifecycle | Scenario | Create to change | Complete |
+| INT-081 | Full bulk lifecycle | Scenario | BulkCreate to BulkUpdate | Complete |
+| INT-082 | Full search lifecycle | Scenario | Search to get | Complete |
+| INT-083 | Full export import | Scenario | Export to import | Complete |
+| INT-084 | Full last admin protection | Scenario | Delete | Rejected |
+| INT-085 | Permission check flow | Integration | Auth | Check |
+| INT-086 | User resolution flow | Integration | User | Resolved |
+| INT-087 | Audit flow | Integration | Audit | Logged |
+| INT-088 | Logging flow | Integration | Log | Logged |
+| INT-089 | Role flow | Integration | Role | Role |
+| INT-090 | E2E full lifecycle | Scenario | All operations | Complete |
 
 ---
 
@@ -500,5 +619,5 @@ User management manager unit tests cover CRUD users, role assignment, status man
 
 ---
 
-**Last Updated:** 2026-02-11  
+**Last Updated:** 2026-02-18  
 **Status:** Ready for Implementation

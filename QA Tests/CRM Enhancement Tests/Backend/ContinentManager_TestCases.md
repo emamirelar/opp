@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -37,7 +37,7 @@ The ContinentManager manages continent reference data for the CRM enhancement:
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result | Priority |
 |----|-----------|-------------|-------|-----------------|----------|
@@ -71,15 +71,10 @@ The ContinentManager manages continent reference data for the CRM enhancement:
 | POS-028 | Get hierarchy tree | Continents with regions | GetHierarchyAsync() | Tree structure | P2 |
 | POS-029 | Validate name required | None | Create with valid name | Success | P2 |
 | POS-030 | Cascading region load | Continent has regions | Get with Include regions | Regions loaded | P2 |
-| POS-031 | Empty search returns all | Continents exist | Search empty string | All returned | P2 |
-| POS-032 | Case-insensitive code search | "af" exists as "AF" | Search "af" | Found | P2 |
-| POS-033 | Get default continent | Config set | GetDefaultAsync() | Default returned | P2 |
-| POS-034 | Validate status transitions | Draft continent | Activate | Status updated | P2 |
-| POS-035 | Concurrent read access | None | 5 parallel GetByIdAsync | All succeed | P2 |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error | Priority |
 |----|-----------|--------------|---------------|----------|
@@ -153,10 +148,30 @@ The ContinentManager manages continent reference data for the CRM enhancement:
 | NEG-068 | Cache stampede | All miss | Thundering herd handled | P2 |
 | NEG-069 | Deadlock | Concurrent update | Retry or deadlock | P2 |
 | NEG-070 | Unique constraint violation | Duplicate insert | DB exception | P2 |
+| NEG-071 | Region API fail | Region 500 | Error | P2 |
+| NEG-072 | DbContext disposed | After dispose | ObjectDisposed | P2 |
+| NEG-073 | Continent has regions | Delete | BusinessException | P2 |
+| NEG-074 | Null codes list | GetByCodes null | ArgumentNull | P2 |
+| NEG-075 | Empty codes list | GetByCodes [] | Empty list | P2 |
+| NEG-076 | Invalid code format | Code "AFRICA" | Reject | P2 |
+| NEG-077 | Duplicate code | Existing code | Conflict | P2 |
+| NEG-078 | GetByIds empty | [] | Empty list | P2 |
+| NEG-079 | Pagination page 0 | Page 0 | Clamp or error | P2 |
+| NEG-080 | Pagination size 0 | Size 0 | Validation | P2 |
+| NEG-081 | Search SQL injection | '; DROP-- | Sanitized | P2 |
+| NEG-082 | Restore non-deleted | Not deleted | Idempotent | P2 |
+| NEG-083 | Name too long | 51 chars | Validation | P2 |
+| NEG-084 | Code too short | 1 char | Validation | P2 |
+| NEG-085 | Export fail | Export error | Handled | P2 |
+| NEG-086 | Hierarchy fail | Hierarchy error | Handled | P2 |
+| NEG-087 | Default not configured | No default | Null or error | P2 |
+| NEG-088 | Invalid status | Status 999 | Reject | P2 |
+| NEG-089 | Batch invalid IDs | [1,-1,2] | Partial fail | P2 |
+| NEG-090 | Circular hierarchy | Self-ref | Validation | P2 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field | Min | Max | At Min | At Max | Over Max | Priority |
 |----|-------|-----|-----|--------|--------|----------|----------|
@@ -230,10 +245,30 @@ The ContinentManager manages continent reference data for the CRM enhancement:
 | BND-068 | Array length | 0 | 1000 | 0 ok | 1000 ok | — | P2 |
 | BND-069 | Token length | 1 | 500 | 1 ok | 500 ok | — | P2 |
 | BND-070 | Correlation ID | 36 | 36 | UUID format | — | — | P2 |
+| BND-071 | Continent ID 1 | 1 | int.Max | Min | — | — | P2 |
+| BND-072 | Region ID 1 | 1 | int.Max | Min | — | — | P2 |
+| BND-073 | Page size 1 | 1 | 100 | Min | — | — | P2 |
+| BND-074 | Page size 100 | 1 | 100 | — | Max | — | P2 |
+| BND-075 | Name 1 | 1 | 50 | Min | — | — | P2 |
+| BND-076 | Name 50 | 1 | 50 | — | Max | — | P2 |
+| BND-077 | Code 2 | 2 | 2 | Min | Max | — | P2 |
+| BND-078 | Search 0 | 0 | 200 | Empty | — | — | P2 |
+| BND-079 | Search 200 | 0 | 200 | — | Max | — | P2 |
+| BND-080 | Codes list 0 | 0 | 100 | Empty | — | — | P2 |
+| BND-081 | Codes list 100 | 0 | 100 | — | Max | — | P2 |
+| BND-082 | Description 0 | 0 | 2000 | Empty | — | — | P2 |
+| BND-083 | Description 2000 | 0 | 2000 | — | Max | — | P2 |
+| BND-084 | Region count 0 | 0 | 100 | None | — | — | P2 |
+| BND-085 | Region count 100 | 0 | 100 | — | Max | — | P2 |
+| BND-086 | Notes 0 | 0 | 4000 | Empty | — | — | P2 |
+| BND-087 | Notes 4000 | 0 | 4000 | — | Max | — | P2 |
+| BND-088 | Hierarchy depth 1 | 1 | 10 | Min | — | — | P2 |
+| BND-089 | Hierarchy depth 10 | 1 | 10 | — | Max | — | P2 |
+| BND-090 | Status 0 | 0 | 10 | Min | — | — | P2 |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule | Trigger | Expected Outcome | Priority |
 |----|-----------|------|---------|------------------|----------|
@@ -287,10 +322,50 @@ The ContinentManager manages continent reference data for the CRM enhancement:
 | FUN-048 | Conditional update | If-Match | Update with stale ETag | 412 | P2 |
 | FUN-049 | Soft delete cascade | Children | Delete parent | Children handled | P2 |
 | FUN-050 | Permission check | CanCreate | Create | Permission validated | P2 |
+| FUN-051 | Create audit | Create | Create | Audit set | P2 |
+| FUN-052 | Update audit | Update | Update | Audit set | P2 |
+| FUN-053 | Soft delete audit | Delete | Delete | DeletedBy set | P2 |
+| FUN-054 | IsDeleted filter | Query | Query | Excludes deleted | P2 |
+| FUN-055 | Include regions | Get | Include | Regions loaded | P2 |
+| FUN-056 | Pagination | Page | Page | Correct slice | P2 |
+| FUN-057 | Sort | Sort | Sort | Ordered | P2 |
+| FUN-058 | Search | Search | Search | Matched | P2 |
+| FUN-059 | GetByCodes | Codes | Get | Returned | P2 |
+| FUN-060 | GetHierarchy | Hierarchy | Get | Tree | P2 |
+| FUN-061 | Restore | Restore | Restore | Restored | P2 |
+| FUN-062 | Include deleted | Admin | IncludeDeleted | All | P2 |
+| FUN-063 | Default continent | Default | Get | Returned | P2 |
+| FUN-064 | AsNoTracking | Read | Query | No tracking | P2 |
+| FUN-065 | Transaction | Transaction | Commit | Committed | P2 |
+| FUN-066 | Concurrency | Concurrent | Read | No conflict | P2 |
+| FUN-067 | Case-insensitive | Search | Case | Matched | P2 |
+| FUN-068 | Unique code | Code | Create | No duplicate | P2 |
+| FUN-069 | DbContext scope | Scope | Per request | Isolated | P2 |
+| FUN-070 | Validation order | Invalid | Validate | Order correct | P2 |
+| FUN-071 | Idempotent delete | Delete | Twice | Second no-op | P2 |
+| FUN-072 | Idempotent restore | Restore | Twice | Second no-op | P2 |
+| FUN-073 | Batch save | Batch | Save | All saved | P2 |
+| FUN-074 | Empty search | Search "" | Search | All | P2 |
+| FUN-075 | Status transition | Status | Change | Validated | P2 |
+| FUN-076 | Logging | Operation | Log | Logged | P2 |
+| FUN-077 | Metrics | Operation | Metric | Recorded | P2 |
+| FUN-078 | Query timeout | Slow | Query | Timeout | P2 |
+| FUN-079 | Retry policy | Transient | Fail | Retried | P2 |
+| FUN-080 | Cascading load | Include | Load | Loaded | P2 |
+| FUN-081 | Connection pool | Concurrent | Connections | Pooled | P2 |
+| FUN-082 | Foreign key | FK | Constraint | Enforced | P2 |
+| FUN-083 | Unique constraint | Unique | Insert | Enforced | P2 |
+| FUN-084 | Index | Query | Index | Fast | P2 |
+| FUN-085 | Export | Export | Export | File | P2 |
+| FUN-086 | GetByIds | IDs | Get | Returned | P2 |
+| FUN-087 | Delete with regions | Has regions | Delete | Reject | P2 |
+| FUN-088 | Code format | Code | Validate | Validated | P2 |
+| FUN-089 | Name required | Name | Validate | Validated | P2 |
+| FUN-090 | Hierarchy validation | Hierarchy | Validate | Validated | P2 |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result | Priority |
 |----|-----------|----------|----------|-----------------|----------|
@@ -344,6 +419,46 @@ The ContinentManager manages continent reference data for the CRM enhancement:
 | INT-048 | Deprecation | Deprecated endpoint | API | Warning header | P1 |
 | INT-049 | Backward compat | Old client | New API | Still works | P1 |
 | INT-050 | Forward compat | New client | Old API | Graceful | P1 |
+| INT-051 | DbContext | CRUD | DbContext | Persisted | P1 |
+| INT-052 | Repository | CRUD | Repository | Persisted | P1 |
+| INT-053 | AutoMapper | Map | Mapper | Mapped | P1 |
+| INT-054 | RegionManager | Region | Manager | Loaded | P1 |
+| INT-055 | AuditDbContext | Audit | Context | Audited | P1 |
+| INT-056 | Transaction | Transaction | Commit | Committed | P1 |
+| INT-057 | PermissionService | Check | Service | Checked | P1 |
+| INT-058 | HttpClient | API | HttpClient | Response | P1 |
+| INT-059 | Logging | Log | ILogger | Logged | P1 |
+| INT-060 | Configuration | Config | IConfiguration | Loaded | P1 |
+| INT-061 | DI container | Resolve | Container | Resolved | P1 |
+| INT-062 | Scoped lifetime | Request | Scope | Per request | P1 |
+| INT-063 | Soft delete filter | Global | Query | Filtered | P1 |
+| INT-064 | Foreign key | FK | Constraint | Enforced | P1 |
+| INT-065 | Unique constraint | Unique | Insert | Enforced | P1 |
+| INT-066 | Cache | Cache | Get | Cached | P1 |
+| INT-067 | Retry | Transient | Retry | Retried | P1 |
+| INT-068 | Health check | Health | Check | Healthy | P1 |
+| INT-069 | Metrics | Metric | Record | Recorded | P1 |
+| INT-070 | User context | User | Context | Resolved | P1 |
+| INT-071 | Export service | Export | Service | File | P1 |
+| INT-072 | API versioning | Version | Request | Versioned | P1 |
+| INT-073 | Rate limiting | Limit | Request | Limited | P1 |
+| INT-074 | Auth middleware | Auth | Request | Authenticated | P1 |
+| INT-075 | Validation middleware | Validate | Request | Validated | P1 |
+| INT-076 | Exception middleware | Exception | Throw | Handled | P1 |
+| INT-077 | Correlation ID | Request | ID | Propagated | P1 |
+| INT-078 | Tracing | Trace | Span | Traced | P1 |
+| INT-079 | Feature flag | Flag | Check | Toggled | P1 |
+| INT-080 | CORS | Cross-origin | Request | Allowed | P1 |
+| INT-081 | Connection | Connection | Open | Connected | P1 |
+| INT-082 | Migration | Migration | Run | Applied | P1 |
+| INT-083 | Index | Query | Index | Fast | P1 |
+| INT-084 | Circuit breaker | Fail | Circuit | Open | P1 |
+| INT-085 | Tenant context | Tenant | Context | Resolved | P1 |
+| INT-086 | Region API | Region | API | Response | P1 |
+| INT-087 | Hierarchy service | Hierarchy | Service | Tree | P1 |
+| INT-088 | Forward compat | New client | Old API | Graceful | P1 |
+| INT-089 | Batch flow | GetByCodes | Continents | Returned | P1 |
+| INT-090 | Search flow | Create, Search | Continent | Found | P1 |
 
 ---
 

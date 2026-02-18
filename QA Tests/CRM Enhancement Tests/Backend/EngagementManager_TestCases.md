@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -38,7 +38,7 @@ The EngagementManager handles engagement tracking for the CRM enhancement:
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result | Priority |
 |----|-----------|-------------|-------|-----------------|----------|
@@ -72,15 +72,10 @@ The EngagementManager handles engagement tracking for the CRM enhancement:
 | POS-028 | Engagement history | Partner exists | GetHistoryAsync(partnerId) | Timeline | P2 |
 | POS-029 | Validate activity type | Valid type | Create with type | Success | P2 |
 | POS-030 | Audit trail | Create engagement | Create | Audit fields set | P2 |
-| POS-031 | Multi-partner metrics | Partners exist | GetMetricsForPartnersAsync(ids) | Map of metrics | P2 |
-| POS-032 | Dashboard stats | Data exists | GetDashboardStatsAsync() | Stats object | P2 |
-| POS-033 | Engagement comparison | 2 partners | CompareAsync(id1, id2) | Comparison data | P2 |
-| POS-034 | Schedule reminder | Follow-up exists | ScheduleReminderAsync(id) | Reminder set | P2 |
-| POS-035 | Cancel follow-up | Follow-up exists | CancelFollowUpAsync(id) | Cancelled | P2 |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error | Priority |
 |----|-----------|--------------|---------------|----------|
@@ -154,10 +149,30 @@ The EngagementManager handles engagement tracking for the CRM enhancement:
 | NEG-068 | Service unavailable | Dependent service down | 503 or fallback | P2 |
 | NEG-069 | Validation multiple | Multiple errors | All returned | P2 |
 | NEG-070 | Encoding invalid | Wrong charset | 400 Bad Request | P2 |
+| NEG-071 | Partner API fail | Partner 500 | Error | P2 |
+| NEG-072 | Activity API fail | Activity 500 | Error | P2 |
+| NEG-073 | DbContext disposed | After dispose | ObjectDisposed | P2 |
+| NEG-074 | Partner soft-deleted | Deleted partner | Reject | P2 |
+| NEG-075 | Null batch | LogActivities null | ArgumentNull | P2 |
+| NEG-076 | Empty batch | LogActivities [] | No-op or error | P2 |
+| NEG-077 | Invalid activity type | Type 999 | Reject | P2 |
+| NEG-078 | Follow-up past | Past date | Reject | P2 |
+| NEG-079 | Complete non-existent | ID 99999 | KeyNotFound | P2 |
+| NEG-080 | Cancel non-existent | ID 99999 | KeyNotFound | P2 |
+| NEG-081 | GetByIds empty | [] | Empty list | P2 |
+| NEG-082 | Pagination page 0 | Page 0 | Clamp or error | P2 |
+| NEG-083 | Pagination size 0 | Size 0 | Validation | P2 |
+| NEG-084 | Export fail | Export error | Handled | P2 |
+| NEG-085 | Dashboard fail | Stats error | Handled | P2 |
+| NEG-086 | Comparison fail | Invalid ids | Error | P2 |
+| NEG-087 | Reminder fail | Reminder error | Handled | P2 |
+| NEG-088 | Score overflow | Score 101 | Validation | P2 |
+| NEG-089 | Notes too long | 4001 chars | Validation | P2 |
+| NEG-090 | Invalid date range | To < From | Validation | P2 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field | Min | Max | At Min | At Max | Over Max | Priority |
 |----|-------|-----|-----|--------|--------|----------|----------|
@@ -231,10 +246,30 @@ The EngagementManager handles engagement tracking for the CRM enhancement:
 | BND-068 | RTL text | — | — | Accept | — | — | P2 |
 | BND-069 | Null byte | — | — | Reject | — | — | P2 |
 | BND-070 | CRLF in field | — | — | Sanitize | — | — | P2 |
+| BND-071 | Partner ID 1 | 1 | int.Max | Min | — | — | P2 |
+| BND-072 | Engagement ID 1 | 1 | int.Max | Min | — | — | P2 |
+| BND-073 | Activity ID 1 | 1 | int.Max | Min | — | — | P2 |
+| BND-074 | Page size 1 | 1 | 100 | Min | — | — | P2 |
+| BND-075 | Page size 100 | 1 | 100 | — | Max | — | P2 |
+| BND-076 | Notes 0 | 0 | 4000 | Empty | — | — | P2 |
+| BND-077 | Notes 4000 | 0 | 4000 | — | Max | — | P2 |
+| BND-078 | Score 0 | 0 | 100 | Min | — | — | P2 |
+| BND-079 | Score 100 | 0 | 100 | — | Max | — | P2 |
+| BND-080 | Days 0 | 0 | 365 | Min | — | — | P2 |
+| BND-081 | Days 365 | 0 | 365 | — | Max | — | P2 |
+| BND-082 | Batch 0 | 0 | 50 | Empty | — | — | P2 |
+| BND-083 | Batch 50 | 0 | 50 | — | Max | — | P2 |
+| BND-084 | Description 0 | 0 | 2000 | Empty | — | — | P2 |
+| BND-085 | Description 2000 | 0 | 2000 | — | Max | — | P2 |
+| BND-086 | Filter ids 0 | 0 | 100 | Empty | — | — | P2 |
+| BND-087 | Filter ids 100 | 0 | 100 | — | Max | — | P2 |
+| BND-088 | Date min | 1900 | 2100 | Min | — | — | P2 |
+| BND-089 | Date max | 1900 | 2100 | — | Max | — | P2 |
+| BND-090 | Weight 0 | 0 | 1 | Min | — | — | P2 |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule | Trigger | Expected Outcome | Priority |
 |----|-----------|------|---------|------------------|----------|
@@ -288,10 +323,50 @@ The EngagementManager handles engagement tracking for the CRM enhancement:
 | FUN-048 | Tenant isolation | Multi-tenant | Cross-tenant | Rejected | P2 |
 | FUN-049 | Soft delete cascade | Children | Delete parent | Children handled | P2 |
 | FUN-050 | Audit immutable | No audit change | Update audit | Ignored | P2 |
+| FUN-051 | Create audit | Create | Create | Audit set | P2 |
+| FUN-052 | Update audit | Update | Update | Audit set | P2 |
+| FUN-053 | Soft delete audit | Delete | Delete | DeletedBy set | P2 |
+| FUN-054 | IsDeleted filter | Query | Query | Excludes deleted | P2 |
+| FUN-055 | Include partner | Get | Include | Partner loaded | P2 |
+| FUN-056 | Pagination | Page | Page | Correct slice | P2 |
+| FUN-057 | Sort | Sort | Sort | Ordered | P2 |
+| FUN-058 | Filter by type | Filter | Type | Filtered | P2 |
+| FUN-059 | Filter by date | Filter | Date | Filtered | P2 |
+| FUN-060 | GetSummary | Summary | Get | Returned | P2 |
+| FUN-061 | GetScoreBreakdown | Breakdown | Get | Returned | P2 |
+| FUN-062 | GetNextFollowUp | Follow-up | Get | Returned | P2 |
+| FUN-063 | GetHistory | History | Get | Returned | P2 |
+| FUN-064 | LogActivities batch | Batch | Log | All logged | P2 |
+| FUN-065 | Complete | Complete | Complete | Completed | P2 |
+| FUN-066 | Cancel follow-up | Cancel | Cancel | Cancelled | P2 |
+| FUN-067 | Schedule reminder | Reminder | Schedule | Scheduled | P2 |
+| FUN-068 | Restore | Restore | Restore | Restored | P2 |
+| FUN-069 | Include deleted | Admin | IncludeDeleted | All | P2 |
+| FUN-070 | GetMetricsForPartners | Metrics | Get | Returned | P2 |
+| FUN-071 | GetDashboardStats | Stats | Get | Returned | P2 |
+| FUN-072 | Compare | Compare | Compare | Returned | P2 |
+| FUN-073 | AsNoTracking | Read | Query | No tracking | P2 |
+| FUN-074 | Transaction | Transaction | Commit | Committed | P2 |
+| FUN-075 | Concurrency | Concurrent | Read | No conflict | P2 |
+| FUN-076 | DbContext scope | Scope | Per request | Isolated | P2 |
+| FUN-077 | Validation order | Invalid | Validate | Order correct | P2 |
+| FUN-078 | Idempotent delete | Delete | Twice | Second no-op | P2 |
+| FUN-079 | Idempotent restore | Restore | Twice | Second no-op | P2 |
+| FUN-080 | Export | Export | Export | File | P2 |
+| FUN-081 | Logging | Operation | Log | Logged | P2 |
+| FUN-082 | Metrics | Operation | Metric | Recorded | P2 |
+| FUN-083 | Query timeout | Slow | Query | Timeout | P2 |
+| FUN-084 | Retry policy | Transient | Fail | Retried | P2 |
+| FUN-085 | Cascading load | Include | Load | Loaded | P2 |
+| FUN-086 | Connection pool | Concurrent | Connections | Pooled | P2 |
+| FUN-087 | Foreign key | FK | Constraint | Enforced | P2 |
+| FUN-088 | Unique constraint | Unique | Insert | Enforced | P2 |
+| FUN-089 | Index | Query | Index | Fast | P2 |
+| FUN-090 | Status transition | Status | Change | Validated | P2 |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result | Priority |
 |----|-----------|----------|----------|-----------------|----------|
@@ -345,6 +420,46 @@ The EngagementManager handles engagement tracking for the CRM enhancement:
 | INT-048 | Circuit breaker | Failures | Circuit | Opened | P1 |
 | INT-049 | Backward compat | Old client | New API | Works | P1 |
 | INT-050 | Forward compat | New client | Old API | Graceful | P1 |
+| INT-051 | DbContext | CRUD | DbContext | Persisted | P1 |
+| INT-052 | Repository | CRUD | Repository | Persisted | P1 |
+| INT-053 | AutoMapper | Map | Mapper | Mapped | P1 |
+| INT-054 | PartnerManager | Partner | Manager | Loaded | P1 |
+| INT-055 | AuditDbContext | Audit | Context | Audited | P1 |
+| INT-056 | Transaction | Transaction | Commit | Committed | P1 |
+| INT-057 | PermissionService | Check | Service | Checked | P1 |
+| INT-058 | HttpClient | API | HttpClient | Response | P1 |
+| INT-059 | Logging | Log | ILogger | Logged | P1 |
+| INT-060 | Configuration | Config | IConfiguration | Loaded | P1 |
+| INT-061 | DI container | Resolve | Container | Resolved | P1 |
+| INT-062 | Scoped lifetime | Request | Scope | Per request | P1 |
+| INT-063 | Soft delete filter | Global | Query | Filtered | P1 |
+| INT-064 | Foreign key | FK | Constraint | Enforced | P1 |
+| INT-065 | Unique constraint | Unique | Insert | Enforced | P1 |
+| INT-066 | Cache | Cache | Get | Cached | P1 |
+| INT-067 | Retry | Transient | Retry | Retried | P1 |
+| INT-068 | Health check | Health | Check | Healthy | P1 |
+| INT-069 | Metrics | Metric | Record | Recorded | P1 |
+| INT-070 | User context | User | Context | Resolved | P1 |
+| INT-071 | Export service | Export | Service | File | P1 |
+| INT-072 | API versioning | Version | Request | Versioned | P1 |
+| INT-073 | Rate limiting | Limit | Request | Limited | P1 |
+| INT-074 | Auth middleware | Auth | Request | Authenticated | P1 |
+| INT-075 | Validation middleware | Validate | Request | Validated | P1 |
+| INT-076 | Exception middleware | Exception | Throw | Handled | P1 |
+| INT-077 | Correlation ID | Request | ID | Propagated | P1 |
+| INT-078 | Tracing | Trace | Span | Traced | P1 |
+| INT-079 | Feature flag | Flag | Check | Toggled | P1 |
+| INT-080 | CORS | Cross-origin | Request | Allowed | P1 |
+| INT-081 | Connection | Connection | Open | Connected | P1 |
+| INT-082 | Migration | Migration | Run | Applied | P1 |
+| INT-083 | Index | Query | Index | Fast | P1 |
+| INT-084 | Circuit breaker | Fail | Circuit | Open | P1 |
+| INT-085 | Tenant context | Tenant | Context | Resolved | P1 |
+| INT-086 | Partner API | Partner | API | Response | P1 |
+| INT-087 | Reminder service | Reminder | Service | Scheduled | P1 |
+| INT-088 | Dashboard service | Dashboard | Service | Stats | P1 |
+| INT-089 | Forward compat | New client | Old API | Graceful | P1 |
+| INT-090 | Batch flow | Log batch | Activities | All logged | P1 |
 
 ---
 

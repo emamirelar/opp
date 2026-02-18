@@ -11,19 +11,24 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+| Check | Formula | Result |
+|-------|---------|--------|
+| N≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| E≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| F≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| I≥3P | 90 ≥ 3×30=90 | ✅ PASS |
 
 ---
 
@@ -33,7 +38,7 @@ AI contextual service: context building for AI prompts, entity data aggregation,
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|-------------|-------|-----------------|
@@ -226,10 +231,30 @@ AI contextual service: context building for AI prompts, entity data aggregation,
 | BND-068 | Timestamp precision | 1704067200000 | Parsed |
 | BND-069 | ISO8601 date | 2026-02-11T00:00:00Z | Parsed |
 | BND-070 | Empty key in object | {"":1} | Parsed |
+| BND-071 | Entity count = 0 | [] | Invalid |
+| BND-072 | Entity count = 1 | [1] | Valid |
+| BND-073 | Entity count = 100 | Max | Valid |
+| BND-074 | Param count = 0 | {} | Defaults |
+| BND-075 | Param count = 100 | Many | Applied |
+| BND-076 | Response size = 0 | "" | Invalid |
+| BND-077 | Response size = 1MB | Max | Parsed |
+| BND-078 | Nesting depth = 1 | 1 level | Parsed |
+| BND-079 | Nesting depth = 64 | Max | Parsed |
+| BND-080 | Array length = 0 | [] | Parsed |
+| BND-081 | Array length = 10000 | Max | Parsed |
+| BND-082 | Cache size = 0 | Cold | Miss |
+| BND-083 | Cache size = 1000 | Max | Eviction |
+| BND-084 | Timeout = 0ms | 0 | Immediate |
+| BND-085 | Timeout = 30000ms | 30s | Success |
+| BND-086 | Retry = 0 | No retry | Fail once |
+| BND-087 | Retry = 3 | 3 | Retries |
+| BND-088 | Concurrent = 1 | 1 | Success |
+| BND-089 | Concurrent = 1000 | 1000 | Throttled |
+| BND-090 | Placeholder count = 0 | None | Applied |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule | Trigger | Expected Outcome |
 |----|-----------|------|---------|------------------|
@@ -283,10 +308,50 @@ AI contextual service: context building for AI prompts, entity data aggregation,
 | FUN-048 | Response fallback | Fallback rule | Parse fail | Fallback |
 | FUN-049 | Rate limit per user | Rate rule | Many requests | Limited |
 | FUN-050 | Quota per tenant | Quota rule | Tenant | Limited |
+| FUN-051 | Context includes entity metadata | Metadata rule | BuildContext | Metadata present |
+| FUN-052 | Context includes audit fields | Audit rule | BuildContext | CreatedBy, Date |
+| FUN-053 | Template respects order | Order rule | ApplyTemplate | Correct order |
+| FUN-054 | Parse preserves types | Type rule | ParseResponse | Types preserved |
+| FUN-055 | Cache key includes entity ID | Cache key rule | BuildContext | Unique key |
+| FUN-056 | Cache invalidation on entity update | Invalidation rule | Entity update | Cache cleared |
+| FUN-057 | Response truncation at limit | Truncation rule | Parse large | Truncated |
+| FUN-058 | Placeholder case sensitivity | Case rule | ApplyTemplate | Case-sensitive |
+| FUN-059 | Default for missing optional | Default rule | ApplyTemplate | Default used |
+| FUN-060 | Error for missing required | Required rule | ApplyTemplate | Exception |
+| FUN-061 | Context aggregation order | Aggregation rule | LoadEntityData | Order consistent |
+| FUN-062 | Template comment ignored | Comment rule | ApplyTemplate | Comments stripped |
+| FUN-063 | JSON number precision | Precision rule | ParseResponse | Precision kept |
+| FUN-064 | Null handling in template | Null rule | ApplyTemplate | Null as empty |
+| FUN-065 | Empty array handling | Array rule | ParseResponse | Empty array |
+| FUN-066 | Cache TTL | TTL rule | Cache entry | Expires |
+| FUN-067 | Retry on transient failure | Retry rule | Transient error | Retried |
+| FUN-068 | No retry on permanent failure | No retry rule | Permanent error | Fail once |
+| FUN-069 | Context includes related entities | Related rule | BuildContext | Related included |
+| FUN-070 | Template conditional evaluation | Conditional rule | ApplyTemplate | Eval correct |
+| FUN-071 | Response schema validation | Schema rule | ParseResponse | Schema validated |
+| FUN-072 | Max aggregate entities | Max rule | LoadEntityData | Limited |
+| FUN-073 | Context excludes soft-deleted | Exclude rule | BuildContext | Excluded |
+| FUN-074 | Template multiline | Multiline rule | ApplyTemplate | Preserved |
+| FUN-075 | Response encoding detection | Encoding rule | ParseResponse | Detected |
+| FUN-076 | Placeholder nesting | Nesting rule | ApplyTemplate | Nested |
+| FUN-077 | Cache key collision | Collision rule | Same key | Overwrite |
+| FUN-078 | Build context timeout | Timeout rule | Slow build | Timeout |
+| FUN-079 | Parse timeout | Parse rule | Slow parse | Timeout |
+| FUN-080 | Context size limit | Size rule | Large context | Limited |
+| FUN-081 | Template variable scope | Scope rule | ApplyTemplate | Scope correct |
+| FUN-082 | Response field mapping | Mapping rule | ParseResponse | Mapped |
+| FUN-083 | Error message format | Error rule | Any error | Consistent format |
+| FUN-084 | Context versioning | Version rule | BuildContext | Version in context |
+| FUN-085 | Template versioning | Template rule | ApplyTemplate | Version checked |
+| FUN-086 | Aggregate pagination | Pagination rule | LoadEntityData | Paginated |
+| FUN-087 | Context includes user context | User rule | BuildContext | User in context |
+| FUN-088 | Permission in context | Permission rule | BuildContext | Permissions |
+| FUN-089 | Localization in template | Locale rule | ApplyTemplate | Locale applied |
+| FUN-090 | Response error field | Error field rule | ParseResponse | Error handled |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Integration | Scenario | Expected Result |
 |----|-----------|-------------|----------|-----------------|
@@ -340,6 +405,46 @@ AI contextual service: context building for AI prompts, entity data aggregation,
 | INT-048 | Build + stakeholder | Stakeholder | Build | Stakeholders |
 | INT-049 | Build + resource plan | Resource | Build | Resources |
 | INT-050 | End-to-end | All services | Full | Success |
+| INT-051 | Entity repository | DbContext | BuildContext | Entity loaded |
+| INT-052 | Opportunity manager | IOpportunityManager | BuildContext | Opp data |
+| INT-053 | Partner manager | IPartnerManager | BuildContext | Partner data |
+| INT-054 | AI service | IAIService | Parse response | Response parsed |
+| INT-055 | Cache service | ICacheService | Cache context | Cached |
+| INT-056 | Permission service | IPermissionService | BuildContext | Permissions |
+| INT-057 | User resolves | UserResolverService | BuildContext | User context |
+| INT-058 | Config service | IConfiguration | Load config | Config applied |
+| INT-059 | Logger | ILogger | Log | Logged |
+| INT-060 | AutoMapper | IMapper | Map entity | Mapped |
+| INT-061 | Org hierarchy | IOrgHierarchyService | BuildContext | Hierarchy |
+| INT-062 | Country service | ICountryService | BuildContext | Countries |
+| INT-063 | Full pipeline DB | DbContext | BuildContext | Success |
+| INT-064 | Full pipeline AI | IAIService | BuildContext | Success |
+| INT-065 | Full pipeline cache | ICacheService | BuildContext | Cache hit |
+| INT-066 | Entity + partner | Both managers | BuildContext | Both |
+| INT-067 | Entity + opportunity | Both managers | BuildContext | Both |
+| INT-068 | Multi-entity context | Multiple managers | BuildContext | Aggregated |
+| INT-069 | Context with audit | AuditableDbContext | BuildContext | Audit |
+| INT-070 | Context with soft delete | Soft delete filter | BuildContext | Filtered |
+| INT-071 | Template + parse | Template + AI | Full flow | Success |
+| INT-072 | Cache + build | Cache + build | Second call | Cache hit |
+| INT-073 | Error handling chain | Error handler | Error | Handled |
+| INT-074 | Retry + AI | Retry + AI | Transient fail | Retried |
+| INT-075 | Permission + build | Permission + build | Build | Scoped |
+| INT-076 | Config + timeout | Config | Build | Timeout |
+| INT-077 | Logger + error | Logger | Error | Logged |
+| INT-078 | Mapper + entity | Mapper | Entity | Mapped |
+| INT-079 | User + permission | User + permission | Build | Correct |
+| INT-080 | Org + country | Org + country | Build | Combined |
+| INT-081 | Build + template | Build + template | Build + apply | Success |
+| INT-082 | Template + parse | Template + parse | Apply + parse | Success |
+| INT-083 | Build + cache + template | All | Full flow | Success |
+| INT-084 | Build + AI + parse | Build + AI | Full flow | Success |
+| INT-085 | Multi-tenant | Tenant context | Build | Tenant isolated |
+| INT-086 | Multi-user | User context | Build | User isolated |
+| INT-087 | Build + notification | Notification | Build | Notified |
+| INT-088 | Parse + validation | Validation | Parse | Validated |
+| INT-089 | Template + localization | Localization | Apply | Localized |
+| INT-090 | End-to-end | All services | Full | Success |
 
 ---
 

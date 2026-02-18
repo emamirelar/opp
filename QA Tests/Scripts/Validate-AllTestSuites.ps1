@@ -1,13 +1,14 @@
 <#
 .SYNOPSIS
-    Validates ALL test suites in the project for 3:1 ratio compliance.
+    Validates ALL test suites in the project for ratio compliance.
 
 .DESCRIPTION
     This script scans all test suite directories and validates each against
     the comprehensive-test-strategy.mdc requirements:
-    - 3:1 Ratio: (Negative + Edge) >= 3 x Positive
+    - Individual ratio checks: N>=3P, E>=3P, F>=3P, I>=3P (each must pass)
     - Minimum test counts per category
     - Fixed minimums for Security (50) and Concurrency (25)
+    - Minimum total: 462
     
     Designed for CI/CD integration to catch compliance issues before merge.
 
@@ -120,30 +121,36 @@ foreach ($Suite in $AllSuites) {
     $L = $Categories["Load"]
     
     # Calculate requirements
-    $NegReq = [Math]::Max(50, [Math]::Ceiling(2 * $P))
-    $EdgeReq = [Math]::Max(50, [Math]::Ceiling(2 * $P))
+    $NegReq = [Math]::Max(50, [Math]::Ceiling(3 * $P))
+    $EdgeReq = [Math]::Max(50, [Math]::Ceiling(3 * $P))
+    $FuncReq = [Math]::Max(50, [Math]::Ceiling(3 * $P))
+    $IntReq = [Math]::Max(50, [Math]::Ceiling(3 * $P))
     $SecReq = 50
     $ConReq = 25
     $UnitReq = 21
-    $FuncReq = 26
-    $IntReq = 25
     $PerfReq = 16
     $LoadReq = 10
     $RatioReq = 3 * $P
+    $MinTotalReq = 462
     
-    # Check compliance (all 10 categories)
+    # Check compliance (all 10 categories + individual ratio checks + total)
+    $TotalTests = $P + $N + $E + $S + $C + $U + $F + $I + $Perf + $L
     $Checks = @{
         "Positive" = ($P -ge 30)
         "Negative" = ($N -ge $NegReq)
         "Boundary" = ($E -ge $EdgeReq)
+        "Functional" = ($F -ge $FuncReq)
+        "Integration" = ($I -ge $IntReq)
         "Security" = ($S -ge $SecReq)
         "Concurrency" = ($C -ge $ConReq)
         "Unit" = ($U -ge $UnitReq)
-        "Functional" = ($F -ge $FuncReq)
-        "Integration" = ($I -ge $IntReq)
         "Performance" = ($Perf -ge $PerfReq)
         "Load" = ($L -ge $LoadReq)
-        "Ratio" = (($N + $E) -ge $RatioReq)
+        "N>=3P" = ($N -ge $RatioReq)
+        "E>=3P" = ($E -ge $RatioReq)
+        "F>=3P" = ($F -ge $RatioReq)
+        "I>=3P" = ($I -ge $RatioReq)
+        "Total" = ($TotalTests -ge $MinTotalReq)
     }
     
     $AllPass = ($Checks.Values | Where-Object { $_ -eq $false } | Measure-Object).Count -eq 0
@@ -165,8 +172,9 @@ foreach ($Suite in $AllSuites) {
         Integration = $I
         Performance = $Perf
         Load = $L
-        RatioSum = ($N + $E)
+        Total = $TotalTests
         RatioReq = $RatioReq
+        MinTotalReq = $MinTotalReq
         Status = $Status
         Issues = ($Checks.GetEnumerator() | Where-Object { -not $_.Value } | ForEach-Object { $_.Key }) -join ", "
     }
@@ -187,7 +195,7 @@ switch ($OutputFormat) {
                 Write-Host ("       Issues: $($R.Issues)") -ForegroundColor Gray
                 Write-Host ("       Core: P=$($R.Positive) N=$($R.Negative) B=$($R.Boundary) S=$($R.Security) C=$($R.Concurrency)") -ForegroundColor Gray
                 Write-Host ("       Add'l: U=$($R.Unit) F=$($R.Functional) I=$($R.Integration) Perf=$($R.Performance) L=$($R.Load)") -ForegroundColor Gray
-                Write-Host ("       Ratio: $($R.RatioSum)/$($R.RatioReq)") -ForegroundColor Gray
+                Write-Host ("       Ratio: N/E/F/I each >= $($R.RatioReq), Total: $($R.Total)/$($R.MinTotalReq)") -ForegroundColor Gray
             }
         }
         
@@ -216,15 +224,16 @@ switch ($OutputFormat) {
         Write-Output "| Category | Minimum |"
         Write-Output "|----------|---------|"
         Write-Output "| Positive | ≥30 |"
-        Write-Output "| Negative | ≥50 AND ≥2×P |"
-        Write-Output "| Boundary | ≥50 AND ≥2×P |"
+        Write-Output "| Negative | ≥50 AND ≥3×P |"
+        Write-Output "| Boundary | ≥50 AND ≥3×P |"
+        Write-Output "| Functional | ≥50 AND ≥3×P |"
+        Write-Output "| Integration | ≥50 AND ≥3×P |"
         Write-Output "| Security | ≥50 |"
         Write-Output "| Concurrency | ≥25 |"
         Write-Output "| Unit | ≥21 |"
-        Write-Output "| Functional | ≥26 |"
-        Write-Output "| Integration | ≥25 |"
         Write-Output "| Performance | ≥16 |"
         Write-Output "| Load | ≥10 |"
+        Write-Output "| Total | ≥462 |"
     }
     
     "JSON" {

@@ -1,7 +1,7 @@
 # ProfileManager — Test Cases
 
 **Component:** `UNOPS.PAO.Business/Managers/ProfileManager`  
-**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Created:** 2026-02-18 | **Last Updated:** 2026-02-18  
 **Author:** QA Team  
 **Standard:** 10-Category, 3:1 Ratio
 
@@ -11,335 +11,471 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
-| §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| §1 Positive (P) | 30 | 30 | ✅ |
+| §2 Negative (N) | 90 | 90 | ✅ |
+| §3 Boundary (E) | 90 | 90 | ✅ |
+| §4 Functional (F) | 90 | 90 | ✅ |
+| §5 Integration (I) | 90 | 90 | ✅ |
+| §6 Security (SEC) | 50 | 50 | ✅ |
+| §7 Concurrency (CON) | 25 | 25 | ✅ |
+| §8 Unit (UNT) | 21 | 21 | ✅ |
+| §9 Performance (PRF) | 16 | 16 | ✅ |
+| §10 Load (LDT) | 10 | 10 | ✅ |
+| **TOTAL** | **462** | **462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance Check**
+| Check | Result | Formula |
+|-------|--------|---------|
+| N≥3P? | ✅ PASS | 90 ≥ 3×30 (90) |
+| E≥3P? | ✅ PASS | 90 ≥ 3×30 (90) |
+| F≥3P? | ✅ PASS | 90 ≥ 3×30 (90) |
+| I≥3P? | ✅ PASS | 90 ≥ 3×30 (90) |
+
+---
+
+## Implementation Status
+
+| File | Path | Status |
+|------|------|--------|
+| Manager | UNOPS.PAO.Business/Managers/ProfileManager.cs | Implemented (no UNOPS override) |
+| Controller | UNOPS.PAO.Presentation/Controllers/Users/UserProfileController.cs | Implemented |
+| Model | UNOPS.PAO.Models/Users/ProfileModel.cs | Implemented (Email, FirstName, LastName) |
+| Entity | UNOPS.PAO.Domain/Entities/UserProfile.cs | Implemented (inherits ModifiableDeletableEntity) |
+| Entity | UNOPS.PAO.Domain/Entities/PAOUser.cs | Implemented (UserProfile 1:1 navigation) |
+| Authorization | UNOPS.PAO.Presentation/ContextPermissionHandlers/ProfileAuthorizationHandler.cs | Implemented (Operations.Read only) |
+| API Route | POST /api/profile | Active |
+| API Route | GET /api/profile | Commented out in code |
 
 ---
 
 ## Feature Overview
 
-**ProfileManager** manages user profile CRUD, avatar, preferences, org unit, contact info, and password management. Key responsibilities: user profile lifecycle, avatar upload, preferences, org unit assignment.
+**ProfileManager** manages user profile retrieval and updates via PAOUser and UserProfile (1:1). Key responsibilities: Get profile by email (sync), Update FirstName/LastName (async), create UserProfile when missing. Uses exact email match; no IsDeleted filter on PAOUser; relies on lazy loading for UserProfile. ProfileManager is injected directly (not in ManagerWrapper).
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps (Brief) | Expected Result | Priority |
 |----|-----------|-------------|---------------|-----------------|----------|
-| POS-001 | Test 1 | Precondition 1 | Step 1 | Result 1 | P0 |
-| POS-002 | Test 2 | Precondition 2 | Step 2 | Result 2 | P0 |
-| POS-003 | Test 3 | Precondition 3 | Step 3 | Result 3 | P0 |
-| POS-004 | Test 4 | Precondition 4 | Step 4 | Result 4 | P0 |
-| POS-005 | Test 5 | Precondition 5 | Step 5 | Result 5 | P0 |
-| POS-006 | Test 6 | Precondition 6 | Step 6 | Result 6 | P1 |
-| POS-007 | Test 7 | Precondition 7 | Step 7 | Result 7 | P1 |
-| POS-008 | Test 8 | Precondition 8 | Step 8 | Result 8 | P1 |
-| POS-009 | Test 9 | Precondition 9 | Step 9 | Result 9 | P1 |
-| POS-010 | Test 10 | Precondition 10 | Step 10 | Result 10 | P1 |
-| POS-011 | Test 11 | Precondition 11 | Step 11 | Result 11 | P1 |
-| POS-012 | Test 12 | Precondition 12 | Step 12 | Result 12 | P1 |
-| POS-013 | Test 13 | Precondition 13 | Step 13 | Result 13 | P1 |
-| POS-014 | Test 14 | Precondition 14 | Step 14 | Result 14 | P1 |
-| POS-015 | Test 15 | Precondition 15 | Step 15 | Result 15 | P1 |
-| POS-016 | Test 16 | Precondition 16 | Step 16 | Result 16 | P1 |
-| POS-017 | Test 17 | Precondition 17 | Step 17 | Result 17 | P1 |
-| POS-018 | Test 18 | Precondition 18 | Step 18 | Result 18 | P1 |
-| POS-019 | Test 19 | Precondition 19 | Step 19 | Result 19 | P1 |
-| POS-020 | Test 20 | Precondition 20 | Step 20 | Result 20 | P1 |
-| POS-021 | Test 21 | Precondition 21 | Step 21 | Result 21 | P1 |
-| POS-022 | Test 22 | Precondition 22 | Step 22 | Result 22 | P1 |
-| POS-023 | Test 23 | Precondition 23 | Step 23 | Result 23 | P1 |
-| POS-024 | Test 24 | Precondition 24 | Step 24 | Result 24 | P1 |
-| POS-025 | Test 25 | Precondition 25 | Step 25 | Result 25 | P1 |
-| POS-026 | Test 26 | Precondition 26 | Step 26 | Result 26 | P1 |
-| POS-027 | Test 27 | Precondition 27 | Step 27 | Result 27 | P1 |
-| POS-028 | Test 28 | Precondition 28 | Step 28 | Result 28 | P1 |
-| POS-029 | Test 29 | Precondition 29 | Step 29 | Result 29 | P1 |
-| POS-030 | Test 30 | Precondition 30 | Step 30 | Result 30 | P1 |
-| POS-031 | Test 31 | Precondition 31 | Step 31 | Result 31 | P1 |
-| POS-032 | Test 32 | Precondition 32 | Step 32 | Result 32 | P1 |
-| POS-033 | Test 33 | Precondition 33 | Step 33 | Result 33 | P1 |
-| POS-034 | Test 34 | Precondition 34 | Step 34 | Result 34 | P1 |
-| POS-035 | Test 35 | Precondition 35 | Step 35 | Result 35 | P1 |
+| POS-001 | Get profile by valid email — user with UserProfile | PAOUser exists with email user@unops.org, UserProfile has FirstName/LastName | ProfileManager.Get("user@unops.org") | ProfileModel with Email, FirstName, LastName | P0 |
+| POS-002 | Get profile by valid email — user without UserProfile | PAOUser exists, UserProfile is null | ProfileManager.Get("newuser@unops.org") | ProfileModel with Email, FirstName="", LastName="" | P0 |
+| POS-003 | Update profile — existing UserProfile | PAOUser has UserProfile with FirstName="John", LastName="Doe" | Update(ProfileModel{Email, FirstName="Jane", LastName="Smith"}) | FirstName/LastName persisted | P0 |
+| POS-004 | Update profile — creates UserProfile when missing | PAOUser exists, UserProfile is null | Update(ProfileModel{Email, FirstName="Alice", LastName="Brown"}) | UserProfile created and persisted | P0 |
+| POS-005 | Get profile — FirstName only | UserProfile has FirstName="John", LastName=null | Get(email) | FirstName="John", LastName="" | P1 |
+| POS-006 | Get profile — LastName only | UserProfile has FirstName=null, LastName="Doe" | Get(email) | FirstName="", LastName="Doe" | P1 |
+| POS-007 | Update profile — FirstName only | Valid profile with FirstName="Marie", LastName=null | Update(profile) | FirstName persisted, LastName unchanged | P1 |
+| POS-008 | Update profile — LastName only | Valid profile with FirstName=null, LastName="Curie" | Update(profile) | LastName persisted | P1 |
+| POS-009 | Update profile — both names empty | ProfileModel with FirstName="", LastName="" | Update(profile) | Empty strings persisted | P1 |
+| POS-010 | Get profile — both names empty | UserProfile has FirstName="", LastName="" | Get(email) | ProfileModel with empty FirstName/LastName | P1 |
+| POS-011 | Update profile — single character names | FirstName="A", LastName="B" | Update(profile) | Single chars persisted | P1 |
+| POS-012 | Get profile — single character names | UserProfile has FirstName="A", LastName="B" | Get(email) | ProfileModel returned correctly | P1 |
+| POS-013 | Update profile — names with spaces | FirstName="Mary Jane", LastName="van der Berg" | Update(profile) | Names with spaces persisted | P1 |
+| POS-014 | Get profile — names with hyphens | UserProfile has LastName="O'Brien" | Get(email) | LastName returned correctly | P1 |
+| POS-015 | Update profile — unicode names | FirstName="François", LastName="Müller" | Update(profile) | Unicode persisted | P1 |
+| POS-016 | Get profile — unicode names | UserProfile has FirstName="José", LastName="García" | Get(email) | Unicode returned correctly | P1 |
+| POS-017 | Update profile — long valid names | FirstName/LastName at 255 chars | Update(profile) | Long names persisted | P1 |
+| POS-018 | Get profile — email with subaddress | PAOUser Email="user+tag@unops.org" | Get("user+tag@unops.org") | ProfileModel returned | P1 |
+| POS-019 | Update profile — email with subaddress | ProfileModel Email="user+tag@unops.org" | Update(profile) | Update succeeds | P1 |
+| POS-020 | Get profile — email case-sensitive match | PAOUser Email="User@UNOPS.org" (exact) | Get("User@UNOPS.org") | ProfileModel returned | P1 |
+| POS-021 | Update profile — overwrite existing values | UserProfile has FirstName="Old", LastName="Name" | Update with FirstName="New", LastName="Name" | Only FirstName changed | P1 |
+| POS-022 | Update profile — SaveChangesAsync completes | Valid profile | Update(profile) | No exception, DB updated | P0 |
+| POS-023 | Get profile — returns new ProfileModel instance | User exists | Get(email) | New ProfileModel, not entity reference | P1 |
+| POS-024 | Update profile — does not modify Email | ProfileModel with Email | Update(profile) | Email used for lookup only, not persisted to UserProfile | P1 |
+| POS-025 | Get profile — Email from input parameter | Get("specific@unops.org") | ProfileModel.Email equals "specific@unops.org" | P1 |
+| POS-026 | Update profile — UserProfile.UserId set by EF | New UserProfile created | Update(profile) | UserProfile linked to PAOUser via FK | P1 |
+| POS-027 | POST /api/profile — authenticated user | Valid JWT, valid ProfileModel body | POST /api/profile | 200 OK | P0 |
+| POS-028 | POST /api/profile — HandleOperationAsync wraps Update | Valid request | POST /api/profile | Success response from HandleOperationAsync | P1 |
+| POS-029 | Get profile — PAOUser.Name uses UserProfile.Name | UserProfile has FirstName="John", LastName="Doe" | PAOUser.Name (computed) | "John Doe" | P2 |
+| POS-030 | Update profile — UserProfile.Name computed after save | Update FirstName="A", LastName="B" | UserProfile.Name | "A B" | P2 |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Condition | Expected Result | Priority |
 |----|-----------|------------------------|-----------------|----------|
-| NEG-001 | Negative 1 | Invalid input 1 | Error 1 | P0 |
-| NEG-002 | Negative 2 | Invalid input 2 | Error 2 | P0 |
-| NEG-003 | Negative 3 | Invalid input 3 | Error 3 | P0 |
-| NEG-004 | Negative 4 | Invalid input 4 | Error 4 | P0 |
-| NEG-005 | Negative 5 | Invalid input 5 | Error 5 | P0 |
-| NEG-006 | Negative 6 | Invalid input 6 | Error 6 | P0 |
-| NEG-007 | Negative 7 | Invalid input 7 | Error 7 | P0 |
-| NEG-008 | Negative 8 | Invalid input 8 | Error 8 | P0 |
-| NEG-009 | Negative 9 | Invalid input 9 | Error 9 | P0 |
-| NEG-010 | Negative 10 | Invalid input 10 | Error 10 | P0 |
-| NEG-011 | Negative 11 | Invalid input 11 | Error 11 | P1 |
-| NEG-012 | Negative 12 | Invalid input 12 | Error 12 | P1 |
-| NEG-013 | Negative 13 | Invalid input 13 | Error 13 | P1 |
-| NEG-014 | Negative 14 | Invalid input 14 | Error 14 | P1 |
-| NEG-015 | Negative 15 | Invalid input 15 | Error 15 | P1 |
-| NEG-016 | Negative 16 | Invalid input 16 | Error 16 | P1 |
-| NEG-017 | Negative 17 | Invalid input 17 | Error 17 | P1 |
-| NEG-018 | Negative 18 | Invalid input 18 | Error 18 | P1 |
-| NEG-019 | Negative 19 | Invalid input 19 | Error 19 | P1 |
-| NEG-020 | Negative 20 | Invalid input 20 | Error 20 | P1 |
-| NEG-021 | Negative 21 | Invalid input 21 | Error 21 | P1 |
-| NEG-022 | Negative 22 | Invalid input 22 | Error 22 | P1 |
-| NEG-023 | Negative 23 | Invalid input 23 | Error 23 | P1 |
-| NEG-024 | Negative 24 | Invalid input 24 | Error 24 | P1 |
-| NEG-025 | Negative 25 | Invalid input 25 | Error 25 | P1 |
-| NEG-026 | Negative 26 | Invalid input 26 | Error 26 | P1 |
-| NEG-027 | Negative 27 | Invalid input 27 | Error 27 | P1 |
-| NEG-028 | Negative 28 | Invalid input 28 | Error 28 | P1 |
-| NEG-029 | Negative 29 | Invalid input 29 | Error 29 | P1 |
-| NEG-030 | Negative 30 | Invalid input 30 | Error 30 | P1 |
-| NEG-031 | Negative 31 | Invalid input 31 | Error 31 | P1 |
-| NEG-032 | Negative 32 | Invalid input 32 | Error 32 | P1 |
-| NEG-033 | Negative 33 | Invalid input 33 | Error 33 | P1 |
-| NEG-034 | Negative 34 | Invalid input 34 | Error 34 | P1 |
-| NEG-035 | Negative 35 | Invalid input 35 | Error 35 | P1 |
-| NEG-036 | Negative 36 | Invalid input 36 | Error 36 | P1 |
-| NEG-037 | Negative 37 | Invalid input 37 | Error 37 | P1 |
-| NEG-038 | Negative 38 | Invalid input 38 | Error 38 | P1 |
-| NEG-039 | Negative 39 | Invalid input 39 | Error 39 | P1 |
-| NEG-040 | Negative 40 | Invalid input 40 | Error 40 | P1 |
-| NEG-041 | Negative 41 | Invalid input 41 | Error 41 | P1 |
-| NEG-042 | Negative 42 | Invalid input 42 | Error 42 | P1 |
-| NEG-043 | Negative 43 | Invalid input 43 | Error 43 | P1 |
-| NEG-044 | Negative 44 | Invalid input 44 | Error 44 | P1 |
-| NEG-045 | Negative 45 | Invalid input 45 | Error 45 | P1 |
-| NEG-046 | Negative 46 | Invalid input 46 | Error 46 | P1 |
-| NEG-047 | Negative 47 | Invalid input 47 | Error 47 | P1 |
-| NEG-048 | Negative 48 | Invalid input 48 | Error 48 | P1 |
-| NEG-049 | Negative 49 | Invalid input 49 | Error 49 | P1 |
-| NEG-050 | Negative 50 | Invalid input 50 | Error 50 | P1 |
-| NEG-051 | Negative 51 | Invalid input 51 | Error 51 | P1 |
-| NEG-052 | Negative 52 | Invalid input 52 | Error 52 | P1 |
-| NEG-053 | Negative 53 | Invalid input 53 | Error 53 | P1 |
-| NEG-054 | Negative 54 | Invalid input 54 | Error 54 | P1 |
-| NEG-055 | Negative 55 | Invalid input 55 | Error 55 | P1 |
-| NEG-056 | Negative 56 | Invalid input 56 | Error 56 | P1 |
-| NEG-057 | Negative 57 | Invalid input 57 | Error 57 | P1 |
-| NEG-058 | Negative 58 | Invalid input 58 | Error 58 | P1 |
-| NEG-059 | Negative 59 | Invalid input 59 | Error 59 | P1 |
-| NEG-060 | Negative 60 | Invalid input 60 | Error 60 | P1 |
-| NEG-061 | Negative 61 | Invalid input 61 | Error 61 | P1 |
-| NEG-062 | Negative 62 | Invalid input 62 | Error 62 | P1 |
-| NEG-063 | Negative 63 | Invalid input 63 | Error 63 | P1 |
-| NEG-064 | Negative 64 | Invalid input 64 | Error 64 | P1 |
-| NEG-065 | Negative 65 | Invalid input 65 | Error 65 | P1 |
-| NEG-066 | Negative 66 | Invalid input 66 | Error 66 | P1 |
-| NEG-067 | Negative 67 | Invalid input 67 | Error 67 | P1 |
-| NEG-068 | Negative 68 | Invalid input 68 | Error 68 | P1 |
-| NEG-069 | Negative 69 | Invalid input 69 | Error 69 | P1 |
-| NEG-070 | Negative 70 | Invalid input 70 | Error 70 | P1 |
+| NEG-001 | Get — non-existent email | Get("nonexistent@unops.org") | BusinessException "User profile not found" | P0 |
+| NEG-002 | Get — null email | Get(null) | BusinessException or FirstOrDefault returns null → BusinessException | P0 |
+| NEG-003 | Get — empty string email | Get("") | BusinessException (no PAOUser with empty email) | P0 |
+| NEG-004 | Update — non-existent email | ProfileModel{Email="nonexistent@unops.org"} | BusinessException "User profile not found" | P0 |
+| NEG-005 | Update — null profile | Update(null) | NullReferenceException or ArgumentNullException | P0 |
+| NEG-006 | Update — profile with null Email | ProfileModel{Email=null, FirstName="A", LastName="B"} | BusinessException (user not found) | P0 |
+| NEG-007 | Update — profile with empty Email | ProfileModel{Email="", FirstName="A", LastName="B"} | BusinessException | P0 |
+| NEG-008 | Get — whitespace-only email | Get("   ") | BusinessException (no match) | P1 |
+| NEG-009 | Get — email with wrong case | PAOUser has "user@unops.org", Get("USER@UNOPS.ORG") | BusinessException (exact match fails) | P1 |
+| NEG-010 | Get — email typo | Get("user@unopss.org") | BusinessException | P1 |
+| NEG-011 | Get — email missing @ | Get("userunops.org") | BusinessException | P1 |
+| NEG-012 | Get — email with trailing space | Get("user@unops.org ") | BusinessException | P1 |
+| NEG-013 | Get — SQL injection in email | Get("'; DROP TABLE PAOUsers;--") | Sanitized or no match, BusinessException | P0 |
+| NEG-014 | Update — SQL injection in FirstName | FirstName="'; DROP TABLE--" | Sanitized or error | P0 |
+| NEG-015 | Update — XSS in FirstName | FirstName="<script>alert(1)</script>" | Sanitized or stored as-is (context-dependent) | P1 |
+| NEG-016 | Update — XSS in LastName | LastName="<img src=x onerror=alert(1)>" | Sanitized or stored | P1 |
+| NEG-017 | Get — email with null byte | Get("user@unops.org\0") | BusinessException or no match | P1 |
+| NEG-018 | Update — profile Email mismatch (cross-user) | Authenticated as A, body Email=B | Update succeeds for B (authorization gap) | P0 |
+| NEG-019 | Get — PAOUser deleted (ActiveUser=false) | PAOUser exists but ActiveUser=false | May still return (no ActiveUser filter) | P1 |
+| NEG-020 | Get — UserProfile IsDeleted=true | UserProfile soft-deleted | May still return (no IsDeleted filter) | P1 |
+| NEG-021 | Update — DbContext disposed | ProfileManager with disposed context | ObjectDisposedException on SaveChangesAsync | P1 |
+| NEG-022 | Update — database connection lost | DB unavailable during SaveChangesAsync | DbUpdateException or connection error | P1 |
+| NEG-023 | Update — transaction rolled back | Simulate rollback | No partial persist | P1 |
+| NEG-024 | Get — PAOUsers DbSet empty | No PAOUsers in DB | BusinessException | P1 |
+| NEG-025 | Update — duplicate PAOUser same email | Two PAOUsers with same Email (data integrity issue) | FirstOrDefault returns first, may update wrong user | P1 |
+| NEG-026 | Get — UserProfile lazy load disabled | Lazy loading off, no Include | NullReferenceException on user.UserProfile?.FirstName | P1 |
+| NEG-027 | Update — UserProfile creation fails (constraint) | UserProfile creation violates FK | DbUpdateException | P1 |
+| NEG-028 | Get — email exceeds max length | Get(500-char string) | BusinessException or no match | P2 |
+| NEG-029 | Update — FirstName exceeds DB column limit | FirstName 10000 chars | DbUpdateException or truncation | P1 |
+| NEG-030 | Update — LastName exceeds DB column limit | LastName 10000 chars | DbUpdateException or truncation | P1 |
+| NEG-031 | POST /api/profile — unauthenticated | No JWT | 401 Unauthorized | P0 |
+| NEG-032 | POST /api/profile — malformed JSON body | Invalid JSON | 400 Bad Request | P1 |
+| NEG-033 | POST /api/profile — missing Content-Type | No application/json header | 415 or 400 | P1 |
+| NEG-034 | POST /api/profile — wrong HTTP method | GET /api/profile (commented out) | 404 or method not allowed | P1 |
+| NEG-035 | Get — ProfileManager not registered | ProfileManager not in DI | Resolution exception at controller construction | P1 |
+| NEG-036 | Update — AppDbContext null | ProfileManager with null context | NullReferenceException | P1 |
+| NEG-037 | Get — email with control characters | Get("user@unops.org\u0000") | BusinessException | P2 |
+| NEG-038 | Update — profile with control chars in FirstName | FirstName="A\u0000B" | Stored or rejected | P2 |
+| NEG-039 | Get — email unicode homograph | Get("user@unоps.org") (Cyrillic o) | No match, BusinessException | P2 |
+| NEG-040 | Update — null FirstName | ProfileModel{FirstName=null} | NullReferenceException or persisted as null | P1 |
+| NEG-041 | Update — null LastName | ProfileModel{LastName=null} | NullReferenceException or persisted as null | P1 |
+| NEG-042 | Get — concurrent delete of PAOUser | PAOUser deleted between Get and use | Stale data or error | P2 |
+| NEG-043 | Update — concurrent delete of PAOUser | PAOUser deleted before Update | DbUpdateConcurrencyException or error | P1 |
+| NEG-044 | Update — UserProfile creation without UserId | New UserProfile, UserId not set | FK constraint may fail | P1 |
+| NEG-045 | Get — multiple PAOUsers same email (data corruption) | Duplicate emails in DB | FirstOrDefault returns first | P1 |
+| NEG-046 | POST /api/profile — empty body | POST with {} | May fail validation or Update with null Email | P1 |
+| NEG-047 | POST /api/profile — Content-Type text/plain | Wrong content type | 415 Unsupported Media Type | P1 |
+| NEG-048 | Get — ProfileAuthorizationHandler not invoked for Get | GET commented out | N/A — endpoint inactive | P2 |
+| NEG-049 | Update — ProfileAuthorizationHandler not used for Update | UpdateProfile has no resource auth | Any authenticated user can update any profile | P0 |
+| NEG-050 | Get — expired JWT (when GET active) | Expired token | 401 Unauthorized | P1 |
+| NEG-051 | Update — revoked token | Token revoked | 401 Unauthorized | P1 |
+| NEG-052 | Get — email with leading spaces | Get("  user@unops.org") | No match, BusinessException | P1 |
+| NEG-053 | Update — profile Email with leading spaces | Email="  user@unops.org" | No match, BusinessException | P1 |
+| NEG-054 | Get — email format invalid (no domain) | Get("user") | BusinessException | P1 |
+| NEG-055 | Get — email format invalid (no local) | Get("@unops.org") | BusinessException | P1 |
+| NEG-056 | Update — circular reference in JSON | Malformed JSON with circular ref | 400 Bad Request | P2 |
+| NEG-057 | Get — PAOUser with orphaned UserProfile | UserProfile.UserId points to deleted PAOUser | Scenario depends on FK config | P2 |
+| NEG-058 | Update — readonly DbContext | Context configured read-only | InvalidOperationException on SaveChanges | P2 |
+| NEG-059 | Get — DbContext in failed transaction state | Previous operation failed | May propagate exception | P2 |
+| NEG-060 | Update — SaveChangesAsync throws | Simulate DB error | Exception propagated | P1 |
+| NEG-061 | Get — email with newline | Get("user@unops.org\n") | No match | P2 |
+| NEG-062 | Update — FirstName with newline | FirstName="A\nB" | Persisted or rejected | P2 |
+| NEG-063 | Get — email with tab | Get("user@unops.org\t") | No match | P2 |
+| NEG-064 | Update — LastName with tab | LastName="A\tB" | Persisted | P2 |
+| NEG-065 | POST /api/profile — oversized body | Body > 1MB | 413 Payload Too Large or error | P2 |
+| NEG-066 | Get — ProfileModel mapping wrong Email | Get returns profile | ProfileModel.Email must match input email | P1 |
+| NEG-067 | Update — UserProfile.Name not updated | Update FirstName/LastName | UserProfile.Name computed on read | P1 |
+| NEG-068 | Get — UserProfile optional fields not mapped | ProfileModel has only Email, FirstName, LastName | OrgUnit, DutyStation, etc. not in ProfileModel | P1 |
+| NEG-069 | Update — UserProfile other fields overwritten | UserProfile has OrgUnit, DutyStation | Update only touches FirstName/LastName | P1 |
+| NEG-070 | Get — PAOUser without Include UserProfile | Lazy loading | Extra query or N+1 if in loop | P2 |
+| NEG-071 | Update — UserProfile new instance not tracked | user.UserProfile = new UserProfile() | EF tracks when assigned to user | P1 |
+| NEG-072 | Get — email with RTL override char | Get("user@unops.org\u202E") | No match | P2 |
+| NEG-073 | Update — FirstName with RTL char | FirstName="A\u202EB" | Persisted | P2 |
+| NEG-074 | Get — email with zero-width space | Get("user@unops.org\u200B") | No match | P2 |
+| NEG-075 | Update — LastName with zero-width space | LastName="Smith\u200B" | Persisted | P2 |
+| NEG-076 | POST /api/profile — CORS preflight failure | Origin not allowed | CORS error | P2 |
+| NEG-077 | Get — ProfileManager in different scope | Request-scoped vs singleton mismatch | Depends on DI config | P2 |
+| NEG-078 | Update — UserProfile ModifiableDeletableEntity fields | New UserProfile created | Name, Status, audit fields have defaults | P1 |
+| NEG-079 | Get — UserProfile inherits ModifiableDeletableEntity | UserProfile has IsDeleted, audit fields | Get does not filter IsDeleted | P1 |
+| NEG-080 | Update — UserProfile.Name required by base | ModifiableDeletableEntity requires Name | May need Name set for save | P1 |
+| NEG-081 | Get — PAOUser.ActiveUser not checked | PAOUser with ActiveUser=false | Still returned | P1 |
+| NEG-082 | Update — PAOUser.ActiveUser not checked | Update for inactive user | Update succeeds | P1 |
+| NEG-083 | POST /api/profile — rate limit exceeded | Too many requests | 429 Too Many Requests | P2 |
+| NEG-084 | Get — HandleOperationAsync not used (GET commented) | GET endpoint | N/A | P2 |
+| NEG-085 | Update — HandleOperationAsync catches exception | Update throws | Handled, appropriate status returned | P1 |
+| NEG-086 | Get — ProfileAuthorizationHandler always succeeds | Operations.Read | context.Succeed(requirement) | P1 |
+| NEG-087 | Update — no [PermissionAuthorize] on UpdateProfile | UpdateProfile action | Only [Authorize] required | P1 |
+| NEG-088 | Get — ProfileModel not returned from controller | GET commented | N/A | P2 |
+| NEG-089 | Update — ProfileModel from body not validated | No [Required] on Email | Update may receive invalid data | P1 |
+| NEG-090 | Get — PAOUser.Id not in ProfileModel | ProfileModel has Email, FirstName, LastName only | No UserId or PAOUser.Id exposed | P1 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max | Priority |
 |----|----------------|-----|-----|--------|--------|----------|----------|
-| BND-001 | Field 1 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-002 | Field 2 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-003 | Field 3 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-004 | Field 4 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-005 | Field 5 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-006 | Field 6 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-007 | Field 7 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-008 | Field 8 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-009 | Field 9 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-010 | Field 10 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-011 | Field 11 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-012 | Field 12 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-013 | Field 13 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-014 | Field 14 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-015 | Field 15 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-016 | Field 16 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-017 | Field 17 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-018 | Field 18 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-019 | Field 19 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-020 | Field 20 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-021 | Field 21 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-022 | Field 22 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-023 | Field 23 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-024 | Field 24 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-025 | Field 25 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-026 | Field 26 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-027 | Field 27 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-028 | Field 28 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-029 | Field 29 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-030 | Field 30 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-031 | Field 31 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-032 | Field 32 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-033 | Field 33 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-034 | Field 34 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-035 | Field 35 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-036 | Field 36 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-037 | Field 37 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-038 | Field 38 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-039 | Field 39 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-040 | Field 40 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-041 | Field 41 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-042 | Field 42 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-043 | Field 43 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-044 | Field 44 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-045 | Field 45 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-046 | Field 46 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-047 | Field 47 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-048 | Field 48 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-049 | Field 49 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-050 | Field 50 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-051 | Field 51 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-052 | Field 52 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-053 | Field 53 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-054 | Field 54 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-055 | Field 55 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-056 | Field 56 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-057 | Field 57 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-058 | Field 58 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-059 | Field 59 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-060 | Field 60 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-061 | Field 61 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-062 | Field 62 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-063 | Field 63 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-064 | Field 64 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-065 | Field 65 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-066 | Field 66 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-067 | Field 67 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-068 | Field 68 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-069 | Field 69 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-070 | Field 70 | Min | Max | At Min | At Max | Over Max | P1 |
+| BND-001 | FirstName | 0 | 255 | "" | 255 chars | 256 chars | P1 |
+| BND-002 | LastName | 0 | 255 | "" | 255 chars | 256 chars | P1 |
+| BND-003 | Email | 5 | 320 | "a@b.c" | 320 chars | 321 chars | P1 |
+| BND-004 | Email local part | 1 | 64 | "a" | 64 chars | 65 chars | P1 |
+| BND-005 | Email domain | 1 | 253 | "a.b" | 253 chars | 254 chars | P1 |
+| BND-006 | FirstName single char | 1 | 1 | "A" | "A" | — | P1 |
+| BND-007 | LastName single char | 1 | 1 | "B" | "B" | — | P1 |
+| BND-008 | FirstName empty string | 0 | 0 | "" | "" | — | P1 |
+| BND-009 | LastName empty string | 0 | 0 | "" | "" | — | P1 |
+| BND-010 | FirstName null | — | — | null | null | — | P1 |
+| BND-011 | LastName null | — | — | null | null | — | P1 |
+| BND-012 | Email null | — | — | null | null | — | P1 |
+| BND-013 | Email empty | 0 | 0 | "" | "" | — | P1 |
+| BND-014 | FirstName whitespace only | — | — | "   " | "   " | — | P1 |
+| BND-015 | LastName whitespace only | — | — | "   " | "   " | — | P1 |
+| BND-016 | FirstName leading space | — | — | " John" | — | — | P1 |
+| BND-017 | LastName trailing space | — | — | "Doe " | — | — | P1 |
+| BND-018 | FirstName 254 chars | 254 | 255 | 254 chars | — | — | P1 |
+| BND-019 | LastName 255 chars | 255 | 255 | — | 255 chars | — | P1 |
+| BND-020 | FirstName 256 chars | 255 | 255 | — | — | 256 chars | P1 |
+| BND-021 | Email "a@b.c" (min valid) | 5 | 5 | "a@b.c" | — | — | P1 |
+| BND-022 | Email 320 chars (max) | 320 | 320 | — | 320 chars | — | P1 |
+| BND-023 | Email 321 chars | 320 | 320 | — | — | 321 chars | P1 |
+| BND-024 | FirstName unicode BMP | — | — | "José" | "日本語" | — | P1 |
+| BND-025 | LastName unicode BMP | — | — | "Müller" | "北京" | — | P1 |
+| BND-026 | FirstName emoji | — | — | "John😀" | — | — | P2 |
+| BND-027 | LastName emoji | — | — | "Doe🎉" | — | — | P2 |
+| BND-028 | FirstName hyphen | — | — | "Mary-Jane" | — | — | P1 |
+| BND-029 | LastName apostrophe | — | — | "O'Brien" | — | — | P1 |
+| BND-030 | FirstName multiple spaces | — | — | "Mary  Jane" | — | — | P1 |
+| BND-031 | Email subaddress | — | — | "user+tag@unops.org" | — | — | P1 |
+| BND-032 | Email case boundary | — | — | "User@UNOPS.org" vs "user@unops.org" | — | — | P1 |
+| BND-033 | PAOUser.Id | 1 | 2147483647 | 1 | Max int | Overflow | P1 |
+| BND-034 | UserProfile.UserId | 1 | 2147483647 | 1 | Max int | Overflow | P1 |
+| BND-035 | FirstName newline | — | — | "A\nB" | — | — | P2 |
+| BND-036 | LastName tab | — | — | "A\tB" | — | — | P2 |
+| BND-037 | FirstName carriage return | — | — | "A\rB" | — | — | P2 |
+| BND-038 | Email with plus | — | — | "user+filter@unops.org" | — | — | P1 |
+| BND-039 | Email with dot in local | — | — | "first.last@unops.org" | — | — | P1 |
+| BND-040 | FirstName at 1 char | 1 | 1 | "X" | — | — | P1 |
+| BND-041 | LastName at 1 char | 1 | 1 | "Y" | — | — | P1 |
+| BND-042 | FirstName at 2 chars | 2 | 2 | "AB" | — | — | P1 |
+| BND-043 | ProfileModel all null | — | — | Email=null, FirstName=null, LastName=null | — | — | P1 |
+| BND-044 | ProfileModel all empty | — | — | Email="", FirstName="", LastName="" | — | — | P1 |
+| BND-045 | Get email at max length | 320 | 320 | — | 320 chars | — | P1 |
+| BND-046 | Update FirstName at 255 | 255 | 255 | — | 255 chars | — | P1 |
+| BND-047 | Update LastName at 255 | 255 | 255 | — | 255 chars | — | P1 |
+| BND-048 | UserProfile.Name computed empty | — | — | FirstName="", LastName="" | Name="" | — | P1 |
+| BND-049 | UserProfile.Name computed FirstName only | — | — | FirstName="John", LastName="" | Name="John" | — | P1 |
+| BND-050 | UserProfile.Name computed LastName only | — | — | FirstName="", LastName="Doe" | Name="Doe" | — | P1 |
+| BND-051 | UserProfile.Name computed both | — | — | FirstName="John", LastName="Doe" | Name="John Doe" | — | P1 |
+| BND-052 | PAOUser.Name when UserProfile null | — | — | UserProfile=null | Name="" | — | P1 |
+| BND-053 | PAOUser.Name when UserProfile.Name empty | — | — | UserProfile.Name="" | Name="" | — | P1 |
+| BND-054 | FirstName 0 chars | 0 | 0 | "" | — | — | P1 |
+| BND-055 | LastName 0 chars | 0 | 0 | "" | — | — | P1 |
+| BND-056 | Email with dash | — | — | "user-name@unops.org" | — | — | P1 |
+| BND-057 | Email with underscore | — | — | "user_name@unops.org" | — | — | P1 |
+| BND-058 | FirstName 100 chars | 100 | 100 | 100 chars | — | — | P1 |
+| BND-059 | LastName 100 chars | 100 | 100 | 100 chars | — | — | P1 |
+| BND-060 | FirstName 200 chars | 200 | 200 | 200 chars | — | — | P1 |
+| BND-061 | Get with email at boundary of DB column | — | — | Email length at column max | — | — | P2 |
+| BND-062 | Update with FirstName at DB column max | — | — | FirstName at column limit | — | — | P2 |
+| BND-063 | Update with LastName at DB column max | — | — | LastName at column limit | — | — | P2 |
+| BND-064 | FirstName with mixed unicode | — | — | "François 北京" | — | — | P2 |
+| BND-065 | LastName with mixed unicode | — | — | "Müller 日本語" | — | — | P2 |
+| BND-066 | Email with internationalized domain | — | — | "user@münchen.de" | — | — | P2 |
+| BND-067 | FirstName 255 chars exact | 255 | 255 | — | 255 chars | — | P1 |
+| BND-068 | LastName 255 chars exact | 255 | 255 | — | 255 chars | — | P1 |
+| BND-069 | FirstName 256 chars over | 255 | 255 | — | — | 256 chars | P1 |
+| BND-070 | LastName 256 chars over | 255 | 255 | — | — | 256 chars | P1 |
+| BND-071 | Email 319 chars | 319 | 320 | 319 chars | — | — | P1 |
+| BND-072 | Email 321 chars over | 320 | 320 | — | — | 321 chars | P1 |
+| BND-073 | FirstName with only spaces (10) | — | — | "          " | — | — | P1 |
+| BND-074 | LastName with only spaces (10) | — | — | "          " | — | — | P1 |
+| BND-075 | Get email exactly matching stored | — | — | Exact match required | — | — | P1 |
+| BND-076 | Update profile Email exactly matching PAOUser | — | — | Must match for lookup | — | — | P1 |
+| BND-077 | UserProfile.UserId boundary | 1 | 2147483647 | 1 | Max | — | P2 |
+| BND-078 | UserProfile.Id (ModifiableDeletableEntity) | 1 | 2147483647 | 1 | Max | — | P2 |
+| BND-079 | FirstName with HTML entities | — | — | "&lt;script&gt;" | — | — | P2 |
+| BND-080 | LastName with HTML entities | — | — | "&amp;" | — | — | P2 |
+| BND-081 | Email with multiple @ | — | — | "user@@unops.org" | — | — | P1 |
+| BND-082 | Email with @ at start | — | — | "@unops.org" | — | — | P1 |
+| BND-083 | Email with @ at end | — | — | "user@" | — | — | P1 |
+| BND-084 | FirstName 50 chars | 50 | 50 | 50 chars | — | — | P1 |
+| BND-085 | LastName 50 chars | 50 | 50 | 50 chars | — | — | P1 |
+| BND-086 | FirstName 150 chars | 150 | 150 | 150 chars | — | — | P1 |
+| BND-087 | LastName 150 chars | 150 | 150 | 150 chars | — | — | P1 |
+| BND-088 | FirstName 250 chars | 250 | 255 | 250 chars | — | — | P1 |
+| BND-089 | LastName 250 chars | 250 | 255 | 250 chars | — | — | P1 |
+| BND-090 | ProfileModel optional vs required | — | — | Email required for Update | FirstName/LastName nullable | — | P1 |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Scenario | Trigger | Expected Outcome | Priority |
 |----|-----------|---------------|---------|------------------|----------|
-| FUN-001 | Functional 1 | Rule 1 | Trigger 1 | Outcome 1 | P0 |
-| FUN-002 | Functional 2 | Rule 2 | Trigger 2 | Outcome 2 | P0 |
-| FUN-003 | Functional 3 | Rule 3 | Trigger 3 | Outcome 3 | P0 |
-| FUN-004 | Functional 4 | Rule 4 | Trigger 4 | Outcome 4 | P0 |
-| FUN-005 | Functional 5 | Rule 5 | Trigger 5 | Outcome 5 | P0 |
-| FUN-006 | Functional 6 | Rule 6 | Trigger 6 | Outcome 6 | P1 |
-| FUN-007 | Functional 7 | Rule 7 | Trigger 7 | Outcome 7 | P1 |
-| FUN-008 | Functional 8 | Rule 8 | Trigger 8 | Outcome 8 | P1 |
-| FUN-009 | Functional 9 | Rule 9 | Trigger 9 | Outcome 9 | P1 |
-| FUN-010 | Functional 10 | Rule 10 | Trigger 10 | Outcome 10 | P1 |
-| FUN-011 | Functional 11 | Rule 11 | Trigger 11 | Outcome 11 | P1 |
-| FUN-012 | Functional 12 | Rule 12 | Trigger 12 | Outcome 12 | P1 |
-| FUN-013 | Functional 13 | Rule 13 | Trigger 13 | Outcome 13 | P1 |
-| FUN-014 | Functional 14 | Rule 14 | Trigger 14 | Outcome 14 | P1 |
-| FUN-015 | Functional 15 | Rule 15 | Trigger 15 | Outcome 15 | P1 |
-| FUN-016 | Functional 16 | Rule 16 | Trigger 16 | Outcome 16 | P1 |
-| FUN-017 | Functional 17 | Rule 17 | Trigger 17 | Outcome 17 | P1 |
-| FUN-018 | Functional 18 | Rule 18 | Trigger 18 | Outcome 18 | P1 |
-| FUN-019 | Functional 19 | Rule 19 | Trigger 19 | Outcome 19 | P1 |
-| FUN-020 | Functional 20 | Rule 20 | Trigger 20 | Outcome 20 | P1 |
-| FUN-021 | Functional 21 | Rule 21 | Trigger 21 | Outcome 21 | P1 |
-| FUN-022 | Functional 22 | Rule 22 | Trigger 22 | Outcome 22 | P1 |
-| FUN-023 | Functional 23 | Rule 23 | Trigger 23 | Outcome 23 | P1 |
-| FUN-024 | Functional 24 | Rule 24 | Trigger 24 | Outcome 24 | P1 |
-| FUN-025 | Functional 25 | Rule 25 | Trigger 25 | Outcome 25 | P1 |
-| FUN-026 | Functional 26 | Rule 26 | Trigger 26 | Outcome 26 | P1 |
-| FUN-027 | Functional 27 | Rule 27 | Trigger 27 | Outcome 27 | P1 |
-| FUN-028 | Functional 28 | Rule 28 | Trigger 28 | Outcome 28 | P1 |
-| FUN-029 | Functional 29 | Rule 29 | Trigger 29 | Outcome 29 | P1 |
-| FUN-030 | Functional 30 | Rule 30 | Trigger 30 | Outcome 30 | P1 |
-| FUN-031 | Functional 31 | Rule 31 | Trigger 31 | Outcome 31 | P1 |
-| FUN-032 | Functional 32 | Rule 32 | Trigger 32 | Outcome 32 | P1 |
-| FUN-033 | Functional 33 | Rule 33 | Trigger 33 | Outcome 33 | P1 |
-| FUN-034 | Functional 34 | Rule 34 | Trigger 34 | Outcome 34 | P1 |
-| FUN-035 | Functional 35 | Rule 35 | Trigger 35 | Outcome 35 | P1 |
-| FUN-036 | Functional 36 | Rule 36 | Trigger 36 | Outcome 36 | P1 |
-| FUN-037 | Functional 37 | Rule 37 | Trigger 37 | Outcome 37 | P1 |
-| FUN-038 | Functional 38 | Rule 38 | Trigger 38 | Outcome 38 | P1 |
-| FUN-039 | Functional 39 | Rule 39 | Trigger 39 | Outcome 39 | P1 |
-| FUN-040 | Functional 40 | Rule 40 | Trigger 40 | Outcome 40 | P1 |
-| FUN-041 | Functional 41 | Rule 41 | Trigger 41 | Outcome 41 | P1 |
-| FUN-042 | Functional 42 | Rule 42 | Trigger 42 | Outcome 42 | P1 |
-| FUN-043 | Functional 43 | Rule 43 | Trigger 43 | Outcome 43 | P1 |
-| FUN-044 | Functional 44 | Rule 44 | Trigger 44 | Outcome 44 | P1 |
-| FUN-045 | Functional 45 | Rule 45 | Trigger 45 | Outcome 45 | P1 |
-| FUN-046 | Functional 46 | Rule 46 | Trigger 46 | Outcome 46 | P1 |
-| FUN-047 | Functional 47 | Rule 47 | Trigger 47 | Outcome 47 | P1 |
-| FUN-048 | Functional 48 | Rule 48 | Trigger 48 | Outcome 48 | P1 |
-| FUN-049 | Functional 49 | Rule 49 | Trigger 49 | Outcome 49 | P1 |
-| FUN-050 | Functional 50 | Rule 50 | Trigger 50 | Outcome 50 | P1 |
+| FUN-001 | Get maps PAOUser to ProfileModel | ProfileModel has Email, FirstName, LastName only | Get(email) | ProfileModel populated from PAOUser + UserProfile | P0 |
+| FUN-002 | Get uses email for PAOUser lookup | Lookup by Email | Get(email) | appDbContext.PAOUsers.FirstOrDefault(x => x.Email == email) | P0 |
+| FUN-003 | Get returns empty strings when UserProfile null | Null coalescing | user.UserProfile?.FirstName ?? string.Empty | FirstName="", LastName="" | P0 |
+| FUN-004 | Update creates UserProfile when null | user.UserProfile == null | Update(profile) | user.UserProfile = new UserProfile() | P0 |
+| FUN-005 | Update sets FirstName on UserProfile | profile.FirstName | Update(profile) | user.UserProfile.FirstName = profile.FirstName | P0 |
+| FUN-006 | Update sets LastName on UserProfile | profile.LastName | Update(profile) | user.UserProfile.LastName = profile.LastName | P0 |
+| FUN-007 | Update uses Email for PAOUser lookup | profile.Email | Update(profile) | appDbContext.PAOUsers.FirstOrDefault(x => x.Email == profile.Email) | P0 |
+| FUN-008 | Update calls SaveChangesAsync | Persistence | Update(profile) | await appDbContext.SaveChangesAsync() | P0 |
+| FUN-009 | Get throws BusinessException when user null | user == null | Get(nonExistentEmail) | throw new BusinessException("User profile not found") | P0 |
+| FUN-010 | Update throws BusinessException when user null | user == null | Update(profileWithBadEmail) | throw new BusinessException("User profile not found") | P0 |
+| FUN-011 | ProfileModel.Email from input parameter | Get does not read from entity | Get(email) | ProfileModel.Email = email (input) | P1 |
+| FUN-012 | UserProfile not modified except FirstName/LastName | Update scope | Update(profile) | OrgUnit, DutyStation, Position, etc. unchanged | P1 |
+| FUN-013 | PAOUser.UserProfile 1:1 relationship | EF configuration | Assign user.UserProfile | Single UserProfile per PAOUser | P1 |
+| FUN-014 | UserProfile.UserId links to PAOUser.Id | FK relationship | New UserProfile | UserId = user.Id when saved | P1 |
+| FUN-015 | Get does not use Include for UserProfile | Lazy loading | Get(email) | Relies on lazy load for user.UserProfile | P1 |
+| FUN-016 | Update does not set UserProfile.UserEmail | ProfileModel has Email | Update(profile) | UserProfile.UserEmail not updated | P1 |
+| FUN-017 | Update does not set UserProfile.UserId explicitly | New UserProfile | user.UserProfile = new UserProfile() | EF sets UserId via relationship | P1 |
+| FUN-018 | ProfileManager not in ManagerWrapper | DI | Controller constructor | ProfileManager injected directly | P1 |
+| FUN-019 | ProfileManager depends only on AppDbContext | Constructor | new ProfileManager(context) | No IManagerWrapper, IMapper | P1 |
+| FUN-020 | Get is synchronous | Method signature | Get(string?) | Returns ProfileModel, no async | P1 |
+| FUN-021 | Update is asynchronous | Method signature | Update(ProfileModel) | async Task | P1 |
+| FUN-022 | UserProfile inherits ModifiableDeletableEntity | Entity base | UserProfile | Has Id, Name, Status, audit, IsDeleted | P1 |
+| FUN-023 | UserProfile.Name computed from FirstName+LastName | Computed property | UserProfile.Name | FirstName + " " + LastName, or FirstName/LastName only | P1 |
+| FUN-024 | PAOUser.Name uses UserProfile.Name | PAOUser.Name getter | PAOUser.Name | UserProfile?.Name ?? string.Empty | P1 |
+| FUN-025 | ProfileModel has no validation attributes | Model | ProfileModel | Email, FirstName, LastName all nullable | P1 |
+| FUN-026 | Get uses FirstOrDefault | Query | PAOUsers.FirstOrDefault(x => x.Email == email) | Single or null | P1 |
+| FUN-027 | Update uses FirstOrDefault | Query | PAOUsers.FirstOrDefault(x => x.Email == profile.Email) | Single or null | P1 |
+| FUN-028 | No IsDeleted filter on PAOUser | Query | Get/Update | PAOUser query has no !x.IsDeleted | P1 |
+| FUN-029 | No IsDeleted filter on UserProfile | Query | Get | UserProfile not filtered by IsDeleted | P1 |
+| FUN-030 | No ActiveUser filter on PAOUser | Query | Get/Update | PAOUser query has no x.ActiveUser | P1 |
+| FUN-031 | POST /api/profile uses [FromBody] | Controller | UpdateProfile([FromBody] ProfileModel profile) | Profile from request body | P1 |
+| FUN-032 | POST /api/profile has [Authorize] | Controller | UserProfileController | Requires authenticated user | P1 |
+| FUN-033 | GET /api/profile commented out | Controller | Get() method | Endpoint not active | P1 |
+| FUN-034 | ProfileAuthorizationHandler checks Operations.Read | Handler | HandleRequirementAsync | requirement == Operations.Read → Succeed | P1 |
+| FUN-035 | ProfileAuthorizationHandler always succeeds for Read | Handler | Any ProfileModel | context.Succeed(requirement) | P1 |
+| FUN-036 | ProfileAuthorizationHandler does not check Edit | Handler | Operations.Edit (if used) | Not implemented | P1 |
+| FUN-037 | UpdateProfile does not authorize resource | Controller | UpdateProfile | No AuthorizeAsync(User, profile, ...) | P1 |
+| FUN-038 | HandleOperationAsync wraps Update | Controller | return await HandleOperationAsync(async () => { await _profileManager.Update(profile); }) | Exception handling, status code | P1 |
+| FUN-039 | Get (commented) would use HttpContext.User.Identity?.Name | Controller | var email = HttpContext.User.Identity?.Name | Email from claims | P1 |
+| FUN-040 | Get (commented) would authorize with Operations.Read | Controller | AuthorizeAsync(User, profile, Operations.Read) | ProfileAuthorizationHandler invoked | P1 |
+| FUN-041 | UserProfile has UserPreference navigation | Entity | UserProfile.UserPreference | Optional 1:1 | P2 |
+| FUN-042 | UserProfile has OrgUnit, SupervisorId, DutyStation, Position | Entity | UserProfile | Not used by ProfileManager | P1 |
+| FUN-043 | ProfileModel maps only 3 fields | Mapping | Get return | Email, FirstName, LastName | P1 |
+| FUN-044 | Update touches only 2 entity fields | Update scope | user.UserProfile.FirstName, LastName | No other UserProfile fields | P1 |
+| FUN-045 | New UserProfile has default ModifiableDeletableEntity values | Entity creation | new UserProfile() | Name, Status, IsDeleted defaults | P1 |
+| FUN-046 | UserProfile.Name required by base (ModifiableDeletableEntity) | Entity | UserProfile | Name may need value for save | P1 |
+| FUN-047 | Get returns new object not entity | Return type | Get(email) | return new ProfileModel() { ... } | P1 |
+| FUN-048 | Update modifies tracked entity | EF tracking | user.UserProfile.FirstName = ... | Changes tracked, SaveChanges persists | P1 |
+| FUN-049 | New UserProfile added to context via assignment | EF | user.UserProfile = new UserProfile() | EF adds when user is tracked | P1 |
+| FUN-050 | APIDictionary.Profile = "api/profile" | Route | APIDictionary.Profile | Route constant | P2 |
+| FUN-051 | UserProfileController inherits BaseController | Controller | UserProfileController | HandleOperationAsync from base | P1 |
+| FUN-052 | ProfileManager implements IApplicationService | Manager | ProfileManager | Marker interface | P2 |
+| FUN-053 | Get email exact match (case-sensitive) | Lookup | x.Email == email | No ToLower, no case-insensitive | P1 |
+| FUN-054 | Update email exact match (case-sensitive) | Lookup | x.Email == profile.Email | No ToLower | P1 |
+| FUN-055 | UserProfile.UserEmail not synced from PAOUser.Email | Data | Update | UserProfile.UserEmail independent | P1 |
+| FUN-056 | ProfileManager has no permission checks | Manager | Get, Update | No permission logic in manager | P1 |
+| FUN-057 | Controller UpdateProfile has no permission attribute | Controller | [HttpPost(APIDictionary.Profile)] | No [PermissionAuthorize] | P1 |
+| FUN-058 | Get (commented) would return profile directly | Controller | return profile | Not Ok(profile), just profile | P1 |
+| FUN-059 | Update returns HandleOperationAsync result | Controller | return await HandleOperationAsync(...) | ActionResult from base | P1 |
+| FUN-060 | UserProfile table "UserProfile" schema "public" | EF config | modelBuilder.Entity<UserProfile> | ToTable("UserProfile", "public") | P2 |
+| FUN-061 | PAOUser has UserProfile optional navigation | Entity | PAOUser.UserProfile | UserProfile? | P1 |
+| FUN-062 | UserProfile has UserId FK | Entity | UserProfile.UserId | int, required | P1 |
+| FUN-063 | ProfileModel properties nullable | Model | ProfileModel | string? for all | P1 |
+| FUN-064 | Get null email passes to FirstOrDefault | Get(null) | x.Email == null | Matches PAOUser with null Email (rare) | P1 |
+| FUN-065 | Update null FirstName assigns null | profile.FirstName = null | user.UserProfile.FirstName = null | Null persisted | P1 |
+| FUN-066 | Update null LastName assigns null | profile.LastName = null | user.UserProfile.LastName = null | Null persisted | P1 |
+| FUN-067 | UserProfile.Name handles null FirstName | FirstName=null, LastName="Doe" | UserProfile.Name | "Doe" | P1 |
+| FUN-068 | UserProfile.Name handles null LastName | FirstName="John", LastName=null | UserProfile.Name | "John" | P1 |
+| FUN-069 | UserProfile.Name handles both null | FirstName=null, LastName=null | UserProfile.Name | "" | P1 |
+| FUN-070 | UserProfile.Name trims space | FirstName="John", LastName="" | UserProfile.Name | "John" (Trim) | P1 |
+| FUN-071 | PAOUser required Email | Entity | PAOUser.Email | required string | P1 |
+| FUN-072 | PAOUser.Id primary key | Entity | PAOUser.Id | int, PK | P1 |
+| FUN-073 | UserProfile.Id from ModifiableDeletableEntity | Entity | UserProfile.Id | int, PK | P1 |
+| FUN-074 | ProfileManager stateless | Manager | Get, Update | No instance state between calls | P1 |
+| FUN-075 | AppDbContext scoped | DI | ProfileManager | DbContext per request | P1 |
+| FUN-076 | Get does not persist | Get | No SaveChanges | Read-only | P1 |
+| FUN-077 | Update persists | Update | SaveChangesAsync | Write | P1 |
+| FUN-078 | Get can be called multiple times | Idempotent read | Get(email) x3 | Same result each time | P1 |
+| FUN-079 | Update is not idempotent | Write | Update(profile1), Update(profile2) | Second overwrites first | P1 |
+| FUN-080 | ProfileModel has no Id | Model | ProfileModel | No UserId, no UserProfile.Id | P1 |
+| FUN-081 | UserProfile created with default constructor | new UserProfile() | No parameters | All properties default | P1 |
+| FUN-082 | Update does not set UserProfile.Name | Name is computed | Update(profile) | Name computed from FirstName+LastName | P1 |
+| FUN-083 | Get ProfileModel.Email always from input | Not from entity | Get(email) | ProfileModel.Email = email | P1 |
+| FUN-084 | UserProfile.UserEmail separate from ProfileModel.Email | Data | Update | UserProfile.UserEmail not set | P1 |
+| FUN-085 | PAOUser.IsInternal not used by ProfileManager | Entity | PAOUser | Ignored | P2 |
+| FUN-086 | PAOUser.ActiveUser not used by ProfileManager | Entity | PAOUser | Ignored | P1 |
+| FUN-087 | UserProfile.SupervisorId not used by ProfileManager | Entity | UserProfile | Ignored | P2 |
+| FUN-088 | UserProfile.DutyStation not used by ProfileManager | Entity | UserProfile | Ignored | P2 |
+| FUN-089 | UserProfile.Position not used by ProfileManager | Entity | UserProfile | Ignored | P2 |
+| FUN-090 | UserProfile.OrgUnit not used by ProfileManager | Entity | UserProfile | Ignored | P2 |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities Involved | Expected Result | Priority |
 |----|-----------|----------|-------------------|-----------------|----------|
-| INT-001 | Integration 1 | Op 1 | Entities 1 | Result 1 | P0 |
-| INT-002 | Integration 2 | Op 2 | Entities 2 | Result 2 | P0 |
-| INT-003 | Integration 3 | Op 3 | Entities 3 | Result 3 | P0 |
-| INT-004 | Integration 4 | Op 4 | Entities 4 | Result 4 | P0 |
-| INT-005 | Integration 5 | Op 5 | Entities 5 | Result 5 | P0 |
-| INT-006 | Integration 6 | Op 6 | Entities 6 | Result 6 | P1 |
-| INT-007 | Integration 7 | Op 7 | Entities 7 | Result 7 | P1 |
-| INT-008 | Integration 8 | Op 8 | Entities 8 | Result 8 | P1 |
-| INT-009 | Integration 9 | Op 9 | Entities 9 | Result 9 | P1 |
-| INT-010 | Integration 10 | Op 10 | Entities 10 | Result 10 | P1 |
-| INT-011 | Integration 11 | Op 11 | Entities 11 | Result 11 | P1 |
-| INT-012 | Integration 12 | Op 12 | Entities 12 | Result 12 | P1 |
-| INT-013 | Integration 13 | Op 13 | Entities 13 | Result 13 | P1 |
-| INT-014 | Integration 14 | Op 14 | Entities 14 | Result 14 | P1 |
-| INT-015 | Integration 15 | Op 15 | Entities 15 | Result 15 | P1 |
-| INT-016 | Integration 16 | Op 16 | Entities 16 | Result 16 | P1 |
-| INT-017 | Integration 17 | Op 17 | Entities 17 | Result 17 | P1 |
-| INT-018 | Integration 18 | Op 18 | Entities 18 | Result 18 | P1 |
-| INT-019 | Integration 19 | Op 19 | Entities 19 | Result 19 | P1 |
-| INT-020 | Integration 20 | Op 20 | Entities 20 | Result 20 | P1 |
-| INT-021 | Integration 21 | Op 21 | Entities 21 | Result 21 | P1 |
-| INT-022 | Integration 22 | Op 22 | Entities 22 | Result 22 | P1 |
-| INT-023 | Integration 23 | Op 23 | Entities 23 | Result 23 | P1 |
-| INT-024 | Integration 24 | Op 24 | Entities 24 | Result 24 | P1 |
-| INT-025 | Integration 25 | Op 25 | Entities 25 | Result 25 | P1 |
-| INT-026 | Integration 26 | Op 26 | Entities 26 | Result 26 | P1 |
-| INT-027 | Integration 27 | Op 27 | Entities 27 | Result 27 | P1 |
-| INT-028 | Integration 28 | Op 28 | Entities 28 | Result 28 | P1 |
-| INT-029 | Integration 29 | Op 29 | Entities 29 | Result 29 | P1 |
-| INT-030 | Integration 30 | Op 30 | Entities 30 | Result 30 | P1 |
-| INT-031 | Integration 31 | Op 31 | Entities 31 | Result 31 | P1 |
-| INT-032 | Integration 32 | Op 32 | Entities 32 | Result 32 | P1 |
-| INT-033 | Integration 33 | Op 33 | Entities 33 | Result 33 | P1 |
-| INT-034 | Integration 34 | Op 34 | Entities 34 | Result 34 | P1 |
-| INT-035 | Integration 35 | Op 35 | Entities 35 | Result 35 | P1 |
-| INT-036 | Integration 36 | Op 36 | Entities 36 | Result 36 | P1 |
-| INT-037 | Integration 37 | Op 37 | Entities 37 | Result 37 | P1 |
-| INT-038 | Integration 38 | Op 38 | Entities 38 | Result 38 | P1 |
-| INT-039 | Integration 39 | Op 39 | Entities 39 | Result 39 | P1 |
-| INT-040 | Integration 40 | Op 40 | Entities 40 | Result 40 | P1 |
-| INT-041 | Integration 41 | Op 41 | Entities 41 | Result 41 | P1 |
-| INT-042 | Integration 42 | Op 42 | Entities 42 | Result 42 | P1 |
-| INT-043 | Integration 43 | Op 43 | Entities 43 | Result 43 | P1 |
-| INT-044 | Integration 44 | Op 44 | Entities 44 | Result 44 | P1 |
-| INT-045 | Integration 45 | Op 45 | Entities 45 | Result 45 | P1 |
-| INT-046 | Integration 46 | Op 46 | Entities 46 | Result 46 | P1 |
-| INT-047 | Integration 47 | Op 47 | Entities 47 | Result 47 | P1 |
-| INT-048 | Integration 48 | Op 48 | Entities 48 | Result 48 | P1 |
-| INT-049 | Integration 49 | Op 49 | Entities 49 | Result 49 | P1 |
-| INT-050 | Integration 50 | Op 50 | Entities 50 | Result 50 | P1 |
+| INT-001 | Get — PAOUser to ProfileModel round-trip | Get | PAOUser, UserProfile, ProfileModel | ProfileModel correctly populated | P0 |
+| INT-002 | Update — ProfileModel to UserProfile persist | Update | ProfileModel, PAOUser, UserProfile, DbContext | DB updated | P0 |
+| INT-003 | Update — UserProfile creation and persist | Update | PAOUser, UserProfile, DbContext | New UserProfile in DB | P0 |
+| INT-004 | POST /api/profile — full request flow | HTTP POST | Controller, ProfileManager, DbContext, PAOUser, UserProfile | 200, DB updated | P0 |
+| INT-005 | Get — DbContext PAOUsers query | Get | AppDbContext, PAOUsers DbSet | Query executes, returns user | P0 |
+| INT-006 | Update — DbContext SaveChangesAsync | Update | AppDbContext | Changes persisted to DB | P0 |
+| INT-007 | Get — PAOUser-UserProfile 1:1 load | Get | PAOUser, UserProfile | UserProfile loaded (lazy or include) | P1 |
+| INT-008 | Update — PAOUser-UserProfile relationship | Update | PAOUser, UserProfile | Relationship maintained | P1 |
+| INT-009 | UserProfile FK to PAOUser | Update | UserProfile.UserId, PAOUser.Id | FK satisfied on insert | P1 |
+| INT-010 | ProfileManager — AppDbContext injection | DI | ProfileManager, AppDbContext | Context injected, queries work | P1 |
+| INT-011 | UserProfileController — ProfileManager injection | DI | UserProfileController, ProfileManager | Manager injected | P1 |
+| INT-012 | UserProfileController — multiple dependencies | DI | ProfileManager, IUserDataManager, IUserInfoService, etc. | All resolved | P1 |
+| INT-013 | Get — PAOUsers DbSet from AppDbContext | Get | appDbContext.PAOUsers | DbSet queryable | P1 |
+| INT-014 | Update — UserProfile added to DbContext | Update | appDbContext, UserProfile | New entity tracked | P1 |
+| INT-015 | Update — existing UserProfile updated in DbContext | Update | appDbContext, UserProfile | Entity state Modified | P1 |
+| INT-016 | Get — UserProfile lazy load from PAOUser | Get | PAOUser.UserProfile | Navigation loaded | P1 |
+| INT-017 | Update — UserProfile assignment to PAOUser | Update | user.UserProfile = new UserProfile() | EF tracks relationship | P1 |
+| INT-018 | ProfileModel — API contract | POST | ProfileModel in body | Serialization/deserialization | P1 |
+| INT-019 | HandleOperationAsync — exception handling | Update throws | BaseController.HandleOperationAsync | Appropriate error response | P1 |
+| INT-020 | [Authorize] — authentication pipeline | POST without token | ASP.NET Core auth | 401 Unauthorized | P1 |
+| INT-021 | ProfileAuthorizationHandler — registration | GET (if active) | IAuthorizationHandler, ProfileModel | Handler invoked | P1 |
+| INT-022 | UserProfile — ModifiableDeletableEntity inheritance | UserProfile | Domain, Audit | Base fields present | P1 |
+| INT-023 | PAOUser — UserProfile navigation | PAOUser | Domain | 1:1 optional | P1 |
+| INT-024 | AppDbContext — PAOUsers DbSet | AppDbContext | DataAccess | DbSet<PAOUser> | P1 |
+| INT-025 | AppDbContext — UserProfile DbSet | AppDbContext | DataAccess | DbSet<UserProfile> or via PAOUser | P1 |
+| INT-026 | EF — PAOUser-UserProfile configuration | OnModelCreating | EF fluent config | HasOne, WithOne, HasForeignKey | P1 |
+| INT-027 | Update — transaction scope | SaveChangesAsync | DbContext | Single transaction | P1 |
+| INT-028 | Get — no transaction (read) | Get | DbContext | Read uncommitted or default | P1 |
+| INT-029 | ProfileModel — JSON serialization | POST body | System.Text.Json or Newtonsoft | ProfileModel deserialized | P1 |
+| INT-030 | UserProfileController — BaseController inheritance | Controller | BaseController | HandleOperationAsync available | P1 |
+| INT-031 | Get — multiple PAOUsers (different emails) | Get | Multiple PAOUsers | Correct user returned by email | P1 |
+| INT-032 | Update — multiple users, update one | Update | PAOUser A, PAOUser B | Only specified user updated | P1 |
+| INT-033 | UserProfile — UserPreference navigation | UserProfile | UserPreference | Optional, not used by ProfileManager | P2 |
+| INT-034 | UserInfoService — separate from ProfileManager | UpdateUserInfo | IUserInfoService, UserProfile | Different endpoint, different service | P1 |
+| INT-035 | GetUserProfileDetails — uses IUserInfoService | GET CurrentUserInfo | UserProfileController, IUserInfoService | Not ProfileManager.Get | P1 |
+| INT-036 | UpdateUserInfo — updates full UserProfile | PUT UserInfoUpdate | UserProfile, IUserInfoService | Different from ProfileManager.Update | P1 |
+| INT-037 | ProfileManager — no IUserInfoService | ProfileManager | Dependencies | Only AppDbContext | P1 |
+| INT-038 | PAOUser — AspNetUsers link | PAOUser | Identity | May link to AspNetUsers | P2 |
+| INT-039 | UserProfile — UserId to PAOUser | UserProfile | PAOUser | FK UserId | P1 |
+| INT-040 | Get — ProfileModel not from AutoMapper | Get | ProfileManager | Manual new ProfileModel() | P1 |
+| INT-041 | Update — no AutoMapper | Update | ProfileManager | Direct property assignment | P1 |
+| INT-042 | ProfileManager — no IMapper | ProfileManager | Dependencies | No mapper injection | P1 |
+| INT-043 | POST /api/profile — route resolution | HTTP | Route /api/profile | Controller action matched | P1 |
+| INT-044 | POST /api/profile — model binding | [FromBody] | ProfileModel | Model bound from JSON | P1 |
+| INT-045 | Get — PAOUser with multiple UserProfiles (invalid) | Data | 1:1 constraint | Only one UserProfile per PAOUser | P1 |
+| INT-046 | Update — UserProfile already exists | Update | user.UserProfile != null | No new creation, update existing | P1 |
+| INT-047 | Get — PAOUser without UserProfile | Get | UserProfile = null | ProfileModel with empty FirstName/LastName | P1 |
+| INT-048 | Update — UserProfile creation, then save | Update | New UserProfile | SaveChangesAsync inserts UserProfile | P1 |
+| INT-049 | EF — UserProfile table name | Migration | UserProfile | Table "UserProfile", schema "public" | P2 |
+| INT-050 | Get — DbContext scope | Get | Request scope | Same context as Update in same request | P1 |
+| INT-051 | Update — DbContext scope | Update | Request scope | Same context as Get in same request | P1 |
+| INT-052 | ProfileManager — scoped lifetime | DI | services.AddScoped<ProfileManager> or similar | Per-request instance | P1 |
+| INT-053 | Get — PAOUser from PostgreSQL | Get | Npgsql, PostgreSQL | Query executes | P1 |
+| INT-054 | Update — UserProfile persist to PostgreSQL | Update | Npgsql, PostgreSQL | Insert/Update in UserProfile table | P1 |
+| INT-055 | UserProfile — audit fields (ModifiableDeletableEntity) | Update | CreatedBy, LastModifiedBy, etc. | May be set by AuditableDbContext | P2 |
+| INT-056 | Get — no audit fields in ProfileModel | Get | ProfileModel | No CreatedDate, etc. | P1 |
+| INT-057 | Update — UserProfile audit fields | Update | UserProfile | LastModifiedBy, LastModifiedDate may update | P2 |
+| INT-058 | ProfileModel — DTO for API | API | ProfileModel | Transport object, not entity | P1 |
+| INT-059 | UserProfile — entity for persistence | DB | UserProfile | Persisted entity | P1 |
+| INT-060 | PAOUser — entity for persistence | DB | PAOUser | Persisted entity | P1 |
+| INT-061 | Get — read path: Controller (commented) → Manager → DbContext → DB | Get | Full stack | N/A (GET commented) | P2 |
+| INT-062 | Update — write path: Controller → Manager → DbContext → DB | Update | Full stack | End-to-end persist | P0 |
+| INT-063 | HandleOperationAsync — success path | Update succeeds | BaseController | 200 OK or configured success | P1 |
+| INT-064 | HandleOperationAsync — exception path | Update throws BusinessException | BaseController | 400 or appropriate status | P1 |
+| INT-065 | BusinessException — global handler | Update throws | IExceptionHandler | ProblemDetails response | P1 |
+| INT-066 | Get — no authorization in manager | Get | ProfileManager | No auth check | P1 |
+| INT-067 | Update — no authorization in manager | Update | ProfileManager | No auth check | P1 |
+| INT-068 | POST /api/profile — authorization at controller | [Authorize] | Controller | Authentication required | P1 |
+| INT-069 | ProfileAuthorizationHandler — ProfileModel resource | Handler | AuthorizationHandler<..., ProfileModel> | ProfileModel as resource | P1 |
+| INT-070 | Operations.Read — requirement type | Handler | OperationAuthorizationRequirement | Standard requirement | P1 |
+| INT-071 | Get — PAOUser Email unique (business rule) | Data | PAOUser | Email should be unique | P1 |
+| INT-072 | Update — lookup by Email | Update | profile.Email | PAOUser found by Email | P1 |
+| INT-073 | Get — ProfileModel immutable from client | Get | ProfileModel | Returned, not modified by client in same request | P2 |
+| INT-074 | Update — ProfileModel from client | Update | ProfileModel | Client sends, server applies | P1 |
+| INT-075 | UserProfile — JsonIgnore on UserPreference | UserProfile | [JsonIgnore] | UserPreference not serialized | P2 |
+| INT-076 | ProfileModel — no JsonIgnore | ProfileModel | All properties | All serialized | P1 |
+| INT-077 | POST /api/profile — CORS | HTTP | CORS middleware | Allowed origins | P2 |
+| INT-078 | POST /api/profile — logging | HandleOperationAsync | ILogger | Exceptions logged | P2 |
+| INT-079 | ProfileManager — no logger | ProfileManager | Dependencies | No ILogger | P1 |
+| INT-080 | Get — PAOUser ActiveUser not filtered | Get | PAOUser | ActiveUser=false still returned | P1 |
+| INT-081 | Update — PAOUser ActiveUser not filtered | Update | PAOUser | Can update inactive user profile | P1 |
+| INT-082 | UserProfile — IsDeleted not filtered | Get/Update | UserProfile | Soft-deleted UserProfile may be used | P1 |
+| INT-083 | Update — UserProfile Name not explicitly set | Update | user.UserProfile.Name | Computed, not stored in Name column (if ignored) | P2 |
+| INT-084 | UserProfile — Name property migration | Migration | IgnoreUserProfileNameProperty | Name may be computed only | P2 |
+| INT-085 | Get — ProfileModel used by AI or other consumers | Get | Downstream | Contract stability | P2 |
+| INT-086 | Update — called from profile edit UI | Update | Client | UI sends ProfileModel | P1 |
+| INT-087 | UserProfileController — consolidated controller | Controller | Profile, UserData, UserInfo | Multiple concerns in one controller | P1 |
+| INT-088 | ProfileManager — single responsibility | Manager | Get, Update | Profile only | P1 |
+| INT-089 | Get — used by commented GET endpoint | Get | Controller | var profile = _profileManager.Get(email) | P2 |
+| INT-090 | Update — used by POST endpoint | Update | Controller | await _profileManager.Update(profile) | P0 |
 
 ---
 
@@ -347,56 +483,56 @@
 
 | ID | Test Name | Attack Vector | Target | Expected Block | Priority |
 |----|-----------|--------------|--------|----------------|----------|
-| SEC-001 | Security 1 | Attack 1 | Target 1 | Block 1 | P0 |
-| SEC-002 | Security 2 | Attack 2 | Target 2 | Block 2 | P0 |
-| SEC-003 | Security 3 | Attack 3 | Target 3 | Block 3 | P0 |
-| SEC-004 | Security 4 | Attack 4 | Target 4 | Block 4 | P0 |
-| SEC-005 | Security 5 | Attack 5 | Target 5 | Block 5 | P0 |
-| SEC-006 | Security 6 | Attack 6 | Target 6 | Block 6 | P0 |
-| SEC-007 | Security 7 | Attack 7 | Target 7 | Block 7 | P0 |
-| SEC-008 | Security 8 | Attack 8 | Target 8 | Block 8 | P0 |
-| SEC-009 | Security 9 | Attack 9 | Target 9 | Block 9 | P0 |
-| SEC-010 | Security 10 | Attack 10 | Target 10 | Block 10 | P0 |
-| SEC-011 | Security 11 | Attack 11 | Target 11 | Block 11 | P1 |
-| SEC-012 | Security 12 | Attack 12 | Target 12 | Block 12 | P1 |
-| SEC-013 | Security 13 | Attack 13 | Target 13 | Block 13 | P1 |
-| SEC-014 | Security 14 | Attack 14 | Target 14 | Block 14 | P1 |
-| SEC-015 | Security 15 | Attack 15 | Target 15 | Block 15 | P1 |
-| SEC-016 | Security 16 | Attack 16 | Target 16 | Block 16 | P1 |
-| SEC-017 | Security 17 | Attack 17 | Target 17 | Block 17 | P1 |
-| SEC-018 | Security 18 | Attack 18 | Target 18 | Block 18 | P1 |
-| SEC-019 | Security 19 | Attack 19 | Target 19 | Block 19 | P1 |
-| SEC-020 | Security 20 | Attack 20 | Target 20 | Block 20 | P1 |
-| SEC-021 | Security 21 | Attack 21 | Target 21 | Block 21 | P1 |
-| SEC-022 | Security 22 | Attack 22 | Target 22 | Block 22 | P1 |
-| SEC-023 | Security 23 | Attack 23 | Target 23 | Block 23 | P1 |
-| SEC-024 | Security 24 | Attack 24 | Target 24 | Block 24 | P1 |
-| SEC-025 | Security 25 | Attack 25 | Target 25 | Block 25 | P1 |
-| SEC-026 | Security 26 | Attack 26 | Target 26 | Block 26 | P1 |
-| SEC-027 | Security 27 | Attack 27 | Target 27 | Block 27 | P1 |
-| SEC-028 | Security 28 | Attack 28 | Target 28 | Block 28 | P1 |
-| SEC-029 | Security 29 | Attack 29 | Target 29 | Block 29 | P1 |
-| SEC-030 | Security 30 | Attack 30 | Target 30 | Block 30 | P1 |
-| SEC-031 | Security 31 | Attack 31 | Target 31 | Block 31 | P1 |
-| SEC-032 | Security 32 | Attack 32 | Target 32 | Block 32 | P1 |
-| SEC-033 | Security 33 | Attack 33 | Target 33 | Block 33 | P1 |
-| SEC-034 | Security 34 | Attack 34 | Target 34 | Block 34 | P1 |
-| SEC-035 | Security 35 | Attack 35 | Target 35 | Block 35 | P1 |
-| SEC-036 | Security 36 | Attack 36 | Target 36 | Block 36 | P1 |
-| SEC-037 | Security 37 | Attack 37 | Target 37 | Block 37 | P1 |
-| SEC-038 | Security 38 | Attack 38 | Target 38 | Block 38 | P1 |
-| SEC-039 | Security 39 | Attack 39 | Target 39 | Block 39 | P1 |
-| SEC-040 | Security 40 | Attack 40 | Target 40 | Block 40 | P1 |
-| SEC-041 | Security 41 | Attack 41 | Target 41 | Block 41 | P1 |
-| SEC-042 | Security 42 | Attack 42 | Target 42 | Block 42 | P1 |
-| SEC-043 | Security 43 | Attack 43 | Target 43 | Block 43 | P1 |
-| SEC-044 | Security 44 | Attack 44 | Target 44 | Block 44 | P1 |
-| SEC-045 | Security 45 | Attack 45 | Target 45 | Block 45 | P1 |
-| SEC-046 | Security 46 | Attack 46 | Target 46 | Block 46 | P1 |
-| SEC-047 | Security 47 | Attack 47 | Target 47 | Block 47 | P1 |
-| SEC-048 | Security 48 | Attack 48 | Target 48 | Block 48 | P1 |
-| SEC-049 | Security 49 | Attack 49 | Target 49 | Block 49 | P1 |
-| SEC-050 | Security 50 | Attack 50 | Target 50 | Block 50 | P1 |
+| SEC-001 | Update another user's profile — Email in body | Authenticated as A, body Email=B | Update B's profile | No server-side check; update succeeds (vulnerability) | P0 |
+| SEC-002 | POST /api/profile unauthenticated | No JWT | Update profile | 401 Unauthorized | P0 |
+| SEC-003 | POST /api/profile — expired token | Expired JWT | Update profile | 401 Unauthorized | P0 |
+| SEC-004 | POST /api/profile — tampered token | Modified JWT | Update profile | 401 Unauthorized | P0 |
+| SEC-005 | POST /api/profile — token with wrong audience | JWT audience mismatch | Update profile | 401 Unauthorized | P1 |
+| SEC-006 | SQL injection in Get email | Get("'; DROP TABLE PAOUsers;--") | Database | Parameterized query, no injection | P0 |
+| SEC-007 | SQL injection in Update Email | ProfileModel Email with SQL | Database | Parameterized query | P0 |
+| SEC-008 | SQL injection in Update FirstName | FirstName with SQL | Database | Parameterized query | P0 |
+| SEC-009 | SQL injection in Update LastName | LastName with SQL | Database | Parameterized query | P0 |
+| SEC-010 | XSS in FirstName — stored | FirstName="<script>alert(1)</script>" | Client display | Sanitize on output or store as-is | P1 |
+| SEC-011 | XSS in LastName — stored | LastName with script | Client display | Sanitize on output | P1 |
+| SEC-012 | ProfileAuthorizationHandler — no resource check for Update | Update any profile | Authorization | Update has no resource-level auth | P0 |
+| SEC-013 | GET /api/profile — commented, no IDOR test | N/A | GET endpoint | Endpoint inactive | P2 |
+| SEC-014 | Update — no verify authenticated user matches Email | Body Email != claims | Authorization | Server does not verify | P0 |
+| SEC-015 | POST /api/profile — CSRF | Cross-site request | CSRF token | [ValidateAntiForgeryToken] or SameSite cookie | P1 |
+| SEC-016 | Get — information disclosure (if GET active) | Enumerate emails | Get(email) | Would need auth + self-only check | P2 |
+| SEC-017 | Update — mass assignment | Extra properties in JSON | ProfileModel | Only Email, FirstName, LastName bound | P1 |
+| SEC-018 | Update — prototype pollution | __proto__ in JSON | ProfileModel | Ignored by serializer | P2 |
+| SEC-019 | POST /api/profile — oversized payload | Body 10MB | Request size limit | 413 or rejected | P1 |
+| SEC-020 | Get — path traversal (N/A) | N/A | Get uses email not path | N/A | P2 |
+| SEC-021 | Update — LDAP injection in Email | Email with LDAP chars | Lookup | Exact match, no LDAP | P2 |
+| SEC-022 | Update — NoSQL injection (N/A) | N/A | PostgreSQL | N/A | P2 |
+| SEC-023 | ProfileManager — no permission service | Manager | Get, Update | No IPermissionService | P1 |
+| SEC-024 | Update — privilege escalation | Low-privilege user | Update admin profile | No check, may succeed | P0 |
+| SEC-025 | Get — horizontal privilege escalation | User A | Get(B's email) | Manager allows; controller (GET) would need check | P1 |
+| SEC-026 | POST /api/profile — HTTP method override | X-HTTP-Method-Override | Bypass | Standard ASP.NET handling | P2 |
+| SEC-027 | Update — replay attack | Replay valid request | Idempotency | Same request twice, both succeed | P2 |
+| SEC-028 | Get — timing attack on email | Measure response time | Enumerate emails | Constant-time or acceptable | P2 |
+| SEC-029 | Update — rate limiting | Many updates | DoS | Rate limit if configured | P2 |
+| SEC-030 | ProfileModel — sensitive data in ProfileModel | ProfileModel | Email, FirstName, LastName | No password, token | P1 |
+| SEC-031 | UserProfile — sensitive fields not in ProfileModel | UserProfile | OrgUnit, SupervisorId | Not exposed via ProfileManager | P1 |
+| SEC-032 | POST /api/profile — HTTPS required | HTTP | Man-in-the-middle | HTTPS enforced in production | P1 |
+| SEC-033 | Update — audit trail | Who updated | AuditableDbContext | LastModifiedBy, LastModifiedDate | P2 |
+| SEC-034 | Get — audit trail | Who read | N/A | No read audit in ProfileManager | P2 |
+| SEC-035 | ProfileAuthorizationHandler — no role check | Handler | Any user | Succeeds for all | P1 |
+| SEC-036 | Update — UserProfile creation by attacker | Attacker creates profile for victim | UserProfile | If victim has no profile, attacker could populate | P1 |
+| SEC-037 | Get — null email information leak | Get(null) | Exception message | "User profile not found" — minimal leak | P1 |
+| SEC-038 | Update — null profile DoS | Update(null) | Server | NullReferenceException, 500 | P1 |
+| SEC-039 | POST /api/profile — content-type bypass | application/xml with JSON body | Parser | 400 or parse error | P2 |
+| SEC-040 | Update — FirstName with null byte | FirstName="A\0B" | Database/display | Stored or rejected | P2 |
+| SEC-041 | Get — email enumeration (if GET active) | Try emails | User existence | Would reveal existence | P2 |
+| SEC-042 | Update — email enumeration | Update with non-existent email | BusinessException | "User profile not found" — reveals non-existence | P1 |
+| SEC-043 | ProfileManager — no encryption at rest | UserProfile in DB | Storage | DB encryption if configured | P2 |
+| SEC-044 | ProfileModel — no encryption in transit | API | Transport | HTTPS | P1 |
+| SEC-045 | Update — concurrent update by different users | User A and B update same profile | Last write wins | No optimistic concurrency | P1 |
+| SEC-046 | Get — cached profile (if caching) | Cached ProfileModel | Stale data | No caching in ProfileManager | P2 |
+| SEC-047 | POST /api/profile — CORS preflight | OPTIONS request | CORS | Proper preflight response | P2 |
+| SEC-048 | Update — JWT with wrong issuer | JWT from other tenant | Validation | 401 if issuer validated | P1 |
+| SEC-049 | ProfileAuthorizationHandler — registered in DI | Handler | Authorization | Handler registered for ProfileModel | P1 |
+| SEC-050 | Update — authorization handler not invoked | UpdateProfile | No resource parameter | AuthorizeAsync not called for Update | P0 |
 
 ---
 
@@ -404,31 +540,31 @@
 
 | ID | Test Name | Concurrent Scenario | Expected Behavior | Priority |
 |----|-----------|---------------------|-------------------|----------|
-| CON-001 | Concurrency 1 | Scenario 1 | Behavior 1 | P0 |
-| CON-002 | Concurrency 2 | Scenario 2 | Behavior 2 | P0 |
-| CON-003 | Concurrency 3 | Scenario 3 | Behavior 3 | P0 |
-| CON-004 | Concurrency 4 | Scenario 4 | Behavior 4 | P0 |
-| CON-005 | Concurrency 5 | Scenario 5 | Behavior 5 | P0 |
-| CON-006 | Concurrency 6 | Scenario 6 | Behavior 6 | P1 |
-| CON-007 | Concurrency 7 | Scenario 7 | Behavior 7 | P1 |
-| CON-008 | Concurrency 8 | Scenario 8 | Behavior 8 | P1 |
-| CON-009 | Concurrency 9 | Scenario 9 | Behavior 9 | P1 |
-| CON-010 | Concurrency 10 | Scenario 10 | Behavior 10 | P1 |
-| CON-011 | Concurrency 11 | Scenario 11 | Behavior 11 | P1 |
-| CON-012 | Concurrency 12 | Scenario 12 | Behavior 12 | P1 |
-| CON-013 | Concurrency 13 | Scenario 13 | Behavior 13 | P1 |
-| CON-014 | Concurrency 14 | Scenario 14 | Behavior 14 | P1 |
-| CON-015 | Concurrency 15 | Scenario 15 | Behavior 15 | P1 |
-| CON-016 | Concurrency 16 | Scenario 16 | Behavior 16 | P1 |
-| CON-017 | Concurrency 17 | Scenario 17 | Behavior 17 | P1 |
-| CON-018 | Concurrency 18 | Scenario 18 | Behavior 18 | P1 |
-| CON-019 | Concurrency 19 | Scenario 19 | Behavior 19 | P1 |
-| CON-020 | Concurrency 20 | Scenario 20 | Behavior 20 | P1 |
-| CON-021 | Concurrency 21 | Scenario 21 | Behavior 21 | P1 |
-| CON-022 | Concurrency 22 | Scenario 22 | Behavior 22 | P1 |
-| CON-023 | Concurrency 23 | Scenario 23 | Behavior 23 | P1 |
-| CON-024 | Concurrency 24 | Scenario 24 | Behavior 24 | P1 |
-| CON-025 | Concurrency 25 | Scenario 25 | Behavior 25 | P1 |
+| CON-001 | Two Updates same user — sequential | Update A, then Update B | Last write wins | P0 |
+| CON-002 | Two Updates same user — parallel | Update A and B concurrently | Last write wins, no exception | P0 |
+| CON-003 | Get and Update same user — parallel | Get while Update in progress | Get may return stale or updated data | P1 |
+| CON-004 | Update and Get same user — parallel | Update while Get in progress | Get may not see Update | P1 |
+| CON-005 | Two Gets same user — parallel | Get(email) x2 concurrently | Both succeed, same result | P0 |
+| CON-006 | Update user A, Update user B — parallel | Different users | Both succeed, no conflict | P0 |
+| CON-007 | Update creates UserProfile — concurrent with Get | UserProfile null, Update creates, Get reads | Get may see null or new profile | P1 |
+| CON-008 | SaveChangesAsync — concurrent from same context | Same ProfileManager instance, two Updates | Sequential (same context) | P1 |
+| CON-009 | SaveChangesAsync — concurrent from different requests | Two HTTP requests, two ProfileManager instances | Both may succeed, last write wins | P1 |
+| CON-010 | Update — DbContext disposed during SaveChanges | Context disposed mid-save | ObjectDisposedException | P1 |
+| CON-011 | Get — PAOUser deleted during Get | Another request deletes PAOUser | Stale data or error | P2 |
+| CON-012 | Update — PAOUser deleted during Update | Another request deletes PAOUser | DbUpdateException or FK violation | P1 |
+| CON-013 | Update — UserProfile deleted during Update | UserProfile soft-deleted | May update IsDeleted record | P2 |
+| CON-014 | Two Updates — FirstName vs LastName | Update1: FirstName, Update2: LastName | Both fields updated, possible interleave | P1 |
+| CON-015 | Update — transaction isolation | Update in transaction, another reads | Depends on isolation level | P2 |
+| CON-016 | Get — read uncommitted | Get during Update before commit | May see uncommitted data | P2 |
+| CON-017 | Update — connection pool exhaustion | Many concurrent Updates | Connection pool limit | P2 |
+| CON-018 | Get — connection pool | Many concurrent Gets | Read connections | P2 |
+| CON-019 | Update — deadlock | Two Updates, different order | Deadlock detection, retry | P2 |
+| CON-020 | Update — optimistic concurrency | UserProfile has RowVersion | No RowVersion in UserProfile | P1 |
+| CON-021 | Get — cached DbContext | Same request, Get twice | Same context, same result | P1 |
+| CON-022 | Update — DbContext scope per request | Two requests | Separate contexts | P1 |
+| CON-023 | Update — UserProfile creation race | Two requests, both create UserProfile | One may fail FK or duplicate | P1 |
+| CON-024 | Get — lazy load race | Get, UserProfile loading | Lazy load completes | P1 |
+| CON-025 | Update — SaveChangesAsync cancellation | CancellationToken | OperationCanceledException | P2 |
 
 ---
 
@@ -436,27 +572,27 @@
 
 | ID | Test Name | Category | Input | Expected Output | Priority |
 |----|-----------|----------|-------|-----------------|----------|
-| UNT-001 | Unit 1 | Validation | Input 1 | Output 1 | P0 |
-| UNT-002 | Unit 2 | Validation | Input 2 | Output 2 | P0 |
-| UNT-003 | Unit 3 | Validation | Input 3 | Output 3 | P0 |
-| UNT-004 | Unit 4 | Validation | Input 4 | Output 4 | P0 |
-| UNT-005 | Unit 5 | Validation | Input 5 | Output 5 | P0 |
-| UNT-006 | Unit 6 | Validation | Input 6 | Output 6 | P1 |
-| UNT-007 | Unit 7 | Validation | Input 7 | Output 7 | P1 |
-| UNT-008 | Unit 8 | Validation | Input 8 | Output 8 | P1 |
-| UNT-009 | Unit 9 | Validation | Input 9 | Output 9 | P1 |
-| UNT-010 | Unit 10 | Validation | Input 10 | Output 10 | P1 |
-| UNT-011 | Unit 11 | Validation | Input 11 | Output 11 | P1 |
-| UNT-012 | Unit 12 | Validation | Input 12 | Output 12 | P1 |
-| UNT-013 | Unit 13 | Validation | Input 13 | Output 13 | P1 |
-| UNT-014 | Unit 14 | Validation | Input 14 | Output 14 | P1 |
-| UNT-015 | Unit 15 | Validation | Input 15 | Output 15 | P1 |
-| UNT-016 | Unit 16 | Validation | Input 16 | Output 16 | P1 |
-| UNT-017 | Unit 17 | Validation | Input 17 | Output 17 | P1 |
-| UNT-018 | Unit 18 | Validation | Input 18 | Output 18 | P1 |
-| UNT-019 | Unit 19 | Validation | Input 19 | Output 19 | P1 |
-| UNT-020 | Unit 20 | Validation | Input 20 | Output 20 | P1 |
-| UNT-021 | Unit 21 | Validation | Input 21 | Output 21 | P1 |
+| UNT-001 | Get — valid email returns ProfileModel | Get | email="user@unops.org", user exists | ProfileModel with Email, FirstName, LastName | P0 |
+| UNT-002 | Get — non-existent email throws BusinessException | Get | email="none@unops.org" | BusinessException "User profile not found" | P0 |
+| UNT-003 | Get — null email throws | Get | email=null | BusinessException | P0 |
+| UNT-004 | Update — valid profile persists | Update | ProfileModel{Email, FirstName, LastName} | No exception, SaveChangesAsync called | P0 |
+| UNT-005 | Update — non-existent email throws BusinessException | Update | ProfileModel{Email="none@unops.org"} | BusinessException "User profile not found" | P0 |
+| UNT-006 | Update — creates UserProfile when null | Update | user.UserProfile=null | user.UserProfile assigned new UserProfile | P0 |
+| UNT-007 | Update — does not create UserProfile when exists | Update | user.UserProfile!=null | Existing UserProfile updated | P1 |
+| UNT-008 | Get — UserProfile null returns empty strings | Get | user.UserProfile=null | FirstName="", LastName="" | P1 |
+| UNT-009 | Get — ProfileModel.Email equals input email | Get | email="x@y.com" | ProfileModel.Email="x@y.com" | P1 |
+| UNT-010 | Update — FirstName assigned to UserProfile | Update | profile.FirstName="Jane" | user.UserProfile.FirstName="Jane" | P1 |
+| UNT-011 | Update — LastName assigned to UserProfile | Update | profile.LastName="Doe" | user.UserProfile.LastName="Doe" | P1 |
+| UNT-012 | Get — uses FirstOrDefault | Get | Mock DbSet | FirstOrDefault invoked with email predicate | P1 |
+| UNT-013 | Update — uses FirstOrDefault | Update | Mock DbSet | FirstOrDefault invoked with profile.Email | P1 |
+| UNT-014 | Update — SaveChangesAsync invoked | Update | Mock DbContext | SaveChangesAsync called | P1 |
+| UNT-015 | Get — returns new ProfileModel instance | Get | Any | Not same as entity | P1 |
+| UNT-016 | ProfileManager — constructor accepts AppDbContext | Constructor | AppDbContext | Instance created | P1 |
+| UNT-017 | Get — empty string email | Get | email="" | BusinessException | P1 |
+| UNT-018 | Update — null FirstName | Update | profile.FirstName=null | user.UserProfile.FirstName=null | P1 |
+| UNT-019 | Update — null LastName | Update | profile.LastName=null | user.UserProfile.LastName=null | P1 |
+| UNT-020 | Get — case-sensitive email match | Get | PAOUser Email="User@UNOPS.org", Get("user@unops.org") | BusinessException (no match) | P1 |
+| UNT-021 | Update — case-sensitive email match | Update | PAOUser Email="User@UNOPS.org", profile.Email="user@unops.org" | BusinessException | P1 |
 
 ---
 
@@ -464,22 +600,22 @@
 
 | ID | Test Name | Operation | Threshold | Priority |
 |----|-----------|----------|-----------|----------|
-| PRF-001 | Perf 1 | Operation 1 | < 500ms | P0 |
-| PRF-002 | Perf 2 | Operation 2 | < 500ms | P0 |
-| PRF-003 | Perf 3 | Operation 3 | < 500ms | P0 |
-| PRF-004 | Perf 4 | Operation 4 | < 500ms | P0 |
-| PRF-005 | Perf 5 | Operation 5 | < 500ms | P0 |
-| PRF-006 | Perf 6 | Operation 6 | < 500ms | P1 |
-| PRF-007 | Perf 7 | Operation 7 | < 500ms | P1 |
-| PRF-008 | Perf 8 | Operation 8 | < 500ms | P1 |
-| PRF-009 | Perf 9 | Operation 9 | < 500ms | P1 |
-| PRF-010 | Perf 10 | Operation 10 | < 500ms | P1 |
-| PRF-011 | Perf 11 | Operation 11 | < 500ms | P1 |
-| PRF-012 | Perf 12 | Operation 12 | < 500ms | P1 |
-| PRF-013 | Perf 13 | Operation 13 | < 500ms | P1 |
-| PRF-014 | Perf 14 | Operation 14 | < 500ms | P1 |
-| PRF-015 | Perf 15 | Operation 15 | < 500ms | P1 |
-| PRF-016 | Perf 16 | Operation 16 | < 500ms | P1 |
+| PRF-001 | Get — single user by email | Get(email) | < 100ms | P0 |
+| PRF-002 | Update — existing UserProfile | Update(profile) | < 200ms | P0 |
+| PRF-003 | Update — create new UserProfile | Update(profile) where UserProfile null | < 300ms | P0 |
+| PRF-004 | POST /api/profile — full request | HTTP POST | < 500ms | P0 |
+| PRF-005 | Get — PAOUsers table 10K rows | Get with 10K PAOUsers | < 100ms (indexed Email) | P1 |
+| PRF-006 | Get — UserProfile lazy load | Get with lazy load | +1 query, < 50ms | P1 |
+| PRF-007 | Update — SaveChangesAsync | SaveChangesAsync | < 100ms | P1 |
+| PRF-008 | Get — no N+1 | Get in loop (if applicable) | No N+1 pattern | P1 |
+| PRF-009 | Update — single round-trip | Update | 1 SaveChanges call | P1 |
+| PRF-010 | Get — index on PAOUser.Email | Get query | Uses index | P1 |
+| PRF-011 | Update — UserProfile insert | New UserProfile | Single INSERT | P1 |
+| PRF-012 | Update — UserProfile update | Existing UserProfile | Single UPDATE | P1 |
+| PRF-013 | Get — PAOUsers 100K rows | Get with large table | < 200ms | P2 |
+| PRF-014 | Update — transaction overhead | Update | Minimal transaction cost | P2 |
+| PRF-015 | Get — no Include overhead | Get without Include | No extra join | P1 |
+| PRF-016 | ProfileManager — no heavy initialization | Constructor | < 1ms | P2 |
 
 ---
 
@@ -487,18 +623,18 @@
 
 | ID | Test Name | Load Profile | Duration | Success Criteria | Priority |
 |----|-----------|-------------|----------|-------------------|----------|
-| LDT-001 | Load 1 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-002 | Load 2 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-003 | Load 3 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-004 | Load 4 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-005 | Load 5 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-006 | Load 6 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-007 | Load 7 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-008 | Load 8 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-009 | Load 9 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-010 | Load 10 | 20 req/s | 5 min | 95% < 500ms | P0 |
+| LDT-001 | POST /api/profile — 10 req/s | 10 concurrent users | 5 min | 95% < 500ms, 0% error | P0 |
+| LDT-002 | POST /api/profile — 20 req/s | 20 concurrent users | 5 min | 95% < 500ms, 0% error | P0 |
+| LDT-003 | Get (manager) — 50 req/s | 50 Get calls/s | 5 min | 95% < 100ms | P1 |
+| LDT-004 | Update — 20 req/s mixed users | 20 users, different emails | 5 min | 95% < 500ms | P0 |
+| LDT-005 | Update — 30 req/s same user | 30 concurrent updates same email | 5 min | Last write wins, no crash | P1 |
+| LDT-006 | POST /api/profile — ramp 0–50 req/s | Ramp up | 10 min | No connection pool exhaustion | P1 |
+| LDT-007 | Update — 100 sequential | 100 Updates | 1 min | All succeed | P1 |
+| LDT-008 | Get — 200 sequential | 200 Gets | 1 min | All succeed | P1 |
+| LDT-009 | Mixed Get/Update — 30 req/s | 15 Get, 15 Update/s | 5 min | 95% < 500ms | P1 |
+| LDT-010 | POST /api/profile — sustained 50 req/s | 50 req/s | 2 min | No 503, no timeout | P2 |
 
 ---
 
-**Last Updated:** 2026-02-11  
+**Last Updated:** 2026-02-18  
 **Status:** Ready for Execution

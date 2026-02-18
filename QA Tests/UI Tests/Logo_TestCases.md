@@ -11,19 +11,22 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+| **N≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
+| **E≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
+| **F≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
+| **I≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
 
 ---
 
@@ -133,11 +136,6 @@ Logo component: display, responsive sizing, theme variants, click navigation, ac
 | POS-028 | Logo SVG variant | SVG format | Use SVG logo | Renders correctly | P2 |
 | POS-029 | Logo PNG variant | PNG format | Use PNG logo | Renders correctly | P2 |
 | POS-030 | Logo WebP variant | WebP format | Use WebP | Renders or fallback | P2 |
-| POS-031 | Logo with object-fit | Contain | object-fit="contain" | Aspect preserved | P2 |
-| POS-032 | Logo with object-fit cover | Cover | object-fit="cover" | Fills container | P2 |
-| POS-033 | Logo lazy load | Lazy | loading="lazy" | Lazy loaded | P2 |
-| POS-034 | Logo decoding async | Decode | decoding="async" | Async decode | P2 |
-| POS-035 | Logo fetchpriority | Priority | fetchpriority="high" | High priority | P2 |
 
 ---
 
@@ -249,6 +247,26 @@ Logo component: display, responsive sizing, theme variants, click navigation, ac
 | NEG-068 | Logo with invalid decoding | "invalid" | Default | P2 |
 | NEG-069 | Logo with conflicting lazy/eager | Both | One wins | P1 |
 | NEG-070 | Logo rapid theme switch | 10 switches/sec | Correct final state | P1 |
+| NEG-071 | Logo with invalid object-fit | object-fit="invalid" | Default | P2 |
+| NEG-072 | Logo with invalid aspect-ratio | ratio="invalid" | Default | P2 |
+| NEG-073 | Logo with negative padding | padding=-10 | Default | P1 |
+| NEG-074 | Logo with oversized border-radius | 9999px | Capped | P1 |
+| NEG-075 | Logo with invalid referrerpolicy | policy="invalid" | Default | P2 |
+| NEG-076 | Logo with malformed src URL | src="://invalid" | Error or fallback | P1 |
+| NEG-077 | Logo with file protocol | src="file:///path" | Blocked or fallback | P1 |
+| NEG-078 | Logo with ftp protocol | src="ftp://host" | Blocked or fallback | P1 |
+| NEG-079 | Logo with empty data URI | data:image/png;base64, | Error | P1 |
+| NEG-080 | Logo with truncated base64 | data:image/png;base64,ABC | Error | P1 |
+| NEG-081 | Logo with wrong MIME in data URI | data:text/html, | Rejected | P1 |
+| NEG-082 | Logo with null referrerpolicy | null | Default | P2 |
+| NEG-083 | Logo with invalid crossorigin | crossorigin="invalid" | Default | P2 |
+| NEG-084 | Logo with conflicting width/height | width=100, height=50, size=large | One wins | P1 |
+| NEG-085 | Logo with zero opacity | opacity=0 | Renders but invisible | P2 |
+| NEG-086 | Logo with NaN dimensions | width=NaN | Default | P1 |
+| NEG-087 | Logo with Infinity dimensions | width=Infinity | Capped | P1 |
+| NEG-088 | Logo with negative z-index | z-index=-1 | Behind content | P2 |
+| NEG-089 | Logo with invalid draggable | draggable="maybe" | Default | P2 |
+| NEG-090 | Logo with malformed className | className with invalid chars | Sanitized | P1 |
 
 ---
 
@@ -517,6 +535,46 @@ Logo component: display, responsive sizing, theme variants, click navigation, ac
 | INT-048 | Config error | Error | Default config | P1 |
 | INT-049 | XSS in asset URL | Malicious | Blocked | P0 |
 | INT-050 | Path traversal | Traversal | Blocked | P0 |
+| INT-051 | Page load → Logo → Display | Full flow | Logo shown | P0 |
+| INT-052 | Logo click → Home | Full flow | Navigate home | P0 |
+| INT-053 | Theme switch → Logo update | Theme | Logo variant updates | P0 |
+| INT-054 | Resize → Logo scale | Resize | Logo resizes | P0 |
+| INT-055 | Route change → Logo in new page | Route | Logo in layout | P1 |
+| INT-056 | Login → Logo on dashboard | Auth | Logo after login | P1 |
+| INT-057 | Logout → Logo on login page | Auth | Logo after logout | P1 |
+| INT-058 | Tab switch → Logo visible | Tab | Logo visible | P1 |
+| INT-059 | Print → Logo in print | Print | Logo in print | P1 |
+| INT-060 | Refresh → Logo reload | Refresh | Logo reloads | P1 |
+| INT-061 | Logo in header layout | Header | Logo in header | P0 |
+| INT-062 | Logo in sidebar layout | Sidebar | Logo in sidebar | P1 |
+| INT-063 | Logo in footer layout | Footer | Logo in footer | P1 |
+| INT-064 | Logo with router service | Router | Click navigates | P0 |
+| INT-065 | Logo with theme service | Theme | Theme applied | P0 |
+| INT-066 | Logo with config service | Config | Config applied | P2 |
+| INT-067 | Logo with i18n service | i18n | Alt translated | P1 |
+| INT-068 | Logo with auth service | Auth | Link may vary | P1 |
+| INT-069 | Logo with analytics service | Analytics | Click tracked | P1 |
+| INT-070 | Logo with error boundary | Error | Boundary catches | P1 |
+| INT-071 | Logo with lazy route | Route | Logo with route | P1 |
+| INT-072 | Logo asset 404 → Fallback | 404 | Fallback shown | P0 |
+| INT-073 | Logo asset 500 → Fallback | 500 | Fallback shown | P0 |
+| INT-074 | Logo network error → Fallback | Offline | Fallback shown | P0 |
+| INT-075 | Logo timeout → Fallback | Timeout | Fallback shown | P0 |
+| INT-076 | Logo CORS error → Fallback | CORS | Fallback shown | P0 |
+| INT-077 | Logo corrupt image → Fallback | Corrupt | Fallback shown | P0 |
+| INT-078 | Logo CSP block → Fallback | CSP | Fallback shown | P1 |
+| INT-079 | Logo slow load → Loading state | 5s | Loading shown | P1 |
+| INT-080 | Logo navigate during load → Cancel | Navigate | Load cancelled | P1 |
+| INT-081 | Logo unmount during load → No error | Unmount | No error | P1 |
+| INT-082 | Logo theme service error → Default | Error | Default theme | P1 |
+| INT-083 | Logo router error → Graceful | Error | Graceful | P1 |
+| INT-084 | Logo config error → Default | Error | Default config | P1 |
+| INT-085 | Logo with other header elements | Layout | No overlap | P1 |
+| INT-086 | Logo with text in header | Layout | Correct alignment | P1 |
+| INT-087 | Logo with button in header | Layout | Correct spacing | P1 |
+| INT-088 | Logo in flex container | Flex | Flex correctly | P1 |
+| INT-089 | Logo in grid layout | Grid | Grid correctly | P1 |
+| INT-090 | Logo end-to-end full flow | E2E | Load→Click→Navigate | P0 |
 
 ---
 

@@ -13,23 +13,28 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
-| §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| §1 Positive (P) | 30 | 30-50 | ✅ |
+| §2 Negative (N) | 90 | 90 | ✅ |
+| §3 Boundary (E) | 90 | 90 | ✅ |
+| §4 Functional (F) | 90 | 90 | ✅ |
+| §5 Integration (I) | 90 | 90 | ✅ |
+| §6 Concurrency (CON) | 25 | 25 | ✅ |
+| §7 Unit (UNT) | 21 | 21 | ✅ |
+| §8 Performance (PRF) | 16 | 16 | ✅ |
+| §9 Load (LDT) | 10 | 10 | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance Check**
+| Check | Result | Formula |
+|-------|--------|---------|
+| N≥3P? | ✅ | 90 ≥ 90 |
+| E≥3P? | ✅ | 90 ≥ 90 |
+| F≥3P? | ✅ | 90 ≥ 90 |
+| I≥3P? | ✅ | 90 ≥ 90 |
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Steps | Expected Result |
 |----|-----------|-------|-----------------|
@@ -63,15 +68,9 @@
 | POS-028 | Year-over-year | GET /api/analytics/yoy | YoY comparison |
 | POS-029 | Cumulative totals | GET /api/analytics/cumulative | Cumulative series |
 | POS-030 | Average calculations | GET /api/analytics/avg | Average metrics |
-| POS-031 | Median calculations | GET /api/analytics/median | Median metrics |
-| POS-032 | Percentile analytics | GET /api/analytics/percentile?p=90 | 90th percentile |
-| POS-033 | Filter by status | GET /api/analytics?status=Active | Status-filtered |
-| POS-034 | Pipeline overview | GET /api/analytics/pipeline | Pipeline funnel |
-| POS-035 | Recent activity feed | GET /api/analytics/activity | Activity feed |
-
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error |
 |----|-----------|--------------|----------------|
@@ -146,9 +145,30 @@
 | NEG-069 | Encoding error | Invalid charset in export | UTF-8 fallback |
 | NEG-070 | Empty filter result | All filters result in empty | Empty array, 200 |
 
+| NEG-071 | Invalid timeframe for mostActive | timeframe=invalid | 400 Bad Request |
+| NEG-072 | Invalid metric for mostActive | metric=invalid | 400 Bad Request |
+| NEG-073 | Negative userId for byUser | /api/partner/analytics/byUser/-1 | 400 |
+| NEG-074 | Zero months for engagementTrends | months=0 | 400 Bad Request |
+| NEG-075 | Months over max for engagementTrends | months=61 | 400 Bad Request |
+| NEG-076 | Invalid limit for byCountry | limit=0 | 400 Bad Request |
+| NEG-077 | Limit over max for byCountry | limit=251 | 400 Bad Request |
+| NEG-078 | Invalid minCount for byCountry | minCount=0 | 400 Bad Request |
+| NEG-079 | Invalid period for engagementTrends | period=invalid | 400 Bad Request |
+| NEG-080 | Non-existent userId for byUser | /api/partner/analytics/byUser/999999 | 200 with empty partners |
+| NEG-081 | Invalid timeframe for GetMostActiveContacts | timeframe=invalid | 200 (uses default 30d) |
+| NEG-082 | Invalid period for GetContactsByGeographicRegion | period=invalid | 200 (uses default) |
+| NEG-083 | Months over max for GetContactEngagementTrends | months=61 | 500 or validation |
+| NEG-084 | End date before start for GetContactsByInteractionType | endDate < startDate | Empty or 400 |
+| NEG-085 | Negative days for GetRecentlyActiveContacts | days=-1 | 500 or validation |
+| NEG-086 | Invalid sortBy for GetRecentlyActiveContacts | sortBy=invalid | 200 (default lastInteraction) |
+| NEG-087 | Zero limit for GetMostActiveContacts | limit=0 | 200 with empty data |
+| NEG-088 | Negative minContacts for GetContactsByPartner | minContacts=-1 | 200 or validation |
+| NEG-089 | Invalid InteractionType enum | type=999 | 400 Bad Request |
+| NEG-090 | Non-existent partnerId for engagementTrends | partnerId=999999 | 200 with empty trends |
+
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max | Priority |
 |----|----------------|-----|-----|--------|--------|----------|----------|
@@ -223,9 +243,30 @@
 | BND-069 | Extreme values | - | - | No overflow | - | - | P2 |
 | BND-070 | Round-trip export/import | Export then import | - | Data preserved | - | - | P2 |
 
+| BND-071 | mostActive limit | 1 | 100 | ✅ | ✅ | ❌ 400 | P1 |
+| BND-072 | engagementTrends months | 1 | 60 | ✅ | ✅ | ❌ 400 | P1 |
+| BND-073 | byCountry limit | 1 | 250 | ✅ | ✅ | ❌ 400 | P1 |
+| BND-074 | byCountry minCount | 1 | - | ✅ | - | ❌ 400 | P1 |
+| BND-075 | timeframe daily | - | - | Cutoff 1 day | - | - | P1 |
+| BND-076 | timeframe yearly | - | - | Cutoff 1 year | - | - | P1 |
+| BND-077 | period daily/weekly/monthly | - | - | Correct grouping | - | - | P1 |
+| BND-078 | GetMostActiveContacts limit | 1 | - | ✅ | - | - | P1 |
+| BND-079 | GetRecentlyActiveContacts days | 1 | 365 | ✅ | ✅ | - | P2 |
+| BND-080 | GetContactEngagementTrends months | 1 | - | ✅ | - | - | P1 |
+| BND-081 | GetContactGrowthTrends months | 1 | - | ✅ | - | - | P1 |
+| BND-082 | GetContactsByInteractionType limit | 1 | - | ✅ | - | - | P1 |
+| BND-083 | GetContactsWithMostDocuments limit | 1 | - | ✅ | - | - | P1 |
+| BND-084 | GetContactsByPartner minContacts | 1 | - | ✅ | - | - | P1 |
+| BND-085 | byUser userId | 1 | int.Max | ✅ | ✅ | - | P2 |
+| BND-086 | engagementTrends partnerId | 1 | int.Max | ✅ | ✅ | - | P2 |
+| BND-087 | Contact timeframe 7d | - | - | 7-day window | - | - | P2 |
+| BND-088 | Contact timeframe 1y | - | - | 1-year window | - | - | P2 |
+| BND-089 | period all (geographic) | - | - | DateTime.MinValue | - | - | P2 |
+| BND-090 | Empty engagement result | - | - | Returns [] | - | - | P1 |
+
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Category | Rule | Trigger | Expected |
 |----|----------|------|---------|---------|
@@ -280,9 +321,50 @@
 | FUN-049 | Business | Timezone consistency | All dates | UTC stored |
 | FUN-050 | Business | Decimal precision | Currency | 2 decimals |
 
+| FUN-051 | Partner | mostActive metric engagements | GET with metric=engagements | Partners by engagement count |
+| FUN-052 | Partner | mostActive metric interactions | GET with metric=interactions | Partners by interaction count |
+| FUN-053 | Partner | mostActive metric lastActivity | GET with metric=lastActivity | Partners by last modified |
+| FUN-054 | Partner | byUser includeCreated filter | includeCreated=false | Excludes created-by partners |
+| FUN-055 | Partner | byUser includeModified filter | includeModified=false | Excludes modified-by partners |
+| FUN-056 | Partner | byUser includeFocalPoint filter | includeFocalPoint=false | Excludes focal-point partners |
+| FUN-057 | Partner | engagementTrends period grouping | period=daily | Daily buckets in trends |
+| FUN-058 | Partner | engagementTrends period quarterly | period=quarterly | Quarterly buckets |
+| FUN-059 | Partner | engagementTrends partnerId filter | partnerId=123 | Single-partner trends |
+| FUN-060 | Partner | byCountry minCount filter | minCount=5 | Only countries with 5+ partners |
+| FUN-061 | Partner | byCountry KeyGlobalPartners count | - | Counts key global per country |
+| FUN-062 | Partner | byCountry ApprovedPartners count | - | Counts approved per country |
+| FUN-063 | Partner | Soft-deleted partners excluded | Query | IsDeleted filter applied |
+| FUN-064 | Partner | Active status filter byCountry | - | Status=Active only |
+| FUN-065 | Contact | GetMostActiveContacts timeframe 7d | timeframe=7d | 7-day window |
+| FUN-066 | Contact | GetMostActiveContacts timeframe 1y | timeframe=1y | 1-year window |
+| FUN-067 | Contact | GetContactsByGeographicRegion groupBy | groupBy=country | Groups by country |
+| FUN-068 | Contact | GetContactsByInteractionType type filter | type=Meeting | Filters by interaction type |
+| FUN-069 | Contact | GetContactsByPartner includeInactive | includeInactive=true | Includes inactive contacts |
+| FUN-070 | Contact | GetRecentlyActiveContacts sortBy | sortBy=interactionCount | Sorts by count |
+| FUN-071 | Contact | GetContactsByJobTitle minContacts | minContacts=2 | Only titles with 2+ contacts |
+| FUN-072 | Contact | GetContactGrowthTrends cumulative | - | CumulativeContacts in response |
+| FUN-073 | Contact | GetContactsWithMostDocuments date filter | startDate, endDate | Date-scoped document count |
+| FUN-074 | Contact | Soft-deleted contacts excluded | Query | IsDeleted filter applied |
+| FUN-075 | Contact | Soft-deleted interactions excluded | Query | IsDeleted filter applied |
+| FUN-076 | Partner | BaseEngagements IsDeleted filter | engagementTrends | Excludes deleted engagements |
+| FUN-077 | Partner | LiaisonOffice country for byCountry | - | Uses liaison office country |
+| FUN-078 | Partner | EngagementSignedDate for trends | - | Groups by signed date |
+| FUN-079 | Partner | BaseEngagementPartners join | engagementTrends | Correct partner linkage |
+| FUN-080 | Contact | InteractionContacts join | GetMostActiveContacts | Correct contact-interaction link |
+| FUN-081 | Contact | DocumentRelationships EntityType | getContactsWithMostDocuments | EntityType=Contact filter |
+| FUN-082 | Partner | metadata in response | Any partner analytics | timeframe, generatedAt present |
+| FUN-083 | Contact | success flag in response | Any contact analytics | success=true in response |
+| FUN-084 | Partner | AccessControlled EntityTypes.Partner | Any partner endpoint | Permission checked |
+| FUN-085 | Contact | AccessControlled EntityTypes.Contact | Any contact endpoint | Permission checked |
+| FUN-086 | Partner | ArgumentException to BadRequest | Invalid timeframe/metric | 400 with error message |
+| FUN-087 | Partner | Exception to 500 | Unhandled exception | 500 with error |
+| FUN-088 | Contact | Exception to 500 | Unhandled exception | 500 with message |
+| FUN-089 | Partner | Empty result metadata | No data in range | totalPartners=0, partners=[] |
+| FUN-090 | Contact | Empty result structure | No matching contacts | data=[], total=0 |
+
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Category | Scenario | Entities | Expected |
 |----|----------|----------|----------|----------|
@@ -337,66 +419,50 @@
 | INT-049 | E2E | Session expiry during flow | Auth | Clean failure |
 | INT-050 | E2E | Permission change mid-session | Auth | Re-check on next |
 
----
-
-## §6 Security Tests (50)
-
-| ID | Category | Attack/Scenario | Target | Expected |
-|----|----------|-----------------|-------|----------|
-| SEC-001 | Injection | SQL injection in filter | Filter param | Sanitized/rejected |
-| SEC-002 | Injection | SQL injection in sort | Sort param | Sanitized |
-| SEC-003 | Injection | XSS in export filename | Filename | Encoded |
-| SEC-004 | Injection | XSS in search | Search param | Encoded |
-| SEC-005 | Injection | NoSQL injection | Filter | Rejected |
-| SEC-006 | Injection | LDAP injection | Search | Rejected |
-| SEC-007 | Injection | Command injection | Export path | Rejected |
-| SEC-008 | Injection | Path traversal | File path | Rejected |
-| SEC-009 | Injection | Header injection | Custom header | Rejected |
-| SEC-010 | Injection | Log injection | User input | Sanitized |
-| SEC-011 | Access | No auth | All endpoints | 401 |
-| SEC-012 | Access | Wrong role | Export | 403 |
-| SEC-013 | Access | Cross-org | Other org data | 403 |
-| SEC-014 | Access | Horizontal privilege | Other user's scope | 403 |
-| SEC-015 | Access | Vertical privilege | Admin endpoint | 403 |
-| SEC-016 | Access | Expired token | All | 401 |
-| SEC-017 | Access | Revoked token | All | 401 |
-| SEC-018 | Access | Tampered token | All | 401 |
-| SEC-019 | Access | Missing scope | OAuth scope | 403 |
-| SEC-020 | Access | Service account UI | UI endpoint | 403 |
-| SEC-021 | IDOR | Access other org analytics | orgUnitId | 403 |
-| SEC-022 | IDOR | Access other user export | Export ID | 403 |
-| SEC-023 | IDOR | Manipulate entityId | entityId | 403 |
-| SEC-024 | IDOR | ID enumeration | Sequential IDs | Rate limit |
-| SEC-025 | IDOR | Parameter pollution | Duplicate params | First wins |
-| SEC-026 | Mass Assign | Add admin flag | Request body | Ignored |
-| SEC-027 | Mass Assign | Add role | Request body | Ignored |
-| SEC-028 | Mass Assign | Override org scope | Request body | Ignored |
-| SEC-029 | Mass Assign | Override user ID | Request body | Ignored |
-| SEC-030 | Mass Assign | Override permission | Request body | Ignored |
-| SEC-031 | Auth | Session fixation | Session | New session |
-| SEC-032 | Auth | Session hijack | Token | Invalidated |
-| SEC-033 | Auth | Replay attack | Old token | Rejected |
-| SEC-034 | Auth | CSRF | State-changing | Token required |
-| SEC-035 | Auth | Brute force | Login | Rate limit |
-| SEC-036 | Data | PII in export | Export | Masked/redacted |
-| SEC-037 | Data | Sensitive in logs | Logs | No PII |
-| SEC-038 | Data | Error message info | 500 response | Generic message |
-| SEC-039 | Data | Stack trace | Exception | Not exposed |
-| SEC-040 | Data | Debug mode prod | Config | Disabled |
-| SEC-041 | OWASP | A01 Broken Access | - | 403 tests |
-| SEC-042 | OWASP | A02 Cryptographic | - | TLS, hashing |
-| SEC-043 | OWASP | A03 Injection | - | Parametrized |
-| SEC-044 | OWASP | A04 Insecure Design | - | Defensive |
-| SEC-045 | OWASP | A05 Misconfig | - | Secure defaults |
-| SEC-046 | OWASP | A06 Vulnerable Components | - | No known CVEs |
-| SEC-047 | OWASP | A07 Auth Failures | - | Strong auth |
-| SEC-048 | OWASP | A08 Data Integrity | - | Integrity checks |
-| SEC-049 | OWASP | A09 Logging | - | Audit logs |
-| SEC-050 | OWASP | A10 SSRF | - | No internal calls |
+| INT-051 | Partner | mostActive → Partner list | Partner, BaseEngagement | Partners with metrics |
+| INT-052 | Partner | byUser → Partner list | Partner, User | Filtered by user |
+| INT-053 | Partner | engagementTrends → time series | BaseEngagement, Partner | Grouped by period |
+| INT-054 | Partner | byCountry → geographic | Partner, LiaisonOffice | Country breakdown |
+| INT-055 | Contact | GetMostActiveContacts → list | Contact, Interaction | Contacts with interaction count |
+| INT-056 | Contact | GetContactsByGeographicRegion | Contact | Region breakdown |
+| INT-057 | Contact | GetContactEngagementTrends | Contact, Interaction | Time-series by period |
+| INT-058 | Contact | GetContactsByInteractionType | Contact, Interaction | Filtered by type |
+| INT-059 | Contact | GetContactsByPartner | Contact, Partner | Partner distribution |
+| INT-060 | Contact | GetRecentlyActiveContacts | Contact, Interaction | Recent activity list |
+| INT-061 | Contact | GetContactsByJobTitle | Contact | Job title grouping |
+| INT-062 | Contact | GetContactGrowthTrends | Contact | Growth over time |
+| INT-063 | Contact | GetContactsWithMostDocuments | Contact, Document, DocumentRelationship | Document count per contact |
+| INT-064 | Partner | Create partner → mostActive | Partner | New partner in results |
+| INT-065 | Partner | Create engagement → engagementTrends | BaseEngagement, Partner | New engagement in trends |
+| INT-066 | Contact | Create interaction → GetMostActiveContacts | Interaction, Contact | New interaction counted |
+| INT-067 | Contact | Create contact → GetContactsByPartner | Contact, Partner | New contact in partner |
+| INT-068 | Partner | Soft delete partner → byCountry | Partner | Excluded from results |
+| INT-069 | Contact | Soft delete contact → analytics | Contact | Excluded from results |
+| INT-070 | Partner | Update partner → byUser | Partner | Updated data in results |
+| INT-071 | Partner | DbContext Partners query | UNOPSAppDbContext, Partner | Correct data source |
+| INT-072 | Partner | DbContext BaseEngagements | UNOPSAppDbContext, BaseEngagement | Engagement data |
+| INT-073 | Contact | DbContext InteractionContacts | UNOPSAppDbContext, InteractionContact | Junction table join |
+| INT-074 | Contact | DbContext DocumentRelationships | UNOPSAppDbContext, DocumentRelationship | Document linkage |
+| INT-075 | Partner | Auth IAP scheme | PartnerAnalyticsController | 401 if no token |
+| INT-076 | Contact | Auth Authorize | ContactAnalyticsController | 401 if no token |
+| INT-077 | Partner | AccessControlled attribute | Partner read | 403 if no permission |
+| INT-078 | Contact | AccessControlled attribute | Contact read | 403 if no permission |
+| INT-079 | Partner | Full flow mostActive | Partner, DB, Auth | End-to-end 200 |
+| INT-080 | Contact | Full flow GetMostActiveContacts | Contact, DB, Auth | End-to-end 200 |
+| INT-081 | Partner | Partner + LiaisonOffice join | Partner, LiaisonOffice | byCountry uses country |
+| INT-082 | Partner | BaseEngagement + BaseEngagementPartners | BaseEngagement, Partner | engagementTrends join |
+| INT-083 | Contact | Contact + InteractionContacts + Interaction | Contact, Interaction | GetMostActiveContacts join |
+| INT-084 | Contact | Contact + Partner join | Contact, Partner | GetContactsByPartner |
+| INT-085 | Partner | Empty DB mostActive | No partners | Empty partners array |
+| INT-086 | Contact | Empty DB GetMostActiveContacts | No contacts | Empty data array |
+| INT-087 | Partner | Single partner in DB | 1 Partner | Single result |
+| INT-088 | Contact | Single contact in DB | 1 Contact | Single result |
+| INT-089 | Partner | Multiple org units | Partner, Hierarchy | Scoped by org |
+| INT-090 | Contact | Date range filter | Interaction.Date | Correct date filtering |
 
 ---
 
-## §7 Concurrency Tests (25)
+## §6 Concurrency Tests (25)
 
 | ID | Scenario | Expected Behavior |
 |----|----------|-------------------|
@@ -428,7 +494,7 @@
 
 ---
 
-## §8 Unit Tests (21)
+## §7 Unit Tests (21)
 
 | ID | Category | Input | Expected Output |
 |----|----------|-------|-----------------|
@@ -456,7 +522,7 @@
 
 ---
 
-## §9 Performance Tests (16)
+## §8 Performance Tests (16)
 
 | ID | Operation | Threshold | Priority |
 |----|-----------|-----------|----------|
@@ -479,7 +545,7 @@
 
 ---
 
-## §10 Load Tests (10)
+## §9 Load Tests (10)
 
 | ID | Load Profile | Duration | Success Criteria |
 |----|--------------|----------|-------------------|

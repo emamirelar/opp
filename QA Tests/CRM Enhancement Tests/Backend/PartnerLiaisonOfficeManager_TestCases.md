@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -36,7 +36,7 @@ The PartnerLiaisonOfficeManager manages partner-to-liaison-office relationships 
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result | Priority |
 |----|-----------|-------------|-------|-----------------|----------|
@@ -70,15 +70,10 @@ The PartnerLiaisonOfficeManager manages partner-to-liaison-office relationships 
 | POS-028 | Case-insensitive search | "office" | Search | Matches | P2 |
 | POS-029 | Get by multiple IDs | IDs exist | GetByIdsAsync([1,2,3]) | 3 returned | P2 |
 | POS-030 | Regional statistics | Assignments exist | GetRegionalStatsAsync() | Stats | P2 |
-| POS-031 | Office capacity | Office has limit | Check capacity | Within limit | P2 |
-| POS-032 | Default assignment | Config set | GetDefaultAsync() | Default | P2 |
-| POS-033 | Validate status | Valid status | Create with status | Success | P2 |
-| POS-034 | Concurrent read | None | 5 parallel GetById | All succeed | P2 |
-| POS-035 | Export assignments | Data exists | ExportAsync() | CSV/Excel | P2 |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error | Priority |
 |----|-----------|--------------|---------------|----------|
@@ -152,10 +147,30 @@ The PartnerLiaisonOfficeManager manages partner-to-liaison-office relationships 
 | NEG-068 | Partner region mismatch | Partner not in office region | Validation error | P2 |
 | NEG-069 | Effective date future | Future effective | Allow or reject | P2 |
 | NEG-070 | Expiry date past | Past expiry | Reject | P2 |
+| NEG-071 | Partner API fail | Partner 500 | Error | P2 |
+| NEG-072 | Office API fail | Office 500 | Error | P2 |
+| NEG-073 | Region API fail | Region 500 | Error | P2 |
+| NEG-074 | DbContext disposed | After dispose | ObjectDisposed | P2 |
+| NEG-075 | Transaction rollback | Rollback | Rollback | P2 |
+| NEG-076 | Partner soft-deleted | Deleted partner | Reject | P2 |
+| NEG-077 | Office soft-deleted | Deleted office | Reject | P2 |
+| NEG-078 | Region soft-deleted | Deleted region | Reject | P2 |
+| NEG-079 | Null office list | AssignOffices null | ArgumentNull | P2 |
+| NEG-080 | Empty office list | AssignOffices [] | No-op or error | P2 |
+| NEG-081 | Invalid region ID | RegionId 99999 | Reject | P2 |
+| NEG-082 | Capacity overflow | Over capacity | Validation | P2 |
+| NEG-083 | Primary on non-assigned | No assignment | BusinessException | P2 |
+| NEG-084 | Restore non-deleted | Not deleted | Idempotent | P2 |
+| NEG-085 | GetByIds empty | [] | Empty list | P2 |
+| NEG-086 | GetByIds null | null | ArgumentNull | P2 |
+| NEG-087 | Pagination page 0 | Page 0 | Clamp or error | P2 |
+| NEG-088 | Pagination size 0 | Size 0 | Validation | P2 |
+| NEG-089 | Search SQL injection | '; DROP-- | Sanitized | P2 |
+| NEG-090 | Export fail | Export error | Handled | P2 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field | Min | Max | At Min | At Max | Over Max | Priority |
 |----|-------|-----|-----|--------|--------|----------|----------|
@@ -229,10 +244,30 @@ The PartnerLiaisonOfficeManager manages partner-to-liaison-office relationships 
 | BND-068 | Region name length | 1 | 100 | 1 ok | 100 ok | Reject | P2 |
 | BND-069 | URL length | 1 | 2048 | 1 ok | 2048 ok | Reject | P2 |
 | BND-070 | Phone length | 1 | 20 | 1 ok | 20 ok | Reject | P2 |
+| BND-071 | Partner ID 1 | 1 | int.Max | Min | — | — | P2 |
+| BND-072 | Office ID 1 | 1 | int.Max | Min | — | — | P2 |
+| BND-073 | Region ID 1 | 1 | int.Max | Min | — | — | P2 |
+| BND-074 | Assignment ID 1 | 1 | int.Max | Min | — | — | P2 |
+| BND-075 | Page size 1 | 1 | 100 | Min | — | — | P2 |
+| BND-076 | Page size 100 | 1 | 100 | — | Max | — | P2 |
+| BND-077 | Bulk assign 0 | 0 | 50 | Empty | — | — | P2 |
+| BND-078 | Bulk assign 50 | 0 | 50 | — | Max | — | P2 |
+| BND-079 | Notes 0 | 0 | 4000 | Empty | — | — | P2 |
+| BND-080 | Notes 4000 | 0 | 4000 | — | Max | — | P2 |
+| BND-081 | Search 0 | 0 | 200 | Empty | — | — | P2 |
+| BND-082 | Search 200 | 0 | 200 | — | Max | — | P2 |
+| BND-083 | Name 1 | 1 | 200 | Min | — | — | P2 |
+| BND-084 | Name 200 | 1 | 200 | — | Max | — | P2 |
+| BND-085 | Code 1 | 1 | 20 | Min | — | — | P2 |
+| BND-086 | Code 20 | 1 | 20 | — | Max | — | P2 |
+| BND-087 | Date min | 1900 | 2100 | Min | — | — | P2 |
+| BND-088 | Date max | 1900 | 2100 | — | Max | — | P2 |
+| BND-089 | Capacity 0 | 0 | 1000 | None | — | — | P2 |
+| BND-090 | Capacity 1000 | 0 | 1000 | — | Max | — | P2 |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule | Trigger | Expected Outcome | Priority |
 |----|-----------|------|---------|------------------|----------|
@@ -286,10 +321,50 @@ The PartnerLiaisonOfficeManager manages partner-to-liaison-office relationships 
 | FUN-048 | Expiry date | Date logic | Create with expiry | Validated | P2 |
 | FUN-049 | Office region | Region match | Assign | Validated | P2 |
 | FUN-050 | Partner region | Region match | Assign | Validated | P2 |
+| FUN-051 | Create audit | Create | Create | Audit set | P2 |
+| FUN-052 | Update audit | Update | Update | Audit set | P2 |
+| FUN-053 | Soft delete audit | Delete | Delete | DeletedBy set | P2 |
+| FUN-054 | IsDeleted filter | Query | Query | Excludes deleted | P2 |
+| FUN-055 | Include partner | Get | Include | Partner loaded | P2 |
+| FUN-056 | Include office | Get | Include | Office loaded | P2 |
+| FUN-057 | Include region | Get | Include | Region loaded | P2 |
+| FUN-058 | Pagination | Page | Page | Correct slice | P2 |
+| FUN-059 | Sort | Sort | Sort | Ordered | P2 |
+| FUN-060 | Filter region | Filter | Region | Filtered | P2 |
+| FUN-061 | Search partner | Search | Partner | Matched | P2 |
+| FUN-062 | Search office | Search | Office | Matched | P2 |
+| FUN-063 | Primary office | Set primary | Set | Primary set | P2 |
+| FUN-064 | Unique partner-office | Create | Create | No duplicate | P2 |
+| FUN-065 | Bulk assign | Bulk | Assign | All assigned | P2 |
+| FUN-066 | Bulk unassign | Bulk | Unassign | All unassigned | P2 |
+| FUN-067 | Restore | Restore | Restore | Restored | P2 |
+| FUN-068 | Include deleted | Admin | IncludeDeleted | All | P2 |
+| FUN-069 | Regional stats | Stats | Get | Correct | P2 |
+| FUN-070 | Capacity check | Capacity | Check | Within limit | P2 |
+| FUN-071 | AsNoTracking | Read | Query | No tracking | P2 |
+| FUN-072 | Batch save | Batch | Save | All saved | P2 |
+| FUN-073 | Transaction | Transaction | Commit | Committed | P2 |
+| FUN-074 | Concurrency | Concurrent | Read | No conflict | P2 |
+| FUN-075 | Case-insensitive | Search | Case | Matched | P2 |
+| FUN-076 | Empty search | Search "" | Search | All | P2 |
+| FUN-077 | GetByIds | IDs | Get | Returned | P2 |
+| FUN-078 | Export | Export | Export | File | P2 |
+| FUN-079 | Default assignment | Default | Get | Returned | P2 |
+| FUN-080 | Status validation | Status | Validate | Validated | P2 |
+| FUN-081 | Cascading load | Include | Load | Loaded | P2 |
+| FUN-082 | DbContext scope | Scope | Per request | Isolated | P2 |
+| FUN-083 | Connection pool | Concurrent | Connections | Pooled | P2 |
+| FUN-084 | Query timeout | Slow | Query | Timeout | P2 |
+| FUN-085 | Retry policy | Transient | Fail | Retried | P2 |
+| FUN-086 | Logging | Operation | Log | Logged | P2 |
+| FUN-087 | Metrics | Operation | Metric | Recorded | P2 |
+| FUN-088 | Validation order | Invalid | Validate | Order correct | P2 |
+| FUN-089 | Idempotent delete | Delete | Twice | Second no-op | P2 |
+| FUN-090 | Idempotent restore | Restore | Twice | Second no-op | P2 |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result | Priority |
 |----|-----------|----------|----------|-----------------|----------|

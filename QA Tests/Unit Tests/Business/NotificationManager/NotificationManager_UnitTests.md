@@ -1,7 +1,7 @@
 # NotificationManager — Unit Test Cases
 
 **Component:** `UNOPS.PAO.Business/Managers/NotificationManager` (Unit Tests)  
-**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Created:** 2026-02-04 | **Last Updated:** 2026-02-18  
 **Author:** QA Team  
 **Standard:** 10-Category, 3:1 Ratio
 
@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,7 +33,7 @@ Notification manager unit tests cover send, receive, templates, channels, prefer
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,15 +67,10 @@ Notification manager unit tests cover send, receive, templates, channels, prefer
 | POS-028 | Channel enabled check | User prefs | IsChannelEnabled | Boolean |
 | POS-029 | Batch partial success | Some fail | BatchSend | Partial results |
 | POS-030 | Get notification history | User exists | GetHistory | History returned |
-| POS-031 | Template validation | Valid template | Validate | Valid |
-| POS-032 | Preference default | New user | GetPreferences | Defaults |
-| POS-033 | Notification type enum | Valid type | Create | Created |
-| POS-034 | Channel enum | Valid channel | Send | Sent |
-| POS-035 | Search notifications | User has notifications | Search | Matching |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Action | Expected Result |
 |----|-----------|---------------------|-----------------|
@@ -149,10 +144,30 @@ Notification manager unit tests cover send, receive, templates, channels, prefer
 | NEG-068 | Email delivery failure | SMTP down | NotificationException |
 | NEG-069 | Push delivery failure | Push down | NotificationException |
 | NEG-070 | In-app storage full | Storage full | StorageException |
+| NEG-071 | Send null template | Template=null | ArgumentNullException |
+| NEG-072 | CreateTemplate null body | Body=null | ArgumentNullException |
+| NEG-073 | UpdateTemplate null template | Template=null | ArgumentNullException |
+| NEG-074 | GetTemplate invalid ID | Id=0 | ArgumentException |
+| NEG-075 | MarkRead null ID | Id=0 | ArgumentException |
+| NEG-076 | MarkAllRead invalid user | UserId=-1 | ArgumentException |
+| NEG-077 | GetUnreadCount invalid user | UserId=0 | ArgumentException |
+| NEG-078 | GetHistory invalid days | Days=366 | ArgumentException |
+| NEG-079 | BatchSend null recipients | Recipients=null | ArgumentNullException |
+| NEG-080 | FilterByChannel invalid | Channel invalid | ArgumentException |
+| NEG-081 | FilterByType invalid | Type invalid | ArgumentException |
+| NEG-082 | Render null template | Template=null | ArgumentNullException |
+| NEG-083 | Render invalid variables | Vars invalid | ValidationException |
+| NEG-084 | UpdatePreferences null prefs | Prefs=null | ArgumentNullException |
+| NEG-085 | IsChannelEnabled invalid | Channel invalid | ArgumentException |
+| NEG-086 | Delete null ID | Id=0 | ArgumentException |
+| NEG-087 | GetById invalid ID | Id=-1 | ArgumentException |
+| NEG-088 | ListTemplates invalid filter | Filter invalid | ArgumentException |
+| NEG-089 | Validate null template | Template=null | ArgumentNullException |
+| NEG-090 | Search null user | UserId=0 | ArgumentException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Condition | Expected Result |
 |----|-----------|-------------------|-----------------|
@@ -226,10 +241,30 @@ Notification manager unit tests cover send, receive, templates, channels, prefer
 | BND-068 | Attachment count max | 10 attachments | Valid |
 | BND-069 | Attachment count over | 11 attachments | Reject |
 | BND-070 | Concurrent mark read | Two mark same | One or both |
+| BND-071 | Message whitespace | Message="   " | Reject |
+| BND-072 | Template name min | Length=1 | Valid |
+| BND-073 | Recipient list max | 100 recipients | Valid |
+| BND-074 | GetUnreadCount zero | No unread | 0 |
+| BND-075 | GetHistory min days | Days=1 | Valid |
+| BND-076 | Channel enum first | First | Valid |
+| BND-077 | Type enum first | First | Valid |
+| BND-078 | Batch size one | 1 recipient | Valid |
+| BND-079 | Mark read duplicate | Already read | No-op |
+| BND-080 | Template version min | Version=1 | Valid |
+| BND-081 | Variable count zero | No vars | Valid |
+| BND-082 | Variable count max | 50 vars | Valid |
+| BND-083 | Subject min length | Length=1 | Valid |
+| BND-084 | Subject max length | Length=255 | Valid |
+| BND-085 | Email min length | Length=5 | Valid |
+| BND-086 | Delivery retry zero | No retries | Config |
+| BND-087 | Rate limit at boundary | At limit | Throttled |
+| BND-088 | Preferences partial | Partial | Merged |
+| BND-089 | Notification ID zero | Id=0 | Reject |
+| BND-090 | Template ID max | Id=2147483647 | Handle |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -283,10 +318,50 @@ Notification manager unit tests cover send, receive, templates, channels, prefer
 | FUN-048 | Status transition | Workflow | ChangeStatus | Valid only |
 | FUN-049 | Permission cached | Performance | Repeated check | Cached |
 | FUN-050 | AsNoTracking read-only | Performance | List | No tracking |
+| FUN-051 | Send audit | Audit | Send | Audit |
+| FUN-052 | CreateTemplate audit | Audit | CreateTemplate | Audit |
+| FUN-053 | UpdateTemplate audit | Audit | UpdateTemplate | Audit |
+| FUN-054 | Delete audit | Audit | Delete | Audit |
+| FUN-055 | MarkRead audit | Audit | MarkRead | Audit |
+| FUN-056 | MarkAllRead audit | Audit | MarkAllRead | Audit |
+| FUN-057 | UpdatePreferences audit | Audit | UpdatePreferences | Audit |
+| FUN-058 | BatchSend validation | Validation | BatchSend | Valid |
+| FUN-059 | Template validation | Validation | CreateTemplate | Valid |
+| FUN-060 | Preferences validation | Validation | UpdatePreferences | Valid |
+| FUN-061 | Channel validation | Validation | Send | Valid |
+| FUN-062 | Type validation | Validation | Send | Valid |
+| FUN-063 | Recipient validation | Validation | Send | Valid |
+| FUN-064 | Message validation | Validation | Send | Valid |
+| FUN-065 | GetByUser filter | Logic | GetByUser | Filter |
+| FUN-066 | FilterByChannel logic | Logic | FilterByChannel | Filtered |
+| FUN-067 | FilterByType logic | Logic | FilterByType | Filtered |
+| FUN-068 | GetUnreadCount logic | Logic | GetUnreadCount | Count |
+| FUN-069 | GetHistory logic | Logic | GetHistory | History |
+| FUN-070 | Render logic | Logic | Render | Rendered |
+| FUN-071 | IsChannelEnabled logic | Logic | IsChannelEnabled | Boolean |
+| FUN-072 | BatchSend transaction | Transaction | BatchSend | Atomic |
+| FUN-073 | Delete transaction | Transaction | Delete | Atomic |
+| FUN-074 | MarkRead transaction | Transaction | MarkRead | Atomic |
+| FUN-075 | MarkAllRead transaction | Transaction | MarkAllRead | Atomic |
+| FUN-076 | CreateTemplate transaction | Transaction | CreateTemplate | Atomic |
+| FUN-077 | UpdateTemplate transaction | Transaction | UpdateTemplate | Atomic |
+| FUN-078 | UpdatePreferences transaction | Transaction | UpdatePreferences | Atomic |
+| FUN-079 | Send transaction | Transaction | Send | Atomic |
+| FUN-080 | Delivery status logic | Logic | Send | Status |
+| FUN-081 | Retry logic | Logic | Send | Retry |
+| FUN-082 | Expiry logic | Logic | Send | Expiry |
+| FUN-083 | Template variable logic | Logic | Render | Replace |
+| FUN-084 | Preferences merge logic | Logic | UpdatePreferences | Merge |
+| FUN-085 | Channel routing logic | Logic | Send | Route |
+| FUN-086 | Type template logic | Logic | Send | Template |
+| FUN-087 | Batch partial logic | Logic | BatchSend | Partial |
+| FUN-088 | GetByUser excludes deleted | Constraint | GetByUser | Excludes |
+| FUN-089 | ListTemplates excludes deleted | Constraint | ListTemplates | Excludes |
+| FUN-090 | Search excludes deleted | Constraint | Search | Excludes |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|

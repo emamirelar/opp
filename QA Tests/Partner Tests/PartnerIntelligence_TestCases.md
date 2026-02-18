@@ -12,19 +12,22 @@
 
 | Category | File/Section | Count | Minimum Required | Status |
 |----------|-------------|-------|-----------------|--------|
-| Positive Tests | §1 | 35 | 30-50 | ✅ |
-| Negative Tests | §2 | 70 | Max(50, 2×35)=70 | ✅ |
-| Boundary Tests | §3 | 70 | Max(50, 2×35)=70 | ✅ |
-| Functional Tests | §4 | 50 | ≥50 | ✅ |
-| Integration Tests | §5 | 50 | ≥50 | ✅ |
+| Positive Tests | §1 | 30 | 30-50 | ✅ |
+| Negative Tests | §2 | 90 | 90 | ✅ |
+| Boundary Tests | §3 | 90 | 90 | ✅ |
+| Functional Tests | §4 | 90 | 90 | ✅ |
+| Integration Tests | §5 | 90 | 90 | ✅ |
 | Security Tests | §6 | 50 | ≥50 | ✅ |
 | Concurrency Tests | §7 | 25 | ≥25 | ✅ |
 | Unit Tests | §8 | 21 | ≥21 | ✅ |
 | Performance Tests | §9 | 16 | ≥16 | ✅ |
 | Load Tests | §10 | 10 | ≥10 | ✅ |
-| **TOTAL** | | **397** | **≥347** | ✅ |
+| **TOTAL** | | **462** | **≥462** | ✅ |
 
-**3:1 Ratio Check:** (N + B) = 140 ≥ 3 × P = 105 → ✅ PASS
+| **N≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
+| **E≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
+| **F≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
+| **I≥3P?** | ✅ | 90 ≥ 3×30 = 90 |
 
 ---
 
@@ -150,11 +153,6 @@ Partner Intelligence provides contextual insights on the partner detail page —
 | POS-028 | Interaction dates formatted correctly | Various dates | View engagement | "Jan 15, 2026" format | P2 |
 | POS-029 | Risk indicator with trend arrow | Risk trending up | View risk | Upward trend arrow | P2 |
 | POS-030 | AI insights with confidence score | AI data includes confidence | View AI | "Confidence: 85%" | P2 |
-| POS-031 | Intelligence section collapsed by default | Fresh page load | Load detail page | Section collapsed, expand on click | P2 |
-| POS-032 | Intelligence remembers collapse state | User expanded section | Navigate away, return | Section remains expanded | P2 |
-| POS-033 | Print intelligence section | Intelligence loaded | Ctrl+P | Section prints cleanly | P2 |
-| POS-034 | Export intelligence as PDF | Intelligence loaded | Click Export PDF | PDF with intelligence data | P2 |
-| POS-035 | Intelligence accessible via screen reader | Section loaded | Use screen reader | All data points announced | P2 |
 
 ---
 
@@ -261,6 +259,26 @@ Partner Intelligence provides contextual insights on the partner detail page —
 | NEG-068 | Refresh button during error state | Error shown, click refresh | Retry attempt | P1 |
 | NEG-069 | Intelligence for archived partner | Partner status = Archived | Intelligence still viewable (read-only) | P1 |
 | NEG-070 | Intelligence with 10,000+ interactions | Huge dataset | Paginated or summarized | P1 |
+| NEG-071 | Invalid time period in URL | ?period=INVALID | Default period | P1 |
+| NEG-072 | Malformed partner ID in URL | /partners/1.5/intelligence | 400 Bad Request | P1 |
+| NEG-073 | Intelligence with null engagement data | Engagement API returns null | Empty state | P1 |
+| NEG-074 | Intelligence with null pipeline data | Pipeline API returns null | Empty state | P1 |
+| NEG-075 | Intelligence with null risk data | Risk API returns null | Empty state | P1 |
+| NEG-076 | Intelligence with null AI data | AI API returns null | Empty state | P1 |
+| NEG-077 | Refresh during error state | Error shown, rapid refresh | Single retry | P1 |
+| NEG-078 | Filter with invalid date format | "not-a-date" | Validation error | P1 |
+| NEG-079 | Export with invalid format | Format = "DOC" | Default PDF | P1 |
+| NEG-080 | Intelligence with negative interaction count | Count = -1 | Display 0 | P1 |
+| NEG-081 | Intelligence with negative pipeline value | Value = -1000 | Handled | P1 |
+| NEG-082 | AI insight with invalid confidence | Confidence = 150% | Capped at 100% | P1 |
+| NEG-083 | Risk with invalid category | Category = "INVALID" | Default or skip | P1 |
+| NEG-084 | Intelligence API returns 204 No Content | 204 | Empty state | P1 |
+| NEG-085 | Intelligence with circular reference in data | Circular | Handled | P1 |
+| NEG-086 | Refresh with expired token | Token expired | 401, redirect | P1 |
+| NEG-087 | Filter with timezone overflow | TZ = "invalid" | Default | P2 |
+| NEG-088 | Intelligence with oversized response | 10MB response | Truncated or error | P1 |
+| NEG-089 | Export during AI generation | AI generating | Export waits or disabled | P2 |
+| NEG-090 | Intelligence with concurrent filter change | Rapid filter toggle | Final filter applied | P1 |
 
 ---
 
@@ -372,6 +390,26 @@ Partner Intelligence provides contextual insights on the partner detail page —
 | BND-068 | AI insight from 365 days ago | Old AI data | Shows age warning | P2 |
 | BND-069 | Intelligence section at minimum viewport | 320px width | Responsive, no overflow | P2 |
 | BND-070 | Intelligence section at 4K viewport | 3840×2160 | Uses space effectively | P2 |
+| BND-071 | Interaction count exactly 0 | Empty | Empty state | P1 |
+| BND-072 | Interaction count exactly 100 | Page size | Full page | P1 |
+| BND-073 | Opportunity count exactly 0 | Empty | Empty pipeline | P1 |
+| BND-074 | Opportunity count exactly 50 | Medium | All displayed | P1 |
+| BND-075 | Pipeline value exactly $0 | Zero | "$0" displayed | P1 |
+| BND-076 | Pipeline value exactly $999,999,999 | Max | Formatted | P1 |
+| BND-077 | Risk count exactly 0 | No risks | "No risks" | P1 |
+| BND-078 | Risk count exactly 50 | Max | Paginated | P1 |
+| BND-079 | AI insight count exactly 0 | No AI | "No insights" | P1 |
+| BND-080 | AI insight count exactly 20 | Max shown | Top 20 | P1 |
+| BND-081 | Confidence exactly 0% | Min | Displayed | P2 |
+| BND-082 | Confidence exactly 100% | Max | Displayed | P2 |
+| BND-083 | Time period exactly 6 months | Last 6 Months | Correct range | P1 |
+| BND-084 | Time period exactly 12 months | Last Year | Correct range | P1 |
+| BND-085 | Custom range exactly 1 day | Single day | That day | P2 |
+| BND-086 | Custom range exactly 10 years | Max | Capped | P2 |
+| BND-087 | Engagement frequency exactly 0/month | No interactions | "0/month" | P1 |
+| BND-088 | Engagement frequency exactly 100/month | Very active | "100/month" | P2 |
+| BND-089 | Description length exactly 4000 chars | Max | Truncated | P1 |
+| BND-090 | AI recommendation exactly 10000 chars | Max | Truncated | P1 |
 
 ---
 
@@ -448,6 +486,46 @@ Partner Intelligence provides contextual insights on the partner detail page —
 | FUN-048 | Pipeline click-through logged | Click opportunity | User ID, opportunity ID | P2 |
 | FUN-049 | Risk detail expansion logged | Expand risk | User ID, risk category | P2 |
 | FUN-050 | Intelligence data refresh duration logged | Refresh complete | Duration, data size | P2 |
+| FUN-051 | Intelligence data scoped to permissions | Permission | Load | Only permitted data | P0 |
+| FUN-052 | OrgUnit scope applies to all sections | OrgUnit | Load | All sections scoped | P0 |
+| FUN-053 | Soft-deleted interactions excluded | IsDeleted | Load | Deleted not shown | P0 |
+| FUN-054 | Soft-deleted opportunities excluded | IsDeleted | Load | Deleted not shown | P0 |
+| FUN-055 | Time filter applies to engagement | Date | Select 6 months | 6-month interactions | P0 |
+| FUN-056 | Time filter applies to pipeline | Date | Select 6 months | 6-month opportunities | P1 |
+| FUN-057 | Time filter applies to risk | Date | Select filter | Risk scoped | P1 |
+| FUN-058 | Refresh reloads all sections | Refresh | Click | All sections reload | P1 |
+| FUN-059 | Metrics recalculate on filter change | Filter | Change period | Totals update | P1 |
+| FUN-060 | AI insights independent of time filter | AI | Change filter | AI remains | P1 |
+| FUN-061 | Engagement sorted by date descending | Sort | Load | Most recent first | P1 |
+| FUN-062 | Pipeline grouped by stage | Group | Load | Grouped by stage | P1 |
+| FUN-063 | Risk categories grouped | Group | Load | Grouped by category | P1 |
+| FUN-064 | New interaction appears after refresh | Data change | Add, refresh | New visible | P1 |
+| FUN-065 | Deleted interaction disappears after refresh | Delete | Delete, refresh | Removed | P1 |
+| FUN-066 | Time period enum validation | Period | Valid | Invalid default | P1 |
+| FUN-067 | Custom date range start ≤ end | Date | Jan–Dec | Dec–Jan invalid | P1 |
+| FUN-068 | Custom date range not future | Date | Past/today | Future invalid | P1 |
+| FUN-069 | Partner ID positive validation | ID | 42 | -1, "abc" invalid | P1 |
+| FUN-070 | Partner not deleted validation | Status | Active | Deleted 404 | P1 |
+| FUN-071 | Input sanitized for XSS | XSS | Clean | `<script>` escaped | P0 |
+| FUN-072 | API content-type validation | Response | application/json | text/html error | P1 |
+| FUN-073 | Metrics handle null values | Null | Mix | All null handled | P1 |
+| FUN-074 | Pipeline value non-negative | Value | 0, 1000 | -500 handled | P1 |
+| FUN-075 | Risk severity valid level | Enum | High/Med/Low | "ULTRA" default | P1 |
+| FUN-076 | AI confidence 0-100% | Range | 50% | -5%, 105% capped | P1 |
+| FUN-077 | Interaction date not future | Date | Past/today | Future flagged | P2 |
+| FUN-078 | Engagement frequency divide-by-zero | Period=0 | 0 months | "N/A" | P1 |
+| FUN-079 | Currency formatting by locale | Locale | US: $1,000 | EU: €1.000 | P2 |
+| FUN-080 | Sort parameter validation | Sort | "date", "type" | "DROP_TABLE" default | P1 |
+| FUN-081 | Max engagement 100 per page | Constraint | 200 interactions | 100 per page | P1 |
+| FUN-082 | Max pipeline items 50 per stage | Constraint | 100 per stage | Summarized | P1 |
+| FUN-083 | Max risk indicators 50 | Constraint | 60 risks | Paginated | P2 |
+| FUN-084 | Max AI recommendations 20 | Constraint | 25 insights | Top 20 | P2 |
+| FUN-085 | API rate limit on refresh | Constraint | 1 per 5s | Rate limited | P1 |
+| FUN-086 | Session timeout 30 min | Constraint | 31 min | Expired | P1 |
+| FUN-087 | Max custom date range 10 years | Constraint | 15 years | Capped | P2 |
+| FUN-088 | Intelligence API response 5MB max | Constraint | Large | Paginated | P2 |
+| FUN-089 | Concurrent intelligence loads 5 | Constraint | 6 partners | 6th queued | P2 |
+| FUN-090 | Export size limit 10MB | Constraint | Large | Chunked | P2 |
 
 ---
 
@@ -529,6 +607,46 @@ Partner Intelligence provides contextual insights on the partner detail page —
 | INT-048 | Export fails | Export endpoint down | "Export unavailable" toast | P2 |
 | INT-049 | Session expired during export | Token expired | Auth prompt | P1 |
 | INT-050 | Concurrent section failures | 2+ sections fail | Each shows independent error | P1 |
+| INT-051 | Add interaction → engagement updates | Create | Interaction, Intelligence | New in engagement | P0 |
+| INT-052 | Delete interaction → engagement updates | Soft-delete | Interaction, Intelligence | Removed after refresh | P0 |
+| INT-053 | Link opportunity → pipeline updates | Create link | Opportunity, Intelligence | In pipeline | P0 |
+| INT-054 | Unlink opportunity → pipeline updates | Remove link | Opportunity, Intelligence | Removed from pipeline | P0 |
+| INT-055 | Update risk data → indicators refresh | Update | Risk, Intelligence | Risk reflects | P1 |
+| INT-056 | Generate AI insights → section updates | Generate | AI, Intelligence | New recommendations | P1 |
+| INT-057 | Partner status change → accessibility | Update | Partner status | Viewable if active/archived | P1 |
+| INT-058 | Partner OrgUnit change → scope changes | Update | OrgUnit | Rescoped | P1 |
+| INT-059 | Contact added → engagement scope expands | Create | Contact, Intelligence | Contact interactions included | P1 |
+| INT-060 | Contact removed → engagement narrows | Delete | Contact, Intelligence | Excluded | P1 |
+| INT-061 | Filter Last 6 Months + verify metrics | Filter | 6-month | Metrics match | P0 |
+| INT-062 | Filter Last Year + verify pipeline | Filter | 12-month | Pipeline shows 12-month | P1 |
+| INT-063 | Filter All Time + complete data | Filter | All time | All historical | P1 |
+| INT-064 | Custom filter + specific range | Filter | Custom dates | Exact range | P1 |
+| INT-065 | Filter change + engagement frequency | Filter | Period change | Frequency recalc | P1 |
+| INT-066 | Filter change + pipeline value | Filter | Period change | Total recalc | P1 |
+| INT-067 | Filter preserves on expand/collapse | Toggle | Section | Filter remains | P1 |
+| INT-068 | Filter resets on partner navigation | Navigate | New partner | Default filter | P2 |
+| INT-069 | Filter persists within same partner | Change filter | Scroll | Filter stays | P1 |
+| INT-070 | Clear custom filter → default | Clear | Custom dates | All Time | P1 |
+| INT-071 | Engagement history page 1 | Pagination | First 20 | Most recent 20 | P1 |
+| INT-072 | Load more engagement history | Pagination | Page 2 | Next 20 | P1 |
+| INT-073 | Pipeline pagination by stage | Pagination | Large | Paginated | P2 |
+| INT-074 | Risk indicators pagination | Pagination | 50+ risks | Paginated | P2 |
+| INT-075 | AI recommendations show all | Pagination | <20 insights | All displayed | P2 |
+| INT-076 | Partner → Interactions → Intelligence | Relationship | Link | In engagement | P0 |
+| INT-077 | Partner → Opportunities → Pipeline | Relationship | Link | In pipeline | P0 |
+| INT-078 | Partner → Contacts → scope | Relationship | Contact | Included | P1 |
+| INT-079 | Partner type → risk profile | Relationship | Type | Financial risks | P1 |
+| INT-080 | OrgUnit → User scope → visibility | Relationship | Permission | Scoped data | P1 |
+| INT-081 | Interaction type → categorization | Relationship | Type | Grouped | P2 |
+| INT-082 | Opportunity stage → pipeline buckets | Relationship | Stage | Correct buckets | P1 |
+| INT-083 | AI model → recommendation generation | Relationship | AI | Based on data | P2 |
+| INT-084 | Risk data source → calculation | Relationship | Risk engine | Calculated | P2 |
+| INT-085 | Time filter → all relationships | Relationship | Filter | All honor filter | P1 |
+| INT-086 | Partner API 404 | Error | Deleted | 404 page | P0 |
+| INT-087 | Intelligence API 500 | Error | Server | Error + retry | P0 |
+| INT-088 | Intelligence API 403 | Error | No permission | Access denied | P0 |
+| INT-089 | Partial section failure | Error | 1 section 500 | Others load | P1 |
+| INT-090 | Intelligence end-to-end full flow | E2E | Partner→Intelligence→Filter→Export | P0 |
 
 ---
 

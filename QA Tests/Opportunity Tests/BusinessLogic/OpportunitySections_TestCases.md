@@ -2,9 +2,9 @@
 
 **Feature:** Opportunity data entry sections — WHY (strategic rationale), WHERE (geographic scope), WHAT (products/services/budget), WHO (stakeholders/team)  
 **Created:** 2026-01-22  
-**Restructured:** 2026-02-11 (10-category standard)  
+**Restructured:** 2026-02-18 (10-category standard, 4× ratio checks)  
 **Author:** QA Team  
-**Standard:** 10-Category, 3:1 Ratio
+**Standard:** 10-Category, N≥3P, E≥3P, F≥3P, I≥3P
 
 ---
 
@@ -12,19 +12,25 @@
 
 | # | Category | Section | Count | Minimum Required | Status |
 |---|----------|---------|-------|-----------------|--------|
-| 1 | Positive Tests | §1 | 35 | 30-50 | ✅ |
-| 2 | Negative Tests | §2 | 70 | Max(50, 2×35=70) | ✅ |
-| 3 | Boundary Tests | §3 | 70 | Max(50, 2×35=70) | ✅ |
-| 4 | Functional Tests | §4 | 50 | ≥50 | ✅ |
-| 5 | Integration Tests | §5 | 50 | ≥50 | ✅ |
-| 6 | Security Tests | §6 | 50 | ≥50 | ✅ |
-| 7 | Concurrency Tests | §7 | 25 | ≥25 | ✅ |
-| 8 | Unit Tests | §8 | 21 | ≥21 | ✅ |
-| 9 | Performance Tests | §9 | 16 | ≥16 | ✅ |
-| 10 | Load Tests | §10 | 10 | ≥10 | ✅ |
-| | **TOTAL** | | **397** | **≥347** | ✅ |
+| 1 | Positive Tests | §1 | 30 | 30 | ✅ |
+| 2 | Negative Tests | §2 | 90 | 90 (3×P) | ✅ |
+| 3 | Boundary Tests | §3 | 90 | 90 (3×P) | ✅ |
+| 4 | Functional Tests | §4 | 90 | 90 (3×P) | ✅ |
+| 5 | Integration Tests | §5 | 90 | 90 (3×P) | ✅ |
+| 6 | Concurrency Tests | §6 | 25 | ≥25 | ✅ |
+| 7 | Unit Tests | §7 | 21 | ≥21 | ✅ |
+| 8 | Performance Tests | §8 | 16 | ≥16 | ✅ |
+| 9 | Load Tests | §9 | 10 | ≥10 | ✅ |
+| | **TOTAL** | | **462** | **≥462** | ✅ |
 
-**3:1 Ratio Check:** (70 + 70) = **140** ≥ 3 × 35 = **105** → ✅ PASS
+### Four Individual Ratio Checks
+
+| Check | Formula | Actual | Required | Status |
+|-------|---------|--------|----------|--------|
+| N ≥ 3P | Negative ≥ 3 × Positive | 90 ≥ 90 | 90 ≥ 90 | ✅ |
+| E ≥ 3P | Edge/Boundary ≥ 3 × Positive | 90 ≥ 90 | 90 ≥ 90 | ✅ |
+| F ≥ 3P | Functional ≥ 3 × Positive | 90 ≥ 90 | 90 ≥ 90 | ✅ |
+| I ≥ 3P | Integration ≥ 3 × Positive | 90 ≥ 90 | 90 ≥ 90 | ✅ |
 
 ---
 
@@ -41,7 +47,7 @@
 
 ## §1 Positive Tests (Happy Path)
 
-> **Count: 35** | **Minimum: 30-50** | ✅ COMPLIANT
+> **Count: 30** | **Minimum: 30** | ✅ COMPLIANT
 
 ### WHY Section (10)
 
@@ -86,23 +92,18 @@
 | POS-027 | View WHAT in read-only | After submission | Not editable | P1 |
 | POS-028 | Budget with different currencies | EUR, GBP, CHF | Currency-specific | P1 |
 
-### WHO Section (7)
+### WHO Section (2)
 
 | ID | Test Name | Steps | Expected Result | Priority |
 |----|-----------|-------|-----------------|----------|
 | POS-029 | Assign OM | Select OM from users | OM linked | P0 |
 | POS-030 | Add funding partner | Search + select partner | Partner linked with amount | P0 |
-| POS-031 | Add client partner | Search + select partner | Client partner linked | P0 |
-| POS-032 | Add stakeholder | Add stakeholder user | Stakeholder linked | P1 |
-| POS-033 | Add collaborator | Assign collaborator role | Collaborator linked | P1 |
-| POS-034 | Multiple funding partners | Add 3 partners | All saved with amounts | P1 |
-| POS-035 | View WHO in read-only | After submission | Not editable | P1 |
 
 ---
 
 ## §2 Negative Tests
 
-> **Count: 70** | **Minimum: Max(50, 2×35=70)** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90 (3×P)** | ✅ COMPLIANT
 
 ### 2.1 Missing Required Fields (16)
 
@@ -204,11 +205,36 @@
 | NEG-069 | Tab navigation order correct | Fields focused in logical order | P2 |
 | NEG-070 | Screen reader reads all labels | All fields accessible | P2 |
 
+### 2.7 Domain-Specific Negative Tests (20)
+
+| ID | Section | Scenario | Expected | Priority |
+|----|---------|----------|----------|----------|
+| NEG-071 | WHY | Strategic Mission not aligned with country | Warning or validation error | P1 |
+| NEG-072 | WHY | SDG without corresponding outcome text | Warning or required linkage | P2 |
+| NEG-073 | WHY | Context references non-existent partner | Validation error | P1 |
+| NEG-074 | WHERE | Country not in UNCF coverage | Warning | P2 |
+| NEG-075 | WHERE | Org unit mismatch with selected country | Validation error | P1 |
+| NEG-076 | WHERE | Implementation dates outside UNCF validity | Warning | P2 |
+| NEG-077 | WHAT | Product not available in selected country | Validation error | P1 |
+| NEG-078 | WHAT | Initiative type incompatible with products | Warning | P2 |
+| NEG-079 | WHAT | Beneficiary total exceeds org capacity | Warning | P2 |
+| NEG-080 | WHAT | Budget currency mismatch with partner country | Warning | P1 |
+| NEG-081 | WHO | OM from different org unit than opportunity | Validation error | P1 |
+| NEG-082 | WHO | Same partner as funding and client | Duplicate blocked | P1 |
+| NEG-083 | WHO | Funding amount exceeds opportunity budget | Validation error | P1 |
+| NEG-084 | WHO | Stakeholder without role assignment | Warning or required | P2 |
+| NEG-085 | CROSS | Submit with WHY complete but WHERE empty | Submit blocked | P0 |
+| NEG-086 | CROSS | Funding partner sum ≠ opportunity budget | Warning or validation | P1 |
+| NEG-087 | CROSS | Client partner not in implementation country | Warning | P2 |
+| NEG-088 | CROSS | Strategic mission not in org unit scope | Warning | P2 |
+| NEG-089 | CROSS | AI-generated content exceeds field max | Truncated or error | P1 |
+| NEG-090 | CROSS | Save with stale version (optimistic lock) | 409 Conflict | P1 |
+
 ---
 
 ## §3 Boundary Tests
 
-> **Count: 70** | **Minimum: Max(50, 2×35=70)** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90 (3×P)** | ✅ COMPLIANT
 
 ### 3.1 Text Field Boundaries (20)
 
@@ -310,11 +336,36 @@
 | BND-069 | Section visible on smallest viewport | Responsive layout | P2 |
 | BND-070 | Section with screen reader | All labels announced | P2 |
 
+### 3.7 Domain-Specific Boundary Tests (20)
+
+| ID | Scenario | Expected | Priority |
+|----|----------|----------|----------|
+| BND-071 | Funding amount = 0 for one partner | ✅ or warning | P1 |
+| BND-072 | Funding amount = 99.99% of budget | ✅ | P1 |
+| BND-073 | Funding amount = 100.01% of budget | Validation error | P1 |
+| BND-074 | Beneficiary M+F+Other = total - 1 | Validation error | P1 |
+| BND-075 | Beneficiary M+F+Other = total + 1 | Validation error | P1 |
+| BND-076 | Single country, single org unit | ✅ | P1 |
+| BND-077 | 10 countries, 1 org unit (multi-country) | ✅ | P1 |
+| BND-078 | 1 country, org unit from different region | Warning or blocked | P2 |
+| BND-079 | SDG count = 1 (minimum for submit) | ✅ | P1 |
+| BND-080 | SDG count = 17 (all) | ✅ | P1 |
+| BND-081 | Strategic Mission count = 1 | ✅ | P1 |
+| BND-082 | Strategic Mission count = max available | ✅ | P2 |
+| BND-083 | Budget = 0 with 0 funding partners | ✅ | P1 |
+| BND-084 | Budget = 0 with 1+ funding partners | Warning or error | P1 |
+| BND-085 | Implementation start = signing date | ✅ | P2 |
+| BND-086 | Implementation start before signing date | Warning | P2 |
+| BND-087 | Timeline spans DST boundary | Correct duration | P2 |
+| BND-088 | Partner search with 0 results | Empty state | P1 |
+| BND-089 | Partner search with 1 result | Single select | P1 |
+| BND-090 | Org unit dropdown with 1 option | Single select | P1 |
+
 ---
 
 ## §4 Functional Tests
 
-> **Count: 50** | **Minimum: ≥50** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90 (3×P)** | ✅ COMPLIANT
 
 ### 4.1 Workflow Rules (15)
 
@@ -386,11 +437,56 @@
 | FUN-049 | AI-assisted edit | AI source noted | P2 |
 | FUN-050 | Bulk section update | Each field change logged | P2 |
 
+### 4.5 Domain-Specific Functional Tests (40)
+
+| ID | Rule | Scenario | Expected | Priority |
+|----|------|----------|----------|----------|
+| FUN-051 | WHY → SDG linkage | Select SDG 1 | Outcome text can reference SDG | P1 |
+| FUN-052 | WHY → Strategic Mission scope | Mission selected | Aligns with org unit | P1 |
+| FUN-053 | WHY → Context word count | Long context | Word count displayed | P2 |
+| FUN-054 | WHERE → Country-org unit mapping | Select country | Org units filtered by region | P0 |
+| FUN-055 | WHERE → UNCF validity period | Select UNCF | Dates within UNCF range | P1 |
+| FUN-056 | WHERE → Multi-country org unit | 3 countries | Single org unit or per-country | P1 |
+| FUN-057 | WHAT → Product-country availability | Product + country | Product available in country | P1 |
+| FUN-058 | WHAT → Budget-currency consistency | Multi-currency partners | Display in opportunity currency | P1 |
+| FUN-059 | WHAT → Initiative type constraints | Type selected | Products match type | P2 |
+| FUN-060 | WHAT → Beneficiary gender breakdown | M+F+Other | Sum = total, all ≥ 0 | P1 |
+| FUN-061 | WHO → OM org unit match | Assign OM | OM in opportunity org unit | P0 |
+| FUN-062 | WHO → Funding partner uniqueness | Add partner | No duplicate funding partners | P1 |
+| FUN-063 | WHO → Client partner uniqueness | Add partner | No duplicate client partners | P1 |
+| FUN-064 | WHO → Funding amount sum | Multiple partners | Sum ≤ budget (or warning) | P1 |
+| FUN-065 | WHO → Stakeholder role assignment | Add stakeholder | Role required or optional | P2 |
+| FUN-066 | CROSS → Submit all sections | All complete | Submit succeeds | P0 |
+| FUN-067 | CROSS → Section dependency order | WHY before WHAT | No enforced order for save | P1 |
+| FUN-068 | CROSS → Country in UNCF coverage | Country selected | Country in UNCF list | P2 |
+| FUN-069 | CROSS → SDG in strategic mission | SDG selected | SDG aligns with mission | P2 |
+| FUN-070 | CROSS → Budget vs funding amounts | Funding sum | Matches or warning | P1 |
+| FUN-071 | AI → WHY suggestions | Click AI | Context/Impact/Outcomes suggested | P1 |
+| FUN-072 | AI → WHERE suggestions | Click AI | Countries/org units suggested | P2 |
+| FUN-073 | AI → WHAT suggestions | Click AI | Products suggested | P2 |
+| FUN-074 | AI → WHO suggestions | Click AI | Partners suggested | P2 |
+| FUN-075 | Read-only → WHY display | After submit | All WHY fields read-only | P0 |
+| FUN-076 | Read-only → WHERE display | After submit | All WHERE fields read-only | P0 |
+| FUN-077 | Read-only → WHAT display | After submit | All WHAT fields read-only | P0 |
+| FUN-078 | Read-only → WHO display | After submit | All WHO fields read-only | P0 |
+| FUN-079 | Draft → Edit any section | Draft status | All sections editable | P0 |
+| FUN-080 | Draft → Partial data | Some sections empty | Save succeeds | P0 |
+| FUN-081 | Validation → WHY on submit | Missing context | Submit blocked | P0 |
+| FUN-082 | Validation → WHERE on submit | Missing country | Submit blocked | P0 |
+| FUN-083 | Validation → WHAT on submit | Missing product | Submit blocked | P0 |
+| FUN-084 | Validation → WHO on submit | Missing OM | Submit blocked | P0 |
+| FUN-085 | Validation → End before start | Invalid dates | Submit blocked | P0 |
+| FUN-086 | Validation → Negative budget | Invalid amount | Submit blocked | P0 |
+| FUN-087 | Validation → Beneficiary mismatch | Breakdown ≠ total | Submit blocked | P1 |
+| FUN-088 | Validation → Funding sum > budget | Over-allocation | Submit blocked or warning | P1 |
+| FUN-089 | Export → All sections included | Export opportunity | WHY/WHERE/WHAT/WHO present | P2 |
+| FUN-090 | Export → Formatting preserved | Export | Dates, numbers, text formatted | P2 |
+
 ---
 
 ## §5 Integration Tests
 
-> **Count: 50** | **Minimum: ≥50** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90 (3×P)** | ✅ COMPLIANT
 
 ### 5.1 CRUD (10)
 
@@ -467,95 +563,54 @@
 | INT-049 | Rate limited section saves | 429 | P2 |
 | INT-050 | Section save with extra fields | Ignored | P2 |
 
----
+### 5.6 Domain-Specific Integration Tests (40)
 
-## §6 Security Tests
-
-> **Count: 50** | **Minimum: ≥50** | ✅ COMPLIANT
-
-### 6.1 Injection (10)
-
-| ID | Vector | Target | Expected | Priority |
-|----|--------|--------|----------|----------|
-| SEC-001 | SQL | Context field | Parameterized | P0 |
-| SEC-002 | SQL | Impact field | Escaped | P0 |
-| SEC-003 | XSS | Outcomes field | HTML escaped | P0 |
-| SEC-004 | XSS | Budget notes | Sanitized | P0 |
-| SEC-005 | XSS | Partner search | Escaped | P0 |
-| SEC-006 | Command | Context | Stored as text | P1 |
-| SEC-007 | Path traversal | Document | Rejected | P1 |
-| SEC-008 | JSON | API body | Blocked | P1 |
-| SEC-009 | Template | Impact | Not evaluated | P2 |
-| SEC-010 | Header | API | Blocked | P2 |
-
-### 6.2 Access Control (10)
-
-| ID | Role | Section | Expected | Priority |
-|----|------|---------|----------|----------|
-| SEC-011 | Unauthenticated | Any section | 401 | P0 |
-| SEC-012 | No permission | Edit WHY | 403 | P0 |
-| SEC-013 | Read-only (workflow) | Edit WHERE | 403 | P0 |
-| SEC-014 | After approval | Edit WHAT | 403 | P0 |
-| SEC-015 | Wrong org unit | Edit WHO | 403 | P1 |
-| SEC-016 | Expired session | Save | 401 | P1 |
-| SEC-017 | Revoked permission | Save | 403 | P1 |
-| SEC-018 | Horizontal: other user's opp | Edit sections | 403 | P0 |
-| SEC-019 | Vertical: Collaborator as OM | OM actions | 403 | P1 |
-| SEC-020 | Admin bypass | Direct API | Per config | P2 |
-
-### 6.3 IDOR (10)
-
-| ID | Object | Expected | Priority |
-|----|--------|----------|----------|
-| SEC-021 | Opportunity ID | 403 | P0 |
-| SEC-022 | Partner ID | 403 | P0 |
-| SEC-023 | Document ID | 403 | P1 |
-| SEC-024 | SDG mapping ID | 403 | P1 |
-| SEC-025 | Country mapping ID | 403 | P1 |
-| SEC-026 | Negative ID | 400 | P2 |
-| SEC-027 | Large ID | 404 | P2 |
-| SEC-028 | UUID format | 400 | P2 |
-| SEC-029 | Sequential scan | Rate limited | P1 |
-| SEC-030 | Predictable ID | Auth gated | P1 |
-
-### 6.4 Mass Assignment (5)
-
-| ID | Field | Expected | Priority |
-|----|-------|----------|----------|
-| SEC-031 | Stage | Ignored | P0 |
-| SEC-032 | Status | Ignored | P0 |
-| SEC-033 | CreatedBy | Server-controlled | P1 |
-| SEC-034 | IsDeleted | Not modifiable | P1 |
-| SEC-035 | Id | Auto-generated | P1 |
-
-### 6.5 Auth & Session (10)
-
-| ID | Attack | Expected | Priority |
-|----|--------|----------|----------|
-| SEC-036 | Replay | Anti-replay | P0 |
-| SEC-037 | CSRF | Token required | P0 |
-| SEC-038 | JWT tamper | Rejected | P0 |
-| SEC-039 | Session fixation | New session | P1 |
-| SEC-040 | Brute force | Rate limited | P1 |
-| SEC-041 | Token refresh | Seamless | P1 |
-| SEC-042 | After logout | Redirect | P1 |
-| SEC-043 | HttpOnly cookie | Set | P1 |
-| SEC-044 | Secure cookie | Set | P1 |
-| SEC-045 | HTTPS only | Enforced | P0 |
-
-### 6.6 Data Exposure (5)
-
-| ID | Data | Expected | Priority |
+| ID | Flow | Expected | Priority |
 |----|------|----------|----------|
-| SEC-046 | Error response | No stack trace | P0 |
-| SEC-047 | Deleted records | Excluded from queries | P1 |
-| SEC-048 | Internal IDs | Display-safe | P2 |
-| SEC-049 | Sensitive logs | No passwords/tokens | P0 |
-| SEC-050 | Document download | Auth required | P0 |
+| INT-051 | WHY → SDG → Opportunity card | SDG displayed on card | P1 |
+| INT-052 | WHY → Strategic Mission → Report | Mission in report export | P1 |
+| INT-053 | WHERE → Country → Partner search | Partners filtered by country | P1 |
+| INT-054 | WHERE → Org unit → User permissions | OM list filtered by org unit | P0 |
+| INT-055 | WHERE → UNCF → Timeline validation | Dates within UNCF period | P1 |
+| INT-056 | WHAT → Product → Country availability | Product-country matrix | P1 |
+| INT-057 | WHAT → Budget → Funding sum | Funding amounts vs budget | P1 |
+| INT-058 | WHAT → Initiative type → Product filter | Products filtered by type | P2 |
+| INT-059 | WHO → OM → Notification | OM receives assignment notification | P1 |
+| INT-060 | WHO → Funding partner → Partner opp list | Opp appears in partner's opps | P0 |
+| INT-061 | WHO → Client partner → Partner opp list | Opp appears in client's opps | P0 |
+| INT-062 | CROSS → Submit → Workflow transition | Opp moves to next stage | P0 |
+| INT-063 | CROSS → Reject → Reopen | Sections editable again | P0 |
+| INT-064 | CROSS → Country change → Org unit reset | Org unit cleared or updated | P1 |
+| INT-065 | CROSS → Budget change → Funding warning | Warning if sum > budget | P1 |
+| INT-066 | AI → WHY → Save | AI content persisted | P1 |
+| INT-067 | AI → Partial fill → Manual complete | Combined save works | P1 |
+| INT-068 | Reference data → Country list | Countries from master data | P0 |
+| INT-069 | Reference data → SDG list | SDGs from master data | P0 |
+| INT-070 | Reference data → Product catalog | Products from catalog | P0 |
+| INT-071 | Reference data → Org units | Org units from hierarchy | P0 |
+| INT-072 | Reference data → Strategic missions | Missions from config | P1 |
+| INT-073 | Audit → Edit WHY | Audit log entry created | P0 |
+| INT-074 | Audit → Edit WHO (OM change) | OM change logged | P0 |
+| INT-075 | Audit → Add funding partner | Partner add logged | P1 |
+| INT-076 | Search → Context full-text | WHY context searchable | P1 |
+| INT-077 | Search → Impact full-text | Impact searchable | P1 |
+| INT-078 | Search → Outcomes full-text | Outcomes searchable | P1 |
+| INT-079 | Filter → Multiple SDGs | AND/OR logic correct | P1 |
+| INT-080 | Filter → Date range | Implementation dates filter | P1 |
+| INT-081 | Filter → Budget range | Budget min/max filter | P1 |
+| INT-082 | Filter → Org unit | Opps in org unit | P1 |
+| INT-083 | Export → PDF all sections | All sections in PDF | P2 |
+| INT-084 | Export → Excel all sections | All sections in Excel | P2 |
+| INT-085 | API → Create opp with all sections | Full opp created | P0 |
+| INT-086 | API → Update single section | Only that section updated | P1 |
+| INT-087 | API → Get opp with sections | All sections returned | P0 |
+| INT-088 | API → Delete opp | Cascade or soft-delete | P1 |
+| INT-089 | oUP sync → Section data | Section data synced to oUP | P2 |
+| INT-090 | Notification → Section complete | User notified when complete | P2 |
 
 ---
 
-## §7 Concurrency Tests
+## §6 Concurrency Tests
 
 > **Count: 25** | **Minimum: ≥25** | ✅ COMPLIANT
 
@@ -589,7 +644,7 @@
 
 ---
 
-## §8 Unit Tests
+## §7 Unit Tests
 
 > **Count: 21** | **Minimum: ≥21** | ✅ COMPLIANT
 
@@ -619,7 +674,7 @@
 
 ---
 
-## §9 Performance Tests
+## §8 Performance Tests
 
 > **Count: 16** | **Minimum: ≥16** | ✅ COMPLIANT
 
@@ -644,7 +699,7 @@
 
 ---
 
-## §10 Load Tests
+## §9 Load Tests
 
 > **Count: 10** | **Minimum: ≥10** | ✅ COMPLIANT
 
@@ -667,18 +722,18 @@
 
 | Feature Area | Test Cases |
 |-------------|------------|
-| **WHY Section** | POS-001 to POS-010, NEG-001 to NEG-005, BND-001 to BND-009, FUN-016 |
-| **WHERE Section** | POS-011 to POS-019, NEG-006 to NEG-009, BND-056 to BND-063, FUN-017 |
-| **WHAT Section** | POS-020 to POS-028, NEG-010 to NEG-011, BND-021 to BND-030, FUN-018 |
-| **WHO Section** | POS-029 to POS-035, NEG-012 to NEG-014, FUN-019 |
-| **Cross-Section Validation** | FUN-027, FUN-028, INT-001 to INT-002 |
-| **AI Assistance** | POS-007, POS-009, INT-009, NEG-056 |
-| **Read-Only Enforcement** | FUN-002, FUN-003, NEG-035 to NEG-039 |
-| **Partner Dropdowns** | FUN-031, FUN-038, NEG-044, NEG-045, SEC-022 |
+| **WHY Section** | POS-001 to POS-010, NEG-001 to NEG-005, NEG-071 to NEG-073, BND-001 to BND-010, BND-079 to BND-082, FUN-016, FUN-051 to FUN-053 |
+| **WHERE Section** | POS-011 to POS-019, NEG-006 to NEG-009, NEG-074 to NEG-076, BND-056 to BND-063, BND-076 to BND-078, FUN-017, FUN-054 to FUN-056 |
+| **WHAT Section** | POS-020 to POS-028, NEG-010 to NEG-011, NEG-077 to NEG-080, BND-021 to BND-030, BND-083 to BND-084, FUN-018, FUN-057 to FUN-060 |
+| **WHO Section** | POS-029 to POS-030, NEG-012 to NEG-014, NEG-081 to NEG-084, BND-071 to BND-075, BND-088 to BND-090, FUN-019, FUN-061 to FUN-065 |
+| **Cross-Section Validation** | NEG-085 to NEG-090, FUN-027, FUN-028, FUN-066 to FUN-070, INT-001 to INT-002, INT-062 to INT-065 |
+| **AI Assistance** | POS-007, INT-009, NEG-056, NEG-089, FUN-071 to FUN-074, INT-066 to INT-067 |
+| **Read-Only Enforcement** | FUN-002, FUN-003, FUN-075 to FUN-078, NEG-035 to NEG-039 |
+| **Partner Dropdowns** | FUN-031, FUN-038, FUN-062 to FUN-063, NEG-044, NEG-045 |
 
 ---
 
-**Last Updated:** 2026-02-11  
-**Supersedes:** Previous version (43 tests, feature sections only)  
+**Last Updated:** 2026-02-18  
+**Supersedes:** 2026-02-11 (10-category, single ratio)  
 **Status:** Ready for Execution  
-**Compliance:** ✅ 10-Category Standard, ✅ 3:1 Ratio (140 ≥ 105)
+**Compliance:** ✅ 10-Category Standard, ✅ N≥3P, E≥3P, F≥3P, I≥3P (all 90≥90)

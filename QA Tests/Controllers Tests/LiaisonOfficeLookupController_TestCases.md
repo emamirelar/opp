@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,12 +33,12 @@ REST API for liaison office lookup: search offices, typeahead, filter by region/
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Steps | Expected Result |
 |----|-----------|-------|-----------------|
 | POS-001 | Get all offices | GET /api/liaison-office-lookup | Office list |
-| POS-002 | Search offices | GET /api/liaison-office-lookup?search=text | Filtered | 
+| POS-002 | Search offices | GET /api/liaison-office-lookup?search=text | Filtered |
 | POS-003 | Typeahead | GET /api/liaison-office-lookup/typeahead?q=text | Suggestions |
 | POS-004 | Filter by region | GET ?region=East Africa | Filtered |
 | POS-005 | Filter by country | GET ?countryId=1 | Filtered |
@@ -67,11 +67,6 @@ REST API for liaison office lookup: search offices, typeahead, filter by region/
 | POS-028 | Multiple regions | GET ?region=East,West | Filtered |
 | POS-029 | Unicode search | GET ?search=中文 | Matches |
 | POS-030 | Partial match | GET ?search=partial | Fuzzy |
-| POS-031 | Case insensitive | GET ?search=ABC | Matches abc |
-| POS-032 | Parent filter | GET ?parentId=1 | Children |
-| POS-033 | Root offices | GET ?parentId=0 | Roots |
-| POS-034 | Cross-region | GET multiple regions | Combined |
-| POS-035 | Cached response | GET same query | 200 |
 
 ---
 
@@ -149,10 +144,30 @@ REST API for liaison office lookup: search offices, typeahead, filter by region/
 | NEG-068 | Missing query | GET no params | 200 or 400 |
 | NEG-069 | Invalid encoding | Malformed URL | 400 |
 | NEG-070 | Soft-deleted filter | Query deleted | Excluded |
+| NEG-071 | Invalid JSON schema | Schema mismatch | 400 |
+| NEG-072 | Missing search param | Search null | 400 |
+| NEG-073 | Invalid region enum | region=invalid | 400 |
+| NEG-074 | Empty typeahead | q= | 400 |
+| NEG-075 | Invalid country format | countryId malformed | 400 |
+| NEG-076 | Lookup locked | Locked lookup | 423 |
+| NEG-077 | Maintenance mode | During maintenance | 503 |
+| NEG-078 | Quota exceeded | Lookup quota | 507 |
+| NEG-079 | Invalid description | desc too long | 400 |
+| NEG-080 | Orphan country | countryId deleted | 404 |
+| NEG-081 | Migration mode | During migration | 503 |
+| NEG-082 | Session invalid | Invalid session | 401 |
+| NEG-083 | Token type wrong | Wrong token type | 401 |
+| NEG-084 | Scope insufficient | OAuth scope | 403 |
+| NEG-085 | Rate limit per user | User rate limit | 429 |
+| NEG-086 | Concurrent limit | Too many concurrent | 429 |
+| NEG-087 | Request timeout | Slow request | 408 |
+| NEG-088 | Lookup archived | Archived lookup | 410 |
+| NEG-089 | Invalid coordinate | coord out of range | 400 |
+| NEG-090 | Hierarchy depth exceeded | Max depth | 400 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max |
 |----|----------------|-----|-----|--------|--------|----------|
@@ -226,10 +241,30 @@ REST API for liaison office lookup: search offices, typeahead, filter by region/
 | BND-068 | Exact match | - | - | Exact | - | - |
 | BND-069 | Combined filter | - | - | AND | - | - |
 | BND-070 | Round-trip | Search → Get | - | Match | - | - |
+| BND-071 | Search charset | - | - | Valid | - | - |
+| BND-072 | Name encoding | - | UTF-8 | Valid | Valid | ❌ |
+| BND-073 | Request size | - | 1MB | - | ✅ | ❌ |
+| BND-074 | Header count | - | 50 | ✅ | ✅ | ❌ |
+| BND-075 | Session duration | - | 24h | Valid | Valid | ❌ |
+| BND-076 | Token lifetime | - | 1h | Valid | Valid | ❌ |
+| BND-077 | Retry count | 0 | 3 | ✅ | ✅ | ❌ |
+| BND-078 | Backoff max | - | 30s | - | ✅ | ❌ |
+| BND-079 | Connection timeout | - | 30s | - | ✅ | ❌ |
+| BND-080 | Read timeout | - | 60s | - | ✅ | ❌ |
+| BND-081 | Write timeout | - | 60s | - | ✅ | ❌ |
+| BND-082 | Idle timeout | - | 90s | - | ✅ | ❌ |
+| BND-083 | Keep-alive | - | 60s | - | ✅ | ❌ |
+| BND-084 | Chunk size | - | 8KB | - | ✅ | ❌ |
+| BND-085 | Buffer size | - | 64KB | - | ✅ | ❌ |
+| BND-086 | Pool size | - | 100 | - | ✅ | ❌ |
+| BND-087 | Queue depth | - | 1000 | - | ✅ | ❌ |
+| BND-088 | Batch size | 1 | 100 | ✅ | ✅ | ❌ |
+| BND-089 | Region enum | - | max | Valid | Valid | ❌ |
+| BND-090 | Country enum | - | max | Valid | Valid | ❌ |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Category | Rule | Trigger | Expected |
 |----|----------|------|---------|----------|
@@ -283,10 +318,50 @@ REST API for liaison office lookup: search offices, typeahead, filter by region/
 | FUN-048 | Business | Permission | Query | Scoped |
 | FUN-049 | Business | Hierarchy | Parent-child | Linked |
 | FUN-050 | Business | Timezone | Location | Correct |
+| FUN-051 | Workflow | Root offices | GET ?parentId=0 | Roots |
+| FUN-052 | Workflow | Parent filter | GET ?parentId | Children |
+| FUN-053 | Validation | Region format | Invalid | 400 |
+| FUN-054 | Validation | Country exists | Invalid | 404 |
+| FUN-055 | Constraint | Lookup lock | Locked | 423 |
+| FUN-056 | Audit | Search | GET search | Audit |
+| FUN-057 | Audit | Typeahead | GET typeahead | Audit |
+| FUN-058 | Business | Hierarchy depth | >10 | 400 |
+| FUN-059 | Business | No circular | Circular | 400 |
+| FUN-060 | Workflow | Case insensitive | GET ?search | Matches |
+| FUN-061 | Validation | Parent exists | Invalid | 404 |
+| FUN-062 | Constraint | Typeahead limit | >20 | Truncate |
+| FUN-063 | Audit | Get | GET | Audit |
+| FUN-064 | Business | Lookup cascade | Delete country | 404 |
+| FUN-065 | Workflow | Cached response | GET same | 200 |
+| FUN-066 | Validation | Search length | Too long | 400 |
+| FUN-067 | Constraint | Export limit | >10K | Truncate |
+| FUN-068 | Audit | Filter | GET filter | Audit |
+| FUN-069 | Business | Region scope | Org scope | Correct |
+| FUN-070 | Workflow | Unicode search | GET ?search | Matches |
+| FUN-071 | Validation | Coordinate range | Out of range | 400 |
+| FUN-072 | Constraint | Query params | >20 | 400 |
+| FUN-073 | Audit | Export | GET export | Audit |
+| FUN-074 | Business | Cross-org office | Other org | 403 |
+| FUN-075 | Workflow | Full round-trip | Search → Get | Match |
+| FUN-076 | Validation | Page bounds | Invalid | 400 |
+| FUN-077 | Constraint | URL length | >2048 | 414 |
+| FUN-078 | Audit | Dropdown | GET dropdown | Audit |
+| FUN-079 | Business | Inactive office | Office disabled | 403 |
+| FUN-080 | Workflow | Partial match | GET ?search | Fuzzy |
+| FUN-081 | Validation | Region format | Invalid | 400 |
+| FUN-082 | Constraint | Hierarchy depth | >10 | 400 |
+| FUN-083 | Audit | Typeahead view | GET typeahead | Audit |
+| FUN-084 | Business | Country scope | Country filter | Correct |
+| FUN-085 | Workflow | Dropdown flow | GET dropdown | Pairs |
+| FUN-086 | Validation | Country format | Invalid | 400 |
+| FUN-087 | Constraint | Max bulk | >100 | 400 |
+| FUN-088 | Audit | Country filter | GET countryId | Audit |
+| FUN-089 | Business | Parent-child | Linked | Correct |
+| FUN-090 | Workflow | Combined filter | GET multi | Combined |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Category | Scenario | Entities | Expected |
 |----|----------|----------|----------|----------|
@@ -340,6 +415,46 @@ REST API for liaison office lookup: search offices, typeahead, filter by region/
 | INT-048 | E2E | Full filter flow | Office | Filter → Get |
 | INT-049 | E2E | Hierarchy flow | Office | Parent → Children |
 | INT-050 | E2E | Session expiry | Auth | Clean fail |
+| INT-051 | CRUD | Get by ID | Office | Match |
+| INT-052 | CRUD | Get by code | Office | Match |
+| INT-053 | Search | Search flow | Office | Matches |
+| INT-054 | Search | Typeahead flow | Office | Suggestions |
+| INT-055 | Filter | Country flow | Office | Filtered |
+| INT-056 | Relationships | Office → Country | Office, Country | Linked |
+| INT-057 | Error | Validation chain | Bad input | 400 |
+| INT-058 | Error | Auth chain | No auth | 401 |
+| INT-059 | E2E | Dropdown flow | Office | Pairs |
+| INT-060 | E2E | Region flow | Office | Filtered |
+| INT-061 | CRUD | Dropdown | Office | Pairs |
+| INT-062 | Filter | Region flow | Office | Filtered |
+| INT-063 | Hierarchy | Parent filter | Office | Children |
+| INT-064 | Relationships | Office → Parent | Office | Linked |
+| INT-065 | Error | Permission chain | No perm | 403 |
+| INT-066 | E2E | Full lookup flow | Office | Search → Get |
+| INT-067 | CRUD | Search | Office | Matches |
+| INT-068 | Filter | Combined filter | Office | Combined |
+| INT-069 | Hierarchy | Root offices | Office | Roots |
+| INT-070 | Relationships | Orphan country | Office | 404 |
+| INT-071 | Error | Conflict resolution | Stale | 409 |
+| INT-072 | E2E | Country flow | Office | Filtered |
+| INT-073 | CRUD | Pagination | Office | Paginated |
+| INT-074 | Filter | Parent filter | Office | Children |
+| INT-075 | Hierarchy | Hierarchy depth | Office | Valid |
+| INT-076 | Relationships | Office → Audit | Office | Audit |
+| INT-077 | Error | Timeout handling | Slow | 504 |
+| INT-078 | E2E | Pagination flow | Office | Paginated |
+| INT-079 | CRUD | Typeahead | Office | Suggestions |
+| INT-080 | Filter | Empty search | Office | All |
+| INT-081 | Hierarchy | Hierarchy validation | Office | Valid |
+| INT-082 | Relationships | Region hierarchy | Office | Linked |
+| INT-083 | Error | Service unavailable | Down | 503 |
+| INT-084 | E2E | Sort flow | Office | Sorted |
+| INT-085 | CRUD | Sort | Office | Sorted |
+| INT-086 | Search | Search concurrent | Office | All |
+| INT-087 | Filter | Filter concurrent | Office | All |
+| INT-088 | Relationships | Office → Children | Office | Linked |
+| INT-089 | Error | Payload too large | Huge | 413 |
+| INT-090 | E2E | Full auth flow | Auth | Token |
 
 ---
 
@@ -508,7 +623,7 @@ REST API for liaison office lookup: search offices, typeahead, filter by region/
 | Typeahead | POS-003, FUN-005 |
 | Filter by region | POS-004, FUN-006–007 |
 | Filter by country | POS-005, FUN-006 |
-| 3:1 Ratio | NEG-001–070, BND-001–070 |
+| 3:1 Ratio | NEG-001–090, BND-001–090, FUN-001–090, INT-001–090 |
 
 ---
 

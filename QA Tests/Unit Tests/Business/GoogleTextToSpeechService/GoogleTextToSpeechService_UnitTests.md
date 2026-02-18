@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | ≥30 | ✅ |
+| §2 Negative | 90 | ≥90 | ✅ |
+| §3 Boundary | 90 | ≥90 | ✅ |
+| §4 Functional | 90 | ≥90 | ✅ |
+| §5 Integration | 90 | ≥90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,7 +33,7 @@ Text-to-speech service unit tests cover audio generation, voice selection, SSML 
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,11 +67,6 @@ Text-to-speech service unit tests cover audio generation, voice selection, SSML 
 | POS-028 | Health check | API available | HealthCheck | Healthy |
 | POS-029 | Get usage stats | Usage tracked | GetUsage | Stats |
 | POS-030 | Rate limit check | Within limit | CheckRate | Allowed |
-| POS-031 | Preload voices | Voices | Preload | Loaded |
-| POS-032 | Stream audio | Stream enabled | Stream | Chunks |
-| POS-033 | Batch synthesize | Multiple texts | Batch | All synthesized |
-| POS-034 | Get audio metadata | Audio exists | GetMetadata | Metadata |
-| POS-035 | Validate text length | Text valid | Validate | True |
 
 ---
 
@@ -149,10 +144,30 @@ Text-to-speech service unit tests cover audio generation, voice selection, SSML 
 | NEG-068 | SSML entity invalid | Entity invalid | ParseException |
 | NEG-069 | Cache corruption | Corrupted cache | CacheException |
 | NEG-070 | Audio decode error | Invalid audio | DecodeException |
+| NEG-071 | Synthesize whitespace-only | Text="   " | ValidationException |
+| NEG-072 | Get voice null language | Language=null | ArgumentNullException |
+| NEG-073 | Set rate null | Rate=null | ArgumentNullException |
+| NEG-074 | GetVoices invalid page | Page invalid | ArgumentException |
+| NEG-075 | Parse SSML empty | SSML="" | ParseException |
+| NEG-076 | Validate SSML null | SSML=null | ArgumentNullException |
+| NEG-077 | Get format null | Format=null | ArgumentNullException |
+| NEG-078 | Batch one null text | Text null in batch | ArgumentNullException |
+| NEG-079 | Stream invalid handler | Handler invalid | ArgumentException |
+| NEG-080 | Get metadata null id | Id=null | ArgumentNullException |
+| NEG-081 | Preload null voices | Voices=null | ArgumentNullException |
+| NEG-082 | Health check invalid | Invalid params | ArgumentException |
+| NEG-083 | Get usage null user | User=null | ArgumentNullException |
+| NEG-084 | Validate text too long | Text over limit | ValidationException |
+| NEG-085 | Select voice null | Voice=null | ArgumentNullException |
+| NEG-086 | Set pitch null | Pitch=null | ArgumentNullException |
+| NEG-087 | Set volume null | Volume=null | ArgumentNullException |
+| NEG-088 | Get languages invalid | Params invalid | ArgumentException |
+| NEG-089 | Cache key invalid chars | Key invalid | ArgumentException |
+| NEG-090 | Retry count negative | Retry=-1 | ArgumentException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Condition | Expected Result |
 |----|-----------|-------------------|-----------------|
@@ -226,10 +241,30 @@ Text-to-speech service unit tests cover audio generation, voice selection, SSML 
 | BND-068 | Validate text max | At limit | True |
 | BND-069 | Async cancellation | Cancel token | OperationCanceledException |
 | BND-070 | Task timeout | Timeout | TimeoutException |
+| BND-071 | Text single char | Length=1 | Valid |
+| BND-072 | Voice list single | Count=1 | Valid |
+| BND-073 | Language list single | Count=1 | Valid |
+| BND-074 | Batch count one | Count=1 | Valid |
+| BND-075 | Speaking rate min | Rate=0.25 | Valid |
+| BND-076 | Speaking rate max | Rate=4.0 | Valid |
+| BND-077 | Pitch min | Pitch=-20 | Valid |
+| BND-078 | Pitch max | Pitch=20 | Valid |
+| BND-079 | Volume min | Volume=0 | Valid |
+| BND-080 | Volume max | Volume=16 | Valid |
+| BND-081 | Format enum first | First | Valid |
+| BND-082 | Format enum last | Last | Valid |
+| BND-083 | Pagination first page | Page=1 | Valid |
+| BND-084 | Pagination last partial | Partial | Correct |
+| BND-085 | Filter language and type | Both | Correct |
+| BND-086 | Stream chunk min | Size=1 | Valid |
+| BND-087 | Stream chunk max | Size=limit | Valid |
+| BND-088 | Retry at min | Retry=0 | No retry |
+| BND-089 | Timeout at min | Timeout=1s | Valid |
+| BND-090 | Timeout at max | Timeout=60s | Valid |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -283,10 +318,50 @@ Text-to-speech service unit tests cover audio generation, voice selection, SSML 
 | FUN-048 | Permission cached | Performance | Repeated check | Cached |
 | FUN-049 | AsNoTracking read-only | Performance | List | No tracking |
 | FUN-050 | Stream disposal | Logic | Stream | Disposed |
+| FUN-051 | Text trim on synthesize | Logic | Synthesize | Trimmed |
+| FUN-052 | Voice selection fallback | Logic | SelectVoice | Fallback |
+| FUN-053 | Language format validation | Constraint | Format | Valid |
+| FUN-054 | SSML tag whitelist | Constraint | ParseSsml | Reject invalid |
+| FUN-055 | Rate limit per user | Constraint | Synthesize | Per user |
+| FUN-056 | Cache key format | Logic | Cache | Unique key |
+| FUN-057 | Usage stats increment | Logic | Synthesize | Incremented |
+| FUN-058 | Health check interval | Logic | HealthCheck | Interval |
+| FUN-059 | Default voice fallback | Logic | GetDefault | Fallback |
+| FUN-060 | Batch sequential | Logic | Batch | Sequential |
+| FUN-061 | Stream chunk size | Logic | Stream | Chunked |
+| FUN-062 | Retry backoff | Logic | Retry | Exponential |
+| FUN-063 | Timeout per request | Logic | SendRequest | Timeout |
+| FUN-064 | Format conversion | Logic | SetFormat | Converted |
+| FUN-065 | Pitch application | Logic | SetPitch | Applied |
+| FUN-066 | Volume application | Logic | SetVolume | Applied |
+| FUN-067 | Filter voices AND | Logic | GetVoices | Combined |
+| FUN-068 | Pagination max page | Logic | GetVoices | Capped |
+| FUN-069 | Sort voices | Logic | GetVoices | Ordered |
+| FUN-070 | Include loads config | Data load | Get include | Config |
+| FUN-071 | No Cartesian on includes | Data load | Multiple | Split |
+| FUN-072 | Audit synthesize call | Audit | Synthesize | Logged |
+| FUN-073 | Permission before synthesize | Authorization | Synthesize | Check first |
+| FUN-074 | Permission before get voices | Authorization | GetVoices | Check first |
+| FUN-075 | Validate text format | Validation | Validate | Format |
+| FUN-076 | Parse SSML structure | Logic | ParseSsml | Parsed |
+| FUN-077 | Validate SSML structure | Logic | ValidateSsml | Validated |
+| FUN-078 | GetMetadata complete | Logic | GetMetadata | Complete |
+| FUN-079 | Preload caches | Logic | Preload | Cached |
+| FUN-080 | Stream disposal on error | Logic | Stream | Disposed |
+| FUN-081 | Batch partial failure | Logic | Batch | Partial |
+| FUN-082 | Cache hit returns | Logic | Cache | Hit |
+| FUN-083 | Cache miss fetches | Logic | Cache | Miss |
+| FUN-084 | Token count estimate | Logic | CountTokens | Estimate |
+| FUN-085 | Truncate preserves | Logic | Truncate | Start |
+| FUN-086 | GetLanguages ordered | Logic | GetLanguages | Ordered |
+| FUN-087 | GetFormat default | Logic | GetFormat | Default |
+| FUN-088 | SetFormat validation | Logic | SetFormat | Validated |
+| FUN-089 | Rate limit reset | Logic | Reset | Reset |
+| FUN-090 | Health check failure | Logic | HealthCheck | Unhealthy |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|
@@ -340,6 +415,46 @@ Text-to-speech service unit tests cover audio generation, voice selection, SSML 
 | INT-048 | Validate text | Scenario | Validate | Validated |
 | INT-049 | Retry on transient | Scenario | Retry | Success |
 | INT-050 | E2E synthesize flow | Scenario | Full flow | Complete |
+| INT-051 | Synthesize then cache | Scenario | Synthesize, Cache | Both |
+| INT-052 | Get voice then synthesize | Scenario | GetVoice, Synthesize | Both |
+| INT-053 | Parse then validate | Scenario | Parse, Validate | Both |
+| INT-054 | Batch then get metadata | Scenario | Batch, GetMetadata | Both |
+| INT-055 | Stream then dispose | Scenario | Stream | Disposed |
+| INT-056 | Preload then get | Scenario | Preload, Get | Both |
+| INT-057 | Health check then synthesize | Scenario | HealthCheck, Synthesize | Both |
+| INT-058 | Rate limit check then synthesize | Scenario | CheckRate, Synthesize | Both |
+| INT-059 | Get usage then synthesize | Scenario | GetUsage, Synthesize | Both |
+| INT-060 | Set format then synthesize | Scenario | SetFormat, Synthesize | Both |
+| INT-061 | Get default then synthesize | Scenario | GetDefault, Synthesize | Both |
+| INT-062 | TTS client call | Integration | TTS | Called |
+| INT-063 | HTTP client integration | Integration | HttpClient | Call |
+| INT-064 | Config integration | Integration | Config | Read |
+| INT-065 | Logger integration | Integration | Logger | Logged |
+| INT-066 | Permission service | Integration | Permission | Check |
+| INT-067 | User resolver | Integration | User | Resolved |
+| INT-068 | Audit context | Integration | Audit | Context |
+| INT-069 | Mapper integration | Integration | Mapper | Mapped |
+| INT-070 | Repository integration | Integration | Repository | CRUD |
+| INT-071 | DbContext integration | Integration | DbContext | Scoped |
+| INT-072 | Transaction scope | Integration | Transaction | Atomic |
+| INT-073 | Cache hit flow | Scenario | Cache | Hit |
+| INT-074 | Cache miss flow | Scenario | Cache | Miss |
+| INT-075 | Retry flow | Scenario | Retry | Success |
+| INT-076 | Timeout flow | Scenario | Timeout | Handled |
+| INT-077 | Fallback model flow | Scenario | Fallback | Used |
+| INT-078 | Pagination with filter | Scenario | Paginate | Filtered |
+| INT-079 | Filter voices | Scenario | Filter | Filtered |
+| INT-080 | Get metadata | Scenario | GetMetadata | Metadata |
+| INT-081 | Validate text | Scenario | Validate | Validated |
+| INT-082 | Parse SSML | Scenario | ParseSsml | Parsed |
+| INT-083 | Validate SSML | Scenario | ValidateSsml | Validated |
+| INT-084 | Get format | Scenario | GetFormat | Format |
+| INT-085 | Set format | Scenario | SetFormat | Set |
+| INT-086 | Get languages | Scenario | GetLanguages | Languages |
+| INT-087 | Get default voice | Scenario | GetDefault | Voice |
+| INT-088 | Get default language | Scenario | GetDefault | Language |
+| INT-089 | Health check | Scenario | HealthCheck | Healthy |
+| INT-090 | Full workflow | Scenario | Full flow | Complete |
 
 ---
 

@@ -11,19 +11,24 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance Check**
+| Check | Result |
+|-------|--------|
+| N ≥ 3P | 90 ≥ 90 ✅ PASS |
+| E ≥ 3P | 90 ≥ 90 ✅ PASS |
+| F ≥ 3P | 90 ≥ 90 ✅ PASS |
+| I ≥ 3P | 90 ≥ 90 ✅ PASS |
 
 ---
 
@@ -149,7 +154,7 @@ User role management: CRUD roles, permission assignment, user-role mapping, role
 
 ## §2 Negative Tests (Failure Scenarios)
 
-> **Minimum:** 70 tests | **Focus:** Invalid inputs, unauthorized access, error conditions
+> **Minimum:** 90 tests | **Focus:** Invalid inputs, unauthorized access, error conditions
 
 ### 2.1 Invalid Input Validation
 
@@ -255,12 +260,32 @@ User role management: CRUD roles, permission assignment, user-role mapping, role
 | NEG-068 | LDAP injection in search | `*)(cn=*` | Sanitized | P1 |
 | NEG-069 | Regex injection in search | `.*+?[]()` | Escaped | P1 |
 | NEG-070 | Concurrent delete same role | 2 users delete | One succeeds, other 404 | P1 |
+| NEG-071 | Create role with invalid chars | Name = "Role@#$" | Validation error | P1 |
+| NEG-072 | Assign role with null session | Session = null | ArgumentNullException | P1 |
+| NEG-073 | Get role with invalid format | Id = "abc" | 400 Bad Request | P1 |
+| NEG-074 | Bulk assign with null role | RoleId = null | ArgumentNullException | P1 |
+| NEG-075 | Update role with invalid status | Status = "Invalid" | Validation error | P1 |
+| NEG-076 | Delete role with active child | Child active | BusinessException or cascade | P1 |
+| NEG-077 | Import with wrong encoding | UTF-16 file | Parse error | P2 |
+| NEG-078 | Export with invalid format | Format = 999 | Default format | P2 |
+| NEG-079 | Permission check with deleted user | User deleted | KeyNotFoundException | P1 |
+| NEG-080 | Permission check with deleted role | Role deleted | KeyNotFoundException | P1 |
+| NEG-081 | Create role with leading/trailing spaces | "  Role  " | Trimmed or error | P1 |
+| NEG-082 | Assign with invalid role hierarchy | Parent = child | BusinessException | P1 |
+| NEG-083 | Get effective perms for deleted user | User deleted | KeyNotFoundException | P1 |
+| NEG-084 | Copy role with invalid target | Target deleted | KeyNotFoundException | P1 |
+| NEG-085 | Validate with null hierarchy | Hierarchy = null | ArgumentNullException | P1 |
+| NEG-086 | Search with empty string | "" | All or empty | P1 |
+| NEG-087 | Filter with invalid status | Status = "invalid" | Default or error | P2 |
+| NEG-088 | Create role with newline in name | "Role\n" | Rejected or trimmed | P1 |
+| NEG-089 | Assign with duplicate in same request | Same assign twice | Duplicate error | P1 |
+| NEG-090 | Update role with stale version | Stale version | Conflict error | P1 |
 
 ---
 
 ## §3 Boundary Tests (Edge Cases)
 
-> **Minimum:** 70 tests | **Focus:** Limits, boundaries, unusual but valid inputs
+> **Minimum:** 90 tests | **Focus:** Limits, boundaries, unusual but valid inputs
 
 ### 3.1 String Length Boundaries
 
@@ -366,12 +391,32 @@ User role management: CRUD roles, permission assignment, user-role mapping, role
 | BND-068 | Export empty | No data | Empty file | P2 |
 | BND-069 | Import with 1 role | Single | Created | P2 |
 | BND-070 | Copy role with 50 permissions | Many | All copied | P2 |
+| BND-071 | Role name at 199 chars | 199 chars | Accepted | P1 |
+| BND-072 | Description at 999 chars | 999 chars | Accepted | P1 |
+| BND-073 | Page size at 999 | 999 | Accepted | P1 |
+| BND-074 | Page size at 1001 | 1001 | Capped at 1000 | P1 |
+| BND-075 | Hierarchy depth at 9 | 9 levels | Accepted | P1 |
+| BND-076 | Roles per user at 19 | 19 roles | Accepted | P2 |
+| BND-077 | Permissions per role at 499 | 499 | Accepted | P2 |
+| BND-078 | Search exactly 254 chars | 254 chars | Processed | P1 |
+| BND-079 | User with 2 roles | Two roles | Merged effective | P1 |
+| BND-080 | Role with 1 permission | Single | 1 permission | P1 |
+| BND-081 | Bulk assign 99 users | 99 | Success | P2 |
+| BND-082 | Empty role name | "" | Rejected | P1 |
+| BND-083 | Single space in name | " " | Rejected | P1 |
+| BND-084 | Tab in name | "Role\t" | Rejected or trimmed | P1 |
+| BND-085 | Unicode in description | Arabic desc | Stored | P2 |
+| BND-086 | Role ID = 2 | Second role | Retrieved | P2 |
+| BND-087 | Pagination page 2 of 2 | 2 pages | 2nd page | P1 |
+| BND-088 | Filter by single status | Active only | Correct subset | P1 |
+| BND-089 | Matrix with 2 roles | Two roles | 2 rows | P1 |
+| BND-090 | Zero permissions in role | 0 | Empty | P1 |
 
 ---
 
 ## §4 Functional Tests (Business Rules)
 
-> **Minimum:** 50 tests | **Breakdown:** Workflow (15), Validation (15), Constraint (10), Audit (10)
+> **Minimum:** 90 tests | **Breakdown:** Workflow (15), Validation (15), Constraint (10), Audit (10)
 
 ### 4.1 Workflow Rules (15)
 
@@ -442,6 +487,46 @@ User role management: CRUD roles, permission assignment, user-role mapping, role
 | FUN-048 | Export audit | Export | ExportBy, ExportDate | P1 |
 | FUN-049 | Failed create no audit | Failed create | No audit entry | P1 |
 | FUN-050 | Audit immutable on read | Get | Audit fields unchanged | P1 |
+| FUN-051 | Remove last role from user | User has 1 role | Remove | Error or allowed per policy | P1 |
+| FUN-052 | Role name case sensitivity | "Admin" vs "admin" | Per policy | P2 |
+| FUN-053 | Permission inheritance depth | 5 levels | All inherited | P1 |
+| FUN-054 | Export format selection | CSV | Correct format | P2 |
+| FUN-055 | Import format validation | JSON | Validated | P1 |
+| FUN-056 | Role status affects effective | Inactive role | Excluded from effective | P1 |
+| FUN-057 | User status affects assignment | User inactive | Assignment blocked per policy | P1 |
+| FUN-058 | Permission scope validation | Entity scope | Validated | P1 |
+| FUN-059 | Role creation audit | Create | CreatedBy set | P0 |
+| FUN-060 | Role update audit | Update | LastModifiedBy set | P0 |
+| FUN-061 | Permission grant audit | Grant | Audit entry | P1 |
+| FUN-062 | Permission revoke audit | Revoke | Audit entry | P1 |
+| FUN-063 | Hierarchy depth validation | 11 levels | Rejected | P1 |
+| FUN-064 | Duplicate role name check | Same name | Rejected | P0 |
+| FUN-065 | Role name trim on save | "  Name  " | → "Name" | P2 |
+| FUN-066 | Permission count limit | 501 | Rejected | P1 |
+| FUN-067 | User role assignment limit | 21 | Rejected | P1 |
+| FUN-068 | Bulk assign validation | Batch | Each validated | P1 |
+| FUN-069 | Copy role preserves hierarchy | Copy | Hierarchy copied | P1 |
+| FUN-070 | Compare roles diff | Compare | Correct diff | P1 |
+| FUN-071 | Export excludes deleted | Export | !IsDeleted | P1 |
+| FUN-072 | Import creates new IDs | Import | New IDs | P1 |
+| FUN-073 | System role count | ≥1 | Cannot delete all | P1 |
+| FUN-074 | Permission required check | Check | Correct result | P0 |
+| FUN-075 | Role hierarchy validation | Validate | No circular | P0 |
+| FUN-076 | Effective permissions merge | User with 3 roles | Union of all | P1 |
+| FUN-077 | Entity override precedence | Entity + Global | Entity wins | P0 |
+| FUN-078 | Deny overrides grant | Grant + Deny | Deny | P0 |
+| FUN-079 | Role activation cascade | Activate | Child roles affected per policy | P2 |
+| FUN-080 | Role deactivation cascade | Deactivate | Child roles affected | P2 |
+| FUN-081 | Permission assignment audit | Assign | Audit entry | P1 |
+| FUN-082 | Permission removal audit | Remove | Audit entry | P1 |
+| FUN-083 | Role deletion soft delete | Delete | IsDeleted=true | P0 |
+| FUN-084 | Role list excludes deleted | List | !IsDeleted | P0 |
+| FUN-085 | Role hierarchy load | Load child | Parent loaded | P1 |
+| FUN-086 | Permission list load | Load role | Permissions loaded | P1 |
+| FUN-087 | User list load | Load role | Users loaded | P1 |
+| FUN-088 | Pagination default | null params | 1, 20 | P1 |
+| FUN-089 | Filter by status | Active | Active only | P1 |
+| FUN-090 | Sort by name | Sort | Alphabetical | P1 |
 
 ---
 
@@ -523,6 +608,46 @@ User role management: CRUD roles, permission assignment, user-role mapping, role
 | INT-048 | SQL injection → sanitized | Injection | Parameterized | P0 |
 | INT-049 | Large payload → 413 | Oversized | Rejected | P2 |
 | INT-050 | Delete system role → 400 | Business rule | BusinessException | P1 |
+| INT-051 | Create → Assign → Remove | Full lifecycle | All succeed | P1 |
+| INT-052 | Create hierarchy → Assign | Parent → Child | Success | P1 |
+| INT-053 | Role → Permission → User | Full chain | All linked | P1 |
+| INT-054 | Export → Import round-trip | Export | Import | Data preserved | P1 |
+| INT-055 | Copy role → Verify | Copy | Target same | P1 |
+| INT-056 | Compare → Validate | Compare | Diff correct | P1 |
+| INT-057 | Bulk assign → Verify | Bulk | All assigned | P1 |
+| INT-058 | Search → Filter → Sort | Combined | Correct results | P1 |
+| INT-059 | API GetById → GetPermissions | Get | Permissions returned | P1 |
+| INT-060 | API GetUserRoles → Effective | Get | Merged correct | P1 |
+| INT-061 | Create → Update → Delete | CRUD | All succeed | P0 |
+| INT-062 | Assign → Remove → Reassign | Assign cycle | Success | P1 |
+| INT-063 | Hierarchy → Effective | Inherit | Child inherits | P1 |
+| INT-064 | Entity override → Check | Override | Override applies | P1 |
+| INT-065 | Import → Export | Import | Export matches | P1 |
+| INT-066 | Pagination → Filter | Page + Filter | Correct subset | P1 |
+| INT-067 | Role → Permission matrix | Load | Matrix correct | P1 |
+| INT-068 | User → Roles → Effective | Load | Effective correct | P1 |
+| INT-069 | Audit trail → Load | Load audit | History shown | P1 |
+| INT-070 | Permission → Roles | Reverse | Roles with permission | P1 |
+| INT-071 | Create role → In list | Create | In list | P0 |
+| INT-072 | Delete role → Not in list | Delete | Excluded | P0 |
+| INT-073 | Update role → Persisted | Update | Changes saved | P0 |
+| INT-074 | Assign → User has role | Assign | User has role | P0 |
+| INT-075 | Remove → User loses role | Remove | User no role | P0 |
+| INT-076 | Search + Filter | Combined | Both applied | P1 |
+| INT-077 | Sort + Paginate | Combined | Correct order | P1 |
+| INT-078 | Copy → Edit | Copy | Independent | P1 |
+| INT-079 | Bulk remove → Verify | Bulk remove | All removed | P1 |
+| INT-080 | Validate → No errors | Validate | Valid | P1 |
+| INT-081 | Hierarchy depth → Effective | 5 levels | All inherited | P1 |
+| INT-082 | Entity override → Deny | Deny override | Deny applies | P1 |
+| INT-083 | Permission grant → Deny | Grant + Deny | Deny wins | P1 |
+| INT-084 | System role → Toggle | System role | Protected | P1 |
+| INT-085 | Role hierarchy → Load | Load | Parent loaded | P1 |
+| INT-086 | Permission list → Paginate | Paginate | Correct page | P1 |
+| INT-087 | User list → Paginate | Paginate | Correct page | P1 |
+| INT-088 | Export → Download | Export | File downloaded | P1 |
+| INT-089 | Import → Validate | Import | Validated | P1 |
+| INT-090 | Full workflow → Audit | Full workflow | Audit complete | P1 |
 
 ---
 

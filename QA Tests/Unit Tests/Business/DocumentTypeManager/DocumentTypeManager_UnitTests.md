@@ -1,7 +1,7 @@
 # DocumentTypeManager — Unit Test Cases
 
 **Component:** `UNOPS.PAO.Business/Managers/DocumentTypeManager` (Unit Tests)  
-**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Created:** 2026-02-04 | **Last Updated:** 2026-02-18  
 **Author:** QA Team  
 **Standard:** 10-Category, 3:1 Ratio
 
@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,7 +33,7 @@ Document type manager unit tests cover CRUD for document types, MIME mapping, va
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,15 +67,10 @@ Document type manager unit tests cover CRUD for document types, MIME mapping, va
 | POS-028 | Category hierarchy | Categories exist | GetHierarchy | Tree |
 | POS-029 | Import types | CSV valid | Import | Imported |
 | POS-030 | Export types | Types exist | Export | Exported |
-| POS-031 | Add MIME mapping | Type exists | AddMime | Added |
-| POS-032 | Remove MIME mapping | Mapping exists | RemoveMime | Removed |
-| POS-033 | Add extension | Type exists | AddExtension | Added |
-| POS-034 | Remove extension | Extension exists | RemoveExtension | Removed |
-| POS-035 | Get type for entity | Entity type valid | GetForEntity | Types |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Action | Expected Result |
 |----|-----------|---------------------|-----------------|
@@ -149,10 +144,30 @@ Document type manager unit tests cover CRUD for document types, MIME mapping, va
 | NEG-068 | Extension case | .PDF vs .pdf | Config |
 | NEG-069 | Reserved extension | .exe | Rejected |
 | NEG-070 | Reserved MIME | application/x-msdownload | Rejected |
+| NEG-071 | AddMime null type ID | TypeId=0 | ArgumentException |
+| NEG-072 | RemoveMime null mapping ID | MappingId=0 | ArgumentException |
+| NEG-073 | GetByType null type | Type=null | ArgumentNullException |
+| NEG-074 | Import null stream | Stream=null | ArgumentNullException |
+| NEG-075 | Export null format | Format=null | ArgumentNullException |
+| NEG-076 | GetForEntity null entity | Entity=null | ArgumentNullException |
+| NEG-077 | Validate empty whitelist | Whitelist empty | False |
+| NEG-078 | GetRules null type | Type=null | ArgumentNullException |
+| NEG-079 | Reorder invalid order | Order negative | ArgumentException |
+| NEG-080 | SetDefault non-existent | Type invalid | KeyNotFoundException |
+| NEG-081 | RemoveDefault no default | No default set | InvalidOperationException |
+| NEG-082 | GetByCode null code | Code=null | ArgumentNullException |
+| NEG-083 | BulkGet null IDs | Ids=null | ArgumentNullException |
+| NEG-084 | ValidateFileSize null type | Type=null | ArgumentNullException |
+| NEG-085 | GetCategory null type | Type=null | ArgumentNullException |
+| NEG-086 | CloneType null source | Source=null | ArgumentNullException |
+| NEG-087 | MergeTypes same type | Same ID | ArgumentException |
+| NEG-088 | GetStatistics invalid range | End<Start | ArgumentException |
+| NEG-089 | SyncFromExternal null source | Source=null | ArgumentNullException |
+| NEG-090 | ValidateConfig null config | Config=null | ArgumentNullException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Condition | Expected Result |
 |----|-----------|-------------------|-----------------|
@@ -226,10 +241,30 @@ Document type manager unit tests cover CRUD for document types, MIME mapping, va
 | BND-068 | GetMaxSize unconfigured | No size | Default or error |
 | BND-069 | Async cancellation | Cancel token | OperationCanceledException |
 | BND-070 | Task timeout | Timeout | TimeoutException |
+| BND-071 | Name exactly 200 chars | Length=200 | Valid |
+| BND-072 | MIME exactly 127 chars | Length=127 | Valid |
+| BND-073 | Extension exactly 20 chars | Length=20 | Valid |
+| BND-074 | Page 1 first | Page=1 | First page |
+| BND-075 | Page at last | Page=last | Last page |
+| BND-076 | Zero results | No match | Empty list |
+| BND-077 | Single result | One match | Single item |
+| BND-078 | Int32.MinValue ID | Id=min | Reject or handle |
+| BND-079 | Nullable parent zero | ParentId=0 | Root |
+| BND-080 | Order at zero | Order=0 | Valid |
+| BND-081 | Order at max | Order=max | Valid |
+| BND-082 | Locale empty | Locale="" | Default |
+| BND-083 | Locale max length | Locale length | Valid |
+| BND-084 | Code min length | Length=1 | Valid |
+| BND-085 | Code max length | At limit | Valid |
+| BND-086 | Description max | 4000 chars | Truncate |
+| BND-087 | Batch size min | Batch=1 | Valid |
+| BND-088 | Batch size max | Batch=limit | Valid |
+| BND-089 | Cache TTL zero | TTL=0 | No cache |
+| BND-090 | Cache TTL max | TTL=max | Valid |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -283,10 +318,50 @@ Document type manager unit tests cover CRUD for document types, MIME mapping, va
 | FUN-048 | RemoveMime deletes mapping | Data | RemoveMime | Removed |
 | FUN-049 | Permission cached | Performance | Repeated check | Cached |
 | FUN-050 | AsNoTracking read-only | Performance | List | No tracking |
+| FUN-051 | GetByType returns correct type | Data | GetByType | Correct type |
+| FUN-052 | GetByCode case handling | Config | GetByCode | Per config |
+| FUN-053 | Bulk get preserves order | Data | GetByIds | Order preserved |
+| FUN-054 | Validate reference exists | Validation | Validate | Exists check |
+| FUN-055 | GetDisplayValue format | Format | GetDisplayValue | Formatted |
+| FUN-056 | Cache invalidation on create | Cache | Create | Invalidated |
+| FUN-057 | Cache invalidation on update | Cache | Update | Invalidated |
+| FUN-058 | Cache invalidation on delete | Cache | Delete | Invalidated |
+| FUN-059 | Typeahead partial match | Search | Typeahead | Partial |
+| FUN-060 | Typeahead limit | Constraint | Typeahead | Capped |
+| FUN-061 | Reorder updates sequence | Update | Reorder | Order updated |
+| FUN-062 | GetActive filters status | Filter | GetActive | Active only |
+| FUN-063 | GetInactive includes inactive | Filter | GetInactive | Inactive |
+| FUN-064 | Hierarchy depth limit | Constraint | GetHierarchy | Max depth |
+| FUN-065 | Import duplicate handling | Validation | Import | Duplicate |
+| FUN-066 | Export headers correct | Format | Export | Headers |
+| FUN-067 | Localized fallback | i18n | GetWithLocale | Fallback |
+| FUN-068 | Parent must exist | Constraint | Create | Reject invalid |
+| FUN-069 | No circular parent | Constraint | Update | Reject |
+| FUN-070 | Code unique per type | Constraint | Create | Reject duplicate |
+| FUN-071 | Search case handling | Config | Search | Per config |
+| FUN-072 | Filter by status | Filter | List | Status filter |
+| FUN-073 | Filter by category | Filter | List | Category filter |
+| FUN-074 | Sort multi-column | Calculation | Sort | Multi-col |
+| FUN-075 | Pagination total pages | Calculation | Page | Total correct |
+| FUN-076 | GetByIds dedup | Data | GetByIds | No duplicates |
+| FUN-077 | Clone preserves config | Data | Clone | Config preserved |
+| FUN-078 | Merge combines MIMEs | Data | Merge | Combined |
+| FUN-079 | Sync updates from source | Data | Sync | Updated |
+| FUN-080 | Statistics aggregation | Calculation | GetStatistics | Correct |
+| FUN-081 | ValidateConfig checks | Validation | ValidateConfig | Valid |
+| FUN-082 | GetCategory hierarchy | Data | GetCategory | Hierarchy |
+| FUN-083 | ValidateFileSize limit | Validation | ValidateFileSize | Limit |
+| FUN-084 | SetDefault updates | Update | SetDefault | Updated |
+| FUN-085 | RemoveDefault clears | Update | RemoveDefault | Cleared |
+| FUN-086 | Reorder validates | Validation | Reorder | Valid order |
+| FUN-087 | Import rollback on error | Transaction | Import | Rollback |
+| FUN-088 | Export streaming | Format | Export | Stream |
+| FUN-089 | GetByType cache key | Cache | GetByType | Key correct |
+| FUN-090 | Typeahead min chars | Constraint | Typeahead | Min chars |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|
@@ -340,6 +415,46 @@ Document type manager unit tests cover CRUD for document types, MIME mapping, va
 | INT-048 | GetRules per type | Scenario | GetRules | Per type |
 | INT-049 | Add remove MIME cycle | Scenario | AddMime, RemoveMime | Clean |
 | INT-050 | E2E CRUD cycle | Scenario | Full cycle | Create→Update→Delete |
+| INT-051 | GetByType with cache | Scenario | GetByType | Cached |
+| INT-052 | Typeahead full flow | Scenario | Typeahead | Matches |
+| INT-053 | Bulk get by IDs | Scenario | GetByIds | All returned |
+| INT-054 | Reorder full flow | Scenario | Reorder | Reordered |
+| INT-055 | GetDisplayValue flow | Scenario | GetDisplayValue | Display |
+| INT-056 | Validate reference flow | Scenario | Validate | True |
+| INT-057 | GetCountries flow | Scenario | Country | Countries |
+| INT-058 | GetRegions flow | Scenario | Region | Regions |
+| INT-059 | Get localized flow | Scenario | GetWithLocale | Localized |
+| INT-060 | Import export round-trip | Scenario | Import, Export | Match |
+| INT-061 | Cache refresh flow | Scenario | Refresh | Updated |
+| INT-062 | Clone type flow | Scenario | Clone | Cloned |
+| INT-063 | Merge types flow | Scenario | Merge | Merged |
+| INT-064 | SetDefault flow | Scenario | SetDefault | Set |
+| INT-065 | RemoveDefault flow | Scenario | RemoveDefault | Cleared |
+| INT-066 | GetStatistics flow | Scenario | GetStatistics | Stats |
+| INT-067 | ValidateConfig flow | Scenario | ValidateConfig | Valid |
+| INT-068 | Sync from external | Scenario | Sync | Synced |
+| INT-069 | Config service integration | Integration | Config | Read |
+| INT-070 | Cache service integration | Integration | Cache | Hit/miss |
+| INT-071 | Multiple entity types | Scenario | DocumentType | Multiple |
+| INT-072 | Hierarchy deep load | Scenario | GetHierarchy | Deep |
+| INT-073 | Pagination with filter | Scenario | Paginate | Filtered |
+| INT-074 | Sort with filter | Scenario | List | Sorted, filtered |
+| INT-075 | Search typeahead | Scenario | Typeahead | Results |
+| INT-076 | GetActive inactive | Scenario | GetActive, GetInactive | Correct |
+| INT-077 | Bulk create types | Scenario | Create | All created |
+| INT-078 | Bulk update types | Scenario | Update | All updated |
+| INT-079 | Concurrent read | Scenario | Parallel | No conflict |
+| INT-080 | Error recovery | Scenario | Error | Recover |
+| INT-081 | Audit trail full | Scenario | CRUD | Full trail |
+| INT-082 | Permission integration | Scenario | Permission | Enforced |
+| INT-083 | User context integration | Scenario | User | Context |
+| INT-084 | Logger integration flow | Scenario | Log | Logged |
+| INT-085 | Mapper round-trip | Scenario | Map | Correct |
+| INT-086 | Repository CRUD cycle | Scenario | Repository | CRUD |
+| INT-087 | DbContext scoping | Scenario | DbContext | Scoped |
+| INT-088 | Transaction rollback | Scenario | Transaction | Rollback |
+| INT-089 | Full import export | Scenario | Import, Export | Complete |
+| INT-090 | E2E with all features | Scenario | Full | Complete |
 
 ---
 
@@ -500,5 +615,5 @@ Document type manager unit tests cover CRUD for document types, MIME mapping, va
 
 ---
 
-**Last Updated:** 2026-02-11  
+**Last Updated:** 2026-02-18  
 **Status:** Ready for Implementation

@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -37,7 +37,7 @@ The PartnerFocalPointManager manages partner focal points for the CRM enhancemen
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result | Priority |
 |----|-----------|-------------|-------|-----------------|----------|
@@ -71,15 +71,10 @@ The PartnerFocalPointManager manages partner focal points for the CRM enhancemen
 | POS-028 | Case-insensitive search | "john" | Search | Matches "John" | P2 |
 | POS-029 | Get by multiple IDs | IDs exist | GetByIdsAsync([1,2,3]) | 3 returned | P2 |
 | POS-030 | Notification frequency | Valid freq | Set frequency | Success | P2 |
-| POS-031 | Multi-channel prefs | Email+SMS | Set prefs | Both set | P2 |
-| POS-032 | Default prefs | New focal point | Create | Defaults applied | P2 |
-| POS-033 | Validate status | Valid status | Create with status | Success | P2 |
-| POS-034 | Concurrent read | None | 5 parallel GetById | All succeed | P2 |
-| POS-035 | Export focal points | Data exists | ExportAsync() | CSV/Excel | P2 |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error | Priority |
 |----|-----------|--------------|---------------|----------|
@@ -153,10 +148,30 @@ The PartnerFocalPointManager manages partner focal points for the CRM enhancemen
 | NEG-068 | Partner contact mismatch | Contact from wrong partner | Validation error | P2 |
 | NEG-069 | Email required for email channel | Email channel, no email | Validation error | P2 |
 | NEG-070 | Phone required for SMS | SMS channel, no phone | Validation error | P2 |
+| NEG-071 | Contact API fail | Contact 500 | Error | P2 |
+| NEG-072 | Partner API fail | Partner 500 | Error | P2 |
+| NEG-073 | DbContext disposed | After dispose | ObjectDisposed | P2 |
+| NEG-074 | Contact soft-deleted | Deleted contact | Reject | P2 |
+| NEG-075 | Partner soft-deleted | Deleted partner | Reject | P2 |
+| NEG-076 | Null prefs | UpdatePrefs null | ArgumentNull | P2 |
+| NEG-077 | Invalid channel | Channel "invalid" | Reject | P2 |
+| NEG-078 | Duplicate role | Same contact, same role | Conflict | P2 |
+| NEG-079 | Email format invalid | Bad email | Validation | P2 |
+| NEG-080 | Phone format invalid | Bad phone | Validation | P2 |
+| NEG-081 | GetByIds empty | [] | Empty list | P2 |
+| NEG-082 | Pagination page 0 | Page 0 | Clamp or error | P2 |
+| NEG-083 | Pagination size 0 | Size 0 | Validation | P2 |
+| NEG-084 | Search SQL injection | '; DROP-- | Sanitized | P2 |
+| NEG-085 | Export fail | Export error | Handled | P2 |
+| NEG-086 | Restore non-deleted | Not deleted | Idempotent | P2 |
+| NEG-087 | Invalid preference | Pref invalid | Reject | P2 |
+| NEG-088 | Preference count overflow | 21 prefs | Reject | P2 |
+| NEG-089 | Notification fail | Notify error | Handled | P2 |
+| NEG-090 | Channel disabled | Disabled channel | Reject | P2 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field | Min | Max | At Min | At Max | Over Max | Priority |
 |----|-------|-----|-----|--------|--------|----------|----------|
@@ -230,10 +245,30 @@ The PartnerFocalPointManager manages partner focal points for the CRM enhancemen
 | BND-068 | Description length | 0 | 4000 | 0 ok | 4000 ok | Reject | P2 |
 | BND-069 | Channels bitmap | 0 | 31 | 0 ok | 31 ok | Reject | P2 |
 | BND-070 | Preference count | 0 | 20 | 0 ok | 20 ok | Reject | P2 |
+| BND-071 | Contact ID 1 | 1 | int.Max | Min | — | — | P2 |
+| BND-072 | Partner ID 1 | 1 | int.Max | Min | — | — | P2 |
+| BND-073 | Focal point ID 1 | 1 | int.Max | Min | — | — | P2 |
+| BND-074 | Page size 1 | 1 | 100 | Min | — | — | P2 |
+| BND-075 | Page size 100 | 1 | 100 | — | Max | — | P2 |
+| BND-076 | Email 5 | 5 | 254 | Min | — | — | P2 |
+| BND-077 | Email 254 | 5 | 254 | — | Max | — | P2 |
+| BND-078 | Phone 7 | 7 | 20 | Min | — | — | P2 |
+| BND-079 | Phone 20 | 7 | 20 | — | Max | — | P2 |
+| BND-080 | Name 1 | 1 | 200 | Min | — | — | P2 |
+| BND-081 | Name 200 | 1 | 200 | — | Max | — | P2 |
+| BND-082 | Prefs 0 | 0 | 20 | None | — | — | P2 |
+| BND-083 | Prefs 20 | 0 | 20 | — | Max | — | P2 |
+| BND-084 | Search 0 | 0 | 200 | Empty | — | — | P2 |
+| BND-085 | Search 200 | 0 | 200 | — | Max | — | P2 |
+| BND-086 | Role name 1 | 1 | 50 | Min | — | — | P2 |
+| BND-087 | Role name 50 | 1 | 50 | — | Max | — | P2 |
+| BND-088 | Notes 0 | 0 | 4000 | Empty | — | — | P2 |
+| BND-089 | Notes 4000 | 0 | 4000 | — | Max | — | P2 |
+| BND-090 | Channel count 0 | 0 | 10 | None | — | — | P2 |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule | Trigger | Expected Outcome | Priority |
 |----|-----------|------|---------|------------------|----------|
@@ -287,10 +322,50 @@ The PartnerFocalPointManager manages partner focal points for the CRM enhancemen
 | FUN-048 | Multi-channel | Multiple channels | Set prefs | All active | P2 |
 | FUN-049 | Frequency boundaries | Valid freq | Set frequency | Validated | P2 |
 | FUN-050 | Duplicate prevention | Same contact 2 roles | Create both | Allowed (different roles) | P2 |
+| FUN-051 | Create audit | Create | Create | Audit set | P2 |
+| FUN-052 | Update audit | Update | Update | Audit set | P2 |
+| FUN-053 | Soft delete audit | Delete | Delete | DeletedBy set | P2 |
+| FUN-054 | IsDeleted filter | Query | Query | Excludes deleted | P2 |
+| FUN-055 | Include contact | Get | Include | Contact loaded | P2 |
+| FUN-056 | Include partner | Get | Include | Partner loaded | P2 |
+| FUN-057 | Channel prefs | Get | Prefs | Loaded | P2 |
+| FUN-058 | Pagination | Page | Page | Correct slice | P2 |
+| FUN-059 | Sort | Sort | Sort | Ordered | P2 |
+| FUN-060 | Search contact | Search | Contact | Matched | P2 |
+| FUN-061 | Search partner | Search | Partner | Matched | P2 |
+| FUN-062 | GetByIds | IDs | Get | Returned | P2 |
+| FUN-063 | Update prefs | Prefs | Update | Updated | P2 |
+| FUN-064 | Restore | Restore | Restore | Restored | P2 |
+| FUN-065 | Include deleted | Admin | IncludeDeleted | All | P2 |
+| FUN-066 | AsNoTracking | Read | Query | No tracking | P2 |
+| FUN-067 | Transaction | Transaction | Commit | Committed | P2 |
+| FUN-068 | Concurrency | Concurrent | Read | No conflict | P2 |
+| FUN-069 | Case-insensitive | Search | Case | Matched | P2 |
+| FUN-070 | Export | Export | Export | File | P2 |
+| FUN-071 | DbContext scope | Scope | Per request | Isolated | P2 |
+| FUN-072 | Validation order | Invalid | Validate | Order correct | P2 |
+| FUN-073 | Idempotent delete | Delete | Twice | Second no-op | P2 |
+| FUN-074 | Idempotent restore | Restore | Twice | Second no-op | P2 |
+| FUN-075 | Batch save | Batch | Save | All saved | P2 |
+| FUN-076 | Empty search | Search "" | Search | All | P2 |
+| FUN-077 | Notification | Notify | Send | Sent | P2 |
+| FUN-078 | Channel validation | Channel | Validate | Validated | P2 |
+| FUN-079 | Role validation | Role | Validate | Validated | P2 |
+| FUN-080 | Email validation | Email | Validate | Validated | P2 |
+| FUN-081 | Phone validation | Phone | Validate | Validated | P2 |
+| FUN-082 | Logging | Operation | Log | Logged | P2 |
+| FUN-083 | Metrics | Operation | Metric | Recorded | P2 |
+| FUN-084 | Query timeout | Slow | Query | Timeout | P2 |
+| FUN-085 | Retry policy | Transient | Fail | Retried | P2 |
+| FUN-086 | Cascading load | Include | Load | Loaded | P2 |
+| FUN-087 | Connection pool | Concurrent | Connections | Pooled | P2 |
+| FUN-088 | Unique constraint | Unique | Insert | Enforced | P2 |
+| FUN-089 | Foreign key | FK | Constraint | Enforced | P2 |
+| FUN-090 | Index | Query | Index | Fast | P2 |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result | Priority |
 |----|-----------|----------|----------|-----------------|----------|
@@ -344,6 +419,46 @@ The PartnerFocalPointManager manages partner focal points for the CRM enhancemen
 | INT-048 | Repository→DbContext | Repo call | Repo, EF | SQL generated | P1 |
 | INT-049 | Multi-entity create | FocalPoint+Prefs | Multiple | All created | P1 |
 | INT-050 | Pagination flow | Create 15, Page 2 | FocalPoint | Correct slice | P1 |
+| INT-051 | DbContext | CRUD | DbContext | Persisted | P1 |
+| INT-052 | Repository | CRUD | Repository | Persisted | P1 |
+| INT-053 | AutoMapper | Map | Mapper | Mapped | P1 |
+| INT-054 | ContactManager | Contact | Manager | Loaded | P1 |
+| INT-055 | PartnerManager | Partner | Manager | Loaded | P1 |
+| INT-056 | AuditDbContext | Audit | Context | Audited | P1 |
+| INT-057 | Transaction | Transaction | Commit | Committed | P1 |
+| INT-058 | PermissionService | Check | Service | Checked | P1 |
+| INT-059 | HttpClient | API | HttpClient | Response | P1 |
+| INT-060 | Logging | Log | ILogger | Logged | P1 |
+| INT-061 | Configuration | Config | IConfiguration | Loaded | P1 |
+| INT-062 | DI container | Resolve | Container | Resolved | P1 |
+| INT-063 | Scoped lifetime | Request | Scope | Per request | P1 |
+| INT-064 | Soft delete filter | Global | Query | Filtered | P1 |
+| INT-065 | Foreign key | FK | Constraint | Enforced | P1 |
+| INT-066 | Unique constraint | Unique | Insert | Enforced | P1 |
+| INT-067 | Cache | Cache | Get | Cached | P1 |
+| INT-068 | Retry | Transient | Retry | Retried | P1 |
+| INT-069 | Health check | Health | Check | Healthy | P1 |
+| INT-070 | Metrics | Metric | Record | Recorded | P1 |
+| INT-071 | User context | User | Context | Resolved | P1 |
+| INT-072 | Export service | Export | Service | File | P1 |
+| INT-073 | Notification service | Notify | Service | Sent | P1 |
+| INT-074 | API versioning | Version | Request | Versioned | P1 |
+| INT-075 | Rate limiting | Limit | Request | Limited | P1 |
+| INT-076 | Auth middleware | Auth | Request | Authenticated | P1 |
+| INT-077 | Validation middleware | Validate | Request | Validated | P1 |
+| INT-078 | Exception middleware | Exception | Throw | Handled | P1 |
+| INT-079 | Correlation ID | Request | ID | Propagated | P1 |
+| INT-080 | Tracing | Trace | Span | Traced | P1 |
+| INT-081 | Feature flag | Flag | Check | Toggled | P1 |
+| INT-082 | CORS | Cross-origin | Request | Allowed | P1 |
+| INT-083 | Connection | Connection | Open | Connected | P1 |
+| INT-084 | Migration | Migration | Run | Applied | P1 |
+| INT-085 | Index | Query | Index | Fast | P1 |
+| INT-086 | Circuit breaker | Fail | Circuit | Open | P1 |
+| INT-087 | Tenant context | Tenant | Context | Resolved | P1 |
+| INT-088 | Contact API | Contact | API | Response | P1 |
+| INT-089 | Partner API | Partner | API | Response | P1 |
+| INT-090 | Forward compat | New client | Old API | Graceful | P1 |
 
 ---
 

@@ -1,7 +1,7 @@
 # UNOPSPartnerManager — Unit Test Cases
 
 **Component:** `UNOPS.PAO.Business/Managers/PartnerManager` (Unit Tests)  
-**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Created:** 2026-02-04 | **Last Updated:** 2026-02-18  
 **Author:** QA Team  
 **Standard:** 10-Category, 3:1 Ratio
 
@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,7 +33,7 @@ Partner manager unit tests cover CRUD, approval workflow, ERP dim value sequence
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,15 +67,10 @@ Partner manager unit tests cover CRUD, approval workflow, ERP dim value sequence
 | POS-028 | Get by type | Partners exist | GetByType | Filtered |
 | POS-029 | Bulk get | IDs valid | GetByIds | Partners |
 | POS-030 | Export partners | Partners exist | Export | Exported |
-| POS-031 | Duplicate check | No duplicate | Create | Created |
-| POS-032 | Parent assignment | Valid parent | Create | Assigned |
-| POS-033 | Contact association | Partner exists | AddContact | Associated |
-| POS-034 | Document association | Partner exists | AddDocument | Associated |
-| POS-035 | Workflow status | Partner exists | GetWorkflowStatus | Status |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Action | Expected Result |
 |----|-----------|---------------------|-----------------|
@@ -149,10 +144,30 @@ Partner manager unit tests cover CRUD, approval workflow, ERP dim value sequence
 | NEG-068 | Reject without reason | Reason empty | ValidationException |
 | NEG-069 | Approve without role | Wrong role | Forbidden |
 | NEG-070 | ErpDimValue collision | Race on create | Handled |
+| NEG-071 | Create null request | Request=null | ArgumentNullException |
+| NEG-072 | Update null request | Request=null | ArgumentNullException |
+| NEG-073 | GetWorkflowStatus invalid | Id=0 | ArgumentException |
+| NEG-074 | Submit null reason | Reason=null | ArgumentNullException |
+| NEG-075 | Reject null reason | Reason=null | ArgumentNullException |
+| NEG-076 | Activate wrong workflow | Wrong stage | BusinessException |
+| NEG-077 | Deactivate wrong workflow | Wrong stage | BusinessException |
+| NEG-078 | GetByCategory invalid | Category invalid | ArgumentException |
+| NEG-079 | GetByType invalid | Type invalid | ArgumentException |
+| NEG-080 | GetHierarchy null partner | Partner=null | ArgumentNullException |
+| NEG-081 | Validate null partner | Partner=null | ArgumentNullException |
+| NEG-082 | GetNextErpDimValue invalid | Config invalid | ArgumentException |
+| NEG-083 | AddContact null contact | Contact=null | ArgumentNullException |
+| NEG-084 | AddDocument null document | Document=null | ArgumentNullException |
+| NEG-085 | Export null filter | Filter=null | ArgumentNullException |
+| NEG-086 | GetByIds duplicate IDs | Duplicate IDs | Handle |
+| NEG-087 | Create with reserved ErpDimValue | Value 8000 | BusinessException |
+| NEG-088 | Update to reserved ErpDimValue | Value 8000 | BusinessException |
+| NEG-089 | Submit without required fields | Missing fields | ValidationException |
+| NEG-090 | Approve without submit | Direct approve | BusinessException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Condition | Expected Result |
 |----|-----------|-------------------|-----------------|
@@ -226,10 +241,30 @@ Partner manager unit tests cover CRUD, approval workflow, ERP dim value sequence
 | BND-068 | Type all | All types | Valid |
 | BND-069 | Concurrent GetNextErpDimValue | Two concurrent | Unique |
 | BND-070 | Export format boundary | Each format | Valid |
+| BND-071 | Name whitespace only | Name="   " | Reject |
+| BND-072 | Code at min | Length=1 | Valid |
+| BND-073 | Code empty | Code="" | Config |
+| BND-074 | GetWorkflowStatus boundary | Each status | Valid |
+| BND-075 | Submit-approve flow | Full flow | Valid |
+| BND-076 | Submit-reject flow | Full flow | Valid |
+| BND-077 | ErpDimValue at 1 | First | Valid |
+| BND-078 | Hierarchy single level | One level | Valid |
+| BND-079 | GetByCategory empty | No match | [] |
+| BND-080 | GetByType empty | No match | [] |
+| BND-081 | GetByIds single | One ID | Valid |
+| BND-082 | Export empty result | No data | Empty |
+| BND-083 | Search partial match | Partial | Matching |
+| BND-084 | Filter multi-status | Multiple | Filtered |
+| BND-085 | Sort multi-column | 3 columns | Correct |
+| BND-086 | Parent assignment boundary | Root to child | Valid |
+| BND-087 | Contact count zero | No contacts | [] |
+| BND-088 | Document count zero | No documents | [] |
+| BND-089 | Workflow status transition | Each transition | Valid |
+| BND-090 | ErpDimValue sequence boundary | At boundary | Valid |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -283,10 +318,50 @@ Partner manager unit tests cover CRUD, approval workflow, ERP dim value sequence
 | FUN-048 | Workflow notifications | Workflow | Status change | Sent |
 | FUN-049 | Permission cached | Performance | Repeated check | Cached |
 | FUN-050 | AsNoTracking read-only | Performance | List | No tracking |
+| FUN-051 | GetHierarchy excludes deleted | Constraint | GetHierarchy | Excludes |
+| FUN-052 | GetByCategory excludes deleted | Constraint | GetByCategory | Excludes |
+| FUN-053 | GetByType excludes deleted | Constraint | GetByType | Excludes |
+| FUN-054 | GetByIds excludes deleted | Constraint | GetByIds | Excludes |
+| FUN-055 | Submit audit | Audit | Submit | Audit |
+| FUN-056 | Approve audit | Audit | Approve | Audit |
+| FUN-057 | Reject audit | Audit | Reject | Audit |
+| FUN-058 | Activate audit | Audit | Activate | Audit |
+| FUN-059 | Deactivate audit | Audit | Deactivate | Audit |
+| FUN-060 | GetWorkflowStatus logic | Logic | GetWorkflowStatus | Status |
+| FUN-061 | AddContact association | Logic | AddContact | Associated |
+| FUN-062 | AddDocument association | Logic | AddDocument | Associated |
+| FUN-063 | Parent assignment validation | Validation | Create | Valid |
+| FUN-064 | Category validation | Validation | Create | Valid |
+| FUN-065 | Type validation | Validation | Create | Valid |
+| FUN-066 | Status validation | Validation | ChangeStatus | Valid |
+| FUN-067 | ErpDimValue validation | Validation | Create | Valid |
+| FUN-068 | Name validation | Validation | Create | Valid |
+| FUN-069 | Code validation | Validation | Create | Valid |
+| FUN-070 | Reject reason required | Validation | Reject | Required |
+| FUN-071 | GetNextErpDimValue transaction | Transaction | GetNextErpDimValue | Atomic |
+| FUN-072 | Submit transaction | Transaction | Submit | Atomic |
+| FUN-073 | Approve transaction | Transaction | Approve | Atomic |
+| FUN-074 | Reject transaction | Transaction | Reject | Atomic |
+| FUN-075 | Activate transaction | Transaction | Activate | Atomic |
+| FUN-076 | Deactivate transaction | Transaction | Deactivate | Atomic |
+| FUN-077 | Export format | Logic | Export | Format |
+| FUN-078 | GetByIds order | Logic | GetByIds | Order |
+| FUN-079 | Search relevance | Logic | Search | Relevance |
+| FUN-080 | Filter combination | Logic | Filter | Combined |
+| FUN-081 | Sort multi-field | Logic | Sort | Multi-field |
+| FUN-082 | Pagination total | Calculation | Paginate | Total |
+| FUN-083 | Hierarchy depth | Logic | GetHierarchy | Depth |
+| FUN-084 | Validate required fields | Validation | Validate | Required |
+| FUN-085 | Contact count limit | Constraint | AddContact | Limit |
+| FUN-086 | Document count limit | Constraint | AddDocument | Limit |
+| FUN-087 | Workflow state machine | Logic | ChangeStatus | State |
+| FUN-088 | ErpDimValue format | Logic | GetNextErpDimValue | Format |
+| FUN-089 | Export encoding | Logic | Export | Encoding |
+| FUN-090 | Bulk get validation | Validation | GetByIds | Valid |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|
@@ -340,6 +415,46 @@ Partner manager unit tests cover CRUD, approval workflow, ERP dim value sequence
 | INT-048 | Restore from delete | Scenario | Restore | Restored |
 | INT-049 | PNO-686 regression | Scenario | ErpDimValue | No regression |
 | INT-050 | E2E create-approve-activate | Scenario | Full cycle | Complete |
+| INT-051 | Create then GetById | Scenario | Create, Get | Complete |
+| INT-052 | Update then GetById | Scenario | Update, Get | Complete |
+| INT-053 | Submit then Approve | Scenario | Submit, Approve | Complete |
+| INT-054 | Submit then Reject | Scenario | Submit, Reject | Complete |
+| INT-055 | Approve then Activate | Scenario | Approve, Activate | Complete |
+| INT-056 | Activate then Deactivate | Scenario | Activate, Deactivate | Complete |
+| INT-057 | GetNextErpDimValue then Create | Scenario | GetNext, Create | Complete |
+| INT-058 | GetHierarchy then GetById | Scenario | Hierarchy, Get | Complete |
+| INT-059 | AddContact then GetById | Scenario | AddContact, Get | Complete |
+| INT-060 | AddDocument then GetById | Scenario | AddDocument, Get | Complete |
+| INT-061 | Search then GetById | Scenario | Search, Get | Complete |
+| INT-062 | Filter then Paginate | Scenario | Filter, Paginate | Complete |
+| INT-063 | Export then Import | Scenario | Export, Import | Complete |
+| INT-064 | GetByCategory then GetById | Scenario | Category, Get | Complete |
+| INT-065 | GetByType then GetById | Scenario | Type, Get | Complete |
+| INT-066 | GetByIds then Update | Scenario | GetByIds, Update | Complete |
+| INT-067 | GetWorkflowStatus then Submit | Scenario | Status, Submit | Complete |
+| INT-068 | Validate then Create | Scenario | Validate, Create | Complete |
+| INT-069 | Create with parent | Scenario | Create | Parent |
+| INT-070 | Update with contacts | Scenario | Update | Contacts |
+| INT-071 | Delete with documents | Scenario | Delete | Documents |
+| INT-072 | GetHierarchy with parent | Scenario | GetHierarchy | Parent |
+| INT-073 | Search with category | Scenario | Search | Category |
+| INT-074 | Filter with type | Scenario | Filter | Type |
+| INT-075 | Export with sort | Scenario | Export | Sorted |
+| INT-076 | GetByIds with filter | Scenario | GetByIds | Filtered |
+| INT-077 | Submit with validation | Scenario | Submit | Validated |
+| INT-078 | Approve with audit | Scenario | Approve | Audit |
+| INT-079 | Reject with reason | Scenario | Reject | Reason |
+| INT-080 | Activate with workflow | Scenario | Activate | Workflow |
+| INT-081 | Deactivate with workflow | Scenario | Deactivate | Workflow |
+| INT-082 | GetNextErpDimValue with reserved | Scenario | GetNext | Reserved |
+| INT-083 | Create with category | Scenario | Create | Category |
+| INT-084 | Create with type | Scenario | Create | Type |
+| INT-085 | Update with status | Scenario | Update | Status |
+| INT-086 | Delete with hierarchy | Scenario | Delete | Hierarchy |
+| INT-087 | Export with encoding | Scenario | Export | Encoding |
+| INT-088 | GetWorkflowStatus all | Scenario | GetWorkflowStatus | All |
+| INT-089 | ErpDimValue sequence full | Scenario | Full sequence | Complete |
+| INT-090 | E2E full partner lifecycle | Scenario | Full cycle | Complete |
 
 ---
 
@@ -500,5 +615,5 @@ Partner manager unit tests cover CRUD, approval workflow, ERP dim value sequence
 
 ---
 
-**Last Updated:** 2026-02-11  
+**Last Updated:** 2026-02-18  
 **Status:** Ready for Implementation

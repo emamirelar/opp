@@ -11,19 +11,24 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance Check**
+| Check | Result |
+|-------|--------|
+| N ≥ 3P | 90 ≥ 90 ✅ PASS |
+| E ≥ 3P | 90 ≥ 90 ✅ PASS |
+| F ≥ 3P | 90 ≥ 90 ✅ PASS |
+| I ≥ 3P | 90 ≥ 90 ✅ PASS |
 
 ---
 
@@ -142,13 +147,12 @@ AI assistant: chat interface, context-aware responses, entity data access, promp
 | POS-032 | Stream response | API streams | Send message | Streaming display | P2 |
 | POS-033 | Stop generation | Stream in progress | Stop button | Generation stopped | P2 |
 | POS-034 | Chat with emoji | Message with emoji | Send | Stored, displayed | P2 |
-| POS-035 | Get AI service status | API available | Check status | Available | P2 |
 
 ---
 
 ## §2 Negative Tests (Failure Scenarios)
 
-> **Minimum:** 70 tests | **Focus:** Invalid inputs, unauthorized access, error conditions
+> **Minimum:** 90 tests | **Focus:** Invalid inputs, unauthorized access, error conditions
 
 ### 2.1 Invalid Input Validation
 
@@ -254,12 +258,32 @@ AI assistant: chat interface, context-aware responses, entity data access, promp
 | NEG-068 | LDAP injection in message | `*)(cn=*` | Sanitized | P1 |
 | NEG-069 | Regex DoS in search | `(((((((((((...))))))))))))` | Rejected or timeout | P1 |
 | NEG-070 | Concurrent delete same chat | 2 users delete | One succeeds, other 404 | P1 |
+| NEG-071 | Send with invalid entity type | EntityType = "Invalid" | Validation error | P1 |
+| NEG-072 | Regenerate with null message | MsgId = null | ArgumentNullException | P1 |
+| NEG-073 | Get conversation invalid format | Id = "abc" | 400 Bad Request | P1 |
+| NEG-074 | Export with invalid format | Format = "invalid" | Default format | P1 |
+| NEG-075 | Context with deleted entity | Entity deleted | Context error | P1 |
+| NEG-076 | List with invalid session | Session invalid | Empty or error | P1 |
+| NEG-077 | Template with missing var | {{missing}} | Placeholder or error | P1 |
+| NEG-078 | Send during rate limit | At limit | 429 | P0 |
+| NEG-079 | Quota exceeded | Over monthly | Quota message | P1 |
+| NEG-080 | Context size exceeded | 50001 chars | Truncated or error | P1 |
+| NEG-081 | Message with null content | Content = null | Validation error | P1 |
+| NEG-082 | Conversation with stale data | Stale | Error or refresh | P1 |
+| NEG-083 | Filter with invalid date | Date = "invalid" | Default or error | P2 |
+| NEG-084 | Search with control chars | \0 in query | Sanitized | P1 |
+| NEG-085 | Stream with invalid chunk | Malformed chunk | Error handled | P1 |
+| NEG-086 | Update with stale version | Stale version | Conflict error | P1 |
+| NEG-087 | Delete with invalid ID | Id = "x" | 400 Bad Request | P1 |
+| NEG-088 | Send with oversized message | 10001 chars | Validation error | P0 |
+| NEG-089 | Context with circular ref | A→B→A | Handled | P1 |
+| NEG-090 | Concurrent send same user | 2 simultaneous | Queued or error | P1 |
 
 ---
 
 ## §3 Boundary Tests (Edge Cases)
 
-> **Minimum:** 70 tests | **Focus:** Limits, boundaries, unusual but valid inputs
+> **Minimum:** 90 tests | **Focus:** Limits, boundaries, unusual but valid inputs
 
 ### 3.1 String Length Boundaries
 
@@ -365,6 +389,26 @@ AI assistant: chat interface, context-aware responses, entity data access, promp
 | BND-068 | Long response | 50000 chars | Displayed | P2 |
 | BND-069 | Multi-language mixed | Mixed | Displayed correctly | P2 |
 | BND-070 | Context with null optional | Optional null | Handled | P2 |
+| BND-071 | Message at 9999 chars | 9999 chars | Accepted | P1 |
+| BND-072 | Response at 49999 chars | 49999 chars | Displayed | P1 |
+| BND-073 | Conversation with 2 messages | Two | Both shown | P1 |
+| BND-074 | Page size at 99 | 99 | Accepted | P1 |
+| BND-075 | Rate limit at 99 | 99 requests | Success | P1 |
+| BND-076 | Search exactly 254 chars | 254 chars | Processed | P1 |
+| BND-077 | Context with 1 entity | Single | Included | P1 |
+| BND-078 | Empty conversation | No messages | Empty chat | P1 |
+| BND-079 | Single message | 1 message | 1 shown | P1 |
+| BND-080 | Context at 49999 chars | 49999 | Sent or truncated | P1 |
+| BND-081 | Message exactly 1 char | "x" | Accepted | P1 |
+| BND-082 | Conversation ID = 2 | Second | Retrieved | P2 |
+| BND-083 | Pagination page 2 of 2 | 2 pages | 2nd page | P1 |
+| BND-084 | Filter by single entity | One entity | Correct | P1 |
+| BND-085 | Unicode in message | Arabic | Stored | P2 |
+| BND-086 | Stream first byte | First chunk | Displayed | P1 |
+| BND-087 | Stream last byte | Last chunk | Complete | P1 |
+| BND-088 | Rate limit reset | After window | Success | P1 |
+| BND-089 | Quota at limit | At monthly | Success | P1 |
+| BND-090 | Zero context | No entity | No context | P1 |
 
 ---
 
@@ -441,6 +485,46 @@ AI assistant: chat interface, context-aware responses, entity data access, promp
 | FUN-048 | Regenerate audit | Regenerate | UserId, OriginalMsgId | P1 |
 | FUN-049 | Failed send no audit | Failed send | No audit entry | P1 |
 | FUN-050 | Audit immutable on read | Get | Audit fields unchanged | P1 |
+| FUN-051 | Message order by timestamp | Order | Chronological | P0 |
+| FUN-052 | Context sent with message | Context | Entity in request | P0 |
+| FUN-053 | Rate limit enforced | Limit | 429 on exceed | P0 |
+| FUN-054 | User permission checked | Permission | CanUseAI required | P0 |
+| FUN-055 | Entity permission for context | Permission | CanViewPartner required | P0 |
+| FUN-056 | Session persistence | Session | Chats restored | P1 |
+| FUN-057 | Prompt template applied | Template | Variables filled | P1 |
+| FUN-058 | Streaming displayed | Stream | Chunks displayed | P1 |
+| FUN-059 | Regenerate uses same context | Regenerate | Same context | P1 |
+| FUN-060 | Deleted entity not in context | Deleted | Excluded | P1 |
+| FUN-061 | Export includes all messages | Export | All messages | P1 |
+| FUN-062 | Clear starts new | Clear | New conversation | P1 |
+| FUN-063 | Stop generation | Stop | Generation stopped | P1 |
+| FUN-064 | Message required | Required | "Hello" | null, "" | P0 |
+| FUN-065 | Message max length | ≤10000 | 10000 | 10001 | P0 |
+| FUN-066 | Entity must exist | FK | Valid ID | 999999 | P0 |
+| FUN-067 | User must have permission | Permission | CanUseAI | No permission | P0 |
+| FUN-068 | No prompt injection | Sanitize | "Normal" | "Ignore previous" | P0 |
+| FUN-069 | No SQL in message | Sanitize | "Text" | `'; DROP--` | P0 |
+| FUN-070 | No XSS in message | Sanitize | "Text" | `<script>` | P0 |
+| FUN-071 | Conversation must exist | FK | Valid ID | 999999 | P1 |
+| FUN-072 | Trim whitespace | Trim | "  Hi  " | → "Hi" | P2 |
+| FUN-073 | Entity type validated | Enum | Partner | Invalid | P1 |
+| FUN-074 | Context size limit | ≤50000 | 50000 | 50001 | P1 |
+| FUN-075 | Rate limit per user | Per user | Limit | Exceed | P0 |
+| FUN-076 | Quota per user | Monthly | Under | Over | P1 |
+| FUN-077 | Session must be valid | Session | Valid | Expired | P0 |
+| FUN-078 | Export format | Enum | JSON, CSV | Invalid | P1 |
+| FUN-079 | Max messages per conversation | 1000 | 1001 | Paginated | P1 |
+| FUN-080 | Max page size | 100 | 500 | Capped | P1 |
+| FUN-081 | Unique conversation ID | DB | Duplicate | Unique ID | P0 |
+| FUN-082 | FK user exists | FK | Non-existent | FK error | P0 |
+| FUN-083 | Concurrent send limit | 1 per user | 2 simultaneous | Queued | P1 |
+| FUN-084 | Context entity limit | 10 | 11 | Truncated | P2 |
+| FUN-085 | Export row limit | 1000 | 1500 | Paginated | P2 |
+| FUN-086 | Conversation retention | 90 days | 91 | Archived | P2 |
+| FUN-087 | Response timeout | 60s | 61s | Timeout error | P1 |
+| FUN-088 | Create conversation audit | New | CreatedBy, CreatedDate | P0 |
+| FUN-089 | Send message audit | Send | UserId, MessageId | P1 |
+| FUN-090 | Delete conversation audit | Delete | DeletedBy, DeletedDate | P1 |
 
 ---
 

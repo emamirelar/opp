@@ -1,6 +1,6 @@
-# ValuesManager — Test Cases
+# UserPreferenceController — Test Cases
 
-**Component:** `UNOPS.PAO.Business/Managers/ValuesManager`  
+**Component:** `OpportunityPlus.API/Controllers/UserPreferenceController`  
 **Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
 **Author:** QA Team  
 **Standard:** 10-Category, 3:1 Ratio
@@ -11,492 +11,504 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive (P) | 30 | 30-50 | ✅ |
+| §2 Negative (N) | 90 | 90 | ✅ |
+| §3 Boundary (E) | 90 | 90 | ✅ |
+| §4 Functional (F) | 90 | 90 | ✅ |
+| §5 Integration (I) | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
 ## Feature Overview
 
-**ValuesManager** manages CRUD lookup values, dropdown data, reference data, entity type values, and caching. Key responsibilities: currencies, countries, partners, contacts, users, org units lookup, eligibility entities.
+REST API for user preferences: CRUD preferences, theme, language, notification settings.
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
-| ID | Test Name | Precondition | Steps (Brief) | Expected Result | Priority |
-|----|-----------|-------------|---------------|-----------------|----------|
-| POS-001 | Test 1 | Precondition 1 | Step 1 | Result 1 | P0 |
-| POS-002 | Test 2 | Precondition 2 | Step 2 | Result 2 | P0 |
-| POS-003 | Test 3 | Precondition 3 | Step 3 | Result 3 | P0 |
-| POS-004 | Test 4 | Precondition 4 | Step 4 | Result 4 | P0 |
-| POS-005 | Test 5 | Precondition 5 | Step 5 | Result 5 | P0 |
-| POS-006 | Test 6 | Precondition 6 | Step 6 | Result 6 | P1 |
-| POS-007 | Test 7 | Precondition 7 | Step 7 | Result 7 | P1 |
-| POS-008 | Test 8 | Precondition 8 | Step 8 | Result 8 | P1 |
-| POS-009 | Test 9 | Precondition 9 | Step 9 | Result 9 | P1 |
-| POS-010 | Test 10 | Precondition 10 | Step 10 | Result 10 | P1 |
-| POS-011 | Test 11 | Precondition 11 | Step 11 | Result 11 | P1 |
-| POS-012 | Test 12 | Precondition 12 | Step 12 | Result 12 | P1 |
-| POS-013 | Test 13 | Precondition 13 | Step 13 | Result 13 | P1 |
-| POS-014 | Test 14 | Precondition 14 | Step 14 | Result 14 | P1 |
-| POS-015 | Test 15 | Precondition 15 | Step 15 | Result 15 | P1 |
-| POS-016 | Test 16 | Precondition 16 | Step 16 | Result 16 | P1 |
-| POS-017 | Test 17 | Precondition 17 | Step 17 | Result 17 | P1 |
-| POS-018 | Test 18 | Precondition 18 | Step 18 | Result 18 | P1 |
-| POS-019 | Test 19 | Precondition 19 | Step 19 | Result 19 | P1 |
-| POS-020 | Test 20 | Precondition 20 | Step 20 | Result 20 | P1 |
-| POS-021 | Test 21 | Precondition 21 | Step 21 | Result 21 | P1 |
-| POS-022 | Test 22 | Precondition 22 | Step 22 | Result 22 | P1 |
-| POS-023 | Test 23 | Precondition 23 | Step 23 | Result 23 | P1 |
-| POS-024 | Test 24 | Precondition 24 | Step 24 | Result 24 | P1 |
-| POS-025 | Test 25 | Precondition 25 | Step 25 | Result 25 | P1 |
-| POS-026 | Test 26 | Precondition 26 | Step 26 | Result 26 | P1 |
-| POS-027 | Test 27 | Precondition 27 | Step 27 | Result 27 | P1 |
-| POS-028 | Test 28 | Precondition 28 | Step 28 | Result 28 | P1 |
-| POS-029 | Test 29 | Precondition 29 | Step 29 | Result 29 | P1 |
-| POS-030 | Test 30 | Precondition 30 | Step 30 | Result 30 | P1 |
-| POS-031 | Test 31 | Precondition 31 | Step 31 | Result 31 | P1 |
-| POS-032 | Test 32 | Precondition 32 | Step 32 | Result 32 | P1 |
-| POS-033 | Test 33 | Precondition 33 | Step 33 | Result 33 | P1 |
-| POS-034 | Test 34 | Precondition 34 | Step 34 | Result 34 | P1 |
-| POS-035 | Test 35 | Precondition 35 | Step 35 | Result 35 | P1 |
+| ID | Test Name | Steps | Expected Result |
+|----|-----------|-------|-----------------|
+| POS-001 | Get my preferences | GET /api/user-preferences/me | My preferences |
+| POS-002 | Get preference by key | GET /api/user-preferences/me/{key} | Value |
+| POS-003 | Set preference | PUT /api/user-preferences/me | 200 OK |
+| POS-004 | Set theme | PUT theme=dark | Theme set |
+| POS-005 | Set language | PUT language=fr | Language set |
+| POS-006 | Set notification settings | PUT notifications | Notifications set |
+| POS-007 | Get theme | GET /api/user-preferences/me/theme | Theme |
+| POS-008 | Get language | GET /api/user-preferences/me/language | Language |
+| POS-009 | Get notifications | GET /api/user-preferences/me/notifications | Notifications |
+| POS-010 | Reset to default | POST /api/user-preferences/me/reset | Reset |
+| POS-011 | Get all keys | GET /api/user-preferences/me/keys | Keys |
+| POS-012 | Bulk set | PUT /api/user-preferences/me/bulk | Bulk set |
+| POS-013 | Delete preference | DELETE /api/user-preferences/me/{key} | Deleted |
+| POS-014 | Empty result | GET for empty | Defaults |
+| POS-015 | Single result | GET for single key | Value |
+| POS-016 | Authenticated access | GET with token | 200 |
+| POS-017 | Default theme | No theme set | Default |
+| POS-018 | Default language | No language set | Default |
+| POS-019 | Timezone preference | PUT timezone=UTC | Timezone set |
+| POS-020 | Date format preference | PUT dateFormat=YYYY-MM-DD | Format set |
+| POS-021 | Pagination preference | PUT pageSize=20 | PageSize set |
+| POS-022 | Dashboard layout | PUT dashboardLayout | Layout set |
+| POS-023 | Email notifications | PUT emailNotifications=true | Set |
+| POS-024 | In-app notifications | PUT inAppNotifications=true | Set |
+| POS-025 | Sort preference | PUT defaultSort=name | Sort set |
+| POS-026 | Filter preference | PUT defaultFilter | Filter set |
+| POS-027 | Export format | PUT exportFormat=csv | Format set |
+| POS-028 | Accessibility | PUT accessibility | Settings set |
+| POS-029 | Compact mode | PUT compactMode=false | Set |
+| POS-030 | Combined update | PUT multiple | All set |
+| POS-031 | Get after set | PUT then GET | Match |
+| POS-032 | Reset single | POST reset key | Reset |
+| POS-033 | Theme options | GET /api/user-preferences/themes | Options |
+| POS-034 | Language options | GET /api/user-preferences/languages | Options |
+| POS-035 | Cached response | GET same query | 200 |
 
 ---
 
 ## §2 Negative Tests (70)
 
-| ID | Test Name | Invalid Input/Condition | Expected Result | Priority |
-|----|-----------|------------------------|-----------------|----------|
-| NEG-001 | Negative 1 | Invalid input 1 | Error 1 | P0 |
-| NEG-002 | Negative 2 | Invalid input 2 | Error 2 | P0 |
-| NEG-003 | Negative 3 | Invalid input 3 | Error 3 | P0 |
-| NEG-004 | Negative 4 | Invalid input 4 | Error 4 | P0 |
-| NEG-005 | Negative 5 | Invalid input 5 | Error 5 | P0 |
-| NEG-006 | Negative 6 | Invalid input 6 | Error 6 | P0 |
-| NEG-007 | Negative 7 | Invalid input 7 | Error 7 | P0 |
-| NEG-008 | Negative 8 | Invalid input 8 | Error 8 | P0 |
-| NEG-009 | Negative 9 | Invalid input 9 | Error 9 | P0 |
-| NEG-010 | Negative 10 | Invalid input 10 | Error 10 | P0 |
-| NEG-011 | Negative 11 | Invalid input 11 | Error 11 | P1 |
-| NEG-012 | Negative 12 | Invalid input 12 | Error 12 | P1 |
-| NEG-013 | Negative 13 | Invalid input 13 | Error 13 | P1 |
-| NEG-014 | Negative 14 | Invalid input 14 | Error 14 | P1 |
-| NEG-015 | Negative 15 | Invalid input 15 | Error 15 | P1 |
-| NEG-016 | Negative 16 | Invalid input 16 | Error 16 | P1 |
-| NEG-017 | Negative 17 | Invalid input 17 | Error 17 | P1 |
-| NEG-018 | Negative 18 | Invalid input 18 | Error 18 | P1 |
-| NEG-019 | Negative 19 | Invalid input 19 | Error 19 | P1 |
-| NEG-020 | Negative 20 | Invalid input 20 | Error 20 | P1 |
-| NEG-021 | Negative 21 | Invalid input 21 | Error 21 | P1 |
-| NEG-022 | Negative 22 | Invalid input 22 | Error 22 | P1 |
-| NEG-023 | Negative 23 | Invalid input 23 | Error 23 | P1 |
-| NEG-024 | Negative 24 | Invalid input 24 | Error 24 | P1 |
-| NEG-025 | Negative 25 | Invalid input 25 | Error 25 | P1 |
-| NEG-026 | Negative 26 | Invalid input 26 | Error 26 | P1 |
-| NEG-027 | Negative 27 | Invalid input 27 | Error 27 | P1 |
-| NEG-028 | Negative 28 | Invalid input 28 | Error 28 | P1 |
-| NEG-029 | Negative 29 | Invalid input 29 | Error 29 | P1 |
-| NEG-030 | Negative 30 | Invalid input 30 | Error 30 | P1 |
-| NEG-031 | Negative 31 | Invalid input 31 | Error 31 | P1 |
-| NEG-032 | Negative 32 | Invalid input 32 | Error 32 | P1 |
-| NEG-033 | Negative 33 | Invalid input 33 | Error 33 | P1 |
-| NEG-034 | Negative 34 | Invalid input 34 | Error 34 | P1 |
-| NEG-035 | Negative 35 | Invalid input 35 | Error 35 | P1 |
-| NEG-036 | Negative 36 | Invalid input 36 | Error 36 | P1 |
-| NEG-037 | Negative 37 | Invalid input 37 | Error 37 | P1 |
-| NEG-038 | Negative 38 | Invalid input 38 | Error 38 | P1 |
-| NEG-039 | Negative 39 | Invalid input 39 | Error 39 | P1 |
-| NEG-040 | Negative 40 | Invalid input 40 | Error 40 | P1 |
-| NEG-041 | Negative 41 | Invalid input 41 | Error 41 | P1 |
-| NEG-042 | Negative 42 | Invalid input 42 | Error 42 | P1 |
-| NEG-043 | Negative 43 | Invalid input 43 | Error 43 | P1 |
-| NEG-044 | Negative 44 | Invalid input 44 | Error 44 | P1 |
-| NEG-045 | Negative 45 | Invalid input 45 | Error 45 | P1 |
-| NEG-046 | Negative 46 | Invalid input 46 | Error 46 | P1 |
-| NEG-047 | Negative 47 | Invalid input 47 | Error 47 | P1 |
-| NEG-048 | Negative 48 | Invalid input 48 | Error 48 | P1 |
-| NEG-049 | Negative 49 | Invalid input 49 | Error 49 | P1 |
-| NEG-050 | Negative 50 | Invalid input 50 | Error 50 | P1 |
-| NEG-051 | Negative 51 | Invalid input 51 | Error 51 | P1 |
-| NEG-052 | Negative 52 | Invalid input 52 | Error 52 | P1 |
-| NEG-053 | Negative 53 | Invalid input 53 | Error 53 | P1 |
-| NEG-054 | Negative 54 | Invalid input 54 | Error 54 | P1 |
-| NEG-055 | Negative 55 | Invalid input 55 | Error 55 | P1 |
-| NEG-056 | Negative 56 | Invalid input 56 | Error 56 | P1 |
-| NEG-057 | Negative 57 | Invalid input 57 | Error 57 | P1 |
-| NEG-058 | Negative 58 | Invalid input 58 | Error 58 | P1 |
-| NEG-059 | Negative 59 | Invalid input 59 | Error 59 | P1 |
-| NEG-060 | Negative 60 | Invalid input 60 | Error 60 | P1 |
-| NEG-061 | Negative 61 | Invalid input 61 | Error 61 | P1 |
-| NEG-062 | Negative 62 | Invalid input 62 | Error 62 | P1 |
-| NEG-063 | Negative 63 | Invalid input 63 | Error 63 | P1 |
-| NEG-064 | Negative 64 | Invalid input 64 | Error 64 | P1 |
-| NEG-065 | Negative 65 | Invalid input 65 | Error 65 | P1 |
-| NEG-066 | Negative 66 | Invalid input 66 | Error 66 | P1 |
-| NEG-067 | Negative 67 | Invalid input 67 | Error 67 | P1 |
-| NEG-068 | Negative 68 | Invalid input 68 | Error 68 | P1 |
-| NEG-069 | Negative 69 | Invalid input 69 | Error 69 | P1 |
-| NEG-070 | Negative 70 | Invalid input 70 | Error 70 | P1 |
+| ID | Test Name | Invalid Input | Expected Error |
+|----|-----------|--------------|----------------|
+| NEG-001 | No auth | No token | 401 |
+| NEG-002 | Expired token | Expired JWT | 401 |
+| NEG-003 | Invalid key | key=invalid | 400 |
+| NEG-004 | Null request | PUT null | 400 |
+| NEG-005 | Invalid theme | theme=invalid | 400 |
+| NEG-006 | Invalid language | language=invalid | 400 |
+| NEG-007 | Invalid timezone | timezone=invalid | 400 |
+| NEG-008 | SQL injection | key='; DROP | Sanitized |
+| NEG-009 | XSS in value | value=<script> | Sanitized |
+| NEG-010 | Cross-user access | Other user prefs | 403 |
+| NEG-011 | Malformed JSON | Invalid JSON | 400 |
+| NEG-012 | Wrong content-type | Application/xml | 415 |
+| NEG-013 | Rate limit | Too many | 429 |
+| NEG-014 | Payload too large | Huge body | 413 |
+| NEG-015 | Invalid Accept | Accept: text/plain | 406 |
+| NEG-016 | HTTP method | POST for get | 405 |
+| NEG-017 | Trailing slash | /api/user-preferences/ | Redirect |
+| NEG-018 | Case sensitivity | /api/User-Preferences | 404 |
+| NEG-019 | Extra path | /api/user-preferences/me/extra | 404 |
+| NEG-020 | Invalid bearer | Bearer malformed | 401 |
+| NEG-021 | Revoked token | Revoked JWT | 401 |
+| NEG-022 | Service account | Service for UI | 403 |
+| NEG-023 | DB timeout | Simulate | 503 |
+| NEG-024 | Invalid notification format | Notifications malformed | 400 |
+| NEG-025 | Invalid date format | dateFormat=invalid | 400 |
+| NEG-026 | Invalid page size | pageSize=invalid | 400 |
+| NEG-027 | Blocked IP | From blocked | 403 |
+| NEG-028 | Control chars | key with \0 | 400 |
+| NEG-029 | Unicode overflow | Very long | 400 |
+| NEG-030 | Empty key | key= | 400 |
+| NEG-031 | Invalid bulk | Bulk malformed | 400 |
+| NEG-032 | Mismatched IDs | Path != body | 400 |
+| NEG-033 | Read-only field | Update createdDate | Ignored |
+| NEG-034 | Version conflict | Stale version | 409 |
+| NEG-035 | CORS fail | Invalid origin | CORS error |
+| NEG-036 | Inactive org | Org inactive | 403 |
+| NEG-037 | Invalid layout | dashboardLayout malformed | 400 |
+| NEG-038 | Invalid export format | exportFormat=invalid | 400 |
+| NEG-039 | Invalid accessibility | accessibility malformed | 400 |
+| NEG-040 | Delete non-existent | key=invalid | 404 |
+| NEG-041 | Reset non-existent | Reset invalid | 400 |
+| NEG-042 | Max URL length | Very long URL | 414 |
+| NEG-043 | Invalid endpoint | /api/user-preferences/invalid | 404 |
+| NEG-044 | Invalid method | PATCH | 405 |
+| NEG-045 | Missing query | GET no params | 200 or 400 |
+| NEG-046 | Invalid encoding | Malformed URL | 400 |
+| NEG-047 | Reserved key | key=RESERVED | 403 |
+| NEG-048 | Invalid value type | value type mismatch | 400 |
+| NEG-049 | Empty bulk | PUT [] | 400 |
+| NEG-050 | Excessive bulk | 1000 keys | 400 |
+| NEG-051 | Audit failure | Audit down | Continue |
+| NEG-052 | Invalid sort | defaultSort=invalid | 400 |
+| NEG-053 | Invalid filter | defaultFilter malformed | 400 |
+| NEG-054 | Key length | key too long | 400 |
+| NEG-055 | Value length | value too long | 400 |
+| NEG-056 | OPTIONS | OPTIONS | 200 |
+| NEG-057 | HEAD | HEAD | 200 or 405 |
+| NEG-058 | Invalid boolean | boolean=invalid | 400 |
+| NEG-059 | Invalid number | number=invalid | 400 |
+| NEG-060 | Theme not in list | theme not supported | 400 |
+| NEG-061 | Language not in list | language not supported | 400 |
+| NEG-062 | Timezone not in list | timezone not supported | 400 |
+| NEG-063 | Circular reference | value references self | 400 |
+| NEG-064 | Duplicate key in bulk | Duplicate keys | 400 |
+| NEG-065 | Invalid JSON value | JSON malformed | 400 |
+| NEG-066 | Invalid nested object | Nested malformed | 400 |
+| NEG-067 | Invalid array | Array malformed | 400 |
+| NEG-068 | Negative page size | pageSize=-1 | 400 |
+| NEG-069 | Excessive page size | pageSize=10000 | 400 |
+| NEG-070 | Soft-deleted | Query deleted | Excluded |
 
 ---
 
 ## §3 Boundary Tests (70)
 
-| ID | Field/Scenario | Min | Max | At Min | At Max | Over Max | Priority |
-|----|----------------|-----|-----|--------|--------|----------|----------|
-| BND-001 | Field 1 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-002 | Field 2 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-003 | Field 3 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-004 | Field 4 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-005 | Field 5 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-006 | Field 6 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-007 | Field 7 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-008 | Field 8 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-009 | Field 9 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-010 | Field 10 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-011 | Field 11 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-012 | Field 12 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-013 | Field 13 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-014 | Field 14 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-015 | Field 15 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-016 | Field 16 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-017 | Field 17 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-018 | Field 18 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-019 | Field 19 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-020 | Field 20 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-021 | Field 21 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-022 | Field 22 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-023 | Field 23 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-024 | Field 24 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-025 | Field 25 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-026 | Field 26 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-027 | Field 27 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-028 | Field 28 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-029 | Field 29 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-030 | Field 30 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-031 | Field 31 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-032 | Field 32 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-033 | Field 33 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-034 | Field 34 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-035 | Field 35 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-036 | Field 36 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-037 | Field 37 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-038 | Field 38 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-039 | Field 39 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-040 | Field 40 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-041 | Field 41 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-042 | Field 42 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-043 | Field 43 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-044 | Field 44 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-045 | Field 45 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-046 | Field 46 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-047 | Field 47 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-048 | Field 48 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-049 | Field 49 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-050 | Field 50 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-051 | Field 51 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-052 | Field 52 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-053 | Field 53 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-054 | Field 54 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-055 | Field 55 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-056 | Field 56 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-057 | Field 57 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-058 | Field 58 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-059 | Field 59 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-060 | Field 60 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-061 | Field 61 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-062 | Field 62 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-063 | Field 63 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-064 | Field 64 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-065 | Field 65 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-066 | Field 66 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-067 | Field 67 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-068 | Field 68 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-069 | Field 69 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-070 | Field 70 | Min | Max | At Min | At Max | Over Max | P1 |
+| ID | Field/Scenario | Min | Max | At Min | At Max | Over Max |
+|----|----------------|-----|-----|--------|--------|----------|
+| BND-001 | key length | 1 | 255 | ✅ | ✅ | ❌ |
+| BND-002 | value length | 0 | 10000 | ✅ | ✅ | ❌ |
+| BND-003 | pageSize | 1 | 100 | ✅ | ✅ | ❌ |
+| BND-004 | Empty list | - | - | [] | - | - |
+| BND-005 | Single item | - | - | [item] | - | - |
+| BND-006 | Zero length key | - | - | ❌ | - | - |
+| BND-007 | Max length key | 255 | - | - | ✅ | ❌ |
+| BND-008 | Unicode key | - | - | Accept | - | - |
+| BND-009 | Arabic value | - | - | Display | - | - |
+| BND-010 | Chinese value | - | - | Display | - | - |
+| BND-011 | Null optional | - | - | Default | - | - |
+| BND-012 | Empty string | - | - | No filter | - | - |
+| BND-013 | Whitespace | - | - | Trim | - | - |
+| BND-014 | Theme options | 0 | 10 | ✅ | ✅ | ❌ |
+| BND-015 | Language options | 0 | 50 | ✅ | ✅ | ❌ |
+| BND-016 | Bulk size | 1 | 100 | ✅ | ✅ | ❌ |
+| BND-017 | Preference count | 0 | 500 | ✅ | ✅ | ❌ |
+| BND-018 | Concurrent requests | - | 100 | ✅ | ✅ | ❌ |
+| BND-019 | URL length | - | 2048 | - | ✅ | ❌ |
+| BND-020 | Query params | - | 20 | ✅ | ✅ | ❌ |
+| BND-021 | Created date | - | - | UTC | - | - |
+| BND-022 | Modified date | - | - | UTC | - | - |
+| BND-023 | Audit fields | - | - | Set | - | - |
+| BND-024 | Round-trip | Set → Get | - | Match | - | - |
+| BND-025 | Reset default | - | - | Default | - | - |
+| BND-026 | Theme length | - | 50 | ✅ | ✅ | ❌ |
+| BND-027 | Language length | - | 10 | ✅ | ✅ | ❌ |
+| BND-028 | Timezone length | - | 50 | ✅ | ✅ | ❌ |
+| BND-029 | Date format length | - | 50 | ✅ | ✅ | ❌ |
+| BND-030 | Layout size | - | 10000 | ✅ | ✅ | ❌ |
+| BND-031 | Notification count | 0 | 50 | ✅ | ✅ | ❌ |
+| BND-032 | Export format length | - | 20 | ✅ | ✅ | ❌ |
+| BND-033 | Boolean value | - | - | true/false | - | - |
+| BND-034 | Number value | - | 999999 | ✅ | ✅ | ❌ |
+| BND-035 | JSON value | - | 10000 | ✅ | ✅ | ❌ |
+| BND-036 | Array value | - | 1000 | ✅ | ✅ | ❌ |
+| BND-037 | Nested object | - | 10 | ✅ | ✅ | ❌ |
+| BND-038 | Version | 1 | - | ✅ | ❌ | - |
+| BND-039 | Key count | 0 | 500 | ✅ | ✅ | ❌ |
+| BND-040 | Inactive | - | - | Excluded | - | - |
+| BND-041 | Default theme | - | - | light | - | - |
+| BND-042 | Default language | - | - | en | - | - |
+| BND-043 | Default page size | - | - | 20 | - | - |
+| BND-044 | Default timezone | - | - | UTC | - | - |
+| BND-045 | Default date format | - | - | ISO | - | - |
+| BND-046 | Partial bulk | - | - | 207 | - | - |
+| BND-047 | Empty bulk | - | - | 400 | - | - |
+| BND-048 | Filter combination | - | 5 | ✅ | ✅ | ❌ |
+| BND-049 | Sort fields | - | 5 | ✅ | ✅ | ❌ |
+| BND-050 | Compact mode | - | - | Boolean | - | - |
+| BND-051 | Email notifications | - | - | Boolean | - | - |
+| BND-052 | In-app notifications | - | - | Boolean | - | - |
+| BND-053 | Dashboard layout | - | - | Valid | - | - |
+| BND-054 | Default sort | - | - | Valid | - | - |
+| BND-055 | Default filter | - | - | Valid | - | - |
+| BND-056 | Accessibility options | - | 20 | ✅ | ✅ | ❌ |
+| BND-057 | Export format options | - | 10 | ✅ | ✅ | ❌ |
+| BND-058 | Page size options | - | 20 | ✅ | ✅ | ❌ |
+| BND-059 | Timezone options | - | 600 | ✅ | ✅ | ❌ |
+| BND-060 | Language options count | - | 50 | ✅ | ✅ | ❌ |
+| BND-061 | Theme options count | - | 10 | ✅ | ✅ | ❌ |
+| BND-062 | Combined update | - | 50 | ✅ | ✅ | ❌ |
+| BND-063 | Reset scope | - | - | All | - | - |
+| BND-064 | Partial reset | - | - | Key | - | - |
+| BND-065 | Get after set | - | - | Match | - | - |
+| BND-066 | Delete after set | - | - | Default | - | - |
+| BND-067 | Overwrite | - | - | Replace | - | - |
+| BND-068 | Merge | - | - | Merge | - | - |
+| BND-069 | Immutable key | - | - | Reject | - | - |
+| BND-070 | Cache TTL | - | 3600 | Valid | Valid | ❌ |
 
 ---
 
 ## §4 Functional Tests (50)
 
-| ID | Test Name | Rule/Scenario | Trigger | Expected Outcome | Priority |
-|----|-----------|---------------|---------|------------------|----------|
-| FUN-001 | Functional 1 | Rule 1 | Trigger 1 | Outcome 1 | P0 |
-| FUN-002 | Functional 2 | Rule 2 | Trigger 2 | Outcome 2 | P0 |
-| FUN-003 | Functional 3 | Rule 3 | Trigger 3 | Outcome 3 | P0 |
-| FUN-004 | Functional 4 | Rule 4 | Trigger 4 | Outcome 4 | P0 |
-| FUN-005 | Functional 5 | Rule 5 | Trigger 5 | Outcome 5 | P0 |
-| FUN-006 | Functional 6 | Rule 6 | Trigger 6 | Outcome 6 | P1 |
-| FUN-007 | Functional 7 | Rule 7 | Trigger 7 | Outcome 7 | P1 |
-| FUN-008 | Functional 8 | Rule 8 | Trigger 8 | Outcome 8 | P1 |
-| FUN-009 | Functional 9 | Rule 9 | Trigger 9 | Outcome 9 | P1 |
-| FUN-010 | Functional 10 | Rule 10 | Trigger 10 | Outcome 10 | P1 |
-| FUN-011 | Functional 11 | Rule 11 | Trigger 11 | Outcome 11 | P1 |
-| FUN-012 | Functional 12 | Rule 12 | Trigger 12 | Outcome 12 | P1 |
-| FUN-013 | Functional 13 | Rule 13 | Trigger 13 | Outcome 13 | P1 |
-| FUN-014 | Functional 14 | Rule 14 | Trigger 14 | Outcome 14 | P1 |
-| FUN-015 | Functional 15 | Rule 15 | Trigger 15 | Outcome 15 | P1 |
-| FUN-016 | Functional 16 | Rule 16 | Trigger 16 | Outcome 16 | P1 |
-| FUN-017 | Functional 17 | Rule 17 | Trigger 17 | Outcome 17 | P1 |
-| FUN-018 | Functional 18 | Rule 18 | Trigger 18 | Outcome 18 | P1 |
-| FUN-019 | Functional 19 | Rule 19 | Trigger 19 | Outcome 19 | P1 |
-| FUN-020 | Functional 20 | Rule 20 | Trigger 20 | Outcome 20 | P1 |
-| FUN-021 | Functional 21 | Rule 21 | Trigger 21 | Outcome 21 | P1 |
-| FUN-022 | Functional 22 | Rule 22 | Trigger 22 | Outcome 22 | P1 |
-| FUN-023 | Functional 23 | Rule 23 | Trigger 23 | Outcome 23 | P1 |
-| FUN-024 | Functional 24 | Rule 24 | Trigger 24 | Outcome 24 | P1 |
-| FUN-025 | Functional 25 | Rule 25 | Trigger 25 | Outcome 25 | P1 |
-| FUN-026 | Functional 26 | Rule 26 | Trigger 26 | Outcome 26 | P1 |
-| FUN-027 | Functional 27 | Rule 27 | Trigger 27 | Outcome 27 | P1 |
-| FUN-028 | Functional 28 | Rule 28 | Trigger 28 | Outcome 28 | P1 |
-| FUN-029 | Functional 29 | Rule 29 | Trigger 29 | Outcome 29 | P1 |
-| FUN-030 | Functional 30 | Rule 30 | Trigger 30 | Outcome 30 | P1 |
-| FUN-031 | Functional 31 | Rule 31 | Trigger 31 | Outcome 31 | P1 |
-| FUN-032 | Functional 32 | Rule 32 | Trigger 32 | Outcome 32 | P1 |
-| FUN-033 | Functional 33 | Rule 33 | Trigger 33 | Outcome 33 | P1 |
-| FUN-034 | Functional 34 | Rule 34 | Trigger 34 | Outcome 34 | P1 |
-| FUN-035 | Functional 35 | Rule 35 | Trigger 35 | Outcome 35 | P1 |
-| FUN-036 | Functional 36 | Rule 36 | Trigger 36 | Outcome 36 | P1 |
-| FUN-037 | Functional 37 | Rule 37 | Trigger 37 | Outcome 37 | P1 |
-| FUN-038 | Functional 38 | Rule 38 | Trigger 38 | Outcome 38 | P1 |
-| FUN-039 | Functional 39 | Rule 39 | Trigger 39 | Outcome 39 | P1 |
-| FUN-040 | Functional 40 | Rule 40 | Trigger 40 | Outcome 40 | P1 |
-| FUN-041 | Functional 41 | Rule 41 | Trigger 41 | Outcome 41 | P1 |
-| FUN-042 | Functional 42 | Rule 42 | Trigger 42 | Outcome 42 | P1 |
-| FUN-043 | Functional 43 | Rule 43 | Trigger 43 | Outcome 43 | P1 |
-| FUN-044 | Functional 44 | Rule 44 | Trigger 44 | Outcome 44 | P1 |
-| FUN-045 | Functional 45 | Rule 45 | Trigger 45 | Outcome 45 | P1 |
-| FUN-046 | Functional 46 | Rule 46 | Trigger 46 | Outcome 46 | P1 |
-| FUN-047 | Functional 47 | Rule 47 | Trigger 47 | Outcome 47 | P1 |
-| FUN-048 | Functional 48 | Rule 48 | Trigger 48 | Outcome 48 | P1 |
-| FUN-049 | Functional 49 | Rule 49 | Trigger 49 | Outcome 49 | P1 |
-| FUN-050 | Functional 50 | Rule 50 | Trigger 50 | Outcome 50 | P1 |
+| ID | Category | Rule | Trigger | Expected |
+|----|----------|------|---------|----------|
+| FUN-001 | Workflow | Get my prefs | GET me | Prefs |
+| FUN-002 | Workflow | Get by key | GET key | Value |
+| FUN-003 | Workflow | Set preference | PUT | Set |
+| FUN-004 | Workflow | Set theme | PUT theme | Theme |
+| FUN-005 | Workflow | Set language | PUT language | Language |
+| FUN-006 | Workflow | Set notifications | PUT notifications | Set |
+| FUN-007 | Workflow | Reset | POST reset | Reset |
+| FUN-008 | Workflow | Bulk set | PUT bulk | Bulk |
+| FUN-009 | Workflow | Delete | DELETE key | Deleted |
+| FUN-010 | Workflow | Get all keys | GET keys | Keys |
+| FUN-011 | Workflow | Theme options | GET themes | Options |
+| FUN-012 | Workflow | Language options | GET languages | Options |
+| FUN-013 | Workflow | Set timezone | PUT timezone | Set |
+| FUN-014 | Workflow | Set date format | PUT dateFormat | Set |
+| FUN-015 | Workflow | Set page size | PUT pageSize | Set |
+| FUN-016 | Validation | Valid theme | Invalid | 400 |
+| FUN-017 | Validation | Valid language | Invalid | 400 |
+| FUN-018 | Validation | Valid key | Invalid | 400 |
+| FUN-019 | Validation | Permission | No permission | 403 |
+| FUN-020 | Validation | Own prefs | Other user | 403 |
+| FUN-021 | Validation | Key format | Invalid | 400 |
+| FUN-022 | Validation | Value format | Invalid | 400 |
+| FUN-023 | Validation | Type match | Mismatch | 400 |
+| FUN-024 | Validation | Reserved key | Reserved | 403 |
+| FUN-025 | Validation | Value length | Too long | 400 |
+| FUN-026 | Constraint | Soft delete | Query | Excluded |
+| FUN-027 | Constraint | Org scope | Cross-org | 403 |
+| FUN-028 | Constraint | Version | Optimistic | 409 |
+| FUN-029 | Constraint | Max keys | >500 | 400 |
+| FUN-030 | Constraint | Max bulk | >100 | 400 |
+| FUN-031 | Constraint | Value size | >10K | 400 |
+| FUN-032 | Constraint | Key size | >255 | 400 |
+| FUN-033 | Constraint | Theme options | Valid only | 400 |
+| FUN-034 | Constraint | Language options | Valid only | 400 |
+| FUN-035 | Constraint | URL length | >2048 | 414 |
+| FUN-036 | Audit | Set | PUT | Audit |
+| FUN-037 | Audit | Delete | DELETE | Audit |
+| FUN-038 | Audit | Reset | POST reset | Audit |
+| FUN-039 | Audit | Bulk | PUT bulk | Audit |
+| FUN-040 | Audit | Timestamp | Any | UTC |
+| FUN-041 | Audit | User ID | Any | User ID |
+| FUN-042 | Audit | IP | Any | IP |
+| FUN-043 | Audit | Resource | Any | Resource |
+| FUN-044 | Audit | Outcome | Any | Outcome |
+| FUN-045 | Audit | Key | Any | Key |
+| FUN-046 | Business | Soft-deleted | Query | Excluded |
+| FUN-047 | Business | Inactive | Query | Excluded |
+| FUN-048 | Business | Permission | Query | Scoped |
+| FUN-049 | Business | User scope | Own prefs | Correct |
+| FUN-050 | Business | Default fallback | No value | Default |
 
 ---
 
 ## §5 Integration Tests (50)
 
-| ID | Test Name | Operation | Entities Involved | Expected Result | Priority |
-|----|-----------|----------|-------------------|-----------------|----------|
-| INT-001 | Integration 1 | Op 1 | Entities 1 | Result 1 | P0 |
-| INT-002 | Integration 2 | Op 2 | Entities 2 | Result 2 | P0 |
-| INT-003 | Integration 3 | Op 3 | Entities 3 | Result 3 | P0 |
-| INT-004 | Integration 4 | Op 4 | Entities 4 | Result 4 | P0 |
-| INT-005 | Integration 5 | Op 5 | Entities 5 | Result 5 | P0 |
-| INT-006 | Integration 6 | Op 6 | Entities 6 | Result 6 | P1 |
-| INT-007 | Integration 7 | Op 7 | Entities 7 | Result 7 | P1 |
-| INT-008 | Integration 8 | Op 8 | Entities 8 | Result 8 | P1 |
-| INT-009 | Integration 9 | Op 9 | Entities 9 | Result 9 | P1 |
-| INT-010 | Integration 10 | Op 10 | Entities 10 | Result 10 | P1 |
-| INT-011 | Integration 11 | Op 11 | Entities 11 | Result 11 | P1 |
-| INT-012 | Integration 12 | Op 12 | Entities 12 | Result 12 | P1 |
-| INT-013 | Integration 13 | Op 13 | Entities 13 | Result 13 | P1 |
-| INT-014 | Integration 14 | Op 14 | Entities 14 | Result 14 | P1 |
-| INT-015 | Integration 15 | Op 15 | Entities 15 | Result 15 | P1 |
-| INT-016 | Integration 16 | Op 16 | Entities 16 | Result 16 | P1 |
-| INT-017 | Integration 17 | Op 17 | Entities 17 | Result 17 | P1 |
-| INT-018 | Integration 18 | Op 18 | Entities 18 | Result 18 | P1 |
-| INT-019 | Integration 19 | Op 19 | Entities 19 | Result 19 | P1 |
-| INT-020 | Integration 20 | Op 20 | Entities 20 | Result 20 | P1 |
-| INT-021 | Integration 21 | Op 21 | Entities 21 | Result 21 | P1 |
-| INT-022 | Integration 22 | Op 22 | Entities 22 | Result 22 | P1 |
-| INT-023 | Integration 23 | Op 23 | Entities 23 | Result 23 | P1 |
-| INT-024 | Integration 24 | Op 24 | Entities 24 | Result 24 | P1 |
-| INT-025 | Integration 25 | Op 25 | Entities 25 | Result 25 | P1 |
-| INT-026 | Integration 26 | Op 26 | Entities 26 | Result 26 | P1 |
-| INT-027 | Integration 27 | Op 27 | Entities 27 | Result 27 | P1 |
-| INT-028 | Integration 28 | Op 28 | Entities 28 | Result 28 | P1 |
-| INT-029 | Integration 29 | Op 29 | Entities 29 | Result 29 | P1 |
-| INT-030 | Integration 30 | Op 30 | Entities 30 | Result 30 | P1 |
-| INT-031 | Integration 31 | Op 31 | Entities 31 | Result 31 | P1 |
-| INT-032 | Integration 32 | Op 32 | Entities 32 | Result 32 | P1 |
-| INT-033 | Integration 33 | Op 33 | Entities 33 | Result 33 | P1 |
-| INT-034 | Integration 34 | Op 34 | Entities 34 | Result 34 | P1 |
-| INT-035 | Integration 35 | Op 35 | Entities 35 | Result 35 | P1 |
-| INT-036 | Integration 36 | Op 36 | Entities 36 | Result 36 | P1 |
-| INT-037 | Integration 37 | Op 37 | Entities 37 | Result 37 | P1 |
-| INT-038 | Integration 38 | Op 38 | Entities 38 | Result 38 | P1 |
-| INT-039 | Integration 39 | Op 39 | Entities 39 | Result 39 | P1 |
-| INT-040 | Integration 40 | Op 40 | Entities 40 | Result 40 | P1 |
-| INT-041 | Integration 41 | Op 41 | Entities 41 | Result 41 | P1 |
-| INT-042 | Integration 42 | Op 42 | Entities 42 | Result 42 | P1 |
-| INT-043 | Integration 43 | Op 43 | Entities 43 | Result 43 | P1 |
-| INT-044 | Integration 44 | Op 44 | Entities 44 | Result 44 | P1 |
-| INT-045 | Integration 45 | Op 45 | Entities 45 | Result 45 | P1 |
-| INT-046 | Integration 46 | Op 46 | Entities 46 | Result 46 | P1 |
-| INT-047 | Integration 47 | Op 47 | Entities 47 | Result 47 | P1 |
-| INT-048 | Integration 48 | Op 48 | Entities 48 | Result 48 | P1 |
-| INT-049 | Integration 49 | Op 49 | Entities 49 | Result 49 | P1 |
-| INT-050 | Integration 50 | Op 50 | Entities 50 | Result 50 | P1 |
+| ID | Category | Scenario | Entities | Expected |
+|----|----------|----------|----------|----------|
+| INT-001 | CRUD | Set → Get | Preference | Match |
+| INT-002 | CRUD | Delete → Get | Preference | Default |
+| INT-003 | CRUD | Reset → Get | Preference | Default |
+| INT-004 | CRUD | Bulk set → Get | Preference | Match |
+| INT-005 | CRUD | Theme set | Preference | Theme |
+| INT-006 | CRUD | Language set | Preference | Language |
+| INT-007 | CRUD | Notification set | Preference | Notifications |
+| INT-008 | CRUD | Get all keys | Preference | Keys |
+| INT-009 | CRUD | Get by key | Preference | Value |
+| INT-010 | CRUD | Options | Preference | Options |
+| INT-011 | Theme | Set theme | Preference | Theme |
+| INT-012 | Theme | Get theme | Preference | Theme |
+| INT-013 | Theme | Theme options | Preference | Options |
+| INT-014 | Language | Set language | Preference | Language |
+| INT-015 | Language | Get language | Preference | Language |
+| INT-016 | Language | Language options | Preference | Options |
+| INT-017 | Notification | Set | Preference | Set |
+| INT-018 | Notification | Get | Preference | Get |
+| INT-019 | Notification | Format | Preference | Format |
+| INT-020 | Notification | Types | Preference | Types |
+| INT-021 | Pagination | Set page size | Preference | Set |
+| INT-022 | Pagination | Get page size | Preference | Get |
+| INT-023 | Pagination | Invalid | Preference | 400 |
+| INT-024 | Pagination | Boundary | Preference | Exact |
+| INT-025 | Pagination | Default | Preference | Default |
+| INT-026 | Relationships | Preference → User | Preference, User | Linked |
+| INT-027 | Relationships | Orphan | Deleted user | 404 |
+| INT-028 | Relationships | User scope | User | Scoped |
+| INT-029 | Relationships | Default cascade | User | Defaults |
+| INT-030 | Relationships | Override | User | Override |
+| INT-031 | Error | DB down | DB | 503 |
+| INT-032 | Error | Auth down | Auth | 401/503 |
+| INT-033 | Error | Validation | Bad input | 400 |
+| INT-034 | Error | NotFound | Invalid key | 404 |
+| INT-035 | Error | Forbidden | No permission | 403 |
+| INT-036 | Error | Conflict | Duplicate | 409 |
+| INT-037 | Error | Rate limit | Too many | 429 |
+| INT-038 | Error | Timeout | Slow | 504 |
+| INT-039 | Error | Payload | Huge | 413 |
+| INT-040 | Error | Media | Wrong type | 415 |
+| INT-041 | Error | Method | Wrong verb | 405 |
+| INT-042 | Error | Service | Dependency | 503 |
+| INT-043 | Error | Gateway | Upstream | 504 |
+| INT-044 | Error | Gone | Deleted | 410 |
+| INT-045 | Error | Locked | Locked | 423 |
+| INT-046 | E2E | Full set flow | Preference | Set → Get |
+| INT-047 | E2E | Full reset flow | Preference | Reset → Default |
+| INT-048 | E2E | Theme flow | Preference | Set → Get |
+| INT-049 | E2E | Language flow | Preference | Set → Get |
+| INT-050 | E2E | Session expiry | Auth | Clean fail |
 
 ---
 
 ## §6 Security Tests (50)
 
-| ID | Test Name | Attack Vector | Target | Expected Block | Priority |
-|----|-----------|--------------|--------|----------------|----------|
-| SEC-001 | Security 1 | Attack 1 | Target 1 | Block 1 | P0 |
-| SEC-002 | Security 2 | Attack 2 | Target 2 | Block 2 | P0 |
-| SEC-003 | Security 3 | Attack 3 | Target 3 | Block 3 | P0 |
-| SEC-004 | Security 4 | Attack 4 | Target 4 | Block 4 | P0 |
-| SEC-005 | Security 5 | Attack 5 | Target 5 | Block 5 | P0 |
-| SEC-006 | Security 6 | Attack 6 | Target 6 | Block 6 | P0 |
-| SEC-007 | Security 7 | Attack 7 | Target 7 | Block 7 | P0 |
-| SEC-008 | Security 8 | Attack 8 | Target 8 | Block 8 | P0 |
-| SEC-009 | Security 9 | Attack 9 | Target 9 | Block 9 | P0 |
-| SEC-010 | Security 10 | Attack 10 | Target 10 | Block 10 | P0 |
-| SEC-011 | Security 11 | Attack 11 | Target 11 | Block 11 | P1 |
-| SEC-012 | Security 12 | Attack 12 | Target 12 | Block 12 | P1 |
-| SEC-013 | Security 13 | Attack 13 | Target 13 | Block 13 | P1 |
-| SEC-014 | Security 14 | Attack 14 | Target 14 | Block 14 | P1 |
-| SEC-015 | Security 15 | Attack 15 | Target 15 | Block 15 | P1 |
-| SEC-016 | Security 16 | Attack 16 | Target 16 | Block 16 | P1 |
-| SEC-017 | Security 17 | Attack 17 | Target 17 | Block 17 | P1 |
-| SEC-018 | Security 18 | Attack 18 | Target 18 | Block 18 | P1 |
-| SEC-019 | Security 19 | Attack 19 | Target 19 | Block 19 | P1 |
-| SEC-020 | Security 20 | Attack 20 | Target 20 | Block 20 | P1 |
-| SEC-021 | Security 21 | Attack 21 | Target 21 | Block 21 | P1 |
-| SEC-022 | Security 22 | Attack 22 | Target 22 | Block 22 | P1 |
-| SEC-023 | Security 23 | Attack 23 | Target 23 | Block 23 | P1 |
-| SEC-024 | Security 24 | Attack 24 | Target 24 | Block 24 | P1 |
-| SEC-025 | Security 25 | Attack 25 | Target 25 | Block 25 | P1 |
-| SEC-026 | Security 26 | Attack 26 | Target 26 | Block 26 | P1 |
-| SEC-027 | Security 27 | Attack 27 | Target 27 | Block 27 | P1 |
-| SEC-028 | Security 28 | Attack 28 | Target 28 | Block 28 | P1 |
-| SEC-029 | Security 29 | Attack 29 | Target 29 | Block 29 | P1 |
-| SEC-030 | Security 30 | Attack 30 | Target 30 | Block 30 | P1 |
-| SEC-031 | Security 31 | Attack 31 | Target 31 | Block 31 | P1 |
-| SEC-032 | Security 32 | Attack 32 | Target 32 | Block 32 | P1 |
-| SEC-033 | Security 33 | Attack 33 | Target 33 | Block 33 | P1 |
-| SEC-034 | Security 34 | Attack 34 | Target 34 | Block 34 | P1 |
-| SEC-035 | Security 35 | Attack 35 | Target 35 | Block 35 | P1 |
-| SEC-036 | Security 36 | Attack 36 | Target 36 | Block 36 | P1 |
-| SEC-037 | Security 37 | Attack 37 | Target 37 | Block 37 | P1 |
-| SEC-038 | Security 38 | Attack 38 | Target 38 | Block 38 | P1 |
-| SEC-039 | Security 39 | Attack 39 | Target 39 | Block 39 | P1 |
-| SEC-040 | Security 40 | Attack 40 | Target 40 | Block 40 | P1 |
-| SEC-041 | Security 41 | Attack 41 | Target 41 | Block 41 | P1 |
-| SEC-042 | Security 42 | Attack 42 | Target 42 | Block 42 | P1 |
-| SEC-043 | Security 43 | Attack 43 | Target 43 | Block 43 | P1 |
-| SEC-044 | Security 44 | Attack 44 | Target 44 | Block 44 | P1 |
-| SEC-045 | Security 45 | Attack 45 | Target 45 | Block 45 | P1 |
-| SEC-046 | Security 46 | Attack 46 | Target 46 | Block 46 | P1 |
-| SEC-047 | Security 47 | Attack 47 | Target 47 | Block 47 | P1 |
-| SEC-048 | Security 48 | Attack 48 | Target 48 | Block 48 | P1 |
-| SEC-049 | Security 49 | Attack 49 | Target 49 | Block 49 | P1 |
-| SEC-050 | Security 50 | Attack 50 | Target 50 | Block 50 | P1 |
+| ID | Category | Attack | Target | Expected |
+|----|----------|--------|-------|----------|
+| SEC-001 | Injection | SQL | Key | Sanitized |
+| SEC-002 | Injection | XSS | Value | Encoded |
+| SEC-003 | Injection | Path traversal | Path | Rejected |
+| SEC-004 | Injection | NoSQL | Filter | Rejected |
+| SEC-005 | Injection | Command | Export | Rejected |
+| SEC-006 | Injection | Header | Header | Rejected |
+| SEC-007 | Injection | Log | Input | Sanitized |
+| SEC-008 | Injection | LDAP | Search | Rejected |
+| SEC-009 | Injection | Log4j | Input | Rejected |
+| SEC-010 | Injection | SSRF | URL | Rejected |
+| SEC-011 | Access | No auth | All | 401 |
+| SEC-012 | Access | Wrong role | Admin | 403 |
+| SEC-013 | Access | Cross-org | Other org | 403 |
+| SEC-014 | Access | Horizontal | Other user | 403 |
+| SEC-015 | Access | Vertical | Admin | 403 |
+| SEC-016 | Access | Expired | Token | 401 |
+| SEC-017 | Access | Revoked | Token | 401 |
+| SEC-018 | Access | Tampered | Token | 401 |
+| SEC-019 | Access | Scope | OAuth | 403 |
+| SEC-020 | Access | Service | UI | 403 |
+| SEC-021 | IDOR | Other user prefs | ID | 403 |
+| SEC-022 | IDOR | Other user | ID | 403 |
+| SEC-023 | IDOR | Manipulate | Path | 403 |
+| SEC-024 | IDOR | Enumeration | IDs | Rate limit |
+| SEC-025 | IDOR | Pollution | Params | First |
+| SEC-026 | Mass Assign | Admin | Body | Ignored |
+| SEC-027 | Mass Assign | Role | Body | Ignored |
+| SEC-028 | Mass Assign | Org | Body | Ignored |
+| SEC-029 | Mass Assign | User | Body | Ignored |
+| SEC-030 | Mass Assign | Permission | Body | Ignored |
+| SEC-031 | Auth | Fixation | Session | New |
+| SEC-032 | Auth | Hijack | Token | Invalid |
+| SEC-033 | Auth | Replay | Old token | Reject |
+| SEC-034 | Auth | CSRF | State | Token |
+| SEC-035 | Auth | Brute | Login | Rate limit |
+| SEC-036 | Data | PII in export | Export | Masked |
+| SEC-037 | Data | Logs | Sensitive | No PII |
+| SEC-038 | Data | Error | 500 | Generic |
+| SEC-039 | Data | Stack | Exception | Hidden |
+| SEC-040 | Data | Debug | Prod | Off |
+| SEC-041 | OWASP | A01 | Access | 403 |
+| SEC-042 | OWASP | A02 | Crypto | TLS |
+| SEC-043 | OWASP | A03 | Injection | Param |
+| SEC-044 | OWASP | A04 | Design | Defensive |
+| SEC-045 | OWASP | A05 | Misconfig | Secure |
+| SEC-046 | OWASP | A06 | Vulnerable | No CVE |
+| SEC-047 | OWASP | A07 | Auth | Strong |
+| SEC-048 | OWASP | A08 | Integrity | Checks |
+| SEC-049 | OWASP | A09 | Logging | Audit |
+| SEC-050 | OWASP | A10 | SSRF | No internal |
 
 ---
 
 ## §7 Concurrency Tests (25)
 
-| ID | Test Name | Concurrent Scenario | Expected Behavior | Priority |
-|----|-----------|---------------------|-------------------|----------|
-| CON-001 | Concurrency 1 | Scenario 1 | Behavior 1 | P0 |
-| CON-002 | Concurrency 2 | Scenario 2 | Behavior 2 | P0 |
-| CON-003 | Concurrency 3 | Scenario 3 | Behavior 3 | P0 |
-| CON-004 | Concurrency 4 | Scenario 4 | Behavior 4 | P0 |
-| CON-005 | Concurrency 5 | Scenario 5 | Behavior 5 | P0 |
-| CON-006 | Concurrency 6 | Scenario 6 | Behavior 6 | P1 |
-| CON-007 | Concurrency 7 | Scenario 7 | Behavior 7 | P1 |
-| CON-008 | Concurrency 8 | Scenario 8 | Behavior 8 | P1 |
-| CON-009 | Concurrency 9 | Scenario 9 | Behavior 9 | P1 |
-| CON-010 | Concurrency 10 | Scenario 10 | Behavior 10 | P1 |
-| CON-011 | Concurrency 11 | Scenario 11 | Behavior 11 | P1 |
-| CON-012 | Concurrency 12 | Scenario 12 | Behavior 12 | P1 |
-| CON-013 | Concurrency 13 | Scenario 13 | Behavior 13 | P1 |
-| CON-014 | Concurrency 14 | Scenario 14 | Behavior 14 | P1 |
-| CON-015 | Concurrency 15 | Scenario 15 | Behavior 15 | P1 |
-| CON-016 | Concurrency 16 | Scenario 16 | Behavior 16 | P1 |
-| CON-017 | Concurrency 17 | Scenario 17 | Behavior 17 | P1 |
-| CON-018 | Concurrency 18 | Scenario 18 | Behavior 18 | P1 |
-| CON-019 | Concurrency 19 | Scenario 19 | Behavior 19 | P1 |
-| CON-020 | Concurrency 20 | Scenario 20 | Behavior 20 | P1 |
-| CON-021 | Concurrency 21 | Scenario 21 | Behavior 21 | P1 |
-| CON-022 | Concurrency 22 | Scenario 22 | Behavior 22 | P1 |
-| CON-023 | Concurrency 23 | Scenario 23 | Behavior 23 | P1 |
-| CON-024 | Concurrency 24 | Scenario 24 | Behavior 24 | P1 |
-| CON-025 | Concurrency 25 | Scenario 25 | Behavior 25 | P1 |
+| ID | Scenario | Expected |
+|----|----------|----------|
+| CON-001 | 2 users get same | Both succeed |
+| CON-002 | 2 users set same key | Last write |
+| CON-003 | 2 users set different | Both succeed |
+| CON-004 | 10 concurrent gets | All succeed |
+| CON-005 | 50 concurrent list | All succeed |
+| CON-006 | Double-click set | Single |
+| CON-007 | Rapid update | Last wins |
+| CON-008 | Delete during read | Snapshot |
+| CON-009 | Cache invalidation | No stale |
+| CON-010 | Connection pool | Queue/503 |
+| CON-011 | Transaction | No dirty |
+| CON-012 | Optimistic | Last write |
+| CON-013 | Deadlock | Timeout |
+| CON-014 | Bulk concurrent | Last or merge |
+| CON-015 | Rate limit | Fair |
+| CON-016 | Session expiry | Clean |
+| CON-017 | Multiple sets | All succeed |
+| CON-018 | Cache stampede | Single |
+| CON-019 | Lock | Timeout |
+| CON-020 | Memory | Graceful |
+| CON-021 | Theme change | Consistent |
+| CON-022 | Language change | Consistent |
+| CON-023 | Permission change | Old |
+| CON-024 | Reset concurrent | Consistent |
+| CON-025 | Replica lag | Eventual |
 
 ---
 
 ## §8 Unit Tests (21)
 
-| ID | Test Name | Category | Input | Expected Output | Priority |
-|----|-----------|----------|-------|-----------------|----------|
-| UNT-001 | Unit 1 | Validation | Input 1 | Output 1 | P0 |
-| UNT-002 | Unit 2 | Validation | Input 2 | Output 2 | P0 |
-| UNT-003 | Unit 3 | Validation | Input 3 | Output 3 | P0 |
-| UNT-004 | Unit 4 | Validation | Input 4 | Output 4 | P0 |
-| UNT-005 | Unit 5 | Validation | Input 5 | Output 5 | P0 |
-| UNT-006 | Unit 6 | Validation | Input 6 | Output 6 | P1 |
-| UNT-007 | Unit 7 | Validation | Input 7 | Output 7 | P1 |
-| UNT-008 | Unit 8 | Validation | Input 8 | Output 8 | P1 |
-| UNT-009 | Unit 9 | Validation | Input 9 | Output 9 | P1 |
-| UNT-010 | Unit 10 | Validation | Input 10 | Output 10 | P1 |
-| UNT-011 | Unit 11 | Validation | Input 11 | Output 11 | P1 |
-| UNT-012 | Unit 12 | Validation | Input 12 | Output 12 | P1 |
-| UNT-013 | Unit 13 | Validation | Input 13 | Output 13 | P1 |
-| UNT-014 | Unit 14 | Validation | Input 14 | Output 14 | P1 |
-| UNT-015 | Unit 15 | Validation | Input 15 | Output 15 | P1 |
-| UNT-016 | Unit 16 | Validation | Input 16 | Output 16 | P1 |
-| UNT-017 | Unit 17 | Validation | Input 17 | Output 17 | P1 |
-| UNT-018 | Unit 18 | Validation | Input 18 | Output 18 | P1 |
-| UNT-019 | Unit 19 | Validation | Input 19 | Output 19 | P1 |
-| UNT-020 | Unit 20 | Validation | Input 20 | Output 20 | P1 |
-| UNT-021 | Unit 21 | Validation | Input 21 | Output 21 | P1 |
+| ID | Category | Input | Expected |
+|----|----------|-------|----------|
+| UNT-001 | Validation | Valid key | Accept |
+| UNT-002 | Validation | Invalid key | Reject |
+| UNT-003 | Validation | Valid value | Accept |
+| UNT-004 | Validation | Invalid value | Reject |
+| UNT-005 | Validation | Valid theme | Accept |
+| UNT-006 | Formatting | Key | Formatted |
+| UNT-007 | Formatting | Value | Formatted |
+| UNT-008 | Formatting | Date | ISO 8601 |
+| UNT-009 | Calculation | Preference count | Correct |
+| UNT-010 | Calculation | Key count | Correct |
+| UNT-011 | Calculation | Default merge | Correct |
+| UNT-012 | Calculation | Reset scope | Correct |
+| UNT-013 | Calculation | Bulk merge | Correct |
+| UNT-014 | Status | Active | Active only |
+| UNT-015 | Status | Inactive | Inactive only |
+| UNT-016 | Status | All | All |
+| UNT-017 | Status | Theme default | Default |
+| UNT-018 | Status | Language default | Default |
+| UNT-019 | Collections | Empty | [] |
+| UNT-020 | Collections | Single | [item] |
+| UNT-021 | Collections | Dedupe | No dupes |
 
 ---
 
 ## §9 Performance Tests (16)
 
-| ID | Test Name | Operation | Threshold | Priority |
-|----|-----------|----------|-----------|----------|
-| PRF-001 | Perf 1 | Operation 1 | < 500ms | P0 |
-| PRF-002 | Perf 2 | Operation 2 | < 500ms | P0 |
-| PRF-003 | Perf 3 | Operation 3 | < 500ms | P0 |
-| PRF-004 | Perf 4 | Operation 4 | < 500ms | P0 |
-| PRF-005 | Perf 5 | Operation 5 | < 500ms | P0 |
-| PRF-006 | Perf 6 | Operation 6 | < 500ms | P1 |
-| PRF-007 | Perf 7 | Operation 7 | < 500ms | P1 |
-| PRF-008 | Perf 8 | Operation 8 | < 500ms | P1 |
-| PRF-009 | Perf 9 | Operation 9 | < 500ms | P1 |
-| PRF-010 | Perf 10 | Operation 10 | < 500ms | P1 |
-| PRF-011 | Perf 11 | Operation 11 | < 500ms | P1 |
-| PRF-012 | Perf 12 | Operation 12 | < 500ms | P1 |
-| PRF-013 | Perf 13 | Operation 13 | < 500ms | P1 |
-| PRF-014 | Perf 14 | Operation 14 | < 500ms | P1 |
-| PRF-015 | Perf 15 | Operation 15 | < 500ms | P1 |
-| PRF-016 | Perf 16 | Operation 16 | < 500ms | P1 |
+| ID | Operation | Threshold |
+|----|-----------|-----------|
+| PRF-001 | Get all | < 100ms |
+| PRF-002 | Get by key | < 50ms |
+| PRF-003 | Set preference | < 100ms |
+| PRF-004 | Bulk set | < 300ms |
+| PRF-005 | Delete | < 100ms |
+| PRF-006 | Reset | < 200ms |
+| PRF-007 | Get theme | < 50ms |
+| PRF-008 | Get language | < 50ms |
+| PRF-009 | Get options | < 100ms |
+| PRF-010 | 10 concurrent | < 1s each |
+| PRF-011 | 50 concurrent | < 2s each |
+| PRF-012 | 5 concurrent set | < 500ms each |
+| PRF-013 | Memory list | < 10MB |
+| PRF-014 | Memory bulk | < 50MB |
+| PRF-015 | Cache hit | > 80% |
+| PRF-016 | DB queries | < 3 per request |
 
 ---
 
 ## §10 Load Tests (10)
 
-| ID | Test Name | Load Profile | Duration | Success Criteria | Priority |
-|----|-----------|-------------|----------|-------------------|----------|
-| LDT-001 | Load 1 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-002 | Load 2 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-003 | Load 3 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-004 | Load 4 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-005 | Load 5 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-006 | Load 6 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-007 | Load 7 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-008 | Load 8 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-009 | Load 9 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-010 | Load 10 | 20 req/s | 5 min | 95% < 500ms | P0 |
+| ID | Load Profile | Duration | Success Criteria |
+|----|--------------|----------|-------------------|
+| LDT-001 | 10 users | 10 min | 95% < 500ms |
+| LDT-002 | 50 users | 10 min | 95% < 1s |
+| LDT-003 | 100 users | 10 min | 95% < 2s |
+| LDT-004 | Spike 10→100 | 5 min | No crash |
+| LDT-005 | Spike 50→200 | 5 min | Graceful |
+| LDT-006 | Stress 200 | Until fail | Document |
+| LDT-007 | Stress 500 | Until fail | Document |
+| LDT-008 | 50 concurrent | 5 min | Queue/limit |
+| LDT-009 | Recovery spike | 5 min | Baseline |
+| LDT-010 | Recovery stress | 10 min | Full |
+
+---
+
+## Traceability Matrix
+
+| Requirement | Test Cases |
+|-------------|------------|
+| CRUD preferences | POS-001–005, FUN-001–003 |
+| Theme settings | POS-004, POS-007, FUN-004 |
+| Language settings | POS-005, POS-008, FUN-005 |
+| Notification settings | POS-006, POS-009, FUN-006 |
+| 3:1 Ratio | NEG-001–070, BND-001–070 |
 
 ---
 

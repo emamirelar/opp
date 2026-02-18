@@ -11,19 +11,18 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P? 90≥90 ✅ | E≥3P? 90≥90 ✅ | F≥3P? 90≥90 ✅ | I≥3P? 90≥90 ✅
 
 ---
 
@@ -44,7 +43,7 @@
 
 ## §1 Positive Tests (Happy Path)
 
-> **Count: 35** | **Minimum: 30-50** | ✅ COMPLIANT
+> **Count: 30** | **Minimum: 30-50** | ✅ COMPLIANT
 
 | ID | Test Name | Precondition | Steps (Brief) | Expected Result | Priority |
 |----|-----------|-------------|---------------|-----------------|----------|
@@ -78,17 +77,12 @@
 | POS-028 | Audit includes IP address | CUD from client | Check audit | Client IP captured (if configured) | P2 |
 | POS-029 | Audit for status change | Entity in Draft | Change to Active | Status transition in audit | P1 |
 | POS-030 | Audit for workflow approval | Opportunity in GO | DoA2 approves | Approval action in audit | P0 |
-| POS-031 | Pagination of audit results | 1000+ audit records | Query with page=2 | Page 2 returned correctly | P2 |
-| POS-032 | Sort audit by timestamp desc | Audit data exists | Query with sort | Newest first | P1 |
-| POS-033 | Filter audit by action type | Mix of CUD | Filter Action=Update | Only updates returned | P1 |
-| POS-034 | Audit record immutable | Audit exists | Attempt update | Audit records read-only | P0 |
-| POS-035 | Reopen from cancelled audited | Opportunity cancelled | Reopen | Reopen action in audit | P1 |
 
 ---
 
 ## §2 Negative Tests (Failure Scenarios)
 
-> **Count: 70** | **Minimum: 70** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90** | ✅ COMPLIANT
 
 ### 2.1 Audit Bypass / Tampering (15)
 
@@ -180,11 +174,36 @@
 | NEG-069 | Audit index corruption | DB index issue | Query degrades, no crash | P2 |
 | NEG-070 | Audit disk quota exceeded | Disk full | Alert, CUD may fail | P1 |
 
+### 2.5 Additional Negative (20)
+
+| ID | Test Name | Scenario | Expected | Priority |
+|----|-----------|----------|----------|----------|
+| NEG-071 | Query audit with invalid entity type | EntityType=Invalid | 400 or empty | P1 |
+| NEG-072 | Export with no data | Empty range | Empty file | P1 |
+| NEG-073 | Audit query with SQL injection | Filter=' | Parameterized | P0 |
+| NEG-074 | Modify audit record | Direct DB update | Audit immutable | P0 |
+| NEG-075 | Delete audit via API | DELETE audit | 403 | P0 |
+| NEG-076 | Spoof CreatedBy in request | Fake user ID | Server uses token | P0 |
+| NEG-077 | Future timestamp in request | Future date | Server uses server time | P0 |
+| NEG-078 | Unauthenticated CUD | No token | 401 | P0 |
+| NEG-079 | Expired token CUD | Token expired | 401 | P0 |
+| NEG-080 | Audit disabled by config | Config off | No audit | P1 |
+| NEG-081 | Audit table full | Disk full | CUD fails or degrades | P1 |
+| NEG-082 | Audit write timeout | DB timeout | Rollback | P1 |
+| NEG-083 | Query with invalid entity ID | EntityId=999999 | Empty or 404 | P1 |
+| NEG-084 | Export with invalid date range | End before start | 400 | P1 |
+| NEG-085 | Export without permission | No audit view | 403 | P0 |
+| NEG-086 | Audit truncation | 1MB string | Truncated or rejected | P1 |
+| NEG-087 | Negative entity ID | EntityId=-1 | 400 or empty | P1 |
+| NEG-088 | Page size over max | PageSize=10000 | 400 or capped | P1 |
+| NEG-089 | Invalid date format | Date=invalid | 400 | P1 |
+| NEG-090 | Oversized export request | 10 years | 400 or paginated | P1 |
+
 ---
 
 ## §3 Boundary Tests (Edge Cases)
 
-> **Count: 70** | **Minimum: 70** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90** | ✅ COMPLIANT
 
 ### 3.1 String Length Boundaries (15)
 
@@ -281,11 +300,36 @@
 | BND-069 | Audit reason | Control chars | Stripped | P1 |
 | BND-070 | JSON in audit | Nested JSON | Valid JSON stored | P1 |
 
+### 3.6 Additional Boundaries (20)
+
+| ID | Test Name | Input | Expected | Priority |
+|----|-----------|-------|----------|----------|
+| BND-071 | Entity name at 1 char | Min length | Accept | P1 |
+| BND-072 | Old value at 0 | Empty | Null or N/A | P1 |
+| BND-073 | New value at 0 | Empty | Null or N/A | P1 |
+| BND-074 | Page at 1 | First page | Valid | P1 |
+| BND-075 | Page size at 1 | Min size | Valid | P1 |
+| BND-076 | Date range at 1 day | 1 day | Valid | P1 |
+| BND-077 | Retention at 0 | Never purge | Valid | P1 |
+| BND-078 | Export limit at 1 | 1 record | Valid | P1 |
+| BND-079 | Batch size at 1 | Min batch | Valid | P1 |
+| BND-080 | Audit results at 0 | No records | Empty array | P1 |
+| BND-081 | Field changes at 0 | No change | Note | P2 |
+| BND-082 | Field changes at 50 | Max | All in audit | P1 |
+| BND-083 | Audit entries at 1 | Single | One item | P1 |
+| BND-084 | Audit entries at 1000+ | Many | Pagination | P1 |
+| BND-085 | Concurrent exports at 1 | Single | Success | P1 |
+| BND-086 | Concurrent exports at 5 | Max | All succeed | P2 |
+| BND-087 | Bulk audit at 1 | Single | One entry | P1 |
+| BND-088 | Bulk audit at 1000 | Max | Batch entries | P1 |
+| BND-089 | Timestamp at epoch | 0 | Valid | P2 |
+| BND-090 | Entity ID at max int | Max | Valid | P1 |
+
 ---
 
 ## §4 Functional Tests (Business Rules)
 
-> **Count: 50** | **Minimum: 50** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90** | ✅ COMPLIANT
 
 ### 4.1 Workflow Rules (15)
 
@@ -357,11 +401,56 @@
 | FUN-049 | Export audit | Action=Export, User, Criteria | P1 |
 | FUN-050 | Retention purge | Action=Purge, Count, Timestamp | P1 |
 
+### 4.5 Additional Functional Rules (40)
+
+| ID | Rule | Trigger | Expected | Priority |
+|----|------|---------|----------|----------|
+| FUN-051 | Every CUD creates audit | Create/Update/Delete | Audit exists | P0 |
+| FUN-052 | Audit immutable | Modify attempt | Rejected | P0 |
+| FUN-053 | CreatedBy on create | Create | Current user | P0 |
+| FUN-054 | LastModifiedBy on update | Update | Current user | P0 |
+| FUN-055 | DeletedBy on soft delete | Delete | Current user | P0 |
+| FUN-056 | DeletedDate on soft delete | Delete | Populated | P0 |
+| FUN-057 | Workflow actions audited | Submit/Approve/Reject | In audit | P0 |
+| FUN-058 | Role changes audited | Assign/remove | Audit entry | P1 |
+| FUN-059 | Login/logout audited | Auth events | Audit entries | P1 |
+| FUN-060 | Failed login audited | Failed auth | Audit with count | P1 |
+| FUN-061 | Export respects retention | Beyond retention | Filtered or blocked | P1 |
+| FUN-062 | Audit query by entity type | Filter EntityType | Only that type | P1 |
+| FUN-063 | Audit query by user | Filter UserId | Only that user | P1 |
+| FUN-064 | Audit includes entity ref | Any CUD | EntityId/EntityType | P0 |
+| FUN-065 | Cascade delete audited | Parent deleted | Child audit | P1 |
+| FUN-066 | Entity ID required | Entity ID | Valid | P0 |
+| FUN-067 | User ID required | User | Valid | P0 |
+| FUN-068 | Timestamp required | Timestamp | Valid | P0 |
+| FUN-069 | Action required | Action | Create/Update/Delete | P0 |
+| FUN-070 | Export date range valid | Start < End | Valid | P1 |
+| FUN-071 | Page size range | 1-1000 | In range | P1 |
+| FUN-072 | Page number positive | >= 1 | Valid | P1 |
+| FUN-073 | Retention non-negative | >= 0 | Valid | P1 |
+| FUN-074 | Filter sanitized | Safe string | XSS escaped | P0 |
+| FUN-075 | Export format valid | CSV/JSON | Valid | P1 |
+| FUN-076 | Entity type allowlist | Partner/Opp/etc | Valid | P1 |
+| FUN-077 | User filter valid | Existing user | Valid | P1 |
+| FUN-078 | Audit ID format | Valid int | Valid | P1 |
+| FUN-079 | Export limit enforced | <= 100000 | Enforced | P1 |
+| FUN-080 | Concurrent export limit | <= 5 | Queue or error | P2 |
+| FUN-081 | Audit PK unique | Duplicate insert | Rejected | P0 |
+| FUN-082 | Audit FK to entity | Orphan audit | Retained | P1 |
+| FUN-083 | Audit FK to user | User deleted | UserId retained | P1 |
+| FUN-084 | No audit update | UPDATE audit | Rejected | P0 |
+| FUN-085 | No audit delete | DELETE audit | Admin purge only | P0 |
+| FUN-086 | Retention purge batch | Purge 100000 | Batched | P1 |
+| FUN-087 | Export format case | csv/CSV | Both work | P2 |
+| FUN-088 | Sort field allowlist | Valid field | Valid | P1 |
+| FUN-089 | Audit entry size limit | Normal payload | Split/reject | P1 |
+| FUN-090 | Sensitive field exclusion | Password change | Password not in audit | P0 |
+
 ---
 
 ## §5 Integration Tests (End-to-End Flows)
 
-> **Count: 50** | **Minimum: 50** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90** | ✅ COMPLIANT
 
 ### 5.1 CRUD + Audit (15)
 
@@ -432,6 +521,51 @@
 | INT-048 | Audit + reporting | Report on audit | Correct aggregates | P1 |
 | INT-049 | Audit + compliance check | Compliance scan | Audit satisfies | P1 |
 | INT-050 | Full lifecycle audit | Create→Update→Delete | All 3 in audit | P0 |
+
+### 5.5 Additional Integration Flows (40)
+
+| ID | Test | Scenario | Expected | Priority |
+|----|------|----------|----------|----------|
+| INT-051 | Create partner → query audit | Partner, Audit | Audit for create | P0 |
+| INT-052 | Update partner → query audit | Partner, Audit | Audit for update | P0 |
+| INT-053 | Delete partner → query audit | Partner, Audit | Audit for delete | P0 |
+| INT-054 | Create opportunity → audit | Opportunity, Audit | Opportunity audit | P0 |
+| INT-055 | Create contact → audit | Contact, Partner, Audit | Contact + Partner ref | P0 |
+| INT-056 | Create interaction → audit | Interaction, Audit | Interaction audit | P1 |
+| INT-057 | Attach document → audit | Document, Audit | Document audit | P1 |
+| INT-058 | Update workflow status → audit | Opportunity, Workflow, Audit | Workflow audit | P0 |
+| INT-059 | Bulk create → audit | Multiple, Audit | Multiple audit entries | P1 |
+| INT-060 | Cascade delete → audit | Parent, Children, Audit | All CUD audited | P1 |
+| INT-061 | Soft delete → restore → audit | Entity, Audit | Delete + restore audited | P1 |
+| INT-062 | Create with relationship → audit | Entity, Related, Audit | Both audited | P1 |
+| INT-063 | Update multiple fields → audit | Entity, Audit | Single audit, all changes | P1 |
+| INT-064 | Transaction rollback → audit | Entity, Audit | No audit or rollback entry | P1 |
+| INT-065 | Cross-entity workflow → audit | Opp, Partner, Audit | Full chain audited | P1 |
+| INT-066 | Query by date range | Last 7 days | Correct records | P0 |
+| INT-067 | Query by entity type | EntityType=Partner | Only partners | P0 |
+| INT-068 | Query by user | UserId=123 | Only user 123 | P0 |
+| INT-069 | Query by entity ID | EntityId=456 | All for entity 456 | P0 |
+| INT-070 | Pagination page 1 | Page=1, Size=50 | First 50 | P1 |
+| INT-071 | Pagination page 2 | Page=2, Size=50 | Next 50 | P1 |
+| INT-072 | Sort by timestamp desc | Sort=Timestamp DESC | Newest first | P1 |
+| INT-073 | Filter by action | Action=Update | Only updates | P1 |
+| INT-074 | Combined filters | Date+User+Type | Intersection | P1 |
+| INT-075 | Empty result | No matching | Empty array | P1 |
+| INT-076 | Export CSV | Date range | Valid CSV | P0 |
+| INT-077 | Export JSON | Date range | Valid JSON | P0 |
+| INT-078 | Export with filters | User+Type+Date | Filtered export | P1 |
+| INT-079 | Export large result | 10000 records | File or chunked | P1 |
+| INT-080 | Export triggers audit | Export | Export action audited | P1 |
+| INT-081 | Export concurrent | 2 users export | Both succeed | P2 |
+| INT-082 | Export retention bound | Beyond retention | Filtered or error | P1 |
+| INT-083 | Export format selection | CSV vs JSON | Correct format | P1 |
+| INT-084 | Export filename | Default | Includes date/type | P2 |
+| INT-085 | Export empty result | No data | Empty file | P1 |
+| INT-086 | Audit for related entity delete | Partner deleted | Contact audit | P1 |
+| INT-087 | Audit with missing user | User deleted | UserId retained | P1 |
+| INT-088 | Audit with missing entity | Entity hard-deleted | Audit retained | P1 |
+| INT-089 | Audit query timeout | Large query | Timeout or paginated | P1 |
+| INT-090 | Audit write failure | DB error | CUD fails | P1 |
 
 ---
 

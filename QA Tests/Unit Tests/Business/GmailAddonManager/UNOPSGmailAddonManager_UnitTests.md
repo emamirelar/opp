@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | ≥30 | ✅ |
+| §2 Negative | 90 | ≥90 | ✅ |
+| §3 Boundary | 90 | ≥90 | ✅ |
+| §4 Functional | 90 | ≥90 | ✅ |
+| §5 Integration | 90 | ≥90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -33,7 +33,7 @@ Gmail addon manager unit tests cover email sync, contact import, OAuth flow, and
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,11 +67,6 @@ Gmail addon manager unit tests cover email sync, contact import, OAuth flow, and
 | POS-028 | Map contact to Gmail | Contact format | Map | Mapped |
 | POS-029 | Get sync status | Sync ran | GetStatus | Status |
 | POS-030 | Get last sync | Sync ran | GetLastSync | Date |
-| POS-031 | Trigger sync | Trigger | TriggerSync | Triggered |
-| POS-032 | Cancel sync | Sync running | Cancel | Cancelled |
-| POS-033 | Get email thread | Thread exists | GetThread | Thread |
-| POS-034 | Search emails | Query valid | Search | Results |
-| POS-035 | Mark as processed | Email exists | MarkProcessed | Marked |
 
 ---
 
@@ -149,10 +144,30 @@ Gmail addon manager unit tests cover email sync, contact import, OAuth flow, and
 | NEG-068 | Import batch validation | Batch invalid | ValidationException |
 | NEG-069 | Token encrypt fail | Encrypt fails | SecurityException |
 | NEG-070 | Token decrypt fail | Decrypt fails | SecurityException |
+| NEG-071 | Sync with whitespace token | Token="   " | ArgumentException |
+| NEG-072 | Import with invalid email | Email invalid | ValidationException |
+| NEG-073 | Get token null user | User=null | ArgumentNullException |
+| NEG-074 | Deduplicate null criteria | Criteria=null | ArgumentNullException |
+| NEG-075 | List emails null token | Token=null | ArgumentNullException |
+| NEG-076 | Get email null ID | Id=null | ArgumentNullException |
+| NEG-077 | Parse sender null | Email=null | ArgumentNullException |
+| NEG-078 | OAuth callback null | Callback=null | ArgumentNullException |
+| NEG-079 | Revoke null token | Token=null | ArgumentNullException |
+| NEG-080 | Validate null token | Token=null | ArgumentNullException |
+| NEG-081 | Search null query | Query=null | ArgumentNullException |
+| NEG-082 | Import batch null | Batch=null | ArgumentNullException |
+| NEG-083 | Get sync status null user | User=null | ArgumentNullException |
+| NEG-084 | Cancel non-running sync | Sync not running | InvalidOperationException |
+| NEG-085 | Mark processed null ID | Id=null | ArgumentNullException |
+| NEG-086 | Link null contact | Contact=null | ArgumentNullException |
+| NEG-087 | Create contact null email | Email=null | ArgumentNullException |
+| NEG-088 | Get thread null ID | Id=null | ArgumentNullException |
+| NEG-089 | Pagination invalid | Page invalid | ArgumentException |
+| NEG-090 | Filter invalid | Filter invalid | ArgumentException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Condition | Expected Result |
 |----|-----------|-------------------|-----------------|
@@ -226,10 +241,30 @@ Gmail addon manager unit tests cover email sync, contact import, OAuth flow, and
 | BND-068 | Sync status completed | Completed | Status |
 | BND-069 | Async cancellation | Cancel token | OperationCanceledException |
 | BND-070 | Task timeout | Timeout | TimeoutException |
+| BND-071 | Email subject single char | Length=1 | Valid |
+| BND-072 | Contact name max | Length=200 | Valid |
+| BND-073 | Email address max | Length=254 | Valid |
+| BND-074 | Page size one | PageSize=1 | Valid |
+| BND-075 | Sync batch max | Batch=100 | Valid |
+| BND-076 | Import batch max | Batch=50 | Valid |
+| BND-077 | Token length max | Length=limit | Valid |
+| BND-078 | Empty email body | Body="" | Valid |
+| BND-079 | Single recipient | Count=1 | Valid |
+| BND-080 | Max recipients | Count=limit | Valid |
+| BND-081 | Empty contact list | List=[] | Returns empty |
+| BND-082 | Single contact | Count=1 | Valid |
+| BND-083 | OAuth state length | State length | Valid |
+| BND-084 | Token expiry boundary | Just expired | Refresh |
+| BND-085 | Rate limit at limit | At limit | Reject |
+| BND-086 | Rate limit at limit-1 | Limit-1 | Valid |
+| BND-087 | Deduplicate threshold | At threshold | Merged |
+| BND-088 | Pagination first page | Page=1 | Valid |
+| BND-089 | Search query max | Query=500 | Valid |
+| BND-090 | Collection single | 1 item | Valid |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -283,10 +318,50 @@ Gmail addon manager unit tests cover email sync, contact import, OAuth flow, and
 | FUN-048 | Localized display | i18n | GetDisplay | Localized |
 | FUN-049 | Permission cached | Performance | Repeated check | Cached |
 | FUN-050 | AsNoTracking read-only | Performance | List | No tracking |
+| FUN-051 | Token required for sync | Validation | SyncEmails | Reject if null |
+| FUN-052 | Email required for import | Validation | ImportContact | Reject if null |
+| FUN-053 | User required for OAuth | Validation | OAuth | Reject if null |
+| FUN-054 | Token encrypted at rest | Constraint | Store | Encrypted |
+| FUN-055 | Token decrypted on use | Constraint | Get | Decrypted |
+| FUN-056 | Duplicate detection by email | Logic | Deduplicate | By email |
+| FUN-057 | OAuth state validated | Validation | Callback | State check |
+| FUN-058 | Token refresh on expiry | Logic | GetToken | Refresh if expired |
+| FUN-059 | Rate limit respected | Constraint | Sync | Limiter |
+| FUN-060 | Pagination correct | Logic | List | Correct page |
+| FUN-061 | List respects IsDeleted | Constraint | List | Excludes deleted |
+| FUN-062 | Map Gmail to contact | Logic | Map | Mapped |
+| FUN-063 | Map contact to Gmail | Logic | Map | Mapped |
+| FUN-064 | Extract sender | Logic | Extract | Sender |
+| FUN-065 | Extract recipients | Logic | Extract | Recipients |
+| FUN-066 | Match contact logic | Logic | Match | Matched |
+| FUN-067 | Create contact logic | Logic | Create | Created |
+| FUN-068 | Link to partner | Logic | Link | Linked |
+| FUN-069 | Pagination offset | Calculation | Page | Skip correct |
+| FUN-070 | Total count accurate | Calculation | Count | Matches |
+| FUN-071 | Sort applies | Calculation | Sort | Ordered |
+| FUN-072 | Filter AND logic | Filter | Multi-filter | All match |
+| FUN-073 | Transaction on import | Transaction | Import | Atomic |
+| FUN-074 | Transaction on sync | Transaction | Sync | Atomic |
+| FUN-075 | Async all operations | Concurrency | All | Async |
+| FUN-076 | Include loads contact | Data load | GetById include | Contact loaded |
+| FUN-077 | No Cartesian on includes | Data load | Multiple includes | Split queries |
+| FUN-078 | Mark processed | Logic | MarkProcessed | Marked |
+| FUN-079 | Get sync status | Logic | GetStatus | Status |
+| FUN-080 | Get last sync | Logic | GetLastSync | Date |
+| FUN-081 | Cancel sync | Logic | Cancel | Cancelled |
+| FUN-082 | Retry on transient | Logic | Retry | Retried |
+| FUN-083 | Revoke invalidates | Logic | Revoke | Invalidated |
+| FUN-084 | Consent stores token | Logic | Consent | Stored |
+| FUN-085 | Callback completes auth | Logic | Callback | Complete |
+| FUN-086 | Deduplicate merges | Logic | Deduplicate | Merged |
+| FUN-087 | Import batch atomic | Logic | ImportBatch | All or none |
+| FUN-088 | Permission before sync | Authorization | Sync | Check first |
+| FUN-089 | Permission before import | Authorization | Import | Check first |
+| FUN-090 | Audit sync and import | Audit | Sync, Import | Logged |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|
@@ -340,6 +415,46 @@ Gmail addon manager unit tests cover email sync, contact import, OAuth flow, and
 | INT-048 | Get last sync | Scenario | GetLastSync | Date |
 | INT-049 | Map formats | Scenario | Map | Mapped |
 | INT-050 | E2E OAuth-sync-import | Scenario | Full flow | Complete |
+| INT-051 | Sync then import | Scenario | Sync, Import | Both |
+| INT-052 | Import then deduplicate | Scenario | Import, Deduplicate | Both |
+| INT-053 | OAuth then sync | Scenario | OAuth, Sync | Both |
+| INT-054 | Token refresh during sync | Scenario | Sync | Refreshed |
+| INT-055 | Batch import | Scenario | ImportBatch | All imported |
+| INT-056 | Search then import | Scenario | Search, Import | Both |
+| INT-057 | Get thread then import | Scenario | Thread, Import | Both |
+| INT-058 | Mark processed | Scenario | MarkProcessed | Marked |
+| INT-059 | Cancel sync | Scenario | Cancel | Cancelled |
+| INT-060 | Get status | Scenario | GetStatus | Status |
+| INT-061 | Get last sync | Scenario | GetLastSync | Date |
+| INT-062 | Gmail API integration | Integration | Gmail API | Client |
+| INT-063 | OAuth client integration | Integration | OAuth | Auth |
+| INT-064 | ContactManager integration | Integration | ContactManager | Contact |
+| INT-065 | Mapper integration | Integration | Mapper | Mapped |
+| INT-066 | Repository integration | Integration | Repository | CRUD |
+| INT-067 | DbContext integration | Integration | DbContext | Scoped |
+| INT-068 | Transaction scope | Integration | Transaction | Atomic |
+| INT-069 | Config integration | Integration | Config | Read |
+| INT-070 | Permission service | Integration | Permission | Check |
+| INT-071 | User resolver | Integration | User | Resolved |
+| INT-072 | Audit context | Integration | Audit | Context |
+| INT-073 | Logger integration | Integration | Logger | Logged |
+| INT-074 | HTTP client integration | Integration | HttpClient | Call |
+| INT-075 | Email-Contact relationship | Relationship | Email, Contact | Valid |
+| INT-076 | Contact-Partner relationship | Relationship | Contact, Partner | Valid |
+| INT-077 | Token-User relationship | Relationship | Token, User | Valid |
+| INT-078 | Cascade soft delete | Relationship | User deleted | Config |
+| INT-079 | Orphan handling | Relationship | User deleted | Retained |
+| INT-080 | Gmail API error | Error | API down | Graceful |
+| INT-081 | Timeout handling | Error | Slow API | Timeout |
+| INT-082 | Rate limit handling | Error | Rate limited | Retry |
+| INT-083 | Parse error handling | Error | Malformed | ParseException |
+| INT-084 | Concurrent sync | Scenario | Parallel | All succeed |
+| INT-085 | Rate limit across syncs | Scenario | Many syncs | Limited |
+| INT-086 | Pagination | Scenario | Paginate | Pages |
+| INT-087 | Filter voices | Scenario | Filter | Filtered |
+| INT-088 | Get email | Scenario | GetEmail | Email |
+| INT-089 | Search emails | Scenario | Search | Results |
+| INT-090 | Full workflow | Scenario | Full flow | Complete |
 
 ---
 

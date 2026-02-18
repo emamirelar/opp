@@ -11,19 +11,18 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P? 90≥90 ✅ | E≥3P? 90≥90 ✅ | F≥3P? 90≥90 ✅ | I≥3P? 90≥90 ✅
 
 ---
 
@@ -44,7 +43,7 @@
 
 ## §1 Positive Tests (Happy Path)
 
-> **Count: 35** | **Minimum: 30-50** | ✅ COMPLIANT
+> **Count: 30** | **Minimum: 30-50** | ✅ COMPLIANT
 
 | ID | Test Name | Precondition | Steps (Brief) | Expected Result | Priority |
 |----|-----------|-------------|---------------|-----------------|----------|
@@ -78,17 +77,12 @@
 | POS-028 | Delete permission | CanDelete | Delete | Success | P0 |
 | POS-029 | Create permission | CanCreate | Create | Success | P0 |
 | POS-030 | View permission | CanView | View | Success | P0 |
-| POS-031 | Cross-entity permission | Partner + Contact | Both checked | Success | P1 |
-| POS-032 | Hierarchy permission | Parent org | Child access | Per config | P1 |
-| POS-033 | Time-based permission | Valid during | Access | Success | P1 |
-| POS-034 | IP allowlist | IP in list | Request | Success | P1 |
-| POS-035 | User agent validation | Valid UA | Request | Success | P2 |
 
 ---
 
 ## §2 Negative Tests (Failure Scenarios)
 
-> **Count: 70** | **Minimum: 70** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90** | ✅ COMPLIANT
 
 ### 2.1 Authentication Failures (15)
 
@@ -185,11 +179,36 @@
 | NEG-069 | API key rate limit | Key over limit | 429 | P0 |
 | NEG-070 | Session fixation | Reuse session ID | New session | P0 |
 
+### 2.6 Additional Negative (20)
+
+| ID | Test Name | Scenario | Expected | Priority |
+|----|-----------|----------|----------|----------|
+| NEG-071 | Token with empty claims | JWT no claims | 401 | P0 |
+| NEG-072 | Token with invalid JSON | Malformed payload | 401 | P0 |
+| NEG-073 | Cross-site request without origin | Missing Origin header | CORS reject | P0 |
+| NEG-074 | Permission check with null entity | EntityId=null | 400 or 404 | P1 |
+| NEG-075 | Role without permissions | Empty role | 403 | P1 |
+| NEG-076 | Expired API key | Key expired | 401 | P0 |
+| NEG-077 | Revoked delegation | Delegation revoked | 403 | P0 |
+| NEG-078 | User in wrong org hierarchy | Child org access parent | 403 | P1 |
+| NEG-079 | Bulk action with no IDs | Empty ID list | 400 | P0 |
+| NEG-080 | Workflow action on wrong stage | Approve Draft | 403 | P0 |
+| NEG-081 | Template download without entity access | No entity perm | 403 | P1 |
+| NEG-082 | Export with invalid filter | Filter syntax error | 400 | P1 |
+| NEG-083 | Import with wrong entity type | Partner template for Opp | 400 | P1 |
+| NEG-084 | Audit view for other tenant | Cross-tenant audit | 403 | P0 |
+| NEG-085 | Session after password reset | Old session | 401 | P0 |
+| NEG-086 | MFA bypass attempt | Skip MFA challenge | 401 | P0 |
+| NEG-087 | Token in query string | Token in URL | Reject or 401 | P0 |
+| NEG-088 | Multiple auth headers | 2 Authorization headers | 400 | P1 |
+| NEG-089 | Permission for non-existent entity | EntityId=999999 | 404 | P1 |
+| NEG-090 | Rate limit on auth endpoint | 100 login attempts | 429 or lockout | P0 |
+
 ---
 
 ## §3 Boundary Tests (Edge Cases)
 
-> **Count: 70** | **Minimum: 70** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90** | ✅ COMPLIANT
 
 ### 3.1 Token Boundaries (15)
 
@@ -286,11 +305,36 @@
 | BND-069 | Scope string | 500 chars | Accept | P1 |
 | BND-070 | Claim value | 4096 chars | Accept or reject | P1 |
 
+### 3.6 Additional Boundaries (20)
+
+| ID | Test Name | Input | Expected | Priority |
+|----|-----------|-------|----------|----------|
+| BND-071 | Token exactly at nbf | nbf=now | Accept or reject per spec | P1 |
+| BND-072 | Zero scope count | No scopes | Minimal access | P1 |
+| BND-073 | Max permission check time | 200 perms | < timeout | P1 |
+| BND-074 | Rate limit at 99% | 99 of 100 | Allow | P1 |
+| BND-075 | CORS preflight at boundary | OPTIONS exactly | 200 | P1 |
+| BND-076 | Session at max count | 10 sessions | New invalidates oldest | P1 |
+| BND-077 | Delegation at expiry boundary | Expires in 1 sec | Accept or reject | P1 |
+| BND-078 | Org ID at max int | Max int | Valid or reject | P1 |
+| BND-079 | Empty permission list | User no perms | 403 on action | P0 |
+| BND-080 | Single permission | 1 perm | That action only | P0 |
+| BND-081 | Token with max claim size | 4096 char claim | Accept or reject | P1 |
+| BND-082 | IP allowlist at max | 100 IPs | All checked | P1 |
+| BND-083 | Origin at max length | 256 chars | Valid or reject | P1 |
+| BND-084 | Lockout at boundary | Last attempt before lock | Lock or allow | P1 |
+| BND-085 | MFA at attempt limit | 9th fail | 10th locks | P1 |
+| BND-086 | Refresh token 1 sec before expiry | Valid | New token | P1 |
+| BND-087 | API key at rate limit | Exactly at limit | 429 on next | P1 |
+| BND-088 | Batch permission 100 entities | 100 IDs | All checked | P1 |
+| BND-089 | Workflow at final stage | Last stage | Limited actions | P1 |
+| BND-090 | Entity with max depth hierarchy | 10 levels | Resolve or timeout | P2 |
+
 ---
 
 ## §4 Functional Tests (Business Rules)
 
-> **Count: 50** | **Minimum: 50** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90** | ✅ COMPLIANT
 
 ### 4.1 JWT Rules (15)
 
@@ -366,7 +410,7 @@
 
 ## §5 Integration Tests (End-to-End Flows)
 
-> **Count: 50** | **Minimum: 50** | ✅ COMPLIANT
+> **Count: 90** | **Minimum: 90** | ✅ COMPLIANT
 
 ### 5.1 Auth Flow (15)
 

@@ -11,19 +11,19 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -283,10 +283,50 @@ REST API for saved filters: CRUD user-saved filters, share filters, apply filter
 | FUN-048 | Business | Permission | Query | Scoped |
 | FUN-049 | Business | User scope | Own filters | Correct |
 | FUN-050 | Business | Apply result | Applied | Correct |
+| FUN-051 | Workflow | Export filter | GET export | Export |
+| FUN-052 | Workflow | Import filter | POST import | Imported |
+| FUN-053 | Validation | Definition schema | Invalid | 400 |
+| FUN-054 | Validation | Share target | Invalid | 404 |
+| FUN-055 | Constraint | Filter lock | Locked | 423 |
+| FUN-056 | Audit | Export | GET export | Audit |
+| FUN-057 | Audit | Import | POST import | Audit |
+| FUN-058 | Business | Default filter | One per entity | One |
+| FUN-059 | Business | Share scope | Own only | 403 |
+| FUN-060 | Workflow | Rename filter | PUT name | Renamed |
+| FUN-061 | Validation | Apply entity | Mismatch | 400 |
+| FUN-062 | Constraint | Max filters | >100 | 400 |
+| FUN-063 | Audit | Share | POST share | Audit |
+| FUN-064 | Business | Unshare cascade | Delete share | Unshared |
+| FUN-065 | Workflow | Cached response | GET same | 200 |
+| FUN-066 | Validation | Criteria format | Invalid | 400 |
+| FUN-067 | Constraint | Max shares | >50 | 400 |
+| FUN-068 | Audit | Unshare | DELETE share | Audit |
+| FUN-069 | Business | Duplicate name | Allow/Reject | Correct |
+| FUN-070 | Workflow | Copy filter | POST copy | Copied |
+| FUN-071 | Validation | Operator enum | Invalid | 400 |
+| FUN-072 | Constraint | Definition size | >10K | 400 |
+| FUN-073 | Audit | Apply | POST apply | Audit |
+| FUN-074 | Business | Cross-user filter | Other user | 403 |
+| FUN-075 | Workflow | Full round-trip | Create → Apply | Match |
+| FUN-076 | Validation | Entity type | Invalid | 400 |
+| FUN-077 | Constraint | One default | Per entity | One |
+| FUN-078 | Audit | Set default | PUT default | Audit |
+| FUN-079 | Business | Inactive user | User disabled | 403 |
+| FUN-080 | Workflow | Duplicate flow | POST duplicate | New |
+| FUN-081 | Validation | Name length | Too long | 400 |
+| FUN-082 | Constraint | Share expiry | Expired | 404 |
+| FUN-083 | Audit | Duplicate | POST duplicate | Audit |
+| FUN-084 | Business | Apply scope | Entity match | Correct |
+| FUN-085 | Workflow | Export → Import | Round-trip | Match |
+| FUN-086 | Validation | Import format | Invalid | 400 |
+| FUN-087 | Constraint | Filter count | >100 | 400 |
+| FUN-088 | Audit | Create | POST | Audit |
+| FUN-089 | Business | Definition schema | Valid schema | Correct |
+| FUN-090 | Workflow | Share → Unshare | Full flow | Unshared |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Category | Scenario | Entities | Expected |
 |----|----------|----------|----------|----------|
@@ -340,6 +380,46 @@ REST API for saved filters: CRUD user-saved filters, share filters, apply filter
 | INT-048 | E2E | Full apply flow | Filter | Apply → Results |
 | INT-049 | E2E | Default flow | Filter | Set → Get |
 | INT-050 | E2E | Session expiry | Auth | Clean fail |
+| INT-051 | CRUD | Export → Import | Filter | Match |
+| INT-052 | CRUD | Duplicate → Get | Filter | New |
+| INT-053 | Share | Share validation | Filter, User | Shared |
+| INT-054 | Apply | Apply to partner | Filter, Partner | Results |
+| INT-055 | Search | Multi-filter flow | Filter | Combined |
+| INT-056 | Relationships | Filter → User | Filter, User | Linked |
+| INT-057 | Error | Validation chain | Bad input | 400 |
+| INT-058 | Error | Auth chain | No auth | 401 |
+| INT-059 | E2E | Export flow | Filter | Export |
+| INT-060 | E2E | Import flow | Filter | Import |
+| INT-061 | CRUD | Rename → Get | Filter | Renamed |
+| INT-062 | Share | Unshare validation | Filter | Unshared |
+| INT-063 | Apply | Apply entity match | Filter | Match |
+| INT-064 | Relationships | Filter → Entity | Filter | Via apply |
+| INT-065 | Error | Permission chain | No perm | 403 |
+| INT-066 | E2E | Full filter flow | Filter | Create → Delete |
+| INT-067 | CRUD | Copy → Get | Filter | New |
+| INT-068 | Share | Share with role | Filter, Role | Shared |
+| INT-069 | Apply | Apply pagination | Filter | Paginated |
+| INT-070 | Relationships | Orphan user | User | 404 |
+| INT-071 | Error | Conflict resolution | Stale | 409 |
+| INT-072 | E2E | Default flow | Filter | Set → Get |
+| INT-073 | CRUD | Update definition → Get | Filter | Match |
+| INT-074 | Share | Share limit | Filter | 400 |
+| INT-075 | Apply | Apply timeout | Filter | 504 |
+| INT-076 | Relationships | Filter → Audit | Filter | Audit |
+| INT-077 | Error | Timeout handling | Slow | 504 |
+| INT-078 | E2E | Duplicate flow | Filter | Duplicated |
+| INT-079 | CRUD | Set default → Get | Filter | Default |
+| INT-080 | Share | Share expiry | Filter | 404 |
+| INT-081 | Apply | Apply validation | Filter | Valid |
+| INT-082 | Relationships | User → Filters | User | Linked |
+| INT-083 | Error | Service unavailable | Down | 503 |
+| INT-084 | E2E | Rename flow | Filter | Renamed |
+| INT-085 | CRUD | Create → Apply | Filter | Applied |
+| INT-086 | Share | Share concurrent | Filter | Last |
+| INT-087 | Apply | Apply concurrent | Filter | All |
+| INT-088 | Relationships | User → Filter | User | 1:N |
+| INT-089 | Error | Payload too large | Huge | 413 |
+| INT-090 | E2E | Full auth flow | Auth | Token |
 
 ---
 
@@ -507,7 +587,7 @@ REST API for saved filters: CRUD user-saved filters, share filters, apply filter
 | CRUD saved filters | POS-001–005, FUN-001–005 |
 | Share filters | POS-009–010, FUN-007–008 |
 | Apply filters | POS-011, FUN-009 |
-| 3:1 Ratio | NEG-001–070, BND-001–070 |
+| 3:1 Ratio | NEG-001–090, BND-001–090, FUN-001–090, INT-001–090 |
 
 ---
 

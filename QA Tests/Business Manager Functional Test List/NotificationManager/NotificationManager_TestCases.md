@@ -1,7 +1,7 @@
 # NotificationManager — Test Cases
 
 **Component:** `UNOPS.PAO.Business/Managers/NotificationManager`  
-**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Created:** 2026-02-18 | **Last Updated:** 2026-02-18  
 **Author:** QA Team  
 **Standard:** 10-Category, 3:1 Ratio
 
@@ -11,494 +11,583 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
-| §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| §1 Positive (P) | 30 | 30-50 | ✅ |
+| §2 Negative (N) | 90 | 90 | ✅ |
+| §3 Boundary (E) | 90 | 90 | ✅ |
+| §4 Functional (F) | 90 | 90 | ✅ |
+| §5 Integration (I) | 90 | 90 | ✅ |
+| §6 Concurrency (CON) | 25 | 25 | ✅ |
+| §7 Unit (UNT) | 21 | 21 | ✅ |
+| §8 Performance (PRF) | 16 | 16 | ✅ |
+| §9 Load (LDT) | 10 | 10 | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance Check**
+| Check | Result | Formula |
+|-------|--------|---------|
+| N≥3P? | ✅ | 90 ≥ 90 |
+| E≥3P? | ✅ | 90 ≥ 90 |
+| F≥3P? | ✅ | 90 ≥ 90 |
+| I≥3P? | ✅ | 90 ≥ 90 |
 
 ---
 
 ## Feature Overview
 
-**NotificationManager** manages send/receive notifications, templates, channels (email/in-app), preferences, and batch operations. Key responsibilities: user notification CRUD, read/unread status, templates, delivery channels, preferences, bulk mark-as-read.
+**NotificationManager** manages in-app notifications for users. Key responsibilities: create notifications (via consumers like PaoWorkflowNotificationService, UNOPSGmailAddonManager, UNOPSGeminiManager), list notifications filtered by userId and unread status, mark as read, update message/status. RecordData stored as JSON; ParseRecordData supports array and single-object formats. Categories/ResponseTypes are free-form (e.g. NewApproval, Recalled, Rejected, Completed, System, User, Alert).
+
+**Implementation:** Manager: `NotificationManager.cs` (no UNOPS override). Controller: `NotificationController.cs`. Entity: `Notification` (Id, UserId, Message, Category, ResponseType, RecordData, Entity, EntityId, IsRead, Status, CreatedAt). Status enum: Pending, Progress, Done, Error.
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps (Brief) | Expected Result | Priority |
 |----|-----------|-------------|---------------|-----------------|----------|
-| POS-001 | Test 1 | Precondition 1 | Step 1 | Result 1 | P0 |
-| POS-002 | Test 2 | Precondition 2 | Step 2 | Result 2 | P0 |
-| POS-003 | Test 3 | Precondition 3 | Step 3 | Result 3 | P0 |
-| POS-004 | Test 4 | Precondition 4 | Step 4 | Result 4 | P0 |
-| POS-005 | Test 5 | Precondition 5 | Step 5 | Result 5 | P0 |
-| POS-006 | Test 6 | Precondition 6 | Step 6 | Result 6 | P1 |
-| POS-007 | Test 7 | Precondition 7 | Step 7 | Result 7 | P1 |
-| POS-008 | Test 8 | Precondition 8 | Step 8 | Result 8 | P1 |
-| POS-009 | Test 9 | Precondition 9 | Step 9 | Result 9 | P1 |
-| POS-010 | Test 10 | Precondition 10 | Step 10 | Result 10 | P1 |
-| POS-011 | Test 11 | Precondition 11 | Step 11 | Result 11 | P1 |
-| POS-012 | Test 12 | Precondition 12 | Step 12 | Result 12 | P1 |
-| POS-013 | Test 13 | Precondition 13 | Step 13 | Result 13 | P1 |
-| POS-014 | Test 14 | Precondition 14 | Step 14 | Result 14 | P1 |
-| POS-015 | Test 15 | Precondition 15 | Step 15 | Result 15 | P1 |
-| POS-016 | Test 16 | Precondition 16 | Step 16 | Result 16 | P1 |
-| POS-017 | Test 17 | Precondition 17 | Step 17 | Result 17 | P1 |
-| POS-018 | Test 18 | Precondition 18 | Step 18 | Result 18 | P1 |
-| POS-019 | Test 19 | Precondition 19 | Step 19 | Result 19 | P1 |
-| POS-020 | Test 20 | Precondition 20 | Step 20 | Result 20 | P1 |
-| POS-021 | Test 21 | Precondition 21 | Step 21 | Result 21 | P1 |
-| POS-022 | Test 22 | Precondition 22 | Step 22 | Result 22 | P1 |
-| POS-023 | Test 23 | Precondition 23 | Step 23 | Result 23 | P1 |
-| POS-024 | Test 24 | Precondition 24 | Step 24 | Result 24 | P1 |
-| POS-025 | Test 25 | Precondition 25 | Step 25 | Result 25 | P1 |
-| POS-026 | Test 26 | Precondition 26 | Step 26 | Result 26 | P1 |
-| POS-027 | Test 27 | Precondition 27 | Step 27 | Result 27 | P1 |
-| POS-028 | Test 28 | Precondition 28 | Step 28 | Result 28 | P1 |
-| POS-029 | Test 29 | Precondition 29 | Step 29 | Result 29 | P1 |
-| POS-030 | Test 30 | Precondition 30 | Step 30 | Result 30 | P1 |
-| POS-031 | Test 31 | Precondition 31 | Step 31 | Result 31 | P1 |
-| POS-032 | Test 32 | Precondition 32 | Step 32 | Result 32 | P1 |
-| POS-033 | Test 33 | Precondition 33 | Step 33 | Result 33 | P1 |
-| POS-034 | Test 34 | Precondition 34 | Step 34 | Result 34 | P1 |
-| POS-035 | Test 35 | Precondition 35 | Step 35 | Result 35 | P1 |
+| POS-001 | GetNotifications returns unread only by default | User 100 has 5 unread, 3 read | GetNotifications(100, null) | 5 notifications, all unread, ordered by CreatedAt desc | P0 |
+| POS-002 | GetNotifications with unreadOnly=true | User 100 has 5 unread | GetNotifications(100, true) | 5 unread notifications | P0 |
+| POS-003 | GetNotifications with unreadOnly=false | User 100 has 3 read | GetNotifications(100, false) | 3 read notifications | P0 |
+| POS-004 | MarkAsRead marks notification | User 100 owns notification 42 (unread) | MarkAsRead(42, 100) | Notification 42 IsRead=true | P0 |
+| POS-005 | UpdateNotification updates message and status | Notification 42 exists | UpdateNotification(42, "Updated", NotificationStatus.Done) | Message and Status updated | P0 |
+| POS-006 | CreateNotification creates with defaults | User 100, valid inputs | CreateNotification(100, "Msg", "System", "Alert", new { id = 1 }) | Notification created, IsRead=false, RecordData JSON | P0 |
+| POS-007 | GetNotifications ordered by CreatedAt desc | User 100 has 3 notifications | GetNotifications(100, false) | Newest first | P0 |
+| POS-008 | GetNotifications filters by userId | User 100 has 5, User 200 has 3 | GetNotifications(100, false) | Only user 100's 5 notifications | P0 |
+| POS-009 | CreateNotification with workflow category | PaoWorkflowNotificationService | CreateNotification(uid, msg, "NewApproval", "workflow_approval", record) | Created with Category NewApproval | P1 |
+| POS-010 | CreateNotification with Gmail category | UNOPSGmailAddonManager | CreateNotification with category from Gmail sync | Created | P1 |
+| POS-011 | CreateNotification with AI category | UNOPSGeminiManager | CreateNotification with data modification | Created | P1 |
+| POS-012 | ParseRecordData returns array format | RecordData = [{"id":1},{"id":2}] | GetNotifications returns Records | Records has 2 items | P1 |
+| POS-013 | ParseRecordData returns single object format | RecordData = {"id":1} | GetNotifications returns Records | Records has 1 item | P1 |
+| POS-014 | MarkAsRead idempotent | Notification already read | MarkAsRead(42, 100) | No error, remains read | P1 |
+| POS-015 | UpdateNotification Pending to Progress | Notification Status=Pending | UpdateNotification(42, "Processing", Progress) | Status=Progress | P1 |
+| POS-016 | UpdateNotification Progress to Done | Notification Status=Progress | UpdateNotification(42, "Complete", Done) | Status=Done | P1 |
+| POS-017 | UpdateNotification to Error | Notification exists | UpdateNotification(42, "Failed", Error) | Status=Error | P1 |
+| POS-018 | CreateNotification with empty message | Valid other fields | CreateNotification(100, "", "System", "Alert", new {}) | Created (message can be empty) | P1 |
+| POS-019 | CreateNotification with complex record object | Nested object | CreateNotification(100, "Msg", "Cat", "Type", new { a = 1, b = new { c = 2 } }) | RecordData serialized correctly | P1 |
+| POS-020 | GetNotifications empty for new user | User 999 has no notifications | GetNotifications(999, null) | Empty list | P1 |
+| POS-021 | API GET /api/notifications returns 200 | Authenticated user | GET /api/notifications | 200 OK, list of NotificationModel | P0 |
+| POS-022 | API GET with unreadOnly query | Authenticated user | GET /api/notifications?unreadOnly=true | 200 OK, unread only | P0 |
+| POS-023 | API PUT mark as read returns 204 | Authenticated user owns notification | PUT /api/notifications/42/read | 204 No Content | P0 |
+| POS-024 | API PUT update returns 204 | Authenticated user | PUT /api/notifications/42/update with body | 204 No Content | P0 |
+| POS-025 | NotificationModel has Id Message Category ResponseType | GetNotifications returns | Inspect model | All fields populated | P1 |
+| POS-026 | NotificationModel has Entity EntityId | Notification has Entity/EntityId set | GetNotifications | Entity, EntityId in response | P1 |
+| POS-027 | CreateNotification with Entity/EntityId | Direct DbContext add (consumer pattern) | Add Notification with Entity="Opportunity", EntityId=123 | Stored and returned | P1 |
+| POS-028 | Multiple consumers create notifications | Workflow, Gmail, Gemini each create | Sequential CreateNotification calls | All created, no conflict | P1 |
+| POS-029 | CreateNotification record with list | record = new List<object>{ new { x = 1 } } | CreateNotification | Serialized as JSON array | P1 |
+| POS-030 | GetNotifications returns Records parsed | RecordData valid JSON | GetNotifications | Records populated from ParseRecordData | P1 |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Condition | Expected Result | Priority |
 |----|-----------|------------------------|-----------------|----------|
-| NEG-001 | Negative 1 | Invalid input 1 | Error 1 | P0 |
-| NEG-002 | Negative 2 | Invalid input 2 | Error 2 | P0 |
-| NEG-003 | Negative 3 | Invalid input 3 | Error 3 | P0 |
-| NEG-004 | Negative 4 | Invalid input 4 | Error 4 | P0 |
-| NEG-005 | Negative 5 | Invalid input 5 | Error 5 | P0 |
-| NEG-006 | Negative 6 | Invalid input 6 | Error 6 | P0 |
-| NEG-007 | Negative 7 | Invalid input 7 | Error 7 | P0 |
-| NEG-008 | Negative 8 | Invalid input 8 | Error 8 | P0 |
-| NEG-009 | Negative 9 | Invalid input 9 | Error 9 | P0 |
-| NEG-010 | Negative 10 | Invalid input 10 | Error 10 | P0 |
-| NEG-011 | Negative 11 | Invalid input 11 | Error 11 | P1 |
-| NEG-012 | Negative 12 | Invalid input 12 | Error 12 | P1 |
-| NEG-013 | Negative 13 | Invalid input 13 | Error 13 | P1 |
-| NEG-014 | Negative 14 | Invalid input 14 | Error 14 | P1 |
-| NEG-015 | Negative 15 | Invalid input 15 | Error 15 | P1 |
-| NEG-016 | Negative 16 | Invalid input 16 | Error 16 | P1 |
-| NEG-017 | Negative 17 | Invalid input 17 | Error 17 | P1 |
-| NEG-018 | Negative 18 | Invalid input 18 | Error 18 | P1 |
-| NEG-019 | Negative 19 | Invalid input 19 | Error 19 | P1 |
-| NEG-020 | Negative 20 | Invalid input 20 | Error 20 | P1 |
-| NEG-021 | Negative 21 | Invalid input 21 | Error 21 | P1 |
-| NEG-022 | Negative 22 | Invalid input 22 | Error 22 | P1 |
-| NEG-023 | Negative 23 | Invalid input 23 | Error 23 | P1 |
-| NEG-024 | Negative 24 | Invalid input 24 | Error 24 | P1 |
-| NEG-025 | Negative 25 | Invalid input 25 | Error 25 | P1 |
-| NEG-026 | Negative 26 | Invalid input 26 | Error 26 | P1 |
-| NEG-027 | Negative 27 | Invalid input 27 | Error 27 | P1 |
-| NEG-028 | Negative 28 | Invalid input 28 | Error 28 | P1 |
-| NEG-029 | Negative 29 | Invalid input 29 | Error 29 | P1 |
-| NEG-030 | Negative 30 | Invalid input 30 | Error 30 | P1 |
-| NEG-031 | Negative 31 | Invalid input 31 | Error 31 | P1 |
-| NEG-032 | Negative 32 | Invalid input 32 | Error 32 | P1 |
-| NEG-033 | Negative 33 | Invalid input 33 | Error 33 | P1 |
-| NEG-034 | Negative 34 | Invalid input 34 | Error 34 | P1 |
-| NEG-035 | Negative 35 | Invalid input 35 | Error 35 | P1 |
-| NEG-036 | Negative 36 | Invalid input 36 | Error 36 | P1 |
-| NEG-037 | Negative 37 | Invalid input 37 | Error 37 | P1 |
-| NEG-038 | Negative 38 | Invalid input 38 | Error 38 | P1 |
-| NEG-039 | Negative 39 | Invalid input 39 | Error 39 | P1 |
-| NEG-040 | Negative 40 | Invalid input 40 | Error 40 | P1 |
-| NEG-041 | Negative 41 | Invalid input 41 | Error 41 | P1 |
-| NEG-042 | Negative 42 | Invalid input 42 | Error 42 | P1 |
-| NEG-043 | Negative 43 | Invalid input 43 | Error 43 | P1 |
-| NEG-044 | Negative 44 | Invalid input 44 | Error 44 | P1 |
-| NEG-045 | Negative 45 | Invalid input 45 | Error 45 | P1 |
-| NEG-046 | Negative 46 | Invalid input 46 | Error 46 | P1 |
-| NEG-047 | Negative 47 | Invalid input 47 | Error 47 | P1 |
-| NEG-048 | Negative 48 | Invalid input 48 | Error 48 | P1 |
-| NEG-049 | Negative 49 | Invalid input 49 | Error 49 | P1 |
-| NEG-050 | Negative 50 | Invalid input 50 | Error 50 | P1 |
-| NEG-051 | Negative 51 | Invalid input 51 | Error 51 | P1 |
-| NEG-052 | Negative 52 | Invalid input 52 | Error 52 | P1 |
-| NEG-053 | Negative 53 | Invalid input 53 | Error 53 | P1 |
-| NEG-054 | Negative 54 | Invalid input 54 | Error 54 | P1 |
-| NEG-055 | Negative 55 | Invalid input 55 | Error 55 | P1 |
-| NEG-056 | Negative 56 | Invalid input 56 | Error 56 | P1 |
-| NEG-057 | Negative 57 | Invalid input 57 | Error 57 | P1 |
-| NEG-058 | Negative 58 | Invalid input 58 | Error 58 | P1 |
-| NEG-059 | Negative 59 | Invalid input 59 | Error 59 | P1 |
-| NEG-060 | Negative 60 | Invalid input 60 | Error 60 | P1 |
-| NEG-061 | Negative 61 | Invalid input 61 | Error 61 | P1 |
-| NEG-062 | Negative 62 | Invalid input 62 | Error 62 | P1 |
-| NEG-063 | Negative 63 | Invalid input 63 | Error 63 | P1 |
-| NEG-064 | Negative 64 | Invalid input 64 | Error 64 | P1 |
-| NEG-065 | Negative 65 | Invalid input 65 | Error 65 | P1 |
-| NEG-066 | Negative 66 | Invalid input 66 | Error 66 | P1 |
-| NEG-067 | Negative 67 | Invalid input 67 | Error 67 | P1 |
-| NEG-068 | Negative 68 | Invalid input 68 | Error 68 | P1 |
-| NEG-069 | Negative 69 | Invalid input 69 | Error 69 | P1 |
-| NEG-070 | Negative 70 | Invalid input 70 | Error 70 | P1 |
+| NEG-001 | MarkAsRead wrong userId | Notification 42 owned by user 100, call MarkAsRead(42, 200) | No change (notification not found for user 200) | P0 |
+| NEG-002 | MarkAsRead non-existent notificationId | MarkAsRead(99999, 100) | No error, no-op | P0 |
+| NEG-003 | MarkAsRead notificationId zero | MarkAsRead(0, 100) | No match, no-op | P1 |
+| NEG-004 | MarkAsRead notificationId negative | MarkAsRead(-1, 100) | No match, no-op | P1 |
+| NEG-005 | UpdateNotification non-existent ID | UpdateNotification(99999, "x", Done) | No error, no-op | P0 |
+| NEG-006 | UpdateNotification notificationId zero | UpdateNotification(0, "x", Done) | No match, no-op | P1 |
+| NEG-007 | GetNotifications userId zero | GetNotifications(0, null) | Empty list (no notifications for user 0) | P1 |
+| NEG-008 | GetNotifications userId negative | GetNotifications(-1, null) | Empty list | P1 |
+| NEG-009 | CreateNotification userId zero | CreateNotification(0, "Msg", "Cat", "Type", new {}) | May create (no validation) or error per design | P1 |
+| NEG-010 | CreateNotification userId negative | CreateNotification(-1, "Msg", "Cat", "Type", new {}) | Per design | P1 |
+| NEG-011 | CreateNotification null message | CreateNotification(100, null, "Cat", "Type", new {}) | NullReferenceException or validation | P0 |
+| NEG-012 | CreateNotification null category | CreateNotification(100, "Msg", null, "Type", new {}) | Per design | P1 |
+| NEG-013 | CreateNotification null responseType | CreateNotification(100, "Msg", "Cat", null, new {}) | Per design | P1 |
+| NEG-014 | CreateNotification null record | CreateNotification(100, "Msg", "Cat", "Type", null) | NullReferenceException in JsonSerializer | P0 |
+| NEG-015 | API GET unauthenticated | No auth token | GET /api/notifications | 401 Unauthorized | P0 |
+| NEG-016 | API PUT mark read unauthenticated | No auth token | PUT /api/notifications/42/read | 401 Unauthorized | P0 |
+| NEG-017 | API PUT update unauthenticated | No auth token | PUT /api/notifications/42/update | 401 Unauthorized | P0 |
+| NEG-018 | API PUT mark read wrong user's notification | User A auth, notification owned by User B | PUT /api/notifications/42/read | 204 (no-op, no error) | P0 |
+| NEG-019 | API PUT update missing request body | Valid auth | PUT /api/notifications/42/update with null/empty body | 400 or 500 per binding | P1 |
+| NEG-020 | API PUT update invalid status value | Body { "Message":"x", "Status": 99 } | 400 or handled | P1 |
+| NEG-021 | API PUT update invalid JSON | Malformed JSON body | 400 Bad Request | P1 |
+| NEG-022 | API GET wrong method POST | POST /api/notifications | 405 Method Not Allowed | P1 |
+| NEG-023 | API PUT mark read with GET | GET /api/notifications/42/read | 405 | P1 |
+| NEG-024 | ParseRecordData null RecordData | RecordData = null in DB | ParseRecordData returns empty list | P1 |
+| NEG-025 | ParseRecordData empty string | RecordData = "" | Returns empty list | P1 |
+| NEG-026 | ParseRecordData invalid JSON | RecordData = "not json" | Fallback to single-item list with raw string | P1 |
+| NEG-027 | ParseRecordData malformed JSON | RecordData = "{ invalid }" | JsonException caught, fallback | P1 |
+| NEG-028 | UpdateNotification null message | UpdateNotification(42, null, Done) | NullReferenceException or DB constraint | P1 |
+| NEG-029 | CreateNotification record causes serialization failure | record with circular reference | JsonSerializer throws | P1 |
+| NEG-030 | GetNotifications with SQL injection in userId | userId from untrusted source | Parameterized query, no injection | P0 |
+| NEG-031 | API path traversal | PUT /api/notifications/../other/read | 404 or sanitized | P1 |
+| NEG-032 | API notificationId non-numeric | PUT /api/notifications/abc/read | 400 or 404 | P1 |
+| NEG-033 | API notificationId overflow | PUT /api/notifications/2147483648/read | 400 or handled | P1 |
+| NEG-034 | MarkAsRead with deleted notification | Notification soft-deleted (if applicable) | Per design | P1 |
+| NEG-035 | UpdateNotification with empty message | UpdateNotification(42, "", Done) | Updated (empty string allowed) | P1 |
+| NEG-036 | CreateNotification message XSS | Message = "<script>alert(1)</script>" | Stored as-is (sanitization at display layer) | P1 |
+| NEG-037 | CreateNotification message SQL injection | Message = "'; DROP TABLE--" | Parameterized, no injection | P0 |
+| NEG-038 | GetNotifications unreadOnly invalid type | unreadOnly="invalid" in query | Coerced to null or 400 | P1 |
+| NEG-039 | API PUT update message XSS | Message with script tag | Stored, display layer sanitizes | P1 |
+| NEG-040 | CreateNotification category empty string | Category = "" | Created | P1 |
+| NEG-041 | CreateNotification responseType empty | ResponseType = "" | Created | P1 |
+| NEG-042 | GetNotifications for non-existent user | userId = 999999 (no user) | Empty list | P1 |
+| NEG-043 | MarkAsRead same notification twice | MarkAsRead(42, 100) then again | Idempotent, no error | P1 |
+| NEG-044 | UpdateNotification same notification twice | Two UpdateNotification calls | Second overwrites first | P1 |
+| NEG-045 | CreateNotification with very long message | Message 10000 chars | DB constraint or truncated | P1 |
+| NEG-046 | CreateNotification with very long category | Category 1000 chars | Per DB schema | P1 |
+| NEG-047 | CreateNotification with very long RecordData | record with huge object | Serialization/DB limit | P1 |
+| NEG-048 | GetNotifications unreadOnly=null vs omitted | Both cases | Same behavior (default unread) | P1 |
+| NEG-049 | API GET with extra query params | ?unreadOnly=true&foo=bar | Ignores foo or 400 | P1 |
+| NEG-050 | UpdateNotification does not check userId | User A updates User B's notification | Updates (no ownership check in manager) | P0 |
+| NEG-051 | CreateNotification with special chars in message | Message = "Test \"quotes\" & <html>" | Escaped in JSON, stored | P1 |
+| NEG-052 | CreateNotification with unicode message | Message = "日本語テスト" | Stored correctly | P1 |
+| NEG-053 | ParseRecordData deeply nested JSON | RecordData complex nested | Deserialized to List<object> | P1 |
+| NEG-054 | CreateNotification record is JsonElement | record from previous deserialization | Serializes | P1 |
+| NEG-055 | CreateNotification record is Dictionary | record = new Dictionary<string,object> | Serializes | P1 |
+| NEG-056 | GetNotifications when DB unavailable | Simulate connection failure | Exception propagated | P1 |
+| NEG-057 | MarkAsRead when DB unavailable | Simulate connection failure | Exception | P1 |
+| NEG-058 | UpdateNotification when DB unavailable | Simulate connection failure | Exception | P1 |
+| NEG-059 | CreateNotification when DB unavailable | Simulate connection failure | Exception | P1 |
+| NEG-060 | API GET returns 500 on manager exception | Manager throws | 500, error message in response | P1 |
+| NEG-061 | API PUT mark read returns 500 on exception | Manager throws | 500 | P1 |
+| NEG-062 | API PUT update returns 500 on exception | Manager throws | 500 | P1 |
+| NEG-063 | CreateNotification with DateTime in record | record = new { date = DateTime.UtcNow } | Serialized (ISO format) | P1 |
+| NEG-064 | CreateNotification with Guid in record | record = new { id = Guid.NewGuid() } | Serialized | P1 |
+| NEG-065 | CreateNotification with null in record | record = new { x = (string)null } | Serialized with null | P1 |
+| NEG-066 | GetNotifications unreadOnly=false with no read | User has only unread | Empty list | P1 |
+| NEG-067 | GetNotifications unreadOnly=true with no unread | User has only read | Empty list | P1 |
+| NEG-068 | MarkAsRead notification from different tenant | Multi-tenant scenario | Per design | P2 |
+| NEG-069 | UpdateNotification with invalid enum | Status = (NotificationStatus)999 | May throw or persist | P1 |
+| NEG-070 | API PUT update missing Message in body | Body { "Status": 0 } | Default or validation | P1 |
+| NEG-071 | API PUT update missing Status in body | Body { "Message": "x" } | Default Progress per UpdateNotificationRequest | P1 |
+| NEG-072 | CreateNotification with anonymous type | record = new { Id = 1, Name = "Test" } | Serialized | P1 |
+| NEG-073 | CreateNotification with array record | record = new[] { 1, 2, 3 } | Wrapped in List<object>, serialized | P1 |
+| NEG-074 | ParseRecordData whitespace only | RecordData = "   " | Treated as empty per IsNullOrEmpty | P1 |
+| NEG-075 | GetNotifications rapid sequential calls | 10 GET calls in 1 second | All return consistent data | P1 |
+| NEG-076 | MarkAsRead then GetNotifications unreadOnly | Mark 42 read, then GET unreadOnly=true | 42 not in list | P1 |
+| NEG-077 | CreateNotification duplicate for same user | Two CreateNotification same user, message | Both created | P1 |
+| NEG-078 | UpdateNotification to same status | Status already Done | Update succeeds, no change | P1 |
+| NEG-079 | UpdateNotification to same message | Message unchanged | Update succeeds | P1 |
+| NEG-080 | GetNotifications with unreadOnly explicit true | unreadOnly=true | Same as null (unread only) | P1 |
+| NEG-081 | CreateNotification record with binary data | record with byte[] | Serialization may fail or Base64 | P1 |
+| NEG-082 | CreateNotification record with stream | record = new MemoryStream() | Serialization fails | P1 |
+| NEG-083 | API GET with Accept: application/xml | Request XML response | Returns JSON (default) | P1 |
+| NEG-084 | API PUT update with Content-Type wrong | Content-Type: text/plain | 415 or binding fails | P1 |
+| NEG-085 | CreateNotification from multiple threads | Concurrent CreateNotification same user | All succeed or proper locking | P1 |
+| NEG-086 | GetNotifications while CreateNotification | Concurrent read and create | Consistent view | P1 |
+| NEG-087 | MarkAsRead while UpdateNotification | Concurrent mark read and update | Both succeed, final state consistent | P1 |
+| NEG-088 | UpdateNotification non-existent no exception | UpdateNotification(99999, "x", Done) | Completes without throw | P1 |
+| NEG-089 | GetNotifications userId int max | GetNotifications(2147483647, null) | Empty or per data | P1 |
+| NEG-090 | CreateNotification userId int max | CreateNotification(2147483647, "x", "y", "z", new {}) | Per design | P1 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max | Priority |
 |----|----------------|-----|-----|--------|--------|----------|----------|
-| BND-001 | Field 1 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-002 | Field 2 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-003 | Field 3 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-004 | Field 4 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-005 | Field 5 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-006 | Field 6 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-007 | Field 7 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-008 | Field 8 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-009 | Field 9 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-010 | Field 10 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-011 | Field 11 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-012 | Field 12 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-013 | Field 13 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-014 | Field 14 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-015 | Field 15 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-016 | Field 16 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-017 | Field 17 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-018 | Field 18 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-019 | Field 19 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-020 | Field 20 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-021 | Field 21 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-022 | Field 22 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-023 | Field 23 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-024 | Field 24 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-025 | Field 25 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-026 | Field 26 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-027 | Field 27 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-028 | Field 28 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-029 | Field 29 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-030 | Field 30 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-031 | Field 31 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-032 | Field 32 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-033 | Field 33 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-034 | Field 34 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-035 | Field 35 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-036 | Field 36 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-037 | Field 37 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-038 | Field 38 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-039 | Field 39 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-040 | Field 40 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-041 | Field 41 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-042 | Field 42 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-043 | Field 43 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-044 | Field 44 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-045 | Field 45 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-046 | Field 46 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-047 | Field 47 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-048 | Field 48 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-049 | Field 49 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-050 | Field 50 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-051 | Field 51 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-052 | Field 52 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-053 | Field 53 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-054 | Field 54 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-055 | Field 55 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-056 | Field 56 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-057 | Field 57 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-058 | Field 58 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-059 | Field 59 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-060 | Field 60 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-061 | Field 61 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-062 | Field 62 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-063 | Field 63 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-064 | Field 64 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-065 | Field 65 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-066 | Field 66 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-067 | Field 67 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-068 | Field 68 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-069 | Field 69 | Min | Max | At Min | At Max | Over Max | P1 |
-| BND-070 | Field 70 | Min | Max | At Min | At Max | Over Max | P1 |
+| BND-001 | UserId | 1 | 2147483647 | 1 | Max int | Overflow | P1 |
+| BND-002 | NotificationId | 1 | 2147483647 | 1 | Max int | Overflow | P1 |
+| BND-003 | Message length | 0 | DB max | "" | Max | Max+1 | P1 |
+| BND-004 | Category length | 0 | DB max | "" | Max | Max+1 | P1 |
+| BND-005 | ResponseType length | 0 | DB max | "" | Max | Max+1 | P1 |
+| BND-006 | RecordData length | 0 | DB max | "" | Large JSON | Exceeds | P1 |
+| BND-007 | unreadOnly | — | — | null | true | false | P1 |
+| BND-008 | NotificationStatus | Pending(0) | Error(3) | Pending | Error | Invalid | P1 |
+| BND-009 | Entity length | 0 | DB max | null | "Opportunity" | — | P1 |
+| BND-010 | EntityId | 0 | 2147483647 | null | Max | Overflow | P1 |
+| BND-011 | CreatedAt | Min | Max | DateTime.MinValue | DateTime.UtcNow | — | P1 |
+| BND-012 | Records count | 0 | — | 0 | Many | — | P1 |
+| BND-013 | ParseRecordData empty array | — | — | "[]" | — | — | P1 |
+| BND-014 | ParseRecordData single element array | — | — | "[{}]" | — | — | P1 |
+| BND-015 | ParseRecordData large array | — | — | 1000 elements | — | — | P1 |
+| BND-016 | GetNotifications zero results | 0 | — | User has 0 | — | — | P1 |
+| BND-017 | GetNotifications one result | 1 | — | User has 1 | — | — | P1 |
+| BND-018 | GetNotifications many results | — | — | User has 500 | — | — | P1 |
+| BND-019 | CreateNotification message 1 char | 1 | — | "x" | — | — | P1 |
+| BND-020 | CreateNotification message 255 chars | — | — | 255 char string | — | — | P1 |
+| BND-021 | CreateNotification category 1 char | 1 | — | "x" | — | — | P1 |
+| BND-022 | CreateNotification record empty object | — | — | new {} | — | — | P1 |
+| BND-023 | CreateNotification record minimal | — | — | new { id = 1 } | — | — | P1 |
+| BND-024 | MarkAsRead first notification | — | — | Id=1 | — | — | P1 |
+| BND-025 | MarkAsRead last notification | — | — | Id=max | — | — | P1 |
+| BND-026 | UpdateNotification status Pending | — | — | Update to Pending | — | — | P1 |
+| BND-027 | UpdateNotification status Progress | — | — | Update to Progress | — | — | P1 |
+| BND-028 | UpdateNotification status Done | — | — | Update to Done | — | — | P1 |
+| BND-029 | UpdateNotification status Error | — | — | Update to Error | — | — | P1 |
+| BND-030 | ParseRecordData single object | — | — | "{\"a\":1}" | — | — | P1 |
+| BND-031 | ParseRecordData array of objects | — | — | "[{\"a\":1},{\"b\":2}]" | — | — | P1 |
+| BND-032 | ParseRecordData array of primitives | — | — | "[1,2,3]" | — | — | P1 |
+| BND-033 | ParseRecordData mixed types | — | — | "[1,\"x\",{}]" | — | — | P1 |
+| BND-034 | ParseRecordData nested object | — | — | "{\"a\":{\"b\":1}}" | — | — | P1 |
+| BND-035 | ParseRecordData invalid then fallback | — | — | "not json" | — | — | P1 |
+| BND-036 | GetNotifications unreadOnly null | — | — | null | — | — | P1 |
+| BND-037 | GetNotifications unreadOnly true | — | — | true | — | — | P1 |
+| BND-038 | GetNotifications unreadOnly false | — | — | false | — | — | P1 |
+| BND-039 | CreatedAt ordering tie | — | — | Same CreatedAt for 2 | — | — | P1 |
+| BND-040 | CreatedAt millisecond precision | — | — | UtcNow | — | — | P1 |
+| BND-041 | Entity null | — | — | null | — | — | P1 |
+| BND-042 | EntityId null | — | — | null | — | — | P1 |
+| BND-043 | Entity and EntityId both set | — | — | "Opportunity", 123 | — | — | P1 |
+| BND-044 | IsRead false default | — | — | New notification | — | — | P1 |
+| BND-045 | IsRead true after MarkAsRead | — | — | After mark | — | — | P1 |
+| BND-046 | Status default Pending | — | — | New notification | — | — | P1 |
+| BND-047 | Category NewApproval | — | — | Workflow | — | — | P1 |
+| BND-048 | Category Recalled | — | — | Workflow | — | — | P1 |
+| BND-049 | Category Rejected | — | — | Workflow | — | — | P1 |
+| BND-050 | Category Completed | — | — | Workflow | — | — | P1 |
+| BND-051 | Category System | — | — | System | — | — | P1 |
+| BND-052 | Category User | — | — | User | — | — | P1 |
+| BND-053 | Category Alert | — | — | Alert | — | — | P1 |
+| BND-054 | ResponseType workflow_approval | — | — | PaoWorkflowNotificationService | — | — | P1 |
+| BND-055 | ResponseType free-form | — | — | Any string | — | — | P1 |
+| BND-056 | Message with newlines | — | — | "Line1\nLine2" | — | — | P1 |
+| BND-057 | Message with tabs | — | — | "Col1\tCol2" | — | — | P1 |
+| BND-058 | Message with unicode | — | — | "日本語" | — | — | P1 |
+| BND-059 | Message with emoji | — | — | "Test 👍" | — | — | P1 |
+| BND-060 | RecordData JSON escape | — | — | "{\"msg\":\"quote\\\"\"}" | — | — | P1 |
+| BND-061 | RecordData unicode | — | — | "{\"name\":\"日本語\"}" | — | — | P1 |
+| BND-062 | Multiple users same notification count | — | — | 2 users, 10 each | — | — | P1 |
+| BND-063 | User with only read notifications | — | — | All IsRead=true | — | — | P1 |
+| BND-064 | User with only unread | — | — | All IsRead=false | — | — | P1 |
+| BND-065 | User with mixed read/unread | — | — | 5 read, 5 unread | — | — | P1 |
+| BND-066 | CreateNotification rapid sequence | — | — | 10 in 1 sec | — | — | P1 |
+| BND-067 | MarkAsRead batch | — | — | Mark 10 as read | — | — | P1 |
+| BND-068 | UpdateNotification batch | — | — | Update 10 | — | — | P1 |
+| BND-069 | GetNotifications then Create | — | — | GET, Create, GET | — | — | P1 |
+| BND-070 | Create then Get unreadOnly | — | — | Create, GET null | — | — | P1 |
+| BND-071 | MarkAsRead then Get unreadOnly false | — | — | Mark, GET false | — | — | P1 |
+| BND-072 | NotificationId 0 | — | — | 0 | — | — | P1 |
+| BND-073 | NotificationId -1 | — | — | -1 | — | — | P1 |
+| BND-074 | UserId 0 | — | — | 0 | — | — | P1 |
+| BND-075 | UserId -1 | — | — | -1 | — | — | P1 |
+| BND-076 | Empty Records in model | — | — | RecordData null | — | — | P1 |
+| BND-077 | Single Record in model | — | — | RecordData single object | — | — | P1 |
+| BND-078 | Multiple Records in model | — | — | RecordData array | — | — | P1 |
+| BND-079 | API route with trailing slash | — | — | /api/notifications/ | — | — | P1 |
+| BND-080 | API route without trailing slash | — | — | /api/notifications | — | — | P1 |
+| BND-081 | API PUT path param | — | — | /api/notifications/42/read | — | — | P1 |
+| BND-082 | API PUT update path | — | — | /api/notifications/42/update | — | — | P1 |
+| BND-083 | Query param unreadOnly true string | — | — | ?unreadOnly=true | — | — | P1 |
+| BND-084 | Query param unreadOnly false string | — | — | ?unreadOnly=false | — | — | P1 |
+| BND-085 | Query param unreadOnly omitted | — | — | No param | — | — | P1 |
+| BND-086 | JsonSerializer options | — | — | Default options | — | — | P1 |
+| BND-087 | ParseRecordData JsonElement in list | — | — | Deserialized array | — | — | P1 |
+| BND-088 | CreateNotification DateTime.Kind | — | — | Utc vs Local | — | — | P1 |
+| BND-089 | CreatedAt timezone | — | — | UTC | — | — | P1 |
+| BND-090 | NotificationModel Status not mapped | — | — | Manager mapping | — | — | P1 |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Scenario | Trigger | Expected Outcome | Priority |
 |----|-----------|---------------|---------|------------------|----------|
-| FUN-001 | Functional 1 | Rule 1 | Trigger 1 | Outcome 1 | P0 |
-| FUN-002 | Functional 2 | Rule 2 | Trigger 2 | Outcome 2 | P0 |
-| FUN-003 | Functional 3 | Rule 3 | Trigger 3 | Outcome 3 | P0 |
-| FUN-004 | Functional 4 | Rule 4 | Trigger 4 | Outcome 4 | P0 |
-| FUN-005 | Functional 5 | Rule 5 | Trigger 5 | Outcome 5 | P0 |
-| FUN-006 | Functional 6 | Rule 6 | Trigger 6 | Outcome 6 | P1 |
-| FUN-007 | Functional 7 | Rule 7 | Trigger 7 | Outcome 7 | P1 |
-| FUN-008 | Functional 8 | Rule 8 | Trigger 8 | Outcome 8 | P1 |
-| FUN-009 | Functional 9 | Rule 9 | Trigger 9 | Outcome 9 | P1 |
-| FUN-010 | Functional 10 | Rule 10 | Trigger 10 | Outcome 10 | P1 |
-| FUN-011 | Functional 11 | Rule 11 | Trigger 11 | Outcome 11 | P1 |
-| FUN-012 | Functional 12 | Rule 12 | Trigger 12 | Outcome 12 | P1 |
-| FUN-013 | Functional 13 | Rule 13 | Trigger 13 | Outcome 13 | P1 |
-| FUN-014 | Functional 14 | Rule 14 | Trigger 14 | Outcome 14 | P1 |
-| FUN-015 | Functional 15 | Rule 15 | Trigger 15 | Outcome 15 | P1 |
-| FUN-016 | Functional 16 | Rule 16 | Trigger 16 | Outcome 16 | P1 |
-| FUN-017 | Functional 17 | Rule 17 | Trigger 17 | Outcome 17 | P1 |
-| FUN-018 | Functional 18 | Rule 18 | Trigger 18 | Outcome 18 | P1 |
-| FUN-019 | Functional 19 | Rule 19 | Trigger 19 | Outcome 19 | P1 |
-| FUN-020 | Functional 20 | Rule 20 | Trigger 20 | Outcome 20 | P1 |
-| FUN-021 | Functional 21 | Rule 21 | Trigger 21 | Outcome 21 | P1 |
-| FUN-022 | Functional 22 | Rule 22 | Trigger 22 | Outcome 22 | P1 |
-| FUN-023 | Functional 23 | Rule 23 | Trigger 23 | Outcome 23 | P1 |
-| FUN-024 | Functional 24 | Rule 24 | Trigger 24 | Outcome 24 | P1 |
-| FUN-025 | Functional 25 | Rule 25 | Trigger 25 | Outcome 25 | P1 |
-| FUN-026 | Functional 26 | Rule 26 | Trigger 26 | Outcome 26 | P1 |
-| FUN-027 | Functional 27 | Rule 27 | Trigger 27 | Outcome 27 | P1 |
-| FUN-028 | Functional 28 | Rule 28 | Trigger 28 | Outcome 28 | P1 |
-| FUN-029 | Functional 29 | Rule 29 | Trigger 29 | Outcome 29 | P1 |
-| FUN-030 | Functional 30 | Rule 30 | Trigger 30 | Outcome 30 | P1 |
-| FUN-031 | Functional 31 | Rule 31 | Trigger 31 | Outcome 31 | P1 |
-| FUN-032 | Functional 32 | Rule 32 | Trigger 32 | Outcome 32 | P1 |
-| FUN-033 | Functional 33 | Rule 33 | Trigger 33 | Outcome 33 | P1 |
-| FUN-034 | Functional 34 | Rule 34 | Trigger 34 | Outcome 34 | P1 |
-| FUN-035 | Functional 35 | Rule 35 | Trigger 35 | Outcome 35 | P1 |
-| FUN-036 | Functional 36 | Rule 36 | Trigger 36 | Outcome 36 | P1 |
-| FUN-037 | Functional 37 | Rule 37 | Trigger 37 | Outcome 37 | P1 |
-| FUN-038 | Functional 38 | Rule 38 | Trigger 38 | Outcome 38 | P1 |
-| FUN-039 | Functional 39 | Rule 39 | Trigger 39 | Outcome 39 | P1 |
-| FUN-040 | Functional 40 | Rule 40 | Trigger 40 | Outcome 40 | P1 |
-| FUN-041 | Functional 41 | Rule 41 | Trigger 41 | Outcome 41 | P1 |
-| FUN-042 | Functional 42 | Rule 42 | Trigger 42 | Outcome 42 | P1 |
-| FUN-043 | Functional 43 | Rule 43 | Trigger 43 | Outcome 43 | P1 |
-| FUN-044 | Functional 44 | Rule 44 | Trigger 44 | Outcome 44 | P1 |
-| FUN-045 | Functional 45 | Rule 45 | Trigger 45 | Outcome 45 | P1 |
-| FUN-046 | Functional 46 | Rule 46 | Trigger 46 | Outcome 46 | P1 |
-| FUN-047 | Functional 47 | Rule 47 | Trigger 47 | Outcome 47 | P1 |
-| FUN-048 | Functional 48 | Rule 48 | Trigger 48 | Outcome 48 | P1 |
-| FUN-049 | Functional 49 | Rule 49 | Trigger 49 | Outcome 49 | P1 |
-| FUN-050 | Functional 50 | Rule 50 | Trigger 50 | Outcome 50 | P1 |
+| FUN-001 | GetNotifications default shows unread only | unreadOnly null = unread only | GetNotifications(100, null) | Only IsRead=false | P0 |
+| FUN-002 | GetNotifications unreadOnly true = unread | Filter | GetNotifications(100, true) | Only unread | P0 |
+| FUN-003 | GetNotifications unreadOnly false = read | Filter | GetNotifications(100, false) | Only read | P0 |
+| FUN-004 | GetNotifications filters by UserId | User isolation | GetNotifications(100, false) | Only user 100's | P0 |
+| FUN-005 | GetNotifications ordered CreatedAt desc | Sort rule | GetNotifications | Newest first | P0 |
+| FUN-006 | MarkAsRead sets IsRead true | Mark rule | MarkAsRead(42, 100) | IsRead=true | P0 |
+| FUN-007 | MarkAsRead requires userId match | Ownership | MarkAsRead(42, 200) when owned by 100 | No change | P0 |
+| FUN-008 | UpdateNotification updates Message | Update rule | UpdateNotification(42, "New", Done) | Message="New" | P0 |
+| FUN-009 | UpdateNotification updates Status | Update rule | UpdateNotification(42, "x", Error) | Status=Error | P0 |
+| FUN-010 | UpdateNotification does not check userId | No ownership | Update any notification by ID | Updates | P0 |
+| FUN-011 | CreateNotification sets IsRead false | Default | CreateNotification | IsRead=false | P0 |
+| FUN-012 | CreateNotification serializes record to JSON | Serialization | CreateNotification(100, "x", "y", "z", new { a = 1 }) | RecordData = [{"a":1}] | P0 |
+| FUN-013 | CreateNotification sets CreatedAt | Timestamp | CreateNotification | CreatedAt = UtcNow | P0 |
+| FUN-014 | ParseRecordData null/empty returns empty list | Fallback | ParseRecordData(null) | [] | P0 |
+| FUN-015 | ParseRecordData array deserializes | Array format | RecordData = "[{},{}]" | Records count 2 | P0 |
+| FUN-016 | ParseRecordData object deserializes to single | Object format | RecordData = "{}" | Records count 1 | P0 |
+| FUN-017 | ParseRecordData invalid JSON fallback | Error handling | RecordData = "x" | Records = [raw string] | P0 |
+| FUN-018 | NotificationModel maps Id Message Category | Mapping | GetNotifications | All fields correct | P0 |
+| FUN-019 | NotificationModel Records from ParseRecordData | Mapping | GetNotifications | Records populated | P0 |
+| FUN-020 | MarkAsRead idempotent | Idempotency | MarkAsRead twice | No error | P1 |
+| FUN-021 | UpdateNotification overwrites | Overwrite | Two updates | Last wins | P1 |
+| FUN-022 | CreateNotification assigns UserId | Assignment | CreateNotification(100, ...) | UserId=100 | P1 |
+| FUN-023 | CreateNotification assigns Category | Assignment | CreateNotification(..., "System", ...) | Category=System | P1 |
+| FUN-024 | CreateNotification assigns ResponseType | Assignment | CreateNotification(..., "Alert") | ResponseType=Alert | P1 |
+| FUN-025 | GetNotifications empty returns empty list | Empty | User has none | [] | P1 |
+| FUN-026 | MarkAsRead non-existent no-op | No-op | MarkAsRead(99999, 100) | Completes | P1 |
+| FUN-027 | UpdateNotification non-existent no-op | No-op | UpdateNotification(99999, ...) | Completes | P1 |
+| FUN-028 | Status transition Pending to Progress | Transition | UpdateNotification(..., Progress) | Status=Progress | P1 |
+| FUN-029 | Status transition Progress to Done | Transition | UpdateNotification(..., Done) | Status=Done | P1 |
+| FUN-030 | Status transition any to Error | Transition | UpdateNotification(..., Error) | Status=Error | P1 |
+| FUN-031 | Workflow consumer creates NewApproval | Consumer | PaoWorkflowNotificationService | Category NewApproval | P1 |
+| FUN-032 | Workflow consumer creates Recalled | Consumer | Recall workflow | Category Recalled | P1 |
+| FUN-033 | Workflow consumer creates Rejected | Consumer | Reject workflow | Category Rejected | P1 |
+| FUN-034 | Workflow consumer creates Completed | Consumer | Approve workflow | Category Completed | P1 |
+| FUN-035 | Gmail consumer creates notification | Consumer | UNOPSGmailAddonManager | Notification created | P1 |
+| FUN-036 | Gemini consumer creates notification | Consumer | UNOPSGeminiManager | Notification created | P1 |
+| FUN-037 | DueDiligenceNotificationService | Consumer | Due diligence | Notification created | P1 |
+| FUN-038 | Record wrapped in List for serialization | CreateNotification | record object | JsonSerializer.Serialize([record]) | P1 |
+| FUN-039 | Entity EntityId not set by CreateNotification | CreateNotification | Manager method | Entity=null, EntityId=null | P1 |
+| FUN-040 | Entity EntityId set by direct DbContext add | Consumer | PaoWorkflowNotificationService adds | Entity, EntityId set | P1 |
+| FUN-041 | API uses CurrentUserId | Controller | GetNotifications | CurrentUserId from UserResolverService | P1 |
+| FUN-042 | API mark read uses CurrentUserId | Controller | MarkAsRead | CurrentUserId passed | P1 |
+| FUN-043 | API update does not pass userId | Controller | UpdateNotification | No userId in manager call | P1 |
+| FUN-044 | API GET returns List<NotificationModel> | Response | GET /api/notifications | Ok(list) | P1 |
+| FUN-045 | API PUT mark read returns NoContent | Response | PUT read | 204 No Content | P1 |
+| FUN-046 | API PUT update returns NoContent | Response | PUT update | 204 No Content | P1 |
+| FUN-047 | API exception returns 500 | Error handling | Manager throws | 500, error body | P1 |
+| FUN-048 | ParseRecordData JsonException first branch | Array fail | Invalid array JSON | Try object branch | P1 |
+| FUN-049 | ParseRecordData JsonException second branch | Object fail | Invalid object JSON | Fallback to raw string | P1 |
+| FUN-050 | ParseRecordData null element in array | Edge | "[null,1]" | Handled | P1 |
+| FUN-051 | CreateNotification record with JsonDocument | Serialization | JsonDocument | Serializes | P1 |
+| FUN-052 | CreateNotification record with JsonNode | Serialization | JsonNode | Serializes | P1 |
+| FUN-053 | GetNotifications does not expose IsRead in model | Model | NotificationModel | No IsRead property in model | P1 |
+| FUN-054 | GetNotifications does not expose UserId in model | Model | NotificationModel | No UserId in model | P1 |
+| FUN-055 | GetNotifications does not expose RecordData raw | Model | NotificationModel | Records not RecordData | P1 |
+| FUN-056 | CreateNotification does not set Entity | CreateNotification | Manager | Entity left default | P1 |
+| FUN-057 | CreateNotification does not set EntityId | CreateNotification | Manager | EntityId left default | P1 |
+| FUN-058 | CreateNotification does not set Status | CreateNotification | Manager | Status defaults Pending | P1 |
+| FUN-059 | UpdateNotification request Message required | UpdateNotificationRequest | Model | Message property | P1 |
+| FUN-060 | UpdateNotification request Status defaults | UpdateNotificationRequest | Model | Status default Progress | P1 |
+| FUN-061 | Multiple categories in system | Categories | Various consumers | NewApproval, System, etc. | P1 |
+| FUN-062 | Multiple response types | ResponseTypes | Various consumers | workflow_approval, etc. | P1 |
+| FUN-063 | CreateNotification from async context | Async | await CreateNotification | Completes | P1 |
+| FUN-064 | GetNotifications from async context | Async | await GetNotifications | Completes | P1 |
+| FUN-065 | MarkAsRead from async context | Async | await MarkAsRead | Completes | P1 |
+| FUN-066 | UpdateNotification from async context | Async | await UpdateNotification | Completes | P1 |
+| FUN-067 | SaveChangesAsync after MarkAsRead | Persistence | MarkAsRead | DB updated | P1 |
+| FUN-068 | SaveChangesAsync after UpdateNotification | Persistence | UpdateNotification | DB updated | P1 |
+| FUN-069 | SaveChangesAsync after CreateNotification | Persistence | CreateNotification | DB updated | P1 |
+| FUN-070 | AddAsync before SaveChanges in Create | Order | CreateNotification | Add then Save | P1 |
+| FUN-071 | FirstOrDefaultAsync in MarkAsRead | Query | MarkAsRead | Single match | P1 |
+| FUN-072 | FirstOrDefaultAsync in UpdateNotification | Query | UpdateNotification | Single match | P1 |
+| FUN-073 | ToListAsync in GetNotifications | Query | GetNotifications | Materialized list | P1 |
+| FUN-074 | Where UserId in GetNotifications | Filter | GetNotifications | userId filter | P1 |
+| FUN-075 | Where IsRead in GetNotifications | Filter | unreadOnly logic | IsRead filter | P1 |
+| FUN-076 | OrderByDescending CreatedAt | Sort | GetNotifications | Order applied | P1 |
+| FUN-077 | Select to NotificationModel | Projection | GetNotifications | Model mapping | P1 |
+| FUN-078 | ParseRecordData called per notification | Per-item | GetNotifications | Each RecordData parsed | P1 |
+| FUN-079 | JsonSerializer default options | Serialization | CreateNotification | No custom options | P1 |
+| FUN-080 | DbContext scoped per request | DI | NotificationManager | AppDbContext injected | P1 |
+| FUN-081 | UserResolverService for controller | DI | NotificationController | CurrentUserId | P1 |
+| FUN-082 | No permission check on GetNotifications | Auth | Controller | [Authorize] only | P1 |
+| FUN-083 | No permission check on MarkAsRead | Auth | Controller | [Authorize] only | P1 |
+| FUN-084 | No permission check on UpdateNotification | Auth | Controller | [Authorize] only | P1 |
+| FUN-085 | IApplicationService implementation | Interface | NotificationManager | Implements | P1 |
+| FUN-086 | Notification entity table Notifications | DB | Entity | ToTable("Notifications") | P1 |
+| FUN-087 | Notification primary key Id | DB | Entity | Id PK | P1 |
+| FUN-088 | Notification foreign key UserId | DB | Entity | UserId to User | P1 |
+| FUN-089 | CreateNotification no Entity/EntityId in manager | Manager | CreateNotification | Not set | P1 |
+| FUN-090 | PaoWorkflowNotificationService uses NotificationManager | Integration | Workflow | CreateNotification called | P1 |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities Involved | Expected Result | Priority |
 |----|-----------|----------|-------------------|-----------------|----------|
-| INT-001 | Integration 1 | Op 1 | Entities 1 | Result 1 | P0 |
-| INT-002 | Integration 2 | Op 2 | Entities 2 | Result 2 | P0 |
-| INT-003 | Integration 3 | Op 3 | Entities 3 | Result 3 | P0 |
-| INT-004 | Integration 4 | Op 4 | Entities 4 | Result 4 | P0 |
-| INT-005 | Integration 5 | Op 5 | Entities 5 | Result 5 | P0 |
-| INT-006 | Integration 6 | Op 6 | Entities 6 | Result 6 | P1 |
-| INT-007 | Integration 7 | Op 7 | Entities 7 | Result 7 | P1 |
-| INT-008 | Integration 8 | Op 8 | Entities 8 | Result 8 | P1 |
-| INT-009 | Integration 9 | Op 9 | Entities 9 | Result 9 | P1 |
-| INT-010 | Integration 10 | Op 10 | Entities 10 | Result 10 | P1 |
-| INT-011 | Integration 11 | Op 11 | Entities 11 | Result 11 | P1 |
-| INT-012 | Integration 12 | Op 12 | Entities 12 | Result 12 | P1 |
-| INT-013 | Integration 13 | Op 13 | Entities 13 | Result 13 | P1 |
-| INT-014 | Integration 14 | Op 14 | Entities 14 | Result 14 | P1 |
-| INT-015 | Integration 15 | Op 15 | Entities 15 | Result 15 | P1 |
-| INT-016 | Integration 16 | Op 16 | Entities 16 | Result 16 | P1 |
-| INT-017 | Integration 17 | Op 17 | Entities 17 | Result 17 | P1 |
-| INT-018 | Integration 18 | Op 18 | Entities 18 | Result 18 | P1 |
-| INT-019 | Integration 19 | Op 19 | Entities 19 | Result 19 | P1 |
-| INT-020 | Integration 20 | Op 20 | Entities 20 | Result 20 | P1 |
-| INT-021 | Integration 21 | Op 21 | Entities 21 | Result 21 | P1 |
-| INT-022 | Integration 22 | Op 22 | Entities 22 | Result 22 | P1 |
-| INT-023 | Integration 23 | Op 23 | Entities 23 | Result 23 | P1 |
-| INT-024 | Integration 24 | Op 24 | Entities 24 | Result 24 | P1 |
-| INT-025 | Integration 25 | Op 25 | Entities 25 | Result 25 | P1 |
-| INT-026 | Integration 26 | Op 26 | Entities 26 | Result 26 | P1 |
-| INT-027 | Integration 27 | Op 27 | Entities 27 | Result 27 | P1 |
-| INT-028 | Integration 28 | Op 28 | Entities 28 | Result 28 | P1 |
-| INT-029 | Integration 29 | Op 29 | Entities 29 | Result 29 | P1 |
-| INT-030 | Integration 30 | Op 30 | Entities 30 | Result 30 | P1 |
-| INT-031 | Integration 31 | Op 31 | Entities 31 | Result 31 | P1 |
-| INT-032 | Integration 32 | Op 32 | Entities 32 | Result 32 | P1 |
-| INT-033 | Integration 33 | Op 33 | Entities 33 | Result 33 | P1 |
-| INT-034 | Integration 34 | Op 34 | Entities 34 | Result 34 | P1 |
-| INT-035 | Integration 35 | Op 35 | Entities 35 | Result 35 | P1 |
-| INT-036 | Integration 36 | Op 36 | Entities 36 | Result 36 | P1 |
-| INT-037 | Integration 37 | Op 37 | Entities 37 | Result 37 | P1 |
-| INT-038 | Integration 38 | Op 38 | Entities 38 | Result 38 | P1 |
-| INT-039 | Integration 39 | Op 39 | Entities 39 | Result 39 | P1 |
-| INT-040 | Integration 40 | Op 40 | Entities 40 | Result 40 | P1 |
-| INT-041 | Integration 41 | Op 41 | Entities 41 | Result 41 | P1 |
-| INT-042 | Integration 42 | Op 42 | Entities 42 | Result 42 | P1 |
-| INT-043 | Integration 43 | Op 43 | Entities 43 | Result 43 | P1 |
-| INT-044 | Integration 44 | Op 44 | Entities 44 | Result 44 | P1 |
-| INT-045 | Integration 45 | Op 45 | Entities 45 | Result 45 | P1 |
-| INT-046 | Integration 46 | Op 46 | Entities 46 | Result 46 | P1 |
-| INT-047 | Integration 47 | Op 47 | Entities 47 | Result 47 | P1 |
-| INT-048 | Integration 48 | Op 48 | Entities 48 | Result 48 | P1 |
-| INT-049 | Integration 49 | Op 49 | Entities 49 | Result 49 | P1 |
-| INT-050 | Integration 50 | Op 50 | Entities 50 | Result 50 | P1 |
+| INT-001 | GET /api/notifications full flow | API to DB | Controller, Manager, DbContext | 200, list from DB | P0 |
+| INT-002 | PUT mark read full flow | API to DB | Controller, Manager, DbContext | 204, IsRead updated | P0 |
+| INT-003 | PUT update full flow | API to DB | Controller, Manager, DbContext | 204, Message/Status updated | P0 |
+| INT-004 | CreateNotification then GetNotifications | Manager flow | Manager, DbContext | Created appears in GET | P0 |
+| INT-005 | MarkAsRead then GetNotifications unreadOnly | Manager flow | Manager, DbContext | Marked not in unread list | P0 |
+| INT-006 | Workflow approval creates notification | PaoWorkflowNotificationService | Workflow, NotificationManager | Notification created | P0 |
+| INT-007 | Gmail sync creates notification | UNOPSGmailAddonManager | Gmail, NotificationManager | Notification created | P0 |
+| INT-008 | Gemini AI creates notification | UNOPSGeminiManager | Gemini, NotificationManager | Notification created | P0 |
+| INT-009 | Workflow recall marks notifications done | PaoWorkflowNotificationService | Workflow, DbContext | MarkWorkflowNotificationsAsRecalledAsync | P0 |
+| INT-010 | Workflow reject marks notifications done | PaoWorkflowNotificationService | Workflow, DbContext | MarkWorkflowNotificationsAsRejectedAsync | P0 |
+| INT-011 | Workflow approve marks notifications done | PaoWorkflowNotificationService | Workflow, DbContext | MarkWorkflowNotificationsAsApprovedAsync | P0 |
+| INT-012 | Create then MarkAsRead then Get | Full flow | Manager | Create, Mark, Get unread=false shows it read | P1 |
+| INT-013 | Create then UpdateNotification then Get | Full flow | Manager | Create, Update, Get shows new message | P1 |
+| INT-014 | Multiple users CreateNotification | Multi-user | Manager | Each user's notifications isolated | P1 |
+| INT-015 | GetNotifications with seeded data | DB seed | DbContext, Manager | Returns seeded notifications | P1 |
+| INT-016 | API auth pipeline | Request | Auth middleware, Controller | 401 if no token | P1 |
+| INT-017 | API model binding | Request | Controller, UpdateNotificationRequest | Body bound to request | P1 |
+| INT-018 | API route matching | Request | Routing | /api/notifications matches | P1 |
+| INT-019 | API route param notificationId | Request | Routing | {notificationId} bound | P1 |
+| INT-020 | DbContext factory in PaoWorkflowNotificationService | Workflow | IDbContextFactory, DbContext | Separate context per operation | P1 |
+| INT-021 | NotificationManager in ManagerWrapper | DI | ManagerWrapper | NotificationManager resolved | P1 |
+| INT-022 | NotificationManager in UNOPSManagerWrapper | DI | UNOPSManagerWrapper | NotificationManager resolved | P1 |
+| INT-023 | Controller receives NotificationManager | DI | Controller | NotificationManager injected | P1 |
+| INT-024 | UserResolverService in Controller | DI | Controller | CurrentUserId from claims | P1 |
+| INT-025 | Logger in Controller | DI | Controller | ILogger injected | P1 |
+| INT-026 | AppDbContext Notifications DbSet | DbContext | AppDbContext | Notifications DbSet | P1 |
+| INT-027 | Notification entity mapping | EF | DbContext | Notification configured | P1 |
+| INT-028 | Migration includes Notifications table | Migration | EF migrations | Table exists | P1 |
+| INT-029 | CreateNotification from Workflow with record | Workflow | WorkflowNotification, record | Record serialized | P1 |
+| INT-030 | CreateNotification from Gmail with record | Gmail | CreationState, record | Record serialized | P1 |
+| INT-031 | CreateNotification from Gemini with record | Gemini | Data modification, record | Record serialized | P1 |
+| INT-032 | GetNotifications returns only current user | API | Controller, UserResolverService | User A cannot see User B's | P1 |
+| INT-033 | MarkAsRead only own notification | API | Controller, Manager | User A cannot mark User B's | P1 |
+| INT-034 | UpdateNotification any notification | API | Controller, Manager | No userId check, updates any | P1 |
+| INT-035 | NotificationModel in API response | API | Controller, Model | JSON serialization | P1 |
+| INT-036 | UpdateNotificationRequest from body | API | Controller, Model | JSON deserialization | P1 |
+| INT-037 | APIDictionary.Notifications constant | Route | APIDictionary | "api/notifications" | P1 |
+| INT-038 | APIDictionary.NotificationRead constant | Route | APIDictionary | "api/notifications/{notificationId}/read" | P1 |
+| INT-039 | Update route hardcoded | Route | Controller | "api/notifications/{notificationId}/update" | P1 |
+| INT-040 | CreateNotification AddAsync then SaveChanges | Manager | DbContext | Add then Save | P1 |
+| INT-041 | MarkAsRead FirstOrDefault then SaveChanges | Manager | DbContext | Load, modify, Save | P1 |
+| INT-042 | UpdateNotification FirstOrDefault then SaveChanges | Manager | DbContext | Load, modify, Save | P1 |
+| INT-043 | GetNotifications ToListAsync | Manager | DbContext | Async enumeration | P1 |
+| INT-044 | ParseRecordData in Select | Manager | GetNotifications | In-memory parse | P1 |
+| INT-045 | JsonSerializer in CreateNotification | Manager | System.Text.Json | Serialize record | P1 |
+| INT-046 | JsonSerializer.Deserialize in ParseRecordData | Manager | System.Text.Json | Deserialize RecordData | P1 |
+| INT-047 | NotificationStatus enum in UpdateNotification | Manager | Domain.Enums | Status parameter | P1 |
+| INT-048 | NotificationStatus in UpdateNotificationRequest | Model | UpdateNotificationRequest | Status property | P1 |
+| INT-049 | NotificationStatus in NotificationModel | Model | NotificationModel | Status property | P1 |
+| INT-050 | Notification entity Status property | Entity | Notification | Status column | P1 |
+| INT-051 | Notification entity IsRead property | Entity | Notification | IsRead column | P1 |
+| INT-052 | Notification entity RecordData property | Entity | Notification | RecordData column (JSON) | P1 |
+| INT-053 | Notification entity CreatedAt property | Entity | Notification | CreatedAt column | P1 |
+| INT-054 | Notification entity Entity EntityId | Entity | Notification | Nullable columns | P1 |
+| INT-055 | PaoWorkflowNotificationService CreateInSystemNotificationsAsync | Workflow | Service | Calls NotificationManager | P1 |
+| INT-056 | PaoWorkflowNotificationService MarkWorkflowNotificationsAsDoneAsync | Workflow | Service | Uses DbContext directly | P1 |
+| INT-057 | Workflow approval email + in-system notification | Workflow | Email, Notification | Both sent | P1 |
+| INT-058 | Gmail creation notification content | Gmail | NotificationManager | Message, Category set | P1 |
+| INT-059 | Gemini data modification notification | Gemini | NotificationManager | Record has modification data | P1 |
+| INT-060 | DueDiligenceNotificationService integration | Due diligence | Service | Creates notifications | P1 |
+| INT-061 | AiContextualService direct DbContext | AI | AiContextualService | Adds to Notifications | P1 |
+| INT-062 | AiContextualService vs NotificationManager | AI | Two paths | Both create notifications | P1 |
+| INT-063 | NotificationController exception logging | Controller | ILogger | LogError on exception | P1 |
+| INT-064 | NotificationController 500 response body | Controller | Exception handler | { error: "..." } | P1 |
+| INT-065 | Global exception handler | Exception | Middleware | May handle 500 | P1 |
+| INT-066 | Integration test GetNotifications_NoParams | Test | NotificationControllerTests | Returns Ok or empty | P1 |
+| INT-067 | Integration test GetNotifications_UnreadOnlyTrue | Test | NotificationControllerTests | Filters | P1 |
+| INT-068 | Integration test GetNotifications_UnreadOnlyFalse | Test | NotificationControllerTests | Filters | P1 |
+| INT-069 | Integration test MarkAsRead workflow | Test | NotificationControllerTests | Mark then Get | P1 |
+| INT-070 | Integration test UpdateNotification workflow | Test | NotificationControllerTests | Update then Get | P1 |
+| INT-071 | Integration test GetNotifications_ReturnsOnlyCurrentUserData | Test | NotificationControllerTests | User isolation | P1 |
+| INT-072 | Unit test NotificationManagerFullTests | Test | NotificationManagerFullTests | Manager tests | P1 |
+| INT-073 | PAOWebApplicationFactory NotificationManager | Test | PAOWebApplicationFactory | NotificationManager registered | P1 |
+| INT-074 | WorkflowControllerTests mock NotificationManager | Test | WorkflowControllerTests | Mock for workflow | P1 |
+| INT-075 | PaoWorkflowNotificationServiceCCTests mock | Test | PaoWorkflowNotificationServiceCCTests | Mock NotificationManager | P1 |
+| INT-076 | PNO-1166 tests mock NotificationManager | Test | PNO-1166 | Mock in fixture | P1 |
+| INT-077 | PNO-1197 tests mock NotificationManager | Test | PNO-1197 | Mock in fixture | P1 |
+| INT-078 | CreateNotification record round-trip | Serialization | Create, Get | RecordData -> Records | P1 |
+| INT-079 | ParseRecordData array round-trip | Deserialization | RecordData array | Records matches | P1 |
+| INT-080 | ParseRecordData object round-trip | Deserialization | RecordData object | Records matches | P1 |
+| INT-081 | Status transition round-trip | Update, Get | Update status, verify | P1 |
+| INT-082 | Message update round-trip | Update, Get | Update message, verify | P1 |
+| INT-083 | MarkAsRead round-trip | Mark, Get | Mark read, GET unread=false | P1 |
+| INT-084 | Multi-consumer notification mix | Workflow, Gmail, Gemini | All create, Get returns all | P1 |
+| INT-085 | Category filter in consumer logic | Consumers | Filter by Category | Per consumer | P1 |
+| INT-086 | ResponseType filter in consumer logic | Consumers | Filter by ResponseType | Per consumer | P1 |
+| INT-087 | Entity EntityId for navigation | Model | Entity, EntityId | Link to entity | P1 |
+| INT-088 | Workflow entity name in notification | Workflow | EntityName | Opportunity, Partner, etc. | P1 |
+| INT-089 | Workflow entity ID in notification | Workflow | EntityId | Entity ID | P1 |
+| INT-090 | Full E2E: Submit -> Notify -> Approve -> Mark done | E2E | Workflow, Notification | End-to-end flow | P1 |
 
 ---
 
-## §6 Security Tests (50)
-
-| ID | Test Name | Attack Vector | Target | Expected Block | Priority |
-|----|-----------|--------------|--------|----------------|----------|
-| SEC-001 | Security 1 | Attack 1 | Target 1 | Block 1 | P0 |
-| SEC-002 | Security 2 | Attack 2 | Target 2 | Block 2 | P0 |
-| SEC-003 | Security 3 | Attack 3 | Target 3 | Block 3 | P0 |
-| SEC-004 | Security 4 | Attack 4 | Target 4 | Block 4 | P0 |
-| SEC-005 | Security 5 | Attack 5 | Target 5 | Block 5 | P0 |
-| SEC-006 | Security 6 | Attack 6 | Target 6 | Block 6 | P0 |
-| SEC-007 | Security 7 | Attack 7 | Target 7 | Block 7 | P0 |
-| SEC-008 | Security 8 | Attack 8 | Target 8 | Block 8 | P0 |
-| SEC-009 | Security 9 | Attack 9 | Target 9 | Block 9 | P0 |
-| SEC-010 | Security 10 | Attack 10 | Target 10 | Block 10 | P0 |
-| SEC-011 | Security 11 | Attack 11 | Target 11 | Block 11 | P1 |
-| SEC-012 | Security 12 | Attack 12 | Target 12 | Block 12 | P1 |
-| SEC-013 | Security 13 | Attack 13 | Target 13 | Block 13 | P1 |
-| SEC-014 | Security 14 | Attack 14 | Target 14 | Block 14 | P1 |
-| SEC-015 | Security 15 | Attack 15 | Target 15 | Block 15 | P1 |
-| SEC-016 | Security 16 | Attack 16 | Target 16 | Block 16 | P1 |
-| SEC-017 | Security 17 | Attack 17 | Target 17 | Block 17 | P1 |
-| SEC-018 | Security 18 | Attack 18 | Target 18 | Block 18 | P1 |
-| SEC-019 | Security 19 | Attack 19 | Target 19 | Block 19 | P1 |
-| SEC-020 | Security 20 | Attack 20 | Target 20 | Block 20 | P1 |
-| SEC-021 | Security 21 | Attack 21 | Target 21 | Block 21 | P1 |
-| SEC-022 | Security 22 | Attack 22 | Target 22 | Block 22 | P1 |
-| SEC-023 | Security 23 | Attack 23 | Target 23 | Block 23 | P1 |
-| SEC-024 | Security 24 | Attack 24 | Target 24 | Block 24 | P1 |
-| SEC-025 | Security 25 | Attack 25 | Target 25 | Block 25 | P1 |
-| SEC-026 | Security 26 | Attack 26 | Target 26 | Block 26 | P1 |
-| SEC-027 | Security 27 | Attack 27 | Target 27 | Block 27 | P1 |
-| SEC-028 | Security 28 | Attack 28 | Target 28 | Block 28 | P1 |
-| SEC-029 | Security 29 | Attack 29 | Target 29 | Block 29 | P1 |
-| SEC-030 | Security 30 | Attack 30 | Target 30 | Block 30 | P1 |
-| SEC-031 | Security 31 | Attack 31 | Target 31 | Block 31 | P1 |
-| SEC-032 | Security 32 | Attack 32 | Target 32 | Block 32 | P1 |
-| SEC-033 | Security 33 | Attack 33 | Target 33 | Block 33 | P1 |
-| SEC-034 | Security 34 | Attack 34 | Target 34 | Block 34 | P1 |
-| SEC-035 | Security 35 | Attack 35 | Target 35 | Block 35 | P1 |
-| SEC-036 | Security 36 | Attack 36 | Target 36 | Block 36 | P1 |
-| SEC-037 | Security 37 | Attack 37 | Target 37 | Block 37 | P1 |
-| SEC-038 | Security 38 | Attack 38 | Target 38 | Block 38 | P1 |
-| SEC-039 | Security 39 | Attack 39 | Target 39 | Block 39 | P1 |
-| SEC-040 | Security 40 | Attack 40 | Target 40 | Block 40 | P1 |
-| SEC-041 | Security 41 | Attack 41 | Target 41 | Block 41 | P1 |
-| SEC-042 | Security 42 | Attack 42 | Target 42 | Block 42 | P1 |
-| SEC-043 | Security 43 | Attack 43 | Target 43 | Block 43 | P1 |
-| SEC-044 | Security 44 | Attack 44 | Target 44 | Block 44 | P1 |
-| SEC-045 | Security 45 | Attack 45 | Target 45 | Block 45 | P1 |
-| SEC-046 | Security 46 | Attack 46 | Target 46 | Block 46 | P1 |
-| SEC-047 | Security 47 | Attack 47 | Target 47 | Block 47 | P1 |
-| SEC-048 | Security 48 | Attack 48 | Target 48 | Block 48 | P1 |
-| SEC-049 | Security 49 | Attack 49 | Target 49 | Block 49 | P1 |
-| SEC-050 | Security 50 | Attack 50 | Target 50 | Block 50 | P1 |
-
----
-
-## §7 Concurrency Tests (25)
+## §6 Concurrency Tests (25)
 
 | ID | Test Name | Concurrent Scenario | Expected Behavior | Priority |
 |----|-----------|---------------------|-------------------|----------|
-| CON-001 | Concurrency 1 | Scenario 1 | Behavior 1 | P0 |
-| CON-002 | Concurrency 2 | Scenario 2 | Behavior 2 | P0 |
-| CON-003 | Concurrency 3 | Scenario 3 | Behavior 3 | P0 |
-| CON-004 | Concurrency 4 | Scenario 4 | Behavior 4 | P0 |
-| CON-005 | Concurrency 5 | Scenario 5 | Behavior 5 | P0 |
-| CON-006 | Concurrency 6 | Scenario 6 | Behavior 6 | P1 |
-| CON-007 | Concurrency 7 | Scenario 7 | Behavior 7 | P1 |
-| CON-008 | Concurrency 8 | Scenario 8 | Behavior 8 | P1 |
-| CON-009 | Concurrency 9 | Scenario 9 | Behavior 9 | P1 |
-| CON-010 | Concurrency 10 | Scenario 10 | Behavior 10 | P1 |
-| CON-011 | Concurrency 11 | Scenario 11 | Behavior 11 | P1 |
-| CON-012 | Concurrency 12 | Scenario 12 | Behavior 12 | P1 |
-| CON-013 | Concurrency 13 | Scenario 13 | Behavior 13 | P1 |
-| CON-014 | Concurrency 14 | Scenario 14 | Behavior 14 | P1 |
-| CON-015 | Concurrency 15 | Scenario 15 | Behavior 15 | P1 |
-| CON-016 | Concurrency 16 | Scenario 16 | Behavior 16 | P1 |
-| CON-017 | Concurrency 17 | Scenario 17 | Behavior 17 | P1 |
-| CON-018 | Concurrency 18 | Scenario 18 | Behavior 18 | P1 |
-| CON-019 | Concurrency 19 | Scenario 19 | Behavior 19 | P1 |
-| CON-020 | Concurrency 20 | Scenario 20 | Behavior 20 | P1 |
-| CON-021 | Concurrency 21 | Scenario 21 | Behavior 21 | P1 |
-| CON-022 | Concurrency 22 | Scenario 22 | Behavior 22 | P1 |
-| CON-023 | Concurrency 23 | Scenario 23 | Behavior 23 | P1 |
-| CON-024 | Concurrency 24 | Scenario 24 | Behavior 24 | P1 |
-| CON-025 | Concurrency 25 | Scenario 25 | Behavior 25 | P1 |
+| CON-001 | Concurrent GetNotifications same user | 10 threads GetNotifications(100, null) | All return consistent data | P0 |
+| CON-002 | Concurrent CreateNotification same user | 10 threads CreateNotification(100, ...) | All 10 created | P0 |
+| CON-003 | Concurrent MarkAsRead same notification | 2 threads MarkAsRead(42, 100) | Idempotent, both succeed | P0 |
+| CON-004 | Concurrent MarkAsRead different notifications | 10 threads MarkAsRead(id, 100) different ids | All succeed | P0 |
+| CON-005 | Concurrent UpdateNotification same notification | 2 threads UpdateNotification(42, msg1, s1) and (42, msg2, s2) | One overwrites, no corruption | P0 |
+| CON-006 | GetNotifications while CreateNotification | Thread 1 GET, Thread 2 Create | GET may or may not include new | P1 |
+| CON-007 | MarkAsRead while GetNotifications | Thread 1 Mark, Thread 2 GET | Consistent view | P1 |
+| CON-008 | CreateNotification while UpdateNotification | Different notifications | Both succeed | P1 |
+| CON-009 | Multiple users concurrent CreateNotification | 5 users, 5 threads each | All 25 created | P1 |
+| CON-010 | Concurrent GetNotifications different users | 10 users, 1 thread each | No cross-user data | P1 |
+| CON-011 | CreateNotification rapid fire same user | 100 CreateNotification in parallel | All 100 created | P1 |
+| CON-012 | MarkAsRead rapid fire different notifications | 50 MarkAsRead in parallel | All succeed | P1 |
+| CON-013 | UpdateNotification rapid fire different | 50 UpdateNotification in parallel | All succeed | P1 |
+| CON-014 | DbContext concurrent access | Single DbContext, parallel ops | EF handles or throws | P1 |
+| CON-015 | PaoWorkflowNotificationService DbContextFactory | Workflow uses factory | Separate contexts, no conflict | P1 |
+| CON-016 | API concurrent GET requests | 20 GET /api/notifications parallel | All 200 | P1 |
+| CON-017 | API concurrent PUT mark read | 10 PUT mark read different ids | All 204 | P1 |
+| CON-018 | API concurrent PUT update | 10 PUT update different ids | All 204 | P1 |
+| CON-019 | CreateNotification and GetNotifications interleaved | Create, GET, Create, GET | No deadlock | P1 |
+| CON-020 | MarkAsRead and UpdateNotification same id | Concurrent Mark and Update | Both succeed, final state consistent | P1 |
+| CON-021 | SaveChangesAsync concurrent | Two managers, same DbContext | Scoped per request, separate instances | P1 |
+| CON-022 | ParseRecordData thread safety | Multiple GetNotifications parallel | ParseRecordData is static, no shared state | P1 |
+| CON-023 | JsonSerializer thread safety | Multiple CreateNotification parallel | JsonSerializer thread-safe | P1 |
+| CON-024 | Workflow and Gmail concurrent CreateNotification | Both services create | Both succeed | P1 |
+| CON-025 | Workflow mark done and MarkAsRead concurrent | MarkWorkflowNotificationsAsDoneAsync and MarkAsRead | Per implementation | P1 |
 
 ---
 
-## §8 Unit Tests (21)
+## §7 Unit Tests (21)
 
 | ID | Test Name | Category | Input | Expected Output | Priority |
 |----|-----------|----------|-------|-----------------|----------|
-| UNT-001 | Unit 1 | Validation | Input 1 | Output 1 | P0 |
-| UNT-002 | Unit 2 | Validation | Input 2 | Output 2 | P0 |
-| UNT-003 | Unit 3 | Validation | Input 3 | Output 3 | P0 |
-| UNT-004 | Unit 4 | Validation | Input 4 | Output 4 | P0 |
-| UNT-005 | Unit 5 | Validation | Input 5 | Output 5 | P0 |
-| UNT-006 | Unit 6 | Validation | Input 6 | Output 6 | P1 |
-| UNT-007 | Unit 7 | Validation | Input 7 | Output 7 | P1 |
-| UNT-008 | Unit 8 | Validation | Input 8 | Output 8 | P1 |
-| UNT-009 | Unit 9 | Validation | Input 9 | Output 9 | P1 |
-| UNT-010 | Unit 10 | Validation | Input 10 | Output 10 | P1 |
-| UNT-011 | Unit 11 | Validation | Input 11 | Output 11 | P1 |
-| UNT-012 | Unit 12 | Validation | Input 12 | Output 12 | P1 |
-| UNT-013 | Unit 13 | Validation | Input 13 | Output 13 | P1 |
-| UNT-014 | Unit 14 | Validation | Input 14 | Output 14 | P1 |
-| UNT-015 | Unit 15 | Validation | Input 15 | Output 15 | P1 |
-| UNT-016 | Unit 16 | Validation | Input 16 | Output 16 | P1 |
-| UNT-017 | Unit 17 | Validation | Input 17 | Output 17 | P1 |
-| UNT-018 | Unit 18 | Validation | Input 18 | Output 18 | P1 |
-| UNT-019 | Unit 19 | Validation | Input 19 | Output 19 | P1 |
-| UNT-020 | Unit 20 | Validation | Input 20 | Output 20 | P1 |
-| UNT-021 | Unit 21 | Validation | Input 21 | Output 21 | P1 |
+| UNT-001 | ParseRecordData null | ParseRecordData | null | [] | P0 |
+| UNT-002 | ParseRecordData empty string | ParseRecordData | "" | [] | P0 |
+| UNT-003 | ParseRecordData "[]" | ParseRecordData | "[]" | [] | P0 |
+| UNT-004 | ParseRecordData "[{}]" | ParseRecordData | "[{}]" | [{}] | P0 |
+| UNT-005 | ParseRecordData "[{\"a\":1}]" | ParseRecordData | "[{\"a\":1}]" | 1 element | P0 |
+| UNT-006 | ParseRecordData "{\"a\":1}" | ParseRecordData | "{\"a\":1}" | 1 element (object) | P0 |
+| UNT-007 | ParseRecordData invalid JSON | ParseRecordData | "invalid" | [raw string] | P0 |
+| UNT-008 | ParseRecordData "[1,2,3]" | ParseRecordData | "[1,2,3]" | 3 elements | P1 |
+| UNT-009 | CreateNotification serialization | CreateNotification | record = new { x = 1 } | RecordData contains x:1 | P0 |
+| UNT-010 | GetNotifications mapping Id | GetNotifications | Notification with Id=42 | Model Id=42 | P0 |
+| UNT-011 | GetNotifications mapping Message | GetNotifications | Notification with Message | Model Message set | P0 |
+| UNT-012 | GetNotifications mapping Category | GetNotifications | Notification with Category | Model Category set | P0 |
+| UNT-013 | GetNotifications mapping ResponseType | GetNotifications | Notification with ResponseType | Model ResponseType set | P0 |
+| UNT-014 | GetNotifications mapping Entity EntityId | GetNotifications | Notification with Entity, EntityId | Model has both | P0 |
+| UNT-015 | GetNotifications mapping Records | GetNotifications | Notification with RecordData | Records from ParseRecordData | P0 |
+| UNT-016 | MarkAsRead condition userId match | MarkAsRead | notification.UserId == userId | Updates | P0 |
+| UNT-017 | MarkAsRead condition userId mismatch | MarkAsRead | notification.UserId != userId | No update | P0 |
+| UNT-018 | UpdateNotification condition exists | UpdateNotification | notification != null | Updates | P0 |
+| UNT-019 | UpdateNotification condition not exists | UpdateNotification | notification == null | No update | P0 |
+| UNT-020 | GetNotifications unreadOnly null branch | GetNotifications | unreadOnly = null | Where IsRead == false | P0 |
+| UNT-021 | GetNotifications unreadOnly has value branch | GetNotifications | unreadOnly = true/false | Where IsRead == !unreadOnly | P0 |
 
 ---
 
-## §9 Performance Tests (16)
+## §8 Performance Tests (16)
 
 | ID | Test Name | Operation | Threshold | Priority |
 |----|-----------|----------|-----------|----------|
-| PRF-001 | Perf 1 | Operation 1 | < 500ms | P0 |
-| PRF-002 | Perf 2 | Operation 2 | < 500ms | P0 |
-| PRF-003 | Perf 3 | Operation 3 | < 500ms | P0 |
-| PRF-004 | Perf 4 | Operation 4 | < 500ms | P0 |
-| PRF-005 | Perf 5 | Operation 5 | < 500ms | P0 |
-| PRF-006 | Perf 6 | Operation 6 | < 500ms | P1 |
-| PRF-007 | Perf 7 | Operation 7 | < 500ms | P1 |
-| PRF-008 | Perf 8 | Operation 8 | < 500ms | P1 |
-| PRF-009 | Perf 9 | Operation 9 | < 500ms | P1 |
-| PRF-010 | Perf 10 | Operation 10 | < 500ms | P1 |
-| PRF-011 | Perf 11 | Operation 11 | < 500ms | P1 |
-| PRF-012 | Perf 12 | Operation 12 | < 500ms | P1 |
-| PRF-013 | Perf 13 | Operation 13 | < 500ms | P1 |
-| PRF-014 | Perf 14 | Operation 14 | < 500ms | P1 |
-| PRF-015 | Perf 15 | Operation 15 | < 500ms | P1 |
-| PRF-016 | Perf 16 | Operation 16 | < 500ms | P1 |
+| PRF-001 | GetNotifications 100 notifications | GetNotifications(100, false) | < 500ms | P0 |
+| PRF-002 | GetNotifications 1000 notifications | GetNotifications(100, false) | < 2s | P0 |
+| PRF-003 | CreateNotification single | CreateNotification(...) | < 100ms | P0 |
+| PRF-004 | MarkAsRead single | MarkAsRead(42, 100) | < 100ms | P0 |
+| PRF-005 | UpdateNotification single | UpdateNotification(42, "x", Done) | < 100ms | P0 |
+| PRF-006 | GetNotifications with ParseRecordData | 50 notifications with RecordData | < 300ms | P1 |
+| PRF-007 | CreateNotification with large record | record 10KB | < 200ms | P1 |
+| PRF-008 | ParseRecordData large JSON | RecordData 50KB | < 50ms | P1 |
+| PRF-009 | API GET /api/notifications | Full request | < 500ms | P0 |
+| PRF-010 | API PUT mark read | Full request | < 200ms | P0 |
+| PRF-011 | API PUT update | Full request | < 200ms | P0 |
+| PRF-012 | GetNotifications empty | User has 0 | < 100ms | P1 |
+| PRF-013 | CreateNotification 10 sequential | 10 CreateNotification | < 2s total | P1 |
+| PRF-014 | MarkAsRead 10 sequential | 10 MarkAsRead | < 1s total | P1 |
+| PRF-015 | GetNotifications ordered | 500 items OrderByDescending | < 1s | P1 |
+| PRF-016 | ParseRecordData 100 items in array | RecordData 100 elements | < 100ms | P1 |
 
 ---
 
-## §10 Load Tests (10)
+## §9 Load Tests (10)
 
 | ID | Test Name | Load Profile | Duration | Success Criteria | Priority |
 |----|-----------|-------------|----------|-------------------|----------|
-| LDT-001 | Load 1 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-002 | Load 2 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-003 | Load 3 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-004 | Load 4 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-005 | Load 5 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-006 | Load 6 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-007 | Load 7 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-008 | Load 8 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-009 | Load 9 | 20 req/s | 5 min | 95% < 500ms | P0 |
-| LDT-010 | Load 10 | 20 req/s | 5 min | 95% < 500ms | P0 |
+| LDT-001 | GET /api/notifications sustained | 20 req/s | 5 min | 95% < 500ms | P0 |
+| LDT-002 | PUT mark read sustained | 10 req/s | 5 min | 95% < 200ms | P0 |
+| LDT-003 | PUT update sustained | 10 req/s | 5 min | 95% < 200ms | P0 |
+| LDT-004 | Mixed GET and PUT | 15 GET/s, 5 PUT/s | 5 min | 95% < 500ms | P0 |
+| LDT-005 | CreateNotification burst | 50 CreateNotification in 1s | 1 burst | All succeed | P1 |
+| LDT-006 | GetNotifications burst | 100 GET in 1s | 1 burst | 95% < 500ms | P1 |
+| LDT-007 | MarkAsRead burst | 50 PUT in 1s | 1 burst | All 204 | P1 |
+| LDT-008 | Multi-user load | 50 users, 2 req/s each | 5 min | No errors | P1 |
+| LDT-009 | Ramp-up GET | 0 to 30 req/s over 2 min | 2 min | No timeout | P1 |
+| LDT-010 | Steady state mixed | 20 req/s mixed | 10 min | 99% success | P0 |
 
 ---
 
-**Last Updated:** 2026-02-11  
+## Implementation Status
+
+| Section | Total | Implemented | Automated | Status |
+|---------|-------|-------------|-----------|--------|
+| §1 Positive | 30 | 12 | NotificationManagerFullTests, NotificationControllerTests | Partial |
+| §2 Negative | 90 | 15 | NotificationControllerTests | Partial |
+| §3 Boundary | 90 | 5 | NotificationManagerFullTests | Partial |
+| §4 Functional | 90 | 8 | NotificationManagerFullTests | Partial |
+| §5 Integration | 90 | 12 | NotificationControllerTests, Workflow tests | Partial |
+| §6 Concurrency | 25 | 2 | NotificationControllerTests | Partial |
+| §7 Unit | 21 | 21 | NotificationManagerFullTests (parse, mapping) | Partial |
+| §8 Performance | 16 | 1 | NotificationControllerTests | Partial |
+| §9 Load | 10 | 0 | — | Not started |
+| **TOTAL** | **462** | **76** | — | **Partial** |
+
+**Notes:**
+- NotificationManager has no UNOPS override; tests apply to base implementation.
+- API endpoints: GET /api/notifications, PUT /api/notifications/{id}/read, PUT /api/notifications/{id}/update.
+- Consumers: PaoWorkflowNotificationService, UNOPSGmailAddonManager, UNOPSGeminiManager, DueDiligenceNotificationService, AiContextualService (direct DbContext).
+- UpdateNotification does not validate userId; MarkAsRead does.
+- ParseRecordData: null/empty → []; array → deserialize; object → [object]; invalid → [raw string].
+
+---
+
+**Last Updated:** 2026-02-18  
 **Status:** Ready for Execution

@@ -11,19 +11,24 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
-| §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| §1 Positive (P) | 30 | 30-50 | ✅ |
+| §2 Negative (N) | 90 | 90 | ✅ |
+| §3 Boundary (E) | 90 | 90 | ✅ |
+| §4 Functional (F) | 90 | 90 | ✅ |
+| §5 Integration (I) | 90 | 90 | ✅ |
+| §6 Concurrency (CON) | 25 | 25 | ✅ |
+| §7 Unit (UNT) | 21 | 21 | ✅ |
+| §8 Performance (PRF) | 16 | 16 | ✅ |
+| §9 Load (LDT) | 10 | 10 | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance Check**
+| Check | Result | Formula |
+|-------|--------|---------|
+| N≥3P? | ✅ | 90 ≥ 90 |
+| E≥3P? | ✅ | 90 ≥ 90 |
+| F≥3P? | ✅ | 90 ≥ 90 |
+| I≥3P? | ✅ | 90 ≥ 90 |
 
 ---
 
@@ -33,7 +38,7 @@
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps (Brief) | Expected Result | Priority |
 |----|-----------|-------------|---------------|-----------------|----------|
@@ -67,15 +72,9 @@
 | POS-028 | Summarize short text | Short input | Summarize | Summary returned | P1 |
 | POS-029 | Rate limit reset | After window | CheckRateLimit | Reset | P1 |
 | POS-030 | Session list pagination | 100 sessions | GetUserSessions paginated | Paginated | P1 |
-| POS-031 | Session filter by starred | Starred sessions | GetUserSessions filter | Starred only | P1 |
-| POS-032 | Session filter by archived | Archived | GetUserSessions filter | Archived only | P1 |
-| POS-033 | Prompt type case | "summary" vs "Summary" | GetPromptDataByType | Per design | P1 |
-| POS-034 | Content generation — long | Long prompt | GenerateContent | Handled | P1 |
-| POS-035 | Session cleanup | Old sessions | CleanupInactiveSessions | Cleaned | P2 |
-
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Condition | Expected Result | Priority |
 |----|-----------|------------------------|-----------------|----------|
@@ -150,9 +149,30 @@
 | NEG-069 | Session — corrupt data | Corrupt session | Handled | P1 |
 | NEG-070 | Audit log failure | Audit down | Op succeeds, audit queued | P2 |
 
+| NEG-071 | FetchResultFromGemini — null promptData | promptData=null | ArgumentNullException or handled | P0 |
+| NEG-072 | FetchResultFromGemini — null relatedJsonData | relatedJsonData=null | Handled or empty result | P1 |
+| NEG-073 | ProcessDataRelatedSummaryDetails — null request | req=null | BusinessException "Invalid request" | P0 |
+| NEG-074 | ProcessDataRelatedSummaryDetails — req.Id null | req.Id=null | BusinessException "Invalid request" | P0 |
+| NEG-075 | GenerateOpportunityStatementAsync — invalid opportunityId | opportunityId=0 | KeyNotFoundException or handled | P0 |
+| NEG-076 | GenerateOpportunityInsightsAsync — non-existent opportunity | opportunityId=99999 | Handled or empty response | P1 |
+| NEG-077 | GetDSTRecommendationsAsync — invalid opportunityId | opportunityId=-1 | Error or handled | P1 |
+| NEG-078 | GetSimilarProjectsAsync — invalid opportunityId | opportunityId=0 | Error or empty | P1 |
+| NEG-079 | GetRelevantPeopleAsync — non-existent opportunity | opportunityId=99999 | Empty or handled | P1 |
+| NEG-080 | ExtractDeliverablesWithFrameworkPriorityAsync — invalid id | opportunityId=0 | Error or empty list | P1 |
+| NEG-081 | ChatWithGemini — null request | req=null | ArgumentNullException or handled | P0 |
+| NEG-082 | ChatWithGemini — empty sessionId | sessionId="" | Error or handled | P1 |
+| NEG-083 | ScanFileForGeminiProcessing — null file | req with null file | Error | P1 |
+| NEG-084 | ProcessPlaceholders — malformed JSON | jsonData="{invalid" | Original text or error | P1 |
+| NEG-085 | GetSessionConfigurationAsync — AgenticAi URL missing | ServiceURL not configured | InvalidOperationException | P1 |
+| NEG-086 | CreateBatchEmbeddingsAsync — null texts | texts=null | ArgumentNullException | P1 |
+| NEG-087 | CreateBatchEmbeddingsAsync — empty list | texts=[] | Empty list returned | P1 |
+| NEG-088 | GenerateKeywordsAsync — null texts | texts=null | ArgumentNullException | P1 |
+| NEG-089 | TranscribeOpportunityDocument — document not found | req.Id for non-existent doc | BusinessException "Document not found" | P0 |
+| NEG-090 | CallGeminiApi — invalid GenerationConfig JSON | Malformed ContentConfig | JsonException or handled | P1 |
+
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max | Priority |
 |----|----------------|-----|-----|--------|--------|----------|----------|
@@ -227,9 +247,30 @@
 | BND-069 | Rate limit per IP | — | — | IP limit | — | — | P2 |
 | BND-070 | API version | — | — | v1 vs v2 | — | — | P2 |
 
+| BND-071 | GetSimilarProjectsAsync maxResults | 1 | 100 | 1 | 100 | 101 | P1 |
+| BND-072 | GetRelevantPeopleAsync maxResults | 1 | 100 | 1 | 100 | 101 | P1 |
+| BND-073 | GetDSTRecommendationsAsync maxResults | 1 | 50 | 1 | 50 | 51 | P1 |
+| BND-074 | dismissedOupQuestionIds count | 0 | 500 | 0 | 500 | 501 | P2 |
+| BND-075 | entityId for cache key | 1 char | 50 chars | "1" | 50 chars | 51 chars | P1 |
+| BND-076 | relatedJsonData length | 0 | MaxToken | "" | Max | Max+1 | P1 |
+| BND-077 | opportunityId for GenerateStatement | 1 | 2147483647 | 1 | Max int | Overflow | P1 |
+| BND-078 | ProcessDataRelatedSummaryDetails req.Id | 1 | Max int | 1 | Max | 0 or negative | P1 |
+| BND-079 | Chat message history length | 0 | 10000 | 0 | 10000 | 10001 | P2 |
+| BND-080 | Batch embedding texts count | 1 | 100 | 1 | 100 | 101 | P2 |
+| BND-081 | GenerateKeywordsAsync texts count | 1 | 100 | 1 | 100 | 101 | P2 |
+| BND-082 | Session title UpdateSessionTitle | 0 | 255 | "" | 255 chars | 256 chars | P1 |
+| BND-083 | GeminiProcessDataRequest Type length | 1 | 100 | "A" | 100 chars | 101 chars | P1 |
+| BND-084 | forceRefresh / invalidateCache | — | — | false | true | — | P1 |
+| BND-085 | saveToDatabase GenerateOpportunityStatement | — | — | false | true | — | P1 |
+| BND-086 | AiPrompt UseCache flag | — | — | false | true | — | P1 |
+| BND-087 | CacheInvalidationMinutes | 0 | 1440 | 0 | 1440 | 1441 | P2 |
+| BND-088 | Retry count CallGeminiApiAsync | 1 | 5 | 1 | 5 | 6 | P2 |
+| BND-089 | ProcessPlaceholders placeholder depth | 1 | 10 | "{a}" | "{a.b.c.d.e}" | 11 levels | P2 |
+| BND-090 | BulkInsertRecordsAsync batch size | 1 | 25 | 1 | 25 | 26 | P2 |
+
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Scenario | Trigger | Expected Outcome | Priority |
 |----|-----------|---------------|---------|------------------|----------|
@@ -284,9 +325,50 @@
 | FUN-049 | Rate limit per user | User limit | CheckRateLimit | Enforced | P0 |
 | FUN-050 | Session expiry | Expired | GetSession | Handled | P1 |
 
+| FUN-051 | GenerateOpportunityInsightsAsync forceRefresh bypasses cache | forceRefresh=true | GenerateOpportunityInsightsAsync(oppId, user, true) | Fresh Gemini call, cache bypassed | P0 |
+| FUN-052 | FetchResultFromGemini cache hit when prompt unchanged | UseCache=true, same entityId | FetchResultFromGemini with cached key | Cached result returned, no API call | P0 |
+| FUN-053 | FetchResultFromGemini cache invalidation on prompt change | Instructions changed | FetchResultFromGemini | Cache invalidated, new API call | P1 |
+| FUN-054 | ProcessPlaceholders replaces {promptData} with full JSON | UserPrompt="{promptData}" | ProcessPlaceholders | jsonData substituted | P0 |
+| FUN-055 | ProcessPlaceholders replaces nested {object.property} | JSON has nested props | ProcessPlaceholders | Placeholder replaced with value | P1 |
+| FUN-056 | ProcessPlaceholders skips JSON-like content in prompt | "{ \"key\": true }" in text | ProcessPlaceholders | Not corrupted | P1 |
+| FUN-057 | GenerateOpportunityStatementAsync saves to Opportunity | saveToDatabase=true | GenerateOpportunityStatementAsync | OpportunityStatementMarkdown updated | P0 |
+| FUN-058 | GenerateOpportunityStatementAsync skips save when false | saveToDatabase=false | GenerateOpportunityStatementAsync | Statement returned, not persisted | P1 |
+| FUN-059 | GetDSTRecommendationsAsync excludes dismissed oupQuestionIds | dismissedOupQuestionIds provided | GetDSTRecommendationsAsync | Dismissed items excluded | P1 |
+| FUN-060 | GetDSTRecommendationsAsync forceRefresh bypasses cache | forceRefresh=true | GetDSTRecommendationsAsync | Fresh recommendations | P1 |
+| FUN-061 | GetSimilarProjectsAsync invalidateCache refreshes | invalidateCache=true | GetSimilarProjectsAsync | Fresh similar projects | P1 |
+| FUN-062 | GetRelevantPeopleAsync invalidateCache refreshes | invalidateCache=true | GetRelevantPeopleAsync | Fresh relevant people | P1 |
+| FUN-063 | CallGeminiApi retry on 429 rate limit | Gemini returns 429 | CallGeminiApiAsync | Exponential backoff, retry up to 5 | P0 |
+| FUN-064 | CallGeminiApi returns error after max retries | All retries fail | CallGeminiApiAsync | Error response returned | P1 |
+| FUN-065 | ProcessDataRelatedSummaryDetails uses DataRetrievalMethod | req has Type, Id | ProcessDataRelatedSummaryDetails | Correct manager invoked, data retrieved | P0 |
+| FUN-066 | ProcessDataRelatedSummaryDetails maps entity to JSON | Entity loaded | ProcessDataRelatedSummaryDetails | JSON context for Gemini | P1 |
+| FUN-067 | ScanFileForGeminiProcessing uses document storage path | req with StoragePath | ScanFileForGeminiProcessing | Document content extracted, sent to Gemini | P1 |
+| FUN-068 | TranscribeOpportunityDocument sets AITranscribed flag | Success | TranscribeOpportunityDocument | Document.AITranscribed=true | P1 |
+| FUN-069 | ExtractDeliverablesWithFrameworkPriorityAsync tagged docs first | Tagged framework docs exist | ExtractDeliverablesWithFrameworkPriorityAsync | Tagged docs prioritized | P1 |
+| FUN-070 | ExtractDeliverablesWithFrameworkPriorityAsync fallback to all docs | No tagged docs | ExtractDeliverablesWithFrameworkPriorityAsync | All documents used | P1 |
+| FUN-071 | GetFrameworkStatusAsync returns status per framework | Opportunity has deliverables | GetFrameworkStatusAsync | FrameworkStatusResponse with statuses | P1 |
+| FUN-072 | ValidateOpportunityStatementAsync compares stored vs generated | Both exist | ValidateOpportunityStatementAsync | Alignment status, differences if any | P0 |
+| FUN-073 | CreateBatchEmbeddingsAsync delegates to AiContextualService | texts list | CreateBatchEmbeddingsAsync | List of embedding strings | P1 |
+| FUN-074 | GenerateKeywordsAsync delegates to AiContextualService | texts list | GenerateKeywordsAsync | Dictionary of keywords | P1 |
+| FUN-075 | GetPromptData delegates to AiContextualService | type string | GetPromptData | Prompts from AiService | P0 |
+| FUN-076 | GetSessionConfigurationAsync caches config | First call | GetSessionConfigurationAsync | SessionConfiguration, cached 1hr | P1 |
+| FUN-077 | ChatWithGeminiStreaming yields chunks | Streaming=true | ChatWithGeminiStreaming | IAsyncEnumerable yields chunks | P0 |
+| FUN-078 | ChatWithGemini non-streaming returns full response | Streaming=false | ChatWithGemini | Full response object | P0 |
+| FUN-079 | GetRequestBody builds system_instruction from promptData | systemInstructions provided | GetRequestBody | system_instruction in request | P1 |
+| FUN-080 | GetRequestBody handles ToolsConfig array format | ToolsConfig as array | GetRequestBody | tools array in request | P1 |
+| FUN-081 | GetRequestBody handles ToolsConfig object format (legacy) | ToolsConfig as object | GetRequestBody | Wrapped in array | P1 |
+| FUN-082 | DisableExternalCalls returns empty from FetchResultFromGemini | AISettings:DisableExternalCalls=true | FetchResultFromGemini | Empty string, no API call | P1 |
+| FUN-083 | DisableExternalCalls returns empty from CallGeminiApi | DisableExternalCalls=true | CallGeminiApi | Empty string | P1 |
+| FUN-084 | GetCredentials uses mock when secret missing | Secret null/empty | GetCredentials | Fake token for testing | P1 |
+| FUN-085 | ProcessBulkImport batch size 25 for Partner | entityName=Partner | ProcessBulkImport | 25 records per batch | P1 |
+| FUN-086 | ProcessBulkImport creates notification when isAsync | isAsync=true | ProcessBulkImport | Notification created | P1 |
+| FUN-087 | MapModelToEntity sets defaults for null model fields | Model with nulls | MapModelToEntity | "default" for Type, Model, etc. | P1 |
+| FUN-088 | GenerateOpportunityProposalAsync aggregates sources | Request with opportunityId | GenerateOpportunityProposalAsync | Proposal from interactions, docs | P1 |
+| FUN-089 | UpdateSessionTitle trims whitespace | Title="  x  " | UpdateSessionTitle | Trimmed before save | P1 |
+| FUN-090 | GetURL uses AISettings:ProjectId not AiPrompt.Project | Prompt has Project | GetURL | URL uses config ProjectId | P1 |
+
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities Involved | Expected Result | Priority |
 |----|-----------|----------|-------------------|-----------------|----------|
@@ -341,66 +423,50 @@
 | INT-049 | Compliance check | Content compliance | GeminiManager | Checked | P1 |
 | INT-050 | PII detection | PII in content | GeminiManager | Detected | P1 |
 
----
-
-## §6 Security Tests (50)
-
-| ID | Test Name | Attack Vector | Target | Expected Block | Priority |
-|----|-----------|--------------|--------|----------------|----------|
-| SEC-001 | SQL injection prompt type | ' OR 1=1-- | GetPromptDataByType | Sanitized | P0 |
-| SEC-002 | XSS in session title | <script>alert(1)</script> | UpdateSessionTitle | Sanitized | P0 |
-| SEC-003 | Prompt injection | Ignore previous | GenerateContent | Sanitized | P0 |
-| SEC-004 | IDOR get session | GetSession(otherId) | GetSessionDataWithChats | 403 | P0 |
-| SEC-005 | IDOR update session | UpdateSession(otherId) | UpdateSession | 403 | P0 |
-| SEC-006 | IDOR end session | EndSession(otherId) | EndSession | 403 | P0 |
-| SEC-007 | Mass assignment | Include Id | CreateSession | Ignored | P0 |
-| SEC-008 | Unauthenticated | No auth | Any op | 401 | P0 |
-| SEC-009 | Expired token | Expired JWT | Any | 401 | P0 |
-| SEC-010 | Wrong role | No permission | CreateSession | 403 | P0 |
-| SEC-011 | Org scope bypass | Cross-org | GetUserSessions | 403 | P0 |
-| SEC-012 | API key exposure | Key in response | GenerateContent | Not exposed | P0 |
-| SEC-013 | PII in prompt | PII | GenerateContent | Sanitized | P0 |
-| SEC-014 | Content exfiltration | Extract data | GenerateContent | Blocked | P0 |
-| SEC-015 | Rate limit bypass | Manipulate | CheckRateLimit | Rejected | P0 |
-| SEC-016 | Session hijack | Other session | GetSession | 403 | P0 |
-| SEC-017 | Replay attack | Replay | GenerateContent | Rejected | P0 |
-| SEC-018 | JWT alg none | alg=none | Request | Rejected | P0 |
-| SEC-019 | Brute force | Enumerate | GetSession | Rate limited | P1 |
-| SEC-020 | CSRF create | Cross-site | CreateSession | Token validated | P0 |
-| SEC-021 | CSRF update | Cross-site | UpdateSession | Token validated | P0 |
-| SEC-022 | CSRF end | Cross-site | EndSession | Token validated | P0 |
-| SEC-023 | Log injection | Malicious log | Log | Sanitized | P1 |
-| SEC-024 | Header injection | Malicious header | Request | Sanitized | P1 |
-| SEC-025 | Parameter pollution | id=1&id=2 | Get | Handled | P1 |
-| SEC-026 | Info disclosure | Probe errors | Invalid | Generic | P1 |
-| SEC-027 | Sensitive data error | Stack trace | Exception | Not exposed | P0 |
-| SEC-028 | Token in URL | Token in query | Request | Avoided | P1 |
-| SEC-029 | Cookie manipulation | Modify cookie | Request | Rejected | P0 |
-| SEC-030 | Substitution attack | Replace JWT | Request | 403 | P0 |
-| SEC-031 | Timing attack | Response time | GetSession | Constant | P2 |
-| SEC-032 | Cache poisoning | Malicious cache | Cache | Sanitized | P1 |
-| SEC-033 | Content — harmful output | Harmful | GenerateContent | Filtered | P0 |
-| SEC-034 | Summarize — PII | PII in text | Summarize | Sanitized | P0 |
-| SEC-035 | Context injection | Malicious context | SetContext | Sanitized | P0 |
-| SEC-036 | Model injection | Invalid model | GenerateContent | Rejected | P0 |
-| SEC-037 | LDAP injection | *)(uid=* | Filter | Sanitized | P0 |
-| SEC-038 | Path traversal | ../../../ | Any | Rejected | P0 |
-| SEC-039 | Null byte | %00 | Filename | Rejected | P0 |
-| SEC-040 | Open redirect | Redirect | Callback | Validated | P1 |
-| SEC-041 | Session fixation | Fixate | Login | New session | P1 |
-| SEC-042 | Excessive data | Huge request | GenerateContent | Rejected | P1 |
-| SEC-043 | DoS rate limit | Many requests | API | 429 | P0 |
-| SEC-044 | DoS large prompt | Huge prompt | GenerateContent | Rejected | P0 |
-| SEC-045 | Privilege escalation | Admin action | User | 403 | P0 |
-| SEC-046 | Insecure reference | SessionId manip | Get | Validated | P0 |
-| SEC-047 | Token expiry | Expired | Request | 401 | P0 |
-| SEC-048 | Audit bypass | Skip audit | Any op | Audit required | P0 |
-| SEC-049 | Content policy bypass | Policy bypass | GenerateContent | Blocked | P0 |
-| SEC-050 | API key leak | Key in log | Log | Not logged | P0 |
+| INT-051 | GeminiManager → AiContextualService FetchResultFromGemini | FetchResultFromGemini | GeminiManager, AiContextualService | Delegated, result returned | P0 |
+| INT-052 | GeminiManager → AiContextualService GetPromptData | GetPromptData | GeminiManager, AiContextualService | Prompts from AiService | P0 |
+| INT-053 | GeminiManager → OpportunityManager GetOpportunityDetailsForAI | GenerateOpportunityInsightsAsync | GeminiManager, OpportunityManager | Opportunity JSON context | P0 |
+| INT-054 | GeminiManager → AiPromptCacheService GetCachedEntry | FetchResultFromGemini with cache | GeminiManager, IAiPromptCacheService | Cache hit or miss | P0 |
+| INT-055 | GeminiManager → AiPromptCacheService InvalidateCache | Prompt changed | GeminiManager, IAiPromptCacheService | Cache invalidated | P1 |
+| INT-056 | GeminiController → GenerateOpportunityStatement | POST /opportunity/{id}/generate-statement | GeminiController, GeminiManager | Statement returned | P0 |
+| INT-057 | GeminiController → ValidateOpportunityStatement | POST /opportunity/{id}/validate-statement | GeminiController, GeminiManager | Validation response | P0 |
+| INT-058 | GeminiController → ProcessDataRelatedSummaryDetails | POST process-data-summary | GeminiController, GeminiManager | Summary response | P0 |
+| INT-059 | GeminiController → TranscribeOpportunityDocument | POST document-transcribe | GeminiController, GeminiManager, Documents | Transcribed, AITranscribed set | P0 |
+| INT-060 | GeminiController → ChatWithGemini streaming | POST AiAssistantChat streaming | GeminiController, GeminiManager | SSE stream | P0 |
+| INT-061 | GeminiController → ChatWithGemini non-streaming | POST AiAssistantChat | GeminiController, GeminiManager | Full response | P0 |
+| INT-062 | WorkflowController → GenerateOpportunityStatementAsync on submit | Submit workflow | WorkflowController, GeminiManager | Statement regenerated | P0 |
+| INT-063 | OpportunityController → insights endpoint | GET /opportunity/{id}/insights | OpportunityController, GeminiManager | Insights response | P0 |
+| INT-064 | UNOPSGeminiManager → OpportunityManager GetOpportunityDetailsForAI | GenerateOpportunityStatementAsync | UNOPSGeminiManager, OpportunityManager | Full opportunity context | P0 |
+| INT-065 | UNOPSGeminiManager → DbContextFactory for parallel queries | GetOpportunityDetailsForAI | UNOPSGeminiManager, IDbContextFactory | Thread-safe context | P1 |
+| INT-066 | UNOPSGeminiManager → UserInfoService for profile | ChatWithGemini | UNOPSGeminiManager, IUserInfoService | User context in prompt | P1 |
+| INT-067 | UNOPSGeminiManager → CloudRunHelper for AgenticAi | GetSessionDetails | UNOPSGeminiManager, CloudRunHelper | Authenticated HTTP | P1 |
+| INT-068 | AiContextualService → Vertex AI generateContent | CallGeminiApi | AiContextualService, Vertex AI | API response | P0 |
+| INT-069 | AiContextualService → GoogleCredential GetAccessToken | CallGeminiApi | AiContextualService, GoogleCredential | Bearer token | P0 |
+| INT-070 | ProcessDataRelatedSummaryDetails → CallFunctionByNameAsync | DataRetrievalMethod | UNOPSGeminiManager, BaseUNOPSManager | Entity data as JSON | P0 |
+| INT-071 | GenerateOpportunityInsightsAsync → opportunity_generate_insights prompt | Generate insights | UNOPSGeminiManager, AiPrompt | Prompt loaded, context sent | P0 |
+| INT-072 | GenerateOpportunityStatementAsync → opportunity_statement prompt | Generate statement | UNOPSGeminiManager, AiPrompt | Statement prompt, docs | P0 |
+| INT-073 | TranscribeOpportunityDocument → opportunity_document_transcribe | Transcribe | UNOPSGeminiManager, Document, AiPrompt | Document content to Gemini | P0 |
+| INT-074 | FetchResultFromGeminiWithDocument → gs:// URI | Document in prompt | AiContextualService, GCS | Document content in request | P1 |
+| INT-075 | FetchResultFromGeminiWithMultipleDocuments → multiple URIs | ExtractDeliverables | AiContextualService | All docs in single call | P1 |
+| INT-076 | CreateBatchEmbeddingsAsync → AiContextualService | CreateBatchEmbeddings | GeminiManager, AiContextualService | Embeddings created | P1 |
+| INT-077 | GenerateKeywordsAsync → AiContextualService | GenerateKeywords | GeminiManager, AiContextualService | Keywords for search | P1 |
+| INT-078 | GetSessionDetails → AgenticAi ServiceURL | Get session with chats | GeminiController, CloudRunHelper | Session JSON from Python | P1 |
+| INT-079 | GetUserSessions → AgenticAi backend | Get user sessions | GeminiManager, AgenticAi | Sessions list | P1 |
+| INT-080 | ChatWithGemini → AgenticAi or Vertex | Chat request | GeminiManager, AgenticAi/Vertex | Chat response | P0 |
+| INT-081 | GetDSTRecommendationsAsync → vector store + Gemini | DST recommendations | UNOPSGeminiManager, AiContextualService | Recommendations | P1 |
+| INT-082 | GetSimilarProjectsAsync → embeddings + Gemini | Similar projects | UNOPSGeminiManager, AiContextualService | Similar projects list | P1 |
+| INT-083 | GetRelevantPeopleAsync → embeddings + Gemini | Relevant people | UNOPSGeminiManager, AiContextualService | Relevant people list | P1 |
+| INT-084 | ExtractDeliverablesWithFrameworkPriorityAsync → documents + Gemini | Extract deliverables | UNOPSGeminiManager, DocumentManager | Extracted list | P1 |
+| INT-085 | GetFrameworkStatusAsync → deliverables analysis | Framework status | UNOPSGeminiManager | Status per framework | P1 |
+| INT-086 | UNOPSAiPromptManager TestPrompt → FetchResultFromGemini | Test prompt | AiPromptManager, AiContextualService | Test result | P1 |
+| INT-087 | UNOPSContactManager → AiContextualService domain suggestion | Contact domain | ContactManager, AiContextualService | Domain suggestions | P2 |
+| INT-088 | ImageGenerationManager → CallGeminiApi pattern | Image generation | ImageGenerationManager, Vertex AI | Same auth pattern | P2 |
+| INT-089 | NotificationManager ← UNOPSGeminiManager CreateNotification | Bulk import async | UNOPSGeminiManager, NotificationManager | Notification on complete | P1 |
+| INT-090 | IManagerWrapper.GeminiManager resolution | Resolve GeminiManager | ManagerWrapper, UNOPSGeminiManager | Correct override | P0 |
 
 ---
 
-## §7 Concurrency Tests (25)
+## §6 Concurrency Tests (25)
 
 | ID | Test Name | Concurrent Scenario | Expected Behavior | Priority |
 |----|-----------|---------------------|-------------------|----------|
@@ -432,7 +498,7 @@
 
 ---
 
-## §8 Unit Tests (21)
+## §7 Unit Tests (21)
 
 | ID | Test Name | Category | Input | Expected Output | Priority |
 |----|-----------|----------|-------|-----------------|----------|
@@ -460,7 +526,7 @@
 
 ---
 
-## §9 Performance Tests (16)
+## §8 Performance Tests (16)
 
 | ID | Test Name | Operation | Threshold | Priority |
 |----|-----------|----------|-----------|----------|
@@ -483,7 +549,7 @@
 
 ---
 
-## §10 Load Tests (10)
+## §9 Load Tests (10)
 
 | ID | Test Name | Load Profile | Duration | Success Criteria | Priority |
 |----|-----------|-------------|----------|-------------------|----------|

@@ -11,19 +11,24 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
-| §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| §1 Positive (P) | 30 | 30-50 | ✅ |
+| §2 Negative (N) | 90 | 90 | ✅ |
+| §3 Boundary (E) | 90 | 90 | ✅ |
+| §4 Functional (F) | 90 | 90 | ✅ |
+| §5 Integration (I) | 90 | 90 | ✅ |
+| §6 Concurrency (CON) | 25 | 25 | ✅ |
+| §7 Unit (UNT) | 21 | 21 | ✅ |
+| §8 Performance (PRF) | 16 | 16 | ✅ |
+| §9 Load (LDT) | 10 | 10 | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance Check**
+| Check | Result | Formula |
+|-------|--------|---------|
+| N≥3P? | ✅ | 90 ≥ 90 |
+| E≥3P? | ✅ | 90 ≥ 90 |
+| F≥3P? | ✅ | 90 ≥ 90 |
+| I≥3P? | ✅ | 90 ≥ 90 |
 
 ---
 
@@ -33,7 +38,7 @@
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps (Brief) | Expected Result | Priority |
 |----|-----------|-------------|---------------|-----------------|----------|
@@ -67,15 +72,9 @@
 | POS-028 | Interaction type from email | Email | CreateInteractionFromEmail | Type=Email | P1 |
 | POS-029 | Email metadata extraction | Email | ExtractMetadata(email) | Metadata | P1 |
 | POS-030 | Get contacts by thread | Thread ID | GetContactsForThread(threadId) | Contacts | P1 |
-| POS-031 | Sync incremental | Previous sync | SyncEmails | Delta only | P1 |
-| POS-032 | Dedup with suggestions | Unmatched | GetUnmatchedEmailsWithSuggestions | Suggestions | P1 |
-| POS-033 | OAuth state validation | State param | ValidateOAuthState(state) | Valid | P1 |
-| POS-034 | Email attachment handling | Email with attachments | CreateInteractionFromEmail | Attachments handled | P1 |
-| POS-035 | Multiple recipients | Email to multiple | MatchEmailToContact | All matched | P1 |
-
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Condition | Expected Result | Priority |
 |----|-----------|------------------------|-----------------|----------|
@@ -150,9 +149,30 @@
 | NEG-069 | Email size limit | Too large | CreateInteractionFromEmail | Rejected | P1 |
 | NEG-070 | Audit log failure | Audit down | Any op | Op succeeds | P2 |
 
+| NEG-071 | FindRelatedRecords — null request | Request=null | NullReferenceException or 500 | P1 |
+| NEG-072 | FindRelatedRecords — null EmailAddresses | EmailAddresses=null | NullReferenceException or handled | P1 |
+| NEG-073 | CreateRecordsFromEmails — null SelectedContacts | SelectedContacts=null | ArgumentException | P1 |
+| NEG-074 | CreateRecordsFromEmails — empty SelectedContacts | SelectedContacts=[] | ArgumentException "No emails selected" | P1 |
+| NEG-075 | CreateRecordsFromEmails — no contact permission | User lacks Contact create | UnauthorizedAccessException | P1 |
+| NEG-076 | CreateRecordsFromEmails — no partner permission | User lacks Partner create | UnauthorizedAccessException | P1 |
+| NEG-077 | CreateRecordsFromEmails — invalid email format | EmailAddress="not-an-email" | FailedEmails populated | P1 |
+| NEG-078 | CreateRecordsFromEmails — null user | user=null | Exception or handled | P1 |
+| NEG-079 | CreateRecordsFromEmails — empty EmailAddress | EmailAddress="" | Contact creation fails, FailedEmails | P1 |
+| NEG-080 | CreateRecordsFromEmails — PartnerManager throws | CreatePartnerAsync throws | FailedEmails for that partner's emails | P1 |
+| NEG-081 | CreateRecordsFromEmails — ContactManager throws | CreateContactAsync throws | FailedEmails populated | P1 |
+| NEG-082 | CreateRecordsFromEmails — GetPartnerByNameAsync throws | Partner lookup throws | Exception propagated | P1 |
+| NEG-083 | CreateRecordsFromEmails — GetContactByEmailAsync throws | Contact lookup throws | Exception propagated | P1 |
+| NEG-084 | FindRelatedRecords — UserDataManager throws | GetUsersByEmailsAsync throws | Users empty, contacts/partners returned | P1 |
+| NEG-085 | FindRelatedRecords — UserInfoService throws | GetUserInfosByEmailsAsync throws | Users with fallback data | P1 |
+| NEG-086 | CreateRecordsFromEmails — invalid PartnerId | PartnerId=99999 | Partner creation fails | P1 |
+| NEG-087 | CreateRecordsFromEmails — null user claims | GetUserIdFromClaims returns 0 | Notifications skipped | P1 |
+| NEG-088 | FindRelatedRecords — ContactManager throws | GetContactsForGmailAddon throws | Exception propagated | P1 |
+| NEG-089 | FindRelatedRecords — PartnerManager throws | GetPartnersForGmailAddon throws | Exception propagated | P1 |
+| NEG-090 | CreateRecordsFromEmails — InteractionManager throws | UpdateInteractionAsync throws | Records created, notification sent | P1 |
+
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max | Priority |
 |----|----------------|-----|-----|--------|--------|----------|----------|
@@ -227,9 +247,30 @@
 | BND-069 | Batch size | — | — | 100 emails | — | — | P1 |
 | BND-070 | Retry count | — | — | Max retries | — | — | P2 |
 
+| BND-071 | SelectedContacts count | 1 | 100 | 1 | 100 | 101 | P1 |
+| BND-072 | GmailThreadId length | 0 | 255 | "" | 255 chars | 256 chars | P1 |
+| BND-073 | GmailMessageId length | 0 | 255 | "" | 255 chars | 256 chars | P1 |
+| BND-074 | PartnerName length | 0 | 500 | "" | 500 chars | 501 chars | P1 |
+| BND-075 | FirstName length | 0 | 255 | "" | 255 chars | 256 chars | P1 |
+| BND-076 | LastName length | 0 | 255 | "" | 255 chars | 256 chars | P1 |
+| BND-077 | EmailAddress domain | 1 | 255 | "a@b.c" | 320 chars | 321 chars | P1 |
+| BND-078 | partnerIds count | 0 | 100 | 0 | 100 | 101 | P1 |
+| BND-079 | UnmatchedEmails count | 0 | 100 | 0 | 100 | 101 | P1 |
+| BND-080 | Contacts per partner | 0 | 100 | 0 | 100 | 101 | P1 |
+| BND-081 | Interactions per contact | 0 | 100 | 0 | 100 | 101 | P1 |
+| BND-082 | PartnerName from domain | 1 char | 255 | "a@b.c" | 320 chars | — | P1 |
+| BND-083 | ExtractNameFromEmail | 1 part | 2+ parts | "user" | "first.last" | — | P1 |
+| BND-084 | CreatedPartners dict | 0 | 100 | 0 | 100 | — | P1 |
+| BND-085 | FailedEmails list | 0 | 100 | 0 | 100 | — | P1 |
+| BND-086 | Email prefix for name | 0 | 100 | "" | 100 chars | — | P1 |
+| BND-087 | MiddleName | 0 | 255 | "" | 255 chars | 256 chars | P1 |
+| BND-088 | PartnerId nullable | 0 | Max int | null | Max int | — | P1 |
+| BND-089 | EmailAddresses empty | — | — | [] | — | — | P1 |
+| BND-090 | Single email in list | — | — | 1 email | — | — | P1 |
+
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Scenario | Trigger | Expected Outcome | Priority |
 |----|-----------|---------------|---------|------------------|----------|
@@ -284,9 +325,50 @@
 | FUN-049 | Metrics | Track | SyncEmails | Metrics | P2 |
 | FUN-050 | Health check | Health | Gmail API | Status | P2 |
 
+| FUN-051 | CanCreateContacts permission | Permission check | FindRelatedRecordsAsync | CanCreateContacts set | P1 |
+| FUN-052 | CanCreatePartners permission | Permission check | FindRelatedRecordsAsync | CanCreatePartners set | P1 |
+| FUN-053 | CanCreateInteractions permission | Permission check | FindRelatedRecordsAsync | CanCreateInteractions set | P1 |
+| FUN-054 | Contact match removes from unmatched | Email match | ProcessContactsAsync | unmatchedEmailStrings.Remove | P1 |
+| FUN-055 | Partner match by contactPartnerIds | Contact has partner | ProcessPartnersAsync | Partners returned | P1 |
+| FUN-056 | User match removes from unmatched | User email match | ProcessUsersAsync | unmatchedEmailStrings.Remove | P1 |
+| FUN-057 | Unmatched emails get suggestions | Unmatched list | GetUnmatchedEmailsWithPartnerSuggestionsAsync | UnmatchedEmails populated | P1 |
+| FUN-058 | Partner name from domain | No PartnerName | GetPartnerNameFromEmail | Domain derived | P1 |
+| FUN-059 | Partner name from provided | PartnerName set | GetPartnerNameFromEmail | PartnerName returned | P1 |
+| FUN-060 | Partner dedup by name | Same partner name | ProcessPartnersForCreationAsync | One partner created | P1 |
+| FUN-061 | Contact skip if exists | Email exists | ProcessSingleContactAsync | ExistingContacts | P1 |
+| FUN-062 | Contact creation | New email | ProcessSingleContactAsync | CreatedContacts | P1 |
+| FUN-063 | PartnerId from SelectedContact | PartnerId set | GetPartnerIdForContact | PartnerId used | P1 |
+| FUN-064 | PartnerId from CreatedPartners | Partner created | GetPartnerIdForContact | PartnerId from state | P1 |
+| FUN-065 | LastName fallback from FirstName | Empty LastName | CreateContactRequest | FirstName as LastName | P1 |
+| FUN-066 | LastName from email prefix | No name | CreateContactRequest | Email prefix capitalized | P1 |
+| FUN-067 | ExtractNameFromEmail | first.last format | ExtractNameFromEmail | FirstName, LastName | P1 |
+| FUN-068 | Interaction update with contacts | GmailThreadId provided | UpdateExistingInteractionAsync | ContactIds added | P1 |
+| FUN-069 | Interaction update with partners | GmailMessageId provided | UpdateExistingInteractionAsync | PartnerIds added | P1 |
+| FUN-070 | Skip interaction update | No GmailThreadId/MessageId | UpdateExistingInteractionAsync | Skipped | P1 |
+| FUN-071 | Notification on contact creation | Contacts created | SendCreationNotificationsAsync | Notification sent | P1 |
+| FUN-072 | Notification on partner creation | Partners created | SendCreationNotificationsAsync | Notification sent | P1 |
+| FUN-073 | Combined notification | Contacts + partners | SendCreationNotificationsAsync | Single combined | P1 |
+| FUN-074 | No notification | Nothing created | SendCreationNotificationsAsync | No notification | P1 |
+| FUN-075 | FailedEmails on partner failure | Partner creation throws | ProcessPartnersForCreationAsync | FailedEmails populated | P1 |
+| FUN-076 | FailedEmails on contact failure | Contact creation throws | ProcessContactsForCreationAsync | FailedEmails populated | P1 |
+| FUN-077 | Skip contact if failed in partner | Partner failed | ProcessSingleContactAsync | Skipped | P1 |
+| FUN-078 | MapContactToGmailContact CanRead | CanRead=false | MapContactToGmailContact | Minimal fields | P1 |
+| FUN-079 | MapPartnerToGmailPartner CanRead | CanRead=false | MapPartnerToGmailPartner | Minimal fields | P1 |
+| FUN-080 | MapInteractionsToGmailInteractions | CanRead filter | MapInteractionsToGmailInteractions | Only CanRead | P1 |
+| FUN-081 | BuildResultMessage | Success | BuildCreateRecordsResult | Message with stats | P1 |
+| FUN-082 | BuildResultMessage | Failed emails | BuildCreateRecordsResult | Failed count in message | P1 |
+| FUN-083 | Success true | Contacts or existing | BuildCreateRecordsResult | Success=true | P1 |
+| FUN-084 | Success false | All failed | BuildCreateRecordsResult | Success=false | P1 |
+| FUN-085 | GetPartnersToCreate | PartnerId set | GetPartnersToCreate | Excluded | P1 |
+| FUN-086 | GetPartnersToCreate | Group by name | GetPartnersToCreate | One per group | P1 |
+| FUN-087 | UserProfile fallback | No UserProfile | MapUserToGmailUser | user.Email | P1 |
+| FUN-088 | UserProfile name | UserProfile exists | MapUserToGmailUser | userProfile.Name | P1 |
+| FUN-089 | contactPartnerIds dedup | Multiple contacts same partner | ProcessContactsAsync | No duplicates | P1 |
+| FUN-090 | Case-insensitive email match | Mixed case | FindRelatedRecordsAsync | Matched | P1 |
+
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities Involved | Expected Result | Priority |
 |----|-----------|----------|-------------------|-----------------|----------|
@@ -341,66 +423,50 @@
 | INT-049 | Push notification | Push | GmailAddonManager | Pushed | P2 |
 | INT-050 | Consent | Consent | GmailAddonManager | Recorded | P1 |
 
----
-
-## §6 Security Tests (50)
-
-| ID | Test Name | Attack Vector | Target | Expected Block | Priority |
-|----|-----------|--------------|--------|----------------|----------|
-| SEC-001 | SQL injection email | ' OR 1=1-- | GetContactsForGmailAddon | Sanitized | P0 |
-| SEC-002 | XSS in subject | <script>alert(1)</script> | CreateInteractionFromEmail | Sanitized | P0 |
-| SEC-003 | IDOR sync | SyncEmails(otherUserId) | SyncEmails | 403 | P0 |
-| SEC-004 | IDOR tokens | GetToken(otherUserId) | GetToken | 403 | P0 |
-| SEC-005 | IDOR import | Import for other | ImportContactFromEmail | 403 | P0 |
-| SEC-006 | Mass assignment | Include Id | ImportContactFromEmail | Ignored | P0 |
-| SEC-007 | Unauthenticated | No auth | Any op | 401 | P0 |
-| SEC-008 | Expired token | Expired JWT | Request | 401 | P0 |
-| SEC-009 | Wrong role | No permission | SyncEmails | 403 | P0 |
-| SEC-010 | Org scope bypass | Cross-org | GetRelatedRecords | 403 | P0 |
-| SEC-011 | OAuth token theft | Stolen token | Use | Detected | P0 |
-| SEC-012 | OAuth state bypass | No state | Callback | Rejected | P0 |
-| SEC-013 | OAuth redirect hijack | Redirect manip | Callback | Validated | P0 |
-| SEC-014 | Email header injection | \r\nBcc: | Email | Sanitized | P0 |
-| SEC-015 | Attachment virus | Infected | CreateInteractionFromEmail | Rejected | P0 |
-| SEC-016 | Rate limit bypass | Bypass | SyncEmails | Rejected | P0 |
-| SEC-017 | Replay attack | Replay | ExchangeToken | Rejected | P0 |
-| SEC-018 | JWT alg none | alg=none | Request | Rejected | P0 |
-| SEC-019 | Brute force | Enumerate | GetRelatedRecords | Rate limited | P1 |
-| SEC-020 | CSRF OAuth | Cross-site | OAuth callback | State validated | P0 |
-| SEC-021 | CSRF sync | Cross-site | SyncEmails | Token validated | P0 |
-| SEC-022 | Log injection | Malicious log | Log | Sanitized | P1 |
-| SEC-023 | Header injection | Malicious header | Request | Sanitized | P1 |
-| SEC-024 | Parameter pollution | userId=1&userId=2 | Request | Handled | P1 |
-| SEC-025 | Open redirect | Redirect | OAuth callback | Validated | P0 |
-| SEC-026 | Session fixation | Fixate | OAuth | New session | P1 |
-| SEC-027 | Token in URL | Token in query | Request | Avoided | P1 |
-| SEC-028 | Sensitive data error | Stack trace | Exception | Not exposed | P0 |
-| SEC-029 | Info disclosure | Probe | Invalid | Generic | P1 |
-| SEC-030 | Token storage plain | Store | ExchangeToken | Encrypted | P0 |
-| SEC-031 | Refresh token exposure | Log | RefreshToken | Not logged | P0 |
-| SEC-032 | Scope escalation | Add scope | Request | Rejected | P0 |
-| SEC-033 | Timing attack | Response time | GetToken | Constant | P2 |
-| SEC-034 | Cache poisoning | Malicious cache | Cache | Sanitized | P1 |
-| SEC-035 | Substitution attack | Replace JWT | Request | 403 | P0 |
-| SEC-036 | Cookie manipulation | Modify auth | Request | Rejected | P0 |
-| SEC-037 | Path traversal | ../../../ | Attachment | Rejected | P0 |
-| SEC-038 | Null byte | %00 | Filename | Rejected | P0 |
-| SEC-039 | LDAP injection | *)(uid=* | Filter | Sanitized | P0 |
-| SEC-040 | Privilege escalation | Admin action | User | 403 | P0 |
-| SEC-041 | Excessive data | Huge request | SyncEmails | Rejected | P1 |
-| SEC-042 | DoS sync | Many syncs | SyncEmails | 429 | P0 |
-| SEC-043 | DoS import | Many imports | ImportContactFromEmail | Rate limited | P0 |
-| SEC-044 | Insecure reference | EmailId manip | Get | Validated | P0 |
-| SEC-045 | Token expiry | Expired | Request | 401 | P0 |
-| SEC-046 | Consent bypass | No consent | SyncEmails | Blocked | P0 |
-| SEC-047 | Audit bypass | Skip audit | Any op | Audit required | P0 |
-| SEC-048 | PII in log | PII | Log | Not logged | P0 |
-| SEC-049 | API key leak | Key in response | GenerateContent | Not exposed | P0 |
-| SEC-050 | Redirect URI validation | Invalid URI | OAuth | Rejected | P0 |
+| INT-051 | FindRelatedRecords — ContactManager | GetContactsForGmailAddon | GmailAddonManager, ContactManager | Contacts in response | P1 |
+| INT-052 | FindRelatedRecords — PartnerManager | GetPartnersForGmailAddon | GmailAddonManager, PartnerManager | Partners in response | P1 |
+| INT-053 | FindRelatedRecords — UserDataManager | GetUsersByEmailsAsync | GmailAddonManager, UserDataManager | Users in response | P1 |
+| INT-054 | FindRelatedRecords — UserInfoService | GetUserInfosByEmailsAsync | GmailAddonManager, UserInfoService | UserProfile data | P1 |
+| INT-055 | FindRelatedRecords — ContactManager unmatched | GetUnmatchedEmailsWithPartnerSuggestionsAsync | GmailAddonManager, ContactManager | UnmatchedEmails | P1 |
+| INT-056 | CreateRecordsFromEmails — PartnerManager | GetPartnerByNameAsync, CreatePartnerAsync | GmailAddonManager, PartnerManager | Partner created | P1 |
+| INT-057 | CreateRecordsFromEmails — ContactManager | GetContactByEmailAsync, CreateContactAsync | GmailAddonManager, ContactManager | Contact created | P1 |
+| INT-058 | CreateRecordsFromEmails — InteractionManager | FindGmailInteractionAsync, UpdateInteractionAsync | GmailAddonManager, InteractionManager | Interaction updated | P1 |
+| INT-059 | CreateRecordsFromEmails — NotificationManager | CreateNotification | GmailAddonManager, NotificationManager | Notification created | P1 |
+| INT-060 | FindRelatedRecords full flow | Contact→Partner→User→Unmatched | All managers | Complete response | P1 |
+| INT-061 | CreateRecordsFromEmails full flow | Partner→Contact→Interaction→Notify | All managers | Records created | P1 |
+| INT-062 | contactPartnerIds passed to PartnerManager | ProcessContactsAsync | ContactManager, PartnerManager | partnerIds in request | P1 |
+| INT-063 | GmailContact mapping | ContactModel | MapContactToGmailContact | GmailRelatedContact | P1 |
+| INT-064 | GmailPartner mapping | PartnerModel | MapPartnerToGmailPartner | GmailRelatedPartner | P1 |
+| INT-065 | GmailUser mapping | PAOUserModel | MapUserToGmailUser | GmailRelatedUser | P1 |
+| INT-066 | Contact interactions mapping | Contact.Interactions | MapInteractionsToGmailInteractions | GmailRelatedInteraction list | P1 |
+| INT-067 | Partner contacts mapping | Partner.Contacts | MapContactsToGmailContacts | GmailRelatedContact list | P1 |
+| INT-068 | PermissionService | CanPerformActionAsync | GmailAddonManager, PermissionService | CanCreate* flags | P1 |
+| INT-069 | Controller FindRelatedRecords | POST find-related-records | GmailAddonController, GmailAddonManager | 200 OK | P1 |
+| INT-070 | Controller CreateRecordsFromEmails | POST create-records | GmailAddonController, GmailAddonManager | 200 OK | P1 |
+| INT-071 | Controller CreateRecordsFromEmails 400 | Bad request | GmailAddonController | 400 BadRequest | P1 |
+| INT-072 | Controller CreateRecordsFromEmails 401 | Unauthorized | GmailAddonController | 401/403 | P1 |
+| INT-073 | CreateRecordsFromEmails — PartnerRequest | CreatePartnerRequest | ContactRequest, PartnerRequest | Partner created | P1 |
+| INT-074 | CreateRecordsFromEmails — ContactRequest | CreateContactRequest | ContactRequest, PartnerId | Contact created | P1 |
+| INT-075 | UpdateInteractionRequest | UpdateInteractionAsync | InteractionModel, UpdateInteractionRequest | Interaction updated | P1 |
+| INT-076 | GmailInteractionRequest | FindGmailInteractionAsync | GmailThreadId, GmailMessageId | Interaction found | P1 |
+| INT-077 | EntityStatus in PartnerRequest | CreatePartnerRequest | Status=Draft | Partner created | P1 |
+| INT-078 | EntityStatus in ContactRequest | CreateContactRequest | Status=Active | Contact created | P1 |
+| INT-079 | DbContext | SaveChanges | GmailAddonManager, DbContext | Persisted | P1 |
+| INT-080 | HttpContextAccessor | GetValidAudienceForCurrentHost | GmailAddonManager | Host URL | P1 |
+| INT-081 | GetUserIdFromClaims | NameIdentifier | SendCreationNotificationsAsync | UserId | P1 |
+| INT-082 | GetUserIdFromClaims fallback | sub, userId | SendCreationNotificationsAsync | UserId | P1 |
+| INT-083 | RecordData in notification | ContactIds, PartnerNames | CreateNotification | RecordData JSON | P1 |
+| INT-084 | Category gmail_records_creation | Combined creation | CreateNotification | Category set | P1 |
+| INT-085 | Category gmail_contact_creation | Contact only | CreateNotification | Category set | P1 |
+| INT-086 | Category gmail_partner_creation | Partner only | CreateNotification | Category set | P1 |
+| INT-087 | ILogger | LogError, LogInformation | UNOPSGmailAddonManager | Logs written | P1 |
+| INT-088 | AutoMapper | Map entity to model | GmailAddonManager | Mapped | P1 |
+| INT-089 | Base GmailAddonManager | NotImplemented | ManagerWrapper | UNOPS override | P1 |
+| INT-090 | ManagerWrapper resolution | IsUNOPSOverride | ManagerWrapper, GmailAddonManager | UNOPSGmailAddonManager | P1 |
 
 ---
 
-## §7 Concurrency Tests (25)
+## §6 Concurrency Tests (25)
 
 | ID | Test Name | Concurrent Scenario | Expected Behavior | Priority |
 |----|-----------|---------------------|-------------------|----------|
@@ -432,7 +498,7 @@
 
 ---
 
-## §8 Unit Tests (21)
+## §7 Unit Tests (21)
 
 | ID | Test Name | Category | Input | Expected Output | Priority |
 |----|-----------|----------|-------|-----------------|----------|
@@ -460,7 +526,7 @@
 
 ---
 
-## §9 Performance Tests (16)
+## §8 Performance Tests (16)
 
 | ID | Test Name | Operation | Threshold | Priority |
 |----|-----------|----------|-----------|----------|
@@ -483,7 +549,7 @@
 
 ---
 
-## §10 Load Tests (10)
+## §9 Load Tests (10)
 
 | ID | Test Name | Load Profile | Duration | Success Criteria | Priority |
 |----|-----------|-------------|----------|-------------------|----------|

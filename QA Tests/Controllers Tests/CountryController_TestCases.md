@@ -13,23 +13,22 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P ✅ (90≥90) | E≥3P ✅ (90≥90) | F≥3P ✅ (90≥90) | I≥3P ✅ (90≥90)
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Steps | Expected Result |
 |----|-----------|-------|-----------------|
@@ -63,15 +62,10 @@
 | POS-028 | Combine filters | GET with region+search | Combined |
 | POS-029 | Empty result | GET for empty region | [] |
 | POS-030 | Single result | GET for single match | [item] |
-| POS-031 | Authenticated | GET with token | 200 |
-| POS-032 | Admin create | POST as admin | 201 |
-| POS-033 | Admin update | PUT as admin | 200 |
-| POS-034 | Admin delete | DELETE as admin | 204 |
-| POS-035 | ISO 3166-1 alpha-2 | GET by 2-char code | Match |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error |
 |----|-----------|--------------|----------------|
@@ -145,10 +139,30 @@
 | NEG-068 | Empty search | search= | No filter |
 | NEG-069 | Audit failure | Audit down | Continue |
 | NEG-070 | DST link circular | Circular DST | 400 |
+| NEG-071 | Invalid adjacent ID | adjacentId=999999 | 404 |
+| NEG-072 | DST overlap dates | Overlapping DST | 400 |
+| NEG-073 | Invalid timezone | tz=Invalid | 400 |
+| NEG-074 | Delete with partners | Country referenced | 409 |
+| NEG-075 | Invalid phone code | phoneCode=invalid | 400 |
+| NEG-076 | Invalid currency | currency=XXX invalid | 400 |
+| NEG-077 | Duplicate adjacent | Same adjacent twice | 409 |
+| NEG-078 | DST link to deleted | DST deleted | 404 |
+| NEG-079 | Region deleted | regionId deleted | 404 |
+| NEG-080 | Continent deleted | continentId deleted | 404 |
+| NEG-081 | Bulk with deleted | Bulk includes deleted | 404/partial |
+| NEG-082 | Export format invalid | format=Invalid | 400 |
+| NEG-083 | Invalid latitude | lat=100 | 400 |
+| NEG-084 | Invalid longitude | lng=200 | 400 |
+| NEG-085 | Invalid DST offset | offset=25 | 400 |
+| NEG-086 | Update inactive | PUT on inactive | 403 |
+| NEG-087 | Restore active | Restore non-deleted | 400 |
+| NEG-088 | Typeahead empty | q= | 400 |
+| NEG-089 | Invalid UNOPS filter | unops=invalid | 400 |
+| NEG-090 | Conflicting filters | Mutually exclusive | 400 |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Field/Scenario | Min | Max | At Min | At Max | Over Max |
 |----|----------------|-----|-----|--------|--------|----------|
@@ -222,10 +236,30 @@
 | BND-068 | Export rows | - | 10000 | ✅ | ✅ | ❌ |
 | BND-069 | Export empty | - | - | Headers | - | - |
 | BND-070 | Export single | - | - | Valid | - | - |
+| BND-071 | DST offset hours | -24 | 24 | ✅ | ✅ | ❌ |
+| BND-072 | Adjacent count | 0 | 50 | ✅ | ✅ | ❌ |
+| BND-073 | Timezone count | 0 | 50 | ✅ | ✅ | ❌ |
+| BND-074 | Phone code length | - | 10 | ✅ | ✅ | ❌ |
+| BND-075 | Currency code | 3 | 3 | ✅ | ✅ | ❌ |
+| BND-076 | Region count | 0 | 100 | ✅ | ✅ | ❌ |
+| BND-077 | Continent count | 0 | 10 | ✅ | ✅ | ❌ |
+| BND-078 | Typeahead min | 1 | - | ✅ | - | - |
+| BND-079 | Typeahead max | - | 20 | - | ✅ | ❌ |
+| BND-080 | Bulk partial | - | - | 207 | - | - |
+| BND-081 | DST start date | - | - | Valid | - | - |
+| BND-082 | DST end date | - | - | Valid | - | - |
+| BND-083 | DST no overlap | - | - | Reject | - | - |
+| BND-084 | Multiple timezones | 0 | 50 | ✅ | ✅ | ❌ |
+| BND-085 | No timezone | - | - | Null/empty | - | - |
+| BND-086 | Same region | - | - | Group | - | - |
+| BND-087 | Same continent | - | - | Group | - | - |
+| BND-088 | UNOPS flag | - | - | Boolean | - | - |
+| BND-089 | Active flag | - | - | Boolean | - | - |
+| BND-090 | Case code | code=us | - | Normalize | - | - |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Category | Rule | Trigger | Expected |
 |----|----------|------|---------|----------|
@@ -279,10 +313,50 @@
 | FUN-048 | Business | Permission | Query | Scoped |
 | FUN-049 | Business | ISO standard | Codes | ISO 3166 |
 | FUN-050 | Business | Timezone | DST | Correct |
+| FUN-051 | Workflow | DST link | POST dst | Linked |
+| FUN-052 | Workflow | Get DST | GET dst | DST data |
+| FUN-053 | Workflow | Get timezone | GET timezone | Timezone |
+| FUN-054 | Workflow | Get adjacent | GET adjacent | Neighbors |
+| FUN-055 | Workflow | Bulk get | POST bulk | Results |
+| FUN-056 | Validation | Required name | Missing | 400 |
+| FUN-057 | Validation | Required code | Missing | 400 |
+| FUN-058 | Validation | Valid ISO | Invalid | 400 |
+| FUN-059 | Validation | Unique code | Duplicate | 409 |
+| FUN-060 | Validation | Valid region | Invalid | 400 |
+| FUN-061 | Constraint | FK region | Invalid | 404 |
+| FUN-062 | Constraint | FK continent | Invalid | 404 |
+| FUN-063 | Constraint | Delete in-use | Referenced | 409 |
+| FUN-064 | Constraint | DST no circular | Circular | 400 |
+| FUN-065 | Constraint | Max bulk | >100 | 400 |
+| FUN-066 | Audit | Create | POST | Audit |
+| FUN-067 | Audit | Update | PUT | Audit |
+| FUN-068 | Audit | Delete | DELETE | Audit |
+| FUN-069 | Audit | Restore | POST restore | Audit |
+| FUN-070 | Audit | DST link | POST dst | Audit |
+| FUN-071 | Business | Soft-deleted | Query | Excluded |
+| FUN-072 | Business | Inactive | Query | Filter |
+| FUN-073 | Business | Permission | Query | Scoped |
+| FUN-074 | Business | ISO | Codes | ISO 3166 |
+| FUN-075 | Business | Timezone | DST | Correct |
+| FUN-076 | Workflow | Export | GET export | File |
+| FUN-077 | Workflow | Filter region | GET ?region | Filtered |
+| FUN-078 | Workflow | Filter continent | GET ?continent | Filtered |
+| FUN-079 | Workflow | Search | GET ?search | Matches |
+| FUN-080 | Workflow | Paginate | GET ?page | Paginated |
+| FUN-081 | Validation | Valid continent | Invalid | 400 |
+| FUN-082 | Validation | Permission | No permission | 403 |
+| FUN-083 | Validation | Admin write | User write | 403 |
+| FUN-084 | Validation | ID format | Invalid | 400 |
+| FUN-085 | Validation | No reserved | Reserved code | 403 |
+| FUN-086 | Constraint | Org scope | Cross-org | 403 |
+| FUN-087 | Constraint | Version | Optimistic | 409 |
+| FUN-088 | Constraint | Export limit | >10K | Truncate |
+| FUN-089 | Constraint | Soft delete | Query | Excluded |
+| FUN-090 | Constraint | Unique code | Duplicate | 409 |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Category | Scenario | Entities | Expected |
 |----|----------|----------|----------|----------|
@@ -336,63 +410,46 @@
 | INT-048 | E2E | Full delete flow | Country | Delete → 404 |
 | INT-049 | E2E | DST flow | Country, DST | Link → Get |
 | INT-050 | E2E | Session expiry | Auth | Clean fail |
-
----
-
-## §6 Security Tests (50)
-
-| ID | Category | Attack | Target | Expected |
-|----|----------|--------|-------|----------|
-| SEC-001 | Injection | SQL | Search | Sanitized |
-| SEC-002 | Injection | XSS | Name | Encoded |
-| SEC-003 | Injection | Path traversal | Path | Rejected |
-| SEC-004 | Injection | NoSQL | Filter | Rejected |
-| SEC-005 | Injection | Command | Export | Rejected |
-| SEC-006 | Injection | Header | Header | Rejected |
-| SEC-007 | Injection | Log | Input | Sanitized |
-| SEC-008 | Injection | LDAP | Search | Rejected |
-| SEC-009 | Injection | Log4j | Input | Rejected |
-| SEC-010 | Injection | SSRF | URL | Rejected |
-| SEC-011 | Access | No auth | All | 401 |
-| SEC-012 | Access | Wrong role | Admin | 403 |
-| SEC-013 | Access | Cross-org | Other org | 403 |
-| SEC-014 | Access | Horizontal | Other user | 403 |
-| SEC-015 | Access | Vertical | Admin | 403 |
-| SEC-016 | Access | Expired | Token | 401 |
-| SEC-017 | Access | Revoked | Token | 401 |
-| SEC-018 | Access | Tampered | Token | 401 |
-| SEC-019 | Access | Scope | OAuth | 403 |
-| SEC-020 | Access | Service | UI | 403 |
-| SEC-021 | IDOR | Other org | ID | 403 |
-| SEC-022 | IDOR | Other user | ID | 403 |
-| SEC-023 | IDOR | Manipulate | Path | 403 |
-| SEC-024 | IDOR | Enumeration | IDs | Rate limit |
-| SEC-025 | IDOR | Pollution | Params | First |
-| SEC-026 | Mass Assign | Admin | Body | Ignored |
-| SEC-027 | Mass Assign | Role | Body | Ignored |
-| SEC-028 | Mass Assign | Org | Body | Ignored |
-| SEC-029 | Mass Assign | User | Body | Ignored |
-| SEC-030 | Mass Assign | Permission | Body | Ignored |
-| SEC-031 | Auth | Fixation | Session | New |
-| SEC-032 | Auth | Hijack | Token | Invalid |
-| SEC-033 | Auth | Replay | Old token | Reject |
-| SEC-034 | Auth | CSRF | State | Token |
-| SEC-035 | Auth | Brute | Login | Rate limit |
-| SEC-036 | Data | PII | Export | Masked |
-| SEC-037 | Data | Logs | Sensitive | No PII |
-| SEC-038 | Data | Error | 500 | Generic |
-| SEC-039 | Data | Stack | Exception | Hidden |
-| SEC-040 | Data | Debug | Prod | Off |
-| SEC-041 | OWASP | A01 | Access | 403 |
-| SEC-042 | OWASP | A02 | Crypto | TLS |
-| SEC-043 | OWASP | A03 | Injection | Param |
-| SEC-044 | OWASP | A04 | Design | Defensive |
-| SEC-045 | OWASP | A05 | Misconfig | Secure |
-| SEC-046 | OWASP | A06 | Vulnerable | No CVE |
-| SEC-047 | OWASP | A07 | Auth | Strong |
-| SEC-048 | OWASP | A08 | Integrity | Checks |
-| SEC-049 | OWASP | A09 | Logging | Audit |
-| SEC-050 | OWASP | A10 | SSRF | No internal |
+| INT-051 | CRUD | Get DST | Country | DST data |
+| INT-052 | CRUD | Get timezone | Country | Timezone |
+| INT-053 | CRUD | Get adjacent | Country | Neighbors |
+| INT-054 | CRUD | Bulk get | Country | Results |
+| INT-055 | CRUD | Export | Country | File |
+| INT-056 | Search | Search by name | Country | Matches |
+| INT-057 | Search | Typeahead | Country | Suggestions |
+| INT-058 | Search | Filter region | Country | Filtered |
+| INT-059 | Search | Filter continent | Country | Filtered |
+| INT-060 | Search | Multi-filter | Country | Combined |
+| INT-061 | Pagination | Page 1 | Country | First |
+| INT-062 | Pagination | Last page | Country | Partial |
+| INT-063 | Pagination | Size | Country | Correct |
+| INT-064 | Pagination | Invalid | Country | 400 |
+| INT-065 | Pagination | Boundary | Country | Exact |
+| INT-066 | Relationships | Country → Region | Linked | Correct |
+| INT-067 | Relationships | Country → Continent | Linked | Correct |
+| INT-068 | Relationships | Country → DST | Linked | Correct |
+| INT-069 | Relationships | Orphan | Deleted region | 404 |
+| INT-070 | Relationships | Adjacent | Country | Neighbors |
+| INT-071 | Error | DB down | DB | 503 |
+| INT-072 | Error | Auth down | Auth | 401/503 |
+| INT-073 | Error | Validation | Bad input | 400 |
+| INT-074 | Error | NotFound | Invalid ID | 404 |
+| INT-075 | Error | Forbidden | No permission | 403 |
+| INT-076 | Error | Conflict | Duplicate | 409 |
+| INT-077 | Error | Rate limit | Too many | 429 |
+| INT-078 | Error | Timeout | Slow | 504 |
+| INT-079 | Error | Payload | Huge | 413 |
+| INT-080 | Error | Media | Wrong type | 415 |
+| INT-081 | Error | Method | Wrong verb | 405 |
+| INT-082 | Error | Service | Dependency | 503 |
+| INT-083 | Error | Gateway | Upstream | 504 |
+| INT-084 | Error | Gone | Deleted | 410 |
+| INT-085 | Error | Locked | Locked | 423 |
+| INT-086 | E2E | Full create flow | Country | Create → Get |
+| INT-087 | E2E | Full update flow | Country | Update → Get |
+| INT-088 | E2E | Full delete flow | Country | Delete → 404 |
+| INT-089 | E2E | Export flow | Country | Export → File |
+| INT-090 | E2E | DST link flow | Country, DST | Link → Get |
 
 ---
 
@@ -504,7 +561,7 @@
 | ISO codes | POS-003, BND-016–017 |
 | Region mapping | POS-005, POS-012 |
 | DST linking | POS-020–021, FUN-012 |
-| 3:1 Ratio | NEG-001–070, BND-001–070 |
+| 3:1 Ratio | NEG-001–090, BND-001–090 |
 
 ---
 

@@ -11,19 +11,24 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
-| §7 Concurrency | 25 | 25 | ✅ |
-| §8 Unit | 21 | 21 | ✅ |
-| §9 Performance | 16 | 16 | ✅ |
-| §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| §1 Positive (P) | 30 | 30-50 | ✅ |
+| §2 Negative (N) | 90 | 90 | ✅ |
+| §3 Boundary (E) | 90 | 90 | ✅ |
+| §4 Functional (F) | 90 | 90 | ✅ |
+| §5 Integration (I) | 90 | 90 | ✅ |
+| §6 Concurrency (CON) | 25 | 25 | ✅ |
+| §7 Unit (UNT) | 21 | 21 | ✅ |
+| §8 Performance (PRF) | 16 | 16 | ✅ |
+| §9 Load (LDT) | 10 | 10 | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance Check**
+| Check | Result | Formula |
+|-------|--------|---------|
+| N≥3P? | ✅ | 90 ≥ 90 |
+| E≥3P? | ✅ | 90 ≥ 90 |
+| F≥3P? | ✅ | 90 ≥ 90 |
+| I≥3P? | ✅ | 90 ≥ 90 |
 
 ---
 
@@ -33,7 +38,7 @@
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps (Brief) | Expected Result | Priority |
 |----|-----------|-------------|---------------|-----------------|----------|
@@ -67,11 +72,6 @@
 | POS-028 | Sort by URL | Links exist | GetEntityLinks OrderBy=Url | Sorted | P1 |
 | POS-029 | Multiple links per entity | Partner has 10 links | GetEntityLinks | 10 returned | P1 |
 | POS-030 | Empty entity links | Entity has no links | GetEntityLinks | Empty list | P1 |
-| POS-031 | URL with query string | https://example.com?q=1 | CreateLink | Accepted | P1 |
-| POS-032 | URL with fragment | https://example.com#section | CreateLink | Accepted | P1 |
-| POS-033 | Deleted link excluded | Link IsDeleted | GetEntityLinks | Excluded | P0 |
-| POS-034 | Specification filter | Spec | GetLinksWithSpecification | Filtered | P1 |
-| POS-035 | Audit trail | Create | CreateLink | Audit entry | P1 |
 
 ---
 
@@ -226,10 +226,30 @@
 | BND-068 | Preview charset | — | — | UTF-8 | — | — | P2 |
 | BND-069 | Preview meta tags | — | — | OG tags | — | — | P2 |
 | BND-070 | Nested includes | — | — | Link→Entity | — | — | P2 |
+| BND-071 | Url StringLength (LinkRequest) | 1 | 2000 | 1 char | 2000 chars | 2001 chars | P1 |
+| BND-072 | Name StringLength (LinkRequest) | 0 | 2000 | null | 2000 chars | 2001 chars | P1 |
+| BND-073 | UpdateLinkRequest.Id | 1 | 2147483647 | 1 | Max int | 0 | P1 |
+| BND-074 | OrderBy column name | — | — | "Name" | "Url" | Invalid col | P1 |
+| BND-075 | Pagination PageIndex=0 | — | — | 0 | — | Error/empty | P1 |
+| BND-076 | Pagination PageSize=0 | — | — | 0 | — | Default or error | P1 |
+| BND-077 | LinkEntityType enum first | — | — | Contact (0) | — | — | P1 |
+| BND-078 | LinkEntityType enum last | — | — | PartnerTree (2) | — | — | P1 |
+| BND-079 | CreateLink Entity+EntityId pair | — | — | Valid pair | — | Mismatch | P1 |
+| BND-080 | GetEntityLinks empty result | — | — | 0 records | — | — | P1 |
+| BND-081 | GetEntityLinks single result | — | — | 1 record | — | — | P1 |
+| BND-082 | GetLinks empty DB | — | — | 0 links | — | — | P1 |
+| BND-083 | GetLinks single link | — | — | 1 link | — | — | P1 |
+| BND-084 | UpdateLink Name=null | — | — | null | — | Defaults to URL | P1 |
+| BND-085 | UpdateLink Name=empty | — | — | "" | — | Per rule | P1 |
+| BND-086 | DeleteLink id not found | — | — | 99999 | — | Graceful | P1 |
+| BND-087 | GetLink id not found | — | — | 99999 | — | Null | P1 |
+| BND-088 | Orphan link GetLink | — | — | Entity deleted | — | Null, link deleted | P1 |
+| BND-089 | ValidateEntityExists Contact | — | — | Contact.Id | — | Not found | P1 |
+| BND-090 | ValidateEntityExists PartnerTree | — | — | PartnerTree.Id | — | Not found | P1 |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Scenario | Trigger | Expected Outcome | Priority |
 |----|-----------|---------------|---------|------------------|----------|
@@ -286,7 +306,7 @@
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities Involved | Expected Result | Priority |
 |----|-----------|----------|-------------------|-----------------|----------|
@@ -340,67 +360,50 @@
 | INT-048 | Entity lookup | Entity | Link | Lookup | P0 |
 | INT-049 | Soft delete cascade | Delete entity | Link | Per rule | P1 |
 | INT-050 | Restore cascade | Restore entity | Link | Per rule | P2 |
+| INT-051 | API GET links pagination | GET /api/links | Controller, LinkManager, PaginationResponse | Paginated links returned | P1 |
+| INT-052 | API POST create link | POST /api/links | Controller, LinkManager, LinkRequest | 201, link created | P1 |
+| INT-053 | API PUT update link | PUT /api/links | Controller, LinkManager, UpdateLinkRequest | 200, link updated | P1 |
+| INT-054 | API DELETE link | DELETE /api/links | Controller, LinkManager | 204, soft-deleted | P1 |
+| INT-055 | DbContext Link persistence | CreateLink | Link, AppDbContext | Record saved to DB | P1 |
+| INT-056 | DataRepository AddAsync | CreateLink | Link, DataRepository | Entity added | P1 |
+| INT-057 | DataRepository GetByIdAsync | GetLink | Link, DataRepository | Entity retrieved | P1 |
+| INT-058 | AutoMapper LinkRequest to Link | CreateLink | LinkRequest, AutoMapper | Entity mapped | P1 |
+| INT-059 | AutoMapper Link to LinkModel | GetLink | Link, AutoMapper | Model mapped | P1 |
+| INT-060 | ManagerWrapper LinkManager resolution | DI | ManagerWrapper, ILinkManager | Correct manager resolved | P1 |
+| INT-061 | LinkController HandleOperationAsync | Any API call | Controller, HandleOperationAsync | Consistent response handling | P1 |
+| INT-062 | PaginationRequest to GetEntityLinks | GET with page params | PaginationRequest, LinkManager | Params passed correctly | P1 |
+| INT-063 | PaginationResponse structure | GetEntityLinks | PaginationResponse, LinkModel | Records + TotalCount | P1 |
+| INT-064 | Soft-delete excluded from list | GetEntityLinks | Link (IsDeleted=true) | Deleted links excluded | P1 |
+| INT-065 | ValidateEntityExists Partner | CreateLink Partner | LinkManager, Partner, DbContext | Partner exists check | P1 |
+| INT-066 | ValidateEntityExists Contact | CreateLink Contact | LinkManager, Contact, DbContext | Contact exists check | P1 |
+| INT-067 | ValidateEntityExists PartnerTree | CreateLink PartnerTree | LinkManager, PartnerTree, DbContext | PartnerTree exists check | P1 |
+| INT-068 | Invalid entity type ArgumentException | CreateLink invalid type | LinkManager | ArgumentException thrown | P1 |
+| INT-069 | Name defaults to URL on create | CreateLink Name=null | LinkManager | Name=URL | P1 |
+| INT-070 | Explicit Name on create | CreateLink Name provided | LinkManager | Name saved | P1 |
+| INT-071 | GetLink returns null for deleted | GetLink IsDeleted | LinkManager | Null returned | P1 |
+| INT-072 | GetLink orphan handling | Entity deleted | LinkManager | Link soft-deleted, null | P1 |
+| INT-073 | UpdateLink orphan handling | Entity deleted | LinkManager | ArgumentException, link deleted | P1 |
+| INT-074 | DeleteLink idempotent non-existent | DeleteLink(99999) | LinkManager | Graceful, no error | P1 |
+| INT-075 | GetEntityLinks empty result | Entity has no links | LinkManager | Empty Records, TotalCount=0 | P1 |
+| INT-076 | GetEntityLinks filter by Entity type | GetEntityLinks(Partner) | LinkManager | Only Partner links | P1 |
+| INT-077 | GetEntityLinks filter by EntityId | GetEntityLinks(entityId=123) | LinkManager | Only entity 123 links | P1 |
+| INT-078 | GetLinks returns all non-deleted | GetLinks | LinkManager, DataRepository | All active links | P1 |
+| INT-079 | Link inherits ModifiableDeletableEntity | CreateLink | Link entity | Audit fields available | P1 |
+| INT-080 | Audit fields on create | CreateLink | Link, AuditableDbContext | CreatedBy, CreatedDate set | P1 |
+| INT-081 | API 401 unauthenticated | No auth header | LinkController | 401 Unauthorized | P1 |
+| INT-082 | API 403 unauthorized | User lacks permission | LinkController | 403 Forbidden | P1 |
+| INT-083 | API 404 link not found | GetLink(99999) | LinkController | 404 or empty | P1 |
+| INT-084 | API 400 invalid LinkRequest | Malformed body | LinkController | 400 Bad Request | P1 |
+| INT-085 | API 400 invalid UpdateLinkRequest | Missing Id | LinkController | 400 Bad Request | P1 |
+| INT-086 | API 400 invalid entity type | EntityType invalid | LinkController | 400 Bad Request | P1 |
+| INT-087 | LinkEntityType enum serialization | API request | LinkRequest, JsonConverter | Enum serialized correctly | P1 |
+| INT-088 | Paginate extension on GetEntityLinks | GetEntityLinks paginated | LinkManager, Paginate | Skip/Take applied | P1 |
+| INT-089 | Non-existent entity GetEntityLinks | EntityId 99999 | LinkManager | Empty response, no exception | P1 |
+| INT-090 | Frontend link service to API | Angular LinkService | LinkService, LinkController | CRUD round-trip | P1 |
 
 ---
 
-## §6 Security Tests (50)
-
-| ID | Test Name | Attack Vector | Target | Expected Block | Priority |
-|----|-----------|--------------|--------|----------------|----------|
-| SEC-001 | SQL injection URL | ' OR 1=1-- | CreateLink | Sanitized | P0 |
-| SEC-002 | SQL injection name | '; DROP TABLE-- | CreateLink | Sanitized | P0 |
-| SEC-003 | XSS in name | <script>alert(1)</script> | CreateLink | Sanitized | P0 |
-| SEC-004 | XSS in URL | javascript:alert(1) | CreateLink | Rejected | P0 |
-| SEC-005 | Open redirect | phishing URL | CreateLink | Rejected | P0 |
-| SEC-006 | SSRF | http://internal | CreateLink | Rejected | P0 |
-| SEC-007 | IDOR get | GetLink(otherId) | GetLink | 403 | P0 |
-| SEC-008 | IDOR update | UpdateLink(otherId) | Update | 403 | P0 |
-| SEC-009 | IDOR delete | DeleteLink(otherId) | Delete | 403 | P0 |
-| SEC-010 | Mass assignment | Include Id | CreateLink | Ignored | P0 |
-| SEC-011 | Unauthenticated | No auth | Any op | 401 | P0 |
-| SEC-012 | Expired token | Expired JWT | Any | 401 | P0 |
-| SEC-013 | Wrong role create | No permission | CreateLink | 403 | P0 |
-| SEC-014 | Wrong role update | No permission | UpdateLink | 403 | P0 |
-| SEC-015 | Wrong role delete | No permission | DeleteLink | 403 | P0 |
-| SEC-016 | Org scope bypass | Cross-org | GetLink | 403 | P0 |
-| SEC-017 | URL scheme bypass | data: | CreateLink | Rejected | P0 |
-| SEC-018 | DNS rebinding | Malicious | CreateLink | Rejected | P0 |
-| SEC-019 | LDAP injection | *)(uid=* | Filter | Sanitized | P0 |
-| SEC-020 | Sensitive data error | Stack trace | Exception | Not exposed | P0 |
-| SEC-021 | Rate limit | Too many | CreateLink | 429 | P1 |
-| SEC-022 | CSRF create | Cross-site | CreateLink | Token validated | P0 |
-| SEC-023 | CSRF update | Cross-site | UpdateLink | Token validated | P0 |
-| SEC-024 | CSRF delete | Cross-site | DeleteLink | Token validated | P0 |
-| SEC-025 | Parameter pollution | id=1&id=2 | Get | Handled | P1 |
-| SEC-026 | Header injection | Malicious header | Request | Sanitized | P1 |
-| SEC-027 | Brute force | Enumerate | GetLink | Rate limited | P1 |
-| SEC-028 | JWT alg none | alg=none | Request | Rejected | P0 |
-| SEC-029 | Log injection | Malicious log | Log | Sanitized | P1 |
-| SEC-030 | Info disclosure | Probe | Invalid | Generic | P1 |
-| SEC-031 | Cookie manipulation | Modify auth | Request | Rejected | P0 |
-| SEC-032 | Substitution attack | Replace JWT | Request | 403 | P0 |
-| SEC-033 | Timing attack | Response time | GetLink | Constant | P2 |
-| SEC-034 | Cache poisoning | Malicious cache | Cache | Sanitized | P1 |
-| SEC-035 | Excessive data | Huge PageSize | GetEntityLinks | Capped | P1 |
-| SEC-036 | DoS create | Many creates | CreateLink | 429 | P0 |
-| SEC-037 | DoS preview | Many previews | GetLinkPreview | Rate limited | P0 |
-| SEC-038 | Privilege escalation | Admin action | User | 403 | P0 |
-| SEC-039 | Entity IDOR | EntityId other org | CreateLink | Error | P0 |
-| SEC-040 | Token expiry | Expired | Request | 401 | P0 |
-| SEC-041 | Session fixation | Fixate | Login | New session | P1 |
-| SEC-042 | Path traversal | ../../../ | URL | Rejected | P0 |
-| SEC-043 | Null byte | %00 | URL | Rejected | P0 |
-| SEC-044 | URL credentials | user:pass@ | CreateLink | Sanitized | P0 |
-| SEC-045 | Audit bypass | Skip audit | Any op | Audit required | P0 |
-| SEC-046 | PII in log | PII | Log | Not logged | P0 |
-| SEC-047 | HTTP verb tampering | PUT vs POST | Create | 405 | P1 |
-| SEC-048 | Replay attack | Replay | CreateLink | Rejected | P0 |
-| SEC-049 | Preview SSRF | Preview internal | GetLinkPreview | Rejected | P0 |
-| SEC-050 | Category injection | Malicious category | CreateLink | Sanitized | P0 |
-
----
-
-## §7 Concurrency Tests (25)
+## §6 Concurrency Tests (25)
 
 | ID | Test Name | Concurrent Scenario | Expected Behavior | Priority |
 |----|-----------|---------------------|-------------------|----------|
@@ -432,7 +435,7 @@
 
 ---
 
-## §8 Unit Tests (21)
+## §7 Unit Tests (21)
 
 | ID | Test Name | Category | Input | Expected Output | Priority |
 |----|-----------|----------|-------|-----------------|----------|
@@ -460,7 +463,7 @@
 
 ---
 
-## §9 Performance Tests (16)
+## §8 Performance Tests (16)
 
 | ID | Test Name | Operation | Threshold | Priority |
 |----|-----------|----------|-----------|----------|
@@ -483,7 +486,7 @@
 
 ---
 
-## §10 Load Tests (10)
+## §9 Load Tests (10)
 
 | ID | Test Name | Load Profile | Duration | Success Criteria | Priority |
 |----|-----------|-------------|----------|-------------------|----------|

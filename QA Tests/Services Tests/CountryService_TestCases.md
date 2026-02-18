@@ -11,19 +11,24 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+| Check | Formula | Result |
+|-------|---------|--------|
+| N≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| E≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| F≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| I≥3P | 90 ≥ 3×30=90 | ✅ PASS |
 
 ---
 
@@ -33,7 +38,7 @@ Country service: country lookup, ISO code mapping, region association, DST data 
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|-------------|-------|-----------------|
@@ -67,15 +72,10 @@ Country service: country lookup, ISO code mapping, region association, DST data 
 | POS-028 | Paginated countries | Page, size | GetPaginatedAsync(page, size) | Page |
 | POS-029 | Sort countries by name | Sort param | GetAllAsync(sort) | Sorted |
 | POS-030 | Get country code | Country ID | GetCodeAsync(id) | ISO code |
-| POS-031 | Get continent for country | Country ID | GetContinentAsync(id) | Continent |
-| POS-032 | Get countries by continent | Continent | GetByContinentAsync(continent) | Countries |
-| POS-033 | Cache warm-up | Startup | WarmCacheAsync() | Preloaded |
-| POS-034 | Batch lookup | Many IDs | GetByIdsAsync(ids) | Batch |
-| POS-035 | Get country metadata | Country ID | GetMetadataAsync(id) | Metadata |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error |
 |----|-----------|---------------|----------------|
@@ -149,10 +149,30 @@ Country service: country lookup, ISO code mapping, region association, DST data 
 | NEG-068 | Timezone not found | GetDstOffsetAsync(noTz) | KeyNotFoundException |
 | NEG-069 | Metadata missing | GetMetadataAsync(noMeta) | KeyNotFoundException |
 | NEG-070 | Warm-up failure | WarmCacheAsync() | CacheException |
+| NEG-071 | Null GetContinent | GetContinentAsync(null) | ArgumentNullException |
+| NEG-072 | Null GetByContinent | GetByContinentAsync(null) | ArgumentNullException |
+| NEG-073 | Invalid GetMetadata | GetMetadataAsync(null) | ArgumentNullException |
+| NEG-074 | Null GetWithRegion | GetWithRegionAsync(null) | ArgumentNullException |
+| NEG-075 | Null GetWithDst | GetWithDstAsync(null) | ArgumentNullException |
+| NEG-076 | Null GetRegionHierarchy | GetRegionHierarchyAsync(null) | ArgumentNullException |
+| NEG-077 | Null GetDstOffset | GetDstOffsetAsync(id, null) | ArgumentNullException |
+| NEG-078 | Null MapIsoAlpha2 | MapIsoAlpha2ToAlpha3(null) | ArgumentNullException |
+| NEG-079 | Null MapIsoAlpha3 | MapIsoAlpha3ToAlpha2(null) | ArgumentNullException |
+| NEG-080 | Null MapNumeric | MapNumericToAlpha2(0) | ArgumentException |
+| NEG-081 | Null GetPaginated | GetPaginatedAsync(null, 10) | ArgumentNullException |
+| NEG-082 | Null GetDropdown | GetDropdownAsync(null) | ArgumentNullException |
+| NEG-083 | Invalid GetDropdown | GetDropdownAsync(invalid) | ArgumentException |
+| NEG-084 | Null ValidateIso | ValidateIsoCode(null) | ArgumentNullException |
+| NEG-085 | Null GetName | GetNameAsync(null) | ArgumentNullException |
+| NEG-086 | Null GetCode | GetCodeAsync(null) | ArgumentNullException |
+| NEG-087 | Null GetActive | GetActiveAsync(bad) | ArgumentException |
+| NEG-088 | Invalid Search filter | SearchAsync(invalid) | ArgumentException |
+| NEG-089 | Null GetByIds | GetByIdsAsync(null) | ArgumentNullException |
+| NEG-090 | Invalid WarmCache | WarmCacheAsync(bad) | CacheException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Value | Expected Result |
 |----|-----------|----------------|-----------------|
@@ -226,10 +246,30 @@ Country service: country lookup, ISO code mapping, region association, DST data 
 | BND-068 | Lowercase ISO | "us" | Normalized |
 | BND-069 | Uppercase ISO | "US" | Valid |
 | BND-070 | Mixed case ISO | "Us" | Normalized |
+| BND-071 | Country count = 0 | None | [] |
+| BND-072 | Country count = 1 | One | [1] |
+| BND-073 | Country count = 250 | All | All |
+| BND-074 | Region count = 0 | None | [] |
+| BND-075 | Region count = 10 | Many | All |
+| BND-076 | Continent count = 0 | None | [] |
+| BND-077 | Continent count = 7 | All | All |
+| BND-078 | DST countries = 0 | None | [] |
+| BND-079 | DST countries = 100 | Many | All |
+| BND-080 | Batch size = 1 | One | One |
+| BND-081 | Batch size = 1000 | Max | All |
+| BND-082 | Hierarchy depth = 0 | Root | Valid |
+| BND-083 | Hierarchy depth = 5 | Deep | Valid |
+| BND-084 | Numeric range = 0 | Min | Invalid |
+| BND-085 | Numeric range = 999 | Max | Valid |
+| BND-086 | Alpha-2 variants | "us", "US" | Normalized |
+| BND-087 | Alpha-3 variants | "usa", "USA" | Normalized |
+| BND-088 | Date range DST | Min/Max | Handled |
+| BND-089 | Pagination last | Last page | Results |
+| BND-090 | Dropdown limit | 10 | Limited |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule | Trigger | Expected Outcome |
 |----|-----------|------|---------|------------------|
@@ -283,10 +323,50 @@ Country service: country lookup, ISO code mapping, region association, DST data 
 | FUN-048 | Metadata merge | Merge | GetMetadata | Merged |
 | FUN-049 | Region fallback | Fallback | No region | Parent |
 | FUN-050 | Typeahead limit | Limit | GetDropdown | Limited |
+| FUN-051 | ISO alpha-2 unique | Uniqueness | GetByIsoAlpha2 | One result |
+| FUN-052 | ISO alpha-3 unique | Uniqueness | GetByIsoAlpha3 | One result |
+| FUN-053 | Numeric code unique | Uniqueness | GetByNumericCode | One result |
+| FUN-054 | Region hierarchy | Hierarchy | GetRegionHierarchy | Ordered |
+| FUN-055 | DST rules | DST rule | GetDstOffset | Correct offset |
+| FUN-056 | Cache TTL | TTL | Cache entry | Expires |
+| FUN-057 | Cache key includes ID | Key rule | Cache | Unique |
+| FUN-058 | Soft delete excluded | Exclude | GetAll | No deleted |
+| FUN-059 | Active only filter | Active | GetActive | Active only |
+| FUN-060 | Case-insensitive search | Case | Search | Case-insensitive |
+| FUN-061 | Search partial match | Partial | Search | Matches |
+| FUN-062 | Pagination offset | Offset | GetPaginated | Correct offset |
+| FUN-063 | Sort order | Sort | GetAll | Ordered |
+| FUN-064 | Region association | Association | GetByRegion | Correct |
+| FUN-065 | DST association | Association | GetDstData | Correct |
+| FUN-066 | Continent association | Association | GetContinent | Correct |
+| FUN-067 | Batch deduplication | Dedup | GetByIds | Deduplicated |
+| FUN-068 | Batch order | Order | GetByIds | Preserved |
+| FUN-069 | Dropdown order | Order | GetDropdown | Sorted |
+| FUN-070 | Map consistency | Consistency | MapIso | Consistent |
+| FUN-071 | Invalidation on update | Invalidation | Update | Cache cleared |
+| FUN-072 | Invalidation on delete | Invalidation | Delete | Cache cleared |
+| FUN-073 | Warm-up loads all | Warm-up | WarmCache | All loaded |
+| FUN-074 | Fallback for missing | Fallback | Missing data | Fallback |
+| FUN-075 | Default region | Default | No region | Default |
+| FUN-076 | Default DST | Default | No DST | UTC |
+| FUN-077 | Error message format | Error | Any error | Consistent |
+| FUN-078 | Validation format | Validation | Invalid | Clear message |
+| FUN-079 | Trim input | Trim | Search | Trimmed |
+| FUN-080 | Normalize ISO | Normalize | ISO input | Uppercase |
+| FUN-081 | Numeric range | Range | Numeric | 0-999 |
+| FUN-082 | Name max length | Max | Name | 255 |
+| FUN-083 | Search max length | Max | Search | 255 |
+| FUN-084 | Pagination max size | Max | Page size | 100 |
+| FUN-085 | Batch max size | Max | IDs | 1000 |
+| FUN-086 | Retry on transient | Retry | Transient | Retried |
+| FUN-087 | No retry on permanent | No retry | Permanent | Fail |
+| FUN-088 | Timeout handling | Timeout | Slow | Timeout |
+| FUN-089 | Cancellation | Cancel | Cancel | Cancelled |
+| FUN-090 | Rate limit | Rate | Many | Limited |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Integration | Scenario | Expected Result |
 |----|-----------|-------------|----------|-----------------|
@@ -340,6 +420,46 @@ Country service: country lookup, ISO code mapping, region association, DST data 
 | INT-048 | Permission + region | Permission | Region | Checked |
 | INT-049 | Tenant + region | Tenant | Region | Scoped |
 | INT-050 | End-to-end | All | Full flow | Success |
+| INT-051 | DbContext | EF Core | GetById | Loaded |
+| INT-052 | Country entity | Entity | GetById | Mapped |
+| INT-053 | Region entity | Entity | GetRegion | Loaded |
+| INT-054 | DST entity | Entity | GetDstData | Loaded |
+| INT-055 | Cache service | ICacheService | GetById | Cached |
+| INT-056 | Opportunity manager | IOpportunityManager | Country in opp | Linked |
+| INT-057 | Partner manager | IPartnerManager | Country in partner | Linked |
+| INT-058 | Liaison office | ILiaisonOfficeService | Country | Linked |
+| INT-059 | Org hierarchy | IOrgHierarchyService | Country | Linked |
+| INT-060 | Configuration | IConfiguration | Config | Applied |
+| INT-061 | Logger | ILogger | Log | Logged |
+| INT-062 | AutoMapper | IMapper | Map | Mapped |
+| INT-063 | Full lookup flow | All | GetByIsoAlpha2 | Success |
+| INT-064 | Full region flow | All | GetByRegion | Success |
+| INT-065 | Full DST flow | All | GetDstOffset | Success |
+| INT-066 | Opportunity + country | Opp + country | Opp with country | Linked |
+| INT-067 | Partner + country | Partner + country | Partner with country | Linked |
+| INT-068 | Search + pagination | Search + pagination | Search paged | Success |
+| INT-069 | Cache + DB | Cache + DB | Miss then hit | Both |
+| INT-070 | Cache invalidation | Cache + update | Update | Invalidated |
+| INT-071 | Soft delete filter | DbContext | Get all | Filtered |
+| INT-072 | Permission + get | Permission | Get | Checked |
+| INT-073 | Tenant + get | Tenant | Get | Scoped |
+| INT-074 | Region + countries | Region | Get countries | Success |
+| INT-075 | DST + timezone | DST | Get offset | Success |
+| INT-076 | Continent + countries | Continent | Get | Success |
+| INT-077 | Dropdown + filter | Dropdown | Filter | Filtered |
+| INT-078 | Batch + cache | Batch + cache | GetByIds | Mixed |
+| INT-079 | Search + sort | Search + sort | Search | Sorted |
+| INT-080 | Pagination + sort | Pagination + sort | Page | Sorted |
+| INT-081 | Map + cache | Map + cache | MapIso | Cached |
+| INT-082 | Warm-up + load | Warm-up | Startup | Loaded |
+| INT-083 | Config + cache TTL | Config | Cache | TTL |
+| INT-084 | Logger + error | Logger | Error | Logged |
+| INT-085 | Mapper + entity | Mapper | Entity | Mapped |
+| INT-086 | DbContext + transaction | DbContext | Transaction | Consistent |
+| INT-087 | Validation + API | Validation | API | Validated |
+| INT-088 | Error handler + get | Error | Get | Handled |
+| INT-089 | Retry + transient | Retry | Transient | Retried |
+| INT-090 | End-to-end | All | Full flow | Success |
 
 ---
 

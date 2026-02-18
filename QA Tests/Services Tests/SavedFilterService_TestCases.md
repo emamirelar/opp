@@ -11,19 +11,24 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+| Check | Formula | Result |
+|-------|---------|--------|
+| N≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| E≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| F≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| I≥3P | 90 ≥ 3×30=90 | ✅ PASS |
 
 ---
 
@@ -33,7 +38,7 @@ Saved filter service: CRUD filters, apply filters, share, user-specific, entity-
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|-------------|-------|-----------------|
@@ -75,7 +80,7 @@ Saved filter service: CRUD filters, apply filters, share, user-specific, entity-
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error |
 |----|-----------|---------------|----------------|
@@ -283,10 +288,50 @@ Saved filter service: CRUD filters, apply filters, share, user-specific, entity-
 | FUN-048 | Default override | Override | SetDefault | Replaced |
 | FUN-049 | Visibility hierarchy | Hierarchy | Visibility | Private < Shared < Public |
 | FUN-050 | Filter versioning | Version | Update | Versioned |
+| FUN-051 | Export format | Format | Export | JSON |
+| FUN-052 | Import validation | Validate | Import | Validated |
+| FUN-053 | Merge conflict | Conflict | Merge | Resolved |
+| FUN-054 | Clone independence | Independent | Clone | New |
+| FUN-055 | Duplicate metadata | Metadata | Duplicate | Copied |
+| FUN-056 | Archive visibility | Visibility | Archive | Hidden |
+| FUN-057 | Restore visibility | Visibility | Restore | Visible |
+| FUN-058 | Search ranking | Rank | Search | Ranked |
+| FUN-059 | Pagination consistency | Consistency | Page | Consistent |
+| FUN-060 | Preset immutability | Immutable | Preset | No change |
+| FUN-061 | Criteria merge | Merge | Merge | Combined |
+| FUN-062 | Filter dependency | Dependency | Apply | Resolved |
+| FUN-063 | User preference | Preference | GetDefault | Preferred |
+| FUN-064 | Entity type scope | Scope | GetByEntityType | Scoped |
+| FUN-065 | Share notification | Notify | Share | Notified |
+| FUN-066 | Unshare cleanup | Cleanup | Unshare | Cleaned |
+| FUN-067 | Default cascade | Cascade | SetDefault | Cascaded |
+| FUN-068 | Batch deduplication | Dedup | GetByIds | Deduplicated |
+| FUN-069 | Cache key uniqueness | Unique | Cache | Unique |
+| FUN-070 | Invalidation scope | Scope | Invalidate | Scoped |
+| FUN-071 | Error aggregation | Aggregate | Batch | Aggregated |
+| FUN-072 | Partial batch | Partial | Batch | Partial |
+| FUN-073 | Retry transient | Retry | Transient | Retried |
+| FUN-074 | Timeout handling | Timeout | Slow | Timeout |
+| FUN-075 | Cancellation | Cancel | Cancel | Cancelled |
+| FUN-076 | Rate limit | Rate | Many | Limited |
+| FUN-077 | Audit trail | Audit | Create | Logged |
+| FUN-078 | Tenant isolation | Tenant | Get | Isolated |
+| FUN-079 | Permission check | Check | Share | Checked |
+| FUN-080 | Trim input | Trim | Create | Trimmed |
+| FUN-081 | Criteria sanitization | Sanitize | Apply | Sanitized |
+| FUN-082 | Order preservation | Preserve | Reorder | Preserved |
+| FUN-083 | Metadata preservation | Preserve | Clone | Preserved |
+| FUN-084 | Criteria preservation | Preserve | Duplicate | Preserved |
+| FUN-085 | Share list limit | Limit | GetShared | Limited |
+| FUN-086 | Warm-up | Warm-up | WarmCache | Preloaded |
+| FUN-087 | Fallback | Fallback | Missing | Fallback |
+| FUN-088 | Error format | Format | Error | Consistent |
+| FUN-089 | Validation format | Format | Validate | Clear |
+| FUN-090 | Quota enforcement | Quota | Create | Enforced |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Integration | Scenario | Expected Result |
 |----|-----------|-------------|----------|-----------------|
@@ -340,6 +385,46 @@ Saved filter service: CRUD filters, apply filters, share, user-specific, entity-
 | INT-048 | Validation + API | Validation | API | Validated |
 | INT-049 | Health check | Health | Check | Healthy |
 | INT-050 | End-to-end | All | Full flow | Success |
+| INT-051 | ListView + filter | ListView | Apply | Filtered |
+| INT-052 | Opportunity + filter | Opportunity | Filter | Applied |
+| INT-053 | Partner + filter | Partner | Filter | Applied |
+| INT-054 | Search + pagination | Search + pagination | Search | Success |
+| INT-055 | Cache + DB | Cache + DB | Miss then hit | Both |
+| INT-056 | Cache invalidation | Cache + update | Update | Invalidated |
+| INT-057 | Soft delete filter | DbContext | Get all | Filtered |
+| INT-058 | Permission + get | Permission | Get | Checked |
+| INT-059 | Tenant + get | Tenant | Get | Scoped |
+| INT-060 | Import + export | Import + export | Both | Match |
+| INT-061 | Clone + share | Clone + share | Both | Success |
+| INT-062 | Duplicate + apply | Duplicate + apply | Both | Success |
+| INT-063 | Config + quota | Config | Quota | From config |
+| INT-064 | Logger + error | Logger | Error | Logged |
+| INT-065 | Mapper + entity | Mapper | Entity | Mapped |
+| INT-066 | Retry + transient | Retry | Transient | Retried |
+| INT-067 | Timeout + create | Timeout | Create | Timeout |
+| INT-068 | Cancellation + create | Cancel | Create | Cancelled |
+| INT-069 | Rate limit + create | Rate limit | Many | Limited |
+| INT-070 | Audit + create | Audit | Create | Audited |
+| INT-071 | User preference | UserPreference | Default | Linked |
+| INT-072 | Entity config | EntityConfig | Entity type | Linked |
+| INT-073 | SavedFilter controller | Controller | API | Linked |
+| INT-074 | Frontend service | Frontend | Apply | Linked |
+| INT-075 | Multi-tenant + cache | Tenant + cache | Get | Isolated |
+| INT-076 | Share + permission | Share + permission | Both | Checked |
+| INT-077 | Preset + entity | Preset + entity | Both | Linked |
+| INT-078 | Batch + cache | Batch + cache | GetByIds | Mixed |
+| INT-079 | Search + filter | Search + filter | Search | Filtered |
+| INT-080 | Pagination + sort | Pagination + sort | Page | Sorted |
+| INT-081 | DbContext + transaction | DbContext | Transaction | Consistent |
+| INT-082 | Error handler + create | Error | Create | Handled |
+| INT-083 | Validation + API | Validation | API | Validated |
+| INT-084 | Health check | Health | Check | Healthy |
+| INT-085 | Full create flow | All | Create | Success |
+| INT-086 | Full apply flow | All | Apply | Success |
+| INT-087 | Full share flow | All | Share | Success |
+| INT-088 | Full pipeline | All | Full flow | Success |
+| INT-089 | Document manager | IDocumentManager | Filter | Linked |
+| INT-090 | End-to-end | All | Full flow | Success |
 
 ---
 

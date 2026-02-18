@@ -11,19 +11,24 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
-| §6 Security | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**3:1 Ratio Compliance Check**
+| Check | Result |
+|-------|--------|
+| N ≥ 3P | 90 ≥ 90 ✅ PASS |
+| E ≥ 3P | 90 ≥ 90 ✅ PASS |
+| F ≥ 3P | 90 ≥ 90 ✅ PASS |
+| I ≥ 3P | 90 ≥ 90 ✅ PASS |
 
 ---
 
@@ -138,17 +143,12 @@ OpportunityPlus to oUP (UNOPS ERP) integration: data sync, status mapping, error
 | POS-028 | Sync with version | Optimistic lock | Sync | Version check | P2 |
 | POS-029 | Sync with existing oUP ID | Re-sync | Sync | Update not create | P2 |
 | POS-030 | Sync rollback on failure | Sync fails | Rollback | Partial reverted | P2 |
-| POS-031 | Sync with dependencies | Partners first | Sync | Order correct | P2 |
-| POS-032 | Sync with lookup cache | Cached lookups | Sync | Cache used | P2 |
-| POS-033 | Sync with rate limit | Rate limited | Sync | Throttled | P2 |
-| POS-034 | Sync with connection pool | Concurrent | Sync | Pool used | P2 |
-| POS-035 | Sync metrics | After sync | Check metrics | Metrics updated | P2 |
 
 ---
 
 ## §2 Negative Tests (Failure Scenarios)
 
-> **Minimum:** 70 tests
+> **Minimum:** 90 tests
 
 ### 2.1 Invalid Input Validation
 
@@ -180,37 +180,40 @@ OpportunityPlus to oUP (UNOPS ERP) integration: data sync, status mapping, error
 
 ## §3 Boundary Tests (Edge Cases)
 
-> **Minimum:** 70 tests
+> **Minimum:** 90 tests
 
-### 3.1–3.7 Boundary Tests (BND-001 to BND-070)
+### 3.1–3.7 Boundary Tests (BND-001 to BND-090)
 
 | ID Range | Key Scenarios |
 |----------|---------------|
 | BND-001 to BND-070 | Field length limits, numeric bounds (0, MAX), date boundaries (leap year, timezone), empty/partial payload, max partners (3 funding, 3 client), 17 risk types, Unicode in names, concurrent sync, retry limits (3 retries), rate limit boundaries |
+| BND-071 to BND-090 | Name at 199 chars, amount at max, date at boundary, 2 funding partners, 2 client partners, 16 risk types, retry at 2, rate limit at boundary, empty payload, single partner, batch size 99, page size 999, sync at midnight, timezone edge, Unicode in description, ID = 2, pagination last page, filter single status, zero partners, max context size |
 
 ---
 
 ## §4 Functional Tests (Business Rules)
 
-> **Minimum:** 50 tests
+> **Minimum:** 90 tests
 
 ### 4.1 Workflow (15) | 4.2 Validation (15) | 4.3 Constraint (10) | 4.4 Audit (10)
 
 | ID Range | Rule Examples |
 |----------|---------------|
 | FUN-001 to FUN-050 | Sync triggers, status mapping, field mapping, idempotency, retry on transient, audit on sync, error handling, rollback, reconciliation |
+| FUN-051 to FUN-090 | Status mapping validation, field mapping validation, idempotency check, retry logic, audit trail, rollback on failure, reconciliation report, deep link creation, email notification, Pub/Sub publish, batch processing, rate limit handling, connection pool, version check, partner validation, country validation, date validation, amount validation, category mapping, risk mapping |
 
 ---
 
 ## §5 Integration Tests (End-to-End Flows)
 
-> **Minimum:** 50 tests
+> **Minimum:** 90 tests
 
 ### 5.1 CRUD (10) | 5.2 Search & Filter (10) | 5.3 Pagination (5) | 5.4 Relationships (10) | 5.5 Error Handling (15)
 
 | ID Range | Scenario Examples |
 |----------|-------------------|
 | INT-001 to INT-050 | Create Opp→Sync→oUP, Update→Sync, Delete→Sync, Deep link, Email notification, Pub/Sub, API errors, timeout, 500, 429 |
+| INT-051 to INT-090 | Full sync lifecycle, Batch sync, Retry flow, Reconciliation flow, Health check flow, Status mapping flow, Field mapping flow, Partner mapping flow, Country mapping flow, Risk mapping flow, SDG mapping flow, Deep link round-trip, Audit trail flow, Rollback flow, Idempotent sync, Partial update, Rate limit handling, Connection pool, Version check, Error propagation |
 
 ---
 

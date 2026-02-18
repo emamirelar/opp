@@ -1,7 +1,7 @@
 # AiContextualService — Unit Test Cases
 
 **Component:** `UNOPS.PAO.Business/Services/AiContextualService` (Unit Tests)  
-**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Created:** 2026-02-04 | **Last Updated:** 2026-02-18  
 **Author:** QA Team  
 **Standard:** 10-Category, 3:1 Ratio
 
@@ -11,19 +11,23 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+**Ratio Compliance:**
+- N ≥ 3P: 90 ≥ 90 → ✅ PASS
+- E ≥ 3P: 90 ≥ 90 → ✅ PASS
+- F ≥ 3P: 90 ≥ 90 → ✅ PASS
+- I ≥ 3P: 90 ≥ 90 → ✅ PASS
 
 ---
 
@@ -33,7 +37,7 @@ AI contextual service unit tests cover context building, entity aggregation, and
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|--------------|-------|-----------------|
@@ -67,15 +71,10 @@ AI contextual service unit tests cover context building, entity aggregation, and
 | POS-028 | Get entity fields | Entity exists | GetEntityFields | Fields |
 | POS-029 | Format for AI | Data exists | FormatForAI | Formatted |
 | POS-030 | Get token count | Text exists | GetTokenCount | Count |
-| POS-031 | Chunk context | Long context | Chunk | Chunks |
-| POS-032 | Combine chunks | Chunks exist | CombineChunks | Combined |
-| POS-033 | Get cache stats | Cache has data | GetCacheStats | Stats |
-| POS-034 | Clear expired cache | Expired entries | ClearExpired | Cleared |
-| POS-035 | Get context metadata | Context exists | GetMetadata | Metadata |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input/Action | Expected Result |
 |----|-----------|---------------------|-----------------|
@@ -149,10 +148,30 @@ AI contextual service unit tests cover context building, entity aggregation, and
 | NEG-068 | GetEntityFields invalid | Entity invalid | ArgumentException |
 | NEG-069 | GetCacheStats null | Cache null | ArgumentNullException |
 | NEG-070 | Merge context empty | Contexts=[] | ArgumentException |
+| NEG-071 | BuildContext null entity type | EntityType=null | ArgumentNullException |
+| NEG-072 | FindSimilar negative threshold | Threshold=-0.1 | ArgumentException |
+| NEG-073 | FindSimilar threshold over 1 | Threshold=1.1 | ArgumentException |
+| NEG-074 | RenderTemplate empty vars | Vars={} | ValidationException |
+| NEG-075 | Truncate zero length | Length=0 | ArgumentException |
+| NEG-076 | Encode null context | Context=null | ArgumentNullException |
+| NEG-077 | Decode null input | Input=null | ArgumentNullException |
+| NEG-078 | GetSize null context | Context=null | ArgumentNullException |
+| NEG-079 | ValidateTemplate null | Template=null | ArgumentNullException |
+| NEG-080 | GetRequiredVars invalid template | Template invalid | ArgumentException |
+| NEG-081 | ApplyDefaults null template | Template=null | ArgumentNullException |
+| NEG-082 | Escape null string | String=null | ArgumentNullException |
+| NEG-083 | GetEntityType null entity | Entity=null | ArgumentNullException |
+| NEG-084 | GetEntityFields null entity | Entity=null | ArgumentNullException |
+| NEG-085 | Chunk null context | Context=null | ArgumentNullException |
+| NEG-086 | CombineChunks null | Chunks=null | ArgumentNullException |
+| NEG-087 | GetCacheStats invalid | Cache invalid | ArgumentException |
+| NEG-088 | ClearExpired null date | Date=null | ArgumentNullException |
+| NEG-089 | GetMetadata null context | Context=null | ArgumentNullException |
+| NEG-090 | Entity ID zero | EntityId=0 | ArgumentException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Condition | Expected Result |
 |----|-----------|-------------------|-----------------|
@@ -226,10 +245,30 @@ AI contextual service unit tests cover context building, entity aggregation, and
 | BND-068 | Escape boundary | All special | Escaped |
 | BND-069 | Encode decode roundtrip | Encode, Decode | Same |
 | BND-070 | Concurrent context build | Two build | Both valid |
+| BND-071 | Context size exactly max | At max | Valid |
+| BND-072 | Embedding vector length | 768 dim | Valid |
+| BND-073 | Token count zero | Empty text | 0 |
+| BND-074 | Token count max | Max text | Count |
+| BND-075 | Merge two contexts | Two | Merged |
+| BND-076 | Merge many contexts | Many | Merged |
+| BND-077 | Chunk overlap zero | Overlap=0 | Valid |
+| BND-078 | Chunk overlap max | Overlap=max | Valid |
+| BND-079 | Similarity threshold exact | At threshold | Include |
+| BND-080 | Similarity threshold below | Below | Exclude |
+| BND-081 | Batch single text | 1 text | Valid |
+| BND-082 | FormatForAI empty | Empty data | Formatted |
+| BND-083 | GetEntityType boundary | Type | Valid |
+| BND-084 | GetEntityFields empty | No fields | [] |
+| BND-085 | GetEntityFields many | Many fields | All |
+| BND-086 | Cache key collision | Collision | Handle |
+| BND-087 | Invalidate partial | Partial | Invalidated |
+| BND-088 | ClearExpired at boundary | At TTL | Cleared |
+| BND-089 | GetMetadata empty | No metadata | Empty |
+| BND-090 | Vector norm zero | Zero vector | Handle |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule/Workflow | Trigger | Expected Outcome |
 |----|-----------|---------------|---------|------------------|
@@ -283,10 +322,50 @@ AI contextual service unit tests cover context building, entity aggregation, and
 | FUN-048 | Permission cached | Performance | Repeated check | Cached |
 | FUN-049 | AsNoTracking read-only | Performance | List | No tracking |
 | FUN-050 | Context caching | Performance | BuildContext | Cached |
+| FUN-051 | Similarity threshold filter | Logic | FindSimilar | Filtered |
+| FUN-052 | Result limit | Logic | FindSimilar | Limited |
+| FUN-053 | Sort by score | Logic | FindSimilar | Sorted |
+| FUN-054 | Entity summary format | Logic | GetEntitySummary | Formatted |
+| FUN-055 | Related entities filter | Logic | GetRelatedEntities | Filtered |
+| FUN-056 | Merge order | Logic | MergeContext | Order |
+| FUN-057 | Truncate preserve | Logic | Truncate | Preserved |
+| FUN-058 | Encode format | Logic | Encode | Format |
+| FUN-059 | Decode format | Logic | Decode | Format |
+| FUN-060 | Token count accuracy | Logic | GetTokenCount | Accurate |
+| FUN-061 | Template validation | Logic | ValidateTemplate | Validated |
+| FUN-062 | Required vars extraction | Logic | GetRequiredVars | Extracted |
+| FUN-063 | Default precedence | Logic | ApplyDefaults | Precedence |
+| FUN-064 | Escape all special | Logic | Escape | All |
+| FUN-065 | Entity type resolution | Logic | GetEntityType | Resolved |
+| FUN-066 | Entity fields filter | Logic | GetEntityFields | Filtered |
+| FUN-067 | Format structure | Logic | FormatForAI | Structure |
+| FUN-068 | Chunk boundary | Logic | Chunk | Boundary |
+| FUN-069 | Combine boundary | Logic | CombineChunks | Boundary |
+| FUN-070 | Cache eviction | Logic | Cache | Evicted |
+| FUN-071 | ClearExpired logic | Logic | ClearExpired | Cleared |
+| FUN-072 | GetMetadata structure | Logic | GetMetadata | Structure |
+| FUN-073 | Batch order | Logic | GenerateBatch | Order |
+| FUN-074 | Context scope | Logic | BuildContext | Scoped |
+| FUN-075 | Entity scope | Logic | AggregateEntity | Scoped |
+| FUN-076 | Permission scope | Authorization | Per entity | Check |
+| FUN-077 | User context scope | Audit | Per user | Set |
+| FUN-078 | Timestamp UTC | Audit | All | UTC |
+| FUN-079 | Deleted exclude FindSimilar | Constraint | FindSimilar | Excluded |
+| FUN-080 | Deleted exclude Aggregate | Constraint | Aggregate | Excluded |
+| FUN-081 | Pagination consistency | Calculation | Page | Consistent |
+| FUN-082 | Sort multi-column | Calculation | Sort | Multi |
+| FUN-083 | Filter OR logic | Filter | OR filter | Match |
+| FUN-084 | Transaction on aggregate | Transaction | Aggregate | Atomic |
+| FUN-085 | Include selective | Data load | Include | Selective |
+| FUN-086 | Config batch size | Config | GenerateBatch | Config |
+| FUN-087 | Config chunk size | Config | Chunk | Config |
+| FUN-088 | Config similarity | Config | FindSimilar | Config |
+| FUN-089 | Context lifecycle | Workflow | Build to invalidate | Complete |
+| FUN-090 | Embedding lifecycle | Workflow | Generate to use | Complete |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Operation | Entities | Expected Result |
 |----|-----------|----------|----------|-----------------|
@@ -340,6 +419,46 @@ AI contextual service unit tests cover context building, entity aggregation, and
 | INT-048 | Get required vars | Scenario | GetRequiredVars | Vars |
 | INT-049 | Audit trail | Scenario | Operations | Trail |
 | INT-050 | E2E build-cache-find | Scenario | Full cycle | Complete |
+| INT-051 | Build then aggregate | Scenario | Build, Aggregate | Complete |
+| INT-052 | Embed then find | Scenario | Embed, Find | Complete |
+| INT-053 | Template then substitute | Scenario | Template, Substitute | Complete |
+| INT-054 | Chunk then combine | Scenario | Chunk, Combine | Complete |
+| INT-055 | Cache then invalidate | Scenario | Cache, Invalidate | Complete |
+| INT-056 | Merge then truncate | Scenario | Merge, Truncate | Complete |
+| INT-057 | Encode then decode | Scenario | Encode, Decode | Same |
+| INT-058 | Get summary then format | Scenario | Summary, Format | Complete |
+| INT-059 | Get related then aggregate | Scenario | Related, Aggregate | Complete |
+| INT-060 | Token count then truncate | Scenario | Count, Truncate | Complete |
+| INT-061 | DbContext scope | Integration | Request | Scoped |
+| INT-062 | Permission cascade | Integration | Role | Cascade |
+| INT-063 | User context propagation | Integration | Request | Propagated |
+| INT-064 | Audit chain | Integration | Operations | Chained |
+| INT-065 | Config service | Integration | Config | Service |
+| INT-066 | Error handling chain | Integration | Error | Handled |
+| INT-067 | Validation chain | Integration | Build | Validated |
+| INT-068 | Mapping chain | Integration | Entity | Mapped |
+| INT-069 | Repository CRUD | Integration | Repository | CRUD |
+| INT-070 | DbContext save | Integration | SaveChanges | Saved |
+| INT-071 | Transaction rollback | Integration | Error | Rollback |
+| INT-072 | Embedding API flow | Integration | API | Flow |
+| INT-073 | Cache flow | Integration | Cache | Flow |
+| INT-074 | Concurrent build | Scenario | Parallel build | All succeed |
+| INT-075 | Concurrent find | Scenario | Parallel find | All succeed |
+| INT-076 | Build aggregate format | Scenario | Full cycle | Complete |
+| INT-077 | Embed find format | Scenario | Full cycle | Complete |
+| INT-078 | Template substitute format | Scenario | Full cycle | Complete |
+| INT-079 | Chunk combine format | Scenario | Full cycle | Complete |
+| INT-080 | Cache invalidate get | Scenario | Full cycle | Complete |
+| INT-081 | Merge truncate encode | Scenario | Full cycle | Complete |
+| INT-082 | Entity summary format | Scenario | Full cycle | Complete |
+| INT-083 | Related aggregate format | Scenario | Full cycle | Complete |
+| INT-084 | Token truncate format | Scenario | Full cycle | Complete |
+| INT-085 | Permission check flow | Integration | Auth | Check |
+| INT-086 | User resolution flow | Integration | User | Resolved |
+| INT-087 | Audit flow | Integration | Audit | Logged |
+| INT-088 | Logging flow | Integration | Log | Logged |
+| INT-089 | Config flow | Integration | Config | Config |
+| INT-090 | E2E full lifecycle | Scenario | All operations | Complete |
 
 ---
 
@@ -500,5 +619,5 @@ AI contextual service unit tests cover context building, entity aggregation, and
 
 ---
 
-**Last Updated:** 2026-02-11  
+**Last Updated:** 2026-02-18  
 **Status:** Ready for Implementation

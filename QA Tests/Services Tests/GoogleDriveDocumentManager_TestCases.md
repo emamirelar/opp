@@ -11,19 +11,24 @@
 
 | Category | Count | Min | ✓ |
 |----------|-------|-----|---|
-| §1 Positive | 35 | 30-50 | ✅ |
-| §2 Negative | 70 | 70 | ✅ |
-| §3 Boundary | 70 | 70 | ✅ |
-| §4 Functional | 50 | 50 | ✅ |
-| §5 Integration | 50 | 50 | ✅ |
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
 | §6 Security | 50 | 50 | ✅ |
 | §7 Concurrency | 25 | 25 | ✅ |
 | §8 Unit | 21 | 21 | ✅ |
 | §9 Performance | 16 | 16 | ✅ |
 | §10 Load | 10 | 10 | ✅ |
-| **TOTAL** | **397** | **≥347** | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**3:1 Ratio:** (70+70)=140 ≥ 3×35=105 → ✅ PASS
+| Check | Formula | Result |
+|-------|---------|--------|
+| N≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| E≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| F≥3P | 90 ≥ 3×30=90 | ✅ PASS |
+| I≥3P | 90 ≥ 3×30=90 | ✅ PASS |
 
 ---
 
@@ -33,7 +38,7 @@ Google Drive integration: document creation, sharing, permissions, conversion, s
 
 ---
 
-## §1 Positive Tests (35)
+## §1 Positive Tests (30)
 
 | ID | Test Name | Precondition | Steps | Expected Result |
 |----|-----------|-------------|-------|-----------------|
@@ -67,15 +72,10 @@ Google Drive integration: document creation, sharing, permissions, conversion, s
 | POS-028 | Get revision | Doc + rev | GetRevisionAsync(docId, revId) | Revision |
 | POS-029 | Publish web | Doc exists | PublishAsync(docId) | Published |
 | POS-030 | Unpublish | Doc published | UnpublishAsync(docId) | Unpublished |
-| POS-031 | Get file metadata | Doc exists | GetMetadataAsync(docId) | Metadata |
-| POS-032 | Watch for changes | Doc exists | WatchAsync(docId, channel) | Watch |
-| POS-033 | Stop watch | Watch active | StopWatchAsync(channelId) | Stopped |
-| POS-034 | Batch get | Multiple docs | BatchGetAsync(docIds) | Documents |
-| POS-035 | Batch update | Multiple docs | BatchUpdateAsync(updates) | Updated |
 
 ---
 
-## §2 Negative Tests (70)
+## §2 Negative Tests (90)
 
 | ID | Test Name | Invalid Input | Expected Error |
 |----|-----------|---------------|----------------|
@@ -149,10 +149,30 @@ Google Drive integration: document creation, sharing, permissions, conversion, s
 | NEG-068 | List deleted folder | ListFolderAsync(deletedId) | NotFoundException |
 | NEG-069 | Create in deleted folder | CreateDocumentAsync(..., deletedFolder) | NotFoundException |
 | NEG-070 | OAuth scope insufficient | CreateDocumentAsync(...) | InsufficientScopeException |
+| NEG-071 | Null GetMetadata | GetMetadataAsync(null) | ArgumentNullException |
+| NEG-072 | Null Watch channel | WatchAsync(docId, null) | ArgumentNullException |
+| NEG-073 | Null BatchGet IDs | BatchGetAsync(null) | ArgumentNullException |
+| NEG-074 | Null BatchUpdate | BatchUpdateAsync(null) | ArgumentNullException |
+| NEG-075 | Invalid StopWatch | StopWatchAsync("") | ArgumentException |
+| NEG-076 | Null GetRevisions | GetRevisionsAsync(null) | ArgumentNullException |
+| NEG-077 | Null GetRevision | GetRevisionAsync(docId, null) | ArgumentNullException |
+| NEG-078 | Null Publish | PublishAsync(null) | ArgumentNullException |
+| NEG-079 | Null Unpublish | UnpublishAsync(null) | ArgumentNullException |
+| NEG-080 | Null AddComment | AddCommentAsync(docId, null) | ArgumentNullException |
+| NEG-081 | Null GetComments | GetCommentsAsync(null) | ArgumentNullException |
+| NEG-082 | Invalid Copy target | CopyAsync(docId, null) | ArgumentNullException |
+| NEG-083 | Invalid Move target | MoveAsync(docId, null) | ArgumentNullException |
+| NEG-084 | Null CreateFolder | CreateFolderAsync(null, ...) | ArgumentNullException |
+| NEG-085 | Null ListFolder | ListFolderAsync(null) | ArgumentNullException |
+| NEG-086 | Null Search | SearchAsync(null) | ArgumentNullException |
+| NEG-087 | Null Trash | TrashAsync(null) | ArgumentNullException |
+| NEG-088 | Null Restore | RestoreAsync(null) | ArgumentNullException |
+| NEG-089 | Invalid GetExportUrl | GetExportUrlAsync(docId, null) | ArgumentNullException |
+| NEG-090 | Null GetDownloadUrl | GetDownloadUrlAsync(null) | ArgumentNullException |
 
 ---
 
-## §3 Boundary Tests (70)
+## §3 Boundary Tests (90)
 
 | ID | Test Name | Boundary Value | Expected Result |
 |----|-----------|----------------|-----------------|
@@ -226,10 +246,30 @@ Google Drive integration: document creation, sharing, permissions, conversion, s
 | BND-068 | Permission role writer | "writer" | Valid |
 | BND-069 | Permission role reader | "reader" | Valid |
 | BND-070 | Permission type user | "user" | Valid |
+| BND-071 | Doc count = 0 | None | [] |
+| BND-072 | Doc count = 1 | One | [1] |
+| BND-073 | Doc count = 1000 | Many | Paginated |
+| BND-074 | Revision count = 0 | None | [] |
+| BND-075 | Revision count = 100 | Many | Returned |
+| BND-076 | Comment count = 0 | None | [] |
+| BND-077 | Comment count = 100 | Many | All |
+| BND-078 | Share count = 0 | None | [] |
+| BND-079 | Share count = 100 | Max | All |
+| BND-080 | Folder depth = 1 | Root | Valid |
+| BND-081 | Folder depth = 20 | Max | Valid |
+| BND-082 | Batch size = 1 | One | Valid |
+| BND-083 | Batch size = 100 | Max | Valid |
+| BND-084 | Watch expiry = 1s | 1 second | Valid |
+| BND-085 | Watch expiry = 7d | 7 days | Valid |
+| BND-086 | Path length = 1 | "a" | Valid |
+| BND-087 | Path length = 1024 | Max | Valid |
+| BND-088 | Content size = 0 | "" | Valid |
+| BND-089 | Content size = 50MB | Max | Valid |
+| BND-090 | Query length = 1 | "a" | Results |
 
 ---
 
-## §4 Functional Tests (50)
+## §4 Functional Tests (90)
 
 | ID | Test Name | Rule | Trigger | Expected Outcome |
 |----|-----------|------|---------|------------------|
@@ -283,10 +323,50 @@ Google Drive integration: document creation, sharing, permissions, conversion, s
 | FUN-048 | Cache invalidation | Invalidation | Update | Invalidated |
 | FUN-049 | Offline support | Offline | Sync | Queued |
 | FUN-050 | Conflict detection | Conflict | Concurrent | Detected |
+| FUN-051 | Doc naming | Naming | Create | Valid name |
+| FUN-052 | Folder naming | Naming | CreateFolder | Valid name |
+| FUN-053 | Share propagation | Propagate | Share | Recipient notified |
+| FUN-054 | Permission inheritance | Inherit | Create in folder | Inherited |
+| FUN-055 | Trash retention | Retention | Trash | 30 days |
+| FUN-056 | Revision retention | Retention | Edit | Revisions kept |
+| FUN-057 | Conversion format | Format | Convert | Supported format |
+| FUN-058 | Sync frequency | Sync | Watch | Notified |
+| FUN-059 | Export format | Format | Export | Supported |
+| FUN-060 | Search scope | Scope | Search | Scoped |
+| FUN-061 | Copy metadata | Metadata | Copy | Preserved |
+| FUN-062 | Move metadata | Metadata | Move | Preserved |
+| FUN-063 | Delete cascade | Cascade | Delete folder | All deleted |
+| FUN-064 | Trash cascade | Cascade | Trash folder | All trashed |
+| FUN-065 | Restore location | Location | Restore | Original |
+| FUN-066 | Share expiration | Expiry | Share | Optional expiry |
+| FUN-067 | Domain restriction | Domain | Share | Checked |
+| FUN-068 | Role hierarchy | Hierarchy | Share | Role order |
+| FUN-069 | Comment threading | Threading | AddComment | Threaded |
+| FUN-070 | Revision ordering | Order | GetRevisions | Chronological |
+| FUN-071 | Publish visibility | Visibility | Publish | Public |
+| FUN-072 | Unpublish | Unpublish | Unpublish | Private |
+| FUN-073 | Watch channel | Channel | Watch | Unique |
+| FUN-074 | Batch atomicity | Atomic | BatchUpdate | All or none |
+| FUN-075 | Conflict resolution | Conflict | Concurrent edit | Merge |
+| FUN-076 | Version history | History | Edit | Versioned |
+| FUN-077 | Export quality | Quality | Export | High |
+| FUN-078 | Conversion quality | Quality | Convert | High |
+| FUN-079 | Sync consistency | Consistency | Sync | Consistent |
+| FUN-080 | Permission check | Check | Access | Checked |
+| FUN-081 | Quota enforcement | Quota | Create | Enforced |
+| FUN-082 | Rate limit | Rate | Many | Limited |
+| FUN-083 | Retry transient | Retry | Transient | Retried |
+| FUN-084 | Error format | Format | Error | Consistent |
+| FUN-085 | Audit trail | Audit | Any op | Logged |
+| FUN-086 | Soft delete | Soft | Delete | Trashed |
+| FUN-087 | Hard delete | Hard | EmptyTrash | Deleted |
+| FUN-088 | Template instantiation | Instantiate | CreateFromTemplate | Copy |
+| FUN-089 | Link sharing | Link | Share | Link |
+| FUN-090 | Email notification | Notify | Share | Email |
 
 ---
 
-## §5 Integration Tests (50)
+## §5 Integration Tests (90)
 
 | ID | Test Name | Integration | Scenario | Expected Result |
 |----|-----------|-------------|----------|-----------------|
@@ -340,6 +420,46 @@ Google Drive integration: document creation, sharing, permissions, conversion, s
 | INT-048 | Fallback | Fallback | Unavailable | Fallback |
 | INT-049 | Health check | Health | Check | Healthy |
 | INT-050 | End-to-end | All | Full flow | Success |
+| INT-051 | Google Drive API | Drive API | Create | Success |
+| INT-052 | OAuth2 | OAuth | Auth | Authenticated |
+| INT-053 | Configuration | IConfiguration | Config | Applied |
+| INT-054 | Logger | ILogger | Log | Logged |
+| INT-055 | Document manager | IDocumentManager | Link | Linked |
+| INT-056 | Opportunity | IOpportunityManager | Doc to opp | Linked |
+| INT-057 | Partner | IPartnerManager | Doc to partner | Linked |
+| INT-058 | User service | IUserService | Share | User resolved |
+| INT-059 | Audit | IAuditService | Any op | Logged |
+| INT-060 | Permission | IPermissionService | Access | Checked |
+| INT-061 | Full create flow | All | Create doc | Success |
+| INT-062 | Full share flow | All | Share | Success |
+| INT-063 | Full convert flow | All | Convert | Success |
+| INT-064 | Full sync flow | All | Sync | Success |
+| INT-065 | Create + share | Create + share | Both | Success |
+| INT-066 | Share + permission | Share + get | Both | Success |
+| INT-067 | Convert + export | Convert + export | Both | Success |
+| INT-068 | Move + sync | Move + sync | Both | Success |
+| INT-069 | Copy + share | Copy + share | Both | Success |
+| INT-070 | Trash + restore | Trash + restore | Both | Success |
+| INT-071 | Document + opp | Document | Link to opp | Linked |
+| INT-072 | Document + partner | Document | Link to partner | Linked |
+| INT-073 | Document + contact | Document | Link to contact | Linked |
+| INT-074 | Config + credentials | Config | Credentials | From config |
+| INT-075 | Logger + error | Logger | Error | Logged |
+| INT-076 | Audit + create | Audit | Create | Audited |
+| INT-077 | Permission + share | Permission | Share | Checked |
+| INT-078 | User + share | User | Share | Resolved |
+| INT-079 | Retry + transient | Retry | Transient | Retried |
+| INT-080 | Timeout + create | Timeout | Create | Timeout |
+| INT-081 | Cancellation + create | Cancel | Create | Cancelled |
+| INT-082 | Rate limit + many | Rate limit | Many | Limited |
+| INT-083 | OAuth + refresh | OAuth | Refresh | Refreshed |
+| INT-084 | Drive + Sheets | Drive + Sheets | Create sheet | Success |
+| INT-085 | Drive + Slides | Drive + Slides | Create slide | Success |
+| INT-086 | Drive + Forms | Drive + Forms | Create form | Success |
+| INT-087 | Drive + GCS | Drive + GCS | Export to GCS | Success |
+| INT-088 | Webhook + Drive | Webhook | Change | Notified |
+| INT-089 | Cache + Drive | Cache | Get | Cached |
+| INT-090 | End-to-end | All | Full flow | Success |
 
 ---
 

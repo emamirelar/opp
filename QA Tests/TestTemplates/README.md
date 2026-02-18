@@ -35,7 +35,10 @@ This folder contains standardized test templates following the **3:1 Test Strate
 ## 3:1 Ratio Requirement
 
 ```
-(Negative + Boundary) ≥ 3 × Positive
+Negative ≥ 3 × Positive
+Edge/Boundary ≥ 3 × Positive
+Functional ≥ 3 × Positive
+Integration ≥ 3 × Positive
 ```
 
 ### Example: 50 Positive Tests
@@ -48,7 +51,7 @@ This folder contains standardized test templates following the **3:1 Test Strate
 | Security | FIXED | 50 |
 | Concurrency | FIXED | 25 |
 | **Total** | | **325** |
-| **Ratio Check** | (100+100) = 200 ≥ 3×50 = 150 | ✅ |
+| **Ratio Check** | N≥3P, E≥3P, F≥3P, I≥3P (each individually) | ✅ |
 
 ## How to Use Templates
 

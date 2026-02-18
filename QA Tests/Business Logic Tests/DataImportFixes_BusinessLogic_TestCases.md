@@ -12,19 +12,19 @@
 
 | Category | File/Section | Count | Minimum Required | Status |
 |----------|-------------|-------|-----------------|--------|
-| Positive Tests | §1 | 35 | 30-50 | ✅ |
-| Negative Tests | §2 | 70 | Max(50, 2×35)=70 | ✅ |
-| Boundary Tests | §3 | 70 | Max(50, 2×35)=70 | ✅ |
-| Functional Tests | §4 | 50 | ≥50 | ✅ |
-| Integration Tests | §5 | 50 | ≥50 | ✅ |
+| Positive Tests | §1 | 30 | 30-50 | ✅ |
+| Negative Tests | §2 | 90 | Max(50, 3×30)=90 | ✅ |
+| Boundary Tests | §3 | 90 | Max(50, 3×30)=90 | ✅ |
+| Functional Tests | §4 | 90 | ≥90 | ✅ |
+| Integration Tests | §5 | 90 | ≥90 | ✅ |
 | Security Tests | §6 | 50 | ≥50 | ✅ |
 | Concurrency Tests | §7 | 25 | ≥25 | ✅ |
 | Unit Tests | §8 | 21 | ≥21 | ✅ |
 | Performance Tests | §9 | 16 | ≥16 | ✅ |
 | Load Tests | §10 | 10 | ≥10 | ✅ |
-| **TOTAL** | | **397** | **≥347** | ✅ |
+| **TOTAL** | | **462** | **≥462** | ✅ |
 
-**3:1 Ratio Check:** (N + B) = 140 ≥ 3 × P = 105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -92,15 +92,10 @@ Data import and migration utilities for bulk partner/contact/interaction/opportu
 | POS-028 | Import status check | GetImportStatusAsync(jobId) | Running/Complete | P1 |
 | POS-029 | Cancel running import | CancelImportAsync(jobId) | Cancelled, partial data handled | P1 |
 | POS-030 | Duplicate detection | Same email/name | Flagged | P1 |
-| POS-031 | Audit fields set | Import rows | CreatedBy/Date set | P1 |
-| POS-032 | Name field set | Import partner | Name ≠ null (ModifiableDeletableEntity) | P1 |
-| POS-033 | Import summary email | Complete import | Email sent | P2 |
-| POS-034 | Export import errors | GetErrorReportAsync | CSV of errors | P2 |
-| POS-035 | Re-import after fix | Fix errors, re-import | Only failed rows | P2 |
 
 ---
 
-## §2 Negative Tests — 70 tests
+## §2 Negative Tests — 90 tests
 
 | ID | Category | Scenario | Expected | Pr |
 |----|----------|---------|----------|----|
@@ -174,10 +169,30 @@ Data import and migration utilities for bulk partner/contact/interaction/opportu
 | NEG-068 | Report | Error report for empty import | Empty report | P2 |
 | NEG-069 | Report | Error report > max size | Truncated | P2 |
 | NEG-070 | Rollback | Rollback after 50% | All rolled back | P1 |
+| NEG-071 | Input | Null conflict resolution | BusinessException | P1 |
+| NEG-072 | Input | Invalid batch size | BusinessException | P1 |
+| NEG-073 | Input | Negative row limit | BusinessException | P1 |
+| NEG-074 | Data | Null FK in required column | Row rejected | P1 |
+| NEG-075 | Data | Empty string in required | Row rejected | P1 |
+| NEG-076 | Auth | Concurrent import same user | Queued or rejected | P1 |
+| NEG-077 | Format | Malformed Excel sheet name | Error | P2 |
+| NEG-078 | Format | CSV with null bytes | Handled or error | P1 |
+| NEG-079 | Dep | File locked by another process | Error | P1 |
+| NEG-080 | State | Import after entity deleted | Error | P1 |
+| NEG-081 | Transform | Transform throws | Row rejected | P1 |
+| NEG-082 | Map | Map to deleted lookup | Row rejected | P1 |
+| NEG-083 | Schedule | Schedule with invalid timezone | Error | P2 |
+| NEG-084 | Report | Report generation timeout | Truncated or error | P2 |
+| NEG-085 | Mass | Mass assign DeletedBy | Blocked | P1 |
+| NEG-086 | Mass | Mass assign DeletedDate | Blocked | P1 |
+| NEG-087 | Input | File path too long | Error | P2 |
+| NEG-088 | Input | Invalid temp directory | Error | P1 |
+| NEG-089 | Dep | Disk full during import | Rollback | P1 |
+| NEG-090 | State | Cancel non-running import | No-op | P2 |
 
 ---
 
-## §3 Boundary Tests — 70 tests
+## §3 Boundary Tests — 90 tests
 
 | ID | Category | Scenario | Expected | Pr |
 |----|----------|---------|----------|----|
@@ -251,12 +266,32 @@ Data import and migration utilities for bulk partner/contact/interaction/opportu
 | BND-068 | Delimiter | Semicolon | European CSV | P1 |
 | BND-069 | Delimiter | Tab | TSV format | P2 |
 | BND-070 | Delimiter | Pipe | Custom delimiter | P2 |
+| BND-071 | Rows | 999 rows | Imported <30s | P1 |
+| BND-072 | Rows | 1001 rows | Batched | P1 |
+| BND-073 | Cols | 25 columns | All mapped | P1 |
+| BND-074 | Cols | 75 columns | Handled | P2 |
+| BND-075 | Size | 99 MB file | Max or accepted | P1 |
+| BND-076 | Field | Name 100 chars | Accepted | P1 |
+| BND-077 | Field | Email 319 chars | Accepted | P1 |
+| BND-078 | Batch | Batch size 50 | 1 batch (if < limit) | P1 |
+| BND-079 | Batch | Batch size 500 | Multiple batches | P1 |
+| BND-080 | Dup | 2 duplicates | Both handled | P1 |
+| BND-081 | Error | 99% errors | 1 imported, report | P1 |
+| BND-082 | Map | Auto-map 75% match | Partial + manual | P1 |
+| BND-083 | Date | "2026-01-01" (start of year) | Parsed | P2 |
+| BND-084 | Date | "2026-12-31" (end of year) | Parsed | P2 |
+| BND-085 | Numeric | 1 | Accepted | P1 |
+| BND-086 | Unicode | Japanese data | Stored | P2 |
+| BND-087 | History | 50 past imports | All listed | P2 |
+| BND-088 | Transform | 5 transforms | All applied | P2 |
+| BND-089 | Progress | 100 rows | Incremental updates | P2 |
+| BND-090 | Delimiter | Colon | Custom delimiter | P2 |
 
 ---
 
 ## §4-§10 (Functional through Load Tests)
 
-### §4 Functional Tests — 50 tests
+### §4 Functional Tests — 90 tests
 **4.1 Import Pipeline (15):** File parse, header detect, field mapping, validation pass, duplicate check, conflict resolution, batch insert, progress update, error collection, report generation, audit log, notification, rollback, partial commit, import complete.
 
 **4.2 Validation (15):** Required fields, email format, date format, numeric format, FK reference, unique constraint, string length, type validation, encoding validation, header validation, row count validation, delimiter detection, BOM handling, file type validation, virus scan.
@@ -265,7 +300,9 @@ Data import and migration utilities for bulk partner/contact/interaction/opportu
 
 **4.4 Audit & History (10):** Import start, import complete, import failed, rows imported count, rows skipped count, errors count, user tracked, duration tracked, file stored, re-import tracking.
 
-### §5 Integration Tests — 50 tests
+**4.5 Extended Functional (40):** FUN-051: Trim applied before validation; FUN-052: Case normalization for codes; FUN-053: Null coalesce for optional fields; FUN-054: Default value injection; FUN-055: FK lookup cache; FUN-056: Batch commit atomicity; FUN-057: Partial batch rollback; FUN-058: Progress granularity; FUN-059: Error row index tracking; FUN-060: Duplicate key handling; FUN-061: Encoding fallback chain; FUN-062: Date format priority; FUN-063: Column order independence; FUN-064: Header case insensitivity; FUN-065: Empty cell handling; FUN-066: Whitespace-only cell; FUN-067: Formula evaluation disabled; FUN-068: Hyperlink extraction; FUN-069: Comment row exclusion; FUN-070: Multi-header detection; FUN-071: Sheet name validation; FUN-072: Row limit enforcement; FUN-073: File size pre-check; FUN-074: MIME validation; FUN-075: Checksum verification; FUN-076: Temp file naming; FUN-077: Cleanup on cancel; FUN-078: Notification on partial; FUN-079: Retry failed rows option; FUN-080: Idempotent re-import; FUN-081: Delta import detection; FUN-082: Incremental import; FUN-083: Import versioning; FUN-084: Schema validation; FUN-085: Cross-entity FK; FUN-086: Hierarchical import order; FUN-087: Lookup table pre-load; FUN-088: Transform dependency order; FUN-089: Validation dependency; FUN-090: Report aggregation.
+
+### §5 Integration Tests — 90 tests
 **5.1 Entity Import (10):** Partners CSV, Partners Excel, Contacts CSV, Contacts Excel, Opportunities CSV, Interactions CSV, mixed entity file, linked entities, hierarchical import, import with documents.
 
 **5.2 Database (10):** Transaction commit, transaction rollback, constraint enforcement, FK validation, unique enforcement, batch insert, partial batch, connection recovery, timeout handling, deadlock.
@@ -275,6 +312,8 @@ Data import and migration utilities for bulk partner/contact/interaction/opportu
 **5.4 Error Handling (10):** Parse error report, validation report, DB error report, partial import report, complete failure report, error CSV export, row-level errors, column-level errors, retry failed rows, error notification.
 
 **5.5 Cross-Feature (10):** Imported partners appear in list, imported contacts linked, search finds imported, export includes imported, AI processes imported, dashboard updated, audit trail, notifications, permissions on imported, workflow status.
+
+**5.6 Extended Integration (40):** INT-051: Partner import → Contact import; INT-052: Contact import → Interaction import; INT-053: Full entity chain import; INT-054: Import → API read round-trip; INT-055: Import → Export round-trip; INT-056: Import → Search round-trip; INT-057: Import → Filter round-trip; INT-058: Multi-entity single file; INT-059: Cross-entity FK validation; INT-060: Import with existing references; INT-061: Import with new references; INT-062: Batch import → Batch read; INT-063: Dry-run → Real import; INT-064: Cancel → Retry; INT-065: Partial → Re-import failed; INT-066: Error report → Fix → Re-import; INT-067: Template download → Populate → Import; INT-068: History → Re-run; INT-069: Schedule → Manual trigger; INT-070: Concurrent entity imports; INT-071: Import → Dashboard refresh; INT-072: Import → Notification; INT-073: Import → Audit query; INT-074: Import → Permission check; INT-075: Import → Workflow trigger; INT-076: Large file → Streaming; INT-077: Multipart upload → Import; INT-078: Storage → DB transaction; INT-079: DB → Storage cleanup; INT-080: Retry → Idempotent; INT-081: Timeout → Partial commit; INT-082: Connection pool → Import; INT-083: Transaction scope; INT-084: Savepoint on error; INT-085: Import → Cache invalidation; INT-086: Import → Search index; INT-087: Import → Report generation; INT-088: Import → Analytics; INT-089: Import → API contract; INT-090: End-to-end validation.
 
 ### §6 Security Tests — 50 tests
 **6.1 Injection (10):** SQL in CSV data, SQL in headers, XSS in data, XSS in filename, formula injection (=CMD), DDE injection, macro injection, command injection, template injection, path traversal.

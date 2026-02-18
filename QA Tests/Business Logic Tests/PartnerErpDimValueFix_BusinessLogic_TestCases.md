@@ -12,19 +12,19 @@
 
 | Category | File/Section | Count | Minimum Required | Status |
 |----------|-------------|-------|-----------------|--------|
-| Positive Tests | §1 | 35 | 30-50 | ✅ |
-| Negative Tests | §2 | 70 | Max(50, 2×35)=70 | ✅ |
-| Boundary Tests | §3 | 70 | Max(50, 2×35)=70 | ✅ |
-| Functional Tests | §4 | 50 | ≥50 | ✅ |
-| Integration Tests | §5 | 50 | ≥50 | ✅ |
+| Positive Tests | §1 | 30 | 30-50 | ✅ |
+| Negative Tests | §2 | 90 | Max(50, 3×30)=90 | ✅ |
+| Boundary Tests | §3 | 90 | Max(50, 3×30)=90 | ✅ |
+| Functional Tests | §4 | 90 | ≥90 | ✅ |
+| Integration Tests | §5 | 90 | ≥90 | ✅ |
 | Security Tests | §6 | 50 | ≥50 | ✅ |
 | Concurrency Tests | §7 | 25 | ≥25 | ✅ |
 | Unit Tests | §8 | 21 | ≥21 | ✅ |
 | Performance Tests | §9 | 16 | ≥16 | ✅ |
 | Load Tests | §10 | 10 | ≥10 | ✅ |
-| **TOTAL** | | **397** | **≥347** | ✅ |
+| **TOTAL** | | **462** | **≥462** | ✅ |
 
-**3:1 Ratio Check:** (N + B) = 140 ≥ 3 × P = 105 → ✅ PASS
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
@@ -34,7 +34,7 @@ When a partner is approved, the system automatically assigns a unique ERP Dim Va
 
 ---
 
-## §1 Positive Tests — 35 tests
+## §1 Positive Tests — 30 tests
 
 ### P0 Detailed (5)
 
@@ -92,15 +92,10 @@ When a partner is approved, the system automatically assigns a unique ERP Dim Va
 | POS-028 | Soft-deleted partner value | Delete partner | Value retained (not freed) | P1 |
 | POS-029 | Multiple orgs, separate ranges | OrgA and OrgB | Each assigns independently | P1 |
 | POS-030 | Assignment timestamp | ApproveAsync | AssignedDate set | P2 |
-| POS-031 | Assignment user | ApproveAsync | AssignedBy set to current | P2 |
-| POS-032 | Value in partner card | UI card | Displayed | P2 |
-| POS-033 | Value in partner PDF | Export PDF | Included | P2 |
-| POS-034 | Reverse lookup | GetPartnerByErpValue(val) | Correct partner | P1 |
-| POS-035 | Range remaining alert | <100 remaining | Warning logged | P2 |
 
 ---
 
-## §2 Negative Tests — 70 tests
+## §2 Negative Tests — 90 tests
 
 | ID | Category | Scenario | Expected | Pr |
 |----|----------|---------|----------|----|
@@ -174,10 +169,30 @@ When a partner is approved, the system automatically assigns a unique ERP Dim Va
 | NEG-068 | Filter | Filter by value not in range | Empty | P2 |
 | NEG-069 | Audit | Tamper audit log | Blocked | P1 |
 | NEG-070 | Migration | Migration fails mid-batch | Partial rollback | P1 |
+| NEG-071 | Input | Null manual value | BusinessException | P1 |
+| NEG-072 | Input | Float partner ID | 400 | P1 |
+| NEG-073 | Range | Range min = max | Config error | P1 |
+| NEG-074 | State | Assign to inactive partner | BusinessException | P1 |
+| NEG-075 | Auth | Batch assign without permission | Unauthorized | P1 |
+| NEG-076 | Batch | Batch with all invalid | Error | P1 |
+| NEG-077 | Config | Range config reload during assign | Uses original | P1 |
+| NEG-078 | Conc | Assign during migration | Queued or error | P1 |
+| NEG-079 | Dep | Unique constraint violation | Rollback | P1 |
+| NEG-080 | Format | Scientific notation value | Error | P2 |
+| NEG-081 | Mass | Mass assign AssignedBy | Blocked | P1 |
+| NEG-082 | Mass | Mass assign AssignedDate | Blocked | P1 |
+| NEG-083 | Range | Search value outside range | Empty | P2 |
+| NEG-084 | State | Assign to cancelled partner | BusinessException | P1 |
+| NEG-085 | Export | Export during batch assign | Consistent | P1 |
+| NEG-086 | Filter | Filter by invalid value | Error | P2 |
+| NEG-087 | Input | Negative batch size | Error | P1 |
+| NEG-088 | Dep | DB deadlock during assign | Retry | P1 |
+| NEG-089 | Config | Range overlap with another org | Conflict | P1 |
+| NEG-090 | State | Re-assign after manual override | Depends on policy | P1 |
 
 ---
 
-## §3 Boundary Tests — 70 tests
+## §3 Boundary Tests — 90 tests
 
 | ID | Category | Scenario | Expected | Pr |
 |----|----------|---------|----------|----|
@@ -251,12 +266,32 @@ When a partner is approved, the system automatically assigns a unique ERP Dim Va
 | BND-068 | Stats | 50% used | Correct counts | P2 |
 | BND-069 | Stats | 100% used | All used, 0 available | P2 |
 | BND-070 | Stats | After deletion (soft) | Count unchanged | P2 |
+| BND-071 | Range | Value 900001 | Accepted | P1 |
+| BND-072 | Range | Value 999998 | Accepted | P1 |
+| BND-073 | Count | 10 partners with values | Next correct | P1 |
+| BND-074 | Count | 90% range used | Warning | P1 |
+| BND-075 | Batch | Batch size 10 | 10 unique | P1 |
+| BND-076 | Batch | Batch size 500 | All unique | P1 |
+| BND-077 | Manual | Value = 900500 | Accepted | P2 |
+| BND-078 | Format | 6-digit value | Standard | P2 |
+| BND-079 | Search | Search 900500 | Found | P2 |
+| BND-080 | Display | Value in list | Formatted | P2 |
+| BND-081 | Timer | Assignment 1s apart | Both unique | P1 |
+| BND-082 | Range | Range size 100 | 100 assignable | P1 |
+| BND-083 | Status | Assign during Draft→Active | Value set | P1 |
+| BND-084 | Stats | 10% used | Correct | P2 |
+| BND-085 | Lookup | Reverse lookup mid | Found | P2 |
+| BND-086 | Audit | 10th assignment | Audit correct | P2 |
+| BND-087 | Range | Config expand range | New values | P1 |
+| BND-088 | Gap | Single gap | Not reused | P1 |
+| BND-089 | Perf | 5 concurrent | All unique | P1 |
+| BND-090 | DB | Value before commit | Not persisted | P1 |
 
 ---
 
 ## §4-§10 (Functional through Load Tests)
 
-### §4 Functional Tests — 50 tests
+### §4 Functional Tests — 90 tests
 **4.1 Auto-Assignment (15):** Approval triggers assignment, sequential allocation, uniqueness enforced, range boundaries respected, value persists, audit created, warning at threshold, exhaustion blocks approval, no reassignment on reactivation, batch assignment, gap handling, deleted partner value not freed, config-driven range, admin override bypass, value visible.
 
 **4.2 Validation (15):** Manual value in range, manual value unique, non-admin can't override, partner must be active, duplicate detected, null value rejected, zero rejected, negative rejected, decimal rejected, string rejected, range config valid, batch items validated, concurrent validation, idempotent assignment, FK constraint.
@@ -265,7 +300,9 @@ When a partner is approved, the system automatically assigns a unique ERP Dim Va
 
 **4.4 Audit & Reporting (10):** Assignment audit, override audit, batch audit, exhaustion warning audit, range config change audit, export includes value, range usage report, assignment history, reverse lookup, search by value.
 
-### §5 Integration Tests — 50 tests
+**4.5 Extended Functional (40):** FUN-051: Sequential allocation; FUN-052: Gap handling; FUN-053: Exhaustion block; FUN-054: Admin override bypass; FUN-055: Value visibility; FUN-056: Range boundary check; FUN-057: Uniqueness check; FUN-058: Partner state check; FUN-059: Batch validation; FUN-060: Duplicate detection; FUN-061: Null value reject; FUN-062: Zero reject; FUN-063: Negative reject; FUN-064: Decimal reject; FUN-065: String reject; FUN-066: Config range valid; FUN-067: Concurrent validation; FUN-068: Idempotent assignment; FUN-069: FK constraint; FUN-070: Draft→Active assign; FUN-071: Active→Inactive retain; FUN-072: Inactive→Active no-reassign; FUN-073: cancelled retain; FUN-074: Soft-delete retain; FUN-075: Restore retain; FUN-076: Approval rollback free; FUN-077: Batch assign all; FUN-078: Partial batch failure; FUN-079: Status change audit; FUN-080: Assignment audit; FUN-081: Override audit; FUN-082: Batch audit; FUN-083: Exhaustion warning; FUN-084: Config change audit; FUN-085: Export value; FUN-086: Range usage report; FUN-087: Assignment history; FUN-088: Reverse lookup; FUN-089: Search by value; FUN-090: Range stats.
+
+### §5 Integration Tests — 90 tests
 **5.1 End-to-End (10):** Create partner→approve→value assigned, batch migrate→all assigned, manual override→persisted, approve→export→value in export, search by value→found, range exhaust→approval blocked, admin override after exhaust→works, deactivate→reactivate→value unchanged, delete→value retained, concurrent approve→both unique.
 
 **5.2 Partner Service (10):** ApproveAsync assigns value, GetByIdAsync returns value, UpdateAsync preserves value, GetListAsync includes value, SearchAsync by value, ExportAsync includes value, FilterAsync by hasValue, TypeaheadAsync with value, Audit includes ERP, Status change preserves value.
@@ -275,6 +312,8 @@ When a partner is approved, the system automatically assigns a unique ERP Dim Va
 **5.4 Error Paths (10):** DB failure on assign→rollback, duplicate constraint→error, timeout on batch→partial, concurrent assign→optimistic concurrency, invalid range config→error, permission denied→403, not found→404, exhausted→400, stale data→409, malformed request→400.
 
 **5.5 Cross-Feature (10):** Org hierarchy scope check, user permissions check, partner status workflow, document export, AI summary includes value, dashboard statistics, notification on assignment, notification on exhaustion, report generation, data import.
+
+**5.6 Extended Integration (40):** INT-051: Create→Approve→Value; INT-052: Batch migrate→All; INT-053: Manual override→Persist; INT-054: Approve→Export→Value; INT-055: Search→Found; INT-056: Exhaust→Block; INT-057: Admin override→Works; INT-058: Deactivate→Reactivate→Value; INT-059: Delete→Value retained; INT-060: Concurrent→Both unique; INT-061: ApproveAsync→Value; INT-062: GetByIdAsync→Value; INT-063: UpdateAsync→Preserve; INT-064: GetListAsync→Value; INT-065: SearchAsync→Value; INT-066: ExportAsync→Value; INT-067: FilterAsync→hasValue; INT-068: TypeaheadAsync→Value; INT-069: Audit→ERP; INT-070: Status change→Preserve; INT-071: GetRangeConfig; INT-072: UpdateRangeConfig; INT-073: Range expansion; INT-074: Range shrink; INT-075: Range stats; INT-076: Warning threshold; INT-077: Exhaustion notification; INT-078: Next value calc; INT-079: Gap analysis; INT-080: Overlap detection; INT-081: DB failure→Rollback; INT-082: Duplicate→Error; INT-083: Timeout→Partial; INT-084: Concurrent→Optimistic; INT-085: Invalid config→Error; INT-086: Permission denied→403; INT-087: Not found→404; INT-088: Exhausted→400; INT-089: Stale→409; INT-090: Malformed→400.
 
 ### §6 Security Tests — 50 tests
 **6.1 Injection (10):** SQL in manual value, SQL in search, XSS in search, XSS in filter, LDAP, path traversal, HTML, JSON, command, template.

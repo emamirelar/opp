@@ -4,9 +4,10 @@
 
 .DESCRIPTION
     This script analyzes a test suite directory and validates:
-    - 3:1 Ratio: (Negative + Edge) >= 3 x Positive
+    - Individual ratio checks: N>=3P, E>=3P, F>=3P, I>=3P (each must pass)
     - Minimum test counts per category
     - Fixed minimums for Security (50) and Concurrency (25)
+    - Minimum total: 462
 
 .PARAMETER Path
     Path to the test suite directory (relative to UNOPS.Pdj.Tests or absolute)
@@ -22,11 +23,14 @@
 
 .NOTES
     Based on comprehensive-test-strategy.mdc requirements:
-    - Formula: (Negative + Edge) >= 3 x Positive
-    - Negative: >= 50 AND >= 2 x Positive
-    - Edge: >= 50 AND >= 2 x Positive  
+    - Individual ratio checks: Negative>=3xPositive, Edge>=3xPositive, Functional>=3xPositive, Integration>=3xPositive
+    - Negative: >= 50 AND >= 3 x Positive
+    - Edge: >= 50 AND >= 3 x Positive
+    - Functional: >= 50 AND >= 3 x Positive
+    - Integration: >= 50 AND >= 3 x Positive
     - Security: >= 50 (FIXED)
     - Concurrency: >= 25 (FIXED)
+    - Total: >= 462
 #>
 
 param(
@@ -158,7 +162,7 @@ $OtherTotal = $Categories["Stress"] + $Categories["Limits"] + $Categories["EndTo
               $Categories["AcceptanceCriteria"] + $Categories["Other"]
 Write-Host ("Other Tests:         {0,4}" -f $OtherTotal) -ForegroundColor Gray
 
-$TotalTests = $Positive + $Negative + $EdgeTotal + $Security + $Concurrency + $OtherTotal
+$TotalTests = $Positive + $Negative + $EdgeTotal + $Security + $Concurrency + $Unit + $Functional + $Integration + $Performance + $Load + $OtherTotal
 Write-Host ("-" * 30)
 Write-Host ("TOTAL:               {0,4}" -f $TotalTests) -ForegroundColor Cyan
 
@@ -166,8 +170,8 @@ Write-Host ("TOTAL:               {0,4}" -f $TotalTests) -ForegroundColor Cyan
 Write-Host "`nREQUIREMENTS CHECK:" -ForegroundColor Yellow
 Write-Host "-" * 50
 
-$NegativeReq = [Math]::Max(50, [Math]::Ceiling(2 * $Positive))
-$EdgeReq = [Math]::Max(50, [Math]::Ceiling(2 * $Positive))
+$NegativeReq = [Math]::Max(50, [Math]::Ceiling(3 * $Positive))
+$EdgeReq = [Math]::Max(50, [Math]::Ceiling(3 * $Positive))
 $SecurityReq = 50
 $ConcurrencyReq = 25
 $RatioReq = 3 * $Positive
@@ -178,14 +182,14 @@ $AllPassed = $true
 $NegativePass = $Negative -ge $NegativeReq
 $NegativeStatus = if ($NegativePass) { "[PASS]" } else { "[FAIL]" }
 $NegativeColor = if ($NegativePass) { "Green" } else { "Red" }
-Write-Host ("Negative:    {0,4} >= {1,4} (max(50, 2x{2}))  {3}" -f $Negative, $NegativeReq, $Positive, $NegativeStatus) -ForegroundColor $NegativeColor
+Write-Host ("Negative:    {0,4} >= {1,4} (max(50, 3x{2}))  {3}" -f $Negative, $NegativeReq, $Positive, $NegativeStatus) -ForegroundColor $NegativeColor
 $AllPassed = $AllPassed -and $NegativePass
 
 # Check Edge
 $EdgePass = $EdgeTotal -ge $EdgeReq
 $EdgeStatus = if ($EdgePass) { "[PASS]" } else { "[FAIL]" }
 $EdgeColor = if ($EdgePass) { "Green" } else { "Red" }
-Write-Host ("Edge:        {0,4} >= {1,4} (max(50, 2x{2}))  {3}" -f $EdgeTotal, $EdgeReq, $Positive, $EdgeStatus) -ForegroundColor $EdgeColor
+Write-Host ("Edge:        {0,4} >= {1,4} (max(50, 3x{2}))  {3}" -f $EdgeTotal, $EdgeReq, $Positive, $EdgeStatus) -ForegroundColor $EdgeColor
 $AllPassed = $AllPassed -and $EdgePass
 
 # Check Security (FIXED)
@@ -208,8 +212,8 @@ Write-Host "-" * 50
 
 # Fixed minimums for mandatory additional categories
 $UnitReq = 21        # Validation(5) + Formatting(3) + Calculations(5) + Status(5) + Collections(3)
-$FunctionalReq = 26  # Workflow(10) + Validation(10) + Constraint(3) + Audit(3)
-$IntegrationReq = 25 # CRUD(5) + Search(5) + Pagination(2) + Relationships(3) + ErrorHandling(10)
+$FunctionalReq = [Math]::Max(50, [Math]::Ceiling(3 * $Positive))
+$IntegrationReq = [Math]::Max(50, [Math]::Ceiling(3 * $Positive))
 $PerformanceReq = 16 # SingleOps(2) + BulkOps(3) + Search(5) + Concurrent(3) + Memory(3)
 $LoadReq = 10        # SustainedLoad(3) + SpikeTesting(2) + StressTesting(2) + Scalability(3)
 
@@ -222,13 +226,13 @@ $AllPassed = $AllPassed -and $UnitPass
 $FunctionalPass = $Functional -ge $FunctionalReq
 $FunctionalStatus = if ($FunctionalPass) { "[PASS]" } else { "[FAIL]" }
 $FunctionalColor = if ($FunctionalPass) { "Green" } else { "Red" }
-Write-Host ("Functional:  {0,4} >= {1,4} (FIXED minimum)         {2}" -f $Functional, $FunctionalReq, $FunctionalStatus) -ForegroundColor $FunctionalColor
+Write-Host ("Functional:  {0,4} >= {1,4} (max(50, 3x{2}))  {3}" -f $Functional, $FunctionalReq, $Positive, $FunctionalStatus) -ForegroundColor $FunctionalColor
 $AllPassed = $AllPassed -and $FunctionalPass
 
 $IntegrationPass = $Integration -ge $IntegrationReq
 $IntegrationStatus = if ($IntegrationPass) { "[PASS]" } else { "[FAIL]" }
 $IntegrationColor = if ($IntegrationPass) { "Green" } else { "Red" }
-Write-Host ("Integration: {0,4} >= {1,4} (FIXED minimum)         {2}" -f $Integration, $IntegrationReq, $IntegrationStatus) -ForegroundColor $IntegrationColor
+Write-Host ("Integration: {0,4} >= {1,4} (max(50, 3x{2}))  {3}" -f $Integration, $IntegrationReq, $Positive, $IntegrationStatus) -ForegroundColor $IntegrationColor
 $AllPassed = $AllPassed -and $IntegrationPass
 
 $PerformancePass = $Performance -ge $PerformanceReq
@@ -243,19 +247,29 @@ $LoadColor = if ($LoadPass) { "Green" } else { "Red" }
 Write-Host ("Load:        {0,4} >= {1,4} (FIXED minimum)         {2}" -f $Load, $LoadReq, $LoadStatus) -ForegroundColor $LoadColor
 $AllPassed = $AllPassed -and $LoadPass
 
-# 3:1 Ratio Check
-Write-Host "`n3:1 RATIO CHECK:" -ForegroundColor Yellow
+# Individual Ratio Checks (N>=3P, E>=3P, F>=3P, I>=3P)
+Write-Host "`nRATIO COMPLIANCE (each must pass):" -ForegroundColor Yellow
 Write-Host "-" * 50
 
-$RatioSum = $Negative + $EdgeTotal
-$RatioPass = $RatioSum -ge $RatioReq
-$RatioStatus = if ($RatioPass) { "[PASS]" } else { "[FAIL]" }
-$RatioColor = if ($RatioPass) { "Green" } else { "Red" }
+$RatioReq = 3 * $Positive
+$NegRatioPass = $Negative -ge $RatioReq
+$EdgeRatioPass = $EdgeTotal -ge $RatioReq
+$FuncRatioPass = $Functional -ge $RatioReq
+$IntRatioPass = $Integration -ge $RatioReq
 
-Write-Host "Formula: (Negative + Edge) >= 3 x Positive"
-Write-Host ("         ({0} + {1}) >= 3 x {2}" -f $Negative, $EdgeTotal, $Positive)
-Write-Host ("         {0} >= {1}  {2}" -f $RatioSum, $RatioReq, $RatioStatus) -ForegroundColor $RatioColor
+Write-Host ("N>=3P: {0,4} >= {1,4}  {2}" -f $Negative, $RatioReq, $(if ($NegRatioPass) { "[PASS]" } else { "[FAIL]" })) -ForegroundColor $(if ($NegRatioPass) { "Green" } else { "Red" })
+Write-Host ("E>=3P: {0,4} >= {1,4}  {2}" -f $EdgeTotal, $RatioReq, $(if ($EdgeRatioPass) { "[PASS]" } else { "[FAIL]" })) -ForegroundColor $(if ($EdgeRatioPass) { "Green" } else { "Red" })
+Write-Host ("F>=3P: {0,4} >= {1,4}  {2}" -f $Functional, $RatioReq, $(if ($FuncRatioPass) { "[PASS]" } else { "[FAIL]" })) -ForegroundColor $(if ($FuncRatioPass) { "Green" } else { "Red" })
+Write-Host ("I>=3P: {0,4} >= {1,4}  {2}" -f $Integration, $RatioReq, $(if ($IntRatioPass) { "[PASS]" } else { "[FAIL]" })) -ForegroundColor $(if ($IntRatioPass) { "Green" } else { "Red" })
+
+$RatioPass = $NegRatioPass -and $EdgeRatioPass -and $FuncRatioPass -and $IntRatioPass
 $AllPassed = $AllPassed -and $RatioPass
+
+# Minimum total check (462)
+$MinTotalReq = 462
+$TotalPass = $TotalTests -ge $MinTotalReq
+Write-Host "`nTotal:  {0,4} >= {1,4} (minimum)  {2}" -f $TotalTests, $MinTotalReq, $(if ($TotalPass) { "[PASS]" } else { "[FAIL]" })) -ForegroundColor $(if ($TotalPass) { "Green" } else { "Red" })
+$AllPassed = $AllPassed -and $TotalPass
 
 # Final Result
 Write-Host "`n========================================" -ForegroundColor Cyan
