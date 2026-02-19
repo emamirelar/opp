@@ -341,7 +341,6 @@ public class WorkflowController : BaseController
         
         // Filter out server-side only requirements (they should not be displayed to users)
         var clientRequirements = requirements.Where(r => !r.OnlyServerSideEvaluation).ToList();
-
         return Ok(clientRequirements);
     }
 
