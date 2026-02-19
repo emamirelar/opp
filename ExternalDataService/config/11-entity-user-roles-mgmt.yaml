@@ -12,7 +12,19 @@ source:
   query: |
     -- This query unpivots the Organisational_Structures table to create one row per director/deputy assignment
     -- Each row represents a (UserId, EntityId, EntityRoleCode) combination
-    WITH ORG_STRUCTURE AS (
+    -- CRITICAL: Only include Org_Units that exist in organization-hierarchies sync (avoids FK lookup failures)
+    WITH ORG AS (
+      SELECT * FROM `unopsreporting.Organisation.Organisational_Structures`
+      WHERE CAST(Effective_Date AS DATE) = CURRENT_DATE()
+    )
+    , VALID_ORG_UNITS AS (
+      -- Mirror organization-hierarchies.yaml ORG_UNIT logic - only org units that sync to OrganizationHierarchies
+      SELECT DISTINCT Org_Unit AS Code
+      FROM ORG
+      WHERE Org_Unit > ''
+        AND (Hub > '' OR Region > '')
+    )
+    , ORG_STRUCTURE AS (
       SELECT
         Org_Unit
         , Org_Unit_Description
@@ -49,11 +61,8 @@ source:
         , Org_Unit_Deputy_Director_Resource_Name
         , Org_Unit_Deputy_Director_Position_No
         , Org_Unit_Deputy_Director_Position_Description
-      FROM
-        `unopsreporting.Organisation.Organisational_Structures`
-      WHERE
-        System_Status = 'N'
-        AND CAST(Effective_Date AS DATE) = CURRENT_DATE()
+      FROM ORG
+      WHERE System_Status = 'N'
     )
     
     -- Regional Directors
@@ -159,7 +168,7 @@ source:
     )
     
     -- Combine all director roles
-    , ALL_DIRECTORS AS (
+    , ALL_DIRECTORS_RAW AS (
       SELECT * FROM REGIONAL_DIRECTORS
       UNION ALL
       SELECT * FROM REGIONAL_DEPUTY_DIRECTORS
@@ -172,21 +181,27 @@ source:
       UNION ALL
       SELECT * FROM ORGUNIT_DEPUTY_DIRECTORS
     )
+    -- Filter to only org units that exist in OrganizationHierarchies (avoids EntityId FK lookup failures)
+    , ALL_DIRECTORS AS (
+      SELECT d.*
+      FROM ALL_DIRECTORS_RAW d
+      INNER JOIN VALID_ORG_UNITS v ON v.Code = d.Org_Unit
+    )
     
     -- Generate final dataset with IDs and standard fields
+    -- CRITICAL: Id MUST include Org_Unit to avoid duplicate Ids when one director manages multiple org units.
+    -- Without Org_Unit, Regional/Hub directors with multiple org units would overwrite each other with wrong EntityId.
     SELECT DISTINCT
-      -- Generate unique ID for composite key (OrgCode, EntityRoleCode, ResourceId)
+      -- Unique ID per (OrgCode, EntityRoleCode, ResourceId, Org_Unit) - one row per org unit assignment
       CAST(MOD(ABS(FARM_FINGERPRINT(CONCAT(
         CAST(OrgCode AS STRING), 
         '-', 
         EntityRoleCode,
         '-',
-        ResourceId
-      ))), 2147483647) AS INT64) AS Id
-      
-      -- IMPORTANT: EntityId should ALWAYS map to the Org_Unit (not Region/Hub)
-      -- This links the director role to the SPECIFIC org unit they manage
-      -- Even Regional/Hub directors are assigned TO manage specific org units
+        ResourceId,
+        '-',
+        CAST(Org_Unit AS STRING)
+      ))), 2147483647) AS INT64) AS Id  
       , CAST(MOD(ABS(FARM_FINGERPRINT(Org_Unit)), 2147483647) AS INT64) AS EntityId
       , 'OrganizationHierarchy' AS EntityType
       
@@ -212,6 +227,7 @@ source:
       , CAST(0 AS INT64) AS DeletedBy
       , CAST(NULL AS TIMESTAMP) AS DeletedDate
       , CAST(0 AS INT64) AS WorkflowStatus
+      , 'Mgmt' AS RoleSource
       
       -- Additional context fields for debugging
       , OrgCode
@@ -228,6 +244,11 @@ source:
   primary_key_field: "Id"
   batch_size: 1000
 
+  # Filter by RoleSource so orphan handling only considers Mgmt records (not DoA)
+  filter:
+    field: "RoleSource"
+    value: "Mgmt"
+
 destination:
   table_name: "EntityUserRoles"
   schema: "public"
@@ -241,10 +262,7 @@ destination:
       is_unique: true
       is_required: true
     
-    - source_field: "EntityId"
-      destination_field: "EntityId"
-      data_type: "integer"
-      is_required: true
+    # EntityId - handled via foreign_key_mappings (lookup from OrganizationHierarchies)
     
     - source_field: "EntityType"
       destination_field: "EntityType"
@@ -304,9 +322,29 @@ destination:
       destination_field: "WorkflowStatus"
       data_type: "integer"
       is_required: true
+    
+    - source_field: "RoleSource"
+      destination_field: "RoleSource"
+      data_type: "varchar(50)"
+      is_required: true
   
+  # Mark orphaned Mgmt records (in DB but not in BigQuery) as IsDeleted=true
+  delete_handler:
+    field: "IsDeleted"
+    value: true
+
   # Foreign key lookups - resolves IDs from lookup tables
   foreign_key_mappings:
+    # Lookup EntityId from OrganizationHierarchies using Org_Unit code
+    # Org_Unit is present for all role levels (Regional, Hub, OrgUnit) - links to specific org unit
+    - source_field: "Org_Unit"
+      lookup_table: "OrganizationHierarchies"
+      lookup_field: "Code"
+      destination_field: "EntityId"
+      lookup_return_field: "Id"
+      is_required: true
+      on_lookup_fail: "LogWarning"
+    
     # Lookup EntityRoleId from EntityRoles using EntityRoleCode
     # This transforms EntityRoleCode (text) into EntityRoleId (integer)
     - source_field: "EntityRoleCode"
@@ -330,7 +368,7 @@ sync_options:
   sync_mode: Upsert  # Insert new or update ALL existing records
   batch_processing: true
   use_bulk_upsert: true  # Uses Id (PK); no additional index needed
-  delete_orphaned_records: false  # Don't delete existing management records not in BigQuery
+  delete_orphaned_records: true  # Mark Mgmt records not in BigQuery as IsDeleted=true
   # Note: Updates all records on every sync to ensure latest data
   # Use CreatedDate vs LastModifiedDate to distinguish inserts from updates
   # Upsert matching: Uses primary_key_field "Id" defined in source section
@@ -338,7 +376,7 @@ sync_options:
 validation:
   required_source_fields:
     - "Id"
-    - "EntityId"
+    - "Org_Unit"   # Used for EntityId FK lookup from OrganizationHierarchies
     - "EntityType"
     - "UserId"
     - "EntityRoleCode"
@@ -363,7 +401,7 @@ error_handling:
   log_skipped_records: true
 
 logging:
-  log_level: "Information"
+  log_level: "Debug"
   log_sql_queries: true
   log_record_details: false
 

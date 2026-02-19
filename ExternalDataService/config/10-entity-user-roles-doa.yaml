@@ -10,7 +10,19 @@ source:
   type: "bigquery"
   
   query: |
-    WITH DOA_DATA AS (
+    -- CRITICAL: Only include Org_Units that exist in organization-hierarchies sync (avoids EntityId FK lookup failures)
+    WITH ORG AS (
+      SELECT * FROM `unopsreporting.Organisation.Organisational_Structures`
+      WHERE CAST(Effective_Date AS DATE) = CURRENT_DATE()
+    )
+    , VALID_ORG_UNITS AS (
+      -- Mirror organization-hierarchies.yaml ORG_UNIT logic - only org units that sync to OrganizationHierarchies
+      SELECT DISTINCT Org_Unit AS Code
+      FROM ORG
+      WHERE Org_Unit > ''
+        AND (Hub > '' OR Region > '')
+    )
+    , DOA_DATA AS (
       SELECT
         -- Generate unique ID for composite key (EntityId, EntityRoleId, UserId)
         CAST(MOD(ABS(FARM_FINGERPRINT(CONCAT(
@@ -88,6 +100,13 @@ source:
         AND Delegation_Of_Authority_Level IS NOT NULL
     )
     
+    -- Filter to only org units that exist in OrganizationHierarchies (avoids EntityId FK lookup failures)
+    , DOA_DATA_FILTERED AS (
+      SELECT d.*
+      FROM DOA_DATA d
+      INNER JOIN VALID_ORG_UNITS v ON v.Code = d.OrgUnitCode
+    )
+    
     SELECT
       Id
       , EntityId
@@ -96,6 +115,7 @@ source:
       , EntityRoleCode
       , Name
       , Status
+      , 'DoA' AS RoleSource
       , CreatedBy
       , CreatedDate
       , LastModifiedBy
@@ -126,10 +146,15 @@ source:
       , Last_Updated_User
       , Last_Updated_User_Name
     FROM
-      DOA_DATA;
+      DOA_DATA_FILTERED;
   
   primary_key_field: "Id"
   batch_size: 1000
+
+  # Filter by RoleSource so orphan handling only considers DoA records (not Mgmt)
+  filter:
+    field: "RoleSource"
+    value: "DoA"
 
 destination:
   table_name: "EntityUserRoles"
@@ -210,7 +235,17 @@ destination:
       destination_field: "WorkflowStatus"
       data_type: "integer"
       is_required: true
+    
+    - source_field: "RoleSource"
+      destination_field: "RoleSource"
+      data_type: "varchar(50)"
+      is_required: true
   
+  # Mark orphaned DoA records (in DB but not in BigQuery) as IsDeleted=true
+  delete_handler:
+    field: "IsDeleted"
+    value: true
+
   # Foreign key lookups - resolves IDs from lookup tables
   foreign_key_mappings:
     # Lookup EntityRoleId from EntityRoles using EntityRoleCode
@@ -236,7 +271,7 @@ sync_options:
   sync_mode: Upsert  # Insert new or update ALL existing records
   batch_processing: true
   use_bulk_upsert: true  # Uses Id (PK); no additional index needed
-  delete_orphaned_records: false  # Don't delete existing DoA records not in BigQuery
+  delete_orphaned_records: true  # Mark DoA records not in BigQuery as IsDeleted=true
   # Note: Updates all records on every sync to ensure latest data
   # Use CreatedDate vs LastModifiedDate to distinguish inserts from updates
   # Upsert matching: Uses primary_key_field "Id" defined in source section
