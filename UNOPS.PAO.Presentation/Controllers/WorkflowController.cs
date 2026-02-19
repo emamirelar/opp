@@ -342,27 +342,6 @@ public class WorkflowController : BaseController
         // Filter out server-side only requirements (they should not be displayed to users)
         var clientRequirements = requirements.Where(r => !r.OnlyServerSideEvaluation).ToList();
 
-        // Task 8.4: For Opportunity, validate and set IsMet on PaoStageRequirement so frontend can display unmet items
-        if (normalizedEntityName.Equals("Opportunity", StringComparison.OrdinalIgnoreCase) && id > 0)
-        {
-            var opportunity = await _context.Set<Opportunity>()
-                .AsNoTracking()
-                .Include(o => o.Stakeholders).ThenInclude(s => s.EntityRole)
-                .Include(o => o.ResponsibleOrgUnit)
-                .Include(o => o.FundingPartners)
-                .Include(o => o.ClientPartners)
-                .Include(o => o.Countries)
-                .Include(o => o.SDGs)
-                .Include(o => o.UNOPSMissions)
-                .Include(o => o.Deliverables)
-                .FirstOrDefaultAsync(o => o.Id == id);
-            var unmetKeys = await ValidateOpportunityRequirementsAsync(opportunity);
-            foreach (var r in clientRequirements.OfType<PaoStageRequirement>())
-            {
-                r.IsMet = !unmetKeys.Contains(r.Description ?? "");
-            }
-        }
-
         return Ok(clientRequirements);
     }
 
