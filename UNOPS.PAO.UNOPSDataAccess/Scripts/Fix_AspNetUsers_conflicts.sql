@@ -185,7 +185,8 @@ BEGIN
         UPDATE public."Documents" SET "DeletedBy" = new_id WHERE "DeletedBy" = old_id;
         UPDATE public."PartnerAgreements" SET "CreatedBy" = new_id WHERE "CreatedBy" = old_id;
         UPDATE public."PartnerAgreements" SET "LastModifiedBy" = new_id WHERE "LastModifiedBy" = old_id;
-        UPDATE public."PartnerAgreements" SET "DeletedBy" = new_id WHERE "DeletedBy" = old_id;
+        --Commented out because it is not a valid column in the table
+        --UPDATE public."PartnerAgreements" SET "DeletedBy" = new_id WHERE "DeletedBy" = old_id;
         UPDATE public."PartnerTrees" SET "CreatedBy" = new_id WHERE "CreatedBy" = old_id;
         UPDATE public."PartnerTrees" SET "LastModifiedBy" = new_id WHERE "LastModifiedBy" = old_id;
         UPDATE public."PartnerTrees" SET "DeletedBy" = new_id WHERE "DeletedBy" = old_id;
