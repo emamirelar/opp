@@ -53,6 +53,7 @@ public class PartnerCompositeSpecification : GenericCompositeSpecification<Partn
     /// </summary>
     /// <param name="orderByField">The field name to order by</param>
     /// <returns>The ordering expression</returns>
+    [return: System.Diagnostics.CodeAnalysis.NotNull]
     private static Expression<Func<Partner, object>> GetOrderByExpression(string? orderByField)
     {
         return orderByField?.ToLowerInvariant() switch
