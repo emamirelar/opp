@@ -47,7 +47,10 @@ VALUES
     ('ELONAW@UNOPS.ORG', 244541),
     ('ALESSIOAM@UNOPS.ORG', 244555),
     ('MAALEXANDRAM@UNOPS.ORG', 244579),
-    ('LINADA@UNOPS.ORG', 244821);
+    ('LINADA@UNOPS.ORG', 244821),
+    ('JASONAL@UNOPS.ORG', 237675),
+    ('ARNAUDS@UNOPS.ORG', 146714),
+    ('LEAJ@UNOPS.ORG', 217958);
 
 -- =============================================================================
 -- Case 2: Same UserID, different email (BQ has new canonical email)
