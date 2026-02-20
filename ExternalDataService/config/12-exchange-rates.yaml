@@ -25,7 +25,7 @@ source:
       AND Effective_Date <= CURRENT_DATE()
       QUALIFY ROW_NUMBER() OVER (
               PARTITION BY Currency, Exchange_Rate
-              ORDER BY Effective_Date, Exchange_Rate_Sequence_No
+              ORDER BY Effective_Date DESC, Exchange_Rate_Sequence_No DESC
             ) = 1
   
   primary_key_field: "Currency"
