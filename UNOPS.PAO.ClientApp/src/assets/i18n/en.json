@@ -1141,6 +1141,7 @@
   "label.expiryDate": "Expiry Date",
   "label.usdEquivalent": "USD Equivalent",
   "label.exchangeRate": "Exchange Rate",
+  "label.exchangeRateSince": "Rate since {{date}}",
   "label.decisionDate": "Decision Date",
   "label.descending": "Descending",
   "label.description": "Description",

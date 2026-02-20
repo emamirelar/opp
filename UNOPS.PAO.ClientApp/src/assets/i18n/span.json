@@ -1111,6 +1111,7 @@
   "label.expiryDate": "Fecha de Vencimiento",
   "label.usdEquivalent": "Equivalente en USD",
   "label.exchangeRate": "Tasa de Cambio",
+  "label.exchangeRateSince": "Tasa desde el {{date}}",
   "label.decisionDate": "Fecha de DecisiÃ³n",
   "label.descending": "Descendente",
   "label.description": "DescripciÃ³n",

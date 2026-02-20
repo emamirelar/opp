@@ -434,7 +434,7 @@
                         @if (partner.exchangeRateDisplay) {
                           <div class="text-xs text-unops-neutral-700">
                             <i class="pi pi-info-circle mr-1"></i>
-                            {{ 'label.exchangeRate' | translate }}: {{ partner.exchangeRateDisplay }}
+                            {{ 'label.exchangeRateSince' | translate: { date: (partner.exchangeRateDate | date:'mediumDate') } }}: {{ partner.exchangeRate | number:'1.2-4' }}
                           </div>
                         }
                       </div>
