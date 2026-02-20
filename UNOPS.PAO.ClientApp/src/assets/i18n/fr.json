@@ -1118,6 +1118,7 @@
   "label.expiryDate": "Date d'Expiration",
   "label.usdEquivalent": "Ã‰quivalent USD",
   "label.exchangeRate": "Taux de Change",
+  "label.exchangeRateSince": "Taux depuis le {{date}}",
   "label.decisionDate": "Date de DÃ©cision",
   "label.descending": "DÃ©croissant",
   "label.description": "Description",

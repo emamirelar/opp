@@ -2092,10 +2092,6 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         // Check if opportunity can be modified (immutability and approval workflow status)
         ThrowIfCannotModify(opportunity);
 
-        // Track if org unit changed
-        var orgUnitChanged = request.ResponsibleOrgUnitId.HasValue && 
-                            request.ResponsibleOrgUnitId.Value != opportunity.ResponsibleOrgUnitId;
-
         // Update Responsible Org Unit
         if (request.ResponsibleOrgUnitId.HasValue)
         {
@@ -2428,7 +2424,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         }
 
         // Auto-populate stakeholders from EntityUserRoles if org unit changed
-        if (orgUnitChanged && request.ResponsibleOrgUnitId.HasValue)
+        if (request.ResponsibleOrgUnitId.HasValue)
         {
             await AutoPopulateStakeholdersFromOrgUnitAsync(opportunity, request.ResponsibleOrgUnitId.Value);
         }
