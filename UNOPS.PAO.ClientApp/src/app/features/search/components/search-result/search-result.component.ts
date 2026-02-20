@@ -451,7 +451,11 @@ export class SearchResultComponent implements OnInit {
         sortable: col.sortable,
         width: col.width,
         ellipsis: col.ellipsis,
-        helperText: col.helperText
+        helperText: col.helperText,
+        thumbnailSize: col.thumbnailSize,
+        thumbnailShape: col.thumbnailShape,
+        thumbnailBorder: col.thumbnailBorder,
+        thumbnailFallback: col.thumbnailFallback
       };
 
       // Handle nested field paths for template functions
@@ -553,6 +557,24 @@ export class SearchResultComponent implements OnInit {
   // Helper methods for tabs
   selectTab(tabKey: string): void {
     this.activeTabKey = tabKey;
+  }
+
+  /**
+   * Get entity type for the active tab to enable correct placeholder images (e.g., Partner.png for partners without logos)
+   */
+  getEntityTypeForActiveTab(): string | undefined {
+    switch (this.activeTabKey) {
+      case 'partners':
+        return 'Partner';
+      case 'contacts':
+        return 'Contact';
+      case 'interactions':
+        return 'Interaction';
+      case 'opportunities':
+        return 'Opportunity';
+      default:
+        return undefined;
+    }
   }
 
   // Capitalize the first letter of a string
