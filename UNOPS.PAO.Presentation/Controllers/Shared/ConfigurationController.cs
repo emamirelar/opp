@@ -1,4 +1,4 @@
-﻿namespace UNOPS.PAO.Presentation.Controllers.Shared;
+namespace UNOPS.PAO.Presentation.Controllers.Shared;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
@@ -86,6 +86,10 @@ public class ConfigurationController : BaseController
                 googleApiKey = googleSettings.GetSection("apiKey").Value;
             }
             
+            var googleAnalyticsEnabled = bool.TryParse(
+                appConfig.GetSection("GoogleAnalyticsEnabled").Value,
+                out var gaEnabled) && gaEnabled;
+
             return await Task.FromResult(new ConfigurationResponse()
             {
                 GoogleClientId = googleClientId,
@@ -93,7 +97,9 @@ public class ConfigurationController : BaseController
                 Environment = appConfig.GetSection("Environment").Value ?? _environment.EnvironmentName,
                 ProjectId = aiSettings.GetSection("ProjectId").Value,
                 Location = aiSettings.GetSection("Location").Value,
-                DefaultModel = aiSettings.GetSection("GeminiModelName").Value
+                DefaultModel = aiSettings.GetSection("GeminiModelName").Value,
+                GoogleAnalyticsMeasurementId = appConfig.GetSection("GoogleAnalyticsMeasurementId").Value,
+                GoogleAnalyticsEnabled = googleAnalyticsEnabled
             });
         }).Result;
     }
