@@ -20,14 +20,18 @@ export function authInterceptor(
   const cookies = document.cookie.split(';').map((c) => c.trim());
   const devCookie = cookies.find((c) => c.startsWith('dev-user-email='));
 
-  // Clone the request if we have a dev cookie to explicitly mark it
+  const headers: Record<string, string> = {};
+
+  // Google IAP: X-Requested-With tells IAP the request is from JavaScript (AJAX).
+  // Without it, IAP may return 302 redirect instead of 401, causing CORS errors.
+  // https://cloud.google.com/iap/docs/external-identity-sessions
+  headers['X-Requested-With'] = 'XMLHttpRequest';
+
   if (devCookie && request.url.startsWith('/api')) {
-    request = request.clone({
-      setHeaders: {
-        'X-Using-Dev-Cookie': 'true',
-      },
-    });
+    headers['X-Using-Dev-Cookie'] = 'true';
   }
+
+  request = request.clone({ setHeaders: headers });
 
   return next(request).pipe(
     catchError((error) => {
