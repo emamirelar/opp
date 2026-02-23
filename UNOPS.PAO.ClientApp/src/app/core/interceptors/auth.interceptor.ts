@@ -50,21 +50,33 @@ export function authInterceptor(
 
           // Try IAP session refresh before redirecting to login
           if (iapSessionRefresh.shouldRun()) {
+            console.log('[AUTH-INTERCEPTOR] 401 received - attempting IAP session refresh', {
+              failedRequestUrl: request.url,
+              method: request.method,
+            });
             return from(iapSessionRefresh.refreshSession()).pipe(
               switchMap((refreshed) => {
                 if (refreshed) {
+                  console.log('[AUTH-INTERCEPTOR] Session refresh succeeded - retrying request', {
+                    url: request.url,
+                  });
                   return next(request);
                 }
+                console.warn('[AUTH-INTERCEPTOR] Session refresh failed - redirecting to login');
                 router.navigate(['login']);
                 return of(error);
               }),
-              catchError(() => {
+              catchError((refreshErr) => {
+                console.warn('[AUTH-INTERCEPTOR] Session refresh threw - redirecting to login', {
+                  error: refreshErr,
+                });
                 router.navigate(['login']);
                 return of(error);
               })
             );
           }
 
+          console.log('[AUTH-INTERCEPTOR] 401 - shouldRun=false, redirecting to login');
           router.navigate(['login']);
           return of(error);
         }

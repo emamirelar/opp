@@ -7,7 +7,7 @@
  */
 
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 /** Refresh interval: 50 minutes (10-minute buffer before 1-hour expiry) */
@@ -50,22 +50,28 @@ export class IapSessionRefreshService {
    */
   async refreshSession(): Promise<boolean> {
     if (!this.shouldRun()) {
+      console.log('[IAP-SESSION] refreshSession skipped: shouldRun()=false (dev cookie or localhost)');
       return false;
     }
 
     if (this.isRefreshing) {
+      console.log('[IAP-SESSION] refreshSession skipped: already refreshing');
       return false;
     }
 
     this.isRefreshing = true;
+    const refreshUrl = this.getRefreshUrl();
+    console.log('[IAP-SESSION] Starting session refresh', { url: refreshUrl, hostname: window.location.hostname });
 
     try {
-      const refreshUrl = this.getRefreshUrl();
       await this.loadRefreshPage(refreshUrl);
+      console.log('[IAP-SESSION] Refresh iframe loaded, waiting 1s before verification');
       await this.delay(1000);
       const verified = await this.verifySession();
       if (verified) {
-        console.log('[IAP-SESSION] Session refreshed successfully');
+        console.log('[IAP-SESSION] Session refreshed successfully - /user/claims returned 200');
+      } else {
+        console.warn('[IAP-SESSION] Session refresh verification failed - /user/claims returned 401 or empty');
       }
       return verified;
     } catch (err) {
@@ -80,11 +86,19 @@ export class IapSessionRefreshService {
    * @description Start proactive refresh timer (call when user is authenticated)
    */
   startProactiveRefresh(): void {
-    if (!this.shouldRun() || this.refreshTimerId !== null) {
+    if (!this.shouldRun()) {
+      console.log('[IAP-SESSION] startProactiveRefresh skipped: shouldRun()=false');
+      return;
+    }
+    if (this.refreshTimerId !== null) {
+      console.log('[IAP-SESSION] startProactiveRefresh skipped: timer already running');
       return;
     }
 
-    console.log('[IAP-SESSION] Starting proactive session refresh (every 50 min)');
+    console.log('[IAP-SESSION] Starting proactive session refresh (every 50 min)', {
+      hostname: window.location.hostname,
+      nextRefreshIn: '50 minutes',
+    });
     this.refreshTimerId = setInterval(() => {
       this.refreshSession();
     }, REFRESH_INTERVAL_MS);
@@ -115,6 +129,7 @@ export class IapSessionRefreshService {
       iframe.style.height = '0';
       iframe.style.border = 'none';
 
+      let resolved = false;
       const cleanup = () => {
         if (iframe.parentNode) {
           iframe.parentNode.removeChild(iframe);
@@ -122,23 +137,36 @@ export class IapSessionRefreshService {
       };
 
       iframe.onload = () => {
+        if (!resolved) {
+          resolved = true;
+          console.log('[IAP-SESSION] Refresh iframe onload fired');
+        }
         cleanup();
         resolve();
       };
 
       iframe.onerror = () => {
+        if (!resolved) {
+          resolved = true;
+          console.warn('[IAP-SESSION] Refresh iframe onerror fired');
+        }
         cleanup();
         reject(new Error('IAP session refresh iframe failed to load'));
       };
 
       document.body.appendChild(iframe);
       iframe.src = url;
+      console.log('[IAP-SESSION] Refresh iframe created and loading', { url });
 
       setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          console.warn('[IAP-SESSION] Refresh iframe timeout (5s) - iframe may have redirected to auth-ui');
+        }
         if (iframe.parentNode) {
           cleanup();
-          resolve();
         }
+        resolve();
       }, 5000);
     });
   }
@@ -151,8 +179,17 @@ export class IapSessionRefreshService {
           observe: 'response',
         })
       );
-      return response.status === 200 && Array.isArray(response.body) && response.body.length > 0;
-    } catch {
+      const success =
+        response.status === 200 && Array.isArray(response.body) && response.body.length > 0;
+      console.log('[IAP-SESSION] verifySession result:', {
+        status: response.status,
+        claimsCount: Array.isArray(response.body) ? response.body.length : 0,
+        success,
+      });
+      return success;
+    } catch (err) {
+      const status = err instanceof HttpErrorResponse ? err.status : 'unknown';
+      console.warn('[IAP-SESSION] verifySession failed:', { status, error: err });
       return false;
     }
   }
