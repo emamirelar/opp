@@ -51,6 +51,7 @@ export class AppComponent implements AfterViewInit {
     this.authService.isLogedIn().subscribe((res) => {
       this.isLoggedIn = res;
       if (res) {
+        console.log('[IAP-SESSION] User logged in - starting proactive refresh');
         this.iapSessionRefresh.startProactiveRefresh();
       }
     });
