@@ -1142,6 +1142,7 @@
   "label.usdEquivalent": "USD Equivalent",
   "label.exchangeRate": "Exchange Rate",
   "label.exchangeRateSince": "Rate since {{date}}",
+  "label.asOf": "as of {{date}}",
   "label.decisionDate": "Decision Date",
   "label.descending": "Descending",
   "label.description": "Description",
