@@ -271,6 +271,7 @@ namespace UNOPS.PAO.UNOPSPresentation.Controllers
                         UserId = assignment.UserId,
                         EntityRoleId = entityRoleId,
                         EntityType = "OrganizationHierarchy",
+                        RoleSource = "DoA",  // Manual DoA assignments from UI
                         Status = EntityStatus.Active,
                         CreatedBy = currentUserId,
                         CreatedDate = DateTime.UtcNow,
