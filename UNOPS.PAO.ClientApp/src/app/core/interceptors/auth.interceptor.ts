@@ -16,7 +16,6 @@ export function authInterceptor(
   const router = inject(Router);
   const iapSessionRefresh = inject(IapSessionRefreshService);
 
-  // Check for dev cookie to add a custom header
   const cookies = document.cookie.split(';').map((c) => c.trim());
   const devCookie = cookies.find((c) => c.startsWith('dev-user-email='));
 
@@ -24,7 +23,6 @@ export function authInterceptor(
 
   // Google IAP: X-Requested-With tells IAP the request is from JavaScript (AJAX).
   // Without it, IAP may return 302 redirect instead of 401, causing CORS errors.
-  // https://cloud.google.com/iap/docs/external-identity-sessions
   headers['X-Requested-With'] = 'XMLHttpRequest';
 
   if (devCookie && request.url.startsWith('/api')) {
@@ -52,17 +50,22 @@ export function authInterceptor(
             return throwError(() => error);
           }
 
-          // Skip refresh for login page auth check - it determines if we have a session
           if (request.url.includes('check-iap-simulation')) {
             return throwError(() => error);
           }
 
-          // Try IAP session refresh before redirecting to login
+          // Skip refresh attempts from the refresh verification itself to avoid loops
+          if (request.url.includes('/user/claims') || request.url.includes('favicon.ico')) {
+            return throwError(() => error);
+          }
+
           if (iapSessionRefresh.shouldRun()) {
             console.log('[AUTH-INTERCEPTOR] 401 received - attempting IAP session refresh', {
               failedRequestUrl: request.url,
               method: request.method,
             });
+
+            // All concurrent 401s share the same refresh promise (no race condition)
             return from(iapSessionRefresh.refreshSession()).pipe(
               switchMap((refreshed) => {
                 if (refreshed) {
@@ -71,11 +74,25 @@ export function authInterceptor(
                   });
                   return next(request);
                 }
+                // Only redirect for user-initiated requests, not background polls
+                if (isBackgroundRequest(request)) {
+                  console.warn('[AUTH-INTERCEPTOR] Session refresh failed for background request - suppressing redirect', {
+                    url: request.url,
+                  });
+                  return throwError(() => error);
+                }
                 console.warn('[AUTH-INTERCEPTOR] Session refresh failed - redirecting to login');
                 router.navigate(['login']);
                 return throwError(() => error);
               }),
               catchError((refreshErr) => {
+                if (isBackgroundRequest(request)) {
+                  console.warn('[AUTH-INTERCEPTOR] Session refresh threw for background request - suppressing redirect', {
+                    url: request.url,
+                    error: refreshErr,
+                  });
+                  return throwError(() => error);
+                }
                 console.warn('[AUTH-INTERCEPTOR] Session refresh threw - redirecting to login', {
                   error: refreshErr,
                 });
@@ -83,6 +100,10 @@ export function authInterceptor(
                 return throwError(() => error);
               })
             );
+          }
+
+          if (isBackgroundRequest(request)) {
+            return throwError(() => error);
           }
 
           console.log('[AUTH-INTERCEPTOR] 401 - shouldRun=false, redirecting to login');
@@ -100,4 +121,13 @@ export function authInterceptor(
       return throwError(() => error);
     })
   );
+}
+
+/**
+ * Background polling requests should not trigger login redirects on 401.
+ * They should fail silently and let the next user-initiated request handle auth.
+ */
+function isBackgroundRequest(request: HttpRequest<unknown>): boolean {
+  return request.url.includes('/notifications') ||
+    request.url.includes('/api/notifications');
 }
