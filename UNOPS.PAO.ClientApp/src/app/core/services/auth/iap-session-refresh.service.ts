@@ -19,7 +19,13 @@ import { firstValueFrom } from 'rxjs';
 export class IapSessionRefreshService {
   private readonly http = inject(HttpClient);
   private sessionRefresherIframe: HTMLIFrameElement | null = null;
-  private isRefreshing = false;
+
+  /**
+   * Shared promise so concurrent 401 callers all wait for the same refresh attempt.
+   * Prevents race condition where second caller gets `false` and redirects to login
+   * while the first caller's refresh is still in progress.
+   */
+  private activeRefreshPromise: Promise<boolean> | null = null;
 
   /**
    * @description Whether IAP session management should be active (non-dev, non-localhost)
@@ -97,23 +103,31 @@ export class IapSessionRefreshService {
 
   /**
    * @description Reactive session refresh via DO_SESSION_REFRESH (on 401).
-   * Opens a popup window for reauthentication per Google's recommended pattern.
+   * If a refresh is already in progress, all callers share the same promise
+   * to avoid race conditions where a second caller redirects to login prematurely.
    */
-  async refreshSession(): Promise<boolean> {
+  refreshSession(): Promise<boolean> {
     if (!this.shouldRun()) {
       console.log('[IAP-SESSION] refreshSession skipped: shouldRun()=false');
-      return false;
+      return Promise.resolve(false);
     }
 
-    if (this.isRefreshing) {
-      console.log('[IAP-SESSION] refreshSession skipped: already refreshing');
-      return false;
+    if (this.activeRefreshPromise) {
+      console.log('[IAP-SESSION] refreshSession: joining existing refresh attempt');
+      return this.activeRefreshPromise;
     }
 
-    this.isRefreshing = true;
     const refreshUrl = `${window.location.origin}/?gcp-iap-mode=DO_SESSION_REFRESH`;
-    console.log('[IAP-SESSION] Starting reactive session refresh (popup)', { url: refreshUrl });
+    console.log('[IAP-SESSION] Starting reactive session refresh', { url: refreshUrl });
 
+    this.activeRefreshPromise = this.doRefresh(refreshUrl).finally(() => {
+      this.activeRefreshPromise = null;
+    });
+
+    return this.activeRefreshPromise;
+  }
+
+  private async doRefresh(refreshUrl: string): Promise<boolean> {
     try {
       const success = await this.openRefreshWindow(refreshUrl);
       if (success) {
@@ -125,14 +139,12 @@ export class IapSessionRefreshService {
     } catch (err) {
       console.warn('[IAP-SESSION] Reactive session refresh error:', err);
       return false;
-    } finally {
-      this.isRefreshing = false;
     }
   }
 
   /**
    * @description Opens DO_SESSION_REFRESH in a popup window and polls until session is restored.
-   * Follows Google's recommended pattern for programmatic 401 handling.
+   * Falls back to iframe if popup is blocked.
    */
   private openRefreshWindow(url: string): Promise<boolean> {
     return new Promise((resolve) => {
@@ -145,7 +157,7 @@ export class IapSessionRefreshService {
       }
 
       let attempts = 0;
-      const maxAttempts = 20;
+      const maxAttempts = 30;
 
       const checkSession = () => {
         attempts++;
@@ -180,9 +192,6 @@ export class IapSessionRefreshService {
     });
   }
 
-  /**
-   * @description Fallback: load DO_SESSION_REFRESH in hidden iframe if popup is blocked
-   */
   private async iframeFallbackRefresh(url: string): Promise<boolean> {
     await this.loadIframe(url);
     await this.delay(2000);
