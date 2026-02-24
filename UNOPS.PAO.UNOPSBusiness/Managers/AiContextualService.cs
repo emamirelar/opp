@@ -1551,6 +1551,12 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 entityName = "Outputs";
                 whereCondition = "1=1";
             }
+            // Special case for unopsMissions (Opportunity specific) - should look at UNOPSMissions table
+            else if (dependent.Equals("unopsMissions", StringComparison.OrdinalIgnoreCase))
+            {
+                entityName = "UNOPSMissions";
+                whereCondition = "1=1";
+            }
             // Special case for User/UserIds - should look at UserProfile table (which has searchable Name field)
             else if (entityName.Equals("User", StringComparison.OrdinalIgnoreCase)
                 || (entityName.Equals("PartnerFocalPointUser", StringComparison.OrdinalIgnoreCase)))
@@ -3136,7 +3142,8 @@ Keywords:";
                    dependent.Equals("teamMembers", StringComparison.OrdinalIgnoreCase) ||
                    dependent.Equals("deliverables", StringComparison.OrdinalIgnoreCase) ||
                    dependent.Equals("countries", StringComparison.OrdinalIgnoreCase) ||
-                   dependent.Equals("sdGs", StringComparison.OrdinalIgnoreCase);
+                   dependent.Equals("sdGs", StringComparison.OrdinalIgnoreCase) ||
+                   dependent.Equals("unopsMissions", StringComparison.OrdinalIgnoreCase);
         }
         
         /// <summary>
@@ -3207,6 +3214,11 @@ Keywords:";
                     {
                         var deliverableObj = await BuildDeliverableObject(textValue);
                         if (deliverableObj != null) objectsArray.Add(deliverableObj);
+                    }
+                    else if (dependent.Equals("unopsMissions", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var missionObj = await BuildUNOPSMissionObject(textValue);
+                        if (missionObj != null) objectsArray.Add(missionObj);
                     }
                 }
                 catch (Exception ex)
@@ -3361,6 +3373,42 @@ Keywords:";
             catch (Exception ex)
             {
                 Console.WriteLine($"[ERROR] Error building SDG object for '{sdgText}': {ex.Message}");
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// Builds a UNOPS Mission object from text value
+        /// </summary>
+        private async Task<JObject?> BuildUNOPSMissionObject(string missionText)
+        {
+            try
+            {
+                var missionId = await GetEntityIdFromText(missionText, "unopsMissions");
+                if (missionId == null || missionId is DBNull)
+                {
+                    Console.WriteLine($"[WARNING] UNOPS Mission not found: '{missionText}'");
+                    return null;
+                }
+                
+                int missionIdInt = Convert.ToInt32(missionId);
+                
+                var mission = await _context.UNOPSMissions
+                    .Where(m => m.Id == missionIdInt && !m.IsDeleted)
+                    .Select(m => new { m.Id, m.Name, m.Code })
+                    .FirstOrDefaultAsync();
+                
+                var result = new JObject { ["unopsMissionId"] = missionIdInt };
+                if (mission != null)
+                {
+                    result["name"] = mission.Name;
+                    result["code"] = mission.Code;
+                }
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error building UNOPS Mission object for '{missionText}': {ex.Message}");
                 return null;
             }
         }

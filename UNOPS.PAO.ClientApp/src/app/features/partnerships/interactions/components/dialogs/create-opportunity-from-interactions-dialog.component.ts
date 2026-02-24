@@ -299,6 +299,7 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     if (opp.stakeholders && opp.stakeholders.length > 0) count++;
     if (opp.countries && opp.countries.length > 0) count++;
     if (opp.sdGs && opp.sdGs.length > 0) count++;
+    if (opp.unopsMissions && opp.unopsMissions.length > 0) count++;
     
     return count;
   });
@@ -1655,6 +1656,7 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
           deliverables: safeJsonParse(rawResponse.opportunity.deliverables, 'deliverables'),
           countries: safeJsonParse(rawResponse.opportunity.countries, 'countries'),
           sdGs: safeJsonParse(rawResponse.opportunity.sdGs, 'sdGs'),
+          unopsMissions: safeJsonParse(rawResponse.opportunity.unopsMissions, 'unopsMissions'),
           dependents: safeJsonParse(rawResponse.opportunity.dependents, 'dependents'),
           // Convert date strings to Date objects for p-datepicker compatibility
           targetSigningDate: parseDate(rawResponse.opportunity.targetSigningDate),
@@ -2029,6 +2031,17 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         }
       }
 
+      if (opp.unopsMissions && opp.unopsMissions.length > 0) {
+        const selectedMissions = opp.unopsMissions.filter((_: any, idx: number) => 
+          this.isFieldSelected(`unopsMissions[${idx}]`)
+        );
+        if (selectedMissions.length > 0) {
+          createRequest.unopsMissions = selectedMissions
+            .filter((m: any) => m.unopsMissionId != null)
+            .map((m: any) => ({ unopsMissionId: m.unopsMissionId }));
+        }
+      }
+
       // Handle partners based on user's role selections
       const fundingPartners: any[] = [];
       const clientPartners: any[] = [];
@@ -2152,7 +2165,7 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     
     // Handle parent-child relationship for collection fields
     // When toggling a parent field, also toggle all its children
-    const collectionFields = ['deliverables', 'sdGs', 'countries', 'stakeholders', 'partnerBudgets'];
+    const collectionFields = ['deliverables', 'sdGs', 'unopsMissions', 'countries', 'stakeholders', 'partnerBudgets'];
     
     if (collectionFields.includes(fieldPath)) {
       // This is a parent collection field - toggle all children
@@ -2366,6 +2379,10 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       updated.set('sdGs', selectAll);
       opp.sdGs.forEach((_: any, idx: number) => updated.set(`sdGs[${idx}]`, selectAll));
     }
+    if (opp.unopsMissions && opp.unopsMissions.length > 0) {
+      updated.set('unopsMissions', selectAll);
+      opp.unopsMissions.forEach((_: any, idx: number) => updated.set(`unopsMissions[${idx}]`, selectAll));
+    }
 
     this.selectedFields.set(updated);
   }
@@ -2433,6 +2450,10 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     if (opp.sdGs && opp.sdGs.length > 0) {
       selected.set('sdGs', true);
       opp.sdGs.forEach((_: any, idx: number) => selected.set(`sdGs[${idx}]`, true));
+    }
+    if (opp.unopsMissions && opp.unopsMissions.length > 0) {
+      selected.set('unopsMissions', true);
+      opp.unopsMissions.forEach((_: any, idx: number) => selected.set(`unopsMissions[${idx}]`, true));
     }
 
     this.selectedFields.set(selected);

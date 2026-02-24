@@ -1118,6 +1118,7 @@
   "label.usdEquivalent": "Equivalente em USD",
   "label.exchangeRate": "Taxa de CÃ¢mbio",
   "label.exchangeRateSince": "Taxa desde {{date}}",
+  "label.asOf": "em {{date}}",
   "label.decisionDate": "Data da DecisÃ£o",
   "label.descending": "Decrescente",
   "label.description": "DescriÃ§Ã£o",

@@ -1717,6 +1717,7 @@ Create a comprehensive summary including their complete profile, interaction his
 - **deliverables** (array): List of deliverable descriptions as text strings (e.g., ["Project Feasibility Study", "Infrastructure Design", "Implementation Plan"])
 - **countries** (array): List of country names as text strings (e.g., ["Kenya", "Tanzania", "Uganda"])
 - **sdGs** (array): List of SDG references as text strings (e.g., ["Goal 6", "SDG 9", "Goal 17"])
+- **unopsMissions** (array): List of UNOPS Strategic Mission names as text strings. Extract alignment to UNOPS Strategic Missions from document content. **VALID VALUES** (match by name or code): "Triple Planetary Crisis", "Energy Transition", "SIDS Resilience and Sustainability", "Quality Healthcare", "Just Digital Transformation", "Social Protection, Equality, Education and Jobs", "Humanitarian, Development and Peace Nexus", "Food Systems Transformation". Or use mission codes: "TRIPLE_PLANETARY_CRISIS", "ENERGY_TRANSITION", etc. Add "unopsMissions" to dependents array.
 
 ## ID Field Mapping Rules
 
@@ -1727,7 +1728,7 @@ Create a comprehensive summary including their complete profile, interaction his
 2. Populate the corresponding Name field with the extracted text
 3. **Add the field name to the "dependents" array** so the system knows to resolve these text names to IDs using similarity matching
 
-**For Collection Fields (fundingPartners, clientPartners, stakeholders, teamMembers, deliverables, countries, sdGs):**
+**For Collection Fields (fundingPartners, clientPartners, stakeholders, teamMembers, deliverables, countries, sdGs, unopsMissions):**
 - Extract as **simple arrays of text strings**
 - Add the collection field name to the "dependents" array
 - The backend will convert these text values to proper object structures with IDs
@@ -1755,6 +1756,7 @@ Create a comprehensive summary including their complete profile, interaction his
    - Initiative type names (for **proposedInitiativeTypeName** field)
    - Geographic locations, country names (for **countries** array)
    - SDG references (SDG 1, SDG 6, Goal 9, etc. → **sdGs** array)
+   - UNOPS Strategic Mission alignments (references to climate, energy, health, digital, etc. → **unopsMissions** array)
    - Dates for signing, delivery, completion (for **targetSigningDate**, **targetDeliveryDate** fields)
    - Proposal submission deadlines (for **submissionDeadline** field)
    - Implementation start dates (for **implementationStartDate** field)
@@ -1793,7 +1795,7 @@ Create a comprehensive summary including their complete profile, interaction his
 Return a valid JSON object with the extracted opportunity data. **ALL property names MUST be in camelCase**. 
 
 **CRITICAL RULES:**
-- **ALWAYS return empty arrays [] for collection fields** (fundingPartners, clientPartners, stakeholders, deliverables, countries, sdGs) when no data is available - **NEVER use null**
+- **ALWAYS return empty arrays [] for collection fields** (fundingPartners, clientPartners, stakeholders, deliverables, countries, sdGs, unopsMissions) when no data is available - **NEVER use null**
 - Include null for optional scalar fields where no information is available
 - **ALWAYS include the "dependents" array** listing all fields that need ID resolution
 
@@ -1841,7 +1843,8 @@ Return a valid JSON object with the extracted opportunity data. **ALL property n
   "deliverables": ["Project Feasibility Study", "Environmental Impact Assessment", "Infrastructure Design and Engineering Plans", "Construction of 3 Water Treatment Plants", "Pipeline Rehabilitation (200 km)", "Community Water Points Installation (50 units)", "Operations and Maintenance Training Program"],
   "countries": ["Kenya"],
   "sdGs": ["Goal 6", "Goal 9", "Goal 11", "Goal 13", "Goal 17"],
-  "dependents": ["responsibleOrgUnitId", "proposedInitiativeTypeId", "fundingPartners", "clientPartners", "stakeholders", "teamMembers", "deliverables", "countries", "sdGs"]
+  "unopsMissions": ["Triple Planetary Crisis", "Energy Transition"],
+  "dependents": ["responsibleOrgUnitId", "proposedInitiativeTypeId", "fundingPartners", "clientPartners", "stakeholders", "teamMembers", "deliverables", "countries", "sdGs", "unopsMissions"]
 }
 ```
 
@@ -2983,6 +2986,7 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
   - **isPrimary** (boolean): true for the single most important/central SDG, false for all others
   - Example: [{"sdgNumber": 6, "sdgName": "Clean Water and Sanitation", "isPrimary": true}, {"sdgNumber": 9, "sdgName": "Industry, Innovation and Infrastructure", "isPrimary": false}]
   - **MUST add "sdGs" to dependents array**
+- **unopsMissions** (array): List of UNOPS Strategic Mission names as text strings. Infer alignment to UNOPS Strategic Missions from interaction topics, document themes, and sector focus. **VALID VALUES**: "Triple Planetary Crisis", "Energy Transition", "SIDS Resilience and Sustainability", "Quality Healthcare", "Just Digital Transformation", "Social Protection, Equality, Education and Jobs", "Humanitarian, Development and Peace Nexus", "Food Systems Transformation". Map content to missions (e.g., climate/energy discussions → "Triple Planetary Crisis" or "Energy Transition"; health projects → "Quality Healthcare"; digital projects → "Just Digital Transformation") - **MUST add "unopsMissions" to dependents array**
 
 ## ID Field Mapping Rules
 
@@ -2993,7 +2997,7 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 2. Populate the corresponding Name field with the extracted/inferred text
 3. **Add the field name to the "dependents" array** so the system knows to resolve these text names to IDs using similarity matching
 
-**For Collection Fields (fundingPartners, clientPartners, stakeholders, deliverables, countries, sdGs):**
+**For Collection Fields (fundingPartners, clientPartners, stakeholders, deliverables, countries, sdGs, unopsMissions):**
 - Extract as **simple arrays of text strings**
 - Add the collection field name to the "dependents" array
 - The backend will convert these text values to proper object structures with IDs
@@ -3005,7 +3009,7 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 - Review name, description, type, documentType of each document
 - Note participants (UNOPS users with org units, partner contacts)
 - Identify discussed topics, priorities, challenges, opportunities from both sources
-- Extract mentioned budgets, timelines, deliverables, locations, SDGs from all sources
+- Extract mentioned budgets, timelines, deliverables, locations, SDGs, UNOPS Strategic Mission alignments from all sources
 
 **STEP 2: IDENTIFY PATTERNS & THEMES**
 - Common discussion topics across interactions and document themes
@@ -3103,7 +3107,7 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 Return a valid JSON object with the proposed opportunity data. **ALL property names MUST be in camelCase**. 
 
 **CRITICAL RULES:**
-- **ALWAYS return empty arrays [] for collection fields** (fundingPartners, clientPartners, stakeholders, deliverables, countries, sdGs) when no data is available - **NEVER use null**
+- **ALWAYS return empty arrays [] for collection fields** (fundingPartners, clientPartners, stakeholders, deliverables, countries, sdGs, unopsMissions) when no data is available - **NEVER use null**
 - Include null for optional scalar fields where no information is available
 - **ALWAYS include the "dependents" array** listing all fields that need ID resolution
 - Use the exact user-provided name and build upon the user-provided description
@@ -3154,7 +3158,8 @@ Return a valid JSON object with the proposed opportunity data. **ALL property na
     {"sdgNumber": 13, "sdgName": "Climate Action", "isPrimary": false},
     {"sdgNumber": 17, "sdgName": "Partnerships for the Goals", "isPrimary": false}
   ],
-  "dependents": ["responsibleOrgUnitName", "proposedInitiativeTypeName", "fundingPartners", "clientPartners", "stakeholders", "deliverables", "countries", "sdGs"]
+  "unopsMissions": ["Triple Planetary Crisis", "Energy Transition"],
+  "dependents": ["responsibleOrgUnitName", "proposedInitiativeTypeName", "fundingPartners", "clientPartners", "stakeholders", "deliverables", "countries", "sdGs", "unopsMissions"]
 }
 ```
 
@@ -3166,7 +3171,7 @@ Return a valid JSON object with the proposed opportunity data. **ALL property na
 - Infer intelligent values based on interaction context, themes, and document metadata
 - **ALWAYS return empty arrays [] for collections when no data found, NEVER null**
 - **CRITICAL: ALWAYS include these fields in the "dependents" array** (even if you provide text values):
-  ["responsibleOrgUnitName", "proposedInitiativeTypeName", "fundingPartners", "clientPartners", "stakeholders", "deliverables", "countries", "sdGs"]
+  ["responsibleOrgUnitName", "proposedInitiativeTypeName", "fundingPartners", "clientPartners", "stakeholders", "deliverables", "countries", "sdGs", "unopsMissions"]
 - The backend will convert text names to database IDs - you just provide the text values and list ALL fields in dependents
 - **CRITICAL FIELD LENGTH LIMITS** - Do NOT exceed these character limits:
   * name: max 255 characters

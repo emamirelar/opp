@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Identity.Entities;
 
@@ -16,4 +16,10 @@ public class EntityUserRole : ModifiableDeletableEntity
     
     public int EntityId { get; set; }
     public required string EntityType { get; set; }
+
+    /// <summary>
+    /// Source of the role assignment: 'DoA' (Delegation of Authority from BigQuery or manual),
+    /// 'Mgmt' (Management roles from BigQuery org structure).
+    /// </summary>
+    public string? RoleSource { get; set; }
 }

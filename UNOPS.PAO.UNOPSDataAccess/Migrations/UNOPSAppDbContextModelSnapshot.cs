@@ -1441,6 +1441,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int?>("RoleId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("RoleSource")
+                        .HasColumnType("text");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
