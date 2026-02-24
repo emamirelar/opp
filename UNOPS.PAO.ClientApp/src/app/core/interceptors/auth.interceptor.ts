@@ -4,7 +4,7 @@ import {
   HttpHandlerFn,
   HttpRequest,
 } from '@angular/common/http';
-import { Observable, of, catchError, from, switchMap } from 'rxjs';
+import { Observable, catchError, from, switchMap, throwError } from 'rxjs';
 import { Router } from '@angular/router';
 import { inject } from '@angular/core';
 import { IapSessionRefreshService } from '@core/services/auth';
@@ -45,16 +45,16 @@ export function authInterceptor(
             if (!request.url.includes('/dev-login')) {
               setTimeout(() => window.location.reload(), 500);
             }
-            return of(error);
+            return throwError(() => error);
           }
 
           if (router.url.includes('/login')) {
-            return of(error);
+            return throwError(() => error);
           }
 
           // Skip refresh for login page auth check - it determines if we have a session
           if (request.url.includes('check-iap-simulation')) {
-            return of(error);
+            return throwError(() => error);
           }
 
           // Try IAP session refresh before redirecting to login
@@ -73,21 +73,21 @@ export function authInterceptor(
                 }
                 console.warn('[AUTH-INTERCEPTOR] Session refresh failed - redirecting to login');
                 router.navigate(['login']);
-                return of(error);
+                return throwError(() => error);
               }),
               catchError((refreshErr) => {
                 console.warn('[AUTH-INTERCEPTOR] Session refresh threw - redirecting to login', {
                   error: refreshErr,
                 });
                 router.navigate(['login']);
-                return of(error);
+                return throwError(() => error);
               })
             );
           }
 
           console.log('[AUTH-INTERCEPTOR] 401 - shouldRun=false, redirecting to login');
           router.navigate(['login']);
-          return of(error);
+          return throwError(() => error);
         }
 
         if (error.status === 403) {
@@ -97,7 +97,7 @@ export function authInterceptor(
         }
       }
 
-      return of(error);
+      return throwError(() => error);
     })
   );
 }
