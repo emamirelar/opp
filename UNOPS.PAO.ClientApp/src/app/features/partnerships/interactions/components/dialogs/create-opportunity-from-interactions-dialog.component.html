@@ -1230,6 +1230,61 @@
               </div>
             }
 
+            <!-- UNOPS Strategic Missions Alignment -->
+            @if (proposedOpportunity()!.opportunity.unopsMissions && proposedOpportunity()!.opportunity.unopsMissions!.length > 0) {
+              <div>
+                <div class="flex items-center justify-between mb-4">
+                  <label class="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <i class="pi pi-building text-blue-600"></i>
+                    {{ 'label.opportunity.alignmentToUNOPSStrategy' | translate }} ({{ proposedOpportunity()!.opportunity.unopsMissions!.length }})
+                  </label>
+                  <div class="flex items-center gap-2">
+                    <p-checkbox
+                      [binary]="true"
+                      [ngModel]="isFieldSelected('unopsMissions')"
+                      (ngModelChange)="toggleField('unopsMissions')"
+                      inputId="field-unopsMissions"
+                    />
+                    <label for="field-unopsMissions" class="cursor-pointer text-sm font-medium text-gray-700">
+                      {{ 'label.selectAll' | translate }}
+                    </label>
+                  </div>
+                </div>
+                <div class="space-y-3">
+                  @for (mission of proposedOpportunity()!.opportunity.unopsMissions; track $index) {
+                    <div 
+                      class="rounded-lg p-4 transition-shadow cursor-pointer"
+                      [ngClass]="{
+                        'bg-blue-50 border border-blue-300': isFieldSelected('unopsMissions[' + $index + ']'),
+                        'bg-yellow-50 border border-yellow-200 hover:shadow-md': !isFieldSelected('unopsMissions[' + $index + ']')
+                      }"
+                      (click)="toggleField('unopsMissions[' + $index + ']')">
+                      <div class="flex items-start gap-4">
+                        <p-checkbox
+                          [binary]="true"
+                          [ngModel]="isFieldSelected('unopsMissions[' + $index + ']')"
+                          (ngModelChange)="toggleField('unopsMissions[' + $index + ']')"
+                          [inputId]="'unopsMission-' + $index"
+                          (click)="$event.stopPropagation()"
+                        />
+                        <i class="pi pi-check-circle text-2xl text-blue-600"></i>
+                        <div class="flex-1">
+                          <h4 class="font-semibold text-gray-900 mb-1">
+                            {{ mission.name || 'UNOPS Mission ' + ($index + 1) }}
+                          </h4>
+                          @if (mission.code) {
+                            <span class="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded">
+                              {{ mission.code }}
+                            </span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
           </div>
         </div>
 

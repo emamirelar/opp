@@ -44,5 +44,6 @@ public class OpportunityRequest
     public List<OpportunityDeliverableRequest>? Deliverables { get; set; }
     public List<OpportunityCountryRequest>? Countries { get; set; }
     public List<OpportunitySDGRequest>? SDGs { get; set; }
+    public List<OpportunityUNOPSMissionRequest>? UNOPSMissions { get; set; }
 }
 

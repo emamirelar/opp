@@ -70,6 +70,10 @@ public class CreateOpportunityFromInteractionsRequest
     /// SDGs - plain integer array of SDG IDs, e.g. [3, 7, 9, 13]
     /// </summary>
     public List<int>? SdGs { get; set; }
+    /// <summary>
+    /// UNOPS Strategic Missions - array of { unopsMissionId }
+    /// </summary>
+    public List<OpportunityUNOPSMissionRequest>? UNOPSMissions { get; set; }
 
     // WHO Section Properties (AI-proposed, user-accepted)
     // These are now proper structured objects from AI analysis

@@ -112,6 +112,7 @@ public class ProposedOpportunityData
     public string? Deliverables { get; set; }
     public string? Countries { get; set; }
     public string? SdGs { get; set; }
+    public string? UnopsMissions { get; set; }
     
     // Dependents list indicating which fields need ID resolution
     public List<string> Dependents { get; set; } = new();
