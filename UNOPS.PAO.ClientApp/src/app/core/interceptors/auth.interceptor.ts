@@ -52,6 +52,11 @@ export function authInterceptor(
             return of(error);
           }
 
+          // Skip refresh for login page auth check - it determines if we have a session
+          if (request.url.includes('check-iap-simulation')) {
+            return of(error);
+          }
+
           // Try IAP session refresh before redirecting to login
           if (iapSessionRefresh.shouldRun()) {
             console.log('[AUTH-INTERCEPTOR] 401 received - attempting IAP session refresh', {
