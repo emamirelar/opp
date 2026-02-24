@@ -1,33 +1,28 @@
 /**
- * @fileoverview IAP Session Refresh Service - Proactively refreshes IAP/GCIP session before 1-hour expiry
+ * @fileoverview IAP Session Refresh Service for GCIP / Identity Platform
  * @author UNOPS Opportunity+ System Development Team
  *
- * GCIP access tokens expire after 1 hour (non-configurable). This service uses IAP's
- * DO_SESSION_REFRESH to extend the session before expiry, preventing "Connection Lost" errors.
+ * GCIP access tokens expire after 1 hour (non-configurable, inherited from Firebase).
+ * For external identities, Google recommends a persistent SESSION_REFRESHER iframe
+ * that continuously keeps the session alive in the background.
+ *
+ * @see https://cloud.google.com/iap/docs/external-identity-sessions
  */
 
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
-/** Refresh interval: 50 minutes (10-minute buffer before 1-hour expiry) */
-const REFRESH_INTERVAL_MS = 50 * 60 * 1000;
-
 @Injectable({
   providedIn: 'root',
 })
-/**
- * @class IapSessionRefreshService
- * @description Proactively refreshes IAP session to prevent 1-hour disconnection.
- * Uses IAP's DO_SESSION_REFRESH and runs a timer when user is authenticated in IAP mode.
- */
 export class IapSessionRefreshService {
   private readonly http = inject(HttpClient);
-  private refreshTimerId: ReturnType<typeof setInterval> | null = null;
+  private sessionRefresherIframe: HTMLIFrameElement | null = null;
   private isRefreshing = false;
 
   /**
-   * @description Check if we're in IAP mode (production-like, no dev cookie)
+   * @description Whether IAP session management should be active (non-dev, non-localhost)
    */
   shouldRun(): boolean {
     const cookies = document.cookie.split(';').map((c) => c.trim());
@@ -37,20 +32,76 @@ export class IapSessionRefreshService {
     }
 
     const hostname = window.location.hostname;
-    const isLocalOrDev =
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname.includes('localhost');
-
-    return !isLocalOrDev;
+    return (
+      hostname !== 'localhost' &&
+      hostname !== '127.0.0.1' &&
+      !hostname.includes('localhost')
+    );
   }
 
   /**
-   * @description Refresh IAP session via DO_SESSION_REFRESH, returns true if successful
+   * @description Embed a persistent SESSION_REFRESHER iframe.
+   * IAP continuously refreshes the session in the background via this iframe.
+   * Call once when the user is authenticated.
+   */
+  startSessionRefresher(): void {
+    if (!this.shouldRun()) {
+      console.log('[IAP-SESSION] startSessionRefresher skipped: shouldRun()=false');
+      return;
+    }
+
+    if (this.sessionRefresherIframe) {
+      console.log('[IAP-SESSION] SESSION_REFRESHER iframe already active');
+      return;
+    }
+
+    const refresherUrl = `${window.location.origin}/?gcp-iap-mode=SESSION_REFRESHER`;
+    console.log('[IAP-SESSION] Embedding persistent SESSION_REFRESHER iframe', {
+      url: refresherUrl,
+      hostname: window.location.hostname,
+    });
+
+    const iframe = document.createElement('iframe');
+    iframe.src = refresherUrl;
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    iframe.style.position = 'absolute';
+    iframe.style.display = 'none';
+    iframe.setAttribute('aria-hidden', 'true');
+    iframe.setAttribute('tabindex', '-1');
+
+    iframe.onload = () => {
+      console.log('[IAP-SESSION] SESSION_REFRESHER iframe loaded');
+    };
+    iframe.onerror = () => {
+      console.warn('[IAP-SESSION] SESSION_REFRESHER iframe failed to load');
+    };
+
+    document.body.appendChild(iframe);
+    this.sessionRefresherIframe = iframe;
+  }
+
+  /**
+   * @description Remove the SESSION_REFRESHER iframe (e.g. on logout)
+   */
+  stopSessionRefresher(): void {
+    if (this.sessionRefresherIframe) {
+      if (this.sessionRefresherIframe.parentNode) {
+        this.sessionRefresherIframe.parentNode.removeChild(this.sessionRefresherIframe);
+      }
+      this.sessionRefresherIframe = null;
+      console.log('[IAP-SESSION] SESSION_REFRESHER iframe removed');
+    }
+  }
+
+  /**
+   * @description Reactive session refresh via DO_SESSION_REFRESH (on 401).
+   * Opens a popup window for reauthentication per Google's recommended pattern.
    */
   async refreshSession(): Promise<boolean> {
     if (!this.shouldRun()) {
-      console.log('[IAP-SESSION] refreshSession skipped: shouldRun()=false (dev cookie or localhost)');
+      console.log('[IAP-SESSION] refreshSession skipped: shouldRun()=false');
       return false;
     }
 
@@ -60,22 +111,19 @@ export class IapSessionRefreshService {
     }
 
     this.isRefreshing = true;
-    const refreshUrl = this.getRefreshUrl();
-    console.log('[IAP-SESSION] Starting session refresh', { url: refreshUrl, hostname: window.location.hostname });
+    const refreshUrl = `${window.location.origin}/?gcp-iap-mode=DO_SESSION_REFRESH`;
+    console.log('[IAP-SESSION] Starting reactive session refresh (popup)', { url: refreshUrl });
 
     try {
-      await this.loadRefreshPage(refreshUrl);
-      console.log('[IAP-SESSION] Refresh iframe loaded, waiting 1s before verification');
-      await this.delay(1000);
-      const verified = await this.verifySession();
-      if (verified) {
-        console.log('[IAP-SESSION] Session refreshed successfully - /user/claims returned 200');
+      const success = await this.openRefreshWindow(refreshUrl);
+      if (success) {
+        console.log('[IAP-SESSION] Reactive session refresh succeeded');
       } else {
-        console.warn('[IAP-SESSION] Session refresh verification failed - /user/claims returned 401 or empty');
+        console.warn('[IAP-SESSION] Reactive session refresh failed');
       }
-      return verified;
+      return success;
     } catch (err) {
-      console.warn('[IAP-SESSION] Session refresh failed:', err);
+      console.warn('[IAP-SESSION] Reactive session refresh error:', err);
       return false;
     } finally {
       this.isRefreshing = false;
@@ -83,53 +131,74 @@ export class IapSessionRefreshService {
   }
 
   /**
-   * @description Start proactive refresh timer (call when user is authenticated)
+   * @description Opens DO_SESSION_REFRESH in a popup window and polls until session is restored.
+   * Follows Google's recommended pattern for programmatic 401 handling.
    */
-  startProactiveRefresh(): void {
-    if (!this.shouldRun()) {
-      console.log('[IAP-SESSION] startProactiveRefresh skipped: shouldRun()=false');
-      return;
-    }
-    if (this.refreshTimerId !== null) {
-      console.log('[IAP-SESSION] startProactiveRefresh skipped: timer already running');
-      return;
-    }
+  private openRefreshWindow(url: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      const refreshWindow = window.open(url, '_iap_session_refresh', 'width=1,height=1');
 
-    console.log('[IAP-SESSION] Starting proactive session refresh (every 50 min)', {
-      hostname: window.location.hostname,
-      nextRefreshIn: '50 minutes',
+      if (!refreshWindow) {
+        console.warn('[IAP-SESSION] Popup blocked - falling back to iframe');
+        this.iframeFallbackRefresh(url).then(resolve);
+        return;
+      }
+
+      let attempts = 0;
+      const maxAttempts = 20;
+
+      const checkSession = () => {
+        attempts++;
+
+        if (refreshWindow.closed || attempts >= maxAttempts) {
+          if (refreshWindow && !refreshWindow.closed) {
+            refreshWindow.close();
+          }
+          this.verifySession().then(resolve);
+          return;
+        }
+
+        fetch('/favicon.ico', {
+          method: 'GET',
+          credentials: 'include',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        })
+          .then((response) => {
+            if (response.status === 401) {
+              setTimeout(checkSession, 500);
+            } else {
+              refreshWindow.close();
+              resolve(true);
+            }
+          })
+          .catch(() => {
+            setTimeout(checkSession, 500);
+          });
+      };
+
+      setTimeout(checkSession, 1000);
     });
-    this.refreshTimerId = setInterval(() => {
-      this.refreshSession();
-    }, REFRESH_INTERVAL_MS);
   }
 
   /**
-   * @description Stop proactive refresh timer
+   * @description Fallback: load DO_SESSION_REFRESH in hidden iframe if popup is blocked
    */
-  stopProactiveRefresh(): void {
-    if (this.refreshTimerId) {
-      clearInterval(this.refreshTimerId);
-      this.refreshTimerId = null;
-      console.log('[IAP-SESSION] Stopped proactive session refresh');
-    }
+  private async iframeFallbackRefresh(url: string): Promise<boolean> {
+    await this.loadIframe(url);
+    await this.delay(2000);
+    return this.verifySession();
   }
 
-  private getRefreshUrl(): string {
-    const base = window.location.origin + '/';
-    return `${base}?gcp-iap-mode=DO_SESSION_REFRESH`;
-  }
-
-  private loadRefreshPage(url: string): Promise<void> {
-    return new Promise((resolve, reject) => {
+  private loadIframe(url: string): Promise<void> {
+    return new Promise((resolve) => {
       const iframe = document.createElement('iframe');
       iframe.style.display = 'none';
-      iframe.style.position = 'absolute';
       iframe.style.width = '0';
       iframe.style.height = '0';
       iframe.style.border = 'none';
+      iframe.style.position = 'absolute';
 
-      let resolved = false;
+      let done = false;
       const cleanup = () => {
         if (iframe.parentNode) {
           iframe.parentNode.removeChild(iframe);
@@ -137,36 +206,29 @@ export class IapSessionRefreshService {
       };
 
       iframe.onload = () => {
-        if (!resolved) {
-          resolved = true;
-          console.log('[IAP-SESSION] Refresh iframe onload fired');
+        if (!done) {
+          done = true;
         }
         cleanup();
         resolve();
       };
-
       iframe.onerror = () => {
-        if (!resolved) {
-          resolved = true;
-          console.warn('[IAP-SESSION] Refresh iframe onerror fired');
+        if (!done) {
+          done = true;
         }
         cleanup();
-        reject(new Error('IAP session refresh iframe failed to load'));
+        resolve();
       };
 
       document.body.appendChild(iframe);
       iframe.src = url;
-      console.log('[IAP-SESSION] Refresh iframe created and loading', { url });
 
       setTimeout(() => {
-        if (!resolved) {
-          resolved = true;
-          console.warn('[IAP-SESSION] Refresh iframe timeout (5s) - iframe may have redirected to auth-ui');
-        }
-        if (iframe.parentNode) {
+        if (!done) {
+          done = true;
           cleanup();
+          resolve();
         }
-        resolve();
       }, 5000);
     });
   }
