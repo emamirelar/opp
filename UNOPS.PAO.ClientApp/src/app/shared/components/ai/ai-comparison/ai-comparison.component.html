@@ -230,6 +230,29 @@
                             </div>
                           }
                         </div>
+                      } @else if (isUNOPSMissionField(diff.field) && isArray(diff.currentValue)) {
+                        <!-- UNOPS Strategic Missions Complex View -->
+                        <div class="space-y-2">
+                          @for (item of diff.currentValue; track $index) {
+                            @let mission = asAny(item);
+                            @let missionName = mission.name ?? mission.unopsMission?.name;
+                            @let missionCode = mission.code ?? mission.unopsMission?.code;
+                            @let missionIcon = mission.iconClass ?? mission.unopsMission?.iconClass;
+                            <div class="bg-white border border-unops-neutral-light rounded-unops-md p-3 flex items-center gap-3">
+                              @if (missionIcon) {
+                                <i [class]="missionIcon + ' text-2xl text-unops-primary'"></i>
+                              } @else {
+                                <i class="pi pi-check-circle text-2xl text-unops-primary"></i>
+                              }
+                              <div class="flex-1">
+                                <div class="font-medium text-unops-sm text-unops-text-primary">{{ missionName }}</div>
+                                @if (missionCode) {
+                                  <span class="text-unops-xs bg-unops-surface-tertiary text-unops-text-secondary px-2 py-1 rounded-unops-sm mt-1 inline-block">{{ missionCode }}</span>
+                                }
+                              </div>
+                            </div>
+                          }
+                        </div>
                       } @else if (diff.type === 'array' || diff.type === 'object') {
                         <pre class="whitespace-pre-wrap break-words font-mono text-unops-xs bg-white p-2 rounded border border-unops-neutral-light max-h-40 overflow-auto">{{ formatValue(diff.currentValue, diff.field) }}</pre>
                       } @else {
@@ -468,6 +491,46 @@
                               <div class="flex-1">
                                 <div class="text-unops-sm font-semibold text-unops-primary">{{ stakeholder.userName }}</div>
                                 <div class="text-unops-xs text-unops-primary">{{ stakeholder.entityRoleName }}</div>
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      } @else if (isUNOPSMissionField(diff.field) && isArray(diff.aiValue)) {
+                        <!-- UNOPS Strategic Missions Complex View with Individual Selection -->
+                        <div class="space-y-2">
+                          <div class="flex items-center justify-between mb-2">
+                            <span class="text-unops-xs text-unops-primary font-medium">
+                              {{ getSelectedArrayItemCount(diff.field) }} / {{ diff.aiValue.length }} {{ 'label.selected' | translate }}
+                            </span>
+                          </div>
+                          @for (item of diff.aiValue; track $index) {
+                            @let mission = asAny(item);
+                            @let missionName = mission.name ?? mission.unopsMission?.name;
+                            @let missionCode = mission.code ?? mission.unopsMission?.code;
+                            @let missionIcon = mission.iconClass ?? mission.unopsMission?.iconClass;
+                            <div 
+                              class="bg-white rounded-unops-md p-3 flex items-center gap-3 cursor-pointer transition-all"
+                              [ngClass]="{
+                                'border-2 border-unops-success ring-2 ring-unops-success ring-opacity-30': isArrayItemSelected(diff.field, $index),
+                                'border-2 border-unops-neutral-light opacity-60': !isArrayItemSelected(diff.field, $index)
+                              }"
+                              (click)="toggleArrayItem(diff.field, $index); $event.stopPropagation()">
+                              <p-checkbox
+                                [binary]="true"
+                                [ngModel]="isArrayItemSelected(diff.field, $index)"
+                                (ngModelChange)="toggleArrayItem(diff.field, $index)"
+                                (click)="$event.stopPropagation()"
+                              />
+                              @if (missionIcon) {
+                                <i [class]="missionIcon + ' text-2xl text-unops-primary'"></i>
+                              } @else {
+                                <i class="pi pi-check-circle text-2xl text-unops-primary"></i>
+                              }
+                              <div class="flex-1">
+                                <div class="font-semibold text-unops-sm text-unops-primary">{{ missionName }}</div>
+                                @if (missionCode) {
+                                  <span class="text-unops-xs bg-unops-primary-light text-unops-primary px-2 py-1 rounded-unops-sm mt-1 inline-block">{{ missionCode }}</span>
+                                }
                               </div>
                             </div>
                           }

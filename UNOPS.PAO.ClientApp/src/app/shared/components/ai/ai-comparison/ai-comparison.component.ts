@@ -444,6 +444,7 @@ export class AiComparisonComponent {
       'deliverables': 'outputId',
       'countries': 'countryId',
       'sdGs': 'sdgId',
+      'unopsMissions': 'unopsMissionId',
     };
     
     return idFieldMap[fieldName] || null;
@@ -584,7 +585,7 @@ export class AiComparisonComponent {
    * @returns {boolean} Whether field is an array field with individual selection
    */
   isArrayField(fieldPath: string): boolean {
-    return ['fundingPartners', 'clientPartners', 'stakeholders', 'countries', 'sdGs', 'deliverables'].includes(fieldPath);
+    return ['fundingPartners', 'clientPartners', 'stakeholders', 'countries', 'sdGs', 'deliverables', 'unopsMissions'].includes(fieldPath);
   }
 
   /**
@@ -829,6 +830,15 @@ export class AiComparisonComponent {
    */
   isCountryField(field: string): boolean {
     return field === 'countries';
+  }
+
+  /**
+   * @description Check if field is a UNOPS Strategic Missions field
+   * @param {string} field - Field path
+   * @returns {boolean} Whether field is unopsMissions
+   */
+  isUNOPSMissionField(field: string): boolean {
+    return field === 'unopsMissions';
   }
 
   /**
