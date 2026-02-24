@@ -7,6 +7,7 @@ import { PasswordModule } from 'primeng/password';
 import { DialogModule } from 'primeng/dialog';
 import { Router } from '@angular/router';
 
+import { HttpErrorResponse } from '@angular/common/http';
 import { SocialAuthComponent } from '../social-auth/social-auth.component';
 import { AuthService } from '@core/services/auth';
 import { SignUpComponent } from '../sign-up/sign-up.component';
@@ -104,6 +105,16 @@ export class LoginComponent implements OnInit {
     // Direct check for IAP simulation headers with simple timeout
     this.authService.getAuthInfo().subscribe({
       next: (authInfo) => {
+        // Auth interceptor may pass HttpErrorResponse (401) as value - treat as not authenticated
+        if (authInfo instanceof HttpErrorResponse) {
+          this.isIapAuthenticated = false;
+          this.canShowPrimitiveLoginOption = true;
+          this.canShowOAuthLoginComponent = true;
+          this.canDoSignUp = true;
+          this.checkingAuthentication = false;
+          sessionStorage.setItem('login_iap_check_active', 'false');
+          return;
+        }
         // Check if we have IAP headers
         const hasIapHeaders = authInfo && authInfo.hasIapEmailHeader;
         
