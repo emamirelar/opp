@@ -176,6 +176,7 @@ export interface ProposedOpportunityResponseRaw {
     deliverables?: string | null;
     countries?: string | null;
     sdGs?: string | null;
+    unopsMissions?: string | null;
     dependents?: string | null;
   };
   interactionsAnalyzed: number;
@@ -239,6 +240,7 @@ export interface ProposedOpportunityResponse {
     deliverables?: ProposedDeliverable[] | null;
     countries?: ProposedCountry[] | null;
     sdGs?: ProposedSDG[] | null;
+    unopsMissions?: { unopsMissionId: number; name?: string; code?: string }[] | null;
     dependents?: string[] | null;
   };
   interactionsAnalyzed: number;
