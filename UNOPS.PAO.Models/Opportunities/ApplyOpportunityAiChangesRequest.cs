@@ -30,6 +30,7 @@ public class ApplyOpportunityAiChangesRequest
     public int? EstimatedIndirectBeneficiaries { get; set; }
     public bool? BeneficiariesToBeDetermined { get; set; }
     public List<int>? SdGs { get; set; }
+    public List<OpportunityUNOPSMissionRequest>? UNOPSMissions { get; set; }
 
     // WHO Section Properties
     /// <summary>

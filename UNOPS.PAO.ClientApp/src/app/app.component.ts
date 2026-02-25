@@ -1,6 +1,6 @@
 import { Component, ViewChild, ViewContainerRef, AfterViewInit, inject } from '@angular/core';
 import { RouterModule, RouterOutlet, Router } from '@angular/router';
-import { AuthService } from '@core/services/auth';
+import { AuthService, IapSessionRefreshService } from '@core/services/auth';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { FeedbackDialogComponent } from '@shared/components/feedback/feedback-dialog/feedback-dialog.component';
@@ -27,6 +27,7 @@ export class AppComponent implements AfterViewInit {
   @ViewChild('dynamicComponent', { read: ViewContainerRef, static: false }) dynamicComponent!: ViewContainerRef;
   viewContainerRef!: ViewContainerRef;
 
+  private iapSessionRefresh = inject(IapSessionRefreshService);
 
   constructor(
     private authService: AuthService,
@@ -40,22 +41,18 @@ export class AppComponent implements AfterViewInit {
 
     // Fast path for dev cookie - skip all API checks
     if (hasCookie) {
-
       this.isLoggedIn = true;
-      // If on login page with dev cookie, redirect to home
       if (window.location.href.includes('/login')) {
-
         window.location.href = '/';
       }
       return;
     }
 
-    // If no dev cookie, proceed with normal auth check
-
-
     this.authService.isLogedIn().subscribe((res) => {
       this.isLoggedIn = res;
-
+      if (res) {
+        this.iapSessionRefresh.startSessionRefresher();
+      }
     });
   }
 

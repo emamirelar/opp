@@ -35,6 +35,7 @@ import { authInterceptor } from '@core/interceptors/auth.interceptor';
 import { serverErrorInterceptor } from '@core/interceptors/server-error.interceptor';
 import { AuthService } from '@core/services/auth';
 import { ConfigurationService } from '@core/services/configuration';
+import { GoogleAnalyticsService } from '@core/services/google-analytics';
 import { HasPermissionDirective } from './shared';
 import { PermissionService } from '@core/services/auth';
 import { LanguageService } from '@shared/services/utils';
@@ -72,10 +73,13 @@ export const appConfig: ApplicationConfig = {
       withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }),
       withComponentInputBinding()
     ),
-    // Simple config loading initializer
+    // Config loading and Google Analytics initialization (GA only when enabled in appsettings)
     provideAppInitializer(() => {
       const configService = inject(ConfigurationService);
-      return configService.loadConfig();
+      const gaService = inject(GoogleAnalyticsService);
+      return configService.loadConfig().then(() => {
+        gaService.initializeIfEnabled();
+      });
     }),
     // Language initialization - load preferred language before app starts
     provideAppInitializer(() => {

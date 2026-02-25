@@ -280,6 +280,13 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 .ToList();
         }
 
+        if (model.UNOPSMissions != null && model.UNOPSMissions.Any())
+        {
+            entity.UNOPSMissions = model.UNOPSMissions
+                .Select(m => new OpportunityUNOPSMission { UNOPSMissionId = m.UNOPSMissionId })
+                .ToList();
+        }
+
         await opportunityRepository.AddAsync(entity);
 
         var opportunityModel = mapper.Map<OpportunityModel>(entity);
@@ -3321,6 +3328,35 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 .ToList();
         }
 
+        // Update UNOPS Missions
+        if (request.UNOPSMissions != null)
+        {
+            entity.UNOPSMissionsNotApplicable = false;
+            var existingMissions = await context.Set<OpportunityUNOPSMission>()
+                .Where(m => m.OpportunityId == id && !m.IsDeleted)
+                .ToListAsync();
+            var requestedMissionIds = request.UNOPSMissions.Select(m => m.UNOPSMissionId).ToHashSet();
+            var existingMissionIds = existingMissions.Select(m => m.UNOPSMissionId).ToHashSet();
+            var missionsToRemove = existingMissions.Where(m => !requestedMissionIds.Contains(m.UNOPSMissionId)).ToList();
+            if (missionsToRemove.Any())
+            {
+                context.Set<OpportunityUNOPSMission>().RemoveRange(missionsToRemove);
+            }
+            foreach (var missionRequest in request.UNOPSMissions)
+            {
+                var existingMission = existingMissions.FirstOrDefault(m => m.UNOPSMissionId == missionRequest.UNOPSMissionId);
+                if (existingMission == null)
+                {
+                    var newMission = new OpportunityUNOPSMission
+                    {
+                        OpportunityId = id,
+                        UNOPSMissionId = missionRequest.UNOPSMissionId
+                    };
+                    context.Set<OpportunityUNOPSMission>().Add(newMission);
+                }
+            }
+        }
+
         // WHO Section - Update partnerships
         if (request.FundingPartners != null)
         {
@@ -3644,6 +3680,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             MiscExternalStakeholders = request.MiscExternalStakeholders,
             ExternalStakeholderNotes = request.ExternalStakeholderNotes,
             SDGs = uniqueSdGs.Select(sdgId => new OpportunitySDGRequest { SDGId = sdgId }).ToList(),
+            UNOPSMissions = request.UNOPSMissions?.DistinctBy(m => m.UNOPSMissionId).ToList(),
             Countries = uniqueCountries.Select(countryId => new OpportunityCountryRequest { CountryId = countryId }).ToList(),
             Deliverables = request.Deliverables ?? new List<OpportunityDeliverableRequest>(),
             Stakeholders = uniqueStakeholders,

@@ -443,6 +443,14 @@ export class OpportunityDocumentsComponent implements OnInit {
       formatFn: (value) =>
         Array.isArray(value) ? `${value.length} SDG(s)` : '0 SDGs',
     },
+    {
+      fieldPath: 'unopsMissions',
+      displayName: 'Alignment to UNOPS Strategic Missions',
+      formatFn: (value) =>
+        Array.isArray(value)
+          ? `${value.length} mission(s)`
+          : '0 missions',
+    },
   ];
 
   /**
@@ -1355,6 +1363,12 @@ export class OpportunityDocumentsComponent implements OnInit {
         transformed.sdGs = value
           .map((sdg: any) => sdg.sdgId)
           .filter((id: number) => id != null);
+      }
+      // Handle UNOPS Missions - extract unopsMissionId to API format
+      else if (key === 'unopsMissions' && Array.isArray(value)) {
+        transformed.unopsMissions = value
+          .filter((m: any) => m.unopsMissionId != null)
+          .map((m: any) => ({ unopsMissionId: m.unopsMissionId }));
       }
       // Handle stakeholders - convert to stakeholder request format with userId and entityRoleId
       else if (key === 'stakeholders' && Array.isArray(value)) {
