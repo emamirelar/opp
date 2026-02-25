@@ -39,7 +39,6 @@ export function authInterceptor(
           const hasDevCookie = cookiesNow.some((c) => c.startsWith('dev-user-email='));
 
           if (hasDevCookie) {
-            console.warn('[AUTH-INTERCEPTOR] 401 error despite dev cookie authentication');
             if (!request.url.includes('/dev-login')) {
               setTimeout(() => window.location.reload(), 500);
             }
@@ -60,43 +59,20 @@ export function authInterceptor(
           }
 
           if (iapSessionRefresh.shouldRun()) {
-            console.log('[AUTH-INTERCEPTOR] 401 received - attempting IAP session refresh', {
-              failedRequestUrl: request.url,
-              method: request.method,
-            });
-
-            // All concurrent 401s share the same refresh promise (no race condition)
             return from(iapSessionRefresh.refreshSession()).pipe(
               switchMap((refreshed) => {
                 if (refreshed) {
-                  console.log('[AUTH-INTERCEPTOR] Session refresh succeeded - retrying request', {
-                    url: request.url,
-                  });
                   return next(request);
                 }
-                // Only redirect for user-initiated requests, not background polls
-                if (isBackgroundRequest(request)) {
-                  console.warn('[AUTH-INTERCEPTOR] Session refresh failed for background request - suppressing redirect', {
-                    url: request.url,
-                  });
-                  return throwError(() => error);
+                if (!isBackgroundRequest(request)) {
+                  router.navigate(['login']);
                 }
-                console.warn('[AUTH-INTERCEPTOR] Session refresh failed - redirecting to login');
-                router.navigate(['login']);
                 return throwError(() => error);
               }),
-              catchError((refreshErr) => {
-                if (isBackgroundRequest(request)) {
-                  console.warn('[AUTH-INTERCEPTOR] Session refresh threw for background request - suppressing redirect', {
-                    url: request.url,
-                    error: refreshErr,
-                  });
-                  return throwError(() => error);
+              catchError(() => {
+                if (!isBackgroundRequest(request)) {
+                  router.navigate(['login']);
                 }
-                console.warn('[AUTH-INTERCEPTOR] Session refresh threw - redirecting to login', {
-                  error: refreshErr,
-                });
-                router.navigate(['login']);
                 return throwError(() => error);
               })
             );
@@ -106,16 +82,10 @@ export function authInterceptor(
             return throwError(() => error);
           }
 
-          console.log('[AUTH-INTERCEPTOR] 401 - shouldRun=false, redirecting to login');
           router.navigate(['login']);
           return throwError(() => error);
         }
 
-        if (error.status === 403) {
-          console.error(
-            '[AUTH-INTERCEPTOR] Access forbidden. You do not have permission to access this resource.'
-          );
-        }
       }
 
       return throwError(() => error);

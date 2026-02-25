@@ -30,13 +30,6 @@ export class ErrorHandlerService {
 
     // Network errors show blocking dialog with refresh button
     if (appError.status === 0) {
-      console.error('[CONNECTION-LOST] Request failed with status 0 (Connection Lost dialog triggered)', {
-        url: error.url,
-        status: error.status,
-        statusText: error.statusText,
-        message: error.message,
-        context,
-      });
       this.showNetworkErrorDialog(appError);
       return;
     }

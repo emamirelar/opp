@@ -10,7 +10,7 @@
  */
 
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable({
@@ -51,21 +51,11 @@ export class IapSessionRefreshService {
    * Call once when the user is authenticated.
    */
   startSessionRefresher(): void {
-    if (!this.shouldRun()) {
-      console.log('[IAP-SESSION] startSessionRefresher skipped: shouldRun()=false');
-      return;
-    }
-
-    if (this.sessionRefresherIframe) {
-      console.log('[IAP-SESSION] SESSION_REFRESHER iframe already active');
+    if (!this.shouldRun() || this.sessionRefresherIframe) {
       return;
     }
 
     const refresherUrl = `${window.location.origin}/?gcp-iap-mode=SESSION_REFRESHER`;
-    console.log('[IAP-SESSION] Embedding persistent SESSION_REFRESHER iframe', {
-      url: refresherUrl,
-      hostname: window.location.hostname,
-    });
 
     const iframe = document.createElement('iframe');
     iframe.src = refresherUrl;
@@ -76,13 +66,6 @@ export class IapSessionRefreshService {
     iframe.style.display = 'none';
     iframe.setAttribute('aria-hidden', 'true');
     iframe.setAttribute('tabindex', '-1');
-
-    iframe.onload = () => {
-      console.log('[IAP-SESSION] SESSION_REFRESHER iframe loaded');
-    };
-    iframe.onerror = () => {
-      console.warn('[IAP-SESSION] SESSION_REFRESHER iframe failed to load');
-    };
 
     document.body.appendChild(iframe);
     this.sessionRefresherIframe = iframe;
@@ -97,7 +80,6 @@ export class IapSessionRefreshService {
         this.sessionRefresherIframe.parentNode.removeChild(this.sessionRefresherIframe);
       }
       this.sessionRefresherIframe = null;
-      console.log('[IAP-SESSION] SESSION_REFRESHER iframe removed');
     }
   }
 
@@ -108,17 +90,14 @@ export class IapSessionRefreshService {
    */
   refreshSession(): Promise<boolean> {
     if (!this.shouldRun()) {
-      console.log('[IAP-SESSION] refreshSession skipped: shouldRun()=false');
       return Promise.resolve(false);
     }
 
     if (this.activeRefreshPromise) {
-      console.log('[IAP-SESSION] refreshSession: joining existing refresh attempt');
       return this.activeRefreshPromise;
     }
 
     const refreshUrl = `${window.location.origin}/?gcp-iap-mode=DO_SESSION_REFRESH`;
-    console.log('[IAP-SESSION] Starting reactive session refresh', { url: refreshUrl });
 
     this.activeRefreshPromise = this.doRefresh(refreshUrl).finally(() => {
       this.activeRefreshPromise = null;
@@ -129,15 +108,8 @@ export class IapSessionRefreshService {
 
   private async doRefresh(refreshUrl: string): Promise<boolean> {
     try {
-      const success = await this.openRefreshWindow(refreshUrl);
-      if (success) {
-        console.log('[IAP-SESSION] Reactive session refresh succeeded');
-      } else {
-        console.warn('[IAP-SESSION] Reactive session refresh failed');
-      }
-      return success;
-    } catch (err) {
-      console.warn('[IAP-SESSION] Reactive session refresh error:', err);
+      return await this.openRefreshWindow(refreshUrl);
+    } catch {
       return false;
     }
   }
@@ -151,7 +123,6 @@ export class IapSessionRefreshService {
       const refreshWindow = window.open(url, '_iap_session_refresh', 'width=1,height=1');
 
       if (!refreshWindow) {
-        console.warn('[IAP-SESSION] Popup blocked - falling back to iframe');
         this.iframeFallbackRefresh(url).then(resolve);
         return;
       }
@@ -250,17 +221,8 @@ export class IapSessionRefreshService {
           observe: 'response',
         })
       );
-      const success =
-        response.status === 200 && Array.isArray(response.body) && response.body.length > 0;
-      console.log('[IAP-SESSION] verifySession result:', {
-        status: response.status,
-        claimsCount: Array.isArray(response.body) ? response.body.length : 0,
-        success,
-      });
-      return success;
-    } catch (err) {
-      const status = err instanceof HttpErrorResponse ? err.status : 'unknown';
-      console.warn('[IAP-SESSION] verifySession failed:', { status, error: err });
+      return response.status === 200 && Array.isArray(response.body) && response.body.length > 0;
+    } catch {
       return false;
     }
   }
