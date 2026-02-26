@@ -22,22 +22,55 @@ node(agentLabel) {
     
     try {
         stage('Checkout Code') {
-            // Checkout with submodules using parent credentials
-            checkout([
-                $class: 'GitSCM',
-                branches: scm.branches,
-                doGenerateSubmoduleConfigurations: false,
-                extensions: [
-                    [$class: 'SubmoduleOption',
-                     disableSubmodules: false,
-                     parentCredentials: true,
-                     recursiveSubmodules: true,
-                     reference: '',
-                     trackingSubmodules: false]
-                ],
-                submoduleCfg: [],
-                userRemoteConfigs: scm.userRemoteConfigs
-            ])
+            def checkoutSuccess = false
+            def maxAttempts = 3
+            def lastError = null
+
+            for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+                try {
+                    echo "Checkout attempt ${attempt} of ${maxAttempts}..."
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: scm.branches,
+                        doGenerateSubmoduleConfigurations: false,
+                        extensions: [
+                            [$class: 'CloneOption',
+                             depth: 0,
+                             noTags: false,
+                             reference: '',
+                             shallow: false,
+                             timeout: 5],
+                            [$class: 'SubmoduleOption',
+                             disableSubmodules: false,
+                             parentCredentials: true,
+                             recursiveSubmodules: true,
+                             reference: '',
+                             timeout: 5,
+                             trackingSubmodules: false]
+                        ],
+                        submoduleCfg: [],
+                        userRemoteConfigs: scm.userRemoteConfigs
+                    ])
+                    checkoutSuccess = true
+                    echo "Checkout succeeded on attempt ${attempt}"
+                    break
+                } catch (Exception checkoutError) {
+                    lastError = checkoutError
+                    echo "Checkout attempt ${attempt} failed: ${checkoutError.getMessage()}"
+                    if (attempt < maxAttempts) {
+                        def waitSeconds = attempt * 15
+                        echo "Waiting ${waitSeconds} seconds before retry..."
+                        sleep(waitSeconds)
+                        // Clean workspace before retry to avoid partial clone issues
+                        sh 'git clean -fdx || true'
+                        sh 'git submodule foreach --recursive git clean -fdx || true'
+                    }
+                }
+            }
+
+            if (!checkoutSuccess) {
+                error("Checkout failed after ${maxAttempts} attempts. Last error: ${lastError?.getMessage() ?: 'Unknown'}")
+            }
 
             publishChecks name: CHECK_NAME,
                           status: 'IN_PROGRESS',
