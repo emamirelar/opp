@@ -84,7 +84,7 @@ export class IapSessionRefreshService {
   }
 
   /**
-   * @description Reactive session refresh via DO_SESSION_REFRESH (on 401).
+   * @description Reactive session refresh via hidden iframe with DO_SESSION_REFRESH (on 401).
    * If a refresh is already in progress, all callers share the same promise
    * to avoid race conditions where a second caller redirects to login prematurely.
    */
@@ -108,68 +108,15 @@ export class IapSessionRefreshService {
 
   private async doRefresh(refreshUrl: string): Promise<boolean> {
     try {
-      return await this.openRefreshWindow(refreshUrl);
+      await this.loadHiddenIframe(refreshUrl);
+      await this.delay(2000);
+      return await this.verifySession();
     } catch {
       return false;
     }
   }
 
-  /**
-   * @description Opens DO_SESSION_REFRESH in a popup window and polls until session is restored.
-   * Falls back to iframe if popup is blocked.
-   */
-  private openRefreshWindow(url: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      const refreshWindow = window.open(url, '_iap_session_refresh', 'width=1,height=1');
-
-      if (!refreshWindow) {
-        this.iframeFallbackRefresh(url).then(resolve);
-        return;
-      }
-
-      let attempts = 0;
-      const maxAttempts = 30;
-
-      const checkSession = () => {
-        attempts++;
-
-        if (refreshWindow.closed || attempts >= maxAttempts) {
-          if (refreshWindow && !refreshWindow.closed) {
-            refreshWindow.close();
-          }
-          this.verifySession().then(resolve);
-          return;
-        }
-
-        fetch('/favicon.ico', {
-          method: 'GET',
-          credentials: 'include',
-          headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        })
-          .then((response) => {
-            if (response.status === 401) {
-              setTimeout(checkSession, 500);
-            } else {
-              refreshWindow.close();
-              resolve(true);
-            }
-          })
-          .catch(() => {
-            setTimeout(checkSession, 500);
-          });
-      };
-
-      setTimeout(checkSession, 1000);
-    });
-  }
-
-  private async iframeFallbackRefresh(url: string): Promise<boolean> {
-    await this.loadIframe(url);
-    await this.delay(2000);
-    return this.verifySession();
-  }
-
-  private loadIframe(url: string): Promise<void> {
+  private loadHiddenIframe(url: string): Promise<void> {
     return new Promise((resolve) => {
       const iframe = document.createElement('iframe');
       iframe.style.display = 'none';
