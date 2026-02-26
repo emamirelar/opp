@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAO: {{EntityName}} - Action Required</title>
+    <title>PAO: {{ EntityName }} - Set to NO GO</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -14,7 +14,7 @@
             padding: 20px;
         }
         .header {
-            background-color: #0077be;
+            background-color: #dc3545;
             color: white;
             padding: 20px;
             text-align: center;
@@ -26,12 +26,17 @@
             border: 1px solid #ddd;
             border-top: none;
         }
-        .highlight-box {
-            background-color: #fff3cd;
-            border: 1px solid #ffc107;
+        .rejection-box {
+            background-color: #f8d7da;
+            border: 1px solid #dc3545;
             border-radius: 4px;
             padding: 15px;
             margin: 15px 0;
+            text-align: center;
+        }
+        .rejection-icon {
+            font-size: 48px;
+            color: #dc3545;
         }
         .info-table {
             width: 100%;
@@ -56,9 +61,6 @@
             border-radius: 4px;
             margin: 10px 5px 10px 0;
         }
-        .button:hover {
-            background-color: #005a8e;
-        }
         .footer {
             background-color: #f1f1f1;
             padding: 15px;
@@ -69,10 +71,9 @@
         }
         .comment-box {
             background-color: #f8f9fa;
-            border-left: 4px solid #0077be;
+            border-left: 4px solid #dc3545;
             padding: 10px 15px;
             margin: 15px 0;
-            font-style: italic;
         }
         .note-box {
             background-color: #e7f3ff;
@@ -86,55 +87,48 @@
 </head>
 <body>
     <div class="header">
-        <h1>Go Decision Required</h1>
+        <h1>Opportunity Set to NO GO</h1>
     </div>
     
     <div class="content">
-        <p>Hello {{ApproverName}},</p>
+        <p>Hello {{ RecipientName }},</p>
         
-        <div class="highlight-box">
-            <strong>Action Required:</strong> As a <strong>{{ApproverRole}}</strong> for <strong>{{OrgUnitName}}</strong>, 
-            you have been requested to review and approve a Go Decision for the following opportunity.
+        <div class="rejection-box">
+            <div class="rejection-icon">&#10006;</div>
+            <strong>The opportunity has been set to NO GO.</strong>
         </div>
+        
+        <p>The DoA Level 2 holder has decided that <strong>{{ OrgUnitName }}</strong> will not proceed with the development of this opportunity at this time.</p>
         
         <table class="info-table">
             <tr>
                 <td>Opportunity:</td>
-                <td><strong>{{EntityName}}</strong></td>
+                <td><strong>{{ EntityName }}</strong></td>
             </tr>
             <tr>
                 <td>Responsible Org Unit:</td>
-                <td>{{OrgUnitName}}</td>
+                <td>{{ OrgUnitName }}</td>
             </tr>
             <tr>
-                <td>Submitted By:</td>
-                <td>{{RequestedByName}}</td>
+                <td>Decision By:</td>
+                <td>{{ RejectedByName }}</td>
             </tr>
             <tr>
-                <td>Submitted On:</td>
-                <td>{{RequestedOn}}</td>
+                <td>Decision Date:</td>
+                <td>{{ RejectedOn }}</td>
             </tr>
         </table>
         
-        {{#if Comment}}
-        <div class="comment-box">
-            <strong>Submitter's Remarks:</strong><br>
-            {{Comment}}
-        </div>
-        {{/if}}
-        
-        <p>Please review the Opportunity Statement and make your Go Decision:</p>
-        
-        <p>
-            <a href="{{EntityUrl}}#statement" class="button">Review Opportunity Statement</a>
-        </p>
-        
-        <p>You can approve (Go) or reject (No Go) this request from the opportunity detail page.</p>
+        {{ CommentSection }}
         
         <div class="note-box">
-            <strong>Note:</strong> If the Go Decision is approved, internal stakeholders from other org units 
-            normally responsible for the opportunity's implementation countries will be automatically notified.
+            <strong>Note:</strong> The Opportunity Manager can reopen this opportunity if circumstances change 
+            and the opportunity becomes viable again.
         </div>
+        
+        <p>
+            <a href="{{ EntityUrl }}" class="button">View Opportunity</a>
+        </p>
     </div>
     
     <div class="footer">
