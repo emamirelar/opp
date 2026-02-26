@@ -139,28 +139,31 @@ node(agentLabel) {
         }
 
         stage('Ensure Artifact Registry Exists') {
-            withCredentials([file(credentialsId: CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-                sh """
-                UNIQUE_CREDS_FILE="\${WORKSPACE}/gcp-creds-registry-\${BUILD_NUMBER}.json"
-                cp "\${GOOGLE_APPLICATION_CREDENTIALS}" "\${UNIQUE_CREDS_FILE}"
-                gcloud auth activate-service-account --key-file="\${UNIQUE_CREDS_FILE}"
-                gcloud config set project ${PROJECT_ID}
-                
-                REPO_TYPE="docker"
+            // Retry for transient GCP API/network issues
+            retry(3) {
+                withCredentials([file(credentialsId: CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    sh """
+                    UNIQUE_CREDS_FILE="\${WORKSPACE}/gcp-creds-registry-\${BUILD_NUMBER}.json"
+                    cp "\${GOOGLE_APPLICATION_CREDENTIALS}" "\${UNIQUE_CREDS_FILE}"
+                    gcloud auth activate-service-account --key-file="\${UNIQUE_CREDS_FILE}"
+                    gcloud config set project ${PROJECT_ID}
+                    
+                    REPO_TYPE="docker"
 
-                if ! gcloud artifacts repositories describe "${REPO_NAME}" --location="${REGION}" >/dev/null 2>&1; then
-                    echo "Artifact Registry '${REPO_NAME}' does not exist in '${REGION}'. Creating..."
-                    gcloud artifacts repositories create "${REPO_NAME}" \\
-                        --repository-format="\$REPO_TYPE" \\
-                        --location="${REGION}" \\
-                        --description="Docker repository for cloud run images"
-                else
-                    echo "Artifact Registry '${REPO_NAME}' already exists in '${REGION}'."
-                fi
-                
-                # Cleanup unique credential file
-                rm -f "\${UNIQUE_CREDS_FILE}"
-                """
+                    if ! gcloud artifacts repositories describe "${REPO_NAME}" --location="${REGION}" >/dev/null 2>&1; then
+                        echo "Artifact Registry '${REPO_NAME}' does not exist in '${REGION}'. Creating..."
+                        gcloud artifacts repositories create "${REPO_NAME}" \\
+                            --repository-format="\$REPO_TYPE" \\
+                            --location="${REGION}" \\
+                            --description="Docker repository for cloud run images"
+                    else
+                        echo "Artifact Registry '${REPO_NAME}' already exists in '${REGION}'."
+                    fi
+                    
+                    # Cleanup unique credential file
+                    rm -f "\${UNIQUE_CREDS_FILE}"
+                    """
+                }
             }
         }
 
@@ -187,8 +190,26 @@ node(agentLabel) {
                         # Copy the appropriate Dockerfile
                         cp deployments/Docker/${DOCKERFILE_MAIN} Dockerfile
                         
-                        # Build and push main application image
-                        gcloud builds submit --tag europe-west4-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME_MAIN}:${IMAGE_TAG} .
+                        # Build and push main application image (with retry for transient GCP API issues)
+                        BUILD_SUCCESS=false
+                        for attempt in 1 2 3; do
+                            echo "Build attempt \$attempt for main application..."
+                            if gcloud builds submit --tag europe-west4-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME_MAIN}:${IMAGE_TAG} .; then
+                                echo "Main application build successful on attempt \$attempt"
+                                BUILD_SUCCESS=true
+                                break
+                            else
+                                echo "Main application build failed on attempt \$attempt"
+                                if [ \$attempt -lt 3 ]; then
+                                    echo "Waiting 20 seconds before retry..."
+                                    sleep 20
+                                fi
+                            fi
+                        done
+                        if [ "\$BUILD_SUCCESS" = false ]; then
+                            echo "Main application build failed after 3 attempts"
+                            exit 1
+                        fi
 
                         # Deploy main application to Cloud Run with retry logic
                         echo "Deploying main application to Cloud Run..."
@@ -274,8 +295,26 @@ node(agentLabel) {
                         # Navigate to AI service directory
                         cd UNOPS.PAO.AIService
 
-                        # Build and push AI service image
-                        gcloud builds submit --tag europe-west4-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME_AI}:${IMAGE_TAG} .
+                        # Build and push AI service image (with retry for transient GCP API issues)
+                        BUILD_SUCCESS=false
+                        for attempt in 1 2 3; do
+                            echo "Build attempt \$attempt for AI service..."
+                            if gcloud builds submit --tag europe-west4-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME_AI}:${IMAGE_TAG} .; then
+                                echo "AI service build successful on attempt \$attempt"
+                                BUILD_SUCCESS=true
+                                break
+                            else
+                                echo "AI service build failed on attempt \$attempt"
+                                if [ \$attempt -lt 3 ]; then
+                                    echo "Waiting 20 seconds before retry..."
+                                    sleep 20
+                                fi
+                            fi
+                        done
+                        if [ "\$BUILD_SUCCESS" = false ]; then
+                            echo "AI service build failed after 3 attempts"
+                            exit 1
+                        fi
 
                         # Deploy AI service to Cloud Run with retry logic
                         echo "Deploying AI service to Cloud Run..."
