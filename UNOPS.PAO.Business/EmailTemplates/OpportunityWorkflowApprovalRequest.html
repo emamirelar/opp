@@ -90,51 +90,19 @@
     </div>
     
     <div class="content">
-        <p>Hello {{ApproverName}},</p>
+        <p>Dear {{ ApproverName }},</p>
         
-        <div class="highlight-box">
-            <strong>Action Required:</strong> As a <strong>{{ApproverRole}}</strong> for <strong>{{OrgUnitName}}</strong>, 
-            you have been requested to review and approve a Go Decision for the following opportunity.
-        </div>
+        <p>You are the current DoA{{ ApproverRoleShort }} holder for {{ OrgUnitIdAndDescription }}.</p>
         
-        <table class="info-table">
-            <tr>
-                <td>Opportunity:</td>
-                <td><strong>{{EntityName}}</strong></td>
-            </tr>
-            <tr>
-                <td>Responsible Org Unit:</td>
-                <td>{{OrgUnitName}}</td>
-            </tr>
-            <tr>
-                <td>Submitted By:</td>
-                <td>{{RequestedByName}}</td>
-            </tr>
-            <tr>
-                <td>Submitted On:</td>
-                <td>{{RequestedOn}}</td>
-            </tr>
-        </table>
+        <p>Opportunity <strong>{{ EntityName }}</strong> has been submitted by {{ RequestedByName }} for your review and to request confirmation that {{ OrgUnitIdAndDescription }} may proceed with further development. Please review the Opportunity Statement carefully and indicate your decision <a href="{{ EntityUrl }}#statement">here</a>.</p>
         
-        {{#if Comment}}
-        <div class="comment-box">
-            <strong>Submitter's Remarks:</strong><br>
-            {{Comment}}
-        </div>
-        {{/if}}
+        <p><em>Please note that, <u>where applicable</u>, Internal Stakeholders from any other UNOPS Org Units normally responsible for any of the countries of Implementation will be notified of any decision to continue development of this Opportunity.</em></p>
         
-        <p>Please review the Opportunity Statement and make your Go Decision:</p>
+        {{ CommentSection }}
         
         <p>
-            <a href="{{EntityUrl}}#statement" class="button">Review Opportunity Statement</a>
+            <a href="{{ EntityUrl }}#statement" class="button">Review Opportunity Statement</a>
         </p>
-        
-        <p>You can approve (Go) or reject (No Go) this request from the opportunity detail page.</p>
-        
-        <div class="note-box">
-            <strong>Note:</strong> If the Go Decision is approved, internal stakeholders from other org units 
-            normally responsible for the opportunity's implementation countries will be automatically notified.
-        </div>
     </div>
     
     <div class="footer">

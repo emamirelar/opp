@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAO: {{EntityName}} - Go Decision Approved</title>
+    <title>PAO: {{ EntityName }} - Go Decision Approved</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -84,7 +84,7 @@
     </div>
     
     <div class="content">
-        <p>Hello {{RecipientName}},</p>
+        <p>Hello {{ RecipientName }},</p>
         
         <div class="success-box">
             <div class="success-icon">&#10004;</div>
@@ -96,31 +96,26 @@
         <table class="info-table">
             <tr>
                 <td>Opportunity:</td>
-                <td><strong>{{EntityName}}</strong></td>
+                <td><strong>{{ EntityName }}</strong></td>
             </tr>
             <tr>
                 <td>Responsible Org Unit:</td>
-                <td>{{OrgUnitName}}</td>
+                <td>{{ OrgUnitName }}</td>
             </tr>
             <tr>
                 <td>Approved By:</td>
-                <td>{{ApprovedByName}}</td>
+                <td>{{ ApprovedByName }}</td>
             </tr>
             <tr>
                 <td>Approved On:</td>
-                <td>{{ApprovedOn}}</td>
+                <td>{{ ApprovedOn }}</td>
             </tr>
         </table>
         
-        {{#if Comment}}
-        <div class="comment-box">
-            <strong>Approver's Comment:</strong><br>
-            {{Comment}}
-        </div>
-        {{/if}}
+        {{ CommentSection }}
         
         <p>
-            <a href="{{EntityUrl}}" class="button">View Opportunity</a>
+            <a href="{{ EntityUrl }}" class="button">View Opportunity</a>
         </p>
     </div>
     
