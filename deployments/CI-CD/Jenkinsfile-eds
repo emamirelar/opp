@@ -22,22 +22,54 @@ node(agentLabel) {
     try {
         stage('Checkout Code') {
             cleanWs()
-            // Checkout main repository with submodules
-            checkout([
-                $class: 'GitSCM',
-                branches: scm.branches,
-                doGenerateSubmoduleConfigurations: false,
-                extensions: [
-                    [$class: 'SubmoduleOption', 
-                     disableSubmodules: false, 
-                     parentCredentials: true, 
-                     recursiveSubmodules: true, 
-                     reference: '', 
-                     trackingSubmodules: false]
-                ],
-                submoduleCfg: [],
-                userRemoteConfigs: scm.userRemoteConfigs
-            ])
+            def checkoutSuccess = false
+            def maxAttempts = 3
+            def lastError = null
+
+            for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+                try {
+                    echo "Checkout attempt ${attempt} of ${maxAttempts}..."
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: scm.branches,
+                        doGenerateSubmoduleConfigurations: false,
+                        extensions: [
+                            [$class: 'CloneOption',
+                             depth: 0,
+                             noTags: false,
+                             reference: '',
+                             shallow: false,
+                             timeout: 5],
+                            [$class: 'SubmoduleOption',
+                             disableSubmodules: false,
+                             parentCredentials: true,
+                             recursiveSubmodules: true,
+                             reference: '',
+                             timeout: 5,
+                             trackingSubmodules: false]
+                        ],
+                        submoduleCfg: [],
+                        userRemoteConfigs: scm.userRemoteConfigs
+                    ])
+                    checkoutSuccess = true
+                    echo "Checkout succeeded on attempt ${attempt}"
+                    break
+                } catch (Exception checkoutError) {
+                    lastError = checkoutError
+                    echo "Checkout attempt ${attempt} failed: ${checkoutError.getMessage()}"
+                    if (attempt < maxAttempts) {
+                        def waitSeconds = attempt * 15
+                        echo "Waiting ${waitSeconds} seconds before retry..."
+                        sleep(waitSeconds)
+                        sh 'git clean -fdx || true'
+                        sh 'git submodule foreach --recursive git clean -fdx || true'
+                    }
+                }
+            }
+
+            if (!checkoutSuccess) {
+                error("Checkout failed after ${maxAttempts} attempts. Last error: ${lastError?.getMessage() ?: 'Unknown'}")
+            }
 
             // Verify submodule was checked out
             sh """
@@ -120,28 +152,31 @@ node(agentLabel) {
         }
 
         stage('Ensure Artifact Registry Exists') {
-            withCredentials([file(credentialsId: CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-                sh """
-                UNIQUE_CREDS_FILE="\${WORKSPACE}/gcp-creds-registry-\${BUILD_NUMBER}.json"
-                cp "\${GOOGLE_APPLICATION_CREDENTIALS}" "\${UNIQUE_CREDS_FILE}"
-                gcloud auth activate-service-account --key-file="\${UNIQUE_CREDS_FILE}"
-                gcloud config set project ${PROJECT_ID}
-                
-                REPO_TYPE="docker"
+            // Retry for transient GCP API/network issues
+            retry(3) {
+                withCredentials([file(credentialsId: CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    sh """
+                    UNIQUE_CREDS_FILE="\${WORKSPACE}/gcp-creds-registry-\${BUILD_NUMBER}.json"
+                    cp "\${GOOGLE_APPLICATION_CREDENTIALS}" "\${UNIQUE_CREDS_FILE}"
+                    gcloud auth activate-service-account --key-file="\${UNIQUE_CREDS_FILE}"
+                    gcloud config set project ${PROJECT_ID}
+                    
+                    REPO_TYPE="docker"
 
-                if ! gcloud artifacts repositories describe "${REPO_NAME}" --location="${REGION}" >/dev/null 2>&1; then
-                    echo "Artifact Registry '${REPO_NAME}' does not exist in '${REGION}'. Creating..."
-                    gcloud artifacts repositories create "${REPO_NAME}" \\
-                        --repository-format="\$REPO_TYPE" \\
-                        --location="${REGION}" \\
-                        --description="Docker repository for External Data Service"
-                else
-                    echo "Artifact Registry '${REPO_NAME}' already exists in '${REGION}'."
-                fi
-                
-                # Cleanup unique credential file
-                rm -f "\${UNIQUE_CREDS_FILE}"
-                """
+                    if ! gcloud artifacts repositories describe "${REPO_NAME}" --location="${REGION}" >/dev/null 2>&1; then
+                        echo "Artifact Registry '${REPO_NAME}' does not exist in '${REGION}'. Creating..."
+                        gcloud artifacts repositories create "${REPO_NAME}" \\
+                            --repository-format="\$REPO_TYPE" \\
+                            --location="${REGION}" \\
+                            --description="Docker repository for External Data Service"
+                    else
+                        echo "Artifact Registry '${REPO_NAME}' already exists in '${REGION}'."
+                    fi
+                    
+                    # Cleanup unique credential file
+                    rm -f "\${UNIQUE_CREDS_FILE}"
+                    """
+                }
             }
         }
 
@@ -195,9 +230,27 @@ node(agentLabel) {
                 echo "Configuration files in build context:"
                 ls -la config/ || echo "No config directory found"
 
-                # Build and push External Data Service image
+                # Build and push External Data Service image (with retry for transient GCP API issues)
                 echo "Building Docker image..."
-                gcloud builds submit --tag ${REGION}-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME}:${IMAGE_TAG} .
+                BUILD_SUCCESS=false
+                for attempt in 1 2 3; do
+                    echo "Build attempt \$attempt for External Data Service..."
+                    if gcloud builds submit --tag ${REGION}-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME}:${IMAGE_TAG} .; then
+                        echo "External Data Service build successful on attempt \$attempt"
+                        BUILD_SUCCESS=true
+                        break
+                    else
+                        echo "External Data Service build failed on attempt \$attempt"
+                        if [ \$attempt -lt 3 ]; then
+                            echo "Waiting 20 seconds before retry..."
+                            sleep 20
+                        fi
+                    fi
+                done
+                if [ "\$BUILD_SUCCESS" = false ]; then
+                    echo "External Data Service build failed after 3 attempts"
+                    exit 1
+                fi
 
                 # Deploy External Data Service to Cloud Run with retry logic
                 echo "Deploying External Data Service to Cloud Run..."
