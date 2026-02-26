@@ -14,6 +14,7 @@ import { forkJoin, Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
+import { DocumentService } from '@shared/services/api/document.service';
 import { PartnerService } from '@partnerships/partners/services/partner.service';
 import { ContactService } from '@partnerships/contacts/services/contact.service';
 import { InteractionService } from '@partnerships/interactions/services/interaction.service';
@@ -92,6 +93,7 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   private permissionService = inject(PermissionService);
   private feedbackDialogService = inject(FeedbackDialogService);
   private dialogService = inject(DialogService);
+  private documentService = inject(DocumentService);
   public layoutService = inject(LayoutService);
   private elementRef = inject(ElementRef);
   private workflowService = inject(WorkflowService);
@@ -255,6 +257,9 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
 
   // Dynamic content test mode
   showDynamicContentTest = signal<boolean>(false);
+
+  // Test PDF generation loading state
+  testPdfLoading = signal<boolean>(false);
 
   // UNCOMMENT BELOW TO ENABLE DUMMY DATA TESTING FOR "VIEW ALL" FUNCTIONALITY
   // useDummyData = signal(false);
@@ -1174,6 +1179,25 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
 
   toggleDynamicContentTest() {
     this.showDynamicContentTest.set(!this.showDynamicContentTest());
+  }
+
+  /**
+   * Convert markdown to Google Doc. Displays success with Google Doc URL or error.
+   */
+  generateTestPdf() {
+    this.testPdfLoading.set(true);
+    this.documentService.convertMarkdownToDoc().subscribe({
+      next: (response) => {
+        this.testPdfLoading.set(false);
+        this.feedbackDialogService.showSuccessToast({
+          summary: 'Success',
+          detail: `Google Doc created: ${response.googleDocUrl}`
+        });
+      },
+      error: () => {
+        this.testPdfLoading.set(false);
+      }
+    });
   }
 
   formatDate(dateString: string | Date | null | undefined): string {
