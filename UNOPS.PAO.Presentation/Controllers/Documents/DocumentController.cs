@@ -216,7 +216,10 @@ public class DocumentController : BaseController
             var aiRetrieverManager = _managerWrapper.AiRetrieverManager;
             if (aiRetrieverManager == null)
                 throw new InvalidOperationException("AI Retriever manager not available");
-            var result = await aiRetrieverManager.ConvertMarkdownToGoogleDocAsync(markdownContent, userEmail);
+            var fileName = !string.IsNullOrEmpty(request?.Filename) ? request.Filename : "document.md";
+            if (!fileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+                fileName += ".md";
+            var result = await aiRetrieverManager.ConvertMarkdownToGoogleDocAsync(markdownContent, userEmail, fileName);
 
             if (!string.IsNullOrEmpty(result.DocumentUrl))
             {
@@ -256,7 +259,10 @@ public class DocumentController : BaseController
             var aiRetrieverManager = _managerWrapper.AiRetrieverManager;
             if (aiRetrieverManager == null)
                 throw new InvalidOperationException("AI Retriever manager not available");
-            var result = await aiRetrieverManager.ConvertMarkdownToGoogleDocAsync(request.Data, userEmail);
+            var fileName = !string.IsNullOrEmpty(request.Filename) ? request.Filename : "document.md";
+            if (!fileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+                fileName += ".md";
+            var result = await aiRetrieverManager.ConvertMarkdownToGoogleDocAsync(request.Data, userEmail, fileName);
 
             return (object)new
             {
