@@ -32,7 +32,8 @@ import {
   OpportunityStatementValidationResponse,
 } from '@shared/models/opportunity.model';
 import { FeedbackDialogService } from '@shared/services/ui';
-import { GoogleOAuthService } from '@core/services/auth/google-oauth.service';
+import { DocumentService } from '@shared/services/api/document.service';
+import { firstValueFrom } from 'rxjs';
 
 /**
  * @class OpportunityStatementSectionComponent
@@ -72,7 +73,7 @@ export class OpportunityStatementSectionComponent implements OnInit {
   private readonly opportunityService = inject(OpportunityService);
   private readonly translateService = inject(TranslateService);
   private readonly feedbackService = inject(FeedbackDialogService);
-  private readonly googleOAuthService = inject(GoogleOAuthService);
+  private readonly documentService = inject(DocumentService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   /**
@@ -387,92 +388,12 @@ export class OpportunityStatementSectionComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      // Get valid Google OAuth ID token (will trigger auth popup if needed)
-      let idToken: string;
-
-      try {
-        idToken = await this.googleOAuthService.getValidIdToken();
-      } catch (authError) {
-        console.error('❌ Google authentication failed:', authError);
-
-        this.feedbackService.showErrorToast({
-          summary: this.translateService.instant('message.error'),
-          detail: this.translateService.instant(
-            'message.opportunity.exportAuthRequired',
-          ),
-        });
-
-        this.isExporting.set(false);
-        this.cdr.detectChanges();
-        return;
-      }
-
-      // Prepare the request
-      const formData = new FormData();
-      const markdownBlob = new Blob([markdown], { type: 'text/markdown' });
-      const filename = `${this.opportunity().name || 'Opportunity Statement'}`;
-      formData.append('file', markdownBlob, filename);
-      formData.append('data', JSON.stringify({ name: filename }));
-
+      // Convert via backend (uses same IAP headers as similar-projects)
       console.log('🌐 Exporting to Google Doc...');
-
-      // Make API call with OAuth ID token
-      const response = await fetch(
-        'https://api.ai.unops.org/v1/convert/markdown-to-google-doc',
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-          },
-          body: formData,
-        },
+      const result = await firstValueFrom(
+        this.documentService.convertMarkdownToDoc(markdown)
       );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error:', errorText);
-
-        // Handle authentication errors - refresh token and retry
-        if (response.status === 401 || response.status === 403) {
-          console.log('🔄 Token expired, refreshing and retrying...');
-
-          try {
-            // Refresh token and retry
-            await this.googleOAuthService.refreshToken();
-
-            // Retry the export with fresh token
-            this.isExporting.set(false);
-            this.cdr.detectChanges();
-            return this.exportToGoogleDoc();
-          } catch (refreshError) {
-            console.error('❌ Token refresh failed:', refreshError);
-
-            this.feedbackService.showErrorToast({
-              summary: this.translateService.instant('message.error'),
-              detail: this.translateService.instant(
-                'message.opportunity.exportAuthExpired',
-              ),
-            });
-          }
-        } else {
-          this.feedbackService.showErrorToast({
-            summary: this.translateService.instant('message.error'),
-            detail: this.translateService.instant(
-              'message.opportunity.exportFailed',
-            ),
-          });
-        }
-
-        this.isExporting.set(false);
-        this.cdr.detectChanges();
-        return;
-      }
-
-      const result = await response.json();
-      console.log('✅ Export successful:', result);
-
-      // Extract the Google Doc URL from the response
-      const docUrl = result.data?.data?.url || result.data?.url || result.url;
+      const docUrl = result?.googleDocUrl;
 
       if (docUrl) {
         this.exportedDocUrl = docUrl;

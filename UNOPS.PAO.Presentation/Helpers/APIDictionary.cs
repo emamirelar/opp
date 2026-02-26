@@ -11,6 +11,7 @@ public class APIDictionary
     public const string Document = APIPrefix + "document";
     public const string DocumentType = APIPrefix + "document-type";
     public const string DocumentGenerate = Document + "/generate-document";
+    public const string DocumentConvertMarkdownToDoc = Document + "/convert-markdown-to-doc";
     public const string DocumentUpload = Document + "/upload";
     public const string DocumentLink = Document + "/link";
     public const string DocumentViewUrl = Document + "/view-url";
