@@ -838,21 +838,25 @@ export class OpportunityTeamSectionComponent implements OnInit {
             next: (responses: EntityUserRolesByOrgUnitResponse[]) => {
               this.loadingAutoPopulatedStakeholders.set(false);
 
-              // Create a map of orgUnitId -> roleId -> user names
+              // Create maps of orgUnitId -> roleId -> user names and position
               const userNameMap = new Map<string, string>();
+              const positionMap = new Map<string, string | null>();
               for (const response of responses) {
                 for (const group of response.roleGroups) {
                   const key = `${response.organizationHierarchyId}-${group.entityRoleId}`;
                   const userNames = group.users.map((u) => u.name).join(', ');
                   userNameMap.set(key, userNames);
+                  const firstUser = group.users?.[0];
+                  positionMap.set(key, firstUser?.position ?? null);
                 }
               }
 
-              // Enrich stakeholders with user names
+              // Enrich stakeholders with user names and position (third line: Advisor, PMO - Specialist, etc.)
               const enriched = rawStakeholders.map((s) => {
                 const key = `${s.organizationHierarchyId}-${s.entityRoleId}`;
                 const userName = userNameMap.get(key) || null;
-                return { ...s, userName };
+                const position = positionMap.get(key) ?? s.position ?? null;
+                return { ...s, userName, position };
               });
 
               this.enrichedAutoPopulatedStakeholders.set(enriched);
