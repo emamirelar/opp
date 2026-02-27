@@ -105,11 +105,17 @@ public class SmtpEmailSender : IEmailSender
             if (!string.IsNullOrEmpty(_emailConfig.LocalDomain))
                 client.LocalDomain = _emailConfig.LocalDomain;
 
+            _logger.LogInformation("Before attempting connection to SMTP Server: {SmtpServer}, Port: {SmtpPort}", _emailConfig.SmtpServer,
+                _emailConfig.SmtpPort);
+
             await client.ConnectAsync(
                 _emailConfig.SmtpServer,
                 _emailConfig.SmtpPort,
                 SecureSocketOptions.StartTlsWhenAvailable
             );
+
+            _logger.LogInformation("After the connection to SMTP Server: {SmtpServer}, Port: {SmtpPort}", _emailConfig.SmtpServer,
+                _emailConfig.SmtpPort);
 
             if (!string.IsNullOrEmpty(_emailConfig.Username) && !string.IsNullOrEmpty(_emailConfig.Password))
             {
