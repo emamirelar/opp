@@ -289,6 +289,22 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         await opportunityRepository.AddAsync(entity);
 
+        // Auto-populate stakeholders from EntityUserRoles when ResponsibleOrgUnitId is set
+        // This ensures director roles and Decision Making Pathway roles appear in the Team section
+        if (model.ResponsibleOrgUnitId.HasValue)
+        {
+            var entityWithStakeholders = await context.Opportunities
+                .Include(o => o.Stakeholders)
+                .FirstOrDefaultAsync(o => o.Id == entity.Id && !o.IsDeleted);
+
+            if (entityWithStakeholders != null)
+            {
+                await AutoPopulateStakeholdersFromOrgUnitAsync(entityWithStakeholders, model.ResponsibleOrgUnitId.Value);
+                await context.SaveChangesAsync();
+                entity = entityWithStakeholders;
+            }
+        }
+
         var opportunityModel = mapper.Map<OpportunityModel>(entity);
         
         // Compute statistics
@@ -3753,7 +3769,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             // Don't fail if assignment fails - log handled by caller
         }
 
-        return createdOpportunity;
+        // Reload opportunity to include stakeholders added by AssignCreatorAsOpportunityManagerAsync
+        // and AutoPopulateStakeholdersFromOrgUnitAsync (called from CreateOpportunityAsync when ResponsibleOrgUnitId is set)
+        return await GetOpportunityAsync(createdOpportunity.Id) ?? createdOpportunity;
     }
 
     public async Task<bool> DeleteOpportunityAsync(int id)

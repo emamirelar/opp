@@ -1904,6 +1904,7 @@
   "message.validation.validationFailed": "Error de ValidaciÃ³n",
   "message.validation.selectAtLeastOneInteraction": "Por favor seleccione al menos una interacciÃ³n",
   "message.validation.selectAtLeastOnePartnerRole": "Por favor seleccione al menos un rol de socio (Financiamiento o Cliente)",
+  "message.validation.orgUnitRequired": "La unidad organizativa responsable del desarrollo de la oportunidad es obligatoria",
   "message.validation.selectAtLeastOnePartner": "Por favor seleccione al menos un socio para este documento",
   "message.validation.noChangeInPartnerSelection": "Por favor realice cambios en la selecciÃ³n de socios antes de guardar",
   "message.selectPartnersForDocument": "Seleccione el(los) socio(s) al que se relaciona este documento (Marco de Resultados). Puede seleccionar socios de financiamiento, socios clientes o ambos.",
