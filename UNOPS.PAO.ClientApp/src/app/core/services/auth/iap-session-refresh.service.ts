@@ -4,8 +4,9 @@
  *
  * GCIP access tokens expire after 1 hour (non-configurable, inherited from Firebase).
  * Hidden iframes cannot complete the GCIP auth-ui token exchange due to cross-origin
- * cookie restrictions. A first-party popup window is required — it opens off-screen
- * and auto-closes so the user never sees it.
+ * cookie restrictions. This service uses a minimal popup window that opens, refreshes
+ * the session cookie, and auto-closes. The main window is immediately refocused so
+ * the user experiences only a brief taskbar flash.
  *
  * @see https://cloud.google.com/iap/docs/external-identity-sessions
  */
@@ -74,8 +75,8 @@ export class IapSessionRefreshService {
   }
 
   /**
-   * @description Refresh the IAP session via a popup window with DO_SESSION_REFRESH.
-   * The popup opens off-screen and auto-closes after the refresh completes.
+   * @description Refresh the IAP session via a minimal popup with DO_SESSION_REFRESH.
+   * The popup auto-closes and the main window is immediately refocused.
    * If a refresh is already in progress, all callers share the same promise.
    */
   refreshSession(): Promise<boolean> {
@@ -105,9 +106,8 @@ export class IapSessionRefreshService {
   }
 
   /**
-   * Opens DO_SESSION_REFRESH in a popup positioned off-screen.
-   * The popup auto-closes after 3 seconds — just enough time for IAP
-   * to process the refresh and set the session cookie.
+   * Opens DO_SESSION_REFRESH in a minimal popup, immediately refocuses the
+   * main window, and auto-closes after 2 seconds.
    */
   private openRefreshPopup(url: string): Promise<boolean> {
     return new Promise((resolve) => {
@@ -122,19 +122,23 @@ export class IapSessionRefreshService {
         return;
       }
 
+      // Immediately refocus the main window so the user stays in context
+      try { popup.blur(); } catch { /* cross-origin */ }
+      window.focus();
+
       setTimeout(() => {
         try {
           if (!popup.closed) {
             popup.close();
           }
-        } catch {
-          // Cross-origin — popup already navigated away
-        }
+        } catch { /* cross-origin */ }
+
+        window.focus();
 
         this.delay(500).then(() => {
           this.verifySession().then(resolve);
         });
-      }, 3000);
+      }, 2000);
     });
   }
 
