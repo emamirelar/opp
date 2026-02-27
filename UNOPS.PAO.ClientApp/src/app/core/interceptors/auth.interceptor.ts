@@ -53,8 +53,13 @@ export function authInterceptor(
             return throwError(() => error);
           }
 
-          // Skip refresh attempts from the refresh verification itself to avoid loops
+          // Skip refresh for verification requests to avoid loops
           if (request.url.includes('/user/claims') || request.url.includes('favicon.ico')) {
+            return throwError(() => error);
+          }
+
+          // Background requests fail silently
+          if (isBackgroundRequest(request)) {
             return throwError(() => error);
           }
 
@@ -64,28 +69,19 @@ export function authInterceptor(
                 if (refreshed) {
                   return next(request);
                 }
-                if (!isBackgroundRequest(request)) {
-                  router.navigate(['login']);
-                }
+                router.navigate(['login']);
                 return throwError(() => error);
               }),
               catchError(() => {
-                if (!isBackgroundRequest(request)) {
-                  router.navigate(['login']);
-                }
+                router.navigate(['login']);
                 return throwError(() => error);
               })
             );
           }
 
-          if (isBackgroundRequest(request)) {
-            return throwError(() => error);
-          }
-
           router.navigate(['login']);
           return throwError(() => error);
         }
-
       }
 
       return throwError(() => error);
@@ -94,8 +90,8 @@ export function authInterceptor(
 }
 
 /**
- * Background polling requests should not trigger login redirects on 401.
- * They should fail silently and let the next user-initiated request handle auth.
+ * Background polling requests should not trigger redirects on 401.
+ * They fail silently and the next user-initiated request handles auth.
  */
 function isBackgroundRequest(request: HttpRequest<unknown>): boolean {
   return request.url.includes('/notifications') ||
