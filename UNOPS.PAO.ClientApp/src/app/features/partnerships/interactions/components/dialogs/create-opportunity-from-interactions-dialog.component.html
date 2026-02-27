@@ -23,6 +23,8 @@
             {{ 'message.validation.opportunityNameTooLong' | translate }}
           } @else if (showPartnerFields() && !isFundingPartner() && !isClientPartner()) {
             {{ 'message.validation.selectAtLeastOnePartnerRole' | translate }}
+          } @else if (!selectedOrgUnitId()) {
+            {{ 'message.validation.orgUnitRequired' | translate }}
           }
         </p-message>
       }
@@ -107,6 +109,97 @@
             {{ 'message.opportunityWillBeCreatedForPartner' | translate: { partnerName: partnerName() } }}
           </div>
         }
+
+        <!-- Org Unit Responsible for Opportunity development (required) -->
+        <div>
+          <h4 class="text-sm font-semibold text-gray-700 mb-2">
+            {{ 'label.opportunity.responsibleOrgUnit' | translate }} *
+          </h4>
+          <p-select
+            [ngModel]="selectedOrgUnitId()"
+            (ngModelChange)="onOrgUnitChange($event)"
+            [options]="organizationUnits()"
+            optionLabel="name"
+            optionValue="id"
+            [filter]="true"
+            filterBy="name,code"
+            [placeholder]="'label.opportunity.selectOrgUnit' | translate"
+            [showClear]="true"
+            class="w-full"
+            [disabled]="generating()"
+            appendTo="body"
+          />
+          @if (selectedOrgUnitId()) {
+            <div class="mt-3 space-y-3">
+              @if (loadingOrgUnitStakeholders()) {
+                <div class="p-3 bg-unops-surface-secondary rounded-unops-lg border border-unops-neutral-300 flex items-center gap-2 text-unops-neutral-600">
+                  <i class="pi pi-spin pi-spinner"></i>
+                  <span>{{ 'message.loadingAutoPopulatedStakeholders' | translate }}</span>
+                </div>
+              } @else {
+                @if (groupedDirectorRoles().length > 0 || decisionMakingPathwayRoles().length > 0) {
+                  <div class="text-xs text-unops-secondary mb-3 flex items-center gap-1">
+                    <i class="pi pi-lock text-unops-secondary"></i>
+                    <span>{{ 'label.opportunity.autoPopulatedFromOrgUnit' | translate }}</span>
+                  </div>
+                  @if (selectedOrgUnitName()) {
+                    <div class="text-sm font-semibold text-unops-primary mb-2 flex items-center gap-2">
+                      <i class="pi pi-building text-unops-primary"></i>
+                      <span>{{ selectedOrgUnitName() }}</span>
+                      <span class="text-unops-neutral-500 font-normal text-xs">({{ groupedDirectorRoles().length + decisionMakingPathwayRoles().length }})</span>
+                    </div>
+                  }
+                }
+                @if (groupedDirectorRoles().length > 0) {
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    @for (stakeholder of groupedDirectorRoles(); track stakeholder.entityRoleId) {
+                      <div class="bg-unops-surface-secondary rounded-unops-md p-2.5 border border-unops-neutral-300 opacity-90">
+                        <div class="flex items-center gap-2">
+                          <p-avatar label="A" shape="circle" size="normal" styleClass="bg-emerald-100 text-emerald-600 flex-shrink-0" />
+                          <div class="min-w-0 flex-1">
+                            <div class="font-semibold text-unops-secondary text-sm truncate">{{ getTranslatedRoleName(stakeholder) }}</div>
+                            @if (stakeholder.userName) {
+                              <div class="text-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">{{ stakeholder.userName }}</div>
+                            }
+                            @if (stakeholder.position) {
+                              <div class="text-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">{{ stakeholder.position }}</div>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+                @if (decisionMakingPathwayRoles().length > 0) {
+                  <div class="pt-4 mt-4 border-t border-unops-neutral-300">
+                    <h4 class="text-sm font-semibold text-unops-neutral-700 mb-3 flex items-center gap-2">
+                      <i class="pi pi-sitemap text-unops-primary"></i>
+                      <span>{{ 'label.opportunity.decisionMakingPathway' | translate }}</span>
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                      @for (stakeholder of decisionMakingPathwayRoles(); track stakeholder.entityRoleId) {
+                        <div class="bg-emerald-50 rounded-unops-md p-2.5 border border-emerald-300">
+                          <div class="flex items-center gap-2">
+                            <p-avatar label="D" shape="circle" size="normal" styleClass="bg-emerald-100 text-emerald-700 flex-shrink-0" />
+                            <div class="min-w-0 flex-1">
+                              <div class="font-semibold text-unops-secondary text-sm truncate">{{ getTranslatedRoleName(stakeholder) }}</div>
+                              @if (stakeholder.userName) {
+                                <div class="text-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">{{ stakeholder.userName }}</div>
+                              }
+                              @if (stakeholder.position) {
+                                <div class="text-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">{{ stakeholder.position }}</div>
+                              }
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+          }
+        </div>
       </div>
     </div>
     
@@ -656,33 +749,109 @@
 
             <!-- Responsible Org Unit & Initiative Type -->
             <div class="grid grid-cols-2 gap-4">
-              @if (proposedOpportunity()!.opportunity.responsibleOrgUnitName) {
-                <div 
-                  class="border rounded-lg p-4 transition-all cursor-pointer"
-                  [ngClass]="{
-                    'bg-blue-50 border-blue-300': isFieldSelected('responsibleOrgUnitName'),
-                    'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('responsibleOrgUnitName')
-                  }"
-                  (click)="toggleField('responsibleOrgUnitName')">
-                  <div class="flex items-start gap-3 mb-2">
-                    <p-checkbox
-                      [binary]="true"
-                      [ngModel]="isFieldSelected('responsibleOrgUnitName')"
-                      (ngModelChange)="toggleField('responsibleOrgUnitName')"
-                      (click)="$event.stopPropagation()"
-                    />
-                    <label class="block text-sm font-semibold text-gray-700 flex-1">
-                      {{ 'label.opportunity.responsibleOrgUnit' | translate }}
-                    </label>
-                  </div>
-                  <input
-                    pInputText
-                    [value]="proposedOpportunity()!.opportunity.responsibleOrgUnitName"
-                    class="w-full bg-yellow-50 border-yellow-200"
-                    readonly
-                    (click)="$event.stopPropagation()" />
+              <!-- Org Unit Responsible - dropdown with director roles and DoA pathway (like Team section) -->
+              <div 
+                class="border rounded-lg p-4 transition-all"
+                [ngClass]="{
+                  'bg-blue-50 border-blue-300': isFieldSelected('responsibleOrgUnitName') || !!selectedOrgUnitId(),
+                  'hover:shadow-sm bg-white border-gray-200': !isFieldSelected('responsibleOrgUnitName') && !selectedOrgUnitId()
+                }">
+                <div class="flex items-start gap-3 mb-2">
+                  <p-checkbox
+                    [binary]="true"
+                    [ngModel]="isFieldSelected('responsibleOrgUnitName') || !!selectedOrgUnitId()"
+                    (ngModelChange)="toggleOrgUnitField($event)"
+                    (click)="$event.stopPropagation()"
+                  />
+                  <label class="block text-sm font-semibold text-gray-700 flex-1">
+                    {{ 'label.opportunity.responsibleOrgUnit' | translate }}
+                  </label>
                 </div>
-              }
+                <p-select
+                  [ngModel]="selectedOrgUnitId() ?? proposedOpportunity()!.opportunity.responsibleOrgUnitId"
+                  (ngModelChange)="onOrgUnitChange($event)"
+                  [options]="organizationUnits()"
+                  optionLabel="name"
+                  optionValue="id"
+                  [filter]="true"
+                  filterBy="name,code"
+                  [placeholder]="'label.opportunity.selectOrgUnit' | translate"
+                  [showClear]="true"
+                  class="w-full"
+                  appendTo="body"
+                  (click)="$event.stopPropagation()"
+                />
+                @if (selectedOrgUnitId() || proposedOpportunity()!.opportunity.responsibleOrgUnitId) {
+                  <div class="mt-3 space-y-3">
+                    @if (loadingOrgUnitStakeholders()) {
+                      <div class="p-3 bg-unops-surface-secondary rounded-unops-lg border border-unops-neutral-300 flex items-center gap-2 text-unops-neutral-600">
+                        <i class="pi pi-spin pi-spinner"></i>
+                        <span>{{ 'message.loadingAutoPopulatedStakeholders' | translate }}</span>
+                      </div>
+                    } @else {
+                      @if (groupedDirectorRoles().length > 0 || decisionMakingPathwayRoles().length > 0) {
+                        <div class="text-xs text-unops-secondary mb-3 flex items-center gap-1">
+                          <i class="pi pi-lock text-unops-secondary"></i>
+                          <span>{{ 'label.opportunity.autoPopulatedFromOrgUnit' | translate }}</span>
+                        </div>
+                        @if (selectedOrgUnitName()) {
+                          <div class="text-sm font-semibold text-unops-primary mb-2 flex items-center gap-2 flex-wrap">
+                            <i class="pi pi-building text-unops-primary"></i>
+                            <span>{{ selectedOrgUnitName() }}</span>
+                            <span class="text-unops-neutral-500 font-normal text-xs">({{ groupedDirectorRoles().length + decisionMakingPathwayRoles().length }})</span>
+                          </div>
+                        }
+                      }
+                      @if (groupedDirectorRoles().length > 0) {
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                          @for (stakeholder of groupedDirectorRoles(); track stakeholder.entityRoleId) {
+                            <div class="bg-unops-surface-secondary rounded-unops-md p-2.5 border border-unops-neutral-300 opacity-90">
+                              <div class="flex items-center gap-2">
+                                <p-avatar label="A" shape="circle" size="normal" styleClass="bg-emerald-100 text-emerald-600 flex-shrink-0" />
+                                <div class="min-w-0 flex-1">
+                                  <div class="font-semibold text-unops-secondary text-sm truncate">{{ getTranslatedRoleName(stakeholder) }}</div>
+                                  @if (stakeholder.userName) {
+                                    <div class="text-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">{{ stakeholder.userName }}</div>
+                                  }
+                                  @if (stakeholder.position) {
+                                    <div class="text-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">{{ stakeholder.position }}</div>
+                                  }
+                                </div>
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      }
+                      @if (decisionMakingPathwayRoles().length > 0) {
+                        <div class="pt-4 mt-4 border-t border-unops-neutral-300">
+                          <h4 class="text-sm font-semibold text-unops-neutral-700 mb-3 flex items-center gap-2">
+                            <i class="pi pi-sitemap text-unops-primary"></i>
+                            <span>{{ 'label.opportunity.decisionMakingPathway' | translate }}</span>
+                          </h4>
+                          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                            @for (stakeholder of decisionMakingPathwayRoles(); track stakeholder.entityRoleId) {
+                              <div class="bg-emerald-50 rounded-unops-md p-2.5 border border-emerald-300">
+                                <div class="flex items-center gap-2">
+                                  <p-avatar label="D" shape="circle" size="normal" styleClass="bg-emerald-100 text-emerald-700 flex-shrink-0" />
+                                  <div class="min-w-0 flex-1">
+                                    <div class="font-semibold text-unops-secondary text-sm truncate">{{ getTranslatedRoleName(stakeholder) }}</div>
+                                    @if (stakeholder.userName) {
+                                      <div class="text-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">{{ stakeholder.userName }}</div>
+                                    }
+                                    @if (stakeholder.position) {
+                                      <div class="text-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">{{ stakeholder.position }}</div>
+                                    }
+                                  </div>
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      }
+                    }
+                  </div>
+                }
+              </div>
               @if (proposedOpportunity()!.opportunity.proposedInitiativeTypeName) {
                 <div 
                   class="border rounded-lg p-4 transition-all cursor-pointer"
@@ -1757,6 +1926,7 @@
         [label]="'button.createOpportunity' | translate"
         icon="pi pi-check"
         severity="success"
+        [disabled]="!canCreate()"
         [loading]="generating()"
         (click)="createOpportunity()">
       </button>
