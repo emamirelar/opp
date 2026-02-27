@@ -582,7 +582,7 @@
                       <div class="text-sm text-unops-primary">{{ getTranslatedRoleName(stakeholder) }}</div>
                     }
                     @if (stakeholder.position) {
-                      <div class="text-xs text-unops-neutral-600 mt-0.5">{{ stakeholder.position }}</div>
+                      <div class="text-xs text-unops-primary font-medium mt-0.5 truncate" [title]="stakeholder.position">{{ stakeholder.position }}</div>
                     }
                   </div>
                 </div>
