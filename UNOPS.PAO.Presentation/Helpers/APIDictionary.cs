@@ -206,6 +206,7 @@ public class APIDictionary
     public const string OpportunityApplyAiChanges = Opportunity + "/{id}/apply-ai-changes";
     public const string OpportunityGenerateStatement = Opportunity + "/{id}/generate-statement";
     public const string OpportunityValidateStatement = Opportunity + "/{id}/validate-statement";
+    public const string OpportunityGenerateStatementPdf = Opportunity + "/generate-statement-pdf";
 
     // Comment
     public const string Comment = APIPrefix + "comment";

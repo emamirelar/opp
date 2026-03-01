@@ -20,6 +20,7 @@ using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Business.Mapping;
 using UNOPS.PAO.UNOPSBusiness.Services;
+using UNOPS.PAO.Models.Documents;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -43,8 +44,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         IExchangeRateService exchangeRateService,
         IPermissionService permissionService = null,
         IHttpContextAccessor httpContextAccessor = null,
-        IServiceProvider serviceProvider = null)
-        : base(mapper, context as UNOPSAppDbContext, configuration, null, "Opportunity", permissionService, httpContextAccessor)
+        IServiceProvider serviceProvider = null,
+        IAiRetrieverManager aiRetrieverManager = null)
+        : base(mapper, context as UNOPSAppDbContext, configuration, null, "Opportunity", permissionService, httpContextAccessor, aiRetrieverManager)
     {
         this.mapper = mapper;
         this.context = context;
@@ -4851,6 +4853,67 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             .FirstOrDefaultAsync();
         result["opportunityStatementMarkdown"] = statement ?? "";
         return result;
+    }
+
+    /// <summary>
+    /// Gets markdown content for PDF generation from Opportunity entity.
+    /// Fetches OpportunityStatementMarkdown from the database.
+    /// </summary>
+    protected override async Task<string?> GetMarkdownForPdfGenerationAsync(string entityName, int entityId)
+    {
+        if (!string.Equals(entityName, "Opportunity", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var statement = await uNOPSAppDbContext.Set<Opportunity>()
+            .AsNoTracking()
+            .Where(o => o.Id == entityId && !o.IsDeleted)
+            .Select(o => o.OpportunityStatementMarkdown)
+            .FirstOrDefaultAsync();
+
+        return statement;
+    }
+
+    /// <summary>
+    /// Generates a statement PDF from markdown, uploads to GCS, and returns the GCS path.
+    /// When EntityName and EntityId are provided (e.g., Opportunity/123), fetches the statement from the database.
+    /// Otherwise uses the Data (markdown) from the request.
+    /// </summary>
+    /// <param name="request">Request with EntityName, EntityId, optional Data, and Filename</param>
+    /// <returns>Result with GcsPath on success</returns>
+    public async Task<GeneratePdfResult> GenerateStatementPdfAsync(GeneratePdfRequest request)
+    {
+        string? markdown;
+        string entityName;
+        int entityId;
+
+        if (!string.IsNullOrEmpty(request.EntityName) && request.EntityId.HasValue && request.EntityId.Value > 0)
+        {
+            entityName = request.EntityName;
+            entityId = request.EntityId.Value;
+            markdown = await GetMarkdownForPdfGenerationAsync(entityName, entityId);
+            if (string.IsNullOrEmpty(markdown) && !string.IsNullOrEmpty(request.Data))
+                markdown = request.Data;
+        }
+        else
+        {
+            markdown = request.Data;
+            entityName = "Document";
+            entityId = 0;
+        }
+
+        if (string.IsNullOrEmpty(markdown))
+        {
+            return new GeneratePdfResult
+            {
+                Error = "No markdown content available",
+                Details = request.EntityName != null && request.EntityId.HasValue
+                    ? $"No statement found for {request.EntityName} ID {request.EntityId}. Provide Data in the request or ensure the entity has a statement."
+                    : "Provide Data (markdown) in the request."
+            };
+        }
+
+        var filename = !string.IsNullOrEmpty(request.Filename) ? request.Filename : "Generated_Document";
+        return await ConvertMarkdownToPdfAndUploadToGcsAsync(markdown, entityName, entityId, filename);
     }
 
     /// <summary>

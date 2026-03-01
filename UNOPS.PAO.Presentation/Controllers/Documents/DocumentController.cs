@@ -266,14 +266,14 @@ public class DocumentController : BaseController
     {
         try
         {
-            // Set up the external API endpoint
-            var convertEndpoint = "https://api.ai.dev.unops.org/v1/convert/markdown-to-google-doc";
-            
+            var baseUrl = _configuration["ExternalApiSettings:BaseUrl"]?.TrimEnd('/') ?? "https://api.ai.unops.org";
+            var convertEndpoint = $"{baseUrl}/v1/convert/markdown-to-google-doc";
+            var timeoutSeconds = _configuration.GetValue<int>("ExternalApiSettings:Timeout", 60);
+
             _logger.LogInformation("Converting markdown to Google Doc: {Filename}", filename);
-            
-            // Use CloudRunHelper to create authenticated HTTP client (same pattern as UNOPSGeminiManager)
+
             using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(convertEndpoint);
-            httpClient.Timeout = TimeSpan.FromSeconds(60); // Allow more time for document conversion
+            httpClient.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
             
             // Prepare the multipart form data
             var formData = new MultipartFormDataContent();
