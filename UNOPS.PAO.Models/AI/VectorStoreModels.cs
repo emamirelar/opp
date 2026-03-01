@@ -293,5 +293,14 @@ public class GoogleDocResponse
     /// </summary>
     [JsonPropertyName("error")]
     public string? Error { get; set; }
+
+    /// <summary>
+    /// Base64-encoded PDF when downloadPDF=true in request (API may return pdfBase64 or pdf_base64)
+    /// </summary>
+    [JsonPropertyName("pdfBase64")]
+    public string? PdfBase64 { get; set; }
+
+    [JsonPropertyName("pdf_base64")]
+    public string? PdfBase64Snake { get; set; }
 }
 

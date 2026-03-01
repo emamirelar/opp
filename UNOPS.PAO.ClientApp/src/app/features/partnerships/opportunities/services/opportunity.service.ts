@@ -67,6 +67,21 @@ export class OpportunityService {
   }
 
   /**
+   * Generate Opportunity Statement PDF and upload to GCS.
+   * Backend fetches markdown from entity and converts via AI service.
+   */
+  generateStatementPdf(request: {
+    entityName: string;
+    entityId: number;
+    filename?: string;
+  }): Observable<{ gcsPath?: string; error?: string; details?: string; success: boolean }> {
+    return this.http.post<{ gcsPath?: string; error?: string; details?: string; success: boolean }>(
+      `${this.apiUrl}/generate-statement-pdf`,
+      request
+    );
+  }
+
+  /**
    * Create a new opportunity
    */
   createOpportunity(request: OpportunityRequest): Observable<Opportunity> {

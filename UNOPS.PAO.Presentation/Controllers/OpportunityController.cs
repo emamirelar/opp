@@ -154,6 +154,28 @@ public class OpportunityController : BaseController
     }
 
     /// <summary>
+    /// Generates a statement PDF from markdown, uploads to GCS, and returns the GCS path.
+    /// When EntityName and EntityId are provided (e.g., Opportunity/123), fetches the opportunity statement from the database.
+    /// Otherwise uses the Data (markdown) from the request.
+    /// </summary>
+    /// <param name="request">Request with EntityName, EntityId, optional Data, and Filename</param>
+    /// <returns>Result with gcsPath on success</returns>
+    [HttpPost(APIDictionary.OpportunityGenerateStatementPdf)]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult> GenerateStatementPdf([FromBody] GeneratePdfRequest request)
+    {
+        if (request == null)
+            return BadRequest("Request cannot be null");
+
+        var result = await _manager.GenerateStatementPdfAsync(request);
+
+        if (result.Success)
+            return Ok(new { gcsPath = result.GcsPath });
+
+        return BadRequest(new { error = result.Error, details = result.Details });
+    }
+
+    /// <summary>
     /// Gets a specific opportunity by ID with user-specific permissions
     /// Stakeholders (team members) on the opportunity can update it even if they don't have global update permission
     /// </summary>

@@ -21,7 +21,12 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+      with:
+        submodules: recursive  # Required for UNOPS.Workflow - Business/Workflow adapters depend on it
+
+    - name: Ensure Workflow submodule initialized
+      run: git submodule update --init --recursive UNOPS.Workflow
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
@@ -240,6 +245,8 @@ jobs:
   #   steps:
   #   - name: Checkout code
   #     uses: actions/checkout@v4
+  #     with:
+  #       submodules: recursive  # Required for UNOPS.Workflow
   #   
   #   - name: Setup Python
   #     uses: actions/setup-python@v5
@@ -282,7 +289,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+      with:
+        submodules: recursive  # Required for UNOPS.Workflow - Business/Workflow adapters depend on it
+
     - name: Generate Summary
       run: |
         echo "# QA Tests Summary" >> $GITHUB_STEP_SUMMARY

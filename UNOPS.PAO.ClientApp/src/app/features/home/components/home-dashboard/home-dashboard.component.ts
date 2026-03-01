@@ -15,6 +15,7 @@ import { map, catchError } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { DocumentService } from '@shared/services/api/document.service';
+import { OpportunityService } from '@partnerships/opportunities/services/opportunity.service';
 import { PartnerService } from '@partnerships/partners/services/partner.service';
 import { ContactService } from '@partnerships/contacts/services/contact.service';
 import { InteractionService } from '@partnerships/interactions/services/interaction.service';
@@ -94,6 +95,7 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   private feedbackDialogService = inject(FeedbackDialogService);
   private dialogService = inject(DialogService);
   private documentService = inject(DocumentService);
+  private opportunityService = inject(OpportunityService);
   public layoutService = inject(LayoutService);
   private elementRef = inject(ElementRef);
   private workflowService = inject(WorkflowService);
@@ -1182,22 +1184,36 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Convert markdown to Google Doc. Displays success with Google Doc URL or error.
+   * Generate Opportunity Statement PDF for opportunity ID 58 and upload to GCS.
    */
   generateTestPdf() {
+    const opportunityId = 5;
     this.testPdfLoading.set(true);
-    this.documentService.convertMarkdownToDoc().subscribe({
-      next: (response) => {
-        this.testPdfLoading.set(false);
-        this.feedbackDialogService.showSuccessToast({
-          summary: 'Success',
-          detail: `Google Doc created: ${response.googleDocUrl}`
-        });
-      },
-      error: () => {
-        this.testPdfLoading.set(false);
-      }
-    });
+    this.opportunityService
+      .generateStatementPdf({
+        entityName: 'Opportunity',
+        entityId: opportunityId,
+        filename: `Opportunity_${opportunityId}_Test_${new Date().toISOString().slice(0, 10)}`
+      })
+      .subscribe({
+        next: (response) => {
+          this.testPdfLoading.set(false);
+          if (response.success && response.gcsPath) {
+            this.feedbackDialogService.showSuccessToast({
+              summary: 'Success',
+              detail: `PDF generated: ${response.gcsPath}`
+            });
+          } else {
+            this.feedbackDialogService.showErrorToast({
+              summary: 'Error',
+              detail: response.error || response.details || 'PDF generation failed'
+            });
+          }
+        },
+        error: () => {
+          this.testPdfLoading.set(false);
+        }
+      });
   }
 
   formatDate(dateString: string | Date | null | undefined): string {

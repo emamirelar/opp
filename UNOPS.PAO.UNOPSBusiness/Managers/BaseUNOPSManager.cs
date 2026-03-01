@@ -4,20 +4,26 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Dynamic.Core;
+using System.Net.Http;
 using System.Reflection;
 using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using UNOPS.PAO.Models.Documents;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSDomain.Authorization;
-using System.Text.Json;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using UNOPS.PAO.Business.Interfaces;
 using Z.Expressions;
 using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Domain.Entities;
@@ -36,9 +42,10 @@ public abstract class BaseUNOPSManager
     protected readonly IPermissionService _permissionService;
     protected readonly IHttpContextAccessor _httpContextAccessor;
     protected readonly string _entityName;
+    protected readonly IAiRetrieverManager _aiRetrieverManager;
 
-    protected BaseUNOPSManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, 
-        UserManager<PAOIdentityUser> userManager = null, string entityName = null, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null)
+    protected BaseUNOPSManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration,
+        UserManager<PAOIdentityUser> userManager = null, string entityName = null, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null, IAiRetrieverManager aiRetrieverManager = null)
     {
         _mapper = mapper;
         _context = context;
@@ -47,6 +54,7 @@ public abstract class BaseUNOPSManager
         _permissionService = permissionService;
         _httpContextAccessor = httpContextAccessor;
         _entityName = entityName ?? GetEntityTypeName();
+        _aiRetrieverManager = aiRetrieverManager;
     }
 
     /// <summary>
@@ -202,6 +210,80 @@ public abstract class BaseUNOPSManager
             return string.Empty;
         }
     }
+
+    #region Statement PDF Generation
+
+    /// <summary>
+    /// Gets markdown content for PDF generation from the entity.
+    /// Override in derived managers for entity-specific implementation (e.g., Opportunity fetches OpportunityStatementMarkdown).
+    /// </summary>
+    /// <param name="entityName">Entity type name (e.g., "Opportunity")</param>
+    /// <param name="entityId">Entity ID</param>
+    /// <returns>Markdown content, or null if no entity-specific implementation</returns>
+    protected virtual Task<string?> GetMarkdownForPdfGenerationAsync(string entityName, int entityId)
+    {
+        return Task.FromResult<string?>(null);
+    }
+
+    /// <summary>
+    /// Converts markdown to PDF via AI service and uploads to GCS.
+    /// Base implementation used when no entity-specific override exists.
+    /// </summary>
+    /// <param name="markdownContent">Markdown content to convert</param>
+    /// <param name="entityName">Entity type for GCS folder (e.g., "Opportunity" → "opportunities")</param>
+    /// <param name="entityId">Entity ID for GCS path</param>
+    /// <param name="filename">Filename for the PDF (without extension)</param>
+    /// <returns>Result with GcsPath on success, or Error/Details on failure</returns>
+    protected async Task<GeneratePdfResult> ConvertMarkdownToPdfAndUploadToGcsAsync(
+        string markdownContent,
+        string entityName,
+        int entityId,
+        string filename)
+    {
+        try
+        {
+            if (_aiRetrieverManager == null)
+            {
+                return new GeneratePdfResult { Error = "AI Retriever service not available", Details = "IAiRetrieverManager was not injected" };
+            }
+
+            var userEmail = GetCurrentUser()?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            var convertResponse = await _aiRetrieverManager.ConvertMarkdownToGoogleDocAsync(markdownContent, userEmail, filename + ".md");
+            var pdfBase64 = convertResponse?.PdfBase64 ?? convertResponse?.PdfBase64Snake;
+
+            if (string.IsNullOrEmpty(pdfBase64))
+            {
+                return new GeneratePdfResult
+                {
+                    Error = "AI service did not return PDF",
+                    Details = "Response did not contain pdfBase64 or pdf_base64"
+                };
+            }
+
+            var pdfBytes = Convert.FromBase64String(pdfBase64);
+            var folder = string.Equals(entityName, "Opportunity", StringComparison.OrdinalIgnoreCase)
+                ? "opportunities"
+                : entityName.ToLowerInvariant() + "s";
+            var gcsService = new GoogleCloudStorageService(_configuration);
+            var gcsPath = await gcsService.UploadPdfBytesAsync(
+                pdfBytes,
+                folder,
+                entityId,
+                $"{filename}.pdf");
+
+            return new GeneratePdfResult { GcsPath = gcsPath };
+        }
+        catch (Exception ex)
+        {
+            return new GeneratePdfResult
+            {
+                Error = "Error converting markdown to PDF",
+                Details = ex.Message
+            };
+        }
+    }
+
+    #endregion
 
     /// <summary>
     /// Gets basic entity data - must be implemented by derived managers
@@ -651,13 +733,13 @@ public abstract class BaseUNOPSManager
             {
                 try
                 {
-                    var propertyFilterJson = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(permission.PropertyFilter);
+                    var propertyFilterJson = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, List<string>>>(permission.PropertyFilter);
                     if (propertyFilterJson != null && propertyFilterJson.TryGetValue("CanUpdate", out var canUpdateFields))
                     {
                         hasPropertyFilters = true;
                         
                         // If CanUpdate is empty array, it means admin role can edit all fields
-                        if (canUpdateFields.Count == 0)
+                        if (canUpdateFields.Count() == 0)
                         {
                             return null; // null means no field restrictions (can edit all fields)
                         }
@@ -669,7 +751,7 @@ public abstract class BaseUNOPSManager
                         }
                     }
                 }
-                catch (JsonException)
+                catch (System.Text.Json.JsonException)
                 {
                     // Invalid JSON, skip this permission's property filter
                 }
@@ -1437,7 +1519,7 @@ public abstract class BaseUNOPSManager
             if (statusProperty != null)
             {
                 // Filter for Active status (assuming Active = 1)
-                query = query.Where(e => EF.Property<int>(e, "Status") == 1);
+                query = query.Where(e => Microsoft.EntityFrameworkCore.EF.Property<int>(e, "Status") == 1);
             }
         }
         catch (Exception ex)

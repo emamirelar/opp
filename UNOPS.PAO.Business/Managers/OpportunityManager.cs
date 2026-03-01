@@ -6,6 +6,7 @@ using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Documents;
 using UNOPS.PAO.Models.Filters;
 using UNOPS.PAO.Models.Opportunities;
 using UNOPS.PAO.Models.Search;
@@ -1692,6 +1693,18 @@ public class OpportunityManager : IOpportunityManager
         }
         
         return "Personnel";
+    }
+
+    /// <summary>
+    /// Generates a statement PDF - UNOPS-specific implementation. Use UNOPSOpportunityManager.
+    /// </summary>
+    public virtual Task<GeneratePdfResult> GenerateStatementPdfAsync(GeneratePdfRequest request)
+    {
+        return Task.FromResult(new GeneratePdfResult
+        {
+            Error = "Statement PDF generation is not available",
+            Details = "This feature requires the UNOPS Opportunity Manager implementation."
+        });
     }
 }
 
