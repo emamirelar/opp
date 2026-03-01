@@ -506,8 +506,7 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
                 return;
             }
 
-            // Get internal stakeholders from those org units (users with relevant roles)
-            // For now, we'll notify users who have DoA2 role on those org units
+            // Get internal stakeholders from those org units (users with any role on those org units)
             var stakeholderUserIds = await context.EntityUserRoles
                 .AsNoTracking()
                 .Include(e => e.EntityRole)
