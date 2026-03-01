@@ -92,16 +92,18 @@
     <div class="content">
         <p>Dear {{ ApproverName }},</p>
         
-        <p>You are the current {{ ApproverRoleShort }} holder for {{ OrgUnitIdAndDescription }}.</p>
+        <p>You are the current <strong>{{ ApproverRoleShort }}</strong> holder for <strong>{{ OrgUnitIdAndDescription }}</strong>.</p>
         
-        <p>Opportunity <strong>{{ EntityName }}</strong> has been submitted by {{ RequestedByName }} for your review and to request confirmation that {{ OrgUnitIdAndDescription }} may proceed with further development. Please review the Opportunity Statement carefully and indicate your decision <a href="{{ EntityUrl }}#statement">here</a>.</p>
+        <p>Opportunity <strong>{{ EntityName }}</strong> has been submitted by <strong>{{ RequestedByName }}</strong> for your review and to request confirmation that <strong>{{ OrgUnitIdAndDescription }}</strong> may proceed with further development.</p>
+        
+        <p>Please review the Opportunity Statement carefully and indicate your decision <a href="{{ EntityStatementUrl }}">here</a>.</p>
         
         <p><em>Please note that, <u>where applicable</u>, Internal Stakeholders from any other UNOPS Org Units normally responsible for any of the countries of Implementation will be notified of any decision to continue development of this Opportunity.</em></p>
         
         {{ CommentSection }}
         
         <p>
-            <a href="{{ EntityUrl }}#statement" class="button">Review Opportunity Statement</a>
+            <a href="{{ EntityStatementUrl }}" class="button">Review Opportunity Statement</a>
         </p>
     </div>
     
