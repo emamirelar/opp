@@ -277,6 +277,11 @@ public class GlobalFilterService
                 // 3. Interaction: Comprehensive relationship-based filtering
                 return await ApplyInteractionOrgUnitFilterAsync(parameter, entityType, orgUnitIds, existingExpression);
             }
+            else if (entityType == typeof(Opportunity))
+            {
+                // 4. Opportunity: Filter by ResponsibleOrgUnitId (direct FK, not OrganizationUnitRelationship)
+                return ApplyOpportunityOrgUnitFilter(parameter, entityType, orgUnitIds, existingExpression);
+            }
             else
             {
                 // For other entity types, try direct lookup first
@@ -288,6 +293,60 @@ public class GlobalFilterService
             _logger.LogWarning(ex, "Failed to apply OrgUnit filter for {EntityType}, continuing without org unit filtering", entityType.Name);
             return existingExpression;
         }
+    }
+
+    /// <summary>
+    /// Apply organization unit filtering for Opportunity entities using ResponsibleOrgUnitId.
+    /// Opportunity has a direct FK to OrganizationHierarchy; does not use OrganizationUnitRelationship.
+    /// </summary>
+    private Expression? ApplyOpportunityOrgUnitFilter(
+        ParameterExpression parameter,
+        Type entityType,
+        List<int> orgUnitIds,
+        Expression? existingExpression)
+    {
+        var responsibleOrgUnitIdProperty = entityType.GetProperty("ResponsibleOrgUnitId");
+        if (responsibleOrgUnitIdProperty == null ||
+            responsibleOrgUnitIdProperty.PropertyType != typeof(int?))
+        {
+            _logger.LogWarning("Opportunity entity has no ResponsibleOrgUnitId property - skipping org unit filter");
+            return existingExpression;
+        }
+
+        var responsibleOrgUnitIdAccess = Expression.Property(parameter, responsibleOrgUnitIdProperty);
+
+        // ResponsibleOrgUnitId.HasValue
+        var hasValueProperty = typeof(int?).GetProperty("HasValue");
+        if (hasValueProperty == null)
+            return existingExpression;
+
+        var hasValueAccess = Expression.Property(responsibleOrgUnitIdAccess, hasValueProperty);
+        var hasValueCheck = Expression.Equal(hasValueAccess, Expression.Constant(true));
+
+        // orgUnitIds.Contains(ResponsibleOrgUnitId.Value)
+        var valueProperty = typeof(int?).GetProperty("Value");
+        if (valueProperty == null)
+            return existingExpression;
+
+        var valueAccess = Expression.Property(responsibleOrgUnitIdAccess, valueProperty);
+        var idsConstant = Expression.Constant(orgUnitIds);
+        var containsMethod = typeof(List<int>).GetMethod("Contains");
+        if (containsMethod == null)
+            return existingExpression;
+
+        var containsCall = Expression.Call(idsConstant, containsMethod, valueAccess);
+
+        // ResponsibleOrgUnitId.HasValue && orgUnitIds.Contains(ResponsibleOrgUnitId.Value)
+        var opportunityFilter = Expression.AndAlso(hasValueCheck, containsCall);
+
+        _logger.LogDebug("Applied ResponsibleOrgUnitId filter for Opportunity with {Count} org units", orgUnitIds.Count);
+
+        if (existingExpression != null)
+        {
+            return Expression.AndAlso(existingExpression, opportunityFilter);
+        }
+
+        return opportunityFilter;
     }
 
     #endregion
