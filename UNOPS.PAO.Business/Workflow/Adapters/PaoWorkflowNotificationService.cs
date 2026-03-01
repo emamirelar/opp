@@ -118,7 +118,8 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
         _logger = logger;
         _configuration = configuration;
         _notificationManager = notificationManager;
-        _baseUrl = _configuration["AppBaseUrl"] ?? "https://pao.unops.org";
+        _baseUrl = _configuration["AppConfig:BaseUrl"]
+            ?? "https://opportunityplus.dev.unops.org";
     }
 
     /// <summary>
@@ -168,7 +169,7 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
             var emailMessage = new EmailMessage
             {
                 TemplateName = "UNOPS.PAO.Business.EmailTemplates.OpportunityWorkflowApprovalRequest.html",
-                Title = $"PAO: {notification.EntityDisplayName} - Action Required",
+                Title = $"Opportunity+: {notification.EntityDisplayName} - Action Required",
                 EmailReceivers = recipientEmails.ToArray(),
                 CcReceivers = ccRecipients.ToArray()
             };
@@ -312,7 +313,7 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
             var emailMessage = new EmailMessage
             {
                 TemplateName = "UNOPS.PAO.Business.EmailTemplates.OpportunityWorkflowCompleted.html",
-                Title = $"PAO: {notification.EntityDisplayName} - Go Decision Approved",
+                Title = $"Opportunity+: {notification.EntityDisplayName} - Go Decision Approved",
                 EmailReceivers = recipientEmails.ToArray()
             };
 
@@ -375,7 +376,7 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
             var emailMessage = new EmailMessage
             {
                 TemplateName = "UNOPS.PAO.Business.EmailTemplates.OpportunityWorkflowRejected.html",
-                Title = $"PAO: {notification.EntityDisplayName} - Set to NO GO",
+                Title = $"Opportunity+: {notification.EntityDisplayName} - Set to NO GO",
                 EmailReceivers = recipientEmails.ToArray()
             };
 
@@ -439,7 +440,7 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
             var emailMessage = new EmailMessage
             {
                 TemplateName = "UNOPS.PAO.Business.EmailTemplates.OpportunityWorkflowRecalled.html",
-                Title = $"PAO: {notification.EntityDisplayName} - Submission Recalled",
+                Title = $"Opportunity+: {notification.EntityDisplayName} - Submission Recalled",
                 EmailReceivers = recipientEmails.ToArray()
             };
 
@@ -546,7 +547,7 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
             var emailMessage = new EmailMessage
             {
                 TemplateName = "UNOPS.PAO.Business.EmailTemplates.OpportunityWorkflowCompleted.html",
-                Title = $"PAO: {opportunity.Name} - Go Decision Approved (FYI)",
+                Title = $"Opportunity+: {opportunity.Name} - Go Decision Approved (FYI)",
                 EmailReceivers = recipientEmails.ToArray()
             };
 
@@ -706,8 +707,8 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
     }
 
     /// <summary>
-    /// Gets the responsible org unit ID and description (name) for an opportunity.
-    /// Format: "ID - Description" or "Description" if ID is not available.
+    /// Gets the responsible org unit description (name) for an opportunity.
+    /// Returns only the org unit name (no ID) for display in email notifications.
     /// </summary>
     private async Task<string> GetOrgUnitIdAndDescriptionForOpportunityAsync(string entityId)
     {
@@ -725,9 +726,7 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
         if (orgUnit == null)
             return "Unknown";
 
-        return orgUnit.Id > 0
-            ? $"{orgUnit.Id} - {orgUnit.Name}"
-            : orgUnit.Name;
+        return orgUnit.Name ?? "Unknown";
     }
 
     /// <summary>
