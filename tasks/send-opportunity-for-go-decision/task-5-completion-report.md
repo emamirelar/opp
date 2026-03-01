@@ -184,7 +184,7 @@ services.AddScoped<IWorkflowNotificationService>(sp => sp.GetRequiredService<Pao
 - Notification service is tested via controller integration tests
 - Email templates use Handlebars-style placeholders (`{{FieldName}}`)
 - Templates render via `IEmailTemplateRenderer` in `SmtpEmailSender`
-- Base URL configurable via `AppBaseUrl` in configuration
+- Base URL configurable via `AppConfig:BaseUrl` in configuration
 
 ---
 
@@ -193,7 +193,7 @@ services.AddScoped<IWorkflowNotificationService>(sp => sp.GetRequiredService<Pao
 - `UNOPS.PAO.MailSender` - Email sending infrastructure
 - `IEmailSender` - Email sending interface
 - `IEmailTemplateRenderer` - Template rendering
-- `IConfiguration` - For `AppBaseUrl` setting
+- `IConfiguration` - For `AppConfig:BaseUrl` setting
 
 ---
 

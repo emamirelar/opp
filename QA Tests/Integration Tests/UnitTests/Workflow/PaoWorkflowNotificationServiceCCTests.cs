@@ -56,7 +56,7 @@ public class PaoWorkflowNotificationServiceCCTests : IDisposable
         _mockEmailSender = new Mock<IEmailSender>();
         _mockLogger = new Mock<ILogger<PaoWorkflowNotificationService>>();
         _mockConfiguration = new Mock<IConfiguration>();
-        _mockConfiguration.Setup(c => c["AppBaseUrl"]).Returns("https://test.unops.org");
+        _mockConfiguration.Setup(c => c["AppConfig:BaseUrl"]).Returns("https://test.unops.org");
 
         // Note: NotificationManager has complex dependencies, so we skip testing in-system notifications here
         // The test focuses on the CC recipient building logic
