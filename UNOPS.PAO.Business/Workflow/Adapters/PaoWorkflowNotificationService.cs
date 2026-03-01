@@ -32,6 +32,7 @@ public record ApprovalRequestEmailModel
     public string Comment { get; init; } = string.Empty;
     public string CommentSection { get; init; } = string.Empty;
     public string EntityUrl { get; init; } = string.Empty;
+    public string EntityStatementUrl { get; init; } = string.Empty;
 }
 
 /// <summary>
@@ -163,7 +164,8 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
                 RequestedOn = notification.Timestamp.ToString("dd MMM yyyy HH:mm"),
                 Comment = notification.Comment,
                 CommentSection = commentSection,
-                EntityUrl = $"{_baseUrl}/opportunity/{notification.EntityId}"
+                EntityUrl = $"{_baseUrl}/partnerships/opportunities/{notification.EntityId}",
+                EntityStatementUrl = $"{_baseUrl}/partnerships/opportunities/{notification.EntityId}/statement"
             };
 
             var emailMessage = new EmailMessage
@@ -307,7 +309,7 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
                 ApprovedOn = notification.Timestamp.ToString("dd MMM yyyy HH:mm"),
                 Comment = notification.Comment,
                 CommentSection = commentSection,
-                EntityUrl = $"{_baseUrl}/opportunity/{notification.EntityId}"
+                EntityUrl = $"{_baseUrl}/partnerships/opportunities/{notification.EntityId}"
             };
 
             var emailMessage = new EmailMessage
@@ -370,7 +372,7 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
                 RejectedOn = notification.Timestamp.ToString("dd MMM yyyy HH:mm"),
                 Comment = notification.Comment,
                 CommentSection = commentSection,
-                EntityUrl = $"{_baseUrl}/opportunity/{notification.EntityId}"
+                EntityUrl = $"{_baseUrl}/partnerships/opportunities/{notification.EntityId}"
             };
 
             var emailMessage = new EmailMessage
@@ -434,7 +436,7 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
                 RecalledOn = notification.Timestamp.ToString("dd MMM yyyy HH:mm"),
                 Comment = notification.Comment,
                 CommentSection = commentSection,
-                EntityUrl = $"{_baseUrl}/opportunity/{notification.EntityId}"
+                EntityUrl = $"{_baseUrl}/partnerships/opportunities/{notification.EntityId}"
             };
 
             var emailMessage = new EmailMessage
@@ -541,7 +543,7 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
                 ApprovedOn = DateTime.UtcNow.ToString("dd MMM yyyy HH:mm"),
                 Comment = "This opportunity has been approved for development and may affect countries in your area of responsibility.",
                 CommentSection = commentSection,
-                EntityUrl = $"{_baseUrl}/opportunity/{opportunityId}"
+                EntityUrl = $"{_baseUrl}/partnerships/opportunities/{opportunityId}"
             };
 
             var emailMessage = new EmailMessage
