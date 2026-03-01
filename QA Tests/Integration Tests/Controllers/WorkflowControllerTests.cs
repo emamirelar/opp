@@ -105,7 +105,7 @@ public class WorkflowControllerTests : IDisposable
 
         // Setup configuration for notification service
         var mockConfiguration = new Mock<IConfiguration>();
-        mockConfiguration.Setup(x => x["AppBaseUrl"]).Returns("https://test.pao.unops.org");
+        mockConfiguration.Setup(x => x["AppConfig:BaseUrl"]).Returns("https://test.pao.unops.org");
 
         // Create notification service
         var mockNotificationLogger = new Mock<ILogger<PaoWorkflowNotificationService>>();

@@ -1711,57 +1711,15 @@ export class OpportunityDocumentsComponent implements OnInit {
     let googleDocId: string | null = null;
 
     try {
-      // Step 1: Get Google OAuth token for AI API
-      let idToken: string;
-      try {
-        console.log('🔑 Requesting Google OAuth token...');
-        idToken = await this.googleOAuthService.getValidIdToken();
-        console.log('✅ Google OAuth token obtained');
-      } catch (authError: any) {
-        console.error('❌ Google authentication failed:', authError);
-        const errorMessage = authError?.message || authError?.error || 'Unknown error';
-        this.feedbackService.showErrorToast({
-          summary: this.translateService.instant('message.error'),
-          detail: `Google authentication failed: ${errorMessage}. If a popup was blocked, please allow popups and try again.`,
-        });
-        return false;
-      }
-
-      // Step 2: Convert markdown to Google Doc using AI API
+      // Step 1: Convert markdown to Google Doc via backend (uses same IAP headers as similar-projects)
       console.log('🔄 Converting markdown to Google Doc...');
-      const formData = new FormData();
-      const markdownBlob = new Blob([markdown], { type: 'text/markdown' });
-      const tempDocName = `Opportunity_${opportunityId}_Statement_Temp`;
-      formData.append('file', markdownBlob, tempDocName);
-      formData.append('data', JSON.stringify({ name: tempDocName }));
-
-      const response = await fetch(
-        'https://api.ai.unops.org/v1/convert/markdown-to-google-doc',
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-          },
-          body: formData,
-        }
+      const result = await firstValueFrom(
+        this.documentService.convertMarkdownToDoc(markdown)
       );
+      const docUrl = result?.googleDocUrl || '';
+      console.log('✅ Google Doc created:', docUrl);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ AI API Error:', errorText);
-        
-        // Handle auth errors with retry
-        if (response.status === 401 || response.status === 403) {
-          console.log('🔄 Token expired, refreshing and retrying...');
-          try {
-            await this.googleOAuthService.refreshToken();
-            // Retry once
-            return this.generateStatementPdf(markdown, opportunityId, pdfFileName);
-          } catch (refreshError) {
-            console.error('❌ Token refresh failed:', refreshError);
-          }
-        }
-        
+      if (!docUrl) {
         this.feedbackService.showErrorToast({
           summary: this.translateService.instant('message.error'),
           detail: 'Failed to convert statement to document. Please try again.',
@@ -1769,13 +1727,8 @@ export class OpportunityDocumentsComponent implements OnInit {
         return false;
       }
 
-      const result = await response.json();
-      console.log('✅ Google Doc created:', result);
-
       // Extract Google Doc ID from the response URL
       // URL format: https://docs.google.com/document/d/{fileId}/edit
-      // API returns URL nested in result.data.data.url or result.data.url
-      const docUrl = result.data?.data?.url || result.data?.url || result.url || '';
       const docIdMatch = docUrl.match(/\/document\/d\/([^\/]+)/);
       if (!docIdMatch) {
         console.error('❌ Could not extract Google Doc ID from URL:', docUrl);
@@ -1788,7 +1741,9 @@ export class OpportunityDocumentsComponent implements OnInit {
       googleDocId = docIdMatch[1];
       console.log(`📄 Google Doc ID: ${googleDocId}`);
 
-      // Step 3: Initialize Google Drive auth if needed
+      const tempDocName = `Opportunity_${opportunityId}_Statement_Temp`;
+
+      // Step 2: Initialize Google Drive auth if needed (for PDF export)
       if (!this.googleDriveAuthAvailable) {
         try {
           const authAvailable = await firstValueFrom(
@@ -1809,14 +1764,14 @@ export class OpportunityDocumentsComponent implements OnInit {
         }
       }
 
-      // Step 4: Export Google Doc as PDF
+      // Step 3: Export Google Doc as PDF
       console.log('🔄 Exporting Google Doc as PDF...');
       const pdfResult = await firstValueFrom(
         this.googleDriveService.exportDriveFileAsPdf(googleDocId!, tempDocName)
       );
       console.log('✅ PDF exported successfully');
 
-      // Step 5: Convert base64 PDF to File object
+      // Step 4: Convert base64 PDF to File object
       const pdfBlob = this.base64ToBlob(pdfResult.data, pdfResult.mimeType);
       const pdfFile = new File([pdfBlob], pdfFileName, {
         type: 'application/pdf',
@@ -1852,6 +1807,7 @@ export class OpportunityDocumentsComponent implements OnInit {
       // Step 8: Delete the temporary Google Doc (best effort - don't fail if this fails)
       try {
         console.log('🧹 Cleaning up temporary Google Doc...');
+        const idToken = await this.googleOAuthService.getValidIdToken();
         await this.deleteGoogleDriveFile(googleDocId!, idToken);
         console.log('✅ Temporary Google Doc deleted');
       } catch (cleanupError) {

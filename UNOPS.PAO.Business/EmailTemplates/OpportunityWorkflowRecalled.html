@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAO: {{EntityName}} - Submission Recalled</title>
+    <title>Opportunity+: {{ EntityName }} - Submission Recalled</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -83,7 +83,7 @@
     </div>
     
     <div class="content">
-        <p>Hello {{RecipientName}},</p>
+        <p>Dear {{ RecipientName }},</p>
         
         <div class="recall-box">
             <div class="recall-icon">&#8634;</div>
@@ -95,36 +95,33 @@
         <table class="info-table">
             <tr>
                 <td>Opportunity:</td>
-                <td><strong>{{EntityName}}</strong></td>
+                <td><strong>{{ EntityName }}</strong></td>
             </tr>
             <tr>
                 <td>Responsible Org Unit:</td>
-                <td>{{OrgUnitName}}</td>
+                <td>{{ OrgUnitName }}</td>
             </tr>
             <tr>
                 <td>Recalled By:</td>
-                <td>{{RecalledByName}}</td>
+                <td>{{ RecalledByName }}</td>
             </tr>
             <tr>
                 <td>Recalled On:</td>
-                <td>{{RecalledOn}}</td>
+                <td>{{ RecalledOn }}</td>
             </tr>
         </table>
         
-        <div class="comment-box">
-            <strong>Justification:</strong><br>
-            {{Comment}}
-        </div>
+        {{ CommentSection }}
         
         <p>No further action is required from you at this time.</p>
         
         <p>
-            <a href="{{EntityUrl}}" class="button">View Opportunity</a>
+            <a href="{{ EntityUrl }}" class="button">View Opportunity</a>
         </p>
     </div>
     
     <div class="footer">
-        <p>This is an automated notification from UNOPS Opportunity+ System (PAO).</p>
+        <p>This is an automated notification from UNOPS Opportunity+ System.</p>
         <p>If you have any questions, please contact your system administrator.</p>
     </div>
 </body>

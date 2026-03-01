@@ -84,7 +84,7 @@ The "Send Opportunity for Go Decision" feature extends the existing workflow inf
 **Q9: Email Notifications**
 - Match exact wording provided in requirements
 - Create email templates as part of this PRD
-- Use GMS pattern for URL generation (`Configuration["AppBaseUrl"]`)
+- Use GMS pattern for URL generation (`Configuration["AppConfig:BaseUrl"]`)
 
 **Q10: Technical Scope**
 - Full feature implementation (validation, notifications, workflow changes)
@@ -865,7 +865,7 @@ if (fieldType == "conditional" && customValidator == "BeneficiariesValidator")
    public async Task NotifyNewApprovalRequestAsync(WorkflowNotification notification)
    {
        var recipients = await GetRecipientEmailsAsync(notification.RecipientUserIds);
-       var baseUrl = _configuration["AppBaseUrl"] ?? "https://pao.unops.org";
+       var baseUrl = _configuration["AppConfig:BaseUrl"] ?? "https://pao.unops.org";
        var opportunityUrl = $"{baseUrl}/opportunity/{notification.EntityId}#statement";
        
        foreach (var email in recipients)

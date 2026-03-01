@@ -238,6 +238,26 @@ export class DocumentService {
   }
 
   /**
+   * Convert markdown to Google Doc via AI API. Returns the Google Doc URL.
+   */
+  convertMarkdownToDoc(markdownContent = '# Test Document\n\nThis is sample **markdown** content.') {
+    this.isLoading.set(true);
+    const body = { data: markdownContent, filename: 'Generated_Document' };
+    return this.http
+      .post<{ googleDocUrl: string }>(`/api/document/convert-markdown-to-doc`, body)
+      .pipe(
+        tap({
+          next: () => {
+            this.isLoading.set(false);
+          },
+          error: () => {
+            this.isLoading.set(false);
+          },
+        })
+      );
+  }
+
+  /**
    * Get partner-document associations for a specific document
    */
   getPartnerDocumentAssociation(documentId: number) {

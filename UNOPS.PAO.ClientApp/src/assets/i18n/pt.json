@@ -1937,6 +1937,7 @@
   "message.validation.validationFailed": "Falha na ValidaÃ§Ã£o",
   "message.validation.selectAtLeastOneInteraction": "Por favor, selecione pelo menos uma interaÃ§Ã£o",
   "message.validation.selectAtLeastOnePartnerRole": "Por favor, selecione pelo menos uma funÃ§Ã£o de parceiro (Financiamento ou Cliente)",
+  "message.validation.orgUnitRequired": "A unidade organizacional responsÃ¡vel pelo desenvolvimento da oportunidade Ã© obrigatÃ³ria",
   "message.validation.selectAtLeastOnePartner": "Por favor, selecione pelo menos um parceiro para este documento",
   "message.validation.noChangeInPartnerSelection": "Por favor, faÃ§a alteraÃ§Ãµes na seleÃ§Ã£o de parceiros antes de salvar",
   "message.selectPartnersForDocument": "Selecione o(s) parceiro(s) ao qual este documento (Quadro de Resultados) se relaciona. VocÃª pode selecionar parceiros de financiamento, parceiros clientes ou ambos.",

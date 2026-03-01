@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Business.Managers;
 using UNOPS.PAO.DataAccess.Context;
@@ -8,6 +9,7 @@ using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.MailSender;
 using UNOPS.PAO.MailSender.Interfaces;
 using UNOPS.Workflow.Business.Interfaces;
+using UNOPS.Workflow.DataAccess;
 using System.Text.Json;
 
 namespace UNOPS.PAO.Business.Workflow.Adapters;
@@ -21,12 +23,16 @@ public record ApprovalRequestEmailModel
 {
     public string ApproverName { get; init; } = string.Empty;
     public string ApproverRole { get; init; } = "DoA Level 2";
+    public string ApproverRoleShort { get; init; } = "DoA2";
     public string OrgUnitName { get; init; } = string.Empty;
+    public string OrgUnitIdAndDescription { get; init; } = string.Empty;
     public string EntityName { get; init; } = string.Empty;
     public string RequestedByName { get; init; } = string.Empty;
     public string RequestedOn { get; init; } = string.Empty;
     public string Comment { get; init; } = string.Empty;
+    public string CommentSection { get; init; } = string.Empty;
     public string EntityUrl { get; init; } = string.Empty;
+    public string EntityStatementUrl { get; init; } = string.Empty;
 }
 
 /// <summary>
@@ -40,6 +46,7 @@ public record WorkflowCompletedEmailModel
     public string ApprovedByName { get; init; } = string.Empty;
     public string ApprovedOn { get; init; } = string.Empty;
     public string Comment { get; init; } = string.Empty;
+    public string CommentSection { get; init; } = string.Empty;
     public string EntityUrl { get; init; } = string.Empty;
 }
 
@@ -54,6 +61,7 @@ public record WorkflowRejectedEmailModel
     public string RejectedByName { get; init; } = string.Empty;
     public string RejectedOn { get; init; } = string.Empty;
     public string Comment { get; init; } = string.Empty;
+    public string CommentSection { get; init; } = string.Empty;
     public string EntityUrl { get; init; } = string.Empty;
 }
 
@@ -68,6 +76,7 @@ public record WorkflowRecalledEmailModel
     public string RecalledByName { get; init; } = string.Empty;
     public string RecalledOn { get; init; } = string.Empty;
     public string Comment { get; init; } = string.Empty;
+    public string CommentSection { get; init; } = string.Empty;
     public string EntityUrl { get; init; } = string.Empty;
 }
 
@@ -84,6 +93,7 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
 {
     private readonly IEmailSender _emailSender;
     private readonly IDbContextFactory<AppDbContext> _contextFactory;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ILogger<PaoWorkflowNotificationService> _logger;
     private readonly IConfiguration _configuration;
     private readonly NotificationManager _notificationManager;
@@ -98,16 +108,19 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
     public PaoWorkflowNotificationService(
         IEmailSender emailSender,
         IDbContextFactory<AppDbContext> contextFactory,
+        IServiceScopeFactory serviceScopeFactory,
         ILogger<PaoWorkflowNotificationService> logger,
         IConfiguration configuration,
         NotificationManager notificationManager)
     {
         _emailSender = emailSender;
         _contextFactory = contextFactory;
+        _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
         _configuration = configuration;
         _notificationManager = notificationManager;
-        _baseUrl = _configuration["AppBaseUrl"] ?? "https://pao.unops.org";
+        _baseUrl = _configuration["AppConfig:BaseUrl"]
+            ?? "https://opportunityplus.dev.unops.org";
     }
 
     /// <summary>
@@ -129,26 +142,36 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
 
             var recipientNames = await GetRecipientNamesAsync(notification.RecipientUserIds);
             var orgUnitName = await GetOrgUnitNameForOpportunityAsync(notification.EntityId);
+            var orgUnitIdAndDescription = await GetOrgUnitIdAndDescriptionForOpportunityAsync(notification.EntityId);
+            var approverRoleShort = await GetApproverRoleShortForOpportunityAsync(notification.EntityId);
 
             // Build CC recipient list (Opportunity Manager, initiator, Director/Manager)
             var ccRecipients = await BuildCCRecipientsAsync(notification);
 
+            var commentSection = !string.IsNullOrEmpty(notification.Comment)
+                ? $"<div class=\"comment-box\"><strong>Submitter's Remarks:</strong><br>{System.Net.WebUtility.HtmlEncode(notification.Comment)}</div>"
+                : string.Empty;
+
             var emailModel = new ApprovalRequestEmailModel
             {
                 ApproverName = string.Join(", ", recipientNames),
-                ApproverRole = "DoA Level 2",
+                ApproverRole = approverRoleShort == "DoA2" ? "DoA Level 2" : "DoA Level 3",
+                ApproverRoleShort = approverRoleShort,
                 OrgUnitName = orgUnitName,
+                OrgUnitIdAndDescription = orgUnitIdAndDescription,
                 EntityName = notification.EntityDisplayName,
                 RequestedByName = notification.PerformedByUserName,
                 RequestedOn = notification.Timestamp.ToString("dd MMM yyyy HH:mm"),
                 Comment = notification.Comment,
-                EntityUrl = $"{_baseUrl}/opportunity/{notification.EntityId}"
+                CommentSection = commentSection,
+                EntityUrl = $"{_baseUrl}/partnerships/opportunities/{notification.EntityId}",
+                EntityStatementUrl = $"{_baseUrl}/partnerships/opportunities/{notification.EntityId}/statement"
             };
 
             var emailMessage = new EmailMessage
             {
-                TemplateName = "WorkflowApprovalRequest.html",
-                Title = $"PAO: {notification.EntityDisplayName} - Action Required",
+                TemplateName = "UNOPS.PAO.Business.EmailTemplates.OpportunityWorkflowApprovalRequest.html",
+                Title = $"Opportunity+: {notification.EntityDisplayName} - Action Required",
                 EmailReceivers = recipientEmails.ToArray(),
                 CcReceivers = ccRecipients.ToArray()
             };
@@ -246,12 +269,23 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
 
     /// <summary>
     /// Notifies the submitter that the Go Decision has been approved.
+    /// For Opportunity: Includes both DoA2 and DoA3 holders (in addition to triggers), even when DoA2 are present.
     /// </summary>
     public async Task NotifyWorkflowCompletedAsync(WorkflowNotification notification)
     {
         try
         {
-            var recipientEmails = await GetRecipientEmailsAsync(notification.RecipientUserIds);
+            var recipientUserIds = notification.RecipientUserIds.ToList();
+
+            // For Opportunity approval: include both DoA2 and DoA3 holders (even if DoA2 are present)
+            if (notification.EntityName.Equals("Opportunity", StringComparison.OrdinalIgnoreCase) &&
+                int.TryParse(notification.EntityId, out var opportunityId))
+            {
+                var doaHolderIds = await GetDoA2AndDoA3HolderUserIdsForOpportunityAsync(opportunityId);
+                recipientUserIds = recipientUserIds.Union(doaHolderIds).Distinct().ToList();
+            }
+
+            var recipientEmails = await GetRecipientEmailsAsync(recipientUserIds);
             if (!recipientEmails.Any())
             {
                 _logger.LogWarning("No recipients found for workflow completed notification for entity {EntityName} {EntityId}",
@@ -259,8 +293,12 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
                 return;
             }
 
-            var recipientNames = await GetRecipientNamesAsync(notification.RecipientUserIds);
+            var recipientNames = await GetRecipientNamesAsync(recipientUserIds);
             var orgUnitName = await GetOrgUnitNameForOpportunityAsync(notification.EntityId);
+
+            var commentSection = !string.IsNullOrEmpty(notification.Comment)
+                ? $"<div class=\"comment-box\"><strong>Approver's Comment:</strong><br>{System.Net.WebUtility.HtmlEncode(notification.Comment)}</div>"
+                : string.Empty;
 
             var emailModel = new WorkflowCompletedEmailModel
             {
@@ -270,13 +308,14 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
                 ApprovedByName = notification.PerformedByUserName,
                 ApprovedOn = notification.Timestamp.ToString("dd MMM yyyy HH:mm"),
                 Comment = notification.Comment,
-                EntityUrl = $"{_baseUrl}/opportunity/{notification.EntityId}"
+                CommentSection = commentSection,
+                EntityUrl = $"{_baseUrl}/partnerships/opportunities/{notification.EntityId}"
             };
 
             var emailMessage = new EmailMessage
             {
-                TemplateName = "WorkflowCompleted.html",
-                Title = $"PAO: {notification.EntityDisplayName} - Go Decision Approved",
+                TemplateName = "UNOPS.PAO.Business.EmailTemplates.OpportunityWorkflowCompleted.html",
+                Title = $"Opportunity+: {notification.EntityDisplayName} - Go Decision Approved",
                 EmailReceivers = recipientEmails.ToArray()
             };
 
@@ -295,12 +334,21 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
 
     /// <summary>
     /// Notifies the submitter that the opportunity has been set to NO GO.
+    /// For Opportunities: only notifies the Opportunity Manager and the initiator (when different from OM).
     /// </summary>
     public async Task NotifyWorkflowRejectedAsync(WorkflowNotification notification)
     {
         try
         {
-            var recipientEmails = await GetRecipientEmailsAsync(notification.RecipientUserIds);
+            var recipientUserIds = notification.RecipientUserIds;
+
+            // For Opportunity rejections: restrict to Opportunity Manager + initiator (when different from OM)
+            if (string.Equals(notification.EntityName, "Opportunity", StringComparison.OrdinalIgnoreCase))
+            {
+                recipientUserIds = await GetRejectionRecipientUserIdsForOpportunityAsync(notification.EntityId);
+            }
+
+            var recipientEmails = await GetRecipientEmailsAsync(recipientUserIds);
             if (!recipientEmails.Any())
             {
                 _logger.LogWarning("No recipients found for workflow rejected notification for entity {EntityName} {EntityId}",
@@ -308,8 +356,12 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
                 return;
             }
 
-            var recipientNames = await GetRecipientNamesAsync(notification.RecipientUserIds);
+            var recipientNames = await GetRecipientNamesAsync(recipientUserIds);
             var orgUnitName = await GetOrgUnitNameForOpportunityAsync(notification.EntityId);
+
+            var commentSection = !string.IsNullOrEmpty(notification.Comment)
+                ? $"<div class=\"comment-box\"><strong>Reason:</strong><br>{System.Net.WebUtility.HtmlEncode(notification.Comment)}</div>"
+                : string.Empty;
 
             var emailModel = new WorkflowRejectedEmailModel
             {
@@ -319,13 +371,14 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
                 RejectedByName = notification.PerformedByUserName,
                 RejectedOn = notification.Timestamp.ToString("dd MMM yyyy HH:mm"),
                 Comment = notification.Comment,
-                EntityUrl = $"{_baseUrl}/opportunity/{notification.EntityId}"
+                CommentSection = commentSection,
+                EntityUrl = $"{_baseUrl}/partnerships/opportunities/{notification.EntityId}"
             };
 
             var emailMessage = new EmailMessage
             {
-                TemplateName = "WorkflowRejected.html",
-                Title = $"PAO: {notification.EntityDisplayName} - Set to NO GO",
+                TemplateName = "UNOPS.PAO.Business.EmailTemplates.OpportunityWorkflowRejected.html",
+                Title = $"Opportunity+: {notification.EntityDisplayName} - Set to NO GO",
                 EmailReceivers = recipientEmails.ToArray()
             };
 
@@ -344,12 +397,22 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
 
     /// <summary>
     /// Notifies DoA Level 2 holders that the Go Decision submission has been recalled.
+    /// For Opportunities: also includes Opportunity Manager and initiator (when different from OM).
     /// </summary>
     public async Task NotifyWorkflowRecalledAsync(WorkflowNotification notification)
     {
         try
         {
-            var recipientEmails = await GetRecipientEmailsAsync(notification.RecipientUserIds);
+            var recipientUserIds = notification.RecipientUserIds.ToList();
+
+            // For Opportunity recalls: add Opportunity Manager and initiator (when different from OM)
+            if (string.Equals(notification.EntityName, "Opportunity", StringComparison.OrdinalIgnoreCase))
+            {
+                var additionalRecipients = await GetRecallAdditionalRecipientUserIdsForOpportunityAsync(notification.EntityId);
+                recipientUserIds = recipientUserIds.Union(additionalRecipients).Distinct().ToList();
+            }
+
+            var recipientEmails = await GetRecipientEmailsAsync(recipientUserIds);
             if (!recipientEmails.Any())
             {
                 _logger.LogWarning("No recipients found for workflow recalled notification for entity {EntityName} {EntityId}",
@@ -357,8 +420,12 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
                 return;
             }
 
-            var recipientNames = await GetRecipientNamesAsync(notification.RecipientUserIds);
+            var recipientNames = await GetRecipientNamesAsync(recipientUserIds);
             var orgUnitName = await GetOrgUnitNameForOpportunityAsync(notification.EntityId);
+
+            var commentSection = !string.IsNullOrEmpty(notification.Comment)
+                ? $"<div class=\"comment-box\"><strong>Justification:</strong><br>{System.Net.WebUtility.HtmlEncode(notification.Comment)}</div>"
+                : string.Empty;
 
             var emailModel = new WorkflowRecalledEmailModel
             {
@@ -368,13 +435,14 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
                 RecalledByName = notification.PerformedByUserName,
                 RecalledOn = notification.Timestamp.ToString("dd MMM yyyy HH:mm"),
                 Comment = notification.Comment,
-                EntityUrl = $"{_baseUrl}/opportunity/{notification.EntityId}"
+                CommentSection = commentSection,
+                EntityUrl = $"{_baseUrl}/partnerships/opportunities/{notification.EntityId}"
             };
 
             var emailMessage = new EmailMessage
             {
-                TemplateName = "WorkflowRecalled.html",
-                Title = $"PAO: {notification.EntityDisplayName} - Submission Recalled",
+                TemplateName = "UNOPS.PAO.Business.EmailTemplates.OpportunityWorkflowRecalled.html",
+                Title = $"Opportunity+: {notification.EntityDisplayName} - Submission Recalled",
                 EmailReceivers = recipientEmails.ToArray()
             };
 
@@ -464,6 +532,8 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
 
             var recipientNames = await GetRecipientNamesAsync(stakeholderUserIds);
 
+            var commentSection = "<div class=\"comment-box\"><strong>Approver's Comment:</strong><br>This opportunity has been approved for development and may affect countries in your area of responsibility.</div>";
+
             var emailModel = new WorkflowCompletedEmailModel
             {
                 RecipientName = string.Join(", ", recipientNames),
@@ -472,13 +542,14 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
                 ApprovedByName = approverName,
                 ApprovedOn = DateTime.UtcNow.ToString("dd MMM yyyy HH:mm"),
                 Comment = "This opportunity has been approved for development and may affect countries in your area of responsibility.",
-                EntityUrl = $"{_baseUrl}/opportunity/{opportunityId}"
+                CommentSection = commentSection,
+                EntityUrl = $"{_baseUrl}/partnerships/opportunities/{opportunityId}"
             };
 
             var emailMessage = new EmailMessage
             {
-                TemplateName = "WorkflowCompleted.html",
-                Title = $"PAO: {opportunity.Name} - Go Decision Approved (FYI)",
+                TemplateName = "UNOPS.PAO.Business.EmailTemplates.OpportunityWorkflowCompleted.html",
+                Title = $"Opportunity+: {opportunity.Name} - Go Decision Approved (FYI)",
                 EmailReceivers = recipientEmails.ToArray()
             };
 
@@ -637,6 +708,93 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
         return opportunity?.ResponsibleOrgUnit?.Name ?? "Unknown";
     }
 
+    /// <summary>
+    /// Gets the responsible org unit description (name) for an opportunity.
+    /// Returns only the org unit name (no ID) for display in email notifications.
+    /// </summary>
+    private async Task<string> GetOrgUnitIdAndDescriptionForOpportunityAsync(string entityId)
+    {
+        if (!int.TryParse(entityId, out var opportunityId))
+            return "Unknown";
+
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
+        var opportunity = await context.Opportunities
+            .AsNoTracking()
+            .Include(o => o.ResponsibleOrgUnit)
+            .FirstOrDefaultAsync(o => o.Id == opportunityId && !o.IsDeleted);
+
+        var orgUnit = opportunity?.ResponsibleOrgUnit;
+        if (orgUnit == null)
+            return "Unknown";
+
+        return orgUnit.Name ?? "Unknown";
+    }
+
+    /// <summary>
+    /// Gets the approver role short form (DoA2 or DoA3) for an opportunity's ResponsibleOrgUnit.
+    /// Uses DoA2 if holders exist; otherwise DoA3.
+    /// </summary>
+    private async Task<string> GetApproverRoleShortForOpportunityAsync(string entityId)
+    {
+        if (!int.TryParse(entityId, out var opportunityId))
+            return "DoA2";
+
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        
+        var opportunity = await context.Opportunities
+            .AsNoTracking()
+            .FirstOrDefaultAsync(o => o.Id == opportunityId && !o.IsDeleted);
+
+        if (opportunity?.ResponsibleOrgUnitId == null)
+            return "DoA2";
+
+        var orgUnitId = opportunity.ResponsibleOrgUnitId.Value;
+
+        var hasDoA2 = await context.Set<EntityUserRole>()
+            .AsNoTracking()
+            .Include(e => e.EntityRole)
+            .AnyAsync(e => !e.IsDeleted &&
+                e.EntityType == "OrganizationHierarchy" &&
+                e.EntityId == orgUnitId &&
+                e.EntityRole != null &&
+                e.EntityRole.Code == "DoA2_OrganizationHierarchy");
+
+        return hasDoA2 ? "DoA2" : "DoA3";
+    }
+
+    /// <summary>
+    /// Gets both DoA2 and DoA3 holder user IDs for an opportunity's ResponsibleOrgUnit.
+    /// Used when an Opportunity is approved to notify all DoA holders (not just the approvers).
+    /// </summary>
+    private async Task<List<int>> GetDoA2AndDoA3HolderUserIdsForOpportunityAsync(int opportunityId)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        var opportunity = await context.Opportunities
+            .AsNoTracking()
+            .FirstOrDefaultAsync(o => o.Id == opportunityId && !o.IsDeleted);
+
+        if (opportunity?.ResponsibleOrgUnitId == null)
+            return new List<int>();
+
+        var orgUnitId = opportunity.ResponsibleOrgUnitId.Value;
+
+        var doaHolderIds = await context.Set<EntityUserRole>()
+            .AsNoTracking()
+            .Include(e => e.EntityRole)
+            .Where(e => !e.IsDeleted &&
+                e.EntityType == "OrganizationHierarchy" &&
+                e.EntityId == orgUnitId &&
+                e.EntityRole != null &&
+                (e.EntityRole.Code == "DoA2_OrganizationHierarchy" || e.EntityRole.Code == "DoA3_OrganizationHierarchy"))
+            .Select(e => e.UserId)
+            .Distinct()
+            .ToListAsync();
+
+        return doaHolderIds;
+    }
+
     #endregion
 
     #region CC Recipient Methods
@@ -702,6 +860,130 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
         }
 
         return ccRecipients.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    /// <summary>
+    /// Gets additional recipient user IDs for Opportunity recall notifications.
+    /// Returns Opportunity Manager and initiator (when different from OM).
+    /// These are added to the approvers who already receive the recall notification.
+    /// </summary>
+    /// <param name="entityId">The opportunity ID as a string</param>
+    /// <returns>List of user IDs: OM + initiator (if different from OM)</returns>
+    private async Task<List<int>> GetRecallAdditionalRecipientUserIdsForOpportunityAsync(string entityId)
+    {
+        var recipientIds = new List<int>();
+
+        var omUserId = await GetOpportunityManagerUserIdAsync(entityId);
+        if (omUserId.HasValue)
+        {
+            recipientIds.Add(omUserId.Value);
+        }
+
+        var initiatorUserId = await GetInitiatorUserIdForRecalledOpportunityAsync(entityId);
+        if (initiatorUserId.HasValue && initiatorUserId != omUserId)
+        {
+            recipientIds.Add(initiatorUserId.Value);
+        }
+
+        return recipientIds.Distinct().ToList();
+    }
+
+    /// <summary>
+    /// Gets the initiator user ID for a recalled Opportunity (the user who submitted for Go Decision).
+    /// Queries the pending Submit workflow log - at recall time the task is not yet closed.
+    /// </summary>
+    /// <param name="entityId">The opportunity ID as a string</param>
+    /// <returns>The initiator's user ID, or null if not found</returns>
+    private async Task<int?> GetInitiatorUserIdForRecalledOpportunityAsync(string entityId)
+    {
+        using var scope = _serviceScopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<WorkflowDbContext>();
+
+        var submitLog = await context.WorkflowLogs
+            .AsNoTracking()
+            .Where(w => !w.IsDeleted
+                     && w.EntityName == "Opportunity"
+                     && w.EntityId == entityId
+                     && w.Action == "Submit"
+                     && w.CompletedOn == null)
+            .OrderByDescending(w => w.CreatedDate)
+            .FirstOrDefaultAsync();
+
+        return submitLog != null ? submitLog.UserId : null;
+    }
+
+    /// <summary>
+    /// Gets the recipient user IDs for Opportunity rejection notifications.
+    /// Returns only the Opportunity Manager and the initiator (when different from OM).
+    /// </summary>
+    /// <param name="entityId">The opportunity ID as a string</param>
+    /// <returns>List of user IDs: OM + initiator (if different from OM)</returns>
+    private async Task<List<int>> GetRejectionRecipientUserIdsForOpportunityAsync(string entityId)
+    {
+        var recipientIds = new List<int>();
+
+        var omUserId = await GetOpportunityManagerUserIdAsync(entityId);
+        if (omUserId.HasValue)
+        {
+            recipientIds.Add(omUserId.Value);
+        }
+
+        var initiatorUserId = await GetInitiatorUserIdForRejectedOpportunityAsync(entityId);
+        if (initiatorUserId.HasValue && initiatorUserId != omUserId)
+        {
+            recipientIds.Add(initiatorUserId.Value);
+        }
+
+        return recipientIds.Distinct().ToList();
+    }
+
+    /// <summary>
+    /// Gets the Opportunity Manager's user ID for the specified opportunity.
+    /// Queries stakeholders with the "Opportunity_Manager_Opportunity" role.
+    /// </summary>
+    /// <param name="entityId">The opportunity ID as a string</param>
+    /// <returns>The Opportunity Manager's user ID, or null if not found</returns>
+    private async Task<int?> GetOpportunityManagerUserIdAsync(string entityId)
+    {
+        if (!int.TryParse(entityId, out var opportunityId))
+            return null;
+
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        var omStakeholder = await context.OpportunityStakeholders
+            .AsNoTracking()
+            .Include(s => s.EntityRole)
+            .Where(s => !s.IsDeleted
+                     && s.OpportunityId == opportunityId
+                     && s.EntityRole != null
+                     && s.EntityRole.Code == "Opportunity_Manager_Opportunity")
+            .FirstOrDefaultAsync();
+
+        return omStakeholder?.UserId;
+    }
+
+    /// <summary>
+    /// Gets the initiator user ID for a rejected Opportunity (the user who submitted for Go Decision).
+    /// Queries the most recent Submit workflow log for this entity.
+    /// </summary>
+    /// <param name="entityId">The opportunity ID as a string</param>
+    /// <returns>The initiator's user ID, or null if not found</returns>
+    private async Task<int?> GetInitiatorUserIdForRejectedOpportunityAsync(string entityId)
+    {
+        using var scope = _serviceScopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<WorkflowDbContext>();
+
+        var submitLog = await context.WorkflowLogs
+            .AsNoTracking()
+            .Where(w => !w.IsDeleted
+                     && w.EntityName == "Opportunity"
+                     && w.EntityId == entityId
+                     && w.Action == "Submit"
+                     && w.CompletedOn != null)
+            .OrderByDescending(w => w.CompletedOn)
+            .FirstOrDefaultAsync();
+
+        return submitLog != null ? submitLog.UserId : null;
     }
 
     /// <summary>

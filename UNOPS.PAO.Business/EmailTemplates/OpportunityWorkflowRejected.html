@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAO: {{EntityName}} - Set to NO GO</title>
+    <title>Opportunity+: {{ EntityName }} - Set to NO GO</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -91,40 +91,35 @@
     </div>
     
     <div class="content">
-        <p>Hello {{RecipientName}},</p>
+        <p>Dear {{ RecipientName }},</p>
         
         <div class="rejection-box">
             <div class="rejection-icon">&#10006;</div>
             <strong>The opportunity has been set to NO GO.</strong>
         </div>
         
-        <p>The DoA Level 2 holder has decided that <strong>{{OrgUnitName}}</strong> will not proceed with the development of this opportunity at this time.</p>
+        <p>The DoA Level 2 holder has decided that <strong>{{ OrgUnitName }}</strong> will not proceed with the development of this opportunity at this time.</p>
         
         <table class="info-table">
             <tr>
                 <td>Opportunity:</td>
-                <td><strong>{{EntityName}}</strong></td>
+                <td><strong>{{ EntityName }}</strong></td>
             </tr>
             <tr>
                 <td>Responsible Org Unit:</td>
-                <td>{{OrgUnitName}}</td>
+                <td>{{ OrgUnitName }}</td>
             </tr>
             <tr>
                 <td>Decision By:</td>
-                <td>{{RejectedByName}}</td>
+                <td>{{ RejectedByName }}</td>
             </tr>
             <tr>
                 <td>Decision Date:</td>
-                <td>{{RejectedOn}}</td>
+                <td>{{ RejectedOn }}</td>
             </tr>
         </table>
         
-        {{#if Comment}}
-        <div class="comment-box">
-            <strong>Reason:</strong><br>
-            {{Comment}}
-        </div>
-        {{/if}}
+        {{ CommentSection }}
         
         <div class="note-box">
             <strong>Note:</strong> The Opportunity Manager can reopen this opportunity if circumstances change 
@@ -132,12 +127,12 @@
         </div>
         
         <p>
-            <a href="{{EntityUrl}}" class="button">View Opportunity</a>
+            <a href="{{ EntityUrl }}" class="button">View Opportunity</a>
         </p>
     </div>
     
     <div class="footer">
-        <p>This is an automated notification from UNOPS Opportunity+ System (PAO).</p>
+        <p>This is an automated notification from UNOPS Opportunity+ System.</p>
         <p>If you have any questions, please contact your system administrator.</p>
     </div>
 </body>

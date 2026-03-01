@@ -6,7 +6,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.IO;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using UNOPS.PAO.Business.Interfaces;
@@ -105,18 +107,20 @@ public class AiRetrieverManager : IAiRetrieverManager
     }
 
     /// <summary>
-    /// Convert markdown to Google Doc
+    /// Convert markdown to Google Doc.
+    /// API expects multipart/form-data with "file" (markdown content) and "data" (JSON metadata).
     /// </summary>
     public async Task<GoogleDocResponse> ConvertMarkdownToGoogleDocAsync(
         string markdown,
-        string? userEmail = null)
+        string? userEmail = null,
+        string? fileName = null)
     {
         _logger.LogInformation("📄 Converting markdown to Google Doc (length: {Length})", markdown?.Length ?? 0);
 
-        var request = new { markdown };
-        return await PostAsync<object, GoogleDocResponse>(
+        return await PostMultipartFormDataAsync<GoogleDocResponse>(
             CONVERT_MARKDOWN_TO_GOOGLE_DOC,
-            request,
+            markdown,
+            fileName ?? "document.md",
             userEmail
         );
     }
@@ -198,6 +202,67 @@ public class AiRetrieverManager : IAiRetrieverManager
                 throw new HttpRequestException(
                     $"API call failed: {response.StatusCode} - {responseContent}");
             }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error calling endpoint {Endpoint}: {Message}", endpoint, ex.Message);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// POST multipart/form-data with file and data fields (API expects "file" and "data").
+    /// </summary>
+    private async Task<TResponse> PostMultipartFormDataAsync<TResponse>(
+        string endpoint,
+        string fileContent,
+        string fileName,
+        string? userEmail = null)
+    {
+        try
+        {
+            _logger.LogInformation("📤 Making POST multipart request to {Endpoint}", endpoint);
+
+            var headers = await BuildAuthenticatedHeadersAsync(endpoint, userEmail, additionalHeaders: null);
+
+            using var content = new MultipartFormDataContent();
+            var fileBytes = Encoding.UTF8.GetBytes(fileContent);
+            var fileContentPart = new ByteArrayContent(fileBytes);
+            fileContentPart.Headers.ContentType = new MediaTypeHeaderValue("text/markdown");
+            content.Add(fileContentPart, "file", fileName);
+
+            var dataJson = JsonSerializer.Serialize(new { name = Path.GetFileNameWithoutExtension(fileName) });
+            content.Add(new StringContent(dataJson, Encoding.UTF8, "application/json"), "data");
+
+            var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
+            foreach (var header in headers)
+            {
+                if (string.Equals(header.Key, "Content-Type", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+            request.Content = content;
+
+            var response = await _httpClient.SendAsync(request);
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            _logger.LogInformation("📥 Response status: {StatusCode}", response.StatusCode);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = JsonSerializer.Deserialize<TResponse>(responseContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (result == null)
+                    throw new InvalidOperationException("Failed to deserialize response");
+
+                return result;
+            }
+
+            _logger.LogError("❌ API call failed: {StatusCode} - {Content}", response.StatusCode, responseContent);
+            throw new HttpRequestException($"API call failed: {response.StatusCode} - {responseContent}");
         }
         catch (Exception ex)
         {

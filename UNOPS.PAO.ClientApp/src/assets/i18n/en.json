@@ -2174,6 +2174,7 @@
   "message.validation.validationFailed": "Validation Failed",
   "message.validation.selectAtLeastOneInteraction": "Please select at least one interaction",
   "message.validation.selectAtLeastOnePartnerRole": "Please select at least one partner role (Funding or Client)",
+  "message.validation.orgUnitRequired": "Org Unit Responsible for Opportunity development is required",
   "message.validation.selectAtLeastOnePartner": "Please select at least one partner for this document",
   "message.validation.noChangeInPartnerSelection": "Please make changes to partner selection before saving",
   "message.selectPartnersForDocument": "Select which partner(s) this document (Results Framework) relates to. You can select funding partners, client partners, or both.",

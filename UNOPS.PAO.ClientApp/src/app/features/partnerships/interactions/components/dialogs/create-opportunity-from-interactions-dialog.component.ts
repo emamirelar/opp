@@ -47,9 +47,26 @@ import {
   ProposeOpportunityRequest
 } from '../../models/interaction-selection.model';
 
+/** Minimal stakeholder model for org unit role display in create dialog */
+interface OrgUnitRoleStakeholder {
+  entityRoleId: number;
+  entityRoleName: string | null;
+  entityRoleCode: string | null;
+  userName: string | null;
+  position: string | null;
+  organizationHierarchyId: number;
+  organizationHierarchyName: string | null;
+}
+
 // Services
 import { FeedbackDialogService } from '@shared/services/ui';
 import { InteractionService } from '../../services/interaction.service';
+import {
+  ValuesService,
+  OrganizationUnit,
+  EntityUserRolesByOrgUnitResponse,
+  EntityUserRoleGroupModel
+} from '@shared/services/api/values.service';
 import { GoogleDriveService } from '@shared/services/google-drive.service';
 import { DocumentService } from '@shared/services/api/document.service';
 import { DrivePickerService } from '@shared/services/integration/drive-picker.service';
@@ -105,6 +122,7 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
   private translateService = inject(TranslateService);
   private feedbackDialogService = inject(FeedbackDialogService);
   private interactionService = inject(InteractionService);
+  private valuesService = inject(ValuesService);
   private googleDriveService = inject(GoogleDriveService);
   private documentService = inject(DocumentService);
   private drivePickerService = inject(DrivePickerService);
@@ -168,6 +186,12 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
   pendingGoogleDriveFiles = signal<{id: string, name: string, mimeType: string}[]>([]);
   selectedDocumentTypeForDialog = signal<number | null>(null);
 
+  // Org Unit Responsible for Opportunity development (like Team section)
+  organizationUnits = signal<OrganizationUnit[]>([]);
+  selectedOrgUnitId = signal<number | null>(null);
+  orgUnitStakeholders = signal<OrgUnitRoleStakeholder[]>([]);
+  loadingOrgUnitStakeholders = signal(false);
+
   // Delivery Modality options (values match backend enum: 1=NotYetKnown, 2=AllDirect, 3=AllGrantSupport, 4=Mixed)
   readonly deliveryModalityOptions = [
     { value: 1, label: 'label.deliveryModality.notYetKnown' },
@@ -220,7 +244,10 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     const nameValue = this.opportunityName().trim();
     const hasValidName = nameValue.length > 0 && nameValue.length <= 255;
     
-    return hasAnySources && hasValidName && hasRoleIfNeeded;
+    // Org Unit Responsible is required
+    const hasOrgUnit = !!this.selectedOrgUnitId();
+    
+    return hasAnySources && hasValidName && hasRoleIfNeeded && hasOrgUnit;
   });
   
   readonly canCreate = computed(() => {
@@ -232,7 +259,12 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     const needsPartnerRole = this.showPartnerFields();
     const hasRoleIfNeeded = !needsPartnerRole || (this.isFundingPartner() || this.isClientPartner());
     
-    return hasValidName && hasRoleIfNeeded;
+    // Org Unit Responsible is required (from dropdown or from AI proposal in review step)
+    const proposal = this.proposedOpportunity();
+    const opp = proposal?.opportunity as { responsibleOrgUnitId?: number } | undefined;
+    const hasOrgUnit = !!this.selectedOrgUnitId() || !!(opp?.responsibleOrgUnitId);
+    
+    return hasValidName && hasRoleIfNeeded && hasOrgUnit;
   });
   
   readonly showPartnerFields = computed(() => {
@@ -354,6 +386,47 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     return Array.from(partnerMap.values());
   });
 
+  // Director roles for selected org unit (excludes DoA1, DoA2, DoA3, Opportunity Manager)
+  readonly groupedDirectorRoles = computed(() => {
+    const stakeholders = this.orgUnitStakeholders();
+    const excluded = ['DoA1', 'DoA2', 'DoA3', 'Opportunity Manager'];
+    const filtered = stakeholders.filter(
+      s => !excluded.includes(s.entityRoleName || '')
+    );
+    const roleOrder = [
+      'Region Director', 'Region Deputy Director', 'Hub Director', 'Hub Deputy Director',
+      'OrgUnit Director', 'OrgUnit Deputy Director', 'MCO Director', 'MCO Deputy Director',
+      'Regional Director', 'Regional Deputy Director', 'Org Unit Director / Manager', 'Org Unit Deputy Director / Manager'
+    ];
+    const getOrder = (name: string) => {
+      const idx = roleOrder.indexOf(name);
+      return idx === -1 ? 999 : idx;
+    };
+    return filtered.sort((a, b) => getOrder(a.entityRoleName || '') - getOrder(b.entityRoleName || ''));
+  });
+
+  // Selected org unit name for display (from dropdown or stakeholders)
+  readonly selectedOrgUnitName = computed(() => {
+    const id = this.selectedOrgUnitId();
+    if (!id) return null;
+    const unit = this.organizationUnits().find(u => u.id === id);
+    if (unit) return unit.name;
+    const first = this.orgUnitStakeholders()[0];
+    return first?.organizationHierarchyName ?? null;
+  });
+
+  // Opportunity Decision Making Pathway: DoA2 and DoA3 only (DoA2 first)
+  readonly decisionMakingPathwayRoles = computed(() => {
+    const stakeholders = this.orgUnitStakeholders();
+    return stakeholders
+      .filter(s => ['DoA2', 'DoA3'].includes(s.entityRoleName || ''))
+      .sort((a, b) => {
+        const orderA = a.entityRoleName === 'DoA2' ? 1 : 2;
+        const orderB = b.entityRoleName === 'DoA2' ? 1 : 2;
+        return orderA - orderB;
+      });
+  });
+
   readonly filteredAvailableInteractions = computed(() => {
     // Don't filter here - filtering is done server-side via search
     return this.availableInteractions();
@@ -383,10 +456,13 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
 
   ngOnInit(): void {
     // Effect is now defined as a class field
-    
+
     // Load document types for Opportunity entity
     this.loadDocumentTypes();
-    
+
+    // Load organization units for Org Unit Responsible dropdown
+    this.loadOrganizationUnits();
+
     // Initialize Google Drive auth for Office file conversion
     this.googleDriveService.initializeAuth().subscribe({
       next: (authAvailable) => {
@@ -982,6 +1058,120 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       this.documentTypes.set([]);
     } finally {
       this.loadingDocumentTypes.set(false);
+    }
+  }
+
+  /**
+   * Load organization units for Org Unit Responsible dropdown (same as Team section)
+   */
+  private loadOrganizationUnits(): void {
+    this.valuesService.getOpportunityOrganizationUnits().subscribe({
+      next: (data) => this.organizationUnits.set(data),
+      error: () => this.organizationUnits.set([])
+    });
+  }
+
+  /**
+   * Load entity user roles for selected org unit (director roles + DoA pathway)
+   */
+  private loadOrgUnitStakeholders(orgUnitId: number): void {
+    this.loadingOrgUnitStakeholders.set(true);
+    this.orgUnitStakeholders.set([]);
+    this.valuesService.getEntityUserRolesByOrgUnits([orgUnitId]).subscribe({
+      next: (responses: EntityUserRolesByOrgUnitResponse[]) => {
+        this.loadingOrgUnitStakeholders.set(false);
+        const response = responses?.[0];
+        if (!response?.roleGroups?.length) {
+          this.orgUnitStakeholders.set([]);
+          return;
+        }
+        const stakeholders: OrgUnitRoleStakeholder[] = response.roleGroups.map(
+          (group: EntityUserRoleGroupModel) => {
+            const firstUser = group.users?.[0];
+            return {
+              entityRoleId: group.entityRoleId,
+              entityRoleName: group.entityRoleName || null,
+              entityRoleCode: group.entityRoleCode || null,
+              userName: group.users?.map(u => u.name).filter(Boolean).join(', ') || null,
+              position: firstUser?.position || null,
+              organizationHierarchyId: response.organizationHierarchyId,
+              organizationHierarchyName: response.organizationHierarchyName || null
+            };
+          }
+        );
+        this.orgUnitStakeholders.set(stakeholders);
+      },
+      error: () => {
+        this.loadingOrgUnitStakeholders.set(false);
+        this.orgUnitStakeholders.set([]);
+      }
+    });
+  }
+
+  /**
+   * Get translated role name matching Team section (uses role.{entityRoleCode} translation keys)
+   * Falls back to entityRoleName if no translation exists
+   */
+  getTranslatedRoleName(stakeholder: OrgUnitRoleStakeholder): string {
+    const code = stakeholder.entityRoleCode;
+    if (code) {
+      const key = `role.${code}`;
+      const translated = this.translateService.instant(key);
+      if (translated && translated !== key) return translated;
+    }
+    return stakeholder.entityRoleName || '';
+  }
+
+  /**
+   * Toggle org unit field inclusion in review step (checkbox)
+   * When unchecking, clears selected org unit
+   */
+  toggleOrgUnitField(checked: boolean): void {
+    if (!checked) {
+      this.selectedOrgUnitId.set(null);
+      this.orgUnitStakeholders.set([]);
+      this.selectedFields.update(m => {
+        const next = new Map(m);
+        next.set('responsibleOrgUnitName', false);
+        return next;
+      });
+      const proposal = this.proposedOpportunity();
+      if (proposal?.opportunity) {
+        const opp = proposal.opportunity as any;
+        opp.responsibleOrgUnitId = null;
+        opp.responsibleOrgUnitName = null;
+      }
+    } else {
+      this.selectedFields.update(m => {
+        const next = new Map(m);
+        next.set('responsibleOrgUnitName', true);
+        return next;
+      });
+    }
+  }
+
+  /**
+   * Handle org unit selection change - load director roles and DoA pathway
+   */
+  onOrgUnitChange(orgUnitId: number | null): void {
+    this.selectedOrgUnitId.set(orgUnitId);
+    if (orgUnitId) {
+      this.loadOrgUnitStakeholders(orgUnitId);
+      // Update proposal when in review step (for create request)
+      const proposal = this.proposedOpportunity();
+      if (proposal?.opportunity) {
+        const opp = proposal.opportunity as any;
+        const unit = this.organizationUnits().find(u => u.id === orgUnitId);
+        opp.responsibleOrgUnitId = orgUnitId;
+        opp.responsibleOrgUnitName = unit?.name || null;
+        this.selectedFields.update(m => {
+          const next = new Map(m);
+          next.set('responsibleOrgUnitName', true);
+          return next;
+        });
+      }
+    } else {
+      this.orgUnitStakeholders.set([]);
     }
   }
   
@@ -1737,6 +1927,7 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
    */
   async createDirectly(): Promise<void> {
     if (!this.canCreate()) {
+      this.showValidationError.set(true);
       return;
     }
     
@@ -1798,7 +1989,6 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         partnerId: isFromInteractionDetail ? 0 : (this.partnerId() || 0),
         isFundingPartner: isFromInteractionDetail ? false : this.isFundingPartner(),
         isClientPartner: isFromInteractionDetail ? false : this.isClientPartner(),
-        
         // Include uploaded documents as structured array
         documents: uploadedDocs.map(d => ({
           gcsPath: d.gcsPath,
@@ -1806,6 +1996,9 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
           documentTypeId: d.documentTypeId
         }))
       };
+      if (this.selectedOrgUnitId()) {
+        createRequest.responsibleOrgUnitId = this.selectedOrgUnitId();
+      }
       
       console.log('📤 Sending direct create request with {0} documents:', uploadedDocs.length, createRequest);
       
@@ -1909,9 +2102,11 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         documents: createRequest.documents
       });
 
-      // Add optional fields only if selected
-      if (this.isFieldSelected('responsibleOrgUnitName') && opp.responsibleOrgUnitId) {
-        createRequest.responsibleOrgUnitId = opp.responsibleOrgUnitId;
+      // Add optional fields only if selected (use selectedOrgUnitId when user chose from dropdown)
+      const effectiveOrgUnitId = this.selectedOrgUnitId() ?? opp.responsibleOrgUnitId;
+      const includeOrgUnit = this.isFieldSelected('responsibleOrgUnitName') || !!this.selectedOrgUnitId();
+      if (includeOrgUnit && effectiveOrgUnitId) {
+        createRequest.responsibleOrgUnitId = effectiveOrgUnitId;
       }
 
       if (this.isFieldSelected('proposedInitiativeTypeName') && opp.proposedInitiativeTypeId) {
@@ -2458,6 +2653,12 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
 
     this.selectedFields.set(selected);
 
+    // Initialize org unit from AI proposal and load director/DoA roles
+    if (opp.responsibleOrgUnitId) {
+      this.selectedOrgUnitId.set(opp.responsibleOrgUnitId);
+      this.loadOrgUnitStakeholders(opp.responsibleOrgUnitId);
+    }
+
     // Initialize partner role selections
     this.initializePartnerRoleSelections();
   }
@@ -2616,6 +2817,8 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     this.selectedExistingDocumentIds.set([]);
     this.availablePartnerDocuments.set([]);
     this.showExistingDocuments.set(false);
+    this.selectedOrgUnitId.set(null);
+    this.orgUnitStakeholders.set([]);
   }
 
   /**

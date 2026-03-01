@@ -1945,6 +1945,7 @@
   "message.validation.validationFailed": "Ã‰chec de la Validation",
   "message.validation.selectAtLeastOneInteraction": "Veuillez sÃ©lectionner au moins une interaction",
   "message.validation.selectAtLeastOnePartnerRole": "Veuillez sÃ©lectionner au moins un rÃ´le de partenaire (Financement ou Client)",
+  "message.validation.orgUnitRequired": "L'unit organisationnelle responsable du dÃ©veloppement de l'opportunitÃ© est requise",
   "message.validation.selectAtLeastOnePartner": "Veuillez sÃ©lectionner au moins un partenaire pour ce document",
   "message.validation.noChangeInPartnerSelection": "Veuillez apporter des modifications Ã  la sÃ©lection des partenaires avant d'enregistrer",
   "message.selectPartnersForDocument": "SÃ©lectionnez le(s) partenaire(s) auquel ce document (Cadre de RÃ©sultats) se rapporte. Vous pouvez sÃ©lectionner des partenaires de financement, des partenaires clients ou les deux.",

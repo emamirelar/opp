@@ -71,7 +71,9 @@ public class EmailTemplateRenderer : IEmailTemplateRenderer
             foreach (var prop in typeof(T).GetProperties())
             {
                 var value = prop.GetValue(model)?.ToString() ?? string.Empty;
+                // Support both {{ PropertyName }} (with spaces) and {{PropertyName}} (no spaces)
                 renderedTemplate = renderedTemplate.Replace($"{{{{ {prop.Name} }}}}", value);
+                renderedTemplate = renderedTemplate.Replace($"{{{{{prop.Name}}}}}", value);
             }
         }
 

@@ -28,11 +28,13 @@ public interface IAiRetrieverManager
         string? userEmail = null);
 
     /// <summary>
-    /// Convert markdown to Google Doc
+    /// Convert markdown to Google Doc.
+    /// API expects multipart/form-data with file and data fields.
     /// </summary>
     Task<GoogleDocResponse> ConvertMarkdownToGoogleDocAsync(
-        string markdown, 
-        string? userEmail = null);
+        string markdown,
+        string? userEmail = null,
+        string? fileName = null);
 
     // Add more endpoint methods as needed...
 }

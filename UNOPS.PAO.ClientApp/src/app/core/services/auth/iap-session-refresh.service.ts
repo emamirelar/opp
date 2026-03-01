@@ -3,8 +3,10 @@
  * @author UNOPS Opportunity+ System Development Team
  *
  * GCIP access tokens expire after 1 hour (non-configurable, inherited from Firebase).
- * For external identities, Google recommends a persistent SESSION_REFRESHER iframe
- * that continuously keeps the session alive in the background.
+ * Hidden iframes cannot complete the GCIP auth-ui token exchange due to cross-origin
+ * cookie restrictions. This service uses a minimal popup window that opens, refreshes
+ * the session cookie, and auto-closes. The main window is immediately refocused so
+ * the user experiences only a brief taskbar flash.
  *
  * @see https://cloud.google.com/iap/docs/external-identity-sessions
  */
@@ -13,16 +15,19 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
+/** Proactive refresh: 45 minutes (15-minute buffer before 1-hour expiry) */
+const PROACTIVE_REFRESH_MS = 45 * 60 * 1000;
+
 @Injectable({
   providedIn: 'root',
 })
 export class IapSessionRefreshService {
   private readonly http = inject(HttpClient);
-  private sessionRefresherIframe: HTMLIFrameElement | null = null;
+  private proactiveTimerId: ReturnType<typeof setInterval> | null = null;
 
   /**
    * Shared promise so concurrent 401 callers all wait for the same refresh attempt.
-   * Prevents race condition where second caller gets `false` and redirects to login
+   * Prevents race condition where a second caller redirects to login
    * while the first caller's refresh is still in progress.
    */
   private activeRefreshPromise: Promise<boolean> | null = null;
@@ -46,47 +51,33 @@ export class IapSessionRefreshService {
   }
 
   /**
-   * @description Embed a persistent SESSION_REFRESHER iframe.
-   * IAP continuously refreshes the session in the background via this iframe.
+   * @description Start proactive session refresh every 45 minutes.
    * Call once when the user is authenticated.
    */
-  startSessionRefresher(): void {
-    if (!this.shouldRun() || this.sessionRefresherIframe) {
+  startProactiveRefresh(): void {
+    if (!this.shouldRun() || this.proactiveTimerId !== null) {
       return;
     }
 
-    const refresherUrl = `${window.location.origin}/?gcp-iap-mode=SESSION_REFRESHER`;
-
-    const iframe = document.createElement('iframe');
-    iframe.src = refresherUrl;
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = 'none';
-    iframe.style.position = 'absolute';
-    iframe.style.display = 'none';
-    iframe.setAttribute('aria-hidden', 'true');
-    iframe.setAttribute('tabindex', '-1');
-
-    document.body.appendChild(iframe);
-    this.sessionRefresherIframe = iframe;
+    this.proactiveTimerId = setInterval(() => {
+      this.refreshSession();
+    }, PROACTIVE_REFRESH_MS);
   }
 
   /**
-   * @description Remove the SESSION_REFRESHER iframe (e.g. on logout)
+   * @description Stop proactive refresh (e.g. on logout)
    */
-  stopSessionRefresher(): void {
-    if (this.sessionRefresherIframe) {
-      if (this.sessionRefresherIframe.parentNode) {
-        this.sessionRefresherIframe.parentNode.removeChild(this.sessionRefresherIframe);
-      }
-      this.sessionRefresherIframe = null;
+  stopProactiveRefresh(): void {
+    if (this.proactiveTimerId !== null) {
+      clearInterval(this.proactiveTimerId);
+      this.proactiveTimerId = null;
     }
   }
 
   /**
-   * @description Reactive session refresh via DO_SESSION_REFRESH (on 401).
-   * If a refresh is already in progress, all callers share the same promise
-   * to avoid race conditions where a second caller redirects to login prematurely.
+   * @description Refresh the IAP session via a minimal popup with DO_SESSION_REFRESH.
+   * The popup auto-closes and the main window is immediately refocused.
+   * If a refresh is already in progress, all callers share the same promise.
    */
   refreshSession(): Promise<boolean> {
     if (!this.shouldRun()) {
@@ -108,108 +99,46 @@ export class IapSessionRefreshService {
 
   private async doRefresh(refreshUrl: string): Promise<boolean> {
     try {
-      return await this.openRefreshWindow(refreshUrl);
+      return await this.openRefreshPopup(refreshUrl);
     } catch {
       return false;
     }
   }
 
   /**
-   * @description Opens DO_SESSION_REFRESH in a popup window and polls until session is restored.
-   * Falls back to iframe if popup is blocked.
+   * Opens DO_SESSION_REFRESH in a minimal popup, immediately refocuses the
+   * main window, and auto-closes after 2 seconds.
    */
-  private openRefreshWindow(url: string): Promise<boolean> {
+  private openRefreshPopup(url: string): Promise<boolean> {
     return new Promise((resolve) => {
-      const refreshWindow = window.open(url, '_iap_session_refresh', 'width=1,height=1');
+      const popup = window.open(
+        url,
+        '_iap_refresh',
+        'width=1,height=1,left=-9999,top=-9999,menubar=no,toolbar=no,location=no,status=no'
+      );
 
-      if (!refreshWindow) {
-        this.iframeFallbackRefresh(url).then(resolve);
+      if (!popup) {
+        resolve(false);
         return;
       }
 
-      let attempts = 0;
-      const maxAttempts = 30;
-
-      const checkSession = () => {
-        attempts++;
-
-        if (refreshWindow.closed || attempts >= maxAttempts) {
-          if (refreshWindow && !refreshWindow.closed) {
-            refreshWindow.close();
-          }
-          this.verifySession().then(resolve);
-          return;
-        }
-
-        fetch('/favicon.ico', {
-          method: 'GET',
-          credentials: 'include',
-          headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        })
-          .then((response) => {
-            if (response.status === 401) {
-              setTimeout(checkSession, 500);
-            } else {
-              refreshWindow.close();
-              resolve(true);
-            }
-          })
-          .catch(() => {
-            setTimeout(checkSession, 500);
-          });
-      };
-
-      setTimeout(checkSession, 1000);
-    });
-  }
-
-  private async iframeFallbackRefresh(url: string): Promise<boolean> {
-    await this.loadIframe(url);
-    await this.delay(2000);
-    return this.verifySession();
-  }
-
-  private loadIframe(url: string): Promise<void> {
-    return new Promise((resolve) => {
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = 'none';
-      iframe.style.position = 'absolute';
-
-      let done = false;
-      const cleanup = () => {
-        if (iframe.parentNode) {
-          iframe.parentNode.removeChild(iframe);
-        }
-      };
-
-      iframe.onload = () => {
-        if (!done) {
-          done = true;
-        }
-        cleanup();
-        resolve();
-      };
-      iframe.onerror = () => {
-        if (!done) {
-          done = true;
-        }
-        cleanup();
-        resolve();
-      };
-
-      document.body.appendChild(iframe);
-      iframe.src = url;
+      // Immediately refocus the main window so the user stays in context
+      try { popup.blur(); } catch { /* cross-origin */ }
+      window.focus();
 
       setTimeout(() => {
-        if (!done) {
-          done = true;
-          cleanup();
-          resolve();
-        }
-      }, 5000);
+        try {
+          if (!popup.closed) {
+            popup.close();
+          }
+        } catch { /* cross-origin */ }
+
+        window.focus();
+
+        this.delay(500).then(() => {
+          this.verifySession().then(resolve);
+        });
+      }, 2000);
     });
   }
 

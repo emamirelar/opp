@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAO: {{EntityName}} - Go Decision Approved</title>
+    <title>Opportunity+: {{ EntityName }} - Action Required</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -14,7 +14,7 @@
             padding: 20px;
         }
         .header {
-            background-color: #28a745;
+            background-color: #0077be;
             color: white;
             padding: 20px;
             text-align: center;
@@ -26,17 +26,12 @@
             border: 1px solid #ddd;
             border-top: none;
         }
-        .success-box {
-            background-color: #d4edda;
-            border: 1px solid #28a745;
+        .highlight-box {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
             border-radius: 4px;
             padding: 15px;
             margin: 15px 0;
-            text-align: center;
-        }
-        .success-icon {
-            font-size: 48px;
-            color: #28a745;
         }
         .info-table {
             width: 100%;
@@ -61,6 +56,9 @@
             border-radius: 4px;
             margin: 10px 5px 10px 0;
         }
+        .button:hover {
+            background-color: #005a8e;
+        }
         .footer {
             background-color: #f1f1f1;
             padding: 15px;
@@ -71,61 +69,46 @@
         }
         .comment-box {
             background-color: #f8f9fa;
-            border-left: 4px solid #28a745;
+            border-left: 4px solid #0077be;
             padding: 10px 15px;
             margin: 15px 0;
             font-style: italic;
+        }
+        .note-box {
+            background-color: #e7f3ff;
+            border: 1px solid #b8daff;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 15px 0;
+            font-size: 13px;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Go Decision Approved</h1>
+        <h1>Go Decision Required</h1>
     </div>
     
     <div class="content">
-        <p>Hello {{RecipientName}},</p>
+        <p>Dear {{ ApproverName }},</p>
         
-        <div class="success-box">
-            <div class="success-icon">&#10004;</div>
-            <strong>The Go Decision for your opportunity has been approved!</strong>
-        </div>
+        <p>You are the current <strong>{{ ApproverRoleShort }}</strong> holder for <strong>{{ OrgUnitIdAndDescription }}</strong>.</p>
         
-        <p>The opportunity is now in the <strong style="color: #28a745;">GO</strong> stage and can proceed to the next phase of development.</p>
+        <p>Opportunity <strong>{{ EntityName }}</strong> has been submitted by <strong>{{ RequestedByName }}</strong> for your review and to request confirmation that <strong>{{ OrgUnitIdAndDescription }}</strong> may proceed with further development.</p>
         
-        <table class="info-table">
-            <tr>
-                <td>Opportunity:</td>
-                <td><strong>{{EntityName}}</strong></td>
-            </tr>
-            <tr>
-                <td>Responsible Org Unit:</td>
-                <td>{{OrgUnitName}}</td>
-            </tr>
-            <tr>
-                <td>Approved By:</td>
-                <td>{{ApprovedByName}}</td>
-            </tr>
-            <tr>
-                <td>Approved On:</td>
-                <td>{{ApprovedOn}}</td>
-            </tr>
-        </table>
+        <p>Please review the Opportunity Statement carefully and indicate your decision <a href="{{ EntityStatementUrl }}">here</a>.</p>
         
-        {{#if Comment}}
-        <div class="comment-box">
-            <strong>Approver's Comment:</strong><br>
-            {{Comment}}
-        </div>
-        {{/if}}
+        <p><em>Please note that, <u>where applicable</u>, Internal Stakeholders from any other UNOPS Org Units normally responsible for any of the countries of Implementation will be notified of any decision to continue development of this Opportunity.</em></p>
+        
+        {{ CommentSection }}
         
         <p>
-            <a href="{{EntityUrl}}" class="button">View Opportunity</a>
+            <a href="{{ EntityStatementUrl }}" class="button">Review Opportunity Statement</a>
         </p>
     </div>
     
     <div class="footer">
-        <p>This is an automated notification from UNOPS Opportunity+ System (PAO).</p>
+        <p>This is an automated notification from UNOPS Opportunity+ System.</p>
         <p>If you have any questions, please contact your system administrator.</p>
     </div>
 </body>
