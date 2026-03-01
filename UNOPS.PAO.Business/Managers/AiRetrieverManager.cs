@@ -231,7 +231,11 @@ public class AiRetrieverManager : IAiRetrieverManager
             fileContentPart.Headers.ContentType = new MediaTypeHeaderValue("text/markdown");
             content.Add(fileContentPart, "file", fileName);
 
-            var dataJson = JsonSerializer.Serialize(new { name = Path.GetFileNameWithoutExtension(fileName) });
+            var dataJson = JsonSerializer.Serialize(new
+            {
+                name = Path.GetFileNameWithoutExtension(fileName),
+                downloadPDF = true
+            });
             content.Add(new StringContent(dataJson, Encoding.UTF8, "application/json"), "data");
 
             var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
