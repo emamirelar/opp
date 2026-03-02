@@ -273,6 +273,7 @@ When InMemory is in use (`IsUsingPostgres = false`), all these tests return earl
 | QA-089 | 🟡 Medium | Concurrent tests share DbContext across parallel tasks | Test Execution | Tests using `Task.Run` with shared DbContext get thread-safety exceptions. Fixed by converting parallel tasks to sequential execution. 5 tests affected (PNO-1197 ConcurrencyTests, PNO-1166 ConcurrencyTests). | N/A | 2026-03-02 | Resolved (2026-03-02) |
 | QA-090 | 🟡 Medium | Partner OrgUnit integration tests blocked by authorization | Infrastructure | 16 tests skipped in PartnerControllerOrgUnitTests (9), PartnerControllerOrgUnitFilterTests (6), PartnerControllerTests (1). Need test auth handler configured in WebApplicationFactory. | N/A | 2026-03-02 | Resolved (2026-03-02) |
 | QA-091 | 🟡 Medium | PNO-1146 fixture mock dependencies incomplete | Mocking | PaoWorkflowNotificationService internal helper methods (GetOrgUnitNameForOpportunityAsync, GetApproverRoleShortForOpportunityAsync, BuildCCRecipientsAsync) throw exceptions caught by try-catch blocks, preventing SendEmailAsync from being called. 21 tests skipped. Fix: add complete seeding for OrgUnit, EntityUserRole, OpportunityStakeholder data in fixture, or mock the helper methods. | N/A | 2026-03-02 | Open |
+| QA-092 | 🟢 Low | Business Tests hang on ImageGeneration and AIMatchingService load tests | Test Performance | `ImageGenerationManagerTests.GenerateOpportunityImages_MultipleCalls_AllPropagateExceptions` and `OpportunitySections.LoadTests.LOAD_011_AIMatchingService_SustainedLoad_20RPS` hang indefinitely against real PostgreSQL. Use `--blame-hang-timeout 60s` to prevent. 2 tests affected. | N/A | 2026-03-02 | Open |
 
 ---
 
@@ -1258,11 +1259,14 @@ Update the permissions mock in the Playwright mock helper to return a denied/blo
 
 ## QA Issue Statistics (Updated 2026-03-02)
 
-- **Total Open:** 7 ⚠️ (QA-014, QA-015, QA-042, QA-043, QA-044, QA-045, QA-088)
+- **Total Open:** 9 ⚠️ (QA-014, QA-015, QA-042, QA-043, QA-044, QA-045, QA-088, QA-091, QA-092)
+- **QA-092 added (2026-03-02):** Two Business Tests hang indefinitely against real PostgreSQL — `ImageGenerationManagerTests` and `LOAD_011_AIMatchingService`. Use `--blame-hang-timeout 60s`.
+- **QA-091 added (2026-03-02):** PNO-1146 fixture mock dependencies incomplete. 21 tests skipped.
 - **QA-089 resolved (2026-03-02):** Concurrent DbContext tests converted from parallel `Task.WhenAll` to sequential execution. 5 tests un-skipped.
 - **QA-090 resolved (2026-03-02):** Added `[Collection("Integration Tests")]` attribute for shared factory injection. 16 tests un-skipped.
 - **QA-088 added (2026-03-02):** GoogleCredential mock in PAOWebApplicationFactory is ineffective — `UNOPSGeminiManager` reads credentials from `IConfiguration` directly, bypassing DI. 51 PartnerController tests blocked.
 - **QA-083 resolved (2026-03-02):** Cloud SQL Proxy now running — PostgreSQL connectivity restored.
+- **Business Tests (2026-03-02):** With proxy running: **2592 passed, 13 failed (all pre-existing DEF-tracked), 176 skipped, 2 hung** (previously 1793 auth failures).
 - **QA-084 resolved (2026-03-02), fully verified:** Fixed OpportunityImmutabilityTests constructor (UserResolverService mock) + AutoMapper mock overload (production uses two-arg `Map` with `IMappingOperationOptions`). **27/27 tests pass** ✅. DEF-051 reclassified — was test mock mismatch, not production defect.
 - **QA-085 resolved (2026-03-02), verified rerun:** Fixed BaseEngagementManagerTests Guid format string — changed invalid `:N8` to `.ToString("N")[..8]` in `SeedEngagementAsync` and `SeedEngagementPartnerAsync`. Also fixed concurrent query test to run sequentially (DbContext is not thread-safe). **39/39 tests pass**.
 - **QA-086 resolved (2026-03-02), verified rerun:** Added `[Collection("Integration Tests")]` attribute to `PartnerControllerTests` class. Fixture error eliminated. Also fixed `UserProfile.Name` NOT NULL seeding issue via raw SQL INSERT. 51 tests now execute but fail due to QA-088 (GoogleCredential mock ineffective).

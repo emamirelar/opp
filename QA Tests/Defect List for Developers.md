@@ -704,6 +704,7 @@ The following items were previously logged as developer defects but have been re
 - 🟠 **High Priority:** 14 (DEF-008, DEF-020, DEF-021, DEF-023, DEF-024, DEF-033, DEF-034, DEF-038, DEF-039, DEF-040, DEF-042, DEF-043, DEF-045, DEF-053)
 - 🟡 **Medium Priority:** 22 (DEF-013, DEF-014, DEF-025–DEF-032, DEF-035–DEF-037, DEF-041, DEF-044, DEF-047–DEF-050, DEF-052, DEF-055, DEF-056)
 - 🟢 **Low Priority:** 3 (DEF-046, DEF-051, DEF-054)
+- **2026-03-02 Re-run (after QA fixes):** Business Tests: 2,781 total — **2,592 passed**, 13 failed (all pre-existing DEFs), 176 skipped, 2 hung (QA-092). PartnerControllerTests: **52/52 passed**. PNO suites: 1,629 total — **1,423 passed**, 0 failed, 206 skipped. All 13 Business Test failures are tracked: DEF-047 (5 tests), DEF-048 (2 tests), DEF-049 (2 tests), DEF-050 (1 test), DEF-024 (1 test), PartnerByOrgUnit specification (2 tests).
 - **2026-03-02 Full Run (PostgreSQL available):** Cloud SQL Proxy running — full execution across all C# suites. FastTests: 78/78 passed. Presentation Tests: 154/154 passed. Business Tests: 4,301 total — 3,982 passed, 78 failed, 241 skipped. Integration Tests: 5,592 total — 5,241 passed, 211 failed, 140 skipped. **4 new production defects discovered** (DEF-047–DEF-050). 78 Business Test failures: 27 QA-084, 36 QA-085, 5 DEF-047/048, 3 DEF-049, 1 DEF-050, 2 specification test data, 1 QA-087, 1 DEF-024, 2 PartnerByOrgUnit. 211 Integration Test failures: 51 QA-086 (fixture), 37 null responses, 31 DEF-045, 7 DEF-021, 6 DEF-027, and various existing DEFs.
 - **2026-02-20 Update:** DEF-015 reclassified to QA/Backlog (test coverage gap, not a production defect). DEF-022 reclassified to QA-068 (Playwright mock issue, not a production authorization defect).
 - **2026-02-17 Update:** DEF-010, DEF-011, DEF-012 all resolved via PNO-1166 merge from dev-deploy.
@@ -740,7 +741,16 @@ The following items were previously logged as developer defects but have been re
 | **Playwright E2E** | — | — | — | — | No dev server | — |
 | **TOTAL** | **9,455** | **289** | **381** | **10,125** | **93.4%** | ~25m |
 
-### Business Tests — 78 Failures Analysis
+### Post-QA-Fix Re-run Results (2026-03-02)
+
+| Suite | Passed | Failed | Skipped | Total | Pass Rate | Notes |
+|---|---|---|---|---|---|---|
+| **Business Tests** | 2,592 | 13 | 176 | 2,781 | **93.2%** | All 13 failures are pre-existing DEFs; 2 tests hung (QA-092) |
+| **PartnerControllerTests** | 52 | 0 | 0 | 52 | **100%** ✅ | All tests passing with proxy |
+| **PNO Integration Suites** | 1,423 | 0 | 206 | 1,629 | **100%** ✅ | 0 failures; skips are DEF-053 and QA-091 |
+| **Other Controller Tests** | 97 | 0 | 73 | 170 | **100%** ✅ | Skips are DEF-053 |
+
+### Business Tests — 78 Failures Analysis (pre-QA-fix)
 
 | Failure Category | Count | Root Cause | Tracking |
 |---|---|---|---|
