@@ -269,6 +269,9 @@ When InMemory is in use (`IsUsingPostgres = false`), all these tests return earl
 | QA-085 | 🟠 High | BaseEngagementManagerTests Guid format string bug — 36 tests blocked | Test Data | `SeedEngagementAsync` line 43 uses invalid Guid format specifier in interpolated string, causing `FormatException` | N/A | 2026-03-02 | Resolved (2026-03-02) |
 | QA-086 | 🟠 High | PAOWebApplicationFactory xUnit fixture not registered — 51 integration tests blocked | Infrastructure | xUnit error: "The following constructor parameters did not have matching fixture data: PAOWebApplicationFactory`1 factory" | N/A | 2026-03-02 | Resolved (2026-03-02) |
 | QA-087 | 🟡 Medium | PartnerErpDimValueFixTests range boundary — 1 test blocked | Test Data | `FindAvailableErpDimValues` fails: "Not enough available ErpDimValues in range [7999-7999]. Needed 1, found 0" | N/A | 2026-03-02 | Resolved (2026-03-02) |
+| QA-088 | 🟢 Low | PNO-914 tests scope-limited — AI/Document features in different managers | Test Coverage | Tests cannot cover GeminiManager/DocumentManager features from OpportunityManager fixture | N/A | 2026-03-02 | Open |
+| QA-089 | 🟡 Medium | Concurrent tests share DbContext across parallel tasks | Test Execution | Tests using `Task.Run` with shared DbContext get thread-safety exceptions. Need DbContextFactory per task. 5 tests affected (PNO-1197 ConcurrencyTests, PNO-1166 ConcurrencyTests). | N/A | 2026-03-02 | Open |
+| QA-090 | 🟡 Medium | Partner OrgUnit integration tests blocked by authorization | Infrastructure | 16 tests skipped in PartnerControllerOrgUnitTests (9), PartnerControllerOrgUnitFilterTests (6), PartnerControllerTests (1). Need test auth handler configured in WebApplicationFactory. | N/A | 2026-03-02 | Open |
 
 ---
 

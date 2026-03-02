@@ -9,8 +9,8 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="13.0.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageReference Include="xunit" Version="2.6.6" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.6">
@@ -48,6 +48,7 @@
   <ItemGroup Condition="!Exists('..\..\UNOPS.Workflow\UNOPS.Workflow.Business\UNOPS.Workflow.Business.csproj')">
     <Compile Remove="Controllers\WorkflowControllerTests.cs" />
     <Compile Remove="UnitTests\Workflow\**\*.cs" />
+    <Compile Remove="PNO-1146_WorkflowEmailNotifications\**\*.cs" />
     <Compile Remove="PNO-1166_RejectDuplicateAndOMTransfer\**\*.cs" />
     <Compile Remove="PNO-1197_DoA3Fallback\**\*.cs" />
   </ItemGroup>

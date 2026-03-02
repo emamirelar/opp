@@ -264,7 +264,7 @@ public class ConcurrencyTests : IDisposable
         results.Should().HaveCount(2);
     }
 
-    [Fact(Skip = "DEF: Concurrent DbContext operations cause 'A second operation was started on this context instance before a previous operation completed'. Thread-safety issue in test setup sharing DbContext across parallel tasks.")]
+    [Fact(Skip = "QA-089: Concurrent DbContext operations cause 'A second operation was started on this context instance before a previous operation completed'. Thread-safety issue in test setup sharing DbContext across parallel tasks.")]
     public async Task CONC_005_SubmitAndCancelRace_HandledCorrectly()
     {
         await SeedOpportunityAsync(5, "IDENTIFY & PROFILE");

@@ -213,7 +213,7 @@ public class UnitTests
         dest.Name.Should().Be("Original");
     }
 
-    [Fact(Skip = "DEF: AutoMapper maps FundingPartners from UpdateOpportunityRequest to Opportunity (count=1), but should ignore them (expected count=0). Collection ignore rule not configured for FundingPartners.")]
+    [Fact(Skip = "DEF-023: AutoMapper maps FundingPartners — collection ignore rule not configured")]
     [Trait("DEF012", "UNIT_018")]
     public void UNIT_018_MapperConfiguration_IgnoreRulesCount()
     {
@@ -239,7 +239,7 @@ public class UnitTests
         dest.Description.Should().Be("Keep");
     }
 
-    [Fact(Skip = "DEF: AutoMapper throws DuplicateTypeMapConfigurationException when loading all assemblies with AllowNullCollections=true. Duplicate CreateMap calls exist across multiple profiles. Profiles need deduplication.")]
+    [Fact(Skip = "DEF-023: AutoMapper throws DuplicateTypeMapConfigurationException — duplicate CreateMap calls across profiles")]
     [Trait("DEF012", "UNIT_020")]
     public void UNIT_020_MapperConfiguration_NoUnmappedMembersWarning()
     {
@@ -251,7 +251,7 @@ public class UnitTests
         config.Invoking(c => c.AssertConfigurationIsValid()).Should().NotThrow();
     }
 
-    [Fact(Skip = "DEF: AutoMapper throws DuplicateTypeMapConfigurationException when loading all assemblies. Duplicate CreateMap calls exist across multiple profiles (UNOPS and base). Profiles need deduplication.")]
+    [Fact(Skip = "DEF-023: AutoMapper throws DuplicateTypeMapConfigurationException — duplicate CreateMap calls across profiles")]
     [Trait("DEF012", "UNIT_021")]
     public void UNIT_021_MapperConfiguration_AssertConfigurationIsValidPasses()
     {

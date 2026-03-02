@@ -89,7 +89,7 @@ public class ConcurrencyTests : PNO1197TestFixtureBase
         result.Result.Should().NotBeNull();
     }
 
-    [Fact(Skip = "DEF: Concurrent DbContext operations cause 'A second operation was started on this context instance before a previous operation completed'. Thread-safety issue in test setup sharing DbContext across parallel tasks.")]
+    [Fact(Skip = "QA-089: Concurrent DbContext operations cause 'A second operation was started on this context instance before a previous operation completed'. Thread-safety issue in test setup sharing DbContext across parallel tasks.")]
     public async Task CONC_003_SubmitWhileDoABeingCreated_HandledCorrectly()
     {
         await SeedOpportunityAsync(1, "IDENTIFY & PROFILE");
@@ -103,7 +103,7 @@ public class ConcurrencyTests : PNO1197TestFixtureBase
         result.Result.Should().NotBeNull();
     }
 
-    [Fact(Skip = "DEF: Concurrent DbContext operations cause 'A second operation was started on this context instance before a previous operation completed'. Thread-safety issue in test setup sharing DbContext across parallel tasks.")]
+    [Fact(Skip = "QA-089: Concurrent DbContext operations cause 'A second operation was started on this context instance before a previous operation completed'. Thread-safety issue in test setup sharing DbContext across parallel tasks.")]
     public async Task CONC_004_SubmitWhileOrgUnitChanging_HandledCorrectly()
     {
         await SeedOpportunityAsync(1, "IDENTIFY & PROFILE");
@@ -140,7 +140,7 @@ public class ConcurrencyTests : PNO1197TestFixtureBase
         results.Count(r => r.Result is OkObjectResult).Should().BeGreaterThan(0);
     }
 
-    [Fact(Skip = "DEF: Concurrent DbContext operations cause 'A second operation was started on this context instance before a previous operation completed'. Thread-safety issue in test setup sharing DbContext across parallel tasks.")]
+    [Fact(Skip = "QA-089: Concurrent DbContext operations cause 'A second operation was started on this context instance before a previous operation completed'. Thread-safety issue in test setup sharing DbContext across parallel tasks.")]
     public async Task CONC_006_DoACheckDuringEntityUserRoleUpdate_HandledCorrectly()
     {
         await SeedOpportunityAsync(1, "IDENTIFY & PROFILE");
@@ -159,7 +159,7 @@ public class ConcurrencyTests : PNO1197TestFixtureBase
         result.Result.Should().NotBeNull();
     }
 
-    [Fact(Skip = "DEF: Concurrent DbContext operations cause 'A second operation was started on this context instance before a previous operation completed'. Thread-safety issue in test setup sharing DbContext across parallel tasks.")]
+    [Fact(Skip = "QA-089: Concurrent DbContext operations cause 'A second operation was started on this context instance before a previous operation completed'. Thread-safety issue in test setup sharing DbContext across parallel tasks.")]
     public async Task CONC_007_SubmitAndDoADeletionRace_HandledCorrectly()
     {
         await SeedOpportunityAsync(1, "IDENTIFY & PROFILE");

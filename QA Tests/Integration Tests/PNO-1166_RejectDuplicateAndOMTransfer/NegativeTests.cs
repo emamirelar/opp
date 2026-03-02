@@ -310,7 +310,7 @@ public class NegativeTests : IDisposable
         result.Should().BeOfType<BadRequestObjectResult>();
     }
 
-    [Fact(Skip = "DEF: WorkflowController.Reject throws NullReferenceException when EntityName is null instead of returning 400 BadRequest. Null guard missing in controller action.")]
+    [Fact(Skip = "DEF-055: WorkflowController.Reject throws NullReferenceException on null EntityName instead of 400 BadRequest")]
     public async Task NEG_007_Reject_NullEntityName_Returns400()
     {
         var request = new RejectWorkflowRequest

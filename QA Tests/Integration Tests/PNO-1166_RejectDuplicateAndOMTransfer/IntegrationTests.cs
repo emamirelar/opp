@@ -478,7 +478,7 @@ public class IntegrationTests : PNO1166TestFixtureBase, IDisposable
         opp!.Stage.Should().Be("CANCELLED");
     }
 
-    [Fact(Skip = "DEF: Reopen workflow sets status to Draft (4) instead of Active (1). Business logic does not correctly update EntityStatus when reopening opportunities from CANCELLED stage.")]
+    [Fact(Skip = "DEF-056: Reopen workflow sets EntityStatus to Draft(4) instead of Active(1)")]
     public async Task INT_033_CrossEntity_ReopenReindexesOpportunity()
     {
         await SeedOpportunityAsync(203, "CANCELLED", EntityStatus.Closed);

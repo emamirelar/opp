@@ -115,7 +115,7 @@ public class ConcurrencyTests
         dest.Name.Should().Be("Seq49");
     }
 
-    [Fact(Skip = "DEF: AutoMapper throws DuplicateTypeMapConfigurationException when loading all assemblies. Duplicate CreateMap calls exist across multiple profiles. Profiles need deduplication.")]
+    [Fact(Skip = "DEF-023: AutoMapper throws DuplicateTypeMapConfigurationException — duplicate CreateMap calls across profiles")]
     [Trait("DEF012", "CONC_006")]
     public void CONC_006_MapDuringConfigValidation()
     {
@@ -221,7 +221,7 @@ public class ConcurrencyTests
         tasks.Select(t => t.Result).Should().OnlyContain(d => d.Name == "P");
     }
 
-    [Fact(Skip = "DEF: AutoMapper maps FundingPartners under concurrency (count=1), but should ignore them (expected count=0). Collection ignore rule not configured for FundingPartners, same root cause as UNIT_018.")]
+    [Fact(Skip = "DEF-023: AutoMapper maps FundingPartners — collection ignore rule not configured")]
     [Trait("DEF012", "CONC_014")]
     public void CONC_014_CollectionIgnore_UnderConcurrency()
     {

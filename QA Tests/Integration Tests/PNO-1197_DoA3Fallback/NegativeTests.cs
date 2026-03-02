@@ -327,7 +327,7 @@ public class NegativeTests : PNO1197TestFixtureBase, IDisposable
             .Which.Success.Should().BeFalse();
     }
 
-    [Fact(Skip = "DEF: Business logic returns true (success) when DoA holder role IsDeleted=true, but test expects false (failure). Submit validation does not correctly filter soft-deleted entity roles.")]
+    [Fact(Skip = "DEF-008: Submit validation does not filter soft-deleted entity roles")]
     public async Task NEG_013_DoAHolderRoleWithIsDeletedTrue_Fails()
     {
         await SeedOpportunityAsync(13, "IDENTIFY & PROFILE");
@@ -711,7 +711,7 @@ public class NegativeTests : PNO1197TestFixtureBase, IDisposable
             .Which.Success.Should().BeTrue();
     }
 
-    [Fact(Skip = "DEF: Business logic returns true (success) when DoA holder role is Inactive, but test expects false (failure). Submit validation does not check entity role status.")]
+    [Fact(Skip = "DEF-008: Submit validation does not check entity role status")]
     public async Task NEG_029_DoAHolderWithDeactivatedRole_Fails()
     {
         await SeedOpportunityAsync(29, "IDENTIFY & PROFILE");
@@ -786,7 +786,7 @@ public class NegativeTests : PNO1197TestFixtureBase, IDisposable
         response.UnmetRequirements.Should().Contain(r => r.Contains("managerRequired", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact(Skip = "DEF: Business logic returns true (success) when countries are missing, but test expects false (failure). Submit validation does not enforce countries requirement.")]
+    [Fact(Skip = "DEF-008: Submit validation does not enforce countries requirement")]
     public async Task NEG_032_MissingCountries_Fails()
     {
         await SeedOpportunityAsync(32, "IDENTIFY & PROFILE");
@@ -804,7 +804,7 @@ public class NegativeTests : PNO1197TestFixtureBase, IDisposable
             .Which.Success.Should().BeFalse();
     }
 
-    [Fact(Skip = "DEF: Business logic returns true (success) when deliverables are missing, but test expects false (failure). Submit validation does not enforce deliverables requirement.")]
+    [Fact(Skip = "DEF-008: Submit validation does not enforce deliverables requirement")]
     public async Task NEG_033_MissingDeliverables_Fails()
     {
         await SeedOpportunityAsync(33, "IDENTIFY & PROFILE");
@@ -822,7 +822,7 @@ public class NegativeTests : PNO1197TestFixtureBase, IDisposable
             .Which.Success.Should().BeFalse();
     }
 
-    [Fact(Skip = "DEF: Business logic returns true (success) when SDGs are missing, but test expects false (failure). Submit validation does not enforce SDGs requirement.")]
+    [Fact(Skip = "DEF-008: Submit validation does not enforce SDGs requirement")]
     public async Task NEG_034_MissingSDGs_Fails()
     {
         await SeedOpportunityAsync(34, "IDENTIFY & PROFILE");
@@ -896,7 +896,7 @@ public class NegativeTests : PNO1197TestFixtureBase, IDisposable
             .Which.Success.Should().BeFalse();
     }
 
-    [Fact(Skip = "DEF: Business logic returns true (success) when funding partners are missing, but test expects false (failure). Submit validation does not enforce funding partners requirement.")]
+    [Fact(Skip = "DEF-008: Submit validation does not enforce funding partners requirement")]
     public async Task NEG_038_MissingFundingPartners_Fails()
     {
         await SeedOpportunityAsync(38, "IDENTIFY & PROFILE");
@@ -914,7 +914,7 @@ public class NegativeTests : PNO1197TestFixtureBase, IDisposable
             .Which.Success.Should().BeFalse();
     }
 
-    [Fact(Skip = "DEF: Business logic returns true (success) when client partners are missing, but test expects false (failure). Submit validation does not enforce client partners requirement.")]
+    [Fact(Skip = "DEF-008: Submit validation does not enforce client partners requirement")]
     public async Task NEG_039_MissingClientPartners_Fails()
     {
         await SeedOpportunityAsync(39, "IDENTIFY & PROFILE");
