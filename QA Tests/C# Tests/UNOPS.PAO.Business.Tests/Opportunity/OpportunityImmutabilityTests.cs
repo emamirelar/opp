@@ -53,11 +53,24 @@ public class OpportunityImmutabilityTests : IDisposable
             .UseInMemoryDatabase(databaseName: $"OpportunityImmutabilityTestDb_{Guid.NewGuid()}")
             .Options;
 
-        var mockUserService = new Mock<UserResolverService<int>>(null);
+        var mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
+        var testIdentity = new ClaimsIdentity(new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, "1"),
+            new Claim(ClaimTypes.Email, "test@test.com"),
+            new Claim(ClaimTypes.Name, "Test User")
+        }, "TestAuth");
+        var testPrincipal = new ClaimsPrincipal(testIdentity);
+        var httpContextMock = new Mock<HttpContext>();
+        httpContextMock.Setup(x => x.User).Returns(testPrincipal);
+        httpContextMock.Setup(x => x.Request.Headers).Returns(new HeaderDictionary());
+        mockHttpContextAccessor.Setup(x => x.HttpContext).Returns(httpContextMock.Object);
+
+        var userResolverService = new UserResolverService<int>(mockHttpContextAccessor.Object);
         var mockDbSchema = new Mock<IDbContextSchema>();
         mockDbSchema.Setup(s => s.Schema).Returns("public");
 
-        _context = new UNOPSAppDbContext(_dbContextOptions, mockUserService.Object, mockDbSchema.Object);
+        _context = new UNOPSAppDbContext(_dbContextOptions, userResolverService, mockDbSchema.Object);
 
         _mockMapper = new Mock<IMapper>();
         // AiContextualService (instantiated by BaseRepository) requires these config values.
@@ -475,19 +488,22 @@ public class OpportunityImmutabilityTests : IDisposable
         // Arrange
         var opportunityId = await CreateOpportunityWithStage("GO");
         
+        var goModel = new OpportunityModel 
+        { 
+            Id = opportunityId, 
+            Name = "GO Opportunity",
+            Stage = "GO",
+            Permissions = new EntityPermissionsModel
+            {
+                CanRead = true,
+                CanUpdate = true,
+                CanDelete = true
+            }
+        };
         _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
-            .Returns(new OpportunityModel 
-            { 
-                Id = opportunityId, 
-                Name = "GO Opportunity",
-                Stage = "GO",
-                Permissions = new EntityPermissionsModel
-                {
-                    CanRead = true,
-                    CanUpdate = true,
-                    CanDelete = true
-                }
-            });
+            .Returns(goModel);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<object>(), It.IsAny<Action<IMappingOperationOptions<object, OpportunityModel>>>()))
+            .Returns(goModel);
 
         // Act
         var result = await _manager.GetOpportunityAsync(_testUser, opportunityId);
@@ -501,7 +517,6 @@ public class OpportunityImmutabilityTests : IDisposable
             result.Permissions.CanUpdate.Should().BeFalse();
             result.Permissions.CanDelete.Should().BeFalse();
         }
-        // If null, the test still passes - immutability blocking is verified by other tests above
     }
 
     [Fact]
@@ -510,19 +525,22 @@ public class OpportunityImmutabilityTests : IDisposable
         // Arrange
         var opportunityId = await CreateOpportunityWithStage("NO GO");
         
+        var noGoModel = new OpportunityModel 
+        { 
+            Id = opportunityId, 
+            Name = "NO GO Opportunity",
+            Stage = "NO GO",
+            Permissions = new EntityPermissionsModel
+            {
+                CanRead = true,
+                CanUpdate = true,
+                CanDelete = true
+            }
+        };
         _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
-            .Returns(new OpportunityModel 
-            { 
-                Id = opportunityId, 
-                Name = "NO GO Opportunity",
-                Stage = "NO GO",
-                Permissions = new EntityPermissionsModel
-                {
-                    CanRead = true,
-                    CanUpdate = true,
-                    CanDelete = true
-                }
-            });
+            .Returns(noGoModel);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<object>(), It.IsAny<Action<IMappingOperationOptions<object, OpportunityModel>>>()))
+            .Returns(noGoModel);
 
         // Act
         var result = await _manager.GetOpportunityAsync(_testUser, opportunityId);
@@ -543,19 +561,22 @@ public class OpportunityImmutabilityTests : IDisposable
         // Arrange
         var opportunityId = await CreateOpportunityWithStage("IDENTIFY & PROFILE");
         
+        var editableModel = new OpportunityModel 
+        { 
+            Id = opportunityId, 
+            Name = "Editable Opportunity",
+            Stage = "IDENTIFY & PROFILE",
+            Permissions = new EntityPermissionsModel
+            {
+                CanRead = true,
+                CanUpdate = true,
+                CanDelete = true
+            }
+        };
         _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
-            .Returns(new OpportunityModel 
-            { 
-                Id = opportunityId, 
-                Name = "Editable Opportunity",
-                Stage = "IDENTIFY & PROFILE",
-                Permissions = new EntityPermissionsModel
-                {
-                    CanRead = true,
-                    CanUpdate = true,
-                    CanDelete = true
-                }
-            });
+            .Returns(editableModel);
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<object>(), It.IsAny<Action<IMappingOperationOptions<object, OpportunityModel>>>()))
+            .Returns(editableModel);
 
         // Act
         var result = await _manager.GetOpportunityAsync(_testUser, opportunityId);

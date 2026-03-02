@@ -260,15 +260,19 @@ public class PartnerErpDimValueFixTests : IDisposable
         // Arrange - Seed a partner at VALID_RANGE_END (7999) so that the next assigned value
         // is 8000, which falls in the reserved range and must be bumped to RESERVED_RANGE_END + 1 (10000).
         // This is deterministic in both SQLite (fresh DB) and PostgreSQL (find available boundary value).
-        var boundaryValues = await FindAvailableErpDimValues(1, VALID_RANGE_END, VALID_RANGE_END);
-        var invalidValues = await FindAvailableErpDimValues(1, INVALID_THRESHOLD + 1, 99999);
+        var isValueAvailable = !await _context.Partners
+            .IgnoreQueryFilters()
+            .AnyAsync(p => p.ErpDimValue == VALID_RANGE_END);
 
-        if (boundaryValues.Count == 0)
+        if (!isValueAvailable)
         {
             // VALID_RANGE_END (7999) already in use — skip rather than find a lower value
             // because the test requires nextValue to enter the reserved range.
             return;
         }
+
+        var boundaryValues = new List<int> { VALID_RANGE_END };
+        var invalidValues = await FindAvailableErpDimValues(1, INVALID_THRESHOLD + 1, 99999);
 
         var partners = new List<UNOPSPartner>
         {

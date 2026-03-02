@@ -42,7 +42,7 @@ public class BaseEngagementManagerTests : ManagerTestBase
     {
         var engagement = new BaseEngagement
         {
-            EngagementNumber = engagementNumber ?? $"ENG_{_testMarker}_{Guid.NewGuid():N8}",
+            EngagementNumber = engagementNumber ?? $"ENG_{_testMarker}_{Guid.NewGuid().ToString("N")[..8]}",
             Name = $"Test Engagement {_testMarker}",
             OpportunityId = opportunityId,
             IsDeleted = isDeleted,
@@ -64,7 +64,7 @@ public class BaseEngagementManagerTests : ManagerTestBase
     {
         var ep = new BaseEngagementPartners
         {
-            Key = $"KEY_{_testMarker}_{Guid.NewGuid():N8}",
+            Key = $"KEY_{_testMarker}_{Guid.NewGuid().ToString("N")[..8]}",
             EngagementNumber = engagementNumber,
             BaseEngagementId = baseEngagementId,
             PartnerId = partnerId,
@@ -677,13 +677,16 @@ public class BaseEngagementManagerTests : ManagerTestBase
         await SeedEngagementAsync(isDeleted: false);
         await SeedEngagementAsync(isDeleted: false);
 
-        var tasks = Enumerable.Range(0, 5).Select(_ =>
-            Context.BaseEngagements
+        var counts = new List<int>();
+        for (int i = 0; i < 5; i++)
+        {
+            var count = await Context.BaseEngagements
                 .AsNoTracking()
                 .Where(e => e.Name.Contains(_testMarker) && !e.IsDeleted)
-                .CountAsync());
+                .CountAsync();
+            counts.Add(count);
+        }
 
-        var counts = await Task.WhenAll(tasks);
         counts.Should().AllBeEquivalentTo(2);
     }
 

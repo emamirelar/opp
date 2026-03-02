@@ -666,19 +666,21 @@ public class PAOWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup
     
     private void SeedTestData(UNOPSAppDbContext unopsDb, AppDbContext coreDb)
     {
-        // Ensure test user exists in UNOPS UserProfile
+        // Ensure test user exists in UNOPS UserProfile.
+        // UserProfile.Name is a read-only computed property (hides base via 'new'),
+        // so EF Core excludes it from INSERTs. Use raw SQL to satisfy the NOT NULL constraint.
         var userInfos = unopsDb.UserProfile.FirstOrDefault(u => u.UserEmail == "testuser@unops.org");
         if (userInfos == null)
         {
-            unopsDb.UserProfile.Add(new UserProfile
-            {
-                UserId = 123,
-                UserEmail = "testuser@unops.org",
-                FirstName = "Test",
-                LastName = "User",
-                OrgUnit = "HQ"
-            });
-            unopsDb.SaveChanges();
+            unopsDb.Database.ExecuteSqlRaw(@"
+                INSERT INTO public.""UserProfile""
+                    (""Id"", ""UserId"", ""UserEmail"", ""FirstName"", ""LastName"", ""Name"",
+                     ""OrgUnit"", ""IsDeleted"", ""CreatedBy"", ""CreatedDate"",
+                     ""LastModifiedBy"", ""LastModifiedDate"", ""Status"", ""WorkflowStatus"")
+                VALUES
+                    (0, 123, 'testuser@unops.org', 'Test', 'User', 'Test User',
+                     'HQ', false, 0, NOW(), 0, NOW(), 0, 0)
+                ON CONFLICT DO NOTHING");
         }
 
         // Ensure PAOUser exists in AppDbContext for ProfileManager (POST /api/profile)
@@ -691,14 +693,6 @@ public class PAOWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup
                 Email = "testuser@unops.org",
                 IsInternal = true,
                 ActiveUser = true,
-                UserProfile = new UserProfile
-                {
-                    UserId = 123,
-                    UserEmail = "testuser@unops.org",
-                    FirstName = "Test",
-                    LastName = "User",
-                    OrgUnit = "HQ"
-                }
             });
             coreDb.SaveChanges();
         }

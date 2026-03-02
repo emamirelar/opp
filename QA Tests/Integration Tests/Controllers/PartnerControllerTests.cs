@@ -18,6 +18,7 @@ using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.IntegrationTests.Controllers;
 
+[Collection("Integration Tests")]
 public class PartnerControllerTests : IntegrationTestBase
 {
     private readonly ILogger<PartnerControllerTests>? _logger;

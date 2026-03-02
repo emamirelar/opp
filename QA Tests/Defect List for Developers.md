@@ -684,16 +684,20 @@ The following items were previously logged as developer defects but have been re
 
 ---
 
-## Defect Statistics (Updated 2026-02-20)
+## Defect Statistics (Updated 2026-03-02 — Full PostgreSQL Run + Verification Reruns)
 
-- **Total Open:** 2 (DEF-013, DEF-014) — DEF-015 reclassified to backlog, DEF-022 reclassified to QA-068
+- **Total Open:** 26 (DEF-008, DEF-013, DEF-014, DEF-020, DEF-021, DEF-023, DEF-024×2, DEF-025–DEF-050, DEF-052, DEF-053)
+- **DEF-051 reclassified (2026-03-02):** Initially reported as `NullReferenceException` in `UNOPSOpportunityManager.GetOpportunityAsync`. Investigation revealed it was an AutoMapper mock overload mismatch in the test (single-arg vs two-arg `Map` overload). Fixed from QA side. **Not a production defect.** Open count reduced from 27 to 26.
+- **NEW (2026-03-02 verification rerun):** 2 new production defects remain: DEF-052 (UserProfile.Name read-only computed property), DEF-053 (UNOPSGeminiManager.GetCredentials crashes on missing credentials — blocks 51 integration tests)
+- **NEW (2026-03-02 full run):** 4 production defects discovered: DEF-047 (empty/whitespace name validation), DEF-048 (name max-length validation), DEF-049 (null request guard), DEF-050 (AutoMapper Country mapping)
 - **Total Partially Resolved:** 1 (DEF-008 — significant implementation progress, DoA3 fallback now added via PNO-1197)
-- **Total Resolved:** 0
-- **Total Reclassified:** 5 (moved to appropriate trackers)
+- **Total Resolved:** 6 (DEF-010, DEF-011, DEF-012, DEF-017, DEF-018, DEF-019)
+- **Total Reclassified:** 6 (DEF-005, DEF-007, DEF-009, DEF-015, DEF-022 → moved to appropriate trackers; DEF-051 → QA mock issue, not production defect)
 - 🔴 **Critical:** 0
-- 🟠 **High Priority:** 1 (DEF-008 remaining gaps — DoA3 fallback added via PNO-1197)
-- 🟡 **Medium Priority:** 2 (DEF-013, DEF-014)
-- 🟢 **Low Priority:** 0
+- 🟠 **High Priority:** 15 (DEF-008, DEF-020, DEF-021, DEF-023, DEF-024×2, DEF-033, DEF-034, DEF-038, DEF-039, DEF-040, DEF-042, DEF-043, DEF-045, DEF-047, DEF-053)
+- 🟡 **Medium Priority:** 14 (DEF-013, DEF-014, DEF-025–DEF-032, DEF-035–DEF-037, DEF-041, DEF-044, DEF-048, DEF-049, DEF-050, DEF-052)
+- 🟢 **Low Priority:** 1 (DEF-046)
+- **2026-03-02 Full Run (PostgreSQL available):** Cloud SQL Proxy running — full execution across all C# suites. FastTests: 78/78 passed. Presentation Tests: 154/154 passed. Business Tests: 4,301 total — 3,982 passed, 78 failed, 241 skipped. Integration Tests: 5,592 total — 5,241 passed, 211 failed, 140 skipped. **4 new production defects discovered** (DEF-047–DEF-050). 78 Business Test failures: 27 QA-084, 36 QA-085, 5 DEF-047/048, 3 DEF-049, 1 DEF-050, 2 specification test data, 1 QA-087, 1 DEF-024, 2 PartnerByOrgUnit. 211 Integration Test failures: 51 QA-086 (fixture), 37 null responses, 31 DEF-045, 7 DEF-021, 6 DEF-027, and various existing DEFs.
 - **2026-02-20 Update:** DEF-015 reclassified to QA/Backlog (test coverage gap, not a production defect). DEF-022 reclassified to QA-068 (Playwright mock issue, not a production authorization defect).
 - **2026-02-17 Update:** DEF-010, DEF-011, DEF-012 all resolved via PNO-1166 merge from dev-deploy.
 - **DEF-010 RESOLVED:** OM role transfer now works — previous OM auto-demoted to Collaborator in `UNOPSOpportunityManager`.
@@ -710,11 +714,62 @@ The following items were previously logged as developer defects but have been re
 - **DEF-018 Resolved:** All services (`AiContextualService`, `AdvancedSearchService`) now have `IsRelational()`/`IsInMemoryProvider()` guards on every relational API call, returning empty results for non-relational providers.
 - **DEF-019 Resolved:** `PAOAuthorizationService.AuthorizeAsync()` now handles `DenyAnonymousAuthorizationRequirement` directly (lines 41-50), succeeding for authenticated users.
 
-### Key Finding: No new production defects discovered during 2026-02-17 full execution across all 5 test suites.
+### Key Finding (2026-03-02 Full PostgreSQL Run): 4 NEW production defects discovered (DEF-047–DEF-050). Total: 10,125 tests executed (78 Fast + 154 Presentation + 4,301 Business + 5,592 Integration). 9,455 passed (93.4%), 289 failed, 381 skipped. Of 289 failures: 114 are QA test infrastructure issues (QA-084/085/086/087), ~130 are already-tracked DEFs (DEF-021/027/042/045 etc.), 10 are new DEF-047–050, and ~35 are test data/assertion issues under investigation.
+
+### Key Finding (2026-02-17): No new production defects discovered during 2026-02-17 full execution across all 5 test suites.
 
 ---
 
-## Latest Test Results (2026-02-17 — Full PostgreSQL Execution)
+## Latest Test Results (2026-03-02 — Full PostgreSQL Run)
+
+### .NET C# Tests - Combined Summary
+
+| Test Suite | Passed | Failed | Skipped | Total | Pass Rate | Duration |
+|------------|--------|--------|---------|-------|-----------|----------|
+| **FastTests** | 78 | 0 | 0 | 78 | 100% ✅ | 7s |
+| **Presentation.Tests** | 154 | 0 | 0 | 154 | 100% ✅ | 14s |
+| **Business.Tests (PostgreSQL)** | 3,982 | 78 | 241 | 4,301 | 92.6% ⚠️ | 22.5m |
+| **Integration Tests (PostgreSQL)** | 5,241 | 211 | 140 | 5,592 | 93.7% ⚠️ | 2.6m |
+| **Playwright E2E** | — | — | — | — | No dev server | — |
+| **TOTAL** | **9,455** | **289** | **381** | **10,125** | **93.4%** | ~25m |
+
+### Business Tests — 78 Failures Analysis
+
+| Failure Category | Count | Root Cause | Tracking |
+|---|---|---|---|
+| BaseEngagementManagerTests — Guid format string | 36 | Test code bug: `SeedEngagementAsync` uses invalid Guid format specifier | QA-085 |
+| OpportunityImmutabilityTests — constructor NullRef | 27 | Test infrastructure: missing HttpContext mock for `UserResolverService` | QA-084 |
+| OpportunityValidation — empty/whitespace name accepted | 5 | **Production defect**: no validation for empty/whitespace opportunity names | **DEF-047** |
+| UNOPSOpportunityManager — null request not guarded | 2 | **Production defect**: `UpdateOpportunityAsync` throws `InvalidOperationException` instead of `ArgumentNullException` | **DEF-049** |
+| OpportunityValidation — name max-length generic error | 2 | **Production defect**: no business-level max-length validation, DB throws generic error | **DEF-048** |
+| PartnerByOrgUnitSpecification — filter returns empty | 2 | Specification filter for indirect contacts and multiple user IDs returns 0 results | Under investigation |
+| AutoMapper — OpportunityCountry.Country missing | 1 | **Production defect**: missing navigation property mapping for Country on OpportunityCountry | **DEF-050** |
+| PartnerErpDimValueFix — range boundary | 1 | Test data boundary: range [7999-7999] has 0 available values | QA-087 |
+| InteractionContactId — FK not enforced | 1 | Already tracked under DEF-024 (ContactId via junction table) | DEF-024 |
+| PartnerByOrgUnitSpecification — Name required | 1 | Already tracked under existing test data issues | Under investigation |
+
+### Integration Tests — 211 Failures Analysis
+
+| Failure Category | Count | Root Cause | Tracking |
+|---|---|---|---|
+| PAOWebApplicationFactory fixture missing | 51 | xUnit class fixture not registered for test classes | QA-086 |
+| Null response / "Expected a value" | 37 | API returns null where test expects data — test data/seeding issue | QA (various) |
+| AuditLogController 500 errors | 31 | All authenticated requests return 500 | DEF-045 |
+| HTTP 500 instead of 400 (validation) | 13 | Server throws instead of returning validation error | Various DEFs |
+| HTTP 500 instead of 200 (success) | 12 | Endpoint throws for valid requests | Various DEFs |
+| HTTP 500 instead of 404 (not found) | 9+7 | Endpoint throws instead of returning 404 | Various DEFs |
+| AIPromptManagement authorization | 12 | PAOWebApplicationFactory fixture missing (subset of 51 above) | QA-086 |
+| PartnerAnalyticsController 500 | 8 | Analytics service failure (likely pg_trgm or SQL) | DEF-042 |
+| DocumentController route conflict | 7 | AmbiguousMatchException — two controllers register same route | DEF-021 |
+| GlobalController missing endpoints | 6 | Health/metadata endpoints not implemented | DEF-027 |
+| ContactAnalytics failures | 9 | Analytics service 500 errors | DEF-042 |
+| Various edge case/validation tests | ~9 | Feature gaps or test data issues | Various DEFs |
+
+**Key Finding (2026-03-02):** 4 NEW production defects discovered (DEF-047–050). Of 289 total failures, ~114 are QA test infrastructure (QA-084/085/086/087), ~130 are already-tracked production DEFs, 10 are new DEFs, and ~35 are under investigation.
+
+---
+
+## Previous Test Results (2026-02-17 — Full PostgreSQL Execution, 0 failures)
 
 ### .NET C# Tests - Combined Summary
 
@@ -1430,6 +1485,138 @@ Based on 2,608 passing tests:
 
 ---
 
+### DEF-047: Missing Opportunity Name Validation for Empty/Whitespace Strings
+
+**Severity:** 🟠 High  
+**Component:** `UNOPSOpportunityManager` / `OpportunityManager` (`UNOPS.PAO.UNOPSBusiness/Managers/UNOPSOpportunityManager.cs`)  
+**Date Reported:** 2026-03-02  
+**Status:** Open  
+**Priority:** P2 — Data integrity / validation gap  
+**Reporter:** QA Team (2026-03-02 full PostgreSQL test run)
+
+**Description:**
+
+`CreateOpportunityAsync` does not validate the `Name` property for empty strings (`""`) or whitespace-only strings (`"   "`). When these values are passed, the opportunity is created successfully without throwing any exception. The `null` case is correctly handled (throws exception), but empty/whitespace passes through.
+
+**Root Cause:** The `CreateOpportunityAsync` method likely checks `name == null` or uses `string.IsNullOrEmpty()` but does NOT use `string.IsNullOrWhiteSpace()`. Empty and whitespace-only names are accepted and persisted to the database.
+
+**Proper Fix:**
+- Replace `string.IsNullOrEmpty(model.Name)` with `string.IsNullOrWhiteSpace(model.Name)` in the validation logic
+- Throw `BusinessException` with a descriptive message containing "name" for empty/whitespace values
+- Apply the same fix in both `OpportunityManager` and `UNOPSOpportunityManager`
+
+**Wrong Fix:** ❌ Adding a database constraint only — validation should happen at the business layer with a user-friendly error message.
+
+**Affected Tests:**
+- `OpportunityValidationTests.CreateOpportunity_InvalidName_ThrowsException(invalidName: "   ")` — Expected exception, none thrown
+- `OpportunityValidationTests.CreateOpportunity_InvalidName_ThrowsException(invalidName: "")` — Expected exception, none thrown
+- `UNOPSOpportunityManagerTests.CreateOpportunity_InvalidName_ThrowsException(invalidName: "   ")` — Expected exception, none thrown
+- `UNOPSOpportunityManagerTests.CreateOpportunity_InvalidName_ThrowsException(invalidName: "")` — Expected exception, none thrown
+- `UNOPSOpportunityManagerTests.CreateOpportunity_WithoutRequiredName_ThrowsException` — Exception message doesn't contain "name"
+
+**Environment:** PostgreSQL (Cloud SQL Proxy)  
+**Error:** `Expected a <System.Exception> to be thrown, but no exception was thrown.`
+
+---
+
+### DEF-048: Missing Opportunity Name Max-Length Validation
+
+**Severity:** 🟡 Medium  
+**Component:** `UNOPSOpportunityManager` / `OpportunityManager`  
+**Date Reported:** 2026-03-02  
+**Status:** Open  
+**Priority:** P3 — Poor error message for max-length violation  
+**Reporter:** QA Team (2026-03-02 full PostgreSQL test run)
+
+**Description:**
+
+When creating an opportunity with a name exceeding the maximum allowed length, the system throws a generic Entity Framework `DbUpdateException` (`"An error occurred while saving the entity changes"`) instead of a descriptive `BusinessException` containing "length". The database column constraint catches the violation, but the error is not user-friendly.
+
+**Root Cause:** No business-layer validation for `Name` max-length. The database column constraint is the only safeguard, producing a generic EF error instead of a domain-level validation message.
+
+**Proper Fix:**
+- Add max-length validation in `CreateOpportunityAsync` before calling `AddAsync()`
+- Throw `BusinessException($"Opportunity name exceeds maximum length of {maxLength} characters")` if validation fails
+- Determine the correct max-length from the database schema or entity configuration
+
+**Wrong Fix:** ❌ Catching `DbUpdateException` and re-throwing as `BusinessException` — validate before saving.
+
+**Affected Tests:**
+- `OpportunityValidationTests.CreateOpportunity_NameTooLong_ThrowsException` — Expected message containing "length"
+- `UNOPSOpportunityManagerTests.CreateOpportunity_NameExceedsMaxLength_ThrowsException` — Expected message containing "length"
+
+**Environment:** PostgreSQL (Cloud SQL Proxy)  
+**Error:** `Expected exception message to match the equivalent of "*length*", but "An error occurred while saving the entity changes." does not.`
+
+---
+
+### DEF-049: Missing Null Request Guard in UNOPSOpportunityManager.UpdateOpportunityAsync
+
+**Severity:** 🟡 Medium  
+**Component:** `UNOPSOpportunityManager.UpdateOpportunityAsync` (`UNOPS.PAO.UNOPSBusiness/Managers/UNOPSOpportunityManager.cs`)  
+**Date Reported:** 2026-03-02  
+**Status:** Open  
+**Priority:** P3 — Error handling / defensive coding  
+**Reporter:** QA Team (2026-03-02 full PostgreSQL test run)
+
+**Description:**
+
+When `UpdateOpportunityAsync` is called with a `null` model parameter, it throws `System.InvalidOperationException` (from LINQ expression evaluation failure) instead of `System.ArgumentNullException`. The null model flows into a LINQ query (`model.Id` evaluation) and causes an internal EF Core expression tree evaluation failure.
+
+**Root Cause:** No null guard at the entry point of `UpdateOpportunityAsync`. The method immediately accesses `model.Id` in a LINQ Where clause without checking if `model` is null.
+
+**Proper Fix:**
+```csharp
+public async Task<OpportunityModel?> UpdateOpportunityAsync(UpdateOpportunityRequest model)
+{
+    ArgumentNullException.ThrowIfNull(model, nameof(model));
+    // ... existing logic
+}
+```
+
+**Wrong Fix:** ❌ Catching the `InvalidOperationException` and re-throwing — validate at entry.
+
+**Affected Tests:**
+- `OpportunityAdvancedFeaturesTests.UpdateOpportunity_NullRequest_HandlesGracefully` — Expected `ArgumentNullException`, got `InvalidOperationException`
+- `UNOPSOpportunityManagerTests.UpdateOpportunity_NullRequest_ShouldThrowArgumentNullException` — Expected `ArgumentNullException`, got `InvalidOperationException`
+
+**Environment:** PostgreSQL (Cloud SQL Proxy)  
+**Error:** `Expected a <System.ArgumentNullException> to be thrown, but found <System.InvalidOperationException>`
+
+---
+
+### DEF-050: AutoMapper Missing OpportunityCountry.Country Navigation Property Mapping
+
+**Severity:** 🟡 Medium  
+**Component:** `OpportunityMappingProfile` (AutoMapper configuration)  
+**Date Reported:** 2026-03-02  
+**Status:** Open  
+**Priority:** P3 — Mapping configuration gap  
+**Reporter:** QA Team (2026-03-02 full PostgreSQL test run)
+
+**Description:**
+
+When mapping `OpportunityCountry` → `OpportunityCountryModel`, AutoMapper throws `AutoMapperMappingException` because the `Country` navigation property on `OpportunityCountry` is null (not eagerly loaded) and the corresponding mapping for `Country` → `CountryModel` fails.
+
+This specifically fails in the `UpdateWhereSection_WithCountries_Success` test when the method saves countries and then re-reads the opportunity with countries included — the Country navigation property is not loaded.
+
+**Root Cause:** Either the `OpportunityCountry` → `OpportunityCountryModel` mapping is missing a rule for the `Country` destination member, or the query that reloads opportunity countries after saving does not `.Include(c => c.Country)`.
+
+**Proper Fix (choose one):**
+- **Option A:** Add `.Include(c => c.Country)` to the query that loads `OpportunityCountries` after saving the WHERE section
+- **Option B:** Add a `ForMember(dest => dest.Country, opt => opt.MapFrom(src => src.Country))` rule with a null guard in the mapping profile
+- **Option C:** Ensure the `OpportunityCountryModel.Country` is populated from a separate query if the navigation property is not loaded
+
+**Wrong Fix:** ❌ Ignoring the `Country` member — users need to see country details.
+
+**Affected Tests:**
+- `UNOPSOpportunityManagerTests.UpdateWhereSection_WithCountries_Success` — `AutoMapperMappingException` on `Countries` → `Country` member
+
+**Environment:** PostgreSQL (Cloud SQL Proxy)  
+**Error:** `AutoMapper.AutoMapperMappingException: Error mapping types. Destination Member: Countries → Country`
+
+---
+
 ### DEF-046: Remove Orphaned `UNOPS.PAO.ExternalDataService` Submodule
 
 **Severity:** 🟢 Low  
@@ -1486,4 +1673,117 @@ git commit -m "chore: remove unused UNOPS.PAO.ExternalDataService submodule"
 **Expected:** Only submodules with active project references are registered in `.gitmodules`.  
 **Actual:** An unused submodule is registered, adding an unnecessary dependency to CI credential requirements.
 
-**Developer Feedback:**
+**Developer Feedback:** Pending review.
+
+---
+
+### DEF-051: ~~UNOPSOpportunityManager.GetOpportunityAsync NullReferenceException at Line 362~~ RECLASSIFIED — QA Mock Issue
+
+**Severity:** ~~🟠 High~~ → N/A  
+**Component:** `OpportunityImmutabilityTests` (test code)  
+**Date Reported:** 2026-03-02  
+**Status:** Closed (Reclassified — Not a production defect)  
+**Reporter:** QA Team (2026-03-02 verification rerun)
+
+**Description:**
+
+Initially reported as `NullReferenceException` at `UNOPSOpportunityManager.GetOpportunityAsync` line 362. Investigation revealed this was caused by an AutoMapper mock mismatch in the test, not a production code bug.
+
+**Root Cause:** The test mocked `mapper.Map<OpportunityModel>(It.IsAny<Opportunity>())` (single-arg overload), but production code calls `mapper.Map<OpportunityModel>(entity, opt => opt.Items["Opportunity"] = entity)` (two-arg overload with `Action<IMappingOperationOptions>`). The unmatched mock returned `null`, causing `model.CreatedByName = ...` at line 362 to throw `NullReferenceException`.
+
+**Fix Applied (QA):** Added two-arg overload mock setup to all 3 affected tests: `_mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<object>(), It.IsAny<Action<IMappingOperationOptions<object, OpportunityModel>>>()))`. Result: **27/27 tests now pass.**
+
+**Related QA:** QA-084
+
+---
+
+### DEF-052: UserProfile.Name Read-Only Computed Property Causes EF Core INSERT Failure
+
+**Severity:** 🟡 Medium  
+**Component:** `UserProfile` entity (`UNOPS.PAO.Domain/Entities/UserProfile.cs`)  
+**Date Reported:** 2026-03-02  
+**Status:** Open  
+**Priority:** P3 — Entity design issue affecting test data seeding  
+**Reporter:** QA Team (2026-03-02 verification rerun)
+
+**Description:**
+
+The `UserProfile` entity inherits `Name` from `ModifiableDeletableEntity` (which is a `{ get; set; }` property mapped to a NOT NULL database column), but hides it with a `new` keyword as a read-only computed property:
+
+```csharp
+public new string Name
+{
+    get
+    {
+        if (!string.IsNullOrEmpty(FirstName) && !string.IsNullOrEmpty(LastName))
+            return $"{FirstName} {LastName}".Trim();
+        // ... fallback logic
+    }
+}
+```
+
+Since this property is getter-only, EF Core excludes it from INSERT statements. The database column `Name` has a NOT NULL constraint, so any EF Core INSERT of `UserProfile` fails with: `23502: null value in column "Name" of relation "UserProfile" violates not-null constraint`.
+
+**Root Cause:** The `new` keyword hides the base settable property with a read-only computed one. EF Core detects the getter-only property and does not include it in INSERTs. The database column retains its NOT NULL constraint.
+
+**Proper Fix (choose one):**
+- **Option A:** Configure the `Name` column as a computed column in EF Core: `.HasComputedColumnSql(...)` and make the column nullable or give it a default
+- **Option B:** Override `SaveChanges()` in the DbContext to automatically set the base `Name` from `FirstName`/`LastName` before persisting
+- **Option C:** Make the database column nullable (`ALTER TABLE "UserProfile" ALTER COLUMN "Name" DROP NOT NULL`) since the computed property handles display
+
+**Wrong Fix:** ❌ Removing the `new` keyword (would break the computed behavior)
+
+**Workaround (QA):** `PAOWebApplicationFactory.SeedTestData()` uses raw SQL INSERT to explicitly set the `Name` column.
+
+**Environment:** Dev/CI (PostgreSQL)  
+**Error:** `Npgsql.PostgresException: 23502: null value in column "Name" of relation "UserProfile" violates not-null constraint`
+
+**Repro Steps:**
+1. Attempt to create a `UserProfile` via EF Core (e.g., `context.UserProfile.Add(new UserProfile { ... }); context.SaveChanges();`)
+2. INSERT fails because `Name` column is excluded from the statement
+
+**Expected:** EF Core correctly inserts `UserProfile` with the computed `Name` value  
+**Actual:** `PostgresException: null value in column "Name"` — EF Core omits the column entirely
+
+**Related QA:** QA-086 (UserProfile seeding issue during integration test setup)
+
+---
+
+### DEF-053: UNOPSGeminiManager.GetCredentials Crashes on Missing Google Credentials
+
+**Severity:** 🟠 High  
+**Component:** `UNOPSGeminiManager` (`UNOPS.PAO.UNOPSBusiness/Managers/UNOPSGeminiManager.cs`)  
+**Date Reported:** 2026-03-02  
+**Status:** Open  
+**Priority:** P2 — Constructor crash blocks entire ManagerWrapper initialization  
+**Reporter:** QA Team (2026-03-02 verification rerun)
+
+**Description:**
+
+`UNOPSGeminiManager.GetCredentials()` at line 198 reads a Google credential JSON string from `IConfiguration` and calls `GoogleCredential.FromJson(json)`. When the configuration value is null or missing (as in test environments without GCP credentials), `GoogleCredential.FromJson(null)` throws `System.ArgumentNullException: Value cannot be null. (Parameter 'credentialParameters')`.
+
+This exception is thrown **during the constructor** of `UNOPSGeminiManager`, which means `UNOPSManagerWrapper` construction fails entirely. Since ALL controllers depend on `IManagerWrapper`, every API endpoint returns HTTP 500.
+
+**Root Cause:** `GetCredentials()` does not check for null/missing credential configuration before calling `GoogleCredential.FromJson()`. Additionally, the credential is loaded directly from `IConfiguration` rather than through DI, so DI-based mocking (as attempted in `PAOWebApplicationFactory`) has no effect.
+
+**Proper Fix:**
+- Guard `GetCredentials()` against null configuration: if credentials are missing, log a warning and set `_credential` to null
+- Make AI-dependent methods check for null credentials and throw a meaningful error (or return empty results) instead of crashing during construction
+- Consider accepting `GoogleCredential` via DI injection to enable test mocking
+
+**Wrong Fix:** ❌ Requiring GCP credentials in test environments
+
+**Affected Tests:** ALL 51 `PartnerControllerTests` (and potentially all other integration tests using the full test server)
+
+**Environment:** Dev/CI (test environment without GCP credentials)  
+**Error:** `System.ArgumentNullException: Value cannot be null. (Parameter 'credentialParameters')` at `UNOPSGeminiManager.GetCredentials()` line 198
+
+**Repro Steps:**
+1. Start the application (or test server) without GCP credential configuration
+2. Any API request triggers `UNOPSManagerWrapper` construction
+3. `UNOPSGeminiManager` constructor calls `GetCredentials()` which throws
+
+**Expected:** Application starts gracefully with AI features disabled when credentials are missing  
+**Actual:** `ArgumentNullException` crashes the entire request pipeline
+
+**Related QA:** QA-088 (GoogleCredential mock ineffective in PAOWebApplicationFactory)
