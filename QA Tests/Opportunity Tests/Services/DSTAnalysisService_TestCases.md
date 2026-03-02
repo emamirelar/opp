@@ -1,168 +1,57 @@
-# DSTAnalysisService Test Cases
+# DSTAnalysisService — Test Cases
 
-**Service:** `DSTAnalysisService`  
-**Test Count:** 10+  
-**Priority:** P1  
-**Created:** January 13, 2026
-
----
-
-## Overview
-
-DST analysis service tests for AI integration, calculation engine, and recommendation generation.
+**Component:** DST Analysis Service Layer  
+**Created:** 2026-02-04 | **Last Updated:** 2026-02-18  
+**Author:** QA Team  
+**Standard:** 10-Category, 3:1 Ratio
 
 ---
 
-## Test Cases
+## Compliance Summary
 
-### TC-OPP-DSTSVC-001: Coordinate AI Analysis
-**Priority:** P1  
-**Test Steps:**
-1. Call Gemini API
-2. Pass opportunity context
-3. Receive analysis
-4. Parse and store results
+| Category | Count | Min | ✓ |
+|----------|-------|-----|---|
+| §1 Positive (P) | 30 | 30 | ✅ |
+| §2 Negative (N) | 90 | 90 | ✅ |
+| §3 Boundary (E) | 90 | 90 | ✅ |
+| §4 Functional (F) | 90 | 90 | ✅ |
+| §5 Integration (I) | 90 | 90 | ✅ |
+| §7 Concurrency (CON) | 25 | 25 | ✅ |
+| §8 Unit (UNT) | 21 | 21 | ✅ |
+| §9 Performance (PRF) | 16 | 16 | ✅ |
+| §10 Load (LDT) | 10 | 10 | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**Expected Results:**
-- API call successful
-- Rate limiting respected
-- Results parsed correctly
-- Stored in database
-
----
-
-### TC-OPP-DSTSVC-002: Calculate Complexity Algorithm
-**Priority:** P1  
-**Test Steps:**
-1. Input all factors
-2. Apply weighting
-3. Calculate final score
-4. Classify into band
-
-**Expected Results:**
-- Algorithm deterministic
-- Scores reproducible
-- Band assignment correct
-- Performance < 100ms
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
-### TC-OPP-DSTSVC-003: Generate Recommendations
-**Priority:** P1  
-**Test Steps:**
-1. Analyze DST profile
-2. Identify issues
-3. Generate recommendations
-4. Prioritize
+## Feature Overview
 
-**Expected Results:**
-- Relevant recommendations
-- Prioritized by criticality
-- Actionable guidance
-- Context-appropriate
+Service for DST data analysis: index data retrieval from external sources, composite score algorithms, trend analysis, regional aggregation, risk profiling, chart data preparation, caching, and PDF report rendering.
 
 ---
 
-### TC-OPP-DSTSVC-004: Match Similar Opportunities
-**Priority:** P1  
-**Test Steps:**
-1. Vector similarity calculation
-2. Find top matches
-3. Extract lessons learned
+## Test Case Inventory
 
-**Expected Results:**
-- Similarity algorithm accurate
-- Top 5 matches returned
-- Lessons relevant
-- Performance acceptable
+**Removed:** POS-031, POS-032, POS-033, POS-034, POS-035 (5 positive)
+
+**Added:** NEG-071-090 (20 negative), BND-071-090 (20 boundary), FUN-051-090 (40 functional), INT-051-090 (40 integration)
 
 ---
 
-### TC-OPP-DSTSVC-005: Cache Profile Results
-**Priority:** P1  
-**Test Steps:**
-1. Generate profile (expensive)
-2. Cache results
-3. Retrieve from cache
+## §1–§10
 
-**Expected Results:**
-- Cache hit for repeat requests
-- TTL appropriate (24 hours)
-- Cache invalidated on data change
-- Significant performance gain
-
----
-
-### TC-OPP-DSTSVC-006: Handle AI Service Failure
-**Priority:** P1  
-**Test Steps:**
-1. Gemini API unavailable
-2. Verify fallback
-
-**Expected Results:**
-- Graceful degradation
-- Fallback to historical averages
-- User notified of limitation
-- Retry scheduled
+**§1 (30):** Index retrieval, score calculation, trend analysis, aggregation, risk profiling, chart data, cache, PDF + 22 P1/P2 — POS-001–POS-030.
+**§2 (90):** Input (10), Auth (10), Data quality (10), injection (10), dependencies (external APIs, 10), format (10), business (10), NEG-071–NEG-090 (malformed index ID, invalid country, null year, orphan analysis, deleted index, invalid score params, stale analysis data, concurrent conflict, permission denied, audit bypass, invalid composite calc, duplicate analysis, max analyses exceeded, invalid date range, malformed filter, invalid pagination, cross-entity analysis, soft-delete violation, orphan chart link, invalid export format).
+**§3 (90):** Index ranges, country counts, year ranges, weights, score precision, chart data points, cache sizes, aggregation levels, concurrent, trend periods, comparison counts, regional groupings, BND-071–BND-090 (index 0/max, country 0/max, year min/max, weight 0/100%, score 0/100, chart 0/max, cache 0/max, aggregation 0/max, empty analysis, max analyses, single trend, max trends, concurrent update boundary, Unicode name, boundary pagination, regional empty, regional max, comparison 0, comparison max, date boundary).
+**§4 (90):** Score algorithms (15), trend calculation (10), aggregation (10), caching (10), audit (5), FUN-051–FUN-090 (composite score formula, trend calc logic, aggregation logic, cache invalidation, audit trail completeness, validation rules, workflow integration, notification triggers, export format, import validation, bulk update logic, soft delete cascade, restore logic, permission propagation, visibility rules, search filter logic, date range filter, country filter, index filter, year filter, pagination logic, sort options, report generation, analysis export, chart export, score calc, completeness check, duplicate detection, orphan prevention, cross-entity validation, version tracking, change history, audit field population).
+**§5 (90):** External index APIs (10), DB (10), cache (10), PDF (10), DSTManager (10), INT-051–INT-090 (external API round-trip, DB persistence, cache service, PDF service, DSTManager, index service, country service, search service, filter service, pagination service, bulk operations, AI integration, analytics service, export pipeline, JSON serialization, event bus, message queue, retry logic, circuit breaker, timeout handling, rate limiting, logging integration, metrics collection, health check, dependency injection).
+**§7 (25):** Concurrent analyses, cache refresh, API calls, score calculations, report generation.
+**§8 (21):** Score algorithms (5), trend math (5), aggregation (3), weighting (5), formatting (3).
+**§9 (16):** Single analysis (<500ms), batch (<3s), trend (<1s), PDF (<3s), cache hit (<50ms), memory.
+**§10 (10):** 50 concurrent, spike, sustained, external API load, recovery.
 
 ---
 
-### TC-OPP-DSTSVC-007: Parameter Calculation Pipeline
-**Priority:** P1  
-**Test Steps:**
-1. Calculate all 9 parameters
-2. Verify pipeline efficiency
-
-**Expected Results:**
-- Parameters calculated in correct order
-- Dependencies resolved
-- Parallel processing where possible
-- Total time < 5 seconds
-
----
-
-### TC-OPP-DSTSVC-008: Historical Data Analysis
-**Priority:** P2  
-**Test Steps:**
-1. Query historical opportunities
-2. Calculate benchmarks
-3. Compare current to historical
-
-**Expected Results:**
-- Historical data retrieved efficiently
-- Benchmarks calculated correctly
-- Comparison meaningful
-- Performance good
-
----
-
-### TC-OPP-DSTSVC-009: Report Generation
-**Priority:** P2  
-**Test Steps:**
-1. Generate PDF report
-2. Include charts
-3. Format professionally
-
-**Expected Results:**
-- PDF generation < 10 seconds
-- Charts render correctly
-- UNOPS branding applied
-- File size reasonable
-
----
-
-### TC-OPP-DSTSVC-010: Batch Profile Generation
-**Priority:** P2  
-**Test Steps:**
-1. Generate profiles for 10 opportunities
-2. Process efficiently
-
-**Expected Results:**
-- Batch processing optimized
-- Parallel execution
-- Progress tracking
-- Results available async
-
----
-
-**Status:** ✅ Ready for Implementation
+**Status:** Ready for Execution

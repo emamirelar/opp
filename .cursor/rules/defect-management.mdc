@@ -1,0 +1,671 @@
+---
+description: Standard for defect tracking, categorization, and management across developer and QA teams
+alwaysApply: true
+---
+
+# Defect Management Standard
+
+## File Organization
+
+### Two Separate Defect Lists
+
+**1. `Defect List for Developers.md`** (Product Defects)
+- **Scope:** All production code defects requiring developer intervention:
+  - ✅ **Functional:** Business logic bugs, incorrect behavior, missing features
+  - ✅ **API/Integration:** Contract violations, endpoint failures, data mapping issues
+  - ✅ **Architecture:** Design flaws, async/sync problems, dependency issues
+  - ✅ **Security:** Vulnerabilities, auth bypass, data exposure, injection flaws
+  - ✅ **Performance:** Slow queries, memory leaks, N+1 problems, resource exhaustion
+  - ✅ **Accessibility:** WCAG violations, keyboard nav, screen reader issues
+  - ✅ **Data Integrity:** Calculation errors, constraint violations, data corruption
+  - ✅ **Error Handling:** Unhandled exceptions, poor messages, silent failures
+  - ✅ **Compatibility:** Browser-specific bugs, device/OS issues, responsive layout
+  - ✅ **Internationalization:** Translation bugs, locale formatting, RTL issues
+  - ✅ **Concurrency:** Race conditions, deadlocks, thread safety problems
+  - ✅ **Observability:** Missing logs, audit gaps, inadequate telemetry
+  - ✅ **Configuration:** Wrong defaults, missing feature flags, env issues
+  - ✅ **Dependencies:** Vulnerable packages, version conflicts, deprecated APIs
+- **Prefix:** DEF-XXX
+- **Location:** `QA Tests/Defect List for Developers.md`
+
+**2. `Defect List for QA.md`** (Test Infrastructure Issues)
+- **Scope:** All test-related issues blocking or degrading test execution:
+  - ✅ **Infrastructure:** CI/CD pipelines, runners, agents, build servers, containers
+  - ✅ **Test Frameworks:** xUnit, NUnit, Jest, Mocha configuration and issues
+  - ✅ **Automation Tools:** Playwright, Selenium, Cypress bugs and limitations
+  - ✅ **Mocking/Stubbing:** Incomplete mocks, wrong behavior, missing API stubs
+  - ✅ **Test Data:** Seeding, quality, isolation, cleanup, fixtures
+  - ✅ **Test Environment:** Local vs CI differences, resource constraints
+  - ✅ **Flaky Tests:** Intermittent failures, timing issues, race conditions
+  - ✅ **Test Execution:** Parallel execution, ordering, isolation, retries
+  - ✅ **Test Performance:** Slow suites, resource consumption, optimization
+  - ✅ **Test Coverage:** Gaps, missing scenarios, coverage metrics
+  - ✅ **Test Reporting:** Dashboards, metrics, result artifacts, screenshots
+  - ✅ **Credentials/Secrets:** API keys, test accounts, certificates, expiration
+  - ✅ **Third-party Services:** External API availability, rate limits, sandboxes
+  - ✅ **Test Maintenance:** Outdated tests, refactoring needs, tech debt
+  - ✅ **Browser/Device Testing:** Cloud farms, device availability, browser matrix
+  - ✅ **Accessibility Tools:** axe-core, WAVE, screen reader test setup
+  - ✅ **Performance Tools:** k6, JMeter, load test infrastructure
+  - ✅ **Security Tools:** OWASP ZAP, Snyk, SAST/DAST integration
+  - ✅ **API Testing:** Postman collections, Newman, contract testing
+  - ✅ **Documentation:** Test plans, setup guides, runbooks
+- **Prefix:** QA-XXX
+- **Location:** `QA Tests/Defect List for QA.md`
+
+---
+
+## Defect Triage Rules
+
+When a defect is discovered during testing, determine ownership:
+
+### Developer Defects (DEF-XXX) - Production Code Issues
+
+| Category | If the issue is... | Severity Hint | Example |
+|----------|-------------------|---------------|---------|
+| **Functional** | Missing business logic | 🟠 High | DEF-001: Missing ChangeStatusAsync method |
+| **Functional** | Wrong/incorrect behavior | 🟠 High | Validation accepts invalid email format |
+| **Functional** | Missing feature | 🟡 Medium | Status history tracking not implemented |
+| **Functional** | Edge case not handled | 🟢 Low | Null partner name crashes report |
+| **API/Integration** | API contract violation | 🟠 High | Endpoint returns 500 instead of 404 |
+| **API/Integration** | Wrong response format | 🟡 Medium | Date format inconsistent across endpoints |
+| **API/Integration** | Integration failure | 🟠 High | oUP sync fails silently |
+| **Architecture** | Design/pattern problem | 🟡 Medium | Sync vs async operations mixed |
+| **Architecture** | Dependency issue | 🟠 High | Circular dependency causes startup failure |
+| **Architecture** | Code structure issue | 🟢 Low | Business logic in controller layer |
+| **Security** | Authentication bypass | 🔴 Critical | User can access admin without login |
+| **Security** | Authorization failure | 🔴 Critical | User sees other users' data |
+| **Security** | Injection vulnerability | 🔴 Critical | SQL injection in search endpoint |
+| **Security** | Data exposure | 🔴 Critical | Passwords visible in API response |
+| **Security** | CSRF/XSS vulnerability | 🟠 High | Script injection in comment field |
+| **Security** | Insecure dependency | 🟠 High | Known CVE in npm package |
+| **Performance** | Slow query/operation | 🟠 High | Dashboard loads in 30+ seconds |
+| **Performance** | Memory leak | 🔴 Critical | Service exhausts heap after 2 hours |
+| **Performance** | N+1 query problem | 🟠 High | Partner list makes 100+ DB calls |
+| **Performance** | Resource exhaustion | 🔴 Critical | Connection pool depleted under load |
+| **Performance** | Inefficient algorithm | 🟡 Medium | O(n²) loop in report generation |
+| **Accessibility** | WCAG Level A violation | 🟠 High | Images missing alt text |
+| **Accessibility** | Keyboard nav broken | 🟠 High | Cannot tab to submit button |
+| **Accessibility** | Screen reader issue | 🟠 High | Form labels not associated |
+| **Accessibility** | Color contrast failure | 🟡 Medium | Text unreadable for colorblind users |
+| **Accessibility** | Focus management issue | 🟡 Medium | Focus lost after modal close |
+| **Data Integrity** | Calculation error | 🔴 Critical | Budget totals incorrect |
+| **Data Integrity** | Constraint violation | 🟠 High | Duplicate records allowed |
+| **Data Integrity** | Data corruption | 🔴 Critical | Save operation corrupts existing data |
+| **Data Integrity** | Orphaned records | 🟡 Medium | Deleted parent leaves child records |
+| **Error Handling** | Unhandled exception | 🟠 High | NullReferenceException crashes page |
+| **Error Handling** | Poor error message | 🟡 Medium | "Error occurred" with no context |
+| **Error Handling** | Silent failure | 🟠 High | Save fails but shows success message |
+| **Error Handling** | Missing validation | 🟡 Medium | Invalid data accepted without warning |
+| **Compatibility** | Browser-specific bug | 🟡 Medium | Layout broken in Safari |
+| **Compatibility** | Device/responsive issue | 🟡 Medium | Buttons overlap on mobile |
+| **Compatibility** | OS-specific issue | 🟡 Medium | File upload fails on macOS |
+| **i18n** | Translation missing | 🟡 Medium | French users see English text |
+| **i18n** | Locale formatting wrong | 🟡 Medium | Dates show MM/DD in European locale |
+| **i18n** | RTL layout broken | 🟡 Medium | Arabic text renders incorrectly |
+| **i18n** | Number/currency format | 🟡 Medium | Euro amounts use wrong separator |
+| **Concurrency** | Race condition | 🔴 Critical | Dual save creates duplicate records |
+| **Concurrency** | Deadlock | 🔴 Critical | System hangs under concurrent access |
+| **Concurrency** | Thread safety issue | 🟠 High | Shared state corrupted by parallel ops |
+| **Observability** | Missing audit log | 🟠 High | Cannot trace who deleted record |
+| **Observability** | Inadequate error log | 🟡 Medium | Stack trace missing context |
+| **Observability** | No telemetry | 🟡 Medium | Cannot measure feature usage |
+| **Configuration** | Wrong default value | 🟡 Medium | Timeout too short for slow networks |
+| **Configuration** | Missing feature flag | 🟡 Medium | Cannot disable feature for testing |
+| **Configuration** | Environment issue | 🟠 High | Prod config points to test database |
+| **Dependencies** | Vulnerable package | 🟠 High | npm audit shows critical CVE |
+| **Dependencies** | Version conflict | 🟡 Medium | Angular version mismatch causes errors |
+| **Dependencies** | Deprecated API usage | 🟢 Low | Using deprecated method (still works) |
+
+### QA Issues (QA-XXX) - Test Infrastructure Issues
+
+| Category | If the issue is... | Severity Hint | Example |
+|----------|-------------------|---------------|---------|
+| **Infrastructure** | Test framework issue | 🟠 High | xUnit runner fails in CI |
+| **Infrastructure** | CI/CD pipeline problem | 🟠 High | Tests timeout in GitHub Actions |
+| **Infrastructure** | Build server failure | 🔴 Critical | All CI builds failing |
+| **Infrastructure** | Container/Docker issue | 🟠 High | Test container won't start |
+| **Infrastructure** | Database setup issue | 🟡 Medium | InMemory DB doesn't support feature |
+| **Infrastructure** | Network/connectivity | 🟠 High | Cannot reach test services |
+| **Tooling** | Test tool bug/limitation | 🟡 Medium | Playwright can't click PrimeNG dialog |
+| **Tooling** | Configuration problem | 🟡 Medium | webServer timeout too short |
+| **Tooling** | Version incompatibility | 🟡 Medium | Playwright version breaks on Node 20 |
+| **Tooling** | Tool installation issue | 🟠 High | npm install fails in CI |
+| **Mocking** | Missing mock/stub | 🟡 Medium | Stub manager lacks ChangeStatusAsync |
+| **Mocking** | Incorrect mock behavior | 🟡 Medium | Mock returns wrong data structure |
+| **Mocking** | API mock incomplete | 🟡 Medium | Permission endpoint not mocked |
+| **Mocking** | Mock state issue | 🟡 Medium | Mock doesn't reset between tests |
+| **Test Data** | Seeder generates invalid data | 🟡 Medium | Seeded partner has null required field |
+| **Test Data** | Insufficient test data | 🟢 Low | Need more edge case scenarios |
+| **Test Data** | Data isolation issue | 🟠 High | Tests interfere with each other |
+| **Test Data** | Cleanup failure | 🟡 Medium | Test data persists after run |
+| **Test Data** | Fixture loading error | 🟡 Medium | JSON fixture malformed |
+| **Environment** | Local vs CI difference | 🟡 Medium | Test passes locally, fails in CI |
+| **Environment** | Missing credentials | 🟠 High | oUP integration needs API key |
+| **Environment** | Resource constraints | 🟡 Medium | CI runner out of memory |
+| **Environment** | Environment variable missing | 🟡 Medium | TEST_API_URL not set |
+| **Environment** | Port conflict | 🟡 Medium | Port 4200 already in use |
+| **Credentials** | API key expired | 🔴 Critical | oUP API key expired, blocks 40 tests |
+| **Credentials** | Test account locked | 🟠 High | Test user account disabled |
+| **Credentials** | Certificate expired | 🔴 Critical | SSL cert expired for test env |
+| **Credentials** | Secret rotation needed | 🟡 Medium | Credentials approaching expiration |
+| **Third-party** | External service unavailable | 🟠 High | Third-party sandbox down |
+| **Third-party** | Rate limit exceeded | 🟡 Medium | API rate limit blocks tests |
+| **Third-party** | API version deprecated | 🟡 Medium | External API sunset warning |
+| **Third-party** | Sandbox data reset | 🟡 Medium | Test data cleared by provider |
+| **Flaky Tests** | Timing-dependent failure | 🟡 Medium | Passes 80% of runs |
+| **Flaky Tests** | Race condition in test | 🟡 Medium | Parallel execution causes failure |
+| **Flaky Tests** | External dependency flaky | 🟡 Medium | Network latency causes timeout |
+| **Flaky Tests** | Animation/transition issue | 🟡 Medium | Element not clickable during animation |
+| **Test Execution** | Parallel execution conflict | 🟡 Medium | Tests interfere when run in parallel |
+| **Test Execution** | Test ordering dependency | 🟡 Medium | Test B fails if Test A doesn't run first |
+| **Test Execution** | Isolation failure | 🟠 High | Global state leaks between tests |
+| **Test Execution** | Retry logic broken | 🟡 Medium | Flaky tests not retrying |
+| **Test Performance** | Test suite too slow | 🟡 Medium | Full suite takes 30+ minutes |
+| **Test Performance** | Single test slow | 🟢 Low | One test takes 60+ seconds |
+| **Test Performance** | Resource-intensive test | 🟡 Medium | Test consumes 2GB+ memory |
+| **Test Coverage** | Missing unit tests | 🟢 Low | Feature has no unit tests |
+| **Test Coverage** | Missing integration tests | 🟡 Medium | Critical flow has no E2E test |
+| **Test Coverage** | Coverage metric inaccurate | 🟢 Low | Coverage tool miscounting |
+| **Reporting** | Report generation failed | 🟡 Medium | Allure report not generating |
+| **Reporting** | Screenshots not captured | 🟡 Medium | Failure screenshots missing |
+| **Reporting** | Metrics not collected | 🟢 Low | Test duration not tracked |
+| **Reporting** | Dashboard broken | 🟡 Medium | Test results not visible |
+| **Browser/Device** | Browser not available | 🟡 Medium | Safari testing blocked in CI |
+| **Browser/Device** | Device farm issue | 🟠 High | BrowserStack connection failed |
+| **Browser/Device** | Browser version mismatch | 🟡 Medium | Chrome version differs local vs CI |
+| **a11y Testing** | axe-core configuration | 🟡 Medium | Accessibility scanner misconfigured |
+| **a11y Testing** | Screen reader setup | 🟡 Medium | NVDA/VoiceOver not available |
+| **Perf Testing** | Load test tool issue | 🟡 Medium | k6 script execution error |
+| **Perf Testing** | Baseline missing | 🟡 Medium | No performance baseline to compare |
+| **Security Testing** | SAST tool failure | 🟡 Medium | Snyk scan not running |
+| **Security Testing** | DAST configuration | 🟡 Medium | OWASP ZAP scan incomplete |
+| **API Testing** | Postman collection outdated | 🟢 Low | Collection doesn't match current API |
+| **API Testing** | Contract test failure | 🟡 Medium | Pact verification failing |
+| **Maintenance** | Test references removed code | 🟢 Low | Test calls deleted method |
+| **Maintenance** | Selector outdated | 🟡 Medium | Element selector no longer matches |
+| **Maintenance** | Test logic outdated | 🟡 Medium | Test validates old behavior |
+| **Documentation** | Missing test docs | 🟢 Low | Test purpose unclear |
+| **Documentation** | Setup guide incomplete | 🟡 Medium | Cannot run tests from docs |
+| **Documentation** | Runbook outdated | 🟢 Low | Troubleshooting steps incorrect |
+
+---
+
+## Defect Severity Levels
+
+Use these severity classifications (MUST be included in every defect):
+
+### Critical 🔴 - Immediate Action Required
+**Definition:** Production-blocking issues causing data loss, security breaches, or complete system failure.
+
+| Impact Area | Examples |
+|-------------|----------|
+| **System** | Application crashes, production outage, startup failure |
+| **Security** | Auth bypass, data exposure, injection vulnerability, privilege escalation |
+| **Data** | Data corruption, incorrect calculations affecting finances, data loss |
+| **Concurrency** | Deadlocks, race conditions causing duplicates, thread safety failures |
+| **Resources** | Memory leaks crashing system, connection pool exhaustion |
+
+**Response:** Stop current work, fix immediately, hotfix deployment if in production.
+
+### High Priority 🟠 - Fix This Sprint
+**Definition:** Major functionality broken with significant user/business impact, no reasonable workaround.
+
+| Impact Area | Examples |
+|-------------|----------|
+| **Functional** | Core feature broken, validation bypassed, workflow blocked |
+| **Performance** | Page loads >10 seconds, N+1 queries, severe degradation |
+| **API** | Endpoint returning errors, integration failures, contract violations |
+| **Accessibility** | WCAG Level A violations, keyboard navigation completely broken |
+| **Error Handling** | Silent failures, unhandled exceptions showing stack traces |
+| **Security** | XSS/CSRF vulnerabilities, insecure dependencies with known exploits |
+| **Data** | Constraint violations, orphaned records, audit trail gaps |
+| **Configuration** | Production config errors, environment-specific failures |
+
+**Response:** Prioritize in current sprint, assign senior developer.
+
+### Medium Priority 🟡 - Plan for Next Sprint
+**Definition:** Moderate impact with workaround available, affects specific scenarios or user groups.
+
+| Impact Area | Examples |
+|-------------|----------|
+| **Functional** | Edge cases not handled, minor validation issues |
+| **UI/UX** | Confusing interface, poor error messages, accessibility Level AA |
+| **Compatibility** | Browser-specific bugs, mobile layout issues |
+| **i18n** | Missing translations, wrong date/number formats, RTL issues |
+| **Performance** | Moderate slowness (3-10 seconds), suboptimal queries |
+| **Observability** | Inadequate logging, missing telemetry |
+| **Configuration** | Wrong defaults, missing feature flags |
+
+**Response:** Add to backlog, address in next sprint.
+
+### Low Priority 🟢 - Backlog
+**Definition:** Minor impact, cosmetic issues, or enhancement requests.
+
+| Impact Area | Examples |
+|-------------|----------|
+| **Cosmetic** | Alignment issues, font inconsistencies, minor styling |
+| **Edge Cases** | Rare scenarios, unusual data combinations |
+| **Documentation** | Code comments, API docs, README updates |
+| **Dependencies** | Deprecated API usage (still functional), version updates |
+| **Optimization** | Minor performance improvements, code cleanup |
+
+**Response:** Add to backlog, address when capacity allows.
+
+---
+
+## Defect Category Definitions
+
+### Developer Defect Categories (DEF-XXX)
+
+| Category | Description | Common Symptoms | Key Questions |
+|----------|-------------|-----------------|---------------|
+| **Functional** | Core business logic incorrect or missing | Wrong output, missing validation, incomplete workflow | Does the feature work as specified? |
+| **API/Integration** | External/internal API communication issues | 4xx/5xx errors, wrong data format, sync failures | Does the API behave per contract? |
+| **Architecture** | Design, structure, or pattern problems | Tight coupling, wrong layer, scalability issues | Is the code organized correctly? |
+| **Security** | Vulnerabilities and auth/authz issues | Unauthorized access, data leaks, injection | Can attackers exploit this? |
+| **Performance** | Speed, memory, resource consumption | Slow responses, high CPU/memory, timeouts | Is it fast and efficient enough? |
+| **Accessibility** | WCAG compliance and assistive tech support | Screen reader issues, no keyboard nav, contrast | Can all users access this? |
+| **Data Integrity** | Data accuracy and consistency | Wrong calculations, duplicates, orphans | Is the data correct and consistent? |
+| **Error Handling** | Exception management and user feedback | Crashes, silent failures, poor messages | Does it fail gracefully? |
+| **Compatibility** | Browser, device, OS support | Works in Chrome, broken in Safari | Does it work everywhere? |
+| **i18n** | Multi-language and locale support | Wrong translations, bad date formats | Does it work globally? |
+| **Concurrency** | Parallel execution issues | Race conditions, deadlocks | Does it work under load? |
+| **Observability** | Logging, monitoring, telemetry | Missing audit trail, no metrics | Can we debug/monitor it? |
+| **Configuration** | Settings and environment issues | Wrong defaults, env-specific bugs | Is it configured correctly? |
+| **Dependencies** | Third-party package issues | CVEs, version conflicts, deprecations | Are dependencies healthy? |
+
+### QA Issue Categories (QA-XXX)
+
+| Category | Description | Common Symptoms | Key Questions |
+|----------|-------------|-----------------|---------------|
+| **Infrastructure** | Test framework, CI/CD, build systems | Pipeline failures, runner crashes, build timeouts | Is the test infrastructure working? |
+| **Tooling** | Test tool bugs, limitations, config | Tool can't interact with component, version issues | Is the test tool working correctly? |
+| **Mocking** | Stub/mock incomplete or incorrect | Missing method, wrong return value, state issues | Do mocks behave like real services? |
+| **Test Data** | Test data quality, seeding, cleanup | Invalid seeds, insufficient scenarios, data leaks | Is test data valid and isolated? |
+| **Environment** | Local vs CI differences, resources | Works locally fails CI, memory issues, port conflicts | Are environments consistent? |
+| **Credentials** | API keys, test accounts, certificates | Expired keys, locked accounts, cert issues | Are credentials valid and current? |
+| **Third-party** | External services, APIs, sandboxes | Service unavailable, rate limits, API changes | Are external dependencies available? |
+| **Flaky Tests** | Intermittent failures, timing issues | Passes sometimes, race conditions, animation waits | Is the test deterministic? |
+| **Test Execution** | Parallel execution, ordering, isolation | Tests interfere, ordering dependencies, state leaks | Do tests run independently? |
+| **Test Performance** | Slow tests, resource consumption | Suite too slow, memory-intensive tests | Are tests efficient? |
+| **Test Coverage** | Missing tests, coverage gaps | Feature untested, metrics inaccurate | Is test coverage adequate? |
+| **Reporting** | Results, artifacts, dashboards | Missing screenshots, reports not generated | Can we see test results? |
+| **Browser/Device** | Browser availability, device farms | Browser not in CI, device farm connection issues | Can we test all targets? |
+| **a11y Testing** | Accessibility testing tools | axe-core misconfigured, screen reader unavailable | Can we test accessibility? |
+| **Perf Testing** | Load/performance test infrastructure | k6 errors, no baseline, resource limits | Can we test performance? |
+| **Security Testing** | SAST/DAST tools, scanners | Snyk not running, ZAP incomplete | Can we test security? |
+| **API Testing** | Postman, Newman, contract tests | Collections outdated, contract verification failing | Can we test APIs? |
+| **Maintenance** | Outdated tests, selector rot, tech debt | Tests reference removed code, selectors broken | Are tests maintained? |
+| **Documentation** | Test docs, setup guides, runbooks | Unclear purpose, can't run from docs | Is testing documented? |
+
+---
+
+## Frequency/Reproducibility
+
+How often does the defect occur?
+
+| Frequency | Description | Example |
+|-----------|-------------|---------|
+| **Always** | 100% reproducible | Form validation fails every time |
+| **Often** | >50% of attempts | Intermittent timeout on slow network |
+| **Sometimes** | 10-50% of attempts | Race condition under load |
+| **Rarely** | <10% of attempts | Edge case with specific data |
+| **Once** | Occurred once, cannot reproduce | May need more investigation |
+
+---
+
+## Developer Defect Template
+
+### Table Header for `Defect List for Developers.md`:
+
+```markdown
+| ID | Severity | Title | Component | Description | Repro Steps | Expected | Actual | Environment | Error/Logs | Related Tests | Date | Status | Reporter |
+|----|----------|-------|-----------|-------------|-------------|----------|--------|-------------|------------|---------------|------|--------|----------|
+```
+
+### Row Template:
+
+```markdown
+| DEF-XXX | 🔴/🟠/🟡/🟢 | [Title max 60 chars] | [Module/Component] | [Description]<br/><br/>**Root Cause:** [If known]<br/><br/>**Proper Fix:**<br/>• [Step 1]<br/>• [Step 2]<br/><br/>**Wrong Fix:** ❌ [Anti-pattern to avoid]<br/><br/>**Workaround:** [If available] | 1. [Step 1]<br/>2. [Step 2]<br/>3. [Step 3] | [Expected result] | [Actual result] | [Dev/Staging/Prod]<br/>[Browser/OS if UI] | `[Error message or stack trace snippet]` | [Test file:line] or N/A | YYYY-MM-DD | Open | [Name/Team] |
+```
+
+### Required Fields:
+| Field | Required | Description |
+|-------|----------|-------------|
+| **ID** | ✅ Yes | Sequential DEF-XXX format |
+| **Severity** | ✅ Yes | 🔴 Critical / 🟠 High / 🟡 Medium / 🟢 Low |
+| **Title** | ✅ Yes | Brief, descriptive (max 60 chars) |
+| **Component** | ✅ Yes | Module, service, or feature area affected |
+| **Description** | ✅ Yes | Include root cause, proper fix, wrong fix guidance |
+| **Repro Steps** | ✅ Yes | Clear, numbered steps to reproduce |
+| **Expected** | ✅ Yes | What should happen |
+| **Actual** | ✅ Yes | What actually happens |
+| **Environment** | ✅ Yes | Where found (Dev/Staging/Prod), browser/OS for UI |
+| **Error/Logs** | 🔶 Recommended | Error message, stack trace, or log snippet |
+| **Related Tests** | 🔶 Recommended | Failing test case reference |
+| **Date** | ✅ Yes | ISO format (YYYY-MM-DD) |
+| **Status** | ✅ Yes | Open/In Progress/Resolved/Verified/Closed |
+| **Reporter** | ✅ Yes | Who discovered the issue |
+
+### Resolution Fields (add when resolved):
+| Field | Description |
+|-------|-------------|
+| **Resolution Notes** | How the issue was fixed |
+| **Fixed By** | Developer who fixed it |
+| **Fix Commit/PR** | Reference to code change |
+| **Fix Version** | Release version containing fix |
+| **Verified By** | QA who verified the fix |
+| **Verification Date** | When verification completed |
+
+---
+
+## QA Issue Template
+
+### Table Header for `Defect List for QA.md`:
+
+```markdown
+| ID | Severity | Title | Category | Description | Repro Steps | Expected | Actual | Environment | Impact | Related DEF | Date | Status | Assigned To |
+|----|----------|-------|----------|-------------|-------------|----------|--------|-------------|--------|-------------|------|--------|-------------|
+```
+
+### Row Template:
+
+```markdown
+| QA-XXX | 🔴/🟠/🟡/🟢 | [Title max 60 chars] | [Infrastructure/Tooling/Mock/Data] | [Description]<br/><br/>**Root Cause:** [If known]<br/><br/>**Temporary Fix (QA):** [Workaround]<br/><br/>**Permanent Fix:** [What's needed long-term] | 1. [Step 1]<br/>2. [Step 2] | [Expected result] | [Actual result] | [Local/CI/Both] | [X tests blocked/skipped] | DEF-XXX or N/A | YYYY-MM-DD | Open | [Name/Team] |
+```
+
+### Required Fields:
+| Field | Required | Description |
+|-------|----------|-------------|
+| **ID** | ✅ Yes | Sequential QA-XXX format |
+| **Severity** | ✅ Yes | 🔴 Critical / 🟠 High / 🟡 Medium / 🟢 Low |
+| **Title** | ✅ Yes | Brief, descriptive (max 60 chars) |
+| **Category** | ✅ Yes | Infrastructure / Tooling / Mock / Data / Environment |
+| **Description** | ✅ Yes | Include root cause, temporary fix, permanent fix |
+| **Repro Steps** | ✅ Yes | Clear steps to reproduce |
+| **Expected** | ✅ Yes | What should happen |
+| **Actual** | ✅ Yes | What actually happens |
+| **Environment** | ✅ Yes | Local / CI / Both |
+| **Impact** | ✅ Yes | Number of tests blocked/skipped/affected |
+| **Related DEF** | 🔶 If applicable | Link to related developer defect |
+| **Date** | ✅ Yes | ISO format (YYYY-MM-DD) |
+| **Status** | ✅ Yes | Open/In Progress/Workaround Applied/Resolved |
+| **Assigned To** | ✅ Yes | Team member or "QA Team" |
+
+---
+
+## Attachments and Evidence
+
+When possible, include:
+
+| Type | Format | When to Include |
+|------|--------|-----------------|
+| **Screenshots** | PNG/JPG | UI defects, error dialogs |
+| **Videos** | MP4/WebM | Complex repro steps, timing issues |
+| **Log Files** | TXT/LOG | Server errors, stack traces |
+| **Trace Files** | ZIP | Playwright traces for E2E failures |
+| **Network Captures** | HAR | API issues, timeout problems |
+| **Test Output** | TXT | Full test run output |
+
+Store in: `QA Tests/Defect Evidence/DEF-XXX/` or `QA Tests/Defect Evidence/QA-XXX/`
+
+---
+
+## Regression Classification
+
+| Type | Description | Action |
+|------|-------------|--------|
+| **New Defect** | Never worked correctly | Normal priority |
+| **Regression** | Previously worked, now broken | Higher priority - investigate recent changes |
+| **Intermittent** | Works sometimes, fails sometimes | Document conditions, may need load testing |
+| **Environment-Specific** | Only fails in certain environments | Document environment differences |
+
+---
+
+## QA-Specific Tracking Sections
+
+### Test Credential Inventory
+
+Track all credentials required for testing in `Defect List for QA.md`:
+
+| Credential | Service | Type | Expiration | Owner | Status |
+|------------|---------|------|------------|-------|--------|
+| oUP API Key | oUP Integration | API Key | 2026-06-15 | QA Team | ✅ Active |
+| Test User 1 | App Login | Username/Password | Never | QA Team | ✅ Active |
+| BrowserStack | E2E Testing | API Key | 2026-12-31 | DevOps | ✅ Active |
+| Azure DevOps | CI/CD | PAT | 2026-03-01 | DevOps | ⚠️ Expiring Soon |
+
+**Actions:**
+- Review credentials monthly
+- Log QA issue 30 days before expiration
+- Rotate immediately if compromised
+
+### Third-party Service Status
+
+Track external dependencies for testing:
+
+| Service | Purpose | Status Page | Current Status | Tests Affected |
+|---------|---------|-------------|----------------|----------------|
+| oUP Sandbox | Integration tests | N/A | ✅ Available | 40 tests |
+| BrowserStack | Cross-browser E2E | status.browserstack.com | ✅ Available | 80 tests |
+| Azure AD B2C | Auth testing | status.azure.com | ✅ Available | All E2E |
+
+**When Service is Down:**
+1. Log QA issue with category "Third-party"
+2. Skip affected tests with clear reason
+3. Monitor status page for recovery
+4. Re-enable tests when service restored
+
+### Test Health Metrics
+
+Track in `Defect List for QA.md` or separate dashboard:
+
+| Metric | Target | Current | Trend | Action If Below Target |
+|--------|--------|---------|-------|------------------------|
+| **Pass Rate** | >95% | 92% | ⬇️ | Investigate top failures |
+| **Flaky Test Rate** | <5% | 8% | ⬆️ | Quarantine and fix flaky tests |
+| **Suite Duration** | <15 min | 22 min | ⬆️ | Optimize slow tests |
+| **Coverage** | >80% | 75% | ➡️ | Add missing tests |
+| **Skipped Tests** | <10% | 15% | ⬆️ | Address blockers |
+
+### Environment Parity Checklist
+
+Verify consistency between environments:
+
+| Setting | Local | CI | Production | Match? |
+|---------|-------|-----|------------|--------|
+| Node.js version | 20.x | 20.x | 20.x | ✅ |
+| npm version | 10.x | 10.x | 10.x | ✅ |
+| Angular CLI | 19.x | 19.x | 19.x | ✅ |
+| .NET SDK | 9.0 | 9.0 | 9.0 | ✅ |
+| PostgreSQL | 15 | 15 | 15 | ✅ |
+| Chrome version | 120 | 120 | N/A | ✅ |
+| Playwright | 1.40 | 1.40 | N/A | ✅ |
+| Timezone | Local | UTC | UTC | ⚠️ Diff |
+| Locale | en-US | en-US | Various | ⚠️ Diff |
+
+**When Mismatch Found:**
+1. Log QA issue with category "Environment"
+2. Document which tests are affected
+3. Propose alignment strategy
+
+### Test Maintenance Backlog
+
+Track test debt in `Defect List for QA.md`:
+
+| Area | Issue | Priority | Estimated Effort | Status |
+|------|-------|----------|------------------|--------|
+| Partner tests | Selectors use deprecated classes | 🟡 Medium | 2 hours | Open |
+| Login tests | Hardcoded credentials | 🟠 High | 1 hour | Open |
+| API mocks | Missing 5 endpoints | 🟡 Medium | 4 hours | In Progress |
+| Performance tests | No baseline established | 🟡 Medium | 3 hours | Open |
+
+---
+
+## Cross-Referencing
+
+When a QA issue exists as a temporary workaround for a developer defect:
+
+**Example:**
+- **QA-001** (Incomplete async wrappers) exists because of **DEF-009** (Architectural async issue)
+- Document this relationship in both issues
+- Update/close QA issue when developer issue is resolved
+
+### Linking Format:
+- In QA issue: `**Related DEF:** DEF-XXX`
+- In DEF issue: `**Related QA:** QA-XXX`
+- In commit messages: `Fixes DEF-XXX` or `Addresses QA-XXX`
+
+---
+
+## Status Management
+
+### Status Values:
+
+| Status | Description | Next Actions |
+|--------|-------------|--------------|
+| **Open** | Newly discovered, not yet assigned | Assign to developer/QA |
+| **In Progress** | Actively being worked on | Monitor progress |
+| **Blocked** | Cannot proceed due to dependency | Document blocker, escalate |
+| **Workaround Applied** | Temporary fix in place (QA only) | Track until permanent fix |
+| **Resolved** | Fixed and ready for verification | QA to verify |
+| **Verified** | Tested and confirmed fixed | Merge and close |
+| **Closed** | Verified and merged to main | Archive for reference |
+| **Won't Fix** | Decided not to fix | Document reason |
+| **Duplicate** | Same as another defect | Link to original |
+
+### Update Requirements:
+- Move resolved defects to "Resolved Defects" section
+- Include resolution date, fixed by, and notes
+- Keep resolved defects for reference (don't delete)
+- Update statistics section when status changes
+
+---
+
+## Metrics and Reporting
+
+Track these metrics weekly/sprint:
+
+| Metric | Description |
+|--------|-------------|
+| **Open Defects** | Total open by severity |
+| **Defect Aging** | Days open (avg, max) |
+| **Resolution Rate** | Defects closed / defects opened |
+| **Regression Rate** | Regressions / total defects |
+| **Test Coverage** | Tests blocked by defects |
+| **Mean Time to Resolve** | Avg days from open to verified |
+
+---
+
+## Best Practices
+
+### For AI Assistants:
+1. **Always triage new defects** using the decision table
+2. **Use correct file** based on defect type
+3. **Follow templates** exactly for consistency
+4. **Generate sequential IDs** (check existing highest number)
+5. **Cross-reference** related issues between files
+6. **Include architectural context** in developer defects
+7. **Suggest proper fixes**, not just workarounds
+8. **Assign severity** based on impact criteria
+9. **Include error messages/logs** when available
+10. **Reference related test cases** that exposed the defect
+
+### For Developers:
+1. Review `Defect List for Developers.md` during sprint planning
+2. Update status as work progresses
+3. Document resolution with clear notes
+4. Consider architectural implications (e.g., async/await patterns)
+5. Reference defect ID in commit messages and PRs
+6. Add regression tests for fixed defects
+7. Update fix version when releasing
+
+### For QA Team:
+1. Review both defect lists during sprint planning
+2. Prioritize test infrastructure improvements
+3. Track temporary workarounds and their expiration
+4. Document root causes when known
+5. Update inventory sections (e.g., missing async wrappers)
+6. Verify fixes in appropriate environment
+7. Update test coverage after defect resolution
+8. Capture evidence (screenshots, logs, traces)
+
+---
+
+## Examples
+
+### Good Developer Defect Entry:
+
+```markdown
+| DEF-001 | 🟠 High | FormManager.ChangeStatusAsync missing | FormManager | Tests call `ChangeStatusAsync` but method doesn't exist. Current `SetStatus()` uses sync database calls.<br/><br/>**Root Cause:** Method never implemented as async.<br/><br/>**Proper Fix:**<br/>• Rename to `ChangeStatusAsync`<br/>• Use `await SaveChangesAsync()`<br/>• Use `await FirstOrDefaultAsync()`<br/><br/>**Wrong Fix:** ❌ Wrapping sync `SetStatus()` in `Task.Run()`<br/><br/>**Workaround:** None | 1. Run test: ESOURCE2-2147_FormStatus/PositiveTests.cs<br/>2. Call `_fixture.FormManager.ChangeStatusAsync(formId, status)` | Method executes and changes form status using proper async/await | Compilation error: method not found. Current sync implementation blocks threads. | Dev | `CS1061: 'FormManager' does not contain a definition for 'ChangeStatusAsync'` | FormStatusTests.cs:45 | 2026-01-26 | Open | QA Team |
+```
+
+### Good QA Issue Entry:
+
+```markdown
+| QA-001 | 🟡 Medium | Incomplete async wrappers in ManagerExtensions | Infrastructure | Many manager methods lack async wrappers. This is a **temporary workaround** only while developers implement proper async managers.<br/><br/>**Root Cause:** Managers implemented synchronously, tests expect async.<br/><br/>**Temporary Fix (QA):** Add more extension wrappers<br/><br/>**Permanent Fix:** DEF-009 - Make underlying managers truly async | 1. Review ManagerExtensions.cs<br/>2. Compare against test expectations<br/>3. Identify missing async wrappers | All test-required methods have temporary async wrappers | Only partial coverage (~30%) with sync-wrapped-as-async methods | Local/CI | 45 tests blocked | DEF-009 | 2026-01-26 | Open | QA Team |
+```
+
+---
+
+## Integration with Development Workflow
+
+| Phase | Defect Activities |
+|-------|-------------------|
+| **Daily Standup** | Mention defect progress by ID (DEF-XXX, QA-XXX) |
+| **Sprint Planning** | Review both lists, prioritize critical/high issues |
+| **Development** | Reference defect IDs in branch names and commits |
+| **Code Review** | Verify fix addresses root cause, not just symptoms |
+| **Pull Request** | Include "Fixes DEF-XXX" in PR description |
+| **Testing** | Verify defect resolution, update status |
+| **Release** | Update fix version, close verified defects |
+| **Retrospective** | Analyze defect patterns, improve processes |
+
+### Commit Message Format:
+```
+fix(component): Brief description
+
+Fixes DEF-XXX
+
+- Root cause: [explanation]
+- Solution: [what was changed]
+- Testing: [how verified]
+```
+
+---
+
+## Compliance Checklist
+
+When adding or updating defects, ensure:
+
+### Required for ALL defects:
+- [ ] Correct file chosen (Developer vs QA)
+- [ ] Correct ID prefix used (DEF-XXX vs QA-XXX)
+- [ ] **Severity assigned** (🔴/🟠/🟡/🟢)
+- [ ] **Component/Category specified**
+- [ ] Clear, descriptive title (max 60 chars)
+- [ ] Detailed description with root cause (if known)
+- [ ] Clear reproduction steps (numbered)
+- [ ] Expected vs actual results
+- [ ] **Environment specified** (Dev/Staging/Prod/CI)
+- [ ] Date in ISO format (YYYY-MM-DD)
+- [ ] Status correctly set
+- [ ] Reporter identified
+
+### Recommended:
+- [ ] Error message/log snippet included
+- [ ] Related test case referenced
+- [ ] Screenshots/evidence attached (for UI issues)
+- [ ] Workaround documented (if available)
+- [ ] Cross-references added (if applicable)
+- [ ] Impact quantified (tests blocked, users affected)
+
+### For Resolution:
+- [ ] Resolution notes explain the fix
+- [ ] Fixed by developer identified
+- [ ] Fix commit/PR referenced
+- [ ] Fix version specified
+- [ ] Verified by QA
+- [ ] Verification date recorded
+- [ ] Moved to Resolved section

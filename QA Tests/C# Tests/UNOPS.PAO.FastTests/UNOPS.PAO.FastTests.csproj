@@ -7,6 +7,11 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <!-- xUnit runner configuration for parallel test execution -->
+  <ItemGroup>
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="xunit" Version="2.9.2" />

@@ -1,0 +1,290 @@
+# Opportunity+ to oUP Integration Guidelines
+
+## Purpose
+
+This rule provides comprehensive guidelines for the Opportunity+ to oneUNOPS Projects (oUP) integration, which synchronizes opportunity data by creating base engagements in the Pre-engagement stage.
+
+## Integration Overview
+
+### What This Integration Does
+
+The integration synchronizes opportunity data from **Opportunity+** to **oneUNOPS Projects (oUP)** by:
+1. Creating a base engagement in oUP
+2. Moving it to the **Pre-engagement stage**
+3. Enabling seamless transition from opportunity identification to formal engagement management
+
+### Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **Bi-directional Deep Linking** | Navigate between Opportunity+ and oUP with contextual links |
+| **Comprehensive Data Sync** | Transfers 19 categories of data (countries, partners, SDGs, risks, deliverables, stakeholders) |
+| **Email Notifications** | Automated alerts when engagements are created or updated |
+| **Idempotent Processing** | Safe to run multiple times without data duplication |
+
+---
+
+## Trigger Behavior
+
+### Current Implementation (Temporary)
+
+⚠️ **IMPORTANT**: The current behavior is temporary for testing:
+
+| Aspect | Current | Expected Final |
+|--------|---------|----------------|
+| **Trigger Event** | EVERY save/update in Opportunity+ | Only when "Submit for GO" is approved |
+| **Data Completeness** | May have incomplete data | Full data after approval |
+| **Use Case** | Testing purposes | Production workflow |
+
+### For QA Testing
+
+- Fill out **all relevant fields** before testing to ensure complete data synchronization
+- Be aware that engagements may be created with incomplete data during the temporary implementation
+
+---
+
+## Message Transport (Google Cloud Pub/Sub)
+
+### Expected Latency
+
+**1-5 minutes** between save in Opportunity+ and engagement creation in oUP
+
+### Message Payload
+
+The Pub/Sub message includes:
+- Full XML payload (can be several MB for large opportunities)
+- Message metadata (timestamp, message ID)
+- Subscription routing information
+
+---
+
+## Data Synchronization Process
+
+### Stored Procedure Location
+
+```
+ou-erp/Database/Stored Procedures/dbo.aunops_Integration_OpportunityPlus_Opportunity_Synchronize.sql
+```
+
+### Processing Steps
+
+| Step | Action | Output |
+|------|--------|--------|
+| 1 | Parse XML into temp tables | `#opportunity`, `#countries`, `#funding_partners`, etc. |
+| 2 | Resolve user IDs from email addresses | Converts emails to oUP user_id |
+| 3 | Check for existing base engagement | Determines if CREATE or UPDATE |
+| 4 | Insert/Update opportunity shadow table | `eppm.aunops_opportunity` |
+| 5 | Insert countries | `eppm.aunops_opportunity_country` |
+| 6 | Insert funding partners | `eppm.aunops_opportunity_funding_partner` |
+| 7 | Insert client partners | `eppm.aunops_opportunity_client_partner` |
+| 8 | Insert stakeholders | `eppm.aunops_opportunity_stakeholder` |
+| 9 | Insert deliverables | `eppm.aunops_opportunity_deliverable` |
+| 10 | Insert SDGs | `eppm.aunops_opportunity_sdg` |
+| 11 | Insert SDG Targets | `eppm.aunops_opportunity_sdg_target` |
+| 12 | Insert SDG Indicators | `eppm.aunops_opportunity_sdg_indicator` |
+| 13 | Insert Collaborators | `eppm.aunops_opportunity_collaborator` |
+| 14 | Insert UNCF Outcomes | `eppm.aunops_opportunity_uncf_outcome` |
+| 15 | Insert UNCF Indicators | `eppm.aunops_opportunity_uncf_indicator` |
+| 16 | Insert Risks | `eppm.aunops_opportunity_risk` |
+| 17 | **Create/Update Base Engagement** | Calls `eppm.aunops_EngInsert` |
+| 18 | Populate engagement relationships | Copy shadow → engagement tables |
+| 19 | Create EAC survey responses | Map risks to survey questions |
+| 20 | Create engagement risks | Call `eppm.aunops_SurveyRiskInsert` |
+| 21 | Send email notification | Notify BD/PE team |
+
+---
+
+## Field Mapping Reference
+
+### Key Information Section
+
+| Opp+ Field | oUP Field | Notes |
+|------------|-----------|-------|
+| Opportunity Name | Engagement Name | Direct mapping |
+| Description | Engagement Description | Direct mapping |
+| Proposed Budget for Initiative | - | **Not mapped** |
+
+### WHAT - Products and Services
+
+| Opp+ Field | oUP Field | Notes |
+|------------|-----------|-------|
+| Delivery Modality | Engagement Name | Appended to name |
+| Products & Services | Project Category | Derived from Service line |
+
+### WHY - Impact & Strategic Alignment
+
+| Opp+ Field | oUP Field | Notes |
+|------------|-----------|-------|
+| Context & Challenges | SDG Contributions → Engagement Justification | |
+| Impact | - | **Not mapped** |
+| Outcome(s) | - | **Not mapped** |
+| Estimated direct beneficiaries | - | **Not mapped** |
+| Estimated indirect beneficiaries | - | **Not mapped** |
+| SDG Alignment | SDG Contributions | |
+| UN Cooperation Framework (UNSDCF) Alignment | UN Cooperation Framework | |
+| Alignment to UNOPS Strategic Missions | - | **Not mapped** |
+| Organization Unit Strategy | - | **Not mapped** |
+
+### WHO - Partners & External Stakeholders
+
+| Opp+ Field | oUP Field | Notes |
+|------------|-----------|-------|
+| Total Opportunity Budget (USD) | Amounts → Estimated Amount | Currency=USD, Exchange Rate=1 |
+| Funding Partners | Partners → Funding Source | |
+| Client Partners | Partners → Client | |
+| External Stakeholders | - | **Not mapped** |
+| Other External Stakeholders | - | **Not mapped** |
+| Additional Notes | - | **Not mapped** |
+
+### WHERE - Geographic Implementation
+
+| Opp+ Field | oUP Field | Notes |
+|------------|-----------|-------|
+| Implementation Countries | Countries of Implementation | Direct mapping |
+
+### WHEN - Timeline & Key Dates
+
+| Opp+ Field | oUP Field | Notes |
+|------------|-----------|-------|
+| Target Signing Date | Estimated Signing Date | |
+| Implementation Start Date | Implementation Start Date | |
+| Target Delivery Date | Implementation End Date | |
+| Work breakdown structure | - | **Not mapped** |
+
+### TEAM - UNOPS Team & Internal Stakeholders
+
+| Opp+ Field | oUP Field | Notes |
+|------------|-----------|-------|
+| Opportunity Manager | Business Developer | |
+| Opportunity Collaborators | Engagement Team (contributors) | |
+| Org Unit Responsible | Organisational Unit | |
+| Proposed Initiative Type | - | **Not mapped** |
+| DOA2 | Engagement Authority DOA2 | Auto-populated |
+| DOA3 | Engagement Authority DOA3 | Auto-populated |
+| Other Internal Stakeholders | - | **Not mapped** |
+
+---
+
+## High Risk Checklist Mapping
+
+When any of these predefined risks are tagged as "Organizational High Risk" in Opportunity+, the corresponding survey question in oUP is answered "Yes" and a risk is created in the Engagement's Risk Register.
+
+| oUP S.No. | Opp+ Predefined Risk |
+|-----------|---------------------|
+| 1.1.1 | No Host Country Agreement |
+| 1.2.1 | High-Risk Security Issues / Armed Conflict |
+| 1.3.1 | New Funding Source or Client |
+| 1.4.1 | Scope Outside UNOPS Mandate |
+| 1.4.2 | Support to Non-UN Security Forces |
+| 1.4.3 | Conflict of Interest |
+| 1.4.4 | Reputational Risk |
+| 1.4.5 | Pre-selection by Government with CPI < 50 |
+| 1.4.6 | Pay Agent Services to Third Parties |
+| 2.1.1 | Negative SDG Impact (Social/Environmental/Economic) |
+| 2.2.1 | Grants to For-Profit Entities or Individuals |
+| 2.3.1 | IT Security and Privacy Risks |
+| 3.1.1 | Engagement Exceeds $100 Million |
+| 3.1.2 | Pricing Policy Deviation |
+| 3.2.1 | Currency Exchange Risk |
+| 3.3.1 | Implementation Before/After Legal Agreement |
+| 4.1.1 | Other Undefined High Risks |
+
+---
+
+## Email Notifications
+
+### New Engagement Creation
+
+**Recipients:**
+- Project Executive (PE)
+- Deputy of Authority Level 2 (DoA2)
+- Business Developer (BD)
+
+**Subject:** `Engagement Created from Opportunity+ - <base engagement number>`
+
+**Content Includes:**
+- Opportunity ID
+- Opportunity Name
+- Engagement Number
+- Stage: Pre-Engagement
+- Quick links to both oUP and Opportunity+
+
+### Engagement Update
+
+**Subject:** `Engagement Updated from Opportunity+ - <base engagement number>`
+
+**Content:** Similar structure, indicating the engagement was refreshed with latest information.
+
+---
+
+## UI Elements
+
+### "Go to oUP" Button (in Opportunity+)
+
+- Appears after successful integration
+- Located next to the Opportunity's status tag
+- Links to: `https://projects.unops.org/?route=uenb/<base_eng>/engagement/overview`
+- **Note:** Only testable in production environment
+
+### "View in Opportunity+" Button (in oUP)
+
+- Appears in oUP Engagement details page footer
+- Links to: `https://opportunityplus.unops.org/#/partnerships/opportunities/<opp_id>`
+
+---
+
+## Implementation Checklist for Developers
+
+### When Implementing Integration-Related Features
+
+- [ ] Ensure all 19 data categories are properly extracted and mapped
+- [ ] Implement idempotent processing (safe for re-runs)
+- [ ] Handle user ID resolution from email addresses
+- [ ] Create/update logic based on existing engagement check
+- [ ] Map high-risk items to survey questions correctly
+- [ ] Send appropriate email notifications (create vs update)
+- [ ] Implement bi-directional deep links
+- [ ] Handle XML payload parsing for all supported elements
+- [ ] Log integration events for debugging
+
+### When Testing Integration
+
+- [ ] Verify all mapped fields transfer correctly
+- [ ] Confirm unmapped fields are intentionally excluded
+- [ ] Test idempotency (run sync multiple times)
+- [ ] Validate email notifications sent to correct recipients
+- [ ] Check deep links work in both directions
+- [ ] Verify high-risk mapping creates risks in oUP
+- [ ] Test with large payloads (performance)
+- [ ] Confirm 1-5 minute latency expectation
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+| Issue | Possible Cause | Resolution |
+|-------|----------------|------------|
+| Engagement not created | Pub/Sub message not received | Check Pub/Sub subscription and message logs |
+| Missing data in engagement | Field not mapped or XML parsing error | Verify field mapping and XML structure |
+| Duplicate engagements | Idempotency check failed | Verify `opportunity_id` lookup logic |
+| Email not received | Invalid email addresses | Check user email resolution |
+| Wrong risk mapping | Risk not tagged as high | Verify risk classification in Opportunity+ |
+
+### Debugging
+
+1. Check stored procedure logs in oUP database
+2. Verify Pub/Sub message delivery
+3. Review XML payload content
+4. Confirm user email → user_id resolution
+5. Check engagement shadow tables
+
+---
+
+## Related Documentation
+
+- Stored Procedure: `dbo.aunops_Integration_OpportunityPlus_Opportunity_Synchronize.sql`
+- Shadow Tables: `eppm.aunops_opportunity_*`
+- Engagement Insert: `eppm.aunops_EngInsert`
+- Risk Insert: `eppm.aunops_SurveyRiskInsert`

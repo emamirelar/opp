@@ -9,6 +9,7 @@ using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Tests.Managers
 {
@@ -39,31 +40,28 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         private void SeedTestData()
         {
+            // Seed Partners first (required for Contact FK)
+            var p1 = new UNOPSPartner { Name = "Example Corp", PartnerShortDescription = "Example Corporation", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow };
+            var p2 = new UNOPSPartner { Name = "Partner Organization", PartnerShortDescription = "Partner Org", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow };
+            var p3 = new UNOPSPartner { Name = "Contractor Inc", PartnerShortDescription = "Contractor", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow };
+            _context.Partners.AddRange(p1, p2, p3);
+
             // Seed Contacts with email addresses for matching
-            var contacts = new List<Contact>
+            var contacts = new List<UNOPSContact>
             {
-                new Contact { Id = 1, Name = "John Doe", FirstName = "John", LastName = "Doe", Title = "Mr.", Email = "john.doe@example.com", PartnerId = 1, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Contact { Id = 2, Name = "Jane Smith", FirstName = "Jane", LastName = "Smith", Title = "Ms.", Email = "jane.smith@partner.org", PartnerId = 2, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Contact { Id = 3, Name = "Bob Wilson", FirstName = "Bob", LastName = "Wilson", Title = "Mr.", Email = "bob.wilson@contractor.com", PartnerId = 3, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Contact { Id = 4, Name = "Alice Brown", FirstName = "Alice", LastName = "Brown", Title = "Ms.", Email = "alice.brown@example.com", PartnerId = 1, Status = EntityStatus.Inactive, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Contact { Id = 5, Name = "Charlie Davis", FirstName = "Charlie", LastName = "Davis", Title = "Mr.", Email = "charlie.davis@example.com", PartnerId = 1, IsDeleted = true, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
+                new UNOPSContact { Name = "John Doe", FirstName = "John", LastName = "Doe", Title = "Mr.", Email = "john.doe@example.com", Partner = p1, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new UNOPSContact { Name = "Jane Smith", FirstName = "Jane", LastName = "Smith", Title = "Ms.", Email = "jane.smith@partner.org", Partner = p2, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new UNOPSContact { Name = "Bob Wilson", FirstName = "Bob", LastName = "Wilson", Title = "Mr.", Email = "bob.wilson@contractor.com", Partner = p3, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new UNOPSContact { Name = "Alice Brown", FirstName = "Alice", LastName = "Brown", Title = "Ms.", Email = "alice.brown@example.com", Partner = p1, Status = EntityStatus.Inactive, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new UNOPSContact { Name = "Charlie Davis", FirstName = "Charlie", LastName = "Davis", Title = "Mr.", Email = "charlie.davis@example.com", Partner = p1, IsDeleted = true, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
             };
             _context.Contacts.AddRange(contacts);
 
-            // Seed Partners for matching
-            var partners = new List<Partner>
-            {
-                new Partner { Id = 1, Name = "Example Corp", PartnerShortDescription = "Example Corporation", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Partner { Id = 2, Name = "Partner Organization", PartnerShortDescription = "Partner Org", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Partner { Id = 3, Name = "Contractor Inc", PartnerShortDescription = "Contractor", Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
-            };
-            _context.Partners.AddRange(partners);
-
             // Seed Interactions for matching
-            var interactions = new List<Interaction>
+            var interactions = new List<UNOPSInteraction>
             {
-                new Interaction { Id = 1, Name = "Meeting with John Doe", Subject = "Meeting with John Doe", Date = DateTime.UtcNow.AddDays(-5), Type = InteractionType.InPersonMeeting, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Interaction { Id = 2, Name = "Email correspondence with Jane", Subject = "Email correspondence with Jane", Date = DateTime.UtcNow.AddDays(-3), Type = InteractionType.Email, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
+                new UNOPSInteraction { Name = "Meeting with John Doe", Subject = "Meeting with John Doe", Date = DateTime.UtcNow.AddDays(-5), Type = InteractionType.InPersonMeeting, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new UNOPSInteraction { Name = "Email correspondence with Jane", Subject = "Email correspondence with Jane", Date = DateTime.UtcNow.AddDays(-3), Type = InteractionType.Email, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
             };
             _context.Interactions.AddRange(interactions);
 
@@ -207,13 +205,12 @@ namespace UNOPS.PAO.Business.Tests.Managers
         public async Task TC_GAM_030_GetRelatedPartnerForContact_ReturnsPartner()
         {
             // If a contact is associated with a partner, we should be able to find it
-            // For this test, we assume contacts might have a PartnerId relationship
             var contact = await _context.Contacts
                 .Include(c => c.Partner)
-                .FirstOrDefaultAsync(c => c.Id == 1);
+                .FirstOrDefaultAsync(c => c.Email == "john.doe@example.com");
 
             Assert.NotNull(contact);
-            // Partner association would be tested if the contact has a PartnerId
+            Assert.NotNull(contact.Partner);
         }
 
         [Fact]
@@ -221,7 +218,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         {
             var contact = await _context.Contacts
                 .Include(c => c.Interactions)
-                .FirstOrDefaultAsync(c => c.Id == 1);
+                .FirstOrDefaultAsync(c => c.Email == "john.doe@example.com");
 
             Assert.NotNull(contact);
             // Interactions would be returned if associated
@@ -417,7 +414,11 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         public void Dispose()
         {
-            _context.Database.EnsureDeleted();
+            if (TestEnvironment.UseInMemory)
+            {
+                try { _context.Database.EnsureDeleted(); }
+                catch { /* SQLite connection may already be closed during concurrent test runs */ }
+            }
             _context.Dispose();
         }
     }

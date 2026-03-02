@@ -1,0 +1,48 @@
+# Test Execution Rules
+
+## C# Test Execution — MANDATORY
+
+### NEVER set USE_INMEMORY_DB=true
+
+**CRITICAL**: The test environment is configured to use **real PostgreSQL** via Cloud SQL Proxy. The `appsettings.Testing.json` contains the correct connection string and IAM authentication settings.
+
+**NEVER** do any of the following:
+- `$env:USE_INMEMORY_DB = "true"`
+- `set USE_INMEMORY_DB=true`
+- Pass `USE_INMEMORY_DB` as an environment variable to any test command
+- Suggest or recommend using InMemory/SQLite mode for running tests
+
+**The correct command to run C# tests is simply:**
+```powershell
+dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj"
+```
+
+**No environment variable overrides. No database mode flags. Just run the tests.**
+
+### Why This Matters
+- The project uses **PostgreSQL** as the only supported test database
+- SQLite/InMemory mode is a **CI-only fallback** for environments without database access
+- Running tests against SQLite hides real schema issues and produces misleading results
+- Setting `USE_INMEMORY_DB=true` bypasses the real database and wastes developer time debugging phantom issues that don't exist in the real environment
+
+### Before Running Tests — Pre-Flight Check
+1. **Verify PostgreSQL is accessible**: `Test-NetConnection -ComputerName 127.0.0.1 -Port 5432 -InformationLevel Quiet` should return `True`
+2. If PostgreSQL is NOT accessible, **tell the user** and ask them to start Cloud SQL Proxy — do NOT silently fall back to SQLite
+3. **Never add environment variable overrides** to test commands unless the user explicitly requests it
+
+### Test Database Configuration
+- **Config file**: `QA Tests/C# Tests/UNOPS.PAO.Business.Tests/appsettings.Testing.json`
+- **Connection**: Cloud SQL Proxy at `127.0.0.1:5432` with IAM authentication
+- **Schema management**: EF migrations (never call `EnsureCreated`/`EnsureDeleted` on PostgreSQL)
+
+## Playwright Test Execution
+
+### Prerequisites
+- Angular dev server must be running at `http://localhost:4200`
+- The `playwright.config.ts` `webServer` block auto-starts `ng serve` if not already running
+- Run from the workspace root: `npx playwright test`
+
+### Test Configuration
+- All spec files have `test.slow()` applied for adequate timeouts
+- Authentication uses `authenticateWithRealBackend` with API mocks via `setupAPIMocks`
+- Base URL: `http://localhost:4200`

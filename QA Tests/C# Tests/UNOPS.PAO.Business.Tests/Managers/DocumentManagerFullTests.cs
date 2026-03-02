@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Tests.Managers
 {
@@ -35,9 +36,8 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         private void SeedTestData()
         {
-            var documents = Enumerable.Range(1, 20).Select(i => new Document
+            var documents = Enumerable.Range(1, 20).Select(i => new UNOPSDocument
             {
-                Id = i,
                 Name = $"Document {i}",
                 Link = $"https://storage.example.com/doc_{i}.pdf",
                 Type = "pdf",
@@ -55,7 +55,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_DM_F001_CreateDocument_ValidData_Succeeds()
         {
-            var document = new Document
+            var document = new UNOPSDocument
             {
                 Name = "Test Document",
                 Link = "https://storage.example.com/test.pdf",
@@ -73,7 +73,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_DM_F002_CreateDocument_WithName_Succeeds()
         {
-            var document = new Document
+            var document = new UNOPSDocument
             {
                 Name = "Named Document",
                 Link = "https://storage.example.com/named.pdf",
@@ -90,7 +90,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_DM_F003_CreateDocument_WithType_Succeeds()
         {
-            var document = new Document
+            var document = new UNOPSDocument
             {
                 Name = "Typed Document",
                 Link = "https://storage.example.com/typed.docx",
@@ -149,7 +149,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_DM_F028_GetDocumentById_Exists_ReturnsDocument()
         {
-            var doc = await _context.Documents.FirstOrDefaultAsync(d => d.Id == 1);
+            var doc = await _context.Documents.FirstOrDefaultAsync(d => d.Name == "Document 1");
             Assert.NotNull(doc);
             Assert.Equal("Document 1", doc.Name);
         }

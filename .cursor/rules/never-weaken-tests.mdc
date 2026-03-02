@@ -1,0 +1,97 @@
+---
+description: Prevents AI from weakening test assertions to make failing tests pass — forces defect logging instead
+alwaysApply: true
+---
+
+# Never Weaken Tests to Make Them Pass — MANDATORY
+
+## The Rule
+
+**When a test fails, NEVER change the test's assertion to match the current (broken) production behavior.**
+
+Instead, follow this decision tree:
+
+```
+Test is failing
+├── Is the test expectation correct (what the code SHOULD do)?
+│   ├── YES → Log a DEF-XXX defect, Skip the test with DEF reference
+│   └── NO → Fix the test (only if the expectation itself is wrong)
+└── Is the failure caused by test infrastructure (DB provider, mocking, setup)?
+    ├── YES → Fix the infrastructure issue
+    └── NO → See above
+```
+
+## What "Weakening a Test" Looks Like
+
+```csharp
+// ❌ WRONG — Changing assertion to match broken behavior
+// Original (correct expectation):
+response.Environment.Should().Be("Production");
+// "Fixed" (weakened to pass):
+response.Environment.Should().BeEmpty();  // ❌ This hides a production bug
+
+// ❌ WRONG — Removing a validation check because production doesn't validate
+// Original:
+.Should().ThrowAsync<Exception>();
+// "Fixed":
+result.Should().NotBeNull(); // ❌ Test no longer checks for missing validation
+
+// ❌ WRONG — Loosening type/value checks
+// Original:
+result.Count.Should().Be(3);
+// "Fixed":
+result.Count.Should().BeGreaterThan(0); // ❌ Weaker assertion hides a bug
+```
+
+## What to Do Instead
+
+```csharp
+// ✅ CORRECT — Skip with defect reference, keep original assertion intact
+[Fact(Skip = "DEF-051: Production uses ?? instead of IsNullOrEmpty for fallback")]
+public void Get_EmptyEnvironmentName_UsesHostEnvironment()
+{
+    // Original correct expectation preserved
+    response.Environment.Should().Be("Production");
+}
+```
+
+## Mandatory Self-Check Before Changing Any Test Assertion
+
+Before modifying ANY test assertion or expected value, answer these questions:
+
+1. **What does the test name say the expected behavior is?**
+   - The test name is the specification. If the name says `_UsesHostEnvironment`, then the expected behavior IS to use the host environment.
+
+2. **Is the current production behavior correct, or is it a bug?**
+   - If the production code SHOULD do what the test expects → log DEF, skip test
+   - If the production code is correct and the test expectation is wrong → fix test
+
+3. **Am I changing the assertion to match what the code DOES vs what it SHOULD DO?**
+   - If yes → STOP. Log a defect instead.
+
+4. **Would a developer reviewing this change say "you hid a bug"?**
+   - If yes → STOP. Log a defect instead.
+
+## Print This Checklist
+
+Every time you change a test assertion, you MUST print:
+
+```
+### Test Assertion Change Review
+| Question | Answer |
+|---|---|
+| Test name says expected behavior is: | [what] |
+| Current production behavior: | [what] |
+| Is production behavior correct? | Yes/No |
+| Am I weakening the assertion? | Yes/No |
+| Action: | Fix test / Log DEF-XXX and skip |
+```
+
+If "Am I weakening the assertion?" is **Yes** and "Is production behavior correct?" is **No**, you MUST log a defect and skip — never change the assertion.
+
+## Common Traps
+
+- ❌ "The `??` operator only handles null, not empty string" → This is explaining WHY the code is buggy, not justifying changing the test
+- ❌ "The fixture replicates production logic" → If the production logic is wrong, the fixture replicating it doesn't make the test wrong
+- ❌ "The test expectation doesn't match the implementation" → That's what defects ARE
+- ❌ "This is a test logic bug" → Only true if the test expectation itself is wrong, not if the production code lacks the expected behavior

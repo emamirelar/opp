@@ -1,0 +1,261 @@
+# Project Organization & File Placement Standards
+
+## **MANDATORY: No Test-Related Files in Root Directory**
+
+**CRITICAL**: ALL test-related files (documentation, scripts, output files, SQL scripts, PowerShell scripts, etc.) MUST be placed in the `QA Tests/` directory, NOT in the project root.
+
+**Why This Matters:**
+- ✅ **Organization**: Keeps the root directory clean and focused on essential project files
+- ✅ **Maintainability**: Centralizes all test-related content in a predictable location
+- ✅ **Discoverability**: All test files are in one place
+- ✅ **Version Control**: Reduces clutter in git status and root folder listings
+
+---
+
+## Root Directory - Allowed Files ONLY
+
+The root directory should ONLY contain:
+
+### ✅ **Allowed in Root:**
+- `README.md` - Project overview and getting started guide
+- `CHANGELOG.md` - Version history and release notes
+- `LICENSE.md` - Project license information
+- `.gitignore` - Git ignore rules
+- `.gitmodules` - Git submodules configuration
+- `package.json` / `package-lock.json` - Node.js dependencies (for Playwright)
+- `playwright.config.ts` - Playwright configuration
+- Solution files (`.sln`)
+- Project configuration files that MUST be at root level
+
+### ❌ **NOT Allowed in Root (Move to QA Tests/):**
+
+| File Type | Example Files | Correct Location |
+|-----------|---------------|------------------|
+| Test SQL scripts | `assign-test-roles.sql`, `create-test-users.sql`, `setup-test-data.sql`, `check-*.sql`, `verify-*.sql` | `QA Tests/Scripts/` |
+| Test PowerShell scripts | `create-test-data.ps1`, `setup-database-*.ps1`, `verify-*.ps1` | `QA Tests/Scripts/` |
+| Build output files | `build-output.txt`, `test-results.txt` | `QA Tests/Test Execution Results/` |
+| Test documentation | `*_SUMMARY.md`, `*_COMPLETE.md`, `*_REPORT.md`, `PR_DESCRIPTION.md` | `QA Tests/Documentation/` |
+| Session summaries | `SESSION_*.md`, `PHASE_*.md` | `QA Tests/Documentation/` |
+| Test plans | `*_PLAN.md`, `*_STRATEGY.md` | `QA Tests/Test Plans/` |
+| Coverage reports | `*_COVERAGE*.md` | `QA Tests/Summary Reports/` |
+
+---
+
+## QA Tests Directory Structure
+
+All test-related files MUST go in the appropriate subdirectory:
+
+```
+QA Tests/
+├── Scripts/                      # SQL and PowerShell test scripts
+│   ├── assign-test-roles.sql     ✅ Test role setup
+│   ├── create-test-users.sql     ✅ Test user creation
+│   ├── setup-test-data.sql       ✅ Test data seeding
+│   ├── setup-database.ps1        ✅ Database setup scripts
+│   └── verify-*.ps1              ✅ Verification scripts
+├── Documentation/                # General test documentation
+│   ├── SETUP_GUIDE.md            ✅ Setup instructions
+│   ├── PR_DESCRIPTION.md         ✅ PR descriptions
+│   └── SESSION_SUMMARY.md        ✅ Session summaries
+├── Test Execution Results/       # Output from test runs
+│   ├── build-output.txt          ✅ Build logs
+│   ├── test-results.txt          ✅ Test output
+│   └── *.trx                     ✅ Test result files
+├── Playwright Tests/             # Playwright E2E tests
+├── C# Tests/                     # C# unit/integration tests
+├── Integration Tests/            # Integration test suites
+├── Summary Reports/              # Coverage and summary reports
+└── Test Plans/                   # Test planning documents
+```
+
+---
+
+## Examples
+
+### ❌ WRONG - Files in root directory:
+```
+opportunityplus/
+├── assign-test-roles.sql          ❌ Should be in QA Tests/Scripts/
+├── create-test-users.sql          ❌ Should be in QA Tests/Scripts/
+├── setup-test-data.sql            ❌ Should be in QA Tests/Scripts/
+├── create-test-data.ps1           ❌ Should be in QA Tests/Scripts/
+├── setup-database-simple.ps1      ❌ Should be in QA Tests/Scripts/
+├── verify-pr-671.ps1              ❌ Should be in QA Tests/Scripts/
+├── verify-pr-671.sql              ❌ Should be in QA Tests/Scripts/
+├── build-output.txt               ❌ Should be in QA Tests/Test Execution Results/
+├── PR_DESCRIPTION.md              ❌ Should be in QA Tests/Documentation/
+├── PHASE_1_COMPLETE.md            ❌ Should be in QA Tests/Documentation/
+├── README.md                      ✅ Allowed in root
+└── QA Tests/
+```
+
+### ✅ CORRECT - All test files in QA Tests:
+```
+opportunityplus/
+├── README.md                      ✅ Allowed in root
+├── CHANGELOG.md                   ✅ Allowed in root
+├── package.json                   ✅ Allowed in root
+├── playwright.config.ts           ✅ Allowed in root
+└── QA Tests/
+    ├── Scripts/
+    │   ├── assign-test-roles.sql  ✅ Correct location
+    │   ├── create-test-users.sql  ✅ Correct location
+    │   ├── setup-test-data.sql    ✅ Correct location
+    │   ├── create-test-data.ps1   ✅ Correct location
+    │   ├── setup-database.ps1     ✅ Correct location
+    │   └── verify-pr-671.ps1      ✅ Correct location
+    ├── Documentation/
+    │   ├── PR_DESCRIPTION.md      ✅ Correct location
+    │   └── SESSION_SUMMARY.md     ✅ Correct location
+    └── Test Execution Results/
+        └── build-output.txt       ✅ Correct location
+```
+
+---
+
+## File Creation Guidelines
+
+**BEFORE creating ANY file, ask yourself:**
+
+1. **Is this a test-related file?** (scripts, documentation, output, etc.)
+   - If YES → Place in `QA Tests/` subdirectory
+   - If NO → May be allowed in root (verify against allowed list)
+
+2. **What type of test file is it?**
+   - SQL/PowerShell scripts → `QA Tests/Scripts/`
+   - Documentation/summaries → `QA Tests/Documentation/`
+   - Test output/results → `QA Tests/Test Execution Results/`
+   - Test specifications → `QA Tests/[Feature] Tests/`
+
+3. **Does a subdirectory already exist for this type?**
+   - If YES → Use the existing subdirectory
+   - If NO → Create an appropriate subdirectory under `QA Tests/`
+
+---
+
+## Migration of Existing Root Files
+
+If test-related files are found in the root directory:
+
+1. **Identify the file type**: SQL script, PowerShell script, documentation, output, etc.
+2. **Determine correct location**: Use the table above to find the right subdirectory
+3. **Move the file**: `git mv [source] "QA Tests/[subdirectory]/[filename]"`
+4. **Update references**: Update any scripts or docs that reference the moved file
+5. **Commit with clear message**: `chore: move test files to QA Tests directory`
+
+---
+
+## Enforcement Checklist
+
+When creating or reviewing files:
+
+- [ ] Is this file in the root directory?
+- [ ] If yes, is it on the "allowed in root" list?
+- [ ] If not allowed, which `QA Tests/` subdirectory should it go in?
+- [ ] Have all references been updated after moving?
+- [ ] Does the filename follow naming conventions?
+
+---
+
+## Exceptions
+
+**The ONLY files allowed in root are:**
+- `README.md`, `CHANGELOG.md`, `LICENSE.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`
+- Git configuration: `.gitignore`, `.gitmodules`
+- Node.js: `package.json`, `package-lock.json`
+- Playwright: `playwright.config.ts`
+- Solution/project files: `.sln`, root-level config files
+- CI/CD: Files that MUST be at root for tooling to work
+
+**Everything else, especially test-related files, MUST be in `QA Tests/`.**
+
+---
+
+## Project Structure Standards
+
+### **Standard Directory Structure**
+
+```
+opportunityplus/
+├── .cursor/                    # Cursor IDE configuration
+│   └── rules/                  # Cursor rules files
+├── .github/                    # GitHub configuration (workflows, agents)
+├── QA Tests/                   # ALL test-related files
+│   ├── Scripts/                # SQL and PowerShell test scripts
+│   ├── Documentation/          # General test documentation
+│   ├── Playwright Tests/       # Playwright E2E tests
+│   ├── C# Tests/               # C# unit/integration tests
+│   ├── Integration Tests/      # Integration test suites
+│   ├── Test Execution Results/ # Output from test runs
+│   ├── Summary Reports/        # Coverage and summary reports
+│   └── Test Plans/             # Test planning documents
+├── Scripts/                    # Production/deployment scripts (NOT test scripts)
+├── UNOPS.PAO.ClientApp/        # Angular frontend
+├── UNOPS.PAO.Server/           # ASP.NET Core backend
+├── UNOPS.PAO.Business/         # Business logic layer
+├── UNOPS.PAO.DataAccess/       # Data access layer
+├── UNOPS.PAO.Domain/           # Domain models
+├── README.md                   # Project overview (root only)
+├── package.json                # Node.js dependencies (root only)
+├── playwright.config.ts        # Playwright config (root only)
+└── opportunityplus.sln         # Solution file
+```
+
+### **File Naming Conventions**
+
+**Test Scripts:**
+- SQL: `kebab-case.sql` or `descriptive-name.sql`
+- PowerShell: `kebab-case.ps1` or `Verb-Noun.ps1`
+- Examples:
+  - `assign-test-roles.sql`
+  - `create-test-users.sql`
+  - `setup-database.ps1`
+
+**Documentation Files:**
+- Use UPPERCASE_WITH_UNDERSCORES.md for summary/report files
+- Use kebab-case.md for guide/reference files
+- Examples:
+  - `PHASE_1_COMPLETE.md` (summary)
+  - `test-coverage-analysis.md` (reference)
+  - `setup-guide.md` (guide)
+
+**Code Files:**
+- C#: PascalCase for classes and files
+- TypeScript/Angular: kebab-case for files, PascalCase for classes
+- Test files: Match the file being tested with `.spec.ts` or `Tests.cs` suffix
+
+---
+
+## Quick Reference: Where Does This File Go?
+
+| If you're creating... | Put it in... |
+|-----------------------|--------------|
+| SQL test script | `QA Tests/Scripts/` |
+| PowerShell test script | `QA Tests/Scripts/` |
+| Test documentation | `QA Tests/Documentation/` |
+| Build/test output | `QA Tests/Test Execution Results/` |
+| Coverage report | `QA Tests/Summary Reports/` |
+| Test plan | `QA Tests/Test Plans/` |
+| Playwright test | `QA Tests/Playwright Tests/` |
+| C# unit test | `QA Tests/C# Tests/` |
+| Integration test | `QA Tests/Integration Tests/` |
+| PR description for tests | `QA Tests/Documentation/` |
+| Session summary | `QA Tests/Documentation/` |
+
+---
+
+## Checklist
+
+When creating ANY file:
+
+- [ ] Is this a test-related file? (If yes, MUST go in QA Tests/)
+- [ ] Is this a SQL/PowerShell script for testing? (If yes, place in QA Tests/Scripts/)
+- [ ] Is this test output or build logs? (If yes, place in QA Tests/Test Execution Results/)
+- [ ] Is this allowed in root? (Only README, CHANGELOG, LICENSE, config files)
+- [ ] Have I used the appropriate subdirectory within QA Tests/?
+- [ ] Have I updated any references to moved files?
+- [ ] Does the filename follow naming conventions?
+
+---
+
+*This rule ensures clean project organization and prevents test-related file clutter in the root directory. ALL test scripts, documentation, and output files MUST be in the `QA Tests/` directory.*
