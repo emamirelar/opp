@@ -2,15 +2,15 @@ namespace UNOPS.PAO.Domain.Entities;
 public class AiPrompt : BaseBusinessEntity
 {
     public new int? Id { get; set; }
-    public string Type { get; set; }
-    
-    public string DataRetrievalMethod { get; set; } // Function name to call on the manager
-    
-    public string SystemInstructions { get; set; }
-    
+    public string Type { get; set; } = string.Empty;
+
+    public string DataRetrievalMethod { get; set; } = string.Empty; // Function name to call on the manager
+
+    public string SystemInstructions { get; set; } = string.Empty;
+
     public string? UserPrompt { get; set; }
-    
-    public string Feature { get; set; }
+
+    public string Feature { get; set; } = string.Empty;
     
     public string? Description { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

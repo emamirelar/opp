@@ -137,6 +137,39 @@ public class GoogleCloudStorageService
     }
 
     /// <summary>
+    /// Uploads PDF bytes to Google Cloud Storage with organized folder structure.
+    /// Used for backend-generated PDFs (e.g., markdown-to-PDF conversion).
+    /// </summary>
+    /// <param name="pdfBytes">PDF file content as byte array</param>
+    /// <param name="folder">Folder name (e.g., "opportunities", "partners")</param>
+    /// <param name="entityId">Entity ID for organizing files</param>
+    /// <param name="fileName">File name (e.g., "statement.pdf")</param>
+    /// <returns>Google Cloud Storage URI (gs://bucket/path)</returns>
+    public async Task<string> UploadPdfBytesAsync(byte[] pdfBytes, string folder, int entityId, string fileName)
+    {
+        if (pdfBytes == null || pdfBytes.Length == 0)
+        {
+            throw new ArgumentException("PDF bytes cannot be null or empty", nameof(pdfBytes));
+        }
+
+        var uniqueId = Guid.NewGuid().ToString();
+        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
+        var fileExtension = Path.GetExtension(fileName);
+        var uniqueFileName = $"{fileNameWithoutExtension}_{uniqueId}{fileExtension}";
+        var objectName = $"{folder.ToLower()}/{entityId}/{uniqueFileName}";
+
+        using var stream = new MemoryStream(pdfBytes);
+        await _storageClient.UploadObjectAsync(
+            _bucketName,
+            objectName,
+            "application/pdf",
+            stream
+        );
+
+        return $"gs://{_bucketName}/{objectName}";
+    }
+
+    /// <summary>
     /// Uploads a PDF file to Google Cloud Storage with organized folder structure
     /// </summary>
     /// <param name="file">PDF file to upload</param>

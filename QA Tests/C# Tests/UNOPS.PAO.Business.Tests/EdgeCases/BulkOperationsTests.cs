@@ -14,6 +14,8 @@ using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.UNOPSDataAccess.Context;
+using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Tests.EdgeCases
 {
@@ -24,25 +26,25 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
     /// </summary>
     public class BulkOperationsTests
     {
-        private readonly DbContextOptions<AppDbContext> _options;
+        private readonly DbContextOptions<UNOPSAppDbContext> _options;
+        private int _partnerId;
 
         public BulkOperationsTests()
         {
-            _options = new DbContextOptionsBuilder<AppDbContext>()
+            _options = new DbContextOptionsBuilder<UNOPSAppDbContext>()
                 .UseInMemoryDatabase(databaseName: $"TestDb_BulkOps_{Guid.NewGuid()}")
                 .Options;
             SeedTestData();
         }
 
-        private AppDbContext CreateContext() => TestDbContextFactory.Create(_options);
+        private AppDbContext CreateContext() => TestDbContextFactory.CreateUNOPS(_options);
 
         private void SeedTestData()
         {
             using var context = CreateContext();
-            
-            var partner = new Partner
+
+            var partner = new UNOPSPartner
             {
-                Id = 1,
                 Name = "Bulk Test Partner",
                 PartnerShortDescription = "Test Partner for Bulk Operations",
                 CreatedBy = 1,
@@ -53,16 +55,17 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
             };
             context.Partners.Add(partner);
             context.SaveChanges();
+            _partnerId = partner.Id;
 
-            var contacts = Enumerable.Range(1, 100).Select(i => new Contact
+            var contacts = Enumerable.Range(1, 100).Select(i => new UNOPSContact
             {
-                Id = i,
+                ContactNumber = $"CN-{i}",
                 Name = $"Contact {i} Last {i}",  // Base class property
                 FirstName = $"Contact {i}",
                 LastName = $"Last {i}",
                 Title = $"Title {i}",
                 Email = $"contact{i}@example.com",
-                PartnerId = 1,
+                PartnerId = _partnerId,
                 CreatedBy = 1,
                 LastModifiedBy = 1,
                 CreatedDate = DateTime.UtcNow,
@@ -78,14 +81,15 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
         public async Task TC_BO_F001_BulkCreate_100Contacts_Succeeds()
         {
             using var context = CreateContext();
-            var newContacts = Enumerable.Range(101, 100).Select(i => new Contact
+            var newContacts = Enumerable.Range(101, 100).Select(i => new UNOPSContact
             {
+                ContactNumber = $"CN-Bulk-{i}",
                 Name = $"Bulk {i} Create {i}",  // Base class property
                 FirstName = $"Bulk {i}",
                 LastName = $"Create {i}",
                 Title = $"Title {i}",
                 Email = $"bulk{i}@example.com",
-                PartnerId = 1,
+                PartnerId = _partnerId,
                 CreatedBy = 1,
                 LastModifiedBy = 1,
                 CreatedDate = DateTime.UtcNow,
@@ -105,14 +109,15 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
             using var context = CreateContext();
             var startTime = DateTime.UtcNow;
             
-            var newContacts = Enumerable.Range(1001, 1000).Select(i => new Contact
+            var newContacts = Enumerable.Range(1001, 1000).Select(i => new UNOPSContact
             {
+                ContactNumber = $"CN-Perf-{i}",
                 Name = $"Performance {i} Test {i}",  // Base class property
                 FirstName = $"Performance {i}",
                 LastName = $"Test {i}",
                 Title = $"Title {i}",
                 Email = $"perf{i}@example.com",
-                PartnerId = 1,
+                PartnerId = _partnerId,
                 CreatedBy = 1,
                 LastModifiedBy = 1,
                 CreatedDate = DateTime.UtcNow,
@@ -132,9 +137,9 @@ namespace UNOPS.PAO.Business.Tests.EdgeCases
             using var context = CreateContext();
             var validContacts = new List<Contact>
             {
-                new Contact { Name = "Valid1 Contact1", FirstName = "Valid1", LastName = "Contact1", Title = "Title1", Email = "valid1@example.com", PartnerId = 1, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Contact { Name = "Valid2 Contact2", FirstName = "Valid2", LastName = "Contact2", Title = "Title2", Email = "valid2@example.com", PartnerId = 1, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
-                new Contact { Name = "Valid3 Contact3", FirstName = "Valid3", LastName = "Contact3", Title = "Title3", Email = "valid3@example.com", PartnerId = 1, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
+                new UNOPSContact { ContactNumber = "CN-Valid1", Name = "Valid1 Contact1", FirstName = "Valid1", LastName = "Contact1", Title = "Title1", Email = "valid1@example.com", PartnerId = _partnerId, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new UNOPSContact { ContactNumber = "CN-Valid2", Name = "Valid2 Contact2", FirstName = "Valid2", LastName = "Contact2", Title = "Title2", Email = "valid2@example.com", PartnerId = _partnerId, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow },
+                new UNOPSContact { ContactNumber = "CN-Valid3", Name = "Valid3 Contact3", FirstName = "Valid3", LastName = "Contact3", Title = "Title3", Email = "valid3@example.com", PartnerId = _partnerId, CreatedBy = 1, LastModifiedBy = 1, CreatedDate = DateTime.UtcNow, LastModifiedDate = DateTime.UtcNow }
             };
             
             context.Contacts.AddRange(validContacts);

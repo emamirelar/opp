@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using UNOPS.PAO.Models.Documents;
 using UNOPS.PAO.Models.Interactions;
 using UNOPS.PAO.Models.OrganizationUnits;
@@ -12,12 +12,12 @@ public class ContactModel
     public string? Salutation { get; set; }
     public string? FirstName { get; set; }
     public string? MiddleName { get; set; }
-    public string LastName { get; set; }
+    public string LastName { get; set; } = null!;
     public string? Suffix { get; set; }
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
     public string? Department { get; set; }
     public string? Description { get; set; }
-    public string Email { get; set; }
+    public string Email { get; set; } = null!;
     public string? Phone { get; set; }
     public string? Mobile { get; set; }
     public string? Assistant { get; set; }
@@ -87,5 +87,5 @@ public class ContactModel
 public class PartnerSummaryModel
 {
     public int Id { get; set; }
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 }

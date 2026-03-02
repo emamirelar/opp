@@ -1,4 +1,4 @@
-﻿namespace UNOPS.PAO.Domain.Infrastructure;
+namespace UNOPS.PAO.Domain.Infrastructure;
 
 public class ErrorLog
 {
@@ -17,7 +17,7 @@ public class ErrorLog
     }
 
     public int Id { get; }
-    public string Message { get; }
+    public string Message { get; } = string.Empty;
     public string? Url { get; }
     public DateTime Date { get; }
     public string? StackTrace { get; }

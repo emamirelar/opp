@@ -109,7 +109,8 @@ public class UNOPSManagerWrapper : ManagerWrapper
         
         // Create OpportunityManager with DbContextFactory for parallel query execution
         var exchangeRateService = serviceProvider.GetRequiredService<IExchangeRateService>();
-        opportunityManager = new UNOPSOpportunityManager(mapper, opsContext, configuration, dbContextFactory, exchangeRateService, permissionService, httpContextAccessor, serviceProvider);
+        var aiRetrieverManager = serviceProvider.GetService<IAiRetrieverManager>();
+        opportunityManager = new UNOPSOpportunityManager(mapper, opsContext, configuration, dbContextFactory, exchangeRateService, permissionService, httpContextAccessor, serviceProvider, aiRetrieverManager);
         
         // Create CommentManager
         commentManager = new CommentManager(mapper, opsContext, this);

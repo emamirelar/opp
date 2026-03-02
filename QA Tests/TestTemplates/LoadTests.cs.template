@@ -1,0 +1,372 @@
+/**
+ * LOAD TESTS TEMPLATE
+ * 
+ * This template follows the comprehensive-test-strategy.mdc requirements:
+ * - Minimum: ≥10 tests (FIXED)
+ *   - Sustained Load (3)
+ *   - Spike Testing (2)
+ *   - Stress Testing (2)
+ *   - Scalability (3)
+ * - Purpose: Verify system behavior under various load conditions
+ * 
+ * Copy this template and replace [ENTITY] with your entity name.
+ * 
+ * @see .cursor/rules/comprehensive-test-strategy.mdc
+ */
+
+using FluentAssertions;
+using System.Diagnostics;
+using Xunit;
+
+namespace UNOPS.PAO.Business.Tests.[MODULE]
+{
+    /// <summary>
+    /// Load Tests for [ENTITY] Manager
+    /// 
+    /// Test Strategy: These tests verify system behavior under
+    /// sustained load, spike conditions, and stress scenarios.
+    /// 
+    /// Required: ≥10 tests (FIXED)
+    /// - Sustained Load (3): Normal operation over time
+    /// - Spike Testing (2): Sudden load increases
+    /// - Stress Testing (2): Beyond normal capacity
+    /// - Scalability (3): Performance at different scales
+    /// </summary>
+    public class [ENTITY]LoadTests : PerformanceTestBase
+    {
+        private readonly Stopwatch _stopwatch = new();
+
+        #region Sustained Load Tests
+
+        /// <summary>
+        /// System handles sustained read load over extended period
+        /// </summary>
+        [Fact]
+        public async Task SustainedLoad_ReadOperations_MaintainsPerformance()
+        {
+            // Arrange
+            var operationCount = 1000;
+            var operationTimes = new List<long>();
+
+            // Act - Simulate sustained read load
+            for (int i = 0; i < operationCount; i++)
+            {
+                _stopwatch.Restart();
+                await SimulateReadOperation();
+                _stopwatch.Stop();
+                operationTimes.Add(_stopwatch.ElapsedTicks);
+                
+                if (i % 100 == 0) await Task.Delay(10); // Simulate realistic pacing
+            }
+
+            // Assert - Performance should not degrade significantly
+            var firstQuarter = operationTimes.Take(250).Average();
+            var lastQuarter = operationTimes.Skip(750).Average();
+            
+            lastQuarter.Should().BeLessThan(firstQuarter * 2,
+                "Performance should not degrade more than 2x under sustained load");
+        }
+
+        /// <summary>
+        /// System handles sustained write load over extended period
+        /// </summary>
+        [Fact]
+        public async Task SustainedLoad_WriteOperations_MaintainsPerformance()
+        {
+            // Arrange
+            var operationCount = 500;
+            var operationTimes = new List<long>();
+
+            // Act - Simulate sustained write load
+            for (int i = 0; i < operationCount; i++)
+            {
+                _stopwatch.Restart();
+                await SimulateWriteOperation();
+                _stopwatch.Stop();
+                operationTimes.Add(_stopwatch.ElapsedTicks);
+            }
+
+            // Assert
+            var avgTime = operationTimes.Average();
+            var stdDev = Math.Sqrt(operationTimes.Average(t => Math.Pow(t - avgTime, 2)));
+            
+            stdDev.Should().BeLessThan(avgTime,
+                "Write operation times should be consistent under sustained load");
+        }
+
+        /// <summary>
+        /// System handles sustained mixed read/write load
+        /// </summary>
+        [Fact]
+        public async Task SustainedLoad_MixedOperations_MaintainsPerformance()
+        {
+            // Arrange
+            var totalOperations = 500;
+            var readWriteRatio = 0.8; // 80% reads, 20% writes
+            var random = new Random(42);
+
+            // Act
+            _stopwatch.Restart();
+            for (int i = 0; i < totalOperations; i++)
+            {
+                if (random.NextDouble() < readWriteRatio)
+                    await SimulateReadOperation();
+                else
+                    await SimulateWriteOperation();
+            }
+            _stopwatch.Stop();
+
+            // Assert
+            var avgTimePerOp = _stopwatch.ElapsedMilliseconds / (double)totalOperations;
+            avgTimePerOp.Should().BeLessThan(50,
+                $"Average operation time was {avgTimePerOp}ms, expected < 50ms");
+        }
+
+        #endregion
+
+        #region Spike Testing
+
+        /// <summary>
+        /// System handles sudden spike in concurrent requests
+        /// </summary>
+        [Fact]
+        public async Task SpikeLoad_SuddenIncrease_HandlesGracefully()
+        {
+            // Arrange - Normal load baseline
+            var normalConcurrency = 10;
+            var spikeConcurrency = 100;
+
+            // Act - Normal load
+            _stopwatch.Restart();
+            var normalTasks = Enumerable.Range(0, normalConcurrency)
+                .Select(_ => SimulateReadOperation())
+                .ToArray();
+            await Task.WhenAll(normalTasks);
+            var normalTime = _stopwatch.ElapsedMilliseconds;
+
+            // Act - Spike load
+            _stopwatch.Restart();
+            var spikeTasks = Enumerable.Range(0, spikeConcurrency)
+                .Select(_ => SimulateReadOperation())
+                .ToArray();
+            await Task.WhenAll(spikeTasks);
+            var spikeTime = _stopwatch.ElapsedMilliseconds;
+
+            // Assert - Spike should not cause catastrophic slowdown
+            var scaleFactor = (double)spikeTime / normalTime;
+            scaleFactor.Should().BeLessThan(spikeConcurrency / normalConcurrency * 2,
+                "Spike load should scale reasonably, not catastrophically");
+        }
+
+        /// <summary>
+        /// System recovers quickly after load spike ends
+        /// </summary>
+        [Fact]
+        public async Task SpikeLoad_Recovery_ReturnsToNormal()
+        {
+            // Arrange - Baseline
+            var baseline = await MeasureOperationTime();
+
+            // Act - Create spike
+            var spikeTasks = Enumerable.Range(0, 100)
+                .Select(_ => SimulateReadOperation())
+                .ToArray();
+            await Task.WhenAll(spikeTasks);
+
+            // Small pause to allow recovery
+            await Task.Delay(100);
+
+            // Measure post-spike
+            var postSpike = await MeasureOperationTime();
+
+            // Assert - Should recover to near baseline
+            postSpike.Should().BeLessThan(baseline * 3,
+                "System should recover to near-baseline performance after spike");
+        }
+
+        #endregion
+
+        #region Stress Testing
+
+        /// <summary>
+        /// System handles load beyond normal capacity
+        /// </summary>
+        [Fact]
+        public async Task StressLoad_BeyondCapacity_DoesNotCrash()
+        {
+            // Arrange
+            var stressLevel = 500;
+            var completedTasks = 0;
+
+            // Act
+            var tasks = Enumerable.Range(0, stressLevel)
+                .Select(async _ =>
+                {
+                    await SimulateReadOperation();
+                    Interlocked.Increment(ref completedTasks);
+                })
+                .ToArray();
+
+            var allCompleted = Task.WhenAll(tasks);
+            var timeoutTask = Task.Delay(TimeSpan.FromSeconds(30));
+            
+            var completedFirst = await Task.WhenAny(allCompleted, timeoutTask);
+
+            // Assert
+            completedFirst.Should().Be(allCompleted, 
+                "All stress operations should complete within timeout");
+            completedTasks.Should().Be(stressLevel,
+                "All operations should complete successfully");
+        }
+
+        /// <summary>
+        /// System maintains data integrity under stress
+        /// </summary>
+        [Fact]
+        public async Task StressLoad_DataIntegrity_Maintained()
+        {
+            // Arrange
+            var operationCount = 200;
+            var expectedSum = Enumerable.Range(1, operationCount).Sum();
+            var actualSum = 0;
+            var lockObj = new object();
+
+            // Act - Concurrent operations that should sum correctly
+            var tasks = Enumerable.Range(1, operationCount)
+                .Select(async i =>
+                {
+                    await SimulateReadOperation();
+                    lock (lockObj)
+                    {
+                        actualSum += i;
+                    }
+                })
+                .ToArray();
+
+            await Task.WhenAll(tasks);
+
+            // Assert - Data integrity maintained
+            actualSum.Should().Be(expectedSum,
+                "Data integrity should be maintained under stress");
+        }
+
+        #endregion
+
+        #region Scalability Tests
+
+        /// <summary>
+        /// System scales linearly with data size
+        /// </summary>
+        [Fact]
+        public void Scalability_DataSize_ScalesLinearly()
+        {
+            // Arrange
+            var sizes = new[] { 100, 1000, 10000 };
+            var times = new List<(int Size, long Time)>();
+
+            // Act
+            foreach (var size in sizes)
+            {
+                var data = Enumerable.Range(1, size).ToList();
+                
+                _stopwatch.Restart();
+                var result = data.Where(x => x % 2 == 0).Sum();
+                _stopwatch.Stop();
+                
+                times.Add((size, _stopwatch.ElapsedTicks));
+            }
+
+            // Assert - Time should scale roughly linearly (not exponentially)
+            var ratio1to2 = (double)times[1].Time / times[0].Time;
+            var ratio2to3 = (double)times[2].Time / times[1].Time;
+            
+            // Both ratios should be similar (linear scaling)
+            var ratioDiff = Math.Abs(ratio1to2 - ratio2to3);
+            ratioDiff.Should().BeLessThan(ratio1to2 * 0.5,
+                "Performance should scale linearly, not exponentially");
+        }
+
+        /// <summary>
+        /// System scales with concurrent user count
+        /// </summary>
+        [Fact]
+        public async Task Scalability_ConcurrentUsers_ScalesEfficiently()
+        {
+            // Arrange
+            var userCounts = new[] { 10, 50, 100 };
+            var times = new List<(int Users, long Time)>();
+
+            // Act
+            foreach (var users in userCounts)
+            {
+                _stopwatch.Restart();
+                var tasks = Enumerable.Range(0, users)
+                    .Select(_ => SimulateReadOperation())
+                    .ToArray();
+                await Task.WhenAll(tasks);
+                _stopwatch.Stop();
+                
+                times.Add((users, _stopwatch.ElapsedMilliseconds));
+            }
+
+            // Assert - Time per user should stay reasonable
+            foreach (var (users, time) in times)
+            {
+                var timePerUser = time / (double)users;
+                timePerUser.Should().BeLessThan(100,
+                    $"Time per user at {users} users was {timePerUser}ms, expected < 100ms");
+            }
+        }
+
+        /// <summary>
+        /// System handles large batch operations efficiently
+        /// </summary>
+        [Fact]
+        public void Scalability_BatchSize_HandlesLargeBatches()
+        {
+            // Arrange
+            var batchSizes = new[] { 100, 500, 1000 };
+            
+            foreach (var batchSize in batchSizes)
+            {
+                // Act
+                _stopwatch.Restart();
+                var batch = Enumerable.Range(1, batchSize)
+                    .Select(i => new { Id = i, Name = $"Item {i}" })
+                    .ToList();
+                var processed = batch.Where(x => x.Id % 2 == 0).ToList();
+                _stopwatch.Stop();
+
+                // Assert
+                _stopwatch.ElapsedMilliseconds.Should().BeLessThan(1000,
+                    $"Batch of {batchSize} should process in < 1000ms");
+            }
+        }
+
+        #endregion
+
+        #region Helper Methods
+
+        private async Task SimulateReadOperation()
+        {
+            // Simulate a read operation with minimal delay
+            await Task.Delay(1);
+        }
+
+        private async Task SimulateWriteOperation()
+        {
+            // Simulate a write operation with slightly more delay
+            await Task.Delay(2);
+        }
+
+        private async Task<long> MeasureOperationTime()
+        {
+            _stopwatch.Restart();
+            await SimulateReadOperation();
+            _stopwatch.Stop();
+            return _stopwatch.ElapsedTicks;
+        }
+
+        #endregion
+    }
+}

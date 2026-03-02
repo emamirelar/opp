@@ -14,7 +14,7 @@ public class InteractionWithContactSpecification : BaseSpecification<Interaction
         : base(i => true) // Match all interactions
     {
         // Include the related contacts through junction table
-        AddInclude(i => i.InteractionContacts);
+        AddInclude(i => i.InteractionContacts!);
         AddInclude("InteractionContacts.Contact");
         
         // Default ordering is by date descending
@@ -29,7 +29,7 @@ public class InteractionWithContactSpecification : BaseSpecification<Interaction
         : base(i => i.Id == interactionId)
     {
         // Include the related contacts through junction table
-        AddInclude(i => i.InteractionContacts);
+        AddInclude(i => i.InteractionContacts!);
         AddInclude("InteractionContacts.Contact");
     }
 } 

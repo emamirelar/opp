@@ -3,6 +3,7 @@ namespace UNOPS.PAO.Domain.Specifications.PartnerSpecifications;
 using System;
 using System.Linq.Expressions;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Domain.Specifications.Interfaces;
 
 /// <summary>
@@ -56,32 +57,34 @@ public class PartnerCompositeSpecification : GenericCompositeSpecification<Partn
     [return: System.Diagnostics.CodeAnalysis.NotNull]
     private static Expression<Func<Partner, object>> GetOrderByExpression(string? orderByField)
     {
-        return orderByField?.ToLowerInvariant() switch
+        var orderKey = orderByField?.ToLowerInvariant() ?? string.Empty;
+        Expression<Func<Partner, object>> result = orderKey switch
         {
-            "name" => p => p.Name ?? "",
-            "partnershortdescription" => p => p.PartnerShortDescription ?? "",
-            "partnerlongdescription" => p => p.PartnerLongDescription ?? "",
-            "status" => p => p.Status,
-            "createddate" => p => p.CreatedDate,
-            "lastmodifieddate" => p => p.LastModifiedDate,
-            "partnercategoryid" => p => p.PartnerCategoryId,
-            "partnergroupid" => p => p.PartnerGroupId ?? 0,
-            "partnerApprovalstatus" => p => p.PartnerApprovalStatus,
-            "keyglobalpartner" => p => p.KeyGlobalPartner,
-            "unsecretariatpartner" => p => p.UNSecretariatPartner,
-            "unandstateentity" => p => p.UNAndStateEntity,
-            "pooledFund" => p => p.PooledFund,
-            "cancreatenewopportunities" => p => p.CanCreateNewOpportunities,
-            "liaisonOfficeid" => p => p.LiaisonOfficeId,
-            "partnerFocalPointuserid" => p => p.PartnerFocalPointUserId,
-            "erpdimValue" => p => p.ErpDimValue,
-            "partnerlevystatus" => p => p.PartnerLevyStatus,
-            "duediligencerequired" => p => p.DueDiligenceRequired,
-            "duediligenceapproval" => p => p.DueDiligenceApproval,
-            "duediligenceapprovaldate" => p => p.DueDiligenceApprovalDate,
-            "duediligenceexpirydate" => p => p.DueDiligenceExpiryDate,
-            "partnerapprovaldate" => p => p.PartnerApprovalDate,
-            _ => p => p.Name ?? "" // Default to Name if no field specified or unknown field
+            "name" => (Expression<Func<Partner, object>>)(p => p.Name ?? ""),
+            "partnershortdescription" => (Expression<Func<Partner, object>>)(p => p.PartnerShortDescription ?? ""),
+            "partnerlongdescription" => (Expression<Func<Partner, object>>)(p => p.PartnerLongDescription ?? ""),
+            "status" => (Expression<Func<Partner, object>>)(p => p.Status),
+            "createddate" => (Expression<Func<Partner, object>>)(p => p.CreatedDate),
+            "lastmodifieddate" => (Expression<Func<Partner, object>>)(p => p.LastModifiedDate),
+            "partnercategoryid" => (Expression<Func<Partner, object>>)(p => p.PartnerCategoryId),
+            "partnergroupid" => (Expression<Func<Partner, object>>)(p => p.PartnerGroupId ?? 0),
+            "partnerapprovalstatus" => (Expression<Func<Partner, object>>)(p => p.PartnerApprovalStatus),
+            "keyglobalpartner" => (Expression<Func<Partner, object>>)(p => p.KeyGlobalPartner),
+            "unsecretariatpartner" => (Expression<Func<Partner, object>>)(p => p.UNSecretariatPartner),
+            "unandstateentity" => (Expression<Func<Partner, object>>)(p => p.UNAndStateEntity),
+            "pooledfund" => (Expression<Func<Partner, object>>)(p => p.PooledFund),
+            "cancreatenewopportunities" => (Expression<Func<Partner, object>>)(p => p.CanCreateNewOpportunities),
+            "liaisonofficeid" => (Expression<Func<Partner, object>>)(p => p.LiaisonOfficeId ?? 0),
+            "partnerfocalpointuserid" => (Expression<Func<Partner, object>>)(p => p.PartnerFocalPointUserId ?? 0),
+            "erpdimvalue" => (Expression<Func<Partner, object>>)(p => p.ErpDimValue ?? 0),
+            "partnerlevystatus" => (Expression<Func<Partner, object>>)(p => (object)(p.PartnerLevyStatus ?? default(PartnerLevyStatus))),
+            "duediligencerequired" => (Expression<Func<Partner, object>>)(p => p.DueDiligenceRequired),
+            "duediligenceapproval" => (Expression<Func<Partner, object>>)(p => (object)(p.DueDiligenceApproval ?? default(DueDiligenceApproval))),
+            "duediligenceapprovaldate" => (Expression<Func<Partner, object>>)(p => p.DueDiligenceApprovalDate ?? DateTime.MinValue),
+            "duediligenceexpirydate" => (Expression<Func<Partner, object>>)(p => p.DueDiligenceExpiryDate ?? DateTime.MinValue),
+            "partnerapprovaldate" => (Expression<Func<Partner, object>>)(p => p.PartnerApprovalDate ?? DateTime.MinValue),
+            _ => (Expression<Func<Partner, object>>)(p => p.Name ?? "") // Default to Name if no field specified or unknown field
         };
+        return result;
     }
 } 

@@ -691,6 +691,7 @@ public class PartnerManager : IPartnerManager
     /// </summary>
     public async Task<PartnerModel?> UpdatePartnerAsync(ClaimsPrincipal user, UpdatePartnerRequest model)
     {
+        await Task.CompletedTask;
         throw new NotImplementedException();
     }
 
@@ -700,6 +701,7 @@ public class PartnerManager : IPartnerManager
     /// </summary>
     public async Task<bool> DeletePartnerAsync(ClaimsPrincipal user, int id)
     {
+        await Task.CompletedTask;
         throw new NotImplementedException();
     }
 
@@ -718,11 +720,13 @@ public class PartnerManager : IPartnerManager
     /// </summary>
     public async Task<PaginationResponse<PartnerModel>> GetPartnersByCategoryAsync(ClaimsPrincipal user, string partnerCategoryCode, PaginationRequest request)
     {
+        await Task.CompletedTask;
         throw new NotImplementedException();
     }
 
     public async Task<List<PartnerModel?>> GetPartnersForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user = null)
     {
+        await Task.CompletedTask;
         throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
     }
 
@@ -761,6 +765,7 @@ public class PartnerManager : IPartnerManager
     // Partner Status Management Methods
     public async Task<PartnerModel?> ActivatePartnerAsync(ClaimsPrincipal user, int id, ActivatePartnerRequest request)
     {
+        await Task.CompletedTask;
         // This implementation doesn't support activation since it works with Partner entities (not UNOPSPartner)
         // Status workflows are managed by UNOPSPartnerManager
         throw new NotSupportedException("Partner activation is managed by UNOPSPartnerManager. Use the UNOPS-specific implementation.");
@@ -768,6 +773,7 @@ public class PartnerManager : IPartnerManager
 
     public async Task<PartnerModel?> ClosePartnerAsync(ClaimsPrincipal user, int id, StatusChangeRequest request)
     {
+        await Task.CompletedTask;
         // This implementation doesn't support closing since it works with Partner entities (not UNOPSPartner)
         // Status workflows are managed by UNOPSPartnerManager
         throw new NotSupportedException("Partner closing is managed by UNOPSPartnerManager. Use the UNOPS-specific implementation.");
@@ -775,6 +781,7 @@ public class PartnerManager : IPartnerManager
 
     public async Task<PartnerModel?> ArchivePartnerAsync(ClaimsPrincipal user, int id, StatusChangeRequest request)
     {
+        await Task.CompletedTask;
         // This implementation doesn't support archiving since it works with Partner entities (not UNOPSPartner)
         // Status workflows are managed by UNOPSPartnerManager
         throw new NotSupportedException("Partner archiving is managed by UNOPSPartnerManager. Use the UNOPS-specific implementation.");
@@ -782,6 +789,7 @@ public class PartnerManager : IPartnerManager
 
     public async Task<PartnerModel?> ApprovePartnerAsync(ClaimsPrincipal user, int id, UpdatePartnerRequest request)
     {
+        await Task.CompletedTask;
         // This implementation doesn't support approval since it works with Partner entities (not UNOPSPartner)
         // Status workflows are managed by UNOPSPartnerManager
         throw new NotSupportedException("Partner approval is managed by UNOPSPartnerManager. Use the UNOPS-specific implementation.");
@@ -796,6 +804,7 @@ public class PartnerManager : IPartnerManager
 
     public virtual async Task<PartnerModel?> GetPartnerByNameAsync(ClaimsPrincipal user, string name)
     {
+        await Task.CompletedTask;
         throw new NotImplementedException("Use UNOPSPartnerManager for UNOPS-specific implementation");
     }
 
@@ -816,6 +825,7 @@ public class PartnerManager : IPartnerManager
         int maxResults = 50,
         PaginationRequest? request = null)
     {
+        await Task.CompletedTask;
         // This base implementation doesn't support advanced smart search
         // Smart search with related entities and intelligent ranking is managed by UNOPSPartnerManager
         throw new NotSupportedException("Smart search is managed by UNOPSPartnerManager. Use the UNOPS-specific implementation for comprehensive search across all related entities.");
@@ -828,11 +838,13 @@ public class PartnerManager : IPartnerManager
 
     public virtual async Task<List<string>> GetSamplePartnerNamesAsync(ClaimsPrincipal user, int count = 5)
     {
+        await Task.CompletedTask;
         throw new NotImplementedException("Use UNOPSPartnerManager for debug functionality");
     }
 
     public virtual async Task<PaginationResponse<PartnerModel>> NewAdvancedSearchPartnersAsync(ClaimsPrincipal user, string searchCriteria, PaginationRequest request)
     {
+        await Task.CompletedTask;
         throw new NotSupportedException("NEW Advanced search functionality is only available in UNOPS implementation. Use UNOPSPartnerManager instead.");
     }
 

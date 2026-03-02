@@ -1,4 +1,5 @@
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Documents;
 using UNOPS.PAO.Models.Filters;
 using UNOPS.PAO.Models.Opportunities;
 using UNOPS.PAO.Models.Search;
@@ -54,6 +55,15 @@ public interface IOpportunityManager
     /// <param name="opportunityId">The opportunity ID</param>
     /// <returns>List of personnel with display label and user ID</returns>
     Task<IEnumerable<TypeaheadInput>> GetExecutivesForOpportunityAsync(int opportunityId);
+
+    /// <summary>
+    /// Generates a statement PDF from markdown, uploads to GCS, and returns the GCS path.
+    /// When EntityName and EntityId are provided (e.g., Opportunity/123), fetches the statement from the entity.
+    /// Otherwise uses the Data (markdown) from the request.
+    /// </summary>
+    /// <param name="request">Request with EntityName, EntityId, optional Data, and Filename</param>
+    /// <returns>Result with GcsPath on success</returns>
+    Task<GeneratePdfResult> GenerateStatementPdfAsync(GeneratePdfRequest request);
 }
 
 

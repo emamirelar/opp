@@ -1,4 +1,4 @@
-﻿namespace UNOPS.PAO.Domain.Infrastructure;
+namespace UNOPS.PAO.Domain.Infrastructure;
 
 public class BaseEntity
 {
@@ -14,5 +14,5 @@ public class BaseEntity
 
     public int Id { get; set; }
     public DateTime CreatedDate { get; set; }
-    public string CreatedBy { get; set; }
+    public string CreatedBy { get; set; } = string.Empty;
 }

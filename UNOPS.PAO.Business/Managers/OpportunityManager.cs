@@ -6,6 +6,7 @@ using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Documents;
 using UNOPS.PAO.Models.Filters;
 using UNOPS.PAO.Models.Opportunities;
 using UNOPS.PAO.Models.Search;
@@ -1359,7 +1360,7 @@ public class OpportunityManager : IOpportunityManager
                 .Where(i => i.InteractionPartners != null && 
                            i.InteractionPartners.Any(ip => partnerIds.Contains(ip.PartnerId)) && 
                            !i.IsDeleted)
-                .Include(i => i.InteractionPartners)
+                .Include(i => i.InteractionPartners!)
                     .ThenInclude(ip => ip.Partner)
                 .OrderByDescending(i => i.Date)
                 .Take(50) // Limit to recent 50 interactions
@@ -1374,7 +1375,7 @@ public class OpportunityManager : IOpportunityManager
                         ? i.InteractionPartners.First().PartnerId 
                         : null,
                     PartnerName = i.InteractionPartners != null && i.InteractionPartners.Any() 
-                        ? i.InteractionPartners.First().Partner.Name 
+                        ? (i.InteractionPartners.First().Partner != null ? i.InteractionPartners.First().Partner.Name : null)
                         : null
                 })
                 .ToListAsync();
@@ -1475,6 +1476,7 @@ public class OpportunityManager : IOpportunityManager
     /// </summary>
     public virtual async Task<OpportunityModel> ApplyAiChangesAsync(int id, ApplyOpportunityAiChangesRequest request)
     {
+        await Task.CompletedTask;
         throw new NotImplementedException("ApplyAiChangesAsync is only implemented in UNOPSOpportunityManager");
     }
 
@@ -1483,6 +1485,7 @@ public class OpportunityManager : IOpportunityManager
     /// </summary>
     public virtual async Task<SimilarOpportunitiesResponse> GetSimilarOpportunitiesAsync(int id, int maxResults = 6, System.Security.Claims.ClaimsPrincipal? user = null)
     {
+        await Task.CompletedTask;
         throw new NotImplementedException("GetSimilarOpportunitiesAsync is only implemented in UNOPSOpportunityManager");
     }
 
@@ -1692,6 +1695,18 @@ public class OpportunityManager : IOpportunityManager
         }
         
         return "Personnel";
+    }
+
+    /// <summary>
+    /// Generates a statement PDF - UNOPS-specific implementation. Use UNOPSOpportunityManager.
+    /// </summary>
+    public virtual Task<GeneratePdfResult> GenerateStatementPdfAsync(GeneratePdfRequest request)
+    {
+        return Task.FromResult(new GeneratePdfResult
+        {
+            Error = "Statement PDF generation is not available",
+            Details = "This feature requires the UNOPS Opportunity Manager implementation."
+        });
     }
 }
 
