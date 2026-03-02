@@ -10,7 +10,7 @@ public class LinkRequest
     public LinkEntityType Entity { get; set; }
     public int EntityId { get; set; }
     [StringLength(2000)]
-    public string Url { get; set; }
+    public string Url { get; set; } = null!;
     [StringLength(2000)]
     public string? Name { get; set; }
 }
@@ -26,6 +26,6 @@ public class LinkModel
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public LinkEntityType Entity { get; set; }
     public int EntityId { get; set; }
-    public string Url { get; set; }
+    public string Url { get; set; } = null!;
     public string? Name { get; set; }
 } 
