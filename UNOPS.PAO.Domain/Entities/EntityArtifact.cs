@@ -33,7 +33,7 @@ public class EntityArtifact : ModifiableDeletableEntity
     /// Display name for this specific artifact instance
     /// </summary>
     [MaxLength(500)]
-    public string? Name { get; set; }
+    public new string? Name { get; set; }
 
     /// <summary>
     /// Artifact value - stored based on ArtifactDataType

@@ -19,7 +19,7 @@ public class InteractionByContactSpecification : BaseSpecification<Interaction>
         ApplyOrderByDescending(i => i.Date);
         
         // Include the related contacts through junction table
-        AddInclude(i => i.InteractionContacts);
+        AddInclude(i => i.InteractionContacts!);
         AddInclude("InteractionContacts.Contact");
     }
 } 

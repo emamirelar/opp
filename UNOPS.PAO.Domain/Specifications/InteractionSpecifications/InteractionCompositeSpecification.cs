@@ -21,11 +21,11 @@ public class InteractionCompositeSpecification : GenericCompositeSpecification<I
         : base(filter)
     {
         // Include the related contacts through junction table
-        AddInclude(i => i.InteractionContacts);
+        AddInclude(i => i.InteractionContacts!);
         AddInclude("InteractionContacts.Contact");
         
         // Include the related partners through junction table
-        AddInclude(i => i.InteractionPartners);
+        AddInclude(i => i.InteractionPartners!);
         AddInclude("InteractionPartners.Partner");
         
         // Apply dynamic ordering based on filter properties
@@ -50,11 +50,11 @@ public class InteractionCompositeSpecification : GenericCompositeSpecification<I
         : base(CreateLegacyFilter(contactId, type, fromDate, toDate, searchText))
     {
         // Include the related contacts through junction table
-        AddInclude(i => i.InteractionContacts);
+        AddInclude(i => i.InteractionContacts!);
         AddInclude("InteractionContacts.Contact");
         
         // Include the related partners through junction table
-        AddInclude(i => i.InteractionPartners);
+        AddInclude(i => i.InteractionPartners!);
         AddInclude("InteractionPartners.Partner");
         
         // Default ordering is by date descending
@@ -140,11 +140,12 @@ public class InteractionCompositeSpecification : GenericCompositeSpecification<I
     /// <returns>The ordering expression</returns>
     private static Expression<Func<Interaction, object>> GetOrderByExpression(string? orderByField)
     {
-        return orderByField?.ToLowerInvariant() switch
+        var orderKey = orderByField?.ToLowerInvariant() ?? string.Empty;
+        return orderKey switch
         {
             "date" => i => i.Date,
-            "subject" => i => i.Subject,
-            "description" => i => i.Description!,
+            "subject" => i => i.Subject ?? string.Empty,
+            "description" => i => i.Description ?? string.Empty,
             "type" => i => i.Type,
             "createddate" => i => i.CreatedDate,
             _ => i => i.Date // Default to Date descending (most recent first) if no field specified or unknown field

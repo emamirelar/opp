@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Domain.Enums;
@@ -113,7 +113,7 @@ public class Partner : ModifiableDeletableEntity
     public string PartnerOrgUnit => 
         string.Join(", ", OrganizationUnitRelationships?
             .Where(r => r?.OrganizationHierarchy != null && r.Status == EntityStatus.Active && !r.IsDeleted)
-            .Select(r => r.OrganizationHierarchy.Name)
+            .Select(r => r!.OrganizationHierarchy!.Name)
             .OrderBy(name => name) ?? Enumerable.Empty<string>());
 
     /// <summary>

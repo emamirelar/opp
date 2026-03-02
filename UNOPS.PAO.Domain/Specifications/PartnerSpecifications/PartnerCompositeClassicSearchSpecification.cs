@@ -109,7 +109,7 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
         // Add short name filter if specified (using PartnerShortDescription)
         if (!string.IsNullOrWhiteSpace(shortName))
         {
-            Expression<Func<Partner, bool>> shortNameFilter = p => p.PartnerShortDescription.ToLower().Contains(shortName.ToLower());
+            Expression<Func<Partner, bool>> shortNameFilter = p => p.PartnerShortDescription != null && p.PartnerShortDescription.ToLower().Contains(shortName.ToLower());
             predicate = CombineExpressions(predicate, shortNameFilter);
         }
         
@@ -190,7 +190,7 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
     {
         if (expr.Body is ConstantExpression constantExpr)
         {
-            return constantExpr.Type == typeof(bool) && (bool)constantExpr.Value;
+            return constantExpr.Type == typeof(bool) && constantExpr.Value != null && (bool)constantExpr.Value;
         }
         
         return false;

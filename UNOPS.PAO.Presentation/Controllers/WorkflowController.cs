@@ -9,6 +9,7 @@ using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Models.Documents;
 using UNOPS.PAO.Models.Workflow;
 using UNOPS.PAO.Presentation.Controllers.Shared;
 using UNOPS.PAO.Presentation.Helpers;
@@ -602,6 +603,28 @@ public class WorkflowController : BaseController
                 entityUrl,
                 entityDisplayName);
 
+            // Generate Submission PDF for Opportunity Go Decision (statement only, no audit trail)
+            if (normalizedEntityName == "Opportunity" && request.NewStage == OpportunityWorkflow.Stages.Go)
+            {
+                try
+                {
+                    var now = DateTime.UtcNow;
+                    var dateStr = now.ToString("yyyyMMdd");
+                    var timeStr = now.ToString("HHmm");
+                    var filename = $"Opportunity_{request.EntityId}_Submission_{dateStr}_{timeStr}";
+                    await _managerWrapper.OpportunityManager.GenerateStatementPdfAsync(new GeneratePdfRequest
+                    {
+                        EntityName = "Opportunity",
+                        EntityId = request.EntityId,
+                        Filename = filename
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to generate submission PDF for Opportunity {OpportunityId}", request.EntityId);
+                }
+            }
+
             return Ok(new WorkflowSubmitResponse
             {
                 Success = true,
@@ -740,6 +763,52 @@ public class WorkflowController : BaseController
 
         // === MARK IN-SYSTEM NOTIFICATIONS AS DONE ===
         await _notificationService.MarkWorkflowNotificationsAsApprovedAsync(normalizedEntityName, request.EntityId);
+
+        // Generate Approval PDF for Opportunity Go Decision (statement + audit trail)
+        if (normalizedEntityName == "Opportunity" && newStage == OpportunityWorkflow.Stages.Go)
+        {
+            try
+            {
+                var stateMachine = GetStateMachine(normalizedEntityName);
+                var history = stateMachine != null
+                    ? _workflowManager.GetWorkflowHistory(stateMachine, normalizedEntityName, request.EntityId).ToList()
+                    : new List<WorkflowHistoryModel>();
+
+                var opportunity = await _context.Opportunities
+                    .AsNoTracking()
+                    .Include(o => o.ResponsibleOrgUnit)
+                    .Include(o => o.ProposedInitiativeType)
+                    .Where(o => o.Id == request.EntityId && !o.IsDeleted)
+                    .Select(o => new
+                    {
+                        o.OpportunityStatementMarkdown,
+                        ResponsibleOrgUnitName = o.ResponsibleOrgUnit != null ? o.ResponsibleOrgUnit.Name : null,
+                        ProposedInitiativeTypeName = o.ProposedInitiativeType != null ? o.ProposedInitiativeType.Name : null
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (opportunity?.OpportunityStatementMarkdown != null)
+                {
+                    var auditTrail = BuildAuditTrailMarkdownForApproval(history, opportunity.ResponsibleOrgUnitName, opportunity.ProposedInitiativeTypeName);
+                    var combinedMarkdown = opportunity.OpportunityStatementMarkdown + "\n\n" + auditTrail;
+
+                    var dateStr = DateTime.UtcNow.ToString("yyyyMMdd");
+                    var filename = $"Opportunity_{request.EntityId}_Approved_{dateStr}";
+
+                    await _managerWrapper.OpportunityManager.GenerateStatementPdfAsync(new GeneratePdfRequest
+                    {
+                        EntityName = "Opportunity",
+                        EntityId = request.EntityId,
+                        Data = combinedMarkdown,
+                        Filename = filename
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to generate approval PDF for Opportunity {OpportunityId}", request.EntityId);
+            }
+        }
 
         return Ok(new { success = true, message = "Workflow approved", newStage });
     }
@@ -1312,6 +1381,53 @@ public class WorkflowController : BaseController
             "opportunity" => "Opportunity",
             _ => entityName
         };
+    }
+
+    /// <summary>
+    /// Builds the audit trail markdown section for the approved opportunity statement PDF.
+    /// Mirrors the frontend buildAuditTrailMarkdown logic.
+    /// </summary>
+    private static string BuildAuditTrailMarkdownForApproval(
+        List<WorkflowHistoryModel> history,
+        string? responsibleOrgUnitName,
+        string? proposedInitiativeTypeName)
+    {
+        var sortedHistory = history.OrderByDescending(h => h.CreatedDate).ToList();
+        var submitRecord = sortedHistory.FirstOrDefault(h => string.Equals(h.Action, "Submit", StringComparison.OrdinalIgnoreCase));
+        var approveRecord = sortedHistory.FirstOrDefault(h => string.Equals(h.Action, "Approve", StringComparison.OrdinalIgnoreCase));
+
+        static string FormatDate(DateTime? date) =>
+            date.HasValue ? date.Value.ToString("dd MMM yyyy, HH:mm", System.Globalization.CultureInfo.InvariantCulture) : "N/A";
+
+        var orgUnitCode = responsibleOrgUnitName ?? "N/A";
+        var initiativeType = proposedInitiativeTypeName ?? "initiative";
+        var acknowledgmentStatement = $"I confirm that, based on the information presented in the Opportunity Statement, I give approval for UNOPS Org Unit \"{orgUnitCode}\" to continue development of this Opportunity as a {initiativeType}.";
+
+        return $@"
+---
+
+## Go Decision Audit Trail
+
+### Submission Details
+| Field | Value |
+|-------|-------|
+| **Date of Submission** | {FormatDate(submitRecord?.CompletedOn ?? submitRecord?.CreatedDate)} |
+| **Submitted By** | {submitRecord?.User?.Name ?? "N/A"} |
+| **Position Title** | N/A |
+| **Remarks for Decision Maker** | {submitRecord?.Comment ?? "None provided"} |
+
+### Decision Details
+| Field | Value |
+|-------|-------|
+| **Date of Decision** | {FormatDate(approveRecord?.CompletedOn ?? approveRecord?.CreatedDate)} |
+| **Decision Maker** | {approveRecord?.User?.Name ?? "N/A"} |
+| **DOA Level** | N/A |
+| **Position Title** | N/A |
+| **Acknowledged Statement** | {acknowledgmentStatement} |
+| **Decision Rationale** | {approveRecord?.Comment ?? "None provided"} |
+
+---
+";
     }
 
     /// <summary>

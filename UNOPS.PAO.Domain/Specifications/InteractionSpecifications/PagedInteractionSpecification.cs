@@ -24,7 +24,7 @@ public class PagedInteractionSpecification : BaseSpecification<Interaction>
         ApplyPaging((pageIndex - 1) * pageSize, pageSize);
         ApplyOrderByDescending(i => i.Date);
         // Include the related contacts through junction table
-        AddInclude(i => i.InteractionContacts);
+        AddInclude(i => i.InteractionContacts!);
         AddInclude("InteractionContacts.Contact");
     }
 } 
