@@ -75,10 +75,16 @@ public class DocumentController : BaseController
             throw new Exception("AISettings configuration is missing.");
     
         var secretName = _configuration.GetValue<string>("AISettings:AIServiceAccountJSONSecretName");
-        
+        if (string.IsNullOrEmpty(secretName))
+        {
+            throw new Exception("AISettings:AIServiceAccountJSONSecretName is not configured.");
+        }
+
         var basicProvider = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId);
         var secretValue = basicProvider.GetSecretVersion(secretName, "latest");
+#pragma warning disable CS0618 // Type or member is obsolete - migration to CredentialFactory pending
         return GoogleCredential.FromJson(secretValue);
+#pragma warning restore CS0618
     }
 
     /// <summary>

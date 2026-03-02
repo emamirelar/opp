@@ -66,16 +66,16 @@ public class StreamingActionResult : ActionResult
         var response = context.HttpContext.Response;
         
         // Set SSE headers (remove Transfer-Encoding to avoid conflicts)
-        response.Headers.Add("Content-Type", "text/event-stream");
-        response.Headers.Add("Cache-Control", "no-cache, no-store, must-revalidate");
-        response.Headers.Add("Pragma", "no-cache");
-        response.Headers.Add("Expires", "0");
-        response.Headers.Add("Connection", "keep-alive");
-        response.Headers.Add("X-Accel-Buffering", "no");
-        response.Headers.Add("X-Proxy-Buffering", "no");
-        response.Headers.Add("Access-Control-Allow-Origin", "*");
-        response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        response.Headers["Content-Type"] = "text/event-stream";
+        response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+        response.Headers["Pragma"] = "no-cache";
+        response.Headers["Expires"] = "0";
+        response.Headers["Connection"] = "keep-alive";
+        response.Headers["X-Accel-Buffering"] = "no";
+        response.Headers["X-Proxy-Buffering"] = "no";
+        response.Headers["Access-Control-Allow-Origin"] = "*";
+        response.Headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS";
+        response.Headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization";
         
         try
         {
@@ -178,10 +178,16 @@ public class GeminiController : BaseController
         }
     
         var secretName = _configuration.GetValue<string>("AISettings:AIServiceAccountJSONSecretName");
-        
+        if (string.IsNullOrEmpty(secretName))
+        {
+            throw new Exception("AISettings:AIServiceAccountJSONSecretName is not configured.");
+        }
+
         var basicProvider = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId);
         var secretValue = basicProvider.GetSecretVersion(secretName, "latest");
+#pragma warning disable CS0618 // Type or member is obsolete - migration to CredentialFactory pending
         var credential = GoogleCredential.FromJson(secretValue);
+#pragma warning restore CS0618
         
         return credential;
     }

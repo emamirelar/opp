@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // INTELLIGENT GLOBAL SEARCH CONTROLLER
 // ============================================================================
 // This controller provides advanced hybrid search capabilities that intelligently
@@ -127,12 +127,7 @@ public class GlobalController : BaseController
     /// Updates user-specific preferences and settings for interface customization and default behaviors.
     /// </summary>
     /// <param name="id">User ID to update preferences for</param>
-    /// <param name="userPreferences">Updated user preference object containing new settings</param>
-    /// <param name="userPreferences.language">Preferred language setting</param>
-    /// <param name="userPreferences.timezone">Preferred timezone</param>
-    /// <param name="userPreferences.theme">UI theme preference</param>
-    /// <param name="userPreferences.defaultView">Default dashboard view</param>
-    /// <param name="userPreferences.notifications">Notification preferences</param>
+    /// <param name="userPreferences">Updated user preference object (language, timezone, theme, defaultView, notifications)</param>
     /// <example_uses>
     /// Update my language preference to French
     /// Change my timezone to EST
@@ -178,11 +173,7 @@ public class GlobalController : BaseController
     /// Updates user's global filter settings and preferences for consistent filtering across all views.
     /// </summary>
     /// <param name="id">User ID to update global filters for</param>
-    /// <param name="globalFilters">Updated global filter configuration</param>
-    /// <param name="globalFilters.orgUnitId">Default organizational unit filter</param>
-    /// <param name="globalFilters.defaultDateRange">Default date range for filtering</param>
-    /// <param name="globalFilters.statusFilters">Default status filters</param>
-    /// <param name="globalFilters.searchPreferences">Search behavior preferences</param>
+    /// <param name="globalFilters">Updated global filter configuration (orgUnitId, defaultDateRange, statusFilters, searchPreferences)</param>
     /// <example_uses>
     /// Save my default organizational unit filter
     /// Update global date range preferences
@@ -342,6 +333,9 @@ public class GlobalController : BaseController
     /// Find "project coordinators in Africa"
     /// </example_uses>
     /// <when_to_use>Use this when the user performs any search operation across the system - it automatically chooses between text search for exact matches and semantic search for conceptual queries.</when_to_use>
+    /// <param name="filterActive">Whether to apply global filters, default: true</param>
+    /// <param name="orderBy">Field to order results by</param>
+    /// <param name="ascending">Sort direction, default: true</param>
     /// <returns>Comprehensive search results with relevance scoring and entity details</returns>
     [HttpGet(APIDictionary.GlobalSearch)]
     public async Task<ActionResult> IntelligentGlobalSearch([FromQuery] string q, [FromQuery] bool debug = false, [FromQuery] bool fullResults = false, [FromQuery] bool filterActive = true, [FromQuery] string? orderBy = null, [FromQuery] bool ascending = true)
@@ -858,7 +852,7 @@ public class GlobalController : BaseController
 
                 // Get the result from the completed task
                 var resultProperty = task.GetType().GetProperty("Result");
-                var result = resultProperty?.GetValue(task);
+                var result = resultProperty?.GetValue(task) as object;
                 
                 if (result is IEnumerable<object> resultList)
                 {
@@ -903,7 +897,7 @@ public class GlobalController : BaseController
 
             // Apply global filters based on entity type
             var filteredIds = await ApplyGlobalFiltersForEntityType(entityIds, entityType, user);
-            var filteredArray = filteredIds.Where(id => entityIds.Contains(id)).ToArray();
+            var filteredArray = (filteredIds ?? Enumerable.Empty<int>()).Where(id => entityIds.Contains(id)).ToArray();
             
             _logger.LogInformation("Global filters reduced {OriginalCount} {EntityType} entities to {FilteredCount}", 
                 entityIds.Length, entityType, filteredArray.Length);

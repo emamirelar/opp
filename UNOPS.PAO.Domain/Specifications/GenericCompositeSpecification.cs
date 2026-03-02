@@ -64,9 +64,9 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
 
                         string? field = criteriaDict.TryGetValue("field", out object? fieldObj) ? fieldObj?.ToString() : null;
                         string? value = criteriaDict.TryGetValue("value", out object? valueObj) ? valueObj?.ToString() : null;
-                        string comparisonOperator = criteriaDict.TryGetValue("operator", out object opObj) ? opObj?.ToString() ?? "like" : "like";
-                        string secondValue = criteriaDict.TryGetValue("secondValue", out object secondValueObj) ? secondValueObj?.ToString() : null;
-                        string logicalOperator = criteriaDict.TryGetValue("logicalOperator", out object logicalOpObj) ? logicalOpObj?.ToString() ?? "AND" : "AND";
+                        string comparisonOperator = criteriaDict.TryGetValue("operator", out object? opObj) ? opObj?.ToString() ?? "like" : "like";
+                        string? secondValue = criteriaDict.TryGetValue("secondValue", out object? secondValueObj) ? secondValueObj?.ToString() : null;
+                        string logicalOperator = criteriaDict.TryGetValue("logicalOperator", out object? logicalOpObj) ? logicalOpObj?.ToString() ?? "AND" : "AND";
 
 
                         if (string.IsNullOrEmpty(field) || string.IsNullOrEmpty(value)) 
@@ -259,7 +259,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                                         comparisonExpr = Expression.LessThanOrEqual(propertyAccess, beforeEqualConstant);
                                         break;
                                     case "between":
-                                        var secondParsedDate = ParseDateValue(secondValue);
+                                        var secondParsedDate = ParseDateValue(secondValue ?? string.Empty);
                                         if (secondParsedDate.HasValue)
                                         {
                                             var startDate = GetStartOfDay(dateValue);
@@ -450,16 +450,13 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
         var nonEmptyProperties = propertiesWithValues
             .Where(x => x.Value != null && !string.IsNullOrEmpty(x.Value.ToString()));
             
-        var propertyExpressions = nonEmptyProperties
-            .Select(x => 
-            {
-                return CreatePropertyExpression(parameter, x.Property, x.Value);
-            })
-            .Where(expr => expr != null);
-
-        foreach (var expr in propertyExpressions)
+        foreach (var x in nonEmptyProperties)
         {
-            expressions.Add(expr.Body);
+            var expr = CreatePropertyExpression(parameter, x.Property, x.Value);
+            if (expr != null)
+            {
+                expressions.Add(expr.Body);
+            }
         }
 
         // Handle search text (this should be combined with AND)
@@ -491,7 +488,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
         return Expression.Lambda<Func<TEntity, bool>>(finalExpression, parameter);
     }
 
-    private static Expression<Func<TEntity, bool>> CreateSearchTextExpression(ParameterExpression parameter, string searchText)
+    private static Expression<Func<TEntity, bool>>? CreateSearchTextExpression(ParameterExpression parameter, string searchText)
     {
         try
         {
@@ -572,7 +569,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
         }
     }
 
-    private static Expression BuildPropertyAccess(ParameterExpression parameter, string propertyPath)
+    private static Expression? BuildPropertyAccess(ParameterExpression parameter, string propertyPath)
     {
         try
         {
@@ -752,10 +749,10 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
         return searchableProperties;
     }
 
-    private static Expression<Func<TEntity, bool>> CreatePropertyExpression(
+    private static Expression<Func<TEntity, bool>>? CreatePropertyExpression(
         ParameterExpression parameter,
         PropertyInfo property,
-        object value)
+        object? value)
     {
         try
         {
@@ -763,13 +760,13 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                 return null;
             
             // Special handling for PartnerId in Interaction entities
-            if (property.Name == "PartnerId" && typeof(TEntity).Name == "Interaction")
+            if (property.Name == "PartnerId" && typeof(TEntity).Name == "Interaction" && value != null)
             {
                 return CreatePartnerIdExpression(parameter, value);
             }
 
             // Special handling for ContactId in Interaction entities
-            if (property.Name == "ContactId" && typeof(TEntity).Name == "Interaction")
+            if (property.Name == "ContactId" && typeof(TEntity).Name == "Interaction" && value != null)
             {
                 return CreateContactIdExpression(parameter, value);
             }
@@ -1069,7 +1066,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
     /// <summary>
     /// Combines expressions with their logical operators (OR/AND) respecting precedence and grouping
     /// </summary>
-    private static Expression CombineExpressionsWithLogicalOperators(List<(Expression Expression, string LogicalOperator)> criteriaWithOperators)
+    private static Expression? CombineExpressionsWithLogicalOperators(List<(Expression Expression, string LogicalOperator)> criteriaWithOperators)
     {
         if (!criteriaWithOperators.Any())
             return null;
