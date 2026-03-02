@@ -143,13 +143,14 @@ public class BoundaryTests : PNO1146TestFixtureBase
             Times.Once);
     }
 
-    [Fact(Skip = "QA-091: PNO-1146 fixture mock dependencies incomplete — internal helper methods throw exceptions caught by try-catch, preventing email send")]
+    [Fact]
     [Trait("Category", "Boundary")]
     public async Task NotifyRejected_EntityUrlWithQueryParams_PreservedInEmail()
     {
-        // Arrange - EntityUrl is built from baseUrl + entityId; query params not in notification
+        // Arrange — seed OM so rejection recipient lookup finds a valid user
         await SeedOpportunityAsync(1);
         await SeedUserAsync(1, "user@unops.org");
+        await SeedOpportunityManagerAsync(1, 1);
         SetupEmailCapture();
 
         var notification = BuildWorkflowNotification(entityId: "1", recipientUserIds: new List<int> { 1 });
@@ -157,13 +158,13 @@ public class BoundaryTests : PNO1146TestFixtureBase
         // Act
         await NotificationService.NotifyWorkflowRejectedAsync(notification);
 
-        // Assert - EntityUrl in model is baseUrl/opportunity/1
+        // Assert - EntityUrl in model is baseUrl/partnerships/opportunities/1
         MockEmailSender.Verify(
             e => e.SendEmailAsync(It.IsAny<EmailMessage>(), It.IsAny<WorkflowRejectedEmailModel>(), It.IsAny<string?>()),
             Times.Once);
     }
 
-    [Fact(Skip = "QA-091: PNO-1146 fixture mock dependencies incomplete — internal helper methods throw exceptions caught by try-catch, preventing email send")]
+    [Fact]
     [Trait("Category", "Boundary")]
     public async Task NotifyRecalled_TimestampAtMinValue_HandlesCorrectly()
     {
@@ -247,13 +248,14 @@ public class BoundaryTests : PNO1146TestFixtureBase
         LastCapturedEmail.Should().NotBeNull();
     }
 
-    [Fact(Skip = "QA-091: PNO-1146 fixture mock dependencies incomplete — internal helper methods throw exceptions caught by try-catch, preventing email send")]
+    [Fact]
     [Trait("Category", "Boundary")]
     public async Task NotifyRejected_CommentWithNewlines_PreservedInModel()
     {
-        // Arrange
+        // Arrange — seed OM so rejection recipient lookup finds a valid user
         await SeedOpportunityAsync(1);
         await SeedUserAsync(1, "user@unops.org");
+        await SeedOpportunityManagerAsync(1, 1);
         var multilineComment = "Line 1\nLine 2\nLine 3";
         WorkflowRejectedEmailModel? capturedModel = null;
         MockEmailSender

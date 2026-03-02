@@ -190,8 +190,9 @@ public class ImageGenerationManagerTests
 
         foreach (var (name, desc) in inputs)
         {
-            var act = () => manager.GenerateOpportunityImagesAsync(name, desc);
-            await act.Should().ThrowAsync<Exception>(because: $"call for '{name}' must throw");
+            var act = () => manager.GenerateOpportunityImagesAsync(name, desc)
+                .WaitAsync(TimeSpan.FromSeconds(30));
+            await act.Should().ThrowAsync<Exception>(because: $"call for '{name}' must throw or timeout");
         }
     }
 

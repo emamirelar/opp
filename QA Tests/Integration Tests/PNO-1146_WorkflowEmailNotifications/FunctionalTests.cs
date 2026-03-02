@@ -19,7 +19,7 @@ namespace UNOPS.PAO.IntegrationTests.PNO1146;
 [Trait("Category", "Functional")]
 public class FunctionalTests : PNO1146TestFixtureBase
 {
-    [Fact(Skip = "QA-091: PNO-1146 fixture mock dependencies incomplete — internal helper methods throw exceptions caught by try-catch, preventing email send")]
+    [Fact]
     [Trait("Category", "Functional")]
     public async Task ApprovalRequest_UsesCorrectTemplate_WorkflowApprovalRequestHtml()
     {
@@ -35,10 +35,10 @@ public class FunctionalTests : PNO1146TestFixtureBase
 
         // Assert
         LastCapturedEmail.Should().NotBeNull();
-        LastCapturedEmail!.TemplateName.Should().Be("WorkflowApprovalRequest.html");
+        LastCapturedEmail!.TemplateName.Should().Be(TemplateApprovalRequest);
     }
 
-    [Fact(Skip = "QA-091: PNO-1146 fixture mock dependencies incomplete — internal helper methods throw exceptions caught by try-catch, preventing email send")]
+    [Fact]
     [Trait("Category", "Functional")]
     public async Task CompletedNotification_UsesCorrectTemplate_WorkflowCompletedHtml()
     {
@@ -54,16 +54,17 @@ public class FunctionalTests : PNO1146TestFixtureBase
 
         // Assert
         LastCapturedEmail.Should().NotBeNull();
-        LastCapturedEmail!.TemplateName.Should().Be("WorkflowCompleted.html");
+        LastCapturedEmail!.TemplateName.Should().Be(TemplateCompleted);
     }
 
-    [Fact(Skip = "QA-091: PNO-1146 fixture mock dependencies incomplete — internal helper methods throw exceptions caught by try-catch, preventing email send")]
+    [Fact]
     [Trait("Category", "Functional")]
     public async Task RejectedNotification_UsesCorrectTemplate_WorkflowRejectedHtml()
     {
-        // Arrange
+        // Arrange — seed OM so rejection recipient lookup finds a valid user
         await SeedOpportunityAsync(1);
         await SeedUserAsync(1, "user@unops.org");
+        await SeedOpportunityManagerAsync(1, 1);
         SetupEmailCapture();
 
         var notification = BuildWorkflowNotification(recipientUserIds: new List<int> { 1 });
@@ -73,10 +74,10 @@ public class FunctionalTests : PNO1146TestFixtureBase
 
         // Assert
         LastCapturedEmail.Should().NotBeNull();
-        LastCapturedEmail!.TemplateName.Should().Be("WorkflowRejected.html");
+        LastCapturedEmail!.TemplateName.Should().Be(TemplateRejected);
     }
 
-    [Fact(Skip = "QA-091: PNO-1146 fixture mock dependencies incomplete — internal helper methods throw exceptions caught by try-catch, preventing email send")]
+    [Fact]
     [Trait("Category", "Functional")]
     public async Task RecalledNotification_UsesCorrectTemplate_WorkflowRecalledHtml()
     {
@@ -92,10 +93,10 @@ public class FunctionalTests : PNO1146TestFixtureBase
 
         // Assert
         LastCapturedEmail.Should().NotBeNull();
-        LastCapturedEmail!.TemplateName.Should().Be("WorkflowRecalled.html");
+        LastCapturedEmail!.TemplateName.Should().Be(TemplateRecalled);
     }
 
-    [Fact(Skip = "QA-091: PNO-1146 fixture mock dependencies incomplete — internal helper methods throw exceptions caught by try-catch, preventing email send")]
+    [Fact]
     [Trait("Category", "Functional")]
     public async Task ApprovalRequest_IncludesEntityUrl_InEmailBody()
     {
@@ -113,9 +114,9 @@ public class FunctionalTests : PNO1146TestFixtureBase
         // Act
         await NotificationService.NotifyNewApprovalRequestAsync(notification);
 
-        // Assert
+        // Assert — URL is {baseUrl}/partnerships/opportunities/{entityId}
         capturedModel.Should().NotBeNull();
-        capturedModel!.EntityUrl.Should().Contain("/opportunity/1");
+        capturedModel!.EntityUrl.Should().Contain("/partnerships/opportunities/1");
     }
 
     [Fact]
@@ -166,13 +167,14 @@ public class FunctionalTests : PNO1146TestFixtureBase
         capturedModel!.EntityName.Should().Be("My Test Opportunity");
     }
 
-    [Fact(Skip = "QA-091: PNO-1146 fixture mock dependencies incomplete — internal helper methods throw exceptions caught by try-catch, preventing email send")]
+    [Fact]
     [Trait("Category", "Functional")]
     public async Task RejectedNotification_IncludesRejectionComment_InEmailBody()
     {
-        // Arrange
+        // Arrange — seed OM so rejection recipient lookup finds a valid user
         await SeedOpportunityAsync(1);
         await SeedUserAsync(1, "user@unops.org");
+        await SeedOpportunityManagerAsync(1, 1);
         WorkflowRejectedEmailModel? capturedModel = null;
         MockEmailSender
             .Setup(e => e.SendEmailAsync(It.IsAny<EmailMessage>(), It.IsAny<WorkflowRejectedEmailModel>(), It.IsAny<string?>()))

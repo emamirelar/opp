@@ -19,7 +19,7 @@ namespace UNOPS.PAO.IntegrationTests.PNO1146;
 [Trait("Category", "Integration")]
 public class IntegrationTests : PNO1146TestFixtureBase
 {
-    [Fact(Skip = "QA-091: PNO-1146 fixture mock dependencies incomplete — internal helper methods throw exceptions caught by try-catch, preventing email send")]
+    [Fact]
     [Trait("Category", "Integration")]
     public async Task SubmitWorkflow_TriggersApprovalRequestEmail_EndToEnd()
     {
@@ -39,11 +39,11 @@ public class IntegrationTests : PNO1146TestFixtureBase
 
         // Assert
         LastCapturedEmail.Should().NotBeNull();
-        LastCapturedEmail!.TemplateName.Should().Be("WorkflowApprovalRequest.html");
+        LastCapturedEmail!.TemplateName.Should().Be(TemplateApprovalRequest);
         LastCapturedEmail.EmailReceivers.Should().Contain("approver@unops.org");
     }
 
-    [Fact(Skip = "QA-091: PNO-1146 fixture mock dependencies incomplete — internal helper methods throw exceptions caught by try-catch, preventing email send")]
+    [Fact]
     [Trait("Category", "Integration")]
     public async Task ApproveWorkflow_TriggersCompletedEmail_EndToEnd()
     {
@@ -63,17 +63,18 @@ public class IntegrationTests : PNO1146TestFixtureBase
 
         // Assert
         LastCapturedEmail.Should().NotBeNull();
-        LastCapturedEmail!.TemplateName.Should().Be("WorkflowCompleted.html");
+        LastCapturedEmail!.TemplateName.Should().Be(TemplateCompleted);
         LastCapturedEmail.EmailReceivers.Should().Contain("submitter@unops.org");
     }
 
-    [Fact(Skip = "QA-091: PNO-1146 fixture mock dependencies incomplete — internal helper methods throw exceptions caught by try-catch, preventing email send")]
+    [Fact]
     [Trait("Category", "Integration")]
     public async Task RejectWorkflow_TriggersRejectedEmail_EndToEnd()
     {
-        // Arrange
+        // Arrange — seed OM so rejection recipient lookup finds a valid user
         await SeedOpportunityAsync(1);
         await SeedUserAsync(1, "submitter@unops.org");
+        await SeedOpportunityManagerAsync(1, 1);
         SetupEmailCapture();
 
         var notification = BuildWorkflowNotification(
@@ -86,10 +87,10 @@ public class IntegrationTests : PNO1146TestFixtureBase
 
         // Assert
         LastCapturedEmail.Should().NotBeNull();
-        LastCapturedEmail!.TemplateName.Should().Be("WorkflowRejected.html");
+        LastCapturedEmail!.TemplateName.Should().Be(TemplateRejected);
     }
 
-    [Fact(Skip = "QA-091: PNO-1146 fixture mock dependencies incomplete — internal helper methods throw exceptions caught by try-catch, preventing email send")]
+    [Fact]
     [Trait("Category", "Integration")]
     public async Task RecallWorkflow_TriggersRecalledEmail_EndToEnd()
     {
@@ -108,10 +109,10 @@ public class IntegrationTests : PNO1146TestFixtureBase
 
         // Assert
         LastCapturedEmail.Should().NotBeNull();
-        LastCapturedEmail!.TemplateName.Should().Be("WorkflowRecalled.html");
+        LastCapturedEmail!.TemplateName.Should().Be(TemplateRecalled);
     }
 
-    [Fact(Skip = "QA-091: PNO-1146 fixture mock dependencies incomplete — internal helper methods throw exceptions caught by try-catch, preventing email send")]
+    [Fact]
     [Trait("Category", "Integration")]
     public async Task SubmitThenRecall_SendsBothNotifications_InSequence()
     {
@@ -134,13 +135,13 @@ public class IntegrationTests : PNO1146TestFixtureBase
         // Assert
         MockEmailSender.Verify(
             e => e.SendEmailAsync(
-                It.Is<EmailMessage>(m => m.TemplateName == "WorkflowApprovalRequest.html"),
+                It.Is<EmailMessage>(m => m.TemplateName == TemplateApprovalRequest),
                 It.IsAny<object>(),
                 It.IsAny<string?>()),
             Times.Once);
         MockEmailSender.Verify(
             e => e.SendEmailAsync(
-                It.Is<EmailMessage>(m => m.TemplateName == "WorkflowRecalled.html"),
+                It.Is<EmailMessage>(m => m.TemplateName == TemplateRecalled),
                 It.IsAny<object>(),
                 It.IsAny<string?>()),
             Times.Once);
@@ -257,7 +258,7 @@ public class IntegrationTests : PNO1146TestFixtureBase
 
         // Assert
         capturedModel.Should().NotBeNull();
-        capturedModel!.EntityUrl.Should().Contain("opportunity");
+        capturedModel!.EntityUrl.Should().Contain("opportunities");
         capturedModel.EntityUrl.Should().Contain("1");
     }
 
@@ -288,7 +289,7 @@ public class IntegrationTests : PNO1146TestFixtureBase
         inSystemNotifications.Should().OnlyContain(n => n.Status == NotificationStatus.Pending);
     }
 
-    [Fact(Skip = "QA-091: PNO-1146 fixture mock dependencies incomplete — internal helper methods throw exceptions caught by try-catch, preventing email send")]
+    [Fact]
     [Trait("Category", "Integration")]
     public async Task SubmitThenRecall_ThenResubmit_ThreeNotificationsCreated()
     {

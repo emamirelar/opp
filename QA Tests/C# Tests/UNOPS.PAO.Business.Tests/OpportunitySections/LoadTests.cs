@@ -454,7 +454,8 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
                     {
                         try
                         {
-                            await GetAIServiceSuggestions(oppId);
+                            await GetAIServiceSuggestions(oppId)
+                                .WaitAsync(TimeSpan.FromSeconds(30));
                             Interlocked.Increment(ref successCount);
                         }
                         catch
@@ -463,10 +464,11 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
                         }
                     }));
                 }
-                await Task.Delay(1000);
+                try { await Task.Delay(1000, cts.Token); }
+                catch (OperationCanceledException) { break; }
             }
 
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(tasks).WaitAsync(TimeSpan.FromSeconds(90));
 
             // Assert
             var successRate = (double)successCount / (successCount + failCount) * 100;

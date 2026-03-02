@@ -99,13 +99,14 @@ public class NegativeTests : PNO1146TestFixtureBase
         await act.Should().ThrowAsync<Exception>();
     }
 
-    [Fact(Skip = "QA-091: PNO-1146 fixture mock dependencies incomplete — internal helper methods throw exceptions caught by try-catch, preventing email send")]
+    [Fact]
     [Trait("Category", "Negative")]
     public async Task NotifyRejected_EmptyComment_StillSendsEmail()
     {
-        // Arrange
+        // Arrange — seed OM so rejection recipient lookup finds a valid user
         await SeedOpportunityAsync(1);
         await SeedUserAsync(1, "user@unops.org");
+        await SeedOpportunityManagerAsync(1, 1);
         var notification = BuildWorkflowNotification(comment: "", recipientUserIds: new List<int> { 1 });
 
         // Act
@@ -117,7 +118,7 @@ public class NegativeTests : PNO1146TestFixtureBase
             Times.Once);
     }
 
-    [Fact(Skip = "QA-091: PNO-1146 fixture mock dependencies incomplete — internal helper methods throw exceptions caught by try-catch, preventing email send")]
+    [Fact]
     [Trait("Category", "Negative")]
     public async Task NotifyRecalled_ZeroPerformedByUserId_HandlesGracefully()
     {
