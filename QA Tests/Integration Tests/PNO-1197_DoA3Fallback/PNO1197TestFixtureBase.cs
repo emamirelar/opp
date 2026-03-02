@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using UNOPS.PAO.Business.Interfaces;
@@ -66,6 +67,8 @@ public abstract class PNO1197TestFixtureBase : IDisposable
         var identity = new ClaimsIdentity(claims, "TestAuth");
         var principal = new ClaimsPrincipal(identity);
         HttpContext = new DefaultHttpContext { User = principal };
+        HttpContext.Request.Scheme = "https";
+        HttpContext.Request.Host = new HostString("test.pao.unops.org");
         mockHttpContextAccessor.Setup(x => x.HttpContext).Returns(HttpContext);
 
         var mockDbContextSchema = new Mock<IDbContextSchema>();
@@ -107,9 +110,15 @@ public abstract class PNO1197TestFixtureBase : IDisposable
         var mockNotificationManager = new Mock<NotificationManager>(
             new AppDbContext(options, userResolverService, mockDbContextSchema.Object),
             userResolverService);
+        var mockServiceScope = new Mock<IServiceScope>();
+        var mockServiceProvider = new Mock<IServiceProvider>();
+        mockServiceScope.Setup(s => s.ServiceProvider).Returns(mockServiceProvider.Object);
+        var mockServiceScopeFactory = new Mock<IServiceScopeFactory>();
+        mockServiceScopeFactory.Setup(f => f.CreateScope()).Returns(mockServiceScope.Object);
         NotificationService = new PaoWorkflowNotificationService(
             MockEmailSender.Object,
             mockContextFactory.Object,
+            mockServiceScopeFactory.Object,
             mockNotificationLogger.Object,
             mockConfiguration.Object,
             mockNotificationManager.Object);

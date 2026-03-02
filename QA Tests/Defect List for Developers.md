@@ -692,19 +692,18 @@ The following items were previously logged as developer defects but have been re
 
 ---
 
-## Defect Statistics (Updated 2026-03-02 — Full PostgreSQL Run + Verification Reruns)
+## Defect Statistics (Updated 2026-03-02)
 
-- **Total Open:** 26 (DEF-008, DEF-013, DEF-014, DEF-020, DEF-021, DEF-023, DEF-024×2, DEF-025–DEF-050, DEF-052, DEF-053)
-- **DEF-051 reclassified (2026-03-02):** Initially reported as `NullReferenceException` in `UNOPSOpportunityManager.GetOpportunityAsync`. Investigation revealed it was an AutoMapper mock overload mismatch in the test (single-arg vs two-arg `Map` overload). Fixed from QA side. **Not a production defect.** Open count reduced from 27 to 26.
-- **NEW (2026-03-02 verification rerun):** 2 new production defects remain: DEF-052 (UserProfile.Name read-only computed property), DEF-053 (UNOPSGeminiManager.GetCredentials crashes on missing credentials — blocks 51 integration tests)
-- **NEW (2026-03-02 full run):** 4 production defects discovered: DEF-047 (empty/whitespace name validation), DEF-048 (name max-length validation), DEF-049 (null request guard), DEF-050 (AutoMapper Country mapping)
-- **Total Partially Resolved:** 1 (DEF-008 — significant implementation progress, DoA3 fallback now added via PNO-1197)
+- **Total Open:** 29 (DEF-008, DEF-013, DEF-014, DEF-020, DEF-021, DEF-023, DEF-024, DEF-025–DEF-050, DEF-052–DEF-056)
+- **NEW (2026-03-02):** DEF-054 (DoA3Fallback missing ILogger logging), DEF-055 (Reject NullReferenceException on null EntityName), DEF-056 (Reopen sets Draft instead of Active)
+- **DEF-051 reclassified (2026-03-02):** AutoMapper mock overload mismatch in test, not a production defect.
+- **Total Partially Resolved:** 1 (DEF-008 — DoA3 fallback added via PNO-1197, remaining gaps in email notifications and UI)
 - **Total Resolved:** 6 (DEF-010, DEF-011, DEF-012, DEF-017, DEF-018, DEF-019)
-- **Total Reclassified:** 6 (DEF-005, DEF-007, DEF-009, DEF-015, DEF-022 → moved to appropriate trackers; DEF-051 → QA mock issue, not production defect)
+- **Total Reclassified:** 6 (DEF-005, DEF-007, DEF-009, DEF-015, DEF-022 → moved to appropriate trackers; DEF-051 → QA mock issue)
 - 🔴 **Critical:** 0
-- 🟠 **High Priority:** 15 (DEF-008, DEF-020, DEF-021, DEF-023, DEF-024×2, DEF-033, DEF-034, DEF-038, DEF-039, DEF-040, DEF-042, DEF-043, DEF-045, DEF-047, DEF-053)
-- 🟡 **Medium Priority:** 14 (DEF-013, DEF-014, DEF-025–DEF-032, DEF-035–DEF-037, DEF-041, DEF-044, DEF-048, DEF-049, DEF-050, DEF-052)
-- 🟢 **Low Priority:** 1 (DEF-046)
+- 🟠 **High Priority:** 14 (DEF-008, DEF-020, DEF-021, DEF-023, DEF-024, DEF-033, DEF-034, DEF-038, DEF-039, DEF-040, DEF-042, DEF-043, DEF-045, DEF-053)
+- 🟡 **Medium Priority:** 22 (DEF-013, DEF-014, DEF-025–DEF-032, DEF-035–DEF-037, DEF-041, DEF-044, DEF-047–DEF-050, DEF-052, DEF-055, DEF-056)
+- 🟢 **Low Priority:** 3 (DEF-046, DEF-051, DEF-054)
 - **2026-03-02 Full Run (PostgreSQL available):** Cloud SQL Proxy running — full execution across all C# suites. FastTests: 78/78 passed. Presentation Tests: 154/154 passed. Business Tests: 4,301 total — 3,982 passed, 78 failed, 241 skipped. Integration Tests: 5,592 total — 5,241 passed, 211 failed, 140 skipped. **4 new production defects discovered** (DEF-047–DEF-050). 78 Business Test failures: 27 QA-084, 36 QA-085, 5 DEF-047/048, 3 DEF-049, 1 DEF-050, 2 specification test data, 1 QA-087, 1 DEF-024, 2 PartnerByOrgUnit. 211 Integration Test failures: 51 QA-086 (fixture), 37 null responses, 31 DEF-045, 7 DEF-021, 6 DEF-027, and various existing DEFs.
 - **2026-02-20 Update:** DEF-015 reclassified to QA/Backlog (test coverage gap, not a production defect). DEF-022 reclassified to QA-068 (Playwright mock issue, not a production authorization defect).
 - **2026-02-17 Update:** DEF-010, DEF-011, DEF-012 all resolved via PNO-1166 merge from dev-deploy.

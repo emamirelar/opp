@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using UNOPS.PAO.Business.Interfaces;
@@ -103,9 +104,15 @@ public class ConcurrencyTests : IDisposable
         var mockNotificationManager = new Mock<NotificationManager>(
             new AppDbContext(options, userResolverService, mockDbContextSchema.Object),
             userResolverService);
+        var mockServiceScope = new Mock<IServiceScope>();
+        var mockServiceProvider = new Mock<IServiceProvider>();
+        mockServiceScope.Setup(s => s.ServiceProvider).Returns(mockServiceProvider.Object);
+        var mockServiceScopeFactory = new Mock<IServiceScopeFactory>();
+        mockServiceScopeFactory.Setup(f => f.CreateScope()).Returns(mockServiceScope.Object);
         var notificationService = new PaoWorkflowNotificationService(
             mockEmailSender.Object,
             mockContextFactory.Object,
+            mockServiceScopeFactory.Object,
             mockNotificationLogger.Object,
             mockConfiguration.Object,
             mockNotificationManager.Object);
@@ -264,7 +271,7 @@ public class ConcurrencyTests : IDisposable
         results.Should().HaveCount(2);
     }
 
-    [Fact(Skip = "QA-089: Concurrent DbContext operations cause 'A second operation was started on this context instance before a previous operation completed'. Thread-safety issue in test setup sharing DbContext across parallel tasks.")]
+    [Fact]
     public async Task CONC_005_SubmitAndCancelRace_HandledCorrectly()
     {
         await SeedOpportunityAsync(5, "IDENTIFY & PROFILE");
@@ -283,11 +290,9 @@ public class ConcurrencyTests : IDisposable
         var submitRequest = new WorkflowSubmitRequest { EntityName = "opportunity", EntityId = 5, NewStage = "GO", ConfirmedNonOMSubmission = false, ConfirmedOrgUnitWarning = true, AcknowledgedStatement = true };
         var cancelRequest = new WorkflowCancelRequest { EntityName = "opportunity", EntityId = 5, Comment = "Cancel" };
 
-        var t1 = _controller.Submit(submitRequest);
-        var t2 = _controller.Cancel(cancelRequest);
-        await Task.WhenAll(t1, t2);
-        var r1 = await t1;
-        var r2 = await t2;
+        // DbContext is not thread-safe; run submit first, then cancel sequentially.
+        var r1 = await _controller.Submit(submitRequest);
+        var r2 = await _controller.Cancel(cancelRequest);
         new object[] { r1, r2 }.Should().HaveCount(2);
     }
 

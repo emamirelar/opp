@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Security.Claims;
@@ -96,8 +97,13 @@ public class LoadTests : IDisposable
             .Returns(() => new AppDbContext(options, userResolverService, mockDbContextSchema.Object));
         var mockNotificationManager = new Mock<NotificationManager>(
             new AppDbContext(options, userResolverService, mockDbContextSchema.Object), userResolverService);
+        var mockServiceScope = new Mock<IServiceScope>();
+        var mockServiceProvider = new Mock<IServiceProvider>();
+        mockServiceScope.Setup(s => s.ServiceProvider).Returns(mockServiceProvider.Object);
+        var mockServiceScopeFactory = new Mock<IServiceScopeFactory>();
+        mockServiceScopeFactory.Setup(f => f.CreateScope()).Returns(mockServiceScope.Object);
         var notificationService = new PaoWorkflowNotificationService(
-            mockEmailSender.Object, mockContextFactory.Object,
+            mockEmailSender.Object, mockContextFactory.Object, mockServiceScopeFactory.Object,
             mockNotificationLogger.Object, mockConfiguration.Object, mockNotificationManager.Object);
 
         mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", It.IsAny<int>()))

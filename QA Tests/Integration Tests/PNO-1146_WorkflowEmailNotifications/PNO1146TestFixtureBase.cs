@@ -8,6 +8,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using UNOPS.PAO.Business.Managers;
@@ -79,9 +80,16 @@ public abstract class PNO1146TestFixtureBase : IDisposable
 
         var notificationManager = new NotificationManager(DbContext, UserResolverService);
 
+        var mockServiceScope = new Mock<IServiceScope>();
+        var mockServiceProvider = new Mock<IServiceProvider>();
+        mockServiceScope.Setup(s => s.ServiceProvider).Returns(mockServiceProvider.Object);
+        var mockServiceScopeFactory = new Mock<IServiceScopeFactory>();
+        mockServiceScopeFactory.Setup(f => f.CreateScope()).Returns(mockServiceScope.Object);
+
         NotificationService = new PaoWorkflowNotificationService(
             MockEmailSender.Object,
             MockContextFactory.Object,
+            mockServiceScopeFactory.Object,
             MockLogger.Object,
             MockConfiguration.Object,
             notificationManager);

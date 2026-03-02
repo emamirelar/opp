@@ -41,7 +41,15 @@ public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions
                 
                 if (!string.IsNullOrEmpty(claimValue))
                 {
-                    claims.Add(new Claim(claimType, claimValue));
+                    // Use ClaimTypes.Role for Test-Role so User.IsInRole() works (e.g. PARTNER_GLOB_ADMIN)
+                    if (string.Equals(claimType, "Role", StringComparison.OrdinalIgnoreCase))
+                    {
+                        claims.Add(new Claim(ClaimTypes.Role, claimValue));
+                    }
+                    else
+                    {
+                        claims.Add(new Claim(claimType, claimValue));
+                    }
                 }
             }
         }

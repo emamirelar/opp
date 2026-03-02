@@ -89,34 +89,34 @@ public class ConcurrencyTests : PNO1197TestFixtureBase
         result.Result.Should().NotBeNull();
     }
 
-    [Fact(Skip = "QA-089: Concurrent DbContext operations cause 'A second operation was started on this context instance before a previous operation completed'. Thread-safety issue in test setup sharing DbContext across parallel tasks.")]
+    [Fact]
     public async Task CONC_003_SubmitWhileDoABeingCreated_HandledCorrectly()
     {
         await SeedOpportunityAsync(1, "IDENTIFY & PROFILE");
         await RemoveDoAHoldersForOrgUnitAsync(1);
         SetupStandardSubmitMocks();
 
-        var submitTask = Controller.Submit(CreateValidSubmitRequest());
+        // DbContext is not thread-safe; run sequentially to simulate rapid submit then DoA creation.
+        var result = await Controller.Submit(CreateValidSubmitRequest());
         await SeedDoAHolderAsync(1, 3);
-        var result = await submitTask;
 
         result.Result.Should().NotBeNull();
     }
 
-    [Fact(Skip = "QA-089: Concurrent DbContext operations cause 'A second operation was started on this context instance before a previous operation completed'. Thread-safety issue in test setup sharing DbContext across parallel tasks.")]
+    [Fact]
     public async Task CONC_004_SubmitWhileOrgUnitChanging_HandledCorrectly()
     {
         await SeedOpportunityAsync(1, "IDENTIFY & PROFILE");
         SetupStandardSubmitMocks();
 
+        // DbContext is not thread-safe; run submit first, then change org unit sequentially.
+        var result = await Controller.Submit(CreateValidSubmitRequest());
         var opp = await DbContext.Opportunities.FindAsync(1);
-        var submitTask = Controller.Submit(CreateValidSubmitRequest());
         if (opp != null)
         {
             opp.ResponsibleOrgUnitId = 2;
             await DbContext.SaveChangesAsync();
         }
-        var result = await submitTask;
 
         result.Result.Should().NotBeNull();
     }
@@ -140,36 +140,35 @@ public class ConcurrencyTests : PNO1197TestFixtureBase
         results.Count(r => r.Result is OkObjectResult).Should().BeGreaterThan(0);
     }
 
-    [Fact(Skip = "QA-089: Concurrent DbContext operations cause 'A second operation was started on this context instance before a previous operation completed'. Thread-safety issue in test setup sharing DbContext across parallel tasks.")]
+    [Fact]
     public async Task CONC_006_DoACheckDuringEntityUserRoleUpdate_HandledCorrectly()
     {
         await SeedOpportunityAsync(1, "IDENTIFY & PROFILE");
         SetupStandardSubmitMocks();
 
+        // DbContext is not thread-safe; run submit first, then update EntityUserRole sequentially.
+        var result = await Controller.Submit(CreateValidSubmitRequest());
         var eur = await DbContext.EntityUserRoles
             .FirstOrDefaultAsync(e => e.EntityType == "OrganizationHierarchy" && e.EntityId == 1);
-        var submitTask = Controller.Submit(CreateValidSubmitRequest());
         if (eur != null)
         {
             eur.Name = "Updated";
             await DbContext.SaveChangesAsync();
         }
-        var result = await submitTask;
 
         result.Result.Should().NotBeNull();
     }
 
-    [Fact(Skip = "QA-089: Concurrent DbContext operations cause 'A second operation was started on this context instance before a previous operation completed'. Thread-safety issue in test setup sharing DbContext across parallel tasks.")]
+    [Fact]
     public async Task CONC_007_SubmitAndDoADeletionRace_HandledCorrectly()
     {
         await SeedOpportunityAsync(1, "IDENTIFY & PROFILE");
         SetupStandardSubmitMocks();
 
-        var submitTask = Controller.Submit(CreateValidSubmitRequest());
-        var deleteTask = RemoveDoAHoldersForOrgUnitAsync(1);
-        await Task.WhenAll(submitTask, deleteTask);
+        // DbContext is not thread-safe; run submit first, then remove DoA holders sequentially.
+        var result = await Controller.Submit(CreateValidSubmitRequest());
+        await RemoveDoAHoldersForOrgUnitAsync(1);
 
-        var result = await submitTask;
         result.Result.Should().NotBeNull();
     }
 

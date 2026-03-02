@@ -733,6 +733,129 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     });
   });
 
+  // Mock /api/contact/{id}/permissions - Contact permissions (required for contact detail page)
+  await page.route(url => {
+    const urlString = url.toString();
+    return /\/api\/contact\/\d+\/permissions/.test(urlString);
+  }, async (route) => {
+    mockLog('[API Mock] Intercepted: /api/contact/{id}/permissions');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(isRestrictedUser ? {
+        canView: true,
+        canEdit: false,
+        canDelete: false,
+      } : {
+        canView: true,
+        canEdit: true,
+        canDelete: true,
+      }),
+    });
+  });
+
+  // Mock /api/interaction/{id}/permissions - Interaction permissions (required for interaction detail page)
+  await page.route(url => {
+    const urlString = url.toString();
+    return /\/api\/interaction\/\d+\/permissions/.test(urlString);
+  }, async (route) => {
+    mockLog('[API Mock] Intercepted: /api/interaction/{id}/permissions');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(isRestrictedUser ? {
+        canView: true,
+        canEdit: false,
+        canDelete: false,
+      } : {
+        canView: true,
+        canEdit: true,
+        canDelete: true,
+      }),
+    });
+  });
+
+  // ==========================================
+  // DASHBOARD ENDPOINTS - Required for home/dashboard page
+  // ==========================================
+
+  // Mock /api/dashboard/content - Combined dashboard data (DashboardCombinedResponse)
+  // Must match DashboardCombinedResponse interface: myPartners, myContacts, myInteractions,
+  // myOpportunities, draftPartners, draftContacts, draftInteractions, draftOpportunities,
+  // orgUnitRecentUpdates, orgUnitName
+  await page.route(url => url.toString().includes('/api/dashboard/content'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/dashboard/content');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        myPartners: [
+          { id: 1, name: 'UNICEF Regional Office', status: 'Active', createdDate: '2024-01-15T00:00:00Z', lastModifiedDate: '2024-06-15T00:00:00Z' },
+          { id: 2, name: 'Red Cross International', status: 'Active', createdDate: '2024-02-20T00:00:00Z', lastModifiedDate: '2024-06-10T00:00:00Z' },
+        ],
+        myContacts: [
+          { id: 1, firstName: 'John', lastName: 'Smith', title: 'Director', status: 'Active', createdDate: '2024-01-20T00:00:00Z', lastModifiedDate: '2024-06-01T00:00:00Z' },
+        ],
+        myInteractions: [
+          { id: 1, type: 'Meeting', subject: 'Quarterly Review', description: null, date: '2024-06-15T10:00:00Z', status: 'Completed', createdDate: '2024-06-10T00:00:00Z', lastModifiedDate: '2024-06-15T00:00:00Z' },
+          { id: 2, type: 'Call', subject: 'Follow-up', description: null, date: '2024-07-01T14:00:00Z', status: 'Completed', createdDate: '2024-06-28T00:00:00Z', lastModifiedDate: '2024-07-01T00:00:00Z' },
+          { id: 3, type: 'Visit', subject: 'Site Assessment', description: null, date: '2024-08-15T09:00:00Z', status: 'Scheduled', createdDate: '2024-07-20T00:00:00Z', lastModifiedDate: '2024-07-20T00:00:00Z' },
+        ],
+        myOpportunities: [
+          { id: 1, name: 'Infrastructure Development Program', status: 'Active', stage: 'Identification', userRole: 'Opportunity Manager', createdDate: '2024-01-15T00:00:00Z', lastModifiedDate: '2024-06-15T00:00:00Z' },
+          { id: 2, name: 'Education Support Initiative', status: 'Active', stage: 'Active', userRole: 'Collaborator', createdDate: '2024-03-01T00:00:00Z', lastModifiedDate: '2024-06-01T00:00:00Z' },
+        ],
+        draftPartners: [],
+        draftContacts: [],
+        draftInteractions: [],
+        draftOpportunities: [
+          { id: 3, name: 'Healthcare Capacity Building', status: 'Draft', stage: 'Draft', userRole: 'Opportunity Manager', createdDate: '2024-05-10T00:00:00Z', lastModifiedDate: '2024-06-10T00:00:00Z' },
+        ],
+        orgUnitRecentUpdates: [
+          { id: 1, name: 'UNICEF Regional Office', type: 'Partner', lastModifiedDate: '2024-06-15T12:00:00Z', lastModifiedBy: 1, lastModifiedByName: 'Test User', status: 'Active' },
+          { id: 2, name: 'John Smith', type: 'Contact', lastModifiedDate: '2024-06-14T10:00:00Z', lastModifiedBy: 1, lastModifiedByName: 'Test User', status: 'Active' },
+          { id: 3, name: 'Quarterly Partnership Review', type: 'Interaction', lastModifiedDate: '2024-06-13T09:00:00Z', lastModifiedBy: 1, lastModifiedByName: 'Test User', status: 'Completed' },
+        ],
+        orgUnitName: 'HQ - Headquarters',
+        orgUnitId: 1,
+      }),
+    });
+  });
+
+  // Mock /api/dashboard/org-unit-recent-updates - Used when loading "View All" recent activity
+  await page.route(url => url.toString().includes('/api/dashboard/org-unit-recent-updates'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/dashboard/org-unit-recent-updates');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        updates: [
+          { id: 1, name: 'UNICEF Regional Office', type: 'Partner', lastModifiedDate: '2024-06-15T12:00:00Z', lastModifiedBy: 1, lastModifiedByName: 'Test User', status: 'Active' },
+          { id: 2, name: 'John Smith', type: 'Contact', lastModifiedDate: '2024-06-14T10:00:00Z', lastModifiedBy: 1, lastModifiedByName: 'Test User', status: 'Active' },
+        ],
+        orgUnitName: 'HQ - Headquarters',
+      }),
+    });
+  });
+
+  // Mock /api/global/search - Cross-entity search (SearchResponse: availableEntities, results)
+  await page.route(url => url.toString().includes('/api/global/search'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/global/search');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        availableEntities: ['partners', 'contacts', 'interactions', 'opportunities'],
+        results: {
+          partners: [],
+          contacts: [],
+          interactions: [],
+          opportunities: [],
+        },
+      }),
+    });
+  });
+
   // ==========================================
   // NOTIFICATION ENDPOINTS - Required for topbar notification panel
   // ==========================================
@@ -1053,6 +1176,27 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     
     // Smart responses based on URL patterns
     if (method === 'GET') {
+      // /api/permissions - Permission config (PermissionService constructor)
+      if (url.includes('/api/permissions') && !url.includes('/api/permissions/check/')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            permissions: [],
+            roles: [],
+          }),
+        });
+        return;
+      }
+      // /api/dev/check-iap-simulation - Dev IAP auth check
+      if (url.includes('/api/dev/check-iap-simulation')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ isIapSimulation: true }),
+        });
+        return;
+      }
       // Permission check endpoints - return correct structure matching Angular PermissionService expectations
       // Restricted users get view-only permissions
       if (url.includes('/api/permissions/check/')) {
@@ -1191,17 +1335,6 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify([]),
-        });
-      }
-      // Dashboard content
-      else if (url.includes('/api/dashboard/content')) {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            recentUpdates: [],
-            quickStats: {},
-          }),
         });
       }
       // User info

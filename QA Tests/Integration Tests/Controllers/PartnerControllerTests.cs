@@ -177,9 +177,10 @@ public class PartnerControllerTests : IntegrationTestBase
 
     #region Basic Filtering Tests
 
-    [Fact(Skip = "Authorization mocking required - high effort, low value")]
+    [Fact]
     public async Task GetAll_NoFilters_ReturnsAllPartners()
     {
+        if (!_isPostgresAvailable) return;
         // Act
         var response = await GetAsync<PaginationResponse<PartnerModel>>("/api/partner?pageSize=20&pageIndex=1");
         

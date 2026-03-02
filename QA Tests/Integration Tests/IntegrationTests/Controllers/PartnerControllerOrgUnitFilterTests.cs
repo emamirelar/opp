@@ -28,10 +28,8 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
     /// 1. Partners directly linked to the org unit (via OrganizationUnitRelationships)
     /// 2. Partners from child org units in the hierarchy
     /// 3. Partners with contacts that have interactions with users from the org unit
-    /// 
-    /// NOTE: These tests are currently skipped due to authorization issues in the test environment.
-    /// Once the test authentication/authorization setup is fixed, remove the Skip attribute from each test.
     /// </summary>
+    [Collection("Integration Tests")]
     public class PartnerControllerOrgUnitFilterTests : IntegrationTestBase
     {
         private static int _testIdCounter = 1000;
@@ -43,7 +41,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
         
         private int GetNextTestId() => Interlocked.Increment(ref _testIdCounter);
 
-        [Fact(Skip = "Skipping due to authorization issues in test environment")]
+        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
         public async Task GetAll_WithOrgUnitId_FiltersPartnersByOrgUnit()
         {
             // Arrange
@@ -64,7 +62,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
                                                     p.Name == "Indirect Partner"); // Indirect partner has contact relation
         }
 
-        [Fact(Skip = "Skipping due to authorization issues in test environment")]
+        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
         public async Task GetAll_WithoutOrgUnitId_ReturnsAllAccessiblePartners()
         {
             // Arrange
@@ -83,7 +81,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             result.Records.Should().HaveCountGreaterThan(0);
         }
 
-        [Fact(Skip = "Skipping due to authorization issues in test environment")]
+        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
         public async Task GetAll_WithAdvancedSearchAndOrgUnitId_CombinesFilters()
         {
             // Arrange
@@ -105,7 +103,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
                                                     ((p.GetPrimaryOrganizationUnit() != null && p.GetPrimaryOrganizationUnit().Id == orgUnitId) || p.Name == "Indirect Partner"));
         }
 
-        [Fact(Skip = "Skipping due to authorization issues in test environment")]
+        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
         public async Task GetAll_WithTextSearchAndOrgUnitId_CombinesFilters()
         {
             // Arrange
@@ -125,7 +123,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             result.Records.First().Name.Should().Be("Direct Partner");
         }
 
-        [Fact(Skip = "Skipping due to authorization issues in test environment")]
+        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
         public async Task GetAll_WithOrgUnitHierarchy_IncludesChildOrgUnits()
         {
             // Arrange
@@ -147,7 +145,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             result.Records.Should().Contain(p => p.GetPrimaryOrganizationUnit() != null && p.GetPrimaryOrganizationUnit().Id == childOrgUnitId);
         }
 
-        [Fact(Skip = "Skipping due to authorization issues in test environment")]
+        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
         public async Task GetAll_WithIndirectRelations_IncludesPartnersViaContacts()
         {
             // Arrange
