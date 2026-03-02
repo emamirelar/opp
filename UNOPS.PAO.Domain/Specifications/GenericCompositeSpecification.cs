@@ -62,8 +62,8 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                             continue;
                         }
 
-                        string field = criteriaDict.TryGetValue("field", out object fieldObj) ? fieldObj?.ToString() : null;
-                        string value = criteriaDict.TryGetValue("value", out object valueObj) ? valueObj?.ToString() : null;
+                        string? field = criteriaDict.TryGetValue("field", out object? fieldObj) ? fieldObj?.ToString() : null;
+                        string? value = criteriaDict.TryGetValue("value", out object? valueObj) ? valueObj?.ToString() : null;
                         string comparisonOperator = criteriaDict.TryGetValue("operator", out object opObj) ? opObj?.ToString() ?? "like" : "like";
                         string secondValue = criteriaDict.TryGetValue("secondValue", out object secondValueObj) ? secondValueObj?.ToString() : null;
                         string logicalOperator = criteriaDict.TryGetValue("logicalOperator", out object logicalOpObj) ? logicalOpObj?.ToString() ?? "AND" : "AND";

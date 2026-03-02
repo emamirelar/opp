@@ -49,7 +49,7 @@ public abstract class BaseCompositeSpecification<T> : BaseSpecification<T>
     {
         if (expr.Body is ConstantExpression constExpr)
         {
-            return constExpr.Type == typeof(bool) && (bool)constExpr.Value;
+            return constExpr.Type == typeof(bool) && constExpr.Value != null && (bool)constExpr.Value;
         }
         return false;
     }

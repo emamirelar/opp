@@ -73,15 +73,15 @@ public class PartnerCompositeSpecification : GenericCompositeSpecification<Partn
             "unandstateentity" => (Expression<Func<Partner, object>>)(p => p.UNAndStateEntity),
             "pooledfund" => (Expression<Func<Partner, object>>)(p => p.PooledFund),
             "cancreatenewopportunities" => (Expression<Func<Partner, object>>)(p => p.CanCreateNewOpportunities),
-            "liaisonofficeid" => (Expression<Func<Partner, object>>)(p => p.LiaisonOfficeId),
-            "partnerfocalpointuserid" => (Expression<Func<Partner, object>>)(p => p.PartnerFocalPointUserId),
+            "liaisonofficeid" => (Expression<Func<Partner, object>>)(p => p.LiaisonOfficeId ?? 0),
+            "partnerfocalpointuserid" => (Expression<Func<Partner, object>>)(p => p.PartnerFocalPointUserId ?? 0),
             "erpdimvalue" => (Expression<Func<Partner, object>>)(p => p.ErpDimValue ?? 0),
             "partnerlevystatus" => (Expression<Func<Partner, object>>)(p => p.PartnerLevyStatus ?? default!),
             "duediligencerequired" => (Expression<Func<Partner, object>>)(p => p.DueDiligenceRequired),
             "duediligenceapproval" => (Expression<Func<Partner, object>>)(p => p.DueDiligenceApproval ?? default!),
-            "duediligenceapprovaldate" => (Expression<Func<Partner, object>>)(p => p.DueDiligenceApprovalDate),
-            "duediligenceexpirydate" => (Expression<Func<Partner, object>>)(p => p.DueDiligenceExpiryDate),
-            "partnerapprovaldate" => (Expression<Func<Partner, object>>)(p => p.PartnerApprovalDate),
+            "duediligenceapprovaldate" => (Expression<Func<Partner, object>>)(p => p.DueDiligenceApprovalDate ?? DateTime.MinValue),
+            "duediligenceexpirydate" => (Expression<Func<Partner, object>>)(p => p.DueDiligenceExpiryDate ?? DateTime.MinValue),
+            "partnerapprovaldate" => (Expression<Func<Partner, object>>)(p => p.PartnerApprovalDate ?? DateTime.MinValue),
             _ => (Expression<Func<Partner, object>>)(p => p.Name ?? "") // Default to Name if no field specified or unknown field
         };
     }
