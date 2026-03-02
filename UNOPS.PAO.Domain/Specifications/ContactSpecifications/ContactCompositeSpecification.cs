@@ -62,7 +62,8 @@ public class ContactCompositeSpecification : GenericCompositeSpecification<Conta
     [return: System.Diagnostics.CodeAnalysis.NotNull]
     private static Expression<Func<Contact, object>> GetOrderByExpression(string? orderByField)
     {
-        return orderByField?.ToLowerInvariant() switch
+        var orderKey = orderByField?.ToLowerInvariant() ?? string.Empty;
+        Expression<Func<Contact, object>> result = orderKey switch
         {
             "firstname" => c => c.FirstName ?? "",
             "lastname" => c => c.LastName ?? "",
@@ -76,5 +77,6 @@ public class ContactCompositeSpecification : GenericCompositeSpecification<Conta
             "partnername" => c => (object)(c.Partner != null ? c.Partner.Name : ""),
             _ => c => c.LastName ?? "" // Default to LastName if no field specified or unknown field
         };
+        return result;
     }
 } 
