@@ -58,7 +58,7 @@ public class PartnerCompositeSpecification : GenericCompositeSpecification<Partn
     private static Expression<Func<Partner, object>> GetOrderByExpression(string? orderByField)
     {
         var orderKey = orderByField?.ToLowerInvariant() ?? string.Empty;
-        return orderKey switch
+        Expression<Func<Partner, object>> result = orderKey switch
         {
             "name" => (Expression<Func<Partner, object>>)(p => p.Name ?? ""),
             "partnershortdescription" => (Expression<Func<Partner, object>>)(p => p.PartnerShortDescription ?? ""),
@@ -85,5 +85,6 @@ public class PartnerCompositeSpecification : GenericCompositeSpecification<Partn
             "partnerapprovaldate" => (Expression<Func<Partner, object>>)(p => p.PartnerApprovalDate ?? DateTime.MinValue),
             _ => (Expression<Func<Partner, object>>)(p => p.Name ?? "") // Default to Name if no field specified or unknown field
         };
+        return result;
     }
 } 

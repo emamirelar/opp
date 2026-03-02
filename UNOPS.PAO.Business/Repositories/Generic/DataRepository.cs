@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
@@ -25,7 +25,7 @@ public class DataRepository<TEntity> where TEntity : class, IBaseBusinessEntity<
     /// <summary>
     /// Gets the Id property safely, handling ambiguous matches in inheritance hierarchies
     /// </summary>
-    private PropertyInfo GetIdProperty(Type entityType)
+    private PropertyInfo? GetIdProperty(Type entityType)
     {
         try
         {

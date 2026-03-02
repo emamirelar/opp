@@ -13,7 +13,7 @@ public class ContactByOrgUnitHierarchySpecification : BaseSpecification<Contact>
     private readonly List<int> _orgUnitHierarchyIds;
     
     public ContactByOrgUnitHierarchySpecification(List<int>? orgUnitHierarchyIds)
-        : base(BuildCriteria(orgUnitHierarchyIds))
+        : base(BuildCriteria(orgUnitHierarchyIds)!)
     {
         _orgUnitHierarchyIds = orgUnitHierarchyIds ?? new List<int>();
         // Include related entities
