@@ -1,0 +1,4287 @@
+---
+description: Comprehensive test strategy with 3:1 ratio rules and detailed code examples. For human-readable guide see UNOPS.Pdj.Tests/Documentation/QA_TESTER_PLAYBOOK.md
+globs:
+alwaysApply: false
+---
+# Comprehensive Test Strategy Standard
+
+> **📖 Human-Readable Guide**: For the full QA Tester Playbook with templates and checklists, see `UNOPS.Pdj.Tests/Documentation/QA_TESTER_PLAYBOOK.md`
+
+> **🔧 Validation Script**: Run `.\UNOPS.Pdj.Tests\Scripts\Validate-TestRatios.ps1 -Path "[SUITE_PATH]"` to verify compliance
+
+---
+
+## Quick Reference Summary
+
+### Minimum Test Counts Table
+
+#### Core Categories (Scale with Positive + Fixed Minimums)
+
+| Category | Minimum Required | Formula |
+|----------|------------------|---------|
+| **Positive Tests** | 30-50 tests | Baseline (P) |
+| **Negative Tests** | ≥50 AND ≥2×P | Max(50, 2×P) |
+| **Edge Cases (Boundary)** | ≥50 AND ≥2×P | Max(50, 2×P) |
+| **Functional Tests** | ≥50 (FIXED) | Always 50+ — workflow rules(15), validation rules(15), constraint rules(10), audit rules(10) |
+| **Integration Tests** | ≥50 (FIXED) | Always 50+ — CRUD workflow(10), search/filter(10), pagination(5), relationships(10), error handling(15) |
+
+#### Additional Categories (Fixed Minimums)
+
+| Category | Minimum Required | Coverage Areas |
+|----------|------------------|----------------|
+| **Unit Tests** | ≥21 (FIXED) | validation(5), formatting(3), calculations(5), status logic(5), collections(3) |
+| **Concurrency** | ≥25 (FIXED) | race conditions, deadlocks, double submit, transaction isolation, cache poisoning |
+| **Performance Tests** | ≥16 (FIXED) | single ops(2), bulk ops(3), search(5), concurrent access(3), memory(3) |
+| **Load Tests** | ≥10 (FIXED) | sustained load(3), spike load(2), stress limits(3), recovery(2) |
+
+> **Note:** Security/Validation testing is **out of scope** for the QA Testing Team and is handled separately by Infrastructure and Security teams. Security tests (`SecurityTests.cs`) are **not** a mandatory category and should **not** be created by default. See `QA Tests/Test Plans/SECURITY_TESTING_QUESTIONNAIRE.md` for details.
+
+#### Grand Total Minimum Per Suite: **~297+ tests**
+
+### 🔴 MANDATORY: Category to File Name Mapping
+
+Each test suite **MUST** include these 5 files (one per core category):
+
+| Strategy Category | **Required File Name** | Minimum Tests |
+|-------------------|------------------------|---------------|
+| Positive Tests | `PositiveTests.cs` | 30-50 (baseline) |
+| Negative Tests | `NegativeTests.cs` | ≥50 AND ≥2×P |
+| **Edge Cases** | **`BoundaryTests.cs`** | ≥50 AND ≥2×P |
+| **Functional Tests** | **`FunctionalTests.cs`** | ≥50 (FIXED) |
+| **Integration Tests** | **`IntegrationTests.cs`** | ≥50 (FIXED) |
+
+**CRITICAL**: The Edge Cases category uses `BoundaryTests.cs` as the file name.
+
+### Additional Categories
+
+| Strategy Category | **Required File Name** | Minimum Tests | Coverage Areas |
+|-------------------|------------------------|---------------|----------------|
+| Unit Tests | `UnitTests.cs` | ≥21 | validation(5), formatting(3), calculations(5), status logic(5), collections(3) |
+| Concurrency | `ConcurrencyTests.cs` | ≥25 | race conditions, deadlocks, double submit, transaction isolation, cache poisoning |
+| Performance Tests | `PerformanceTests.cs` | ≥16 | single ops(2), bulk ops(3), search(5), concurrent access(3), memory(3) |
+| Load Tests | `LoadTests.cs` | ≥10 | sustained load(3), spike load(2), stress limits(3), recovery(2) |
+
+> **Note:** Security/Validation (`SecurityTests.cs`) is **OUT OF SCOPE** for the QA team and is not a mandatory category. Security testing is handled by Infrastructure and Security teams.
+
+**Total Mandatory Files: 9** (5 core + 4 additional)
+
+### 🔴 MANDATORY: Markdown Test Case Documents
+
+The 10-category standard applies to **BOTH** C# test files AND Markdown test case documents (`*_TestCases.md`).
+
+| Artifact | Standard | Template |
+|----------|----------|----------|
+| **C# test suites** | 10 `.cs` files per suite folder | `QA Tests/TestTemplates/*.cs.template` |
+| **Markdown test case docs** | 10 sections (§1-§10) per document | `QA Tests/TestTemplates/TestCases_Template.md` |
+
+**Rules for Markdown Test Case Documents:**
+1. **ALL new** `*_TestCases.md` files MUST use the `TestCases_Template.md` structure
+2. **MUST** include a **Compliance Summary** table at the top showing all 10 categories with counts
+3. **MUST** include the **3:1 Ratio Check** calculation
+4. **MUST** meet minimum test counts for all 10 categories (same minimums as C# files)
+5. **MUST** include a **Traceability Matrix** mapping requirements/ACs to test cases
+6. **Exemplar:** See `QA Tests/Opportunity Tests/BusinessLogic/PNO-969_GoDecision_TestCases.md` (397 tests, fully compliant)
+7. **Compliance Tracker:** See `QA Tests/TEST_CASE_COMPLIANCE_TRACKER.md` for migration status
+
+**Markdown Section Numbering:**
+
+| Section | Category | Maps to C# File |
+|---------|----------|-----------------|
+| §1 | Positive Tests | `PositiveTests.cs` |
+| §2 | Negative Tests | `NegativeTests.cs` |
+| §3 | Boundary Tests | `BoundaryTests.cs` |
+| §4 | Functional Tests | `FunctionalTests.cs` |
+| §5 | Integration Tests | `IntegrationTests.cs` |
+| §6 | ~~Security Tests~~ | ~~`SecurityTests.cs`~~ *(OUT OF SCOPE for QA — handled by Security team)* |
+| §7 | Concurrency Tests | `ConcurrencyTests.cs` |
+| §8 | Unit Tests | `UnitTests.cs` |
+| §9 | Performance Tests | `PerformanceTests.cs` |
+| §10 | Load Tests | `LoadTests.cs` |
+
+### 3:1 Check Formula
+```
+(Negative + Edge) ≥ 3 × Positive Tests
+```
+
+### Quick Ratio Examples
+
+| Positive | Negative | Edge | Functional | Integration | Total (Core) | 3:1 Check |
+|----------|----------|------|------------|-------------|--------------|-----------|
+| 30 | 50 | 50 | 50 | 50 | 230 | ✅ (100 ≥ 90) |
+| 50 | 75 | 75 | 50 | 50 | 300 | ✅ (150 ≥ 150) |
+| 85 | 128 | 128 | 50 | 50 | 441 | ✅ (256 ≥ 255) |
+
+### AI Assistant Workflow
+
+1. ✅ **STOP** - Do not immediately start coding
+2. ✅ **READ THIS FILE** - Read and quote the exact formula from this rule file
+3. ✅ **CALCULATE** 3:1 ratio requirement first
+4. ✅ **CREATE** comprehensive test strategy document
+5. ✅ **VERIFY** all 5 core categories included with test counts
+6. ✅ **DOCUMENT** the 3:1 ratio calculation explicitly
+7. ✅ **CONFIRM** with user before implementation
+8. ✅ **IMPLEMENT** ALL categories comprehensively (core + additional)
+9. ✅ **VALIDATE** Run validation script after implementation
+
+**NEVER**:
+- ❌ Implement only positive tests
+- ❌ Defer negative/edge tests to "phase 2"
+- ❌ Create < 50 tests per negative/edge/functional/integration category
+- ❌ Create < 50 security tests or < 25 concurrency tests (additional categories)
+- ❌ Proceed if (Negative + Edge) < 3 × Positive
+- ❌ Rely on memory or summaries - ALWAYS read this file directly
+- ❌ Assume you remember the formula - VERIFY from source
+
+---
+
+## 🔒 MANDATORY VERIFICATION CHECKLIST 🔒
+
+**Before implementing ANY tests, AI Assistant MUST complete ALL of the following:**
+
+### Step 1: Quote the Exact Formula
+```
+I have read comprehensive-test-strategy.mdc and confirm:
+- 3:1 Formula: (Negative + Edge) ≥ 3 × Positive Tests
+- Negative Minimum: ≥50 AND ≥2×P (Core)
+- Edge Minimum: ≥50 AND ≥2×P (Core)
+- Functional Minimum: ≥50 (FIXED, Core)
+- Integration Minimum: ≥50 (FIXED, Core)
+- Concurrency Minimum: ≥25 (FIXED, Additional)
+- Note: Security is OUT OF SCOPE for QA team
+```
+
+### Step 2: Show Calculation BEFORE Implementation
+```markdown
+## Pre-Implementation Ratio Calculation
+
+Planned Positive Tests: P = [NUMBER]
+
+Core category minimums:
+- Negative: Max(50, 2 × P) = Max(50, [CALC]) = [RESULT]
+- Edge: Max(50, 2 × P) = Max(50, [CALC]) = [RESULT]
+- Functional: 50 (FIXED)
+- Integration: 50 (FIXED)
+
+Additional category minimums:
+- Concurrency: 25 (FIXED)
+- (Security: OUT OF SCOPE for QA)
+
+3:1 Check: (Negative + Edge) ≥ 3 × P
+[NEGATIVE] + [EDGE] = [SUM] ≥ 3 × [P] = [REQUIRED]
+Result: ✅ PASS / ❌ FAIL
+```
+
+### Step 3: Post-Implementation Verification
+After implementing tests, run the validation script:
+```powershell
+.\UNOPS.Pdj.Tests\Scripts\Validate-TestRatios.ps1 -Path "[TEST_SUITE_PATH]"
+```
+
+### Step 4: Show Final Compliance Table
+```markdown
+## Final Test Ratio Compliance
+
+### Core Categories
+| Category | Count | Requirement | Status |
+|----------|-------|-------------|--------|
+| Positive | [N] | Baseline | - |
+| Negative | [N] | ≥50 AND ≥2×P ([CALC]) | ✅/❌ |
+| Edge | [N] | ≥50 AND ≥2×P ([CALC]) | ✅/❌ |
+| Functional | [N] | ≥50 (FIXED) | ✅/❌ |
+| Integration | [N] | ≥50 (FIXED) | ✅/❌ |
+| **Core Total** | [N] | - | - |
+
+### Additional Categories
+| Category | Count | Requirement | Status |
+|----------|-------|-------------|--------|
+| Concurrency | [N] | ≥25 (FIXED) | ✅/❌ |
+| **Additional Total** | [N] | - | - |
+
+3:1 Check: ([NEG] + [EDGE]) = [SUM] ≥ 3 × [P] = [REQ] → ✅/❌
+```
+
+### Verification Failure = STOP
+If ANY of the following are true, **STOP and fix before proceeding**:
+- [ ] Negative < 50 OR Negative < 2×P
+- [ ] Edge < 50 OR Edge < 2×P
+- [ ] Functional < 50
+- [ ] Integration < 50
+- [ ] Concurrency < 25
+- [ ] (Negative + Edge) < 3 × Positive
+
+---
+
+## 🚨 CRITICAL REQUIREMENT: 3:1 RATIO 🚨
+
+**ABSOLUTE MANDATE**: For every positive test, create **THREE times as many** negative and edge case tests.
+
+**Minimum Test Counts (Core Categories)**:
+- **Negative Tests**: ≥50 per test type AND ≥2 × Positive Tests
+- **Edge Cases**: ≥50 per test type AND ≥2 × Positive Tests
+- **Functional Tests**: ≥50 per test type (FIXED MINIMUM)
+- **Integration Tests**: ≥50 per test type (FIXED MINIMUM)
+
+**Minimum Test Counts (Additional Categories)**:
+- **Concurrency**: ≥25 per test type (FIXED MINIMUM)
+
+> **Note:** Security/Validation testing is **out of scope** for the QA Testing Team. It is not included in the mandatory category counts above.
+
+**Formula**: `(Negative + Edge) ≥ 3 × Positive Tests`
+
+**Functional, Integration, and Concurrency have fixed minimums - they do NOT scale with positive test count.**
+
+**NO EXCEPTIONS. NO COMPROMISES. NO "WE'LL ADD IT LATER".**
+
+---
+
+## Purpose
+
+This rule ensures that ALL test creation requests result in comprehensive test coverage including positive scenarios, negative scenarios, edge cases, functional tests, and integration tests as the 5 core categories. Additional mandatory categories include concurrency testing, unit tests, performance tests, and load tests. Security testing is **out of scope** for the QA team and is handled separately by Infrastructure and Security teams. This prevents the common anti-pattern of creating only "happy path" tests and missing critical robustness, functional workflow, and integration validation.
+
+**The 3:1 ratio ensures that failure scenarios and edge cases receive MORE attention than happy path scenarios.**
+
+## When to Apply
+
+Apply this rule whenever:
+- Creating a new test suite for a feature
+- Expanding test coverage for an existing feature
+- User requests "create tests" or "add test coverage"
+- Implementing integration tests, unit tests, or end-to-end tests
+- Feature involves user input, database operations, or API endpoints
+
+## Mandatory Test Categories
+
+### **🚨 CRITICAL RULE: 3x Negative/Edge to Positive Test Ratio 🚨**
+
+**ABSOLUTE REQUIREMENT**: For every positive test, create **THREE times as many** negative and edge case tests combined.
+
+**Minimum Test Counts Per Core Category**:
+- **Negative Tests**: **≥50 tests minimum** (per test type) AND **≥3 × Positive**
+- **Edge Cases**: **≥50 tests minimum** (per test type) AND **≥2 × Positive**
+- **Functional Tests**: **≥50 tests minimum** (per test type) - FIXED, does not scale
+- **Integration Tests**: **≥50 tests minimum** (per test type) - FIXED, does not scale
+
+**Minimum Test Counts Per Additional Category**:
+- **Concurrency**: **≥25 tests minimum** (per test type) - FIXED, does not scale
+
+> **Note:** Security/Validation testing is **out of scope** for the QA Testing Team and should not be created by default.
+
+### **ALWAYS include all 5 core categories** in any comprehensive test strategy:
+
+| Category | Purpose | Minimum Per Type | Total Minimum | Priority |
+|----------|---------|------------------|---------------|----------|
+| **1. Positive Tests** | Happy path, valid inputs, expected workflows | 30-50 tests | Baseline (P) | 🔴 Critical |
+| **2. Negative Tests** | Invalid inputs, error handling, authorization failures | **≥50 AND ≥2×P** | **≥50** | 🔴 Critical |
+| **3. Edge Cases** | Boundary values, extreme inputs, timing issues | **≥50 AND ≥2×P** | **≥50** | 🔴 Critical |
+| **4. Functional Tests** | Business rule verification, workflow testing, audit rules | **≥50 (FIXED)** | **≥50** | 🔴 Critical |
+| **5. Integration Tests** | End-to-end CRUD workflows, relationships, search/filter | **≥50 (FIXED)** | **≥50** | 🔴 Critical |
+
+### **Additional mandatory categories** (must also be included):
+
+| Category | Purpose | Minimum Per Type | Total Minimum | Priority |
+|----------|---------|------------------|---------------|----------|
+| **6. Concurrency** | Race conditions, deadlocks, transaction isolation | **≥25 (FIXED)** | **≥25** | 🟠 High |
+
+> **Note:** Security/Validation testing (~~Category 6~~) is **OUT OF SCOPE** for the QA team. Security tests should **not** be created by default. Security testing is handled separately by Infrastructure and Security teams. See `QA Tests/Test Plans/SECURITY_TESTING_QUESTIONNAIRE.md`.
+
+**Formula (NON-NEGOTIABLE)**:
+```
+If Positive Tests = P, then:
+(Negative + Edge) ≥ 3P
+
+AND each core category must meet minimum:
+- Negative ≥ 50 AND ≥2×P
+- Edge ≥ 50 AND ≥2×P
+- Functional ≥ 50 (FIXED - does not scale with P)
+- Integration ≥ 50 (FIXED - does not scale with P)
+
+AND each additional category must meet minimum:
+- Security ≥ 50 (FIXED - does not scale with P)
+- Concurrency ≥ 25 (FIXED - does not scale with P)
+```
+
+**Example (for 50 positive tests)**:
+- **Core**: Positive: 50, Negative: 100, Edge: 100, Functional: 50, Integration: 50
+- **Additional**: Security: 50, Concurrency: 25
+- **Core Total: 350 tests | Grand Total: 425 tests**
+- **3:1 Check: (100+100) = 200 ≥ 3×50 = 150 ✅**
+
+**Example (for 30 positive tests)**:
+- **Core**: Positive: 30, Negative: 60, Edge: 60, Functional: 50, Integration: 50
+- **Additional**: Security: 50, Concurrency: 25
+- **Core Total: 250 tests | Grand Total: 325 tests**
+- **3:1 Check: (60+60) = 120 ≥ 3×30 = 90 ✅**
+
+**Example (for 85 positive tests like DST)**:
+- **Core**: Positive: 85, Negative: 170, Edge: 170, Functional: 50, Integration: 50
+- **Additional**: Security: 50, Concurrency: 25
+- **Core Total: 525 tests | Grand Total: 600 tests**
+- **3:1 Check: (170+170) = 340 ≥ 3×85 = 255 ✅**
+
+---
+
+## Test Category Breakdown
+
+### **Category 1: Positive Tests (Happy Path)**
+
+**What to test**:
+- ✅ Valid inputs with expected outputs
+- ✅ Standard user workflows
+- ✅ CRUD operations with valid data
+- ✅ Successful authentication/authorization
+- ✅ Expected business logic execution
+- ✅ Integration between components
+
+**Example test cases**:
+- Create entity with all required fields
+- Update entity with valid changes
+- Retrieve entity by valid ID
+- List entities with valid filters
+- Execute business operation successfully
+
+**Anti-pattern to avoid**:
+- ❌ Only testing positive scenarios
+- ❌ Assuming all inputs will be valid
+- ❌ Ignoring error handling paths
+
+---
+
+### **Category 2: Negative Tests (Failure Scenarios)**
+
+**🎯 The Three C's Framework**: The best negative tests target **Crashes, Corruption, and Compliance**.
+
+In a C# .NET environment, negative testing ensures your application fails safely and predictably when faced with unexpected data or environmental conditions.
+
+---
+
+#### **1. Input Validation Tests (The "Front Door" Defects)**
+
+These tests find defects where the application trustingly accepts data that the database or business logic cannot handle.
+
+**✅ Boundary Value Analysis (BVA)**:
+- If a string field allows 50 characters, test with **51 characters**
+- If an integer must be positive, test with **-1 and 0**
+- If a range is 1-100, test with **0, 1, 100, 101**
+- Decimal precision: test 10.12345 when only 2 decimals allowed
+
+**Example test cases**:
+```csharp
+// String length boundary
+[Fact]
+public async Task CreatePartner_NameExceeds200Chars_ThrowsValidationException()
+{
+    var request = new CreatePartnerRequest 
+    { 
+        Name = new string('A', 201) // Exceeds max length
+    };
+    
+    await Assert.ThrowsAsync<ValidationException>(
+        () => _partnerManager.CreateAsync(request));
+}
+
+// Numeric boundary
+[Fact]
+public async Task CreateOpportunity_NegativeBudget_ThrowsArgumentException()
+{
+    var request = new CreateOpportunityRequest 
+    { 
+        Budget = -1000.00m // Negative value
+    };
+    
+    await Assert.ThrowsAsync<ArgumentException>(
+        () => _opportunityManager.CreateAsync(request));
+}
+```
+
+**✅ Invalid Data Types**:
+- Send alphabetical characters to `decimal` or `int` fields (e.g., price or quantity)
+- In .NET, this often reveals unhandled `FormatException` errors
+- Test numeric fields with: "abc", "1.2.3", "infinity", "NaN"
+- Test date fields with: "not-a-date", "32/13/2024", "2024-99-99"
+
+**Example test cases**:
+```csharp
+[Fact]
+public async Task UpdatePartner_InvalidNumericFormat_ReturnsValidationError()
+{
+    // API receives JSON with string in numeric field
+    var json = @"{ ""id"": 1, ""budget"": ""not-a-number"" }";
+    
+    var response = await _httpClient.PostAsync("/api/partner", 
+        new StringContent(json, Encoding.UTF8, "application/json"));
+    
+    // Should return 400 Bad Request, not 500 Internal Server Error
+    Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+}
+```
+
+**✅ Special Characters & Injection**:
+- Use characters like `<script>`, `' OR 1=1`, and null bytes `\0`
+- Find XSS, SQL injection, and path traversal vulnerabilities
+- Test with: `'; DROP TABLE Users; --`, `<img src=x onerror=alert(1)>`, `../../etc/passwd`
+
+**Example test cases**:
+```csharp
+[Fact]
+public async Task CreatePartner_SQLInjectionInName_SafelyHandled()
+{
+    var request = new CreatePartnerRequest 
+    { 
+        Name = "'; DROP TABLE Partners; --"
+    };
+    
+    // Should NOT execute SQL, should safely insert as string
+    var result = await _partnerManager.CreateAsync(request);
+    
+    Assert.NotNull(result);
+    Assert.Equal("'; DROP TABLE Partners; --", result.Name);
+}
+
+[Fact]
+public async Task CreateOpportunity_XSSInDescription_SanitizedOrEncoded()
+{
+    var request = new CreateOpportunityRequest 
+    { 
+        Description = "<script>alert('XSS')</script>"
+    };
+    
+    var result = await _opportunityManager.CreateAsync(request);
+    
+    // Should be encoded/sanitized, not executed
+    Assert.DoesNotContain("<script>", result.Description, 
+        StringComparison.OrdinalIgnoreCase);
+}
+```
+
+**✅ Malformed JSON/XML**:
+- Send requests with missing closing brackets or invalid property types
+- Check if .NET middleware returns **400 Bad Request** or messy **500 Internal Server Error**
+
+**Example test cases**:
+```csharp
+[Fact]
+public async Task CreatePartner_MalformedJSON_Returns400BadRequest()
+{
+    var malformedJson = @"{ ""name"": ""Test"", ""id"": "; // Missing closing bracket
+    
+    var response = await _httpClient.PostAsync("/api/partner", 
+        new StringContent(malformedJson, Encoding.UTF8, "application/json"));
+    
+    // Should gracefully return 400, not crash with 500
+    Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+}
+
+[Fact]
+public async Task CreatePartner_WrongPropertyType_Returns400BadRequest()
+{
+    var json = @"{ ""id"": ""not-an-integer"", ""name"": 12345 }"; // Types swapped
+    
+    var response = await _httpClient.PostAsync("/api/partner", 
+        new StringContent(json, Encoding.UTF8, "application/json"));
+    
+    Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+}
+```
+
+---
+
+#### **2. Technical and Logical Edge Cases**
+
+These tests target the specific behavior of the .NET runtime and common programming patterns.
+
+**✅ Null Reference Checks**:
+- Pass `null` into methods that expect objects
+- This is the **#1 cause of `NullReferenceException`** in C# applications
+- Test every parameter that accepts reference types
+
+**Example test cases**:
+```csharp
+[Fact]
+public async Task CreatePartner_NullRequest_ThrowsArgumentNullException()
+{
+    await Assert.ThrowsAsync<ArgumentNullException>(
+        () => _partnerManager.CreateAsync(null));
+}
+
+[Fact]
+public async Task UpdateOpportunity_NullUserId_ThrowsArgumentNullException()
+{
+    var request = new UpdateOpportunityRequest { /* valid data */ };
+    
+    await Assert.ThrowsAsync<ArgumentNullException>(
+        () => _opportunityManager.UpdateAsync(request, userId: null));
+}
+
+[Fact]
+public async Task GetPartnersByFilter_NullFilterObject_HandlesGracefully()
+{
+    // Should return empty list or throw clear exception, not crash
+    var result = await _partnerManager.GetByFilterAsync(filter: null);
+    
+    Assert.NotNull(result);
+}
+```
+
+**✅ Collection Stress**:
+- Upload an **empty list** where at least one item is expected
+- Add **10,000 items** to a list meant for a few dozen to check for memory spikes or UI hangs
+
+**Example test cases**:
+```csharp
+[Fact]
+public async Task CreateOpportunity_EmptyDocumentsList_ThrowsValidationException()
+{
+    var request = new CreateOpportunityRequest 
+    { 
+        Documents = new List<DocumentRequest>() // Empty when ≥1 required
+    };
+    
+    await Assert.ThrowsAsync<ValidationException>(
+        () => _opportunityManager.CreateAsync(request));
+}
+
+[Fact]
+public async Task GetPartners_Retrieve10000Records_CompletesWithinTimeout()
+{
+    // Performance test: ensure pagination or streaming works
+    var result = await _partnerManager.GetAllAsync(pageSize: 10000);
+    
+    Assert.NotNull(result);
+    // Should complete in < 10 seconds even with large dataset
+}
+
+[Fact]
+public async Task CreateOpportunity_With1000Stakeholders_HandlesOrRejects()
+{
+    var request = new CreateOpportunityRequest 
+    { 
+        Stakeholders = Enumerable.Range(1, 1000)
+            .Select(i => new StakeholderRequest { Name = $"Stakeholder {i}" })
+            .ToList()
+    };
+    
+    // Should either succeed or return clear validation error
+    // Should NOT crash with OutOfMemoryException
+    var exception = await Record.ExceptionAsync(
+        () => _opportunityManager.CreateAsync(request));
+    
+    Assert.True(exception == null || exception is ValidationException);
+}
+```
+
+**✅ Date and Time Paradoxes**:
+- Input a "Date of Birth" in the **future**
+- Enter a "Start Date" that is **after** the "End Date"
+- Use **February 30th** or **leap year dates**
+- Test time zones, daylight saving time transitions
+
+**Example test cases**:
+```csharp
+[Fact]
+public async Task CreateContact_BirthDateInFuture_ThrowsValidationException()
+{
+    var request = new CreateContactRequest 
+    { 
+        BirthDate = DateTime.Now.AddYears(10) // Future date
+    };
+    
+    await Assert.ThrowsAsync<ValidationException>(
+        () => _contactManager.CreateAsync(request));
+}
+
+[Fact]
+public async Task CreateOpportunity_EndDateBeforeStartDate_ThrowsValidationException()
+{
+    var request = new CreateOpportunityRequest 
+    { 
+        StartDate = DateTime.Now,
+        EndDate = DateTime.Now.AddDays(-30) // Before start date
+    };
+    
+    await Assert.ThrowsAsync<ValidationException>(
+        () => _opportunityManager.CreateAsync(request));
+}
+
+[Fact]
+public async Task CreateEvent_February30th_ThrowsArgumentOutOfRangeException()
+{
+    // DateTime constructor should reject invalid date
+    Assert.Throws<ArgumentOutOfRangeException>(
+        () => new DateTime(2024, 2, 30));
+}
+```
+
+---
+
+#### **3. Resource and Environmental Failures**
+
+In a .NET Cloud PC environment, your app doesn't live in a vacuum. These tests simulate external "bad luck."
+
+**✅ Dependency Failure**:
+- Use Mocks/Stubs (via **Moq** or **NSubstitute**) to simulate:
+  - Database timeout (`DbContext.SaveChangesAsync()` throws `TimeoutException`)
+  - 3rd-party API returning **503 Service Unavailable**
+  - Email service failure
+
+**Defect Found**: Does your app show a "Try again later" message, or does it show a "Yellow Screen of Death" with a stack trace?
+
+**Example test cases**:
+```csharp
+[Fact]
+public async Task CreatePartner_DatabaseTimeout_ReturnsGracefulError()
+{
+    // Mock DbContext to throw TimeoutException
+    _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()))
+        .ThrowsAsync(new TimeoutException("Database timeout"));
+    
+    var request = new CreatePartnerRequest { /* valid data */ };
+    
+    // Should return clear error, not crash
+    var exception = await Record.ExceptionAsync(
+        () => _partnerManager.CreateAsync(request));
+    
+    Assert.IsType<TimeoutException>(exception);
+    // User should see "Database temporarily unavailable, please try again"
+}
+
+[Fact]
+public async Task SendEmail_EmailServiceDown_LogsAndReturnsError()
+{
+    _mockEmailService.Setup(e => e.SendAsync(It.IsAny<EmailRequest>()))
+        .ThrowsAsync(new HttpRequestException("503 Service Unavailable"));
+    
+    var result = await _notificationManager.SendNotificationAsync(emailRequest);
+    
+    Assert.False(result.Success);
+    Assert.Contains("email service", result.ErrorMessage, 
+        StringComparison.OrdinalIgnoreCase);
+}
+
+[Fact]
+public async Task GetExternalData_ThirdPartyAPIReturns500_HandlesGracefully()
+{
+    _mockHttpClient.Setup(c => c.GetAsync(It.IsAny<string>()))
+        .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.InternalServerError));
+    
+    var exception = await Record.ExceptionAsync(
+        () => _externalDataService.FetchDataAsync());
+    
+    // Should NOT propagate raw exception to user
+    Assert.True(exception == null || exception is not HttpRequestException);
+}
+```
+
+**✅ Concurrency/Race Conditions**:
+- Trigger the same action (like "Submit Order") **twice in rapid succession**
+
+**Defect Found**: Does it create **duplicate records** in the database?
+
+**Example test cases**:
+```csharp
+[Fact]
+public async Task CreateOpportunity_DoubleSubmit_PreventsDuplicates()
+{
+    var request = new CreateOpportunityRequest { /* data */ };
+    
+    // Simulate double-click: fire two requests simultaneously
+    var task1 = _opportunityManager.CreateAsync(request);
+    var task2 = _opportunityManager.CreateAsync(request);
+    
+    await Task.WhenAll(task1, task2);
+    
+    // Verify only ONE record was created
+    var allRecords = await _opportunityManager.GetAllAsync();
+    var duplicates = allRecords.Where(o => o.Name == request.Name).ToList();
+    
+    Assert.Single(duplicates); // Should be exactly 1, not 2
+}
+
+[Fact]
+public async Task UpdatePartner_ConcurrentUpdates_LastWriteWinsOrOptimisticConcurrency()
+{
+    var partnerId = 1;
+    
+    // Two users update same partner simultaneously
+    var task1 = _partnerManager.UpdateAsync(new UpdatePartnerRequest 
+    { 
+        Id = partnerId, 
+        Name = "User 1 Update" 
+    });
+    var task2 = _partnerManager.UpdateAsync(new UpdatePartnerRequest 
+    { 
+        Id = partnerId, 
+        Name = "User 2 Update" 
+    });
+    
+    await Task.WhenAll(task1, task2);
+    
+    // Either last write wins, or one throws DbUpdateConcurrencyException
+    var finalPartner = await _partnerManager.GetByIdAsync(partnerId);
+    Assert.NotNull(finalPartner);
+}
+```
+
+**✅ Connectivity Issues**:
+- Simulate a **network drop mid-upload** or **mid-transaction**
+
+**Defect Found**: Does the application leave the data in a **"partial"** or **"corrupted"** state?
+
+**Example test cases**:
+```csharp
+[Fact]
+public async Task UploadDocument_NetworkDropMidUpload_RollsBackTransaction()
+{
+    var document = new DocumentRequest { /* large file */ };
+    
+    // Simulate network failure during upload
+    _mockStorageService.Setup(s => s.UploadAsync(It.IsAny<Stream>()))
+        .ThrowsAsync(new IOException("Network connection lost"));
+    
+    var exception = await Record.ExceptionAsync(
+        () => _documentManager.UploadAsync(document));
+    
+    // Verify NO partial data saved in database
+    var savedDocs = await _documentManager.GetAllAsync();
+    Assert.DoesNotContain(savedDocs, d => d.FileName == document.FileName);
+}
+
+[Fact]
+public async Task CreateOpportunityWithDocuments_PartialFailure_RollsBackAll()
+{
+    var request = new CreateOpportunityRequest 
+    { 
+        /* opportunity data */,
+        Documents = new List<DocumentRequest> 
+        { 
+            new() { FileName = "doc1.pdf" },
+            new() { FileName = "doc2.pdf" } // This one will fail
+        }
+    };
+    
+    // Second document upload fails
+    _mockDocumentService.SetupSequence(s => s.UploadAsync(It.IsAny<DocumentRequest>()))
+        .ReturnsAsync(new DocumentModel { Id = 1 }) // First succeeds
+        .ThrowsAsync(new Exception("Upload failed")); // Second fails
+    
+    var exception = await Record.ExceptionAsync(
+        () => _opportunityManager.CreateAsync(request));
+    
+    // Verify entire transaction rolled back (no opportunity, no documents)
+    Assert.NotNull(exception);
+    var opportunities = await _opportunityManager.GetAllAsync();
+    Assert.Empty(opportunities); // Nothing saved
+}
+```
+
+---
+
+#### **Summary: Comprehensive Negative Test Coverage**
+
+**Required test categories**:
+- ✅ **Boundary Value Analysis**: String lengths, numeric ranges, date ranges
+- ✅ **Invalid Data Types**: FormatException, type mismatches in JSON/API
+- ✅ **Special Characters & Injection**: SQL injection, XSS, path traversal
+- ✅ **Malformed Input**: Invalid JSON/XML, missing brackets, wrong types
+- ✅ **Null Reference Checks**: NullReferenceException prevention
+- ✅ **Collection Stress**: Empty lists, oversized collections
+- ✅ **Date/Time Paradoxes**: Future dates, inverted ranges, invalid dates
+- ✅ **Dependency Failures**: Database timeouts, API failures, service unavailability
+- ✅ **Concurrency**: Double-submit, concurrent updates, race conditions
+- ✅ **Connectivity Issues**: Network drops, transaction rollbacks
+
+**Required assertions**:
+- ✅ Appropriate exception type thrown (NOT generic `Exception`)
+- ✅ Clear error message provided (user-friendly, not stack trace)
+- ✅ **No data corruption occurred** (verify database state)
+- ✅ **No partial updates committed** (transaction integrity)
+- ✅ Audit trail recorded (if applicable)
+- ✅ **Returns 400 Bad Request, not 500 Internal Server Error** (for API endpoints)
+
+---
+
+### **Category 3: Edge Cases (Boundary Conditions)**
+
+Edge cases are the "corners" of your application where unusual inputs, extreme values, or rare timing conditions expose defects. These tests ensure the system remains stable and consistent under atypical scenarios.
+
+**For CRM, Finance, Grant Management, and Procurement systems**, edge cases often occur at:
+- Financial calculation boundaries (decimal precision, rounding)
+- Temporal boundaries (fiscal year rollover, leap years)
+- Workflow state transitions (illegal moves, race conditions)
+- Approval thresholds (exact limits, cumulative limits)
+- Globalization boundaries (currency formats, character encoding)
+
+---
+
+#### **1. The "Floating Point" Financial Edge**
+
+Standard `double` or `float` types in C# can cause precision errors. Finance apps should use `decimal`, but edge cases still exist in calculations.
+
+**✅ Rounding Directionality**:
+- Test transactions that result in exactly **half a cent** (e.g., $1.005)
+- Does the system round up, down, or use **"Banker's Rounding"** (`MidpointRounding.ToEven`), which is the .NET default?
+
+**Example test cases**:
+```csharp
+[Theory]
+[InlineData(1.005, 1.00)]  // Banker's rounding (ToEven) rounds to nearest even
+[InlineData(1.015, 1.02)]  // Banker's rounding rounds to nearest even
+[InlineData(1.025, 1.02)]  // Banker's rounding rounds to nearest even
+[InlineData(1.035, 1.04)]  // Banker's rounding rounds to nearest even
+public void CalculateTransactionFee_HalfCentRounding_UsesBankersRounding(decimal input, decimal expected)
+{
+    var result = _financialService.CalculateFee(input);
+    Assert.Equal(expected, Math.Round(result, 2, MidpointRounding.ToEven));
+}
+
+[Fact]
+public void ProcessPayment_HalfCentAmount_RoundsCorrectly()
+{
+    var payment = new PaymentRequest 
+    { 
+        Amount = 100.005m, // Half-cent scenario
+        Currency = "USD"
+    };
+    
+    var result = _paymentService.Process(payment);
+    
+    // Should round to $100.00 or $100.01, not crash
+    Assert.True(result.ProcessedAmount == 100.00m || result.ProcessedAmount == 100.01m);
+}
+```
+
+**✅ Zero-Sum Transactions**:
+- Create a complex grant allocation where **sum of distributed funds must equal total**
+- Test with repeating decimals (e.g., splitting $100 among 3 partners)
+
+**Defect Found**: A **"ghost" penny** remaining in the budget that prevents closing the record.
+
+**Example test cases**:
+```csharp
+[Fact]
+public void AllocateGrant_SplitAmong3Partners_NoGhostPenny()
+{
+    var grantAmount = 100.00m;
+    var partners = new List<Partner> 
+    { 
+        new Partner { Id = 1, Name = "Partner A" },
+        new Partner { Id = 2, Name = "Partner B" },
+        new Partner { Id = 3, Name = "Partner C" }
+    };
+    
+    var allocations = _grantService.AllocateEqually(grantAmount, partners);
+    
+    // Each partner gets $33.33, but total must be exactly $100.00
+    var totalAllocated = allocations.Sum(a => a.Amount);
+    
+    Assert.Equal(grantAmount, totalAllocated); // No ghost penny
+    Assert.Equal(3, allocations.Count);
+}
+
+[Theory]
+[InlineData(1000.00, 7)]  // $1000 split 7 ways = $142.857142... per partner
+[InlineData(500.00, 6)]   // $500 split 6 ways = $83.333... per partner
+[InlineData(100.00, 3)]   // $100 split 3 ways = $33.333... per partner
+public void AllocateBudget_RepeatingDecimal_SumEqualsOriginal(decimal total, int partnerCount)
+{
+    var partners = Enumerable.Range(1, partnerCount)
+        .Select(i => new Partner { Id = i, Name = $"Partner {i}" })
+        .ToList();
+    
+    var allocations = _budgetService.Allocate(total, partners);
+    
+    // CRITICAL: Sum must exactly equal original amount
+    Assert.Equal(total, allocations.Sum(a => a.Amount));
+}
+```
+
+**✅ Extreme Currency Spans**:
+- Test a procurement order with **massive quantity** (1 million units) at **very small price** ($0.0001)
+
+**Example test cases**:
+```csharp
+[Theory]
+[InlineData(1000000, 0.0001, 100.00)]     // 1M units @ $0.0001 = $100
+[InlineData(5000000, 0.00001, 50.00)]     // 5M units @ $0.00001 = $50
+[InlineData(1, 999999999.99, 999999999.99)] // 1 unit @ $1B
+public void CalculateProcurementTotal_ExtremeQuantityAndPrice_AccuratePrecision(
+    int quantity, decimal unitPrice, decimal expectedTotal)
+{
+    var order = new ProcurementOrder 
+    { 
+        Quantity = quantity,
+        UnitPrice = unitPrice
+    };
+    
+    var total = _procurementService.CalculateTotal(order);
+    
+    Assert.Equal(expectedTotal, total);
+}
+
+[Fact]
+public void CreateInvoice_MicroPriceMassiveQuantity_NoOverflow()
+{
+    var invoice = new InvoiceRequest 
+    { 
+        LineItems = new List<InvoiceLineItem>
+        {
+            new() 
+            { 
+                Quantity = 10000000, // 10 million
+                UnitPrice = 0.000001m // One millionth of a dollar
+            }
+        }
+    };
+    
+    // Should handle calculation without overflow or precision loss
+    var result = _invoiceService.Create(invoice);
+    
+    Assert.NotNull(result);
+    Assert.Equal(10.00m, result.Total); // 10M × $0.000001 = $10.00
+}
+```
+
+---
+
+#### **2. Temporal and Fiscal Boundaries**
+
+Finance and Grant systems are slave to the calendar. Most defects appear at the "junctions" of time.
+
+**✅ Fiscal Year Rollover**:
+- Attempt to post a procurement invoice on the **last second of the fiscal year** (23:59:59) vs. **first second of the new one**
+
+**Example test cases**:
+```csharp
+[Fact]
+public void PostInvoice_LastSecondOfFiscalYear_AssignedToCorrectYear()
+{
+    // Assume fiscal year ends June 30
+    var lastSecondFY2024 = new DateTime(2024, 6, 30, 23, 59, 59);
+    var firstSecondFY2025 = new DateTime(2024, 7, 1, 0, 0, 0);
+    
+    var invoice1 = new Invoice 
+    { 
+        Amount = 5000m,
+        PostedDate = lastSecondFY2024
+    };
+    
+    var invoice2 = new Invoice 
+    { 
+        Amount = 3000m,
+        PostedDate = firstSecondFY2025
+    };
+    
+    var result1 = _fiscalService.AssignFiscalYear(invoice1);
+    var result2 = _fiscalService.AssignFiscalYear(invoice2);
+    
+    Assert.Equal(2024, result1.FiscalYear);
+    Assert.Equal(2025, result2.FiscalYear);
+}
+
+[Fact]
+public void CloseGrant_OnFiscalYearBoundary_HandlesCorrectly()
+{
+    var grant = new Grant 
+    { 
+        ExpirationDate = new DateTime(2024, 6, 30, 23, 59, 59),
+        Status = GrantStatus.Active
+    };
+    
+    // Attempt to close grant at fiscal year boundary
+    var result = _grantService.CloseGrant(grant.Id, 
+        closureDate: new DateTime(2024, 6, 30, 23, 59, 59));
+    
+    Assert.True(result.Success);
+    Assert.Equal(GrantStatus.Closed, result.Grant.Status);
+}
+```
+
+**✅ Leap Year Budgeting**:
+- For interest-bearing accounts or grant durations, test calculations that **span February 29th**
+
+**Example test cases**:
+```csharp
+[Theory]
+[InlineData(2024, 2, 29, true)]   // 2024 is a leap year
+[InlineData(2023, 2, 29, false)]  // 2023 is not
+[InlineData(2000, 2, 29, true)]   // 2000 is (divisible by 400)
+[InlineData(1900, 2, 29, false)]  // 1900 is not (divisible by 100 but not 400)
+public void CalculateGrantDuration_LeapYearDate_ValidatesCorrectly(
+    int year, int month, int day, bool shouldBeValid)
+{
+    if (shouldBeValid)
+    {
+        var startDate = new DateTime(year, month, day);
+        var grant = new Grant 
+        { 
+            StartDate = startDate,
+            DurationMonths = 12
+        };
+        
+        var result = _grantService.CalculateEndDate(grant);
+        
+        Assert.NotNull(result);
+    }
+    else
+    {
+        // Should reject invalid leap year date
+        Assert.Throws<ArgumentOutOfRangeException>(() => 
+            new DateTime(year, month, day));
+    }
+}
+
+[Fact]
+public void CalculateInterest_SpansLeapYear_Accurate366DayCalculation()
+{
+    var account = new Account 
+    { 
+        Balance = 100000m,
+        InterestRate = 0.05m, // 5% annual
+        StartDate = new DateTime(2024, 1, 1),  // Leap year
+        EndDate = new DateTime(2024, 12, 31)
+    };
+    
+    var interest = _financialService.CalculateInterest(account);
+    
+    // Leap year has 366 days, not 365
+    var expectedDaily = 100000m * 0.05m / 366m;
+    var expectedTotal = expectedDaily * 366m;
+    
+    Assert.Equal(expectedTotal, interest, 2); // 2 decimal precision
+}
+```
+
+**✅ Backdating/Future-dating**:
+- Try to set a **"Received Date" earlier than "Ordered Date"**
+- Set a **"Grant Expiration" in the year 9999**
+
+**Example test cases**:
+```csharp
+[Fact]
+public void CreateProcurement_ReceivedBeforeOrdered_ThrowsValidationException()
+{
+    var procurement = new ProcurementRequest 
+    { 
+        OrderedDate = DateTime.Now,
+        ReceivedDate = DateTime.Now.AddDays(-10) // 10 days BEFORE order
+    };
+    
+    await Assert.ThrowsAsync<ValidationException>(
+        () => _procurementService.CreateAsync(procurement));
+}
+
+[Fact]
+public void CreateGrant_ExpirationInYear9999_HandlesOrRejects()
+{
+    var grant = new GrantRequest 
+    { 
+        StartDate = DateTime.Now,
+        ExpirationDate = new DateTime(9999, 12, 31) // Far future
+    };
+    
+    // Should either handle gracefully or reject with clear message
+    var exception = await Record.ExceptionAsync(
+        () => _grantService.CreateAsync(grant));
+    
+    if (exception != null)
+    {
+        Assert.IsType<ValidationException>(exception);
+        Assert.Contains("expiration", exception.Message, 
+            StringComparison.OrdinalIgnoreCase);
+    }
+}
+
+[Theory]
+[InlineData(-1)]   // 1 day in past
+[InlineData(-30)]  // 30 days in past
+[InlineData(-365)] // 1 year in past
+public void UpdateContract_BackdateStartDate_ValidatesOrRejects(int daysOffset)
+{
+    var contract = new Contract 
+    { 
+        StartDate = DateTime.Now.AddDays(daysOffset),
+        EndDate = DateTime.Now.AddYears(1)
+    };
+    
+    var exception = await Record.ExceptionAsync(
+        () => _contractService.CreateAsync(contract));
+    
+    // Should reject backdated contracts
+    Assert.NotNull(exception);
+    Assert.IsType<ValidationException>(exception);
+}
+```
+
+---
+
+#### **3. Workflow and State Machine "Illegal Moves"**
+
+CRM and Procurement apps rely on strict status flows (e.g., Draft → Pending → Approved → Paid).
+
+**✅ The "Double-Submit" Race Condition**:
+- Rapidly click **"Approve" twice** on a Grant application
+
+**Defect Found**: In .NET, if not handled with thread safety or database locks, this can trigger **two separate payment disbursements** for one approval.
+
+**Example test cases**:
+```csharp
+[Fact]
+public async Task ApproveGrant_DoubleClick_OnlyProcessesOnce()
+{
+    var grantId = 123;
+    
+    // Simulate double-click: fire two approval requests simultaneously
+    var task1 = _grantService.ApproveAsync(grantId);
+    var task2 = _grantService.ApproveAsync(grantId);
+    
+    await Task.WhenAll(task1, task2);
+    
+    // Verify only ONE approval recorded
+    var grant = await _grantService.GetByIdAsync(grantId);
+    var approvalHistory = await _auditService.GetApprovalHistoryAsync(grantId);
+    
+    Assert.Single(approvalHistory); // Only one approval event
+    Assert.Equal(GrantStatus.Approved, grant.Status);
+}
+
+[Fact]
+public async Task ProcessPayment_DoubleSubmit_OnlyOnePaymentCreated()
+{
+    var paymentRequest = new PaymentRequest 
+    { 
+        Amount = 5000m,
+        RecipientId = 456
+    };
+    
+    // Simulate double-submit
+    var task1 = _paymentService.ProcessAsync(paymentRequest);
+    var task2 = _paymentService.ProcessAsync(paymentRequest);
+    
+    await Task.WhenAll(task1, task2);
+    
+    // Verify only ONE payment created in database
+    var payments = await _paymentService.GetByRecipientAsync(456);
+    var duplicates = payments.Where(p => p.Amount == 5000m).ToList();
+    
+    Assert.Single(duplicates); // Should be exactly 1, not 2
+}
+```
+
+**✅ The "Impossible" Transition**:
+- Attempt to move a Procurement Order from **"Cancelled"** directly to **"Paid"** via API call (bypassing UI logic)
+
+**Example test cases**:
+```csharp
+[Theory]
+[InlineData(ProcurementStatus.Cancelled, ProcurementStatus.Paid)]
+[InlineData(ProcurementStatus.Draft, ProcurementStatus.Completed)]
+[InlineData(ProcurementStatus.Rejected, ProcurementStatus.InProgress)]
+public async Task UpdateProcurementStatus_IllegalTransition_ThrowsInvalidOperationException(
+    ProcurementStatus fromStatus, ProcurementStatus toStatus)
+{
+    var procurement = await CreateProcurementWithStatus(fromStatus);
+    
+    var request = new UpdateProcurementStatusRequest 
+    { 
+        Id = procurement.Id,
+        NewStatus = toStatus
+    };
+    
+    await Assert.ThrowsAsync<InvalidOperationException>(
+        () => _procurementService.UpdateStatusAsync(request));
+}
+
+[Fact]
+public async Task TransitionGrantStatus_SkipRequiredApproval_Rejected()
+{
+    var grant = await CreateGrantWithStatus(GrantStatus.Draft);
+    
+    // Try to move from Draft → Paid (skipping Pending and Approved)
+    var request = new UpdateGrantRequest 
+    { 
+        Id = grant.Id,
+        Status = GrantStatus.Paid
+    };
+    
+    var exception = await Record.ExceptionAsync(
+        () => _grantService.UpdateAsync(request));
+    
+    Assert.NotNull(exception);
+    Assert.Contains("workflow", exception.Message, 
+        StringComparison.OrdinalIgnoreCase);
+}
+```
+
+**✅ Out-of-Order Deletion**:
+- Try to delete a **"Vendor"** who still has an **"Active Contract"** or **"Open Invoice"** attached
+
+**Example test cases**:
+```csharp
+[Fact]
+public async Task DeleteVendor_HasActiveContracts_ThrowsBusinessException()
+{
+    // Create vendor with active contract
+    var vendor = await CreateVendorAsync();
+    var contract = await CreateContractAsync(vendor.Id, ContractStatus.Active);
+    
+    // Attempt to delete vendor
+    await Assert.ThrowsAsync<BusinessException>(
+        () => _vendorService.DeleteAsync(vendor.Id));
+    
+    // Verify vendor still exists
+    var existingVendor = await _vendorService.GetByIdAsync(vendor.Id);
+    Assert.NotNull(existingVendor);
+}
+
+[Fact]
+public async Task DeletePartner_HasOpenInvoices_ReturnsValidationError()
+{
+    var partner = await CreatePartnerAsync();
+    var invoice = await CreateInvoiceAsync(partner.Id, InvoiceStatus.Pending);
+    
+    var result = await _partnerService.DeleteAsync(partner.Id);
+    
+    Assert.False(result.Success);
+    Assert.Contains("open invoices", result.ErrorMessage, 
+        StringComparison.OrdinalIgnoreCase);
+}
+
+[Theory]
+[InlineData(GrantStatus.Active)]
+[InlineData(GrantStatus.Approved)]
+[InlineData(GrantStatus.InProgress)]
+public async Task DeleteGrant_ActiveStatus_Prevented(GrantStatus status)
+{
+    var grant = await CreateGrantWithStatus(status);
+    
+    // Cannot delete active/approved/in-progress grants
+    await Assert.ThrowsAsync<InvalidOperationException>(
+        () => _grantService.DeleteAsync(grant.Id));
+}
+```
+
+---
+
+#### **4. Grant and Procurement Limits (The "Threshold" Tests)**
+
+Financial systems often have **"Approval Limits"** (e.g., a manager can only approve up to $5,000).
+
+**✅ The Exact Limit**:
+- If the limit is **$5,000**, test **$4,999.99, $5,000.00, and $5,000.01**
+
+**Defect Found**: The logic often uses `>` instead of `>=`, leading to unauthorized approvals or blocked valid ones.
+
+**Example test cases**:
+```csharp
+[Theory]
+[InlineData(4999.99, true)]   // Below limit - should auto-approve
+[InlineData(5000.00, true)]   // At limit - should auto-approve
+[InlineData(5000.01, false)]  // One cent over - requires senior approval
+[InlineData(0.00, false)]     // Zero amount - invalid
+[InlineData(10000.00, false)] // Double limit - requires senior approval
+public void ValidateApprovalThreshold_ManagerLimit5000_CorrectAuthorization(
+    decimal amount, bool expectedAutoApproval)
+{
+    var request = new ProcurementRequest 
+    { 
+        Total = amount,
+        RequestedBy = _managerUserId // Manager with $5K limit
+    };
+    
+    bool canAutoApprove = _approvalService.CheckAutomaticApproval(request);
+    
+    Assert.Equal(expectedAutoApproval, canAutoApprove);
+}
+
+[Theory]
+[InlineData(999.99, ApprovalLevel.Supervisor)]
+[InlineData(1000.00, ApprovalLevel.Supervisor)]
+[InlineData(1000.01, ApprovalLevel.Manager)]
+[InlineData(5000.00, ApprovalLevel.Manager)]
+[InlineData(5000.01, ApprovalLevel.Director)]
+[InlineData(50000.00, ApprovalLevel.Director)]
+[InlineData(50000.01, ApprovalLevel.ExecutiveCommittee)]
+public void DetermineApprovalLevel_TieredLimits_CorrectEscalation(
+    decimal amount, ApprovalLevel expectedLevel)
+{
+    var grant = new GrantRequest { Amount = amount };
+    
+    var requiredLevel = _approvalService.DetermineRequiredApproval(grant);
+    
+    Assert.Equal(expectedLevel, requiredLevel);
+}
+```
+
+**✅ Cumulative Limits**:
+- A user has a **daily limit of $10,000**. Test three transactions of **$4,000**.
+
+**Defect Found**: The system checks individual transactions but fails to **aggregate the daily total** correctly.
+
+**Example test cases**:
+```csharp
+[Fact]
+public async Task ProcessPayments_CumulativeDailyLimit_EnforcesAggregate()
+{
+    var userId = 789;
+    var dailyLimit = 10000m;
+    var today = DateTime.Today;
+    
+    // Process 3 payments of $4,000 each (total $12,000 > $10K limit)
+    var payment1 = new PaymentRequest { UserId = userId, Amount = 4000m, Date = today };
+    var payment2 = new PaymentRequest { UserId = userId, Amount = 4000m, Date = today };
+    var payment3 = new PaymentRequest { UserId = userId, Amount = 4000m, Date = today };
+    
+    var result1 = await _paymentService.ProcessAsync(payment1);
+    var result2 = await _paymentService.ProcessAsync(payment2);
+    var result3 = await _paymentService.ProcessAsync(payment3); // Should fail
+    
+    Assert.True(result1.Success);
+    Assert.True(result2.Success);
+    Assert.False(result3.Success); // Exceeds daily cumulative limit
+    Assert.Contains("daily limit", result3.ErrorMessage, 
+        StringComparison.OrdinalIgnoreCase);
+}
+
+[Fact]
+public async Task ApproveProcurements_MonthlyBudgetLimit_EnforcesAggregate()
+{
+    var departmentId = 100;
+    var monthlyBudget = 50000m;
+    var currentMonth = DateTime.Now;
+    
+    // Department already spent $45K this month
+    await CreateProcurementsForDepartment(departmentId, 45000m, currentMonth);
+    
+    // Try to approve $10K procurement (would exceed $50K monthly budget)
+    var newProcurement = new ProcurementRequest 
+    { 
+        DepartmentId = departmentId,
+        Amount = 10000m,
+        Date = currentMonth
+    };
+    
+    var result = await _procurementService.ApproveAsync(newProcurement);
+    
+    Assert.False(result.Success);
+    Assert.Contains("monthly budget", result.ErrorMessage, 
+        StringComparison.OrdinalIgnoreCase);
+}
+
+[Theory]
+[InlineData(3000, 3000, 3000, true)]   // 3 × $3K = $9K (under $10K limit)
+[InlineData(4000, 4000, 2000, true)]   // $10K total (at limit)
+[InlineData(4000, 4000, 2001, false)]  // $10,001 total (exceeds limit)
+[InlineData(5000, 5000, 1, false)]     // $10,001 total (exceeds by 1 cent)
+public async Task EnforceDailyLimit_MultipleTransactions_CumulativeCheck(
+    decimal amount1, decimal amount2, decimal amount3, bool shouldSucceed)
+{
+    var userId = 999;
+    var today = DateTime.Today;
+    
+    await _paymentService.ProcessAsync(new PaymentRequest 
+    { 
+        UserId = userId, Amount = amount1, Date = today 
+    });
+    await _paymentService.ProcessAsync(new PaymentRequest 
+    { 
+        UserId = userId, Amount = amount2, Date = today 
+    });
+    
+    var result3 = await _paymentService.ProcessAsync(new PaymentRequest 
+    { 
+        UserId = userId, Amount = amount3, Date = today 
+    });
+    
+    Assert.Equal(shouldSucceed, result3.Success);
+}
+```
+
+---
+
+#### **5. Globalization and Compliance**
+
+If your CRM or Finance app is used across borders, the edges are often cultural or regulatory.
+
+**✅ Currency Symbol Collisions**:
+- Use currencies with **different decimal placements**:
+  - **Japanese Yen** has no decimals (¥1000)
+  - **Kuwaiti Dinar** has three decimals (KWD 1.000)
+
+**Example test cases**:
+```csharp
+[Theory]
+[InlineData("USD", 2, 1000.00, "1000.00")]      // US Dollar - 2 decimals
+[InlineData("JPY", 0, 1000, "1000")]            // Japanese Yen - 0 decimals
+[InlineData("KWD", 3, 1.000, "1.000")]          // Kuwaiti Dinar - 3 decimals
+[InlineData("BHD", 3, 5.250, "5.250")]          // Bahraini Dinar - 3 decimals
+[InlineData("EUR", 2, 500.50, "500.50")]        // Euro - 2 decimals
+public void FormatCurrency_DifferentDecimalPlaces_CorrectFormatting(
+    string currencyCode, int decimals, decimal amount, string expectedFormat)
+{
+    var formatted = _currencyService.Format(amount, currencyCode);
+    
+    var decimalCount = formatted.Contains('.') 
+        ? formatted.Split('.')[1].Length 
+        : 0;
+    
+    Assert.Equal(decimals, decimalCount);
+}
+
+[Fact]
+public void CreateInvoice_JapaneseYen_NoDecimalValues()
+{
+    var invoice = new InvoiceRequest 
+    { 
+        Amount = 1000.00m, // Should be stored as 1000 (no decimals)
+        Currency = "JPY"
+    };
+    
+    var result = _invoiceService.Create(invoice);
+    
+    Assert.Equal(1000m, result.Amount);
+    Assert.DoesNotContain(".", result.FormattedAmount); // No decimal point
+}
+
+[Fact]
+public void CalculateExchange_KuwaitiDinar_ThreeDecimalPrecision()
+{
+    var amount = 100.000m; // KWD with 3 decimals
+    var rate = 3.27m; // Exchange rate to USD
+    
+    var converted = _currencyService.Convert(amount, "KWD", "USD", rate);
+    
+    // Should handle 3-decimal precision correctly
+    Assert.Equal(327.000m, converted);
+}
+```
+
+**✅ Character Overflows**:
+- Input a **vendor name in non-Latin script** (Cyrillic or Kanji) that **exceeds byte-limit** of database column, even if "character count" seems fine
+
+**Example test cases**:
+```csharp
+[Theory]
+[InlineData("АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя")] // Cyrillic
+[InlineData("日本語の会社名前が長いですよねこれはテストです")] // Japanese Kanji
+[InlineData("الشركة العربية للتجارة والصناعة والخدمات")] // Arabic
+[InlineData("中国国际贸易投资发展有限责任公司")] // Chinese
+public async Task CreateVendor_NonLatinScript_HandlesMultiByteCharacters(string vendorName)
+{
+    var vendor = new VendorRequest 
+    { 
+        Name = vendorName,
+        Country = "JP"
+    };
+    
+    // Should handle multi-byte characters correctly
+    // UTF-8 encoding: some characters take 2-4 bytes
+    var byteCount = Encoding.UTF8.GetByteCount(vendorName);
+    var charCount = vendorName.Length;
+    
+    // Character count may be less than byte count for multi-byte scripts
+    Assert.True(byteCount >= charCount);
+    
+    var result = await _vendorService.CreateAsync(vendor);
+    Assert.NotNull(result);
+    Assert.Equal(vendorName, result.Name);
+}
+
+[Fact]
+public async Task CreatePartner_LongUnicodeString_TruncatesOrRejects()
+{
+    // Each Japanese character can be 3 bytes in UTF-8
+    // 100 characters × 3 bytes = 300 bytes (may exceed 200-byte column limit)
+    var longJapaneseName = string.Concat(Enumerable.Repeat("日", 100));
+    
+    var partner = new PartnerRequest { Name = longJapaneseName };
+    
+    var exception = await Record.ExceptionAsync(
+        () => _partnerService.CreateAsync(partner));
+    
+    if (exception != null)
+    {
+        // Should reject gracefully with validation error
+        Assert.IsType<ValidationException>(exception);
+        Assert.Contains("length", exception.Message, 
+            StringComparison.OrdinalIgnoreCase);
+    }
+}
+
+[Theory]
+[InlineData("Company™ Inc®")]           // Trademark symbols
+[InlineData("Café & Restaurant")]       // Accented characters
+[InlineData("Price: €50 or $65")]       // Multiple currency symbols
+[InlineData("Email: user@example.com")] // Special characters
+public async Task SaveVendor_SpecialCharacters_PreservesCorrectly(string vendorName)
+{
+    var vendor = new VendorRequest { Name = vendorName };
+    
+    var result = await _vendorService.CreateAsync(vendor);
+    
+    // Should preserve special characters exactly
+    Assert.Equal(vendorName, result.Name);
+}
+```
+
+---
+
+#### **6. Enterprise Boundary and Limits Testing**
+
+In enterprise systems like Procurement or Grants Management, **boundaries aren't just numbers—they are legal and fiscal guardrails**. Defects at these limits often result in:
+- **"Leakage"**: Money going where it shouldn't
+- **"Deadlocks"**: Users unable to complete valid work
+
+These tests target the boundaries where systems break under real-world constraints.
+
+---
+
+##### **6.1 Financial and Decimal Boundaries**
+
+In .NET, `decimal` is the standard for finance, but how the database and UI handle its precision is where defects hide.
+
+**✅ Precision Truncation**:
+- If C# code uses `decimal` but SQL database is set to `Decimal(18,2)`, test value like **100.009**
+
+**Defect Found**: Does the system round to **100.01**, truncate to **100.00**, or throw **"Data truncated"** exception?
+
+**Example test cases**:
+```csharp
+[Theory]
+[InlineData(100.009, 100.01)]  // Should round to 2 decimals
+[InlineData(100.001, 100.00)]  // Should round to 2 decimals
+[InlineData(100.005, 100.00)]  // Banker's rounding (ToEven)
+[InlineData(999.999, 1000.00)] // Should round up
+public async Task SaveInvoice_DecimalPrecisionExceedsDB_RoundsCorrectly(
+    decimal inputAmount, decimal expectedStored)
+{
+    var invoice = new InvoiceRequest 
+    { 
+        Amount = inputAmount // More than 2 decimal places
+    };
+    
+    var result = await _invoiceService.CreateAsync(invoice);
+    
+    // Should round to 2 decimals (DB precision), not truncate or error
+    Assert.Equal(expectedStored, result.Amount);
+}
+
+[Fact]
+public async Task CreateProcurement_DecimalOverflow_HandlesGracefully()
+{
+    // C# decimal has 28-29 significant digits
+    // Database Decimal(18,2) has 18 total digits, 2 after decimal
+    var tooManyDigits = 9999999999999999.99m; // 18 digits (16 + 2)
+    
+    var procurement = new ProcurementRequest 
+    { 
+        Amount = tooManyDigits
+    };
+    
+    // Should either accept or return clear validation error
+    var exception = await Record.ExceptionAsync(
+        () => _procurementService.CreateAsync(procurement));
+    
+    if (exception != null)
+    {
+        // Should be validation error, not SQL truncation error
+        Assert.IsType<ValidationException>(exception);
+    }
+}
+
+[Theory]
+[InlineData("100.009")]    // 3 decimal places (over limit)
+[InlineData("100.0099")]   // 4 decimal places
+[InlineData("100.123456")] // 6 decimal places
+public async Task ProcessPayment_StringDecimalConversion_HandlesExtraPrecision(
+    string amountString)
+{
+    // API receives string, converts to decimal
+    var payment = new PaymentRequest 
+    { 
+        AmountString = amountString
+    };
+    
+    // Should parse and round correctly, not crash with FormatException
+    var result = await _paymentService.ProcessAsync(payment);
+    
+    Assert.True(result.Success);
+    Assert.True(result.Amount > 0);
+}
+```
+
+**✅ The "Zero" and "Near-Zero" Floor**:
+- Test procurement lines with price of **$0.00 and $0.01**
+
+**Defect Found**: Many systems fail to calculate **taxes or shipping correctly** on "Free" or "Sample" items.
+
+**Example test cases**:
+```csharp
+[Theory]
+[InlineData(0.00, 0)]     // Zero amount
+[InlineData(0.01, 0.01)]  // One cent
+[InlineData(0.001, 0.00)] // Sub-cent (should round to 0)
+public async Task CalculateTax_ZeroAndNearZero_HandlesCorrectly(
+    decimal amount, decimal expectedTax)
+{
+    var item = new ProcurementItem 
+    { 
+        UnitPrice = amount,
+        Quantity = 1,
+        TaxRate = 0.10m // 10% tax
+    };
+    
+    var result = _taxService.Calculate(item);
+    
+    // Zero and near-zero should not cause division-by-zero or NaN
+    Assert.Equal(expectedTax, result.TaxAmount);
+}
+
+[Fact]
+public async Task CreateInvoice_AllItemsZeroPrice_TotalsCorrectly()
+{
+    var invoice = new InvoiceRequest 
+    { 
+        LineItems = new List<InvoiceLineItem>
+        {
+            new() { Description = "Free Sample", UnitPrice = 0.00m, Quantity = 10 },
+            new() { Description = "Promotional Item", UnitPrice = 0.00m, Quantity = 5 }
+        }
+    };
+    
+    var result = await _invoiceService.CreateAsync(invoice);
+    
+    // Should handle zero-price items without errors
+    Assert.Equal(0.00m, result.Subtotal);
+    Assert.Equal(0.00m, result.Tax);
+    Assert.Equal(0.00m, result.Total);
+}
+
+[Theory]
+[InlineData(0.00, 100, 10.00, 10.00)]  // Free item, shipping applies
+[InlineData(0.01, 1, 5.00, 5.01)]      // Near-zero item with shipping
+[InlineData(0.00, 0, 0.00, 0.00)]      // Zero price, zero quantity
+public async Task CalculateShipping_ZeroPrice_StillAppliesShipping(
+    decimal unitPrice, int quantity, decimal shippingFee, decimal expectedTotal)
+{
+    var order = new OrderRequest 
+    { 
+        Items = new List<OrderItem> 
+        { 
+            new() { UnitPrice = unitPrice, Quantity = quantity }
+        },
+        ShippingFee = shippingFee
+    };
+    
+    var result = _orderService.CalculateTotal(order);
+    
+    // Shipping should apply even when item price is zero
+    Assert.Equal(expectedTotal, result.Total);
+}
+```
+
+**✅ Maximum Capacity**:
+- Enter the **largest possible value** for the data type (e.g., `decimal.MaxValue`)
+
+**Defect Found**: Often triggers **"Arithmetic Overflow"** errors during totalization (e.g., adding $1 charge to maxed-out budget).
+
+**Example test cases**:
+```csharp
+[Fact]
+public void CreateBudget_DecimalMaxValue_HandlesOrRejects()
+{
+    var budget = new BudgetRequest 
+    { 
+        TotalAmount = decimal.MaxValue // 79,228,162,514,264,337,593,543,950,335
+    };
+    
+    // Should either accept or return clear validation error
+    var exception = Record.Exception(() => _budgetService.Create(budget));
+    
+    if (exception != null)
+    {
+        // Should be business validation, not arithmetic overflow
+        Assert.IsType<ValidationException>(exception);
+        Assert.Contains("maximum", exception.Message, 
+            StringComparison.OrdinalIgnoreCase);
+    }
+}
+
+[Fact]
+public void AddExpense_ToMaxedOutBudget_ThrowsOverflowException()
+{
+    var budget = new Budget 
+    { 
+        TotalAmount = decimal.MaxValue,
+        CurrentSpent = decimal.MaxValue - 1000m
+    };
+    
+    var expense = new ExpenseRequest { Amount = 2000m };
+    
+    // Adding to near-max value should overflow or be rejected
+    var exception = Record.Exception(
+        () => _budgetService.AddExpense(budget, expense));
+    
+    Assert.NotNull(exception);
+    // Could be OverflowException or ValidationException
+    Assert.True(exception is OverflowException || 
+                exception is ValidationException);
+}
+
+[Theory]
+[InlineData(decimal.MaxValue)]
+[InlineData(decimal.MinValue)]
+[InlineData(79228162514264337593543950335)] // Max value in numeric form
+public async Task ProcessPayment_ExtremeValues_RejectsGracefully(decimal amount)
+{
+    var payment = new PaymentRequest { Amount = amount };
+    
+    var result = await _paymentService.ProcessAsync(payment);
+    
+    // Should reject with clear message, not crash
+    Assert.False(result.Success);
+    Assert.Contains("valid amount", result.ErrorMessage, 
+        StringComparison.OrdinalIgnoreCase);
+}
+```
+
+---
+
+##### **6.2 Thresholds and Approval Hierarchies**
+
+Procurement and Grants rely heavily on **"Approval Tiers."** These are classic **"Off-by-One"** defect hotspots.
+
+**✅ Tier Transitions**:
+- If a **Manager can approve up to $5,000** and a **Director is required for anything over that**, test exactly **$5,000.00**
+
+**Defect Found**: The logic `if (amount > 5000)` behaves differently than `if (amount >= 5000)`.
+
+**Example test cases**:
+```csharp
+[Theory]
+[InlineData(4999.99, ApproverLevel.Manager, true)]   // Below threshold
+[InlineData(5000.00, ApproverLevel.Manager, true)]   // AT threshold (critical test!)
+[InlineData(5000.01, ApproverLevel.Director, false)] // Above threshold
+[InlineData(10000.00, ApproverLevel.Director, true)] // Director limit
+[InlineData(10000.01, ApproverLevel.VP, false)]      // Requires VP
+public async Task DetermineApprover_ThresholdBoundary_CorrectTierAssignment(
+    decimal amount, ApproverLevel currentLevel, bool canApprove)
+{
+    var request = new ApprovalRequest 
+    { 
+        Amount = amount,
+        ApproverLevel = currentLevel
+    };
+    
+    var result = _approvalService.CanApprove(request);
+    
+    // CRITICAL: Test the exact boundary value
+    Assert.Equal(canApprove, result);
+}
+
+[Fact]
+public async Task ApproveGrant_ExactlyAtLimit_DoesNotRequireEscalation()
+{
+    // Manager has exactly $5,000 approval authority
+    var grant = new GrantRequest 
+    { 
+        Amount = 5000.00m,
+        RequestedBy = _managerUserId
+    };
+    
+    var result = await _grantService.SubmitForApprovalAsync(grant);
+    
+    // Should auto-approve, NOT escalate to Director
+    Assert.True(result.AutoApproved);
+    Assert.Equal(ApproverLevel.Manager, result.ApproverLevel);
+}
+
+[Theory]
+[InlineData(999.99, "Supervisor")]
+[InlineData(1000.00, "Supervisor")]  // Exact boundary
+[InlineData(1000.01, "Manager")]
+[InlineData(5000.00, "Manager")]     // Exact boundary
+[InlineData(5000.01, "Director")]
+[InlineData(50000.00, "Director")]   // Exact boundary
+[InlineData(50000.01, "VP")]
+public void GetRequiredApprover_TieredLimits_CorrectEscalation(
+    decimal amount, string expectedApprover)
+{
+    var procurement = new ProcurementRequest { Amount = amount };
+    
+    var requiredApprover = _approvalService.GetRequiredApprover(procurement);
+    
+    Assert.Equal(expectedApprover, requiredApprover);
+}
+```
+
+**✅ Multi-Limit Aggregation**:
+- Test user's **"Single Transaction Limit"** vs. **"Daily/Monthly Limit"**
+- Example: User has $1,000 single-transaction limit. Attempt to process **ten $101 transactions**.
+
+**Example test cases**:
+```csharp
+[Fact]
+public async Task ProcessMultipleTransactions_ExceedsDailyLimit_RejectsAfterThreshold()
+{
+    var userId = 123;
+    var singleTxnLimit = 1000m;
+    var dailyLimit = 5000m;
+    
+    // Process 5 transactions of $1,000 each (within individual limit)
+    // Total = $5,000 (at daily limit)
+    for (int i = 0; i < 5; i++)
+    {
+        var payment = new PaymentRequest 
+        { 
+            UserId = userId,
+            Amount = singleTxnLimit,
+            Date = DateTime.Today
+        };
+        
+        var result = await _paymentService.ProcessAsync(payment);
+        
+        if (i < 5)
+        {
+            Assert.True(result.Success); // First 5 succeed
+        }
+    }
+    
+    // 6th transaction should fail (exceeds $5K daily limit)
+    var sixthPayment = new PaymentRequest 
+    { 
+        UserId = userId,
+        Amount = 1000m,
+        Date = DateTime.Today
+    };
+    
+    var sixthResult = await _paymentService.ProcessAsync(sixthPayment);
+    
+    Assert.False(sixthResult.Success);
+    Assert.Contains("daily limit", sixthResult.ErrorMessage, 
+        StringComparison.OrdinalIgnoreCase);
+}
+
+[Theory]
+[InlineData(10, 101, 1000, 5000, false)]  // 10 × $101 = $1,010 (exceeds daily at 5th txn)
+[InlineData(5, 999, 1000, 5000, true)]    // 5 × $999 = $4,995 (within both limits)
+[InlineData(1, 1001, 1000, 5000, false)]  // $1,001 (exceeds single transaction limit)
+public async Task EnforceMultiLevelLimits_SingleAndDaily_BothRespected(
+    int transactionCount, decimal amountEach, 
+    decimal singleLimit, decimal dailyLimit, bool shouldAllSucceed)
+{
+    var userId = 456;
+    int successCount = 0;
+    
+    for (int i = 0; i < transactionCount; i++)
+    {
+        var payment = new PaymentRequest 
+        { 
+            UserId = userId,
+            Amount = amountEach,
+            Date = DateTime.Today
+        };
+        
+        var result = await _paymentService.ProcessAsync(payment);
+        
+        if (result.Success) successCount++;
+    }
+    
+    if (shouldAllSucceed)
+    {
+        Assert.Equal(transactionCount, successCount);
+    }
+    else
+    {
+        Assert.True(successCount < transactionCount);
+    }
+}
+```
+
+**✅ Budget Depletion**:
+- Test a Grant payout that **exactly equals the remaining balance** (e.g., balance is $500.25, request is $500.25)
+
+**Defect Found**: Rounding errors in the background might make balance appear as **$500.2499**, causing the $500.25 request to be rejected.
+
+**Example test cases**:
+```csharp
+[Fact]
+public async Task ProcessPayout_ExactlyEqualsRemainingBalance_Succeeds()
+{
+    var grant = new Grant 
+    { 
+        TotalAmount = 10000.00m,
+        PaidOut = 9499.75m,
+        RemainingBalance = 500.25m // Exact remaining
+    };
+    
+    var payout = new PayoutRequest 
+    { 
+        GrantId = grant.Id,
+        Amount = 500.25m // Exactly the remaining balance
+    };
+    
+    var result = await _grantService.ProcessPayoutAsync(payout);
+    
+    // Should succeed - exact balance match
+    Assert.True(result.Success);
+    Assert.Equal(0.00m, result.Grant.RemainingBalance);
+}
+
+[Theory]
+[InlineData(500.25, 500.25, true)]   // Exact match
+[InlineData(500.25, 500.24, true)]   // Under by 1 cent
+[InlineData(500.25, 500.26, false)]  // Over by 1 cent
+[InlineData(500.2499, 500.25, false)] // Precision issue (balance slightly less)
+public async Task ValidatePayout_AgainstRemainingBalance_PrecisionHandling(
+    decimal remainingBalance, decimal requestedAmount, bool shouldSucceed)
+{
+    var grant = new Grant 
+    { 
+        TotalAmount = 10000m,
+        PaidOut = 10000m - remainingBalance,
+        RemainingBalance = remainingBalance
+    };
+    
+    var payout = new PayoutRequest 
+    { 
+        GrantId = grant.Id,
+        Amount = requestedAmount
+    };
+    
+    var result = await _grantService.ProcessPayoutAsync(payout);
+    
+    Assert.Equal(shouldSucceed, result.Success);
+}
+
+[Fact]
+public async Task DepleteBudget_MultipleSmallPayouts_NoGhostPenny()
+{
+    var budget = new Budget 
+    { 
+        TotalAmount = 100.00m,
+        Spent = 0.00m
+    };
+    
+    // Make 100 payouts of $1.00 each
+    for (int i = 0; i < 100; i++)
+    {
+        var expense = new ExpenseRequest { Amount = 1.00m };
+        await _budgetService.AddExpenseAsync(budget.Id, expense);
+    }
+    
+    // Reload budget
+    var finalBudget = await _budgetService.GetByIdAsync(budget.Id);
+    
+    // Should be exactly depleted (no ghost penny)
+    Assert.Equal(100.00m, finalBudget.Spent);
+    Assert.Equal(0.00m, finalBudget.RemainingBalance);
+}
+```
+
+---
+
+##### **6.3 Project Management and CRM "Entity" Limits**
+
+These systems often break when they hit the limits of human-organized data.
+
+**✅ The "Many-to-Many" Stress Test**:
+- Attach **500+ documents** to a single Project or Grant
+
+**Defect Found**: UI timeout or **"Out of Memory"** errors in .NET `List<T>` or `IQueryable` when trying to render the list.
+
+**Example test cases**:
+```csharp
+[Theory]
+[InlineData(100)]
+[InlineData(500)]
+[InlineData(1000)]
+[InlineData(5000)]
+public async Task AttachDocuments_LargeQuantity_HandlesWithoutTimeout(int documentCount)
+{
+    var project = await CreateProjectAsync();
+    
+    // Attach many documents
+    var documents = Enumerable.Range(1, documentCount)
+        .Select(i => new DocumentRequest 
+        { 
+            FileName = $"Document_{i}.pdf",
+            FileSize = 1024 * 100 // 100KB each
+        })
+        .ToList();
+    
+    var stopwatch = Stopwatch.StartNew();
+    
+    // Should complete within reasonable time (e.g., 30 seconds)
+    var result = await _projectService.AttachDocumentsAsync(project.Id, documents);
+    
+    stopwatch.Stop();
+    
+    Assert.True(result.Success);
+    Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(30), 
+        $"Took {stopwatch.Elapsed.TotalSeconds}s to attach {documentCount} documents");
+}
+
+[Fact]
+public async Task LoadProject_With5000Documents_UsesEfficientPagination()
+{
+    var project = await CreateProjectWithDocuments(5000);
+    
+    // Should use pagination, not load all at once
+    var result = await _projectService.GetByIdAsync(project.Id);
+    
+    Assert.NotNull(result);
+    // Should return document count, not all documents
+    Assert.Equal(5000, result.DocumentCount);
+    
+    // Loading actual documents should be paginated
+    var documents = await _projectService.GetDocumentsAsync(
+        project.Id, 
+        pageNumber: 1, 
+        pageSize: 50);
+    
+    Assert.Equal(50, documents.Count);
+}
+
+[Fact]
+public async Task AddStakeholders_ManyToMany_NoCartesianExplosion()
+{
+    var opportunity = await CreateOpportunityAsync();
+    
+    // Attach 100 partners, each with 10 contacts
+    var partners = await CreatePartnersWithContacts(
+        partnerCount: 100, 
+        contactsPerPartner: 10);
+    
+    // Associate all partners with opportunity
+    var result = await _opportunityService.AddStakeholdersAsync(
+        opportunity.Id, 
+        partners.Select(p => p.Id).ToList());
+    
+    // Should not create 100 × 10 = 1000 rows in join table
+    // Should create 100 rows (one per partner)
+    var stakeholders = await _opportunityService.GetStakeholdersAsync(opportunity.Id);
+    
+    Assert.Equal(100, stakeholders.Count);
+}
+```
+
+**✅ Date Boundaries**:
+- **Project End Date**: Set end date to **same day as start date**
+- **Fiscal Year Crossover**: Create project that **starts December 31st, ends January 1st**
+- **The "Infinite" Project**: Set project to end in **year 9999**
+
+**Example test cases**:
+```csharp
+[Fact]
+public async Task CreateProject_EndDateSameAsStartDate_AllowsOrRejects()
+{
+    var today = DateTime.Today;
+    
+    var project = new ProjectRequest 
+    { 
+        StartDate = today,
+        EndDate = today // Same day
+    };
+    
+    var result = await _projectService.CreateAsync(project);
+    
+    // Should either allow (0-day project) or reject with clear message
+    if (!result.Success)
+    {
+        Assert.Contains("end date", result.ErrorMessage, 
+            StringComparison.OrdinalIgnoreCase);
+    }
+}
+
+[Fact]
+public async Task CreateGrant_SpansFiscalYearBoundary_AssignedCorrectly()
+{
+    // Grant starts Dec 31, 2024, ends Jan 1, 2025
+    var grant = new GrantRequest 
+    { 
+        StartDate = new DateTime(2024, 12, 31),
+        EndDate = new DateTime(2025, 1, 1),
+        DurationDays = 2
+    };
+    
+    var result = await _grantService.CreateAsync(grant);
+    
+    Assert.True(result.Success);
+    // Should handle fiscal year transition correctly
+    Assert.NotNull(result.Grant.FiscalYear);
+}
+
+[Theory]
+[InlineData(9999, 12, 31)]  // Far future
+[InlineData(2100, 1, 1)]    // Next century
+[InlineData(1900, 1, 1)]    // Past century
+public async Task CreateProject_ExtremeDates_ValidatesOrAccepts(
+    int year, int month, int day)
+{
+    var project = new ProjectRequest 
+    { 
+        StartDate = DateTime.Today,
+        EndDate = new DateTime(year, month, day)
+    };
+    
+    var exception = await Record.ExceptionAsync(
+        () => _projectService.CreateAsync(project));
+    
+    // Should either accept or reject with validation error
+    if (exception != null)
+    {
+        Assert.IsType<ValidationException>(exception);
+    }
+}
+
+[Fact]
+public async Task CalculateProjectDuration_OneDayProject_HandlesCorrectly()
+{
+    var startDate = DateTime.Today;
+    var endDate = DateTime.Today; // Same day
+    
+    var duration = _projectService.CalculateDuration(startDate, endDate);
+    
+    // Should be 0 or 1 day, not negative or error
+    Assert.True(duration >= 0);
+    Assert.True(duration <= 1);
+}
+```
+
+**✅ Name and String Lengths**:
+- CRM systems often fail on **long names or addresses**
+- Test with string **exactly 1 character longer** than database field (often **255 or 4000**)
+
+**Example test cases**:
+```csharp
+[Theory]
+[InlineData(254, true)]   // Just under limit
+[InlineData(255, true)]   // Exactly at limit
+[InlineData(256, false)]  // One over limit
+[InlineData(500, false)]  // Way over limit
+public async Task CreateVendor_NameLength_EnforcesLimit(
+    int nameLength, bool shouldSucceed)
+{
+    var vendor = new VendorRequest 
+    { 
+        Name = new string('A', nameLength)
+    };
+    
+    var exception = await Record.ExceptionAsync(
+        () => _vendorService.CreateAsync(vendor));
+    
+    if (shouldSucceed)
+    {
+        Assert.Null(exception);
+    }
+    else
+    {
+        Assert.NotNull(exception);
+        Assert.IsType<ValidationException>(exception);
+    }
+}
+
+[Theory]
+[InlineData(3999, true)]   // Just under limit (NVARCHAR(4000))
+[InlineData(4000, true)]   // Exactly at limit
+[InlineData(4001, false)]  // One over limit
+public async Task SaveProjectDescription_MaxLength_TruncatesOrRejects(
+    int descriptionLength, bool shouldSucceed)
+{
+    var description = new string('X', descriptionLength);
+    
+    var project = new ProjectRequest 
+    { 
+        Description = description
+    };
+    
+    var result = await _projectService.CreateAsync(project);
+    
+    if (shouldSucceed)
+    {
+        Assert.True(result.Success);
+        Assert.Equal(descriptionLength, result.Project.Description.Length);
+    }
+    else
+    {
+        Assert.False(result.Success);
+        Assert.Contains("length", result.ErrorMessage, 
+            StringComparison.OrdinalIgnoreCase);
+    }
+}
+
+[Fact]
+public async Task CreateContact_LongAddress_HandlesMultiLineFields()
+{
+    // Test address that exceeds single-line limits but is valid multi-line
+    var contact = new ContactRequest 
+    { 
+        Address = new string('A', 255), // Max single line
+        City = new string('B', 100),
+        Country = new string('C', 100),
+        PostalCode = "12345-67890"
+    };
+    
+    var result = await _contactService.CreateAsync(contact);
+    
+    Assert.True(result.Success);
+}
+```
+
+---
+
+##### **6.4 Concurrency and Session Limits**
+
+In C# .NET, how the server handles multiple **"hands in the cookie jar"** is a critical boundary.
+
+**✅ The "Double Disbursement" Limit**:
+- Use tool like **JMeter or Playwright** to trigger **"Submit Payment" API twice within milliseconds**
+
+**Defect Found**: If .NET code lacks `lock` statements or database transactions, a Grant could be **paid out twice**.
+
+**Example test cases**:
+```csharp
+[Fact]
+public async Task ProcessPayment_DoubleSubmitWithinMilliseconds_OnlyProcessesOnce()
+{
+    var paymentRequest = new PaymentRequest 
+    { 
+        GrantId = 123,
+        Amount = 5000m,
+        RecipientId = 456
+    };
+    
+    // Fire two requests simultaneously (within milliseconds)
+    var task1 = _paymentService.ProcessAsync(paymentRequest);
+    var task2 = _paymentService.ProcessAsync(paymentRequest);
+    
+    await Task.WhenAll(task1, task2);
+    
+    var result1 = await task1;
+    var result2 = await task2;
+    
+    // Only ONE should succeed
+    var successCount = (result1.Success ? 1 : 0) + (result2.Success ? 1 : 0);
+    Assert.Equal(1, successCount);
+    
+    // Verify only one payment record created
+    var payments = await _paymentService.GetByGrantIdAsync(123);
+    Assert.Single(payments.Where(p => p.Amount == 5000m));
+}
+
+[Fact]
+public async Task ApproveGrant_ConcurrentApprovals_PreventsDuplicateDisbursement()
+{
+    var grantId = 789;
+    var approvers = new[] { 101, 102, 103 }; // 3 users approving simultaneously
+    
+    // All three approve at same time
+    var tasks = approvers.Select(userId => 
+        _grantService.ApproveAsync(grantId, userId)).ToArray();
+    
+    await Task.WhenAll(tasks);
+    
+    // Verify only ONE approval recorded
+    var approvalHistory = await _auditService.GetApprovalHistoryAsync(grantId);
+    Assert.Single(approvalHistory);
+    
+    // Verify only ONE payment triggered
+    var payments = await _paymentService.GetByGrantIdAsync(grantId);
+    Assert.Single(payments);
+}
+
+[Theory]
+[InlineData(2)]    // 2 simultaneous requests
+[InlineData(5)]    // 5 simultaneous requests
+[InlineData(10)]   // 10 simultaneous requests
+public async Task ProcessTransaction_ConcurrentRequests_MaintainsDataIntegrity(
+    int concurrentRequestCount)
+{
+    var accountId = 999;
+    var transactionAmount = 100m;
+    
+    // Fire N concurrent transactions
+    var tasks = Enumerable.Range(1, concurrentRequestCount)
+        .Select(_ => _transactionService.ProcessAsync(
+            new TransactionRequest 
+            { 
+                AccountId = accountId,
+                Amount = transactionAmount
+            }))
+        .ToArray();
+    
+    await Task.WhenAll(tasks);
+    
+    // Verify all transactions recorded correctly (no duplicates)
+    var transactions = await _transactionService.GetByAccountAsync(accountId);
+    
+    Assert.Equal(concurrentRequestCount, transactions.Count);
+    Assert.Equal(transactionAmount * concurrentRequestCount, 
+        transactions.Sum(t => t.Amount));
+}
+```
+
+**✅ Batch Upload Limits**:
+- If procurement system allows **CSV uploads**, test with **1 row, exact limit (e.g., 1000 rows), and 1001 rows**
+
+**Defect Found**: Finding where **server-side timeout** (HttpClient or Kestrel timeout) kills the process.
+
+**Example test cases**:
+```csharp
+[Theory]
+[InlineData(1)]      // Single row
+[InlineData(100)]    // Small batch
+[InlineData(999)]    // Just under limit
+[InlineData(1000)]   // Exactly at limit
+[InlineData(1001)]   // One over limit
+public async Task UploadCSV_VariousRowCounts_HandlesOrRejectsAppropriately(
+    int rowCount)
+{
+    var csvData = GenerateMockCSV(rowCount);
+    
+    var upload = new FileUploadRequest 
+    { 
+        FileName = "procurement_upload.csv",
+        Content = csvData,
+        RowCount = rowCount
+    };
+    
+    var stopwatch = Stopwatch.StartNew();
+    
+    var result = await _uploadService.ProcessCSVAsync(upload);
+    
+    stopwatch.Stop();
+    
+    if (rowCount <= 1000)
+    {
+        // Should succeed within reasonable time (< 60 seconds)
+        Assert.True(result.Success);
+        Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(60));
+    }
+    else
+    {
+        // Should reject or require batch processing
+        Assert.False(result.Success);
+        Assert.Contains("limit", result.ErrorMessage, 
+            StringComparison.OrdinalIgnoreCase);
+    }
+}
+
+[Fact]
+public async Task UploadLargeFile_ExceedsTimeout_FailsGracefully()
+{
+    // Generate large CSV (10,000 rows)
+    var largeCSV = GenerateMockCSV(10000);
+    
+    var upload = new FileUploadRequest 
+    { 
+        FileName = "large_upload.csv",
+        Content = largeCSV
+    };
+    
+    // Set aggressive timeout (5 seconds)
+    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+    
+    // Should timeout or be rejected before processing
+    var exception = await Record.ExceptionAsync(
+        () => _uploadService.ProcessCSVAsync(upload, cts.Token));
+    
+    Assert.NotNull(exception);
+    // Should be timeout or validation error, not unhandled exception
+    Assert.True(exception is TaskCanceledException || 
+                exception is ValidationException);
+}
+
+[Theory]
+[InlineData(5000, 50, 100)]   // 5000 rows, 50 per batch, 100 batches
+[InlineData(10000, 100, 100)] // 10000 rows, 100 per batch, 100 batches
+public async Task BatchUpload_LargeDataset_ProcessesInChunks(
+    int totalRows, int batchSize, int expectedBatches)
+{
+    var csvData = GenerateMockCSV(totalRows);
+    
+    var upload = new FileUploadRequest 
+    { 
+        FileName = "large_batch_upload.csv",
+        Content = csvData,
+        BatchSize = batchSize
+    };
+    
+    var result = await _uploadService.ProcessInBatchesAsync(upload);
+    
+    Assert.True(result.Success);
+    Assert.Equal(expectedBatches, result.BatchesProcessed);
+    Assert.Equal(totalRows, result.RowsProcessed);
+}
+```
+
+---
+
+#### **7. Standard Edge Cases (Boundary Conditions)**
+
+**✅ Numeric Boundaries**:
+- Boundary values: **0, 1, MAX_INT, MIN_INT**
+- Extreme values: zero, negative, billions
+
+**✅ String Boundaries**:
+- Empty strings, whitespace-only
+- Very long strings (10,000+ characters)
+- Special characters and Unicode
+
+**✅ Collection Boundaries**:
+- Empty collections/lists
+- Single-item collections
+- Very large collections (10,000+ items)
+
+**✅ Timing Boundaries**:
+- Immediate requests (no delay)
+- Operations at exact midnight
+- Concurrent operations on same resource
+
+**Example test cases**:
+```csharp
+[Theory]
+[InlineData(0)]
+[InlineData(1)]
+[InlineData(1000)]
+[InlineData(-1)]
+[InlineData(int.MaxValue)]
+public async Task GetPagedResults_BoundaryPageSize_HandlesGracefully(int pageSize)
+{
+    var request = new PagedRequest { PageSize = pageSize };
+    
+    var exception = await Record.ExceptionAsync(
+        () => _dataService.GetPagedAsync(request));
+    
+    // Should either handle or return clear validation error
+    Assert.True(exception == null || exception is ValidationException);
+}
+
+[Fact]
+public async Task CreateRecord_UnicodeEmoji_PreservesCorrectly()
+{
+    var description = "Project for healthcare 🏥 and education 📚 sectors";
+    
+    var record = new RecordRequest { Description = description };
+    var result = await _recordService.CreateAsync(record);
+    
+    Assert.Equal(description, result.Description);
+}
+```
+
+---
+
+#### **Summary: Comprehensive Edge Case Coverage**
+
+**Required test categories for CRM/Finance/Procurement systems**:
+- ✅ **Floating Point Financial Edge**: Rounding, zero-sum, extreme spans
+- ✅ **Temporal and Fiscal Boundaries**: Fiscal year rollover, leap years, backdating
+- ✅ **Workflow State Machine**: Double-submit, illegal transitions, out-of-order deletion
+- ✅ **Threshold Tests**: Exact limits, cumulative limits, tiered approvals
+- ✅ **Globalization**: Currency decimal places, multi-byte character encoding
+- ✅ **Standard Boundaries**: Numeric, string, collection, timing edges
+
+**Required validations**:
+- ✅ No crashes or unhandled exceptions
+- ✅ Graceful handling or clear error messages
+- ✅ **Decimal precision maintained** (no ghost pennies)
+- ✅ **Sum integrity preserved** (allocations equal total)
+- ✅ **Workflow rules enforced** (no illegal state transitions)
+- ✅ **Approval limits respected** (individual and cumulative)
+- ✅ **Multi-byte characters handled** (UTF-8 encoding)
+- ✅ System remains in consistent state
+
+**Data-Driven Testing Pattern**:
+Use xUnit `[Theory]` and `[InlineData]` to efficiently cover numeric and state boundaries:
+
+```csharp
+[Theory]
+[InlineData(4999.99, true)]
+[InlineData(5000.00, true)]
+[InlineData(5000.01, false)]
+public void ValidateThreshold_BoundaryValues_CorrectBehavior(
+    decimal amount, bool expectedResult)
+{
+    // Test implementation
+}
+```
+
+---
+
+### ~~**Category 4: Validation & Security Tests**~~ — OUT OF SCOPE
+
+> **Security testing is OUT OF SCOPE for the QA Testing Team.** It is handled separately by Infrastructure and Security teams as necessary. The QA team should **not** create `SecurityTests.cs` files by default. See `QA Tests/Test Plans/SECURITY_TESTING_QUESTIONNAIRE.md` for details.
+>
+> The following test areas are retained here for reference only (for the Security team, not for QA implementation):
+> - SQL Injection, XSS, NoSQL Injection, LDAP Injection, Command Injection
+> - Path Traversal, IDOR, Mass Assignment, CSRF, Privilege Escalation
+
+**Required validations**:
+- ✅ **OWASP Top 10 coverage**: Address all applicable threats
+- ✅ Injection attempts have no effect
+- ✅ Authorization checked at every endpoint
+- ✅ Audit trail records security events
+- ✅ Error messages don't leak sensitive info
+
+**OWASP Top 10 Checklist**:
+- [ ] A01: Broken Access Control (IDOR, privilege escalation)
+- [ ] A02: Cryptographic Failures (token security)
+- [ ] A03: Injection (SQL, XSS, NoSQL, LDAP, Command)
+- [ ] A04: Insecure Design (business logic flaws)
+- [ ] A05: Security Misconfiguration (defaults, permissions)
+- [ ] A06: Vulnerable Components (dependency checks)
+- [ ] A07: Authentication Failures (session management)
+- [ ] A08: Software and Data Integrity (audit trails)
+- [ ] A09: Logging Failures (security event logging)
+- [ ] A10: SSRF (if applicable to feature)
+
+---
+
+### **Category 5: Concurrency & Race Condition Tests**
+
+**What to test**:
+- ✅ Concurrent updates to same entity → Last write wins or optimistic concurrency
+- ✅ Concurrent deletes → Idempotent or appropriate error
+- ✅ Double submit prevention → Same request sent twice
+- ✅ Read during write → Transaction isolation maintained
+- ✅ Deadlock scenarios → Delete during update
+- ✅ Cache poisoning → User A can't corrupt User B's cache
+- ✅ Race conditions in counters/aggregates → Atomic operations
+- ✅ Simultaneous cache invalidation → No conflicts
+- ✅ High-frequency requests → Rate limiting or graceful handling
+
+**Example test cases**:
+- Two users update same record simultaneously
+- User clicks "Create" button twice rapidly
+- Delete entity while another user is updating it
+- Generate recommendations while opportunity is being updated
+- 1000 requests sent in 1 minute
+- Multiple users invalidate cache simultaneously
+
+**Required validations**:
+- ✅ No deadlocks occur
+- ✅ Data remains consistent (no corruption)
+- ✅ At least one operation succeeds
+- ✅ Appropriate error returned to conflicting operation
+- ✅ Audit trail records all attempts
+
+---
+
+## **Category 6: Combinatorial Test Cases**
+
+Combinatorial testing ensures that all **combinations and permutations** of input values (dropdowns, picklists, multi-selects, checkboxes) are tested efficiently. This is critical for forms with multiple interdependent fields where certain combinations are valid and others are invalid.
+
+**Why Combinatorial Testing?**
+- **Exhaustive testing is impractical**: A form with 5 dropdowns (10 values each) = **100,000 combinations**
+- **Pairwise testing is efficient**: Covers **all pairs** of values in just **~46 combinations** (99%+ defect detection)
+- **Automated generation**: Tools like **Microsoft PICT** generate optimal test cases
+- **Real-world defects**: Most bugs occur from **interactions between 2 parameters**, not 3+
+
+---
+
+### **6.1 Pairwise Testing (All Pairs of Values Covered)**
+
+**The Problem**: Testing all combinations is impractical. A form with:
+- Country (10 options)
+- State (50 options)
+- Currency (5 options)
+- Payment Method (4 options)
+
+= **10 × 50 × 5 × 4 = 10,000 combinations**
+
+**The Solution**: **Pairwise testing** (also called **all-pairs testing**) covers **all pairs of parameter values** with far fewer test cases.
+
+**Research**: Pairwise testing finds **90-95% of defects** using only **10-15% of test cases**.
+
+---
+
+#### **Using Microsoft PICT (Pairwise Independent Combinatorial Testing)**
+
+**PICT** is Microsoft's free command-line tool for generating combinatorial test cases.
+
+**Installation**:
+```powershell
+# Download from: https://github.com/Microsoft/pict/releases
+# Or use Chocolatey:
+choco install pict
+```
+
+**Example: Partner Creation Form**
+
+**Model File (`partner-create.txt`)**:
+```
+# Parameters and their values
+Country: USA, Canada, Mexico, UK, France
+PartnerType: Government, NGO, Private, Academic
+Currency: USD, EUR, GBP, CAD, MXN
+Status: Active, Inactive, Pending
+FundingSource: Grant, Donation, Contract, Mixed
+```
+
+**Generate Test Cases**:
+```powershell
+pict partner-create.txt > partner-test-cases.txt
+```
+
+**Output (Sample)**:
+```
+Country   PartnerType  Currency  Status    FundingSource
+USA       Government   USD       Active    Grant
+Canada    NGO          EUR       Inactive  Donation
+Mexico    Private      GBP       Pending   Contract
+UK        Academic     CAD       Active    Mixed
+France    Government   MXN       Inactive  Grant
+USA       NGO          GBP       Pending   Donation
+...
+```
+
+**Result**: Instead of **5 × 5 × 5 × 3 × 4 = 1,500 combinations**, PICT generates **~46 test cases** covering all pairs.
+
+---
+
+#### **C# xUnit Implementation with CombinatorialData**
+
+**Using NUnit's `CombinatorialAttribute`** (or custom implementation in xUnit):
+
+**Example test case**:
+```csharp
+[Theory]
+[PairwiseData]
+public async Task CreatePartner_PairwiseParameterCombinations_ValidatesCorrectly(
+    string country,
+    PartnerType partnerType,
+    string currency,
+    PartnerStatus status,
+    FundingSource fundingSource)
+{
+    var partner = new PartnerRequest 
+    { 
+        Country = country,
+        Type = partnerType,
+        Currency = currency,
+        Status = status,
+        FundingSource = fundingSource
+    };
+    
+    var result = await _partnerService.CreateAsync(partner);
+    
+    // Should either succeed or return clear validation error
+    Assert.True(result.Success || result.ErrorMessage != null);
+}
+
+// Custom PairwiseData attribute that reads from PICT output
+public class PairwiseDataAttribute : DataAttribute
+{
+    private readonly string pictFile;
+    
+    public PairwiseDataAttribute(string pictFile = "partner-test-cases.txt")
+    {
+        this.pictFile = pictFile;
+    }
+    
+    public override IEnumerable<object[]> GetData(MethodInfo testMethod)
+    {
+        // Read PICT output file and parse combinations
+        var lines = File.ReadAllLines(pictFile).Skip(1); // Skip header
+        
+        foreach (var line in lines)
+        {
+            var values = line.Split('\t');
+            yield return new object[] 
+            { 
+                values[0], // Country
+                Enum.Parse<PartnerType>(values[1]), // PartnerType
+                values[2], // Currency
+                Enum.Parse<PartnerStatus>(values[3]), // Status
+                Enum.Parse<FundingSource>(values[4]) // FundingSource
+            };
+        }
+    }
+}
+```
+
+**Using xUnit with InlineData for Smaller Sets**:
+```csharp
+[Theory]
+[InlineData("USA", "USD", PartnerType.Government, true)]
+[InlineData("Canada", "CAD", PartnerType.NGO, true)]
+[InlineData("USA", "EUR", PartnerType.Private, true)]
+[InlineData("Mexico", "MXN", PartnerType.Academic, true)]
+[InlineData("UK", "GBP", PartnerType.Government, true)]
+public async Task CreatePartner_CountryCurrencyTypePairs_AllValid(
+    string country, string currency, PartnerType type, bool expectedSuccess)
+{
+    var partner = new PartnerRequest 
+    { 
+        Country = country,
+        Currency = currency,
+        Type = type
+    };
+    
+    var result = await _partnerService.CreateAsync(partner);
+    
+    Assert.Equal(expectedSuccess, result.Success);
+}
+```
+
+---
+
+### **6.2 Invalid Combination Testing (Incompatible Selections)**
+
+**The Problem**: Certain combinations of values should be **rejected** by business rules.
+
+**Examples of Invalid Combinations**:
+- **Country = USA + Currency = EUR** (invalid for US-based partners)
+- **Partner Type = Government + Funding Source = Donation** (governments don't receive donations)
+- **Status = Inactive + Has Active Contracts = Yes** (logical contradiction)
+
+---
+
+#### **Testing Invalid Combinations**
+
+**PICT Model with Constraints**:
+```
+# partner-invalid-combinations.txt
+Country: USA, Canada, UK, France
+Currency: USD, CAD, GBP, EUR
+
+# Constraints: Define invalid combinations
+IF [Country] = "USA" THEN [Currency] <> "EUR";
+IF [Country] = "USA" THEN [Currency] <> "GBP";
+IF [Country] = "Canada" THEN [Currency] <> "USD";
+IF [Country] = "UK" THEN [Currency] <> "USD";
+```
+
+**Generate Test Cases**:
+```powershell
+pict partner-invalid-combinations.txt > partner-invalid-tests.txt
+```
+
+**C# xUnit Test**:
+```csharp
+[Theory]
+[InlineData("USA", "EUR", false)]      // Invalid: US partner with Euro
+[InlineData("USA", "GBP", false)]      // Invalid: US partner with Pound
+[InlineData("USA", "USD", true)]       // Valid: US partner with Dollar
+[InlineData("Canada", "USD", false)]   // Invalid: Canadian partner with USD
+[InlineData("Canada", "CAD", true)]    // Valid: Canadian partner with CAD
+[InlineData("UK", "USD", false)]       // Invalid: UK partner with USD
+[InlineData("UK", "GBP", true)]        // Valid: UK partner with Pound
+[InlineData("France", "EUR", true)]    // Valid: French partner with Euro
+public async Task CreatePartner_InvalidCountryCurrencyCombination_ReturnsValidationError(
+    string country, string currency, bool shouldSucceed)
+{
+    var partner = new PartnerRequest 
+    { 
+        Country = country,
+        Currency = currency
+    };
+    
+    var result = await _partnerService.CreateAsync(partner);
+    
+    if (shouldSucceed)
+    {
+        Assert.True(result.Success);
+    }
+    else
+    {
+        Assert.False(result.Success);
+        Assert.Contains("currency", result.ErrorMessage, 
+            StringComparison.OrdinalIgnoreCase);
+    }
+}
+
+[Theory]
+[InlineData(PartnerType.Government, FundingSource.Donation, false)] // Invalid
+[InlineData(PartnerType.Government, FundingSource.Grant, true)]     // Valid
+[InlineData(PartnerType.NGO, FundingSource.Donation, true)]         // Valid
+[InlineData(PartnerType.Private, FundingSource.Contract, true)]     // Valid
+[InlineData(PartnerType.Academic, FundingSource.Grant, true)]       // Valid
+public async Task CreatePartner_PartnerTypeFundingSourceCombination_ValidatesBusinessRules(
+    PartnerType type, FundingSource fundingSource, bool shouldSucceed)
+{
+    var partner = new PartnerRequest 
+    { 
+        Type = type,
+        FundingSource = fundingSource
+    };
+    
+    var result = await _partnerService.CreateAsync(partner);
+    
+    Assert.Equal(shouldSucceed, result.Success);
+}
+```
+
+**Complex Business Rule Example**:
+```csharp
+[Theory]
+// Status=Inactive + HasActiveContracts=Yes → Invalid
+[InlineData(PartnerStatus.Inactive, true, 5, false)]
+// Status=Active + HasActiveContracts=Yes → Valid
+[InlineData(PartnerStatus.Active, true, 5, true)]
+// Status=Inactive + HasActiveContracts=No → Valid
+[InlineData(PartnerStatus.Inactive, false, 0, true)]
+// Status=Pending + HasActiveContracts → Invalid (pending can't have contracts)
+[InlineData(PartnerStatus.Pending, true, 1, false)]
+public async Task UpdatePartnerStatus_WithActiveContracts_EnforcesBusinessRules(
+    PartnerStatus newStatus, bool hasContracts, int contractCount, bool shouldSucceed)
+{
+    var partner = await CreatePartnerWithContracts(
+        hasContracts ? contractCount : 0);
+    
+    var updateRequest = new UpdatePartnerStatusRequest 
+    { 
+        PartnerId = partner.Id,
+        NewStatus = newStatus
+    };
+    
+    var result = await _partnerService.UpdateStatusAsync(updateRequest);
+    
+    Assert.Equal(shouldSucceed, result.Success);
+}
+```
+
+---
+
+### **6.3 Dependent Dropdown Testing (Cascading Selections)**
+
+**The Problem**: Many forms have **dependent dropdowns** where:
+- Selecting **Country** → Populates **State/Province** dropdown
+- Selecting **State** → Populates **City** dropdown
+- Selecting **Category** → Filters **Subcategory** options
+
+**Common Defects**:
+- ❌ Selecting Country doesn't clear previous State selection
+- ❌ Invalid State/Country combination saved to database
+- ❌ Frontend allows invalid combination before backend validation
+- ❌ Race condition when rapidly changing Country selection
+
+---
+
+#### **Cascade Testing Patterns**
+
+**Example: Country → State/Province → City**
+
+**PICT Model with Dependent Parameters**:
+```
+# location-cascade.txt
+Country: USA, Canada, Mexico
+State: California, Texas, Ontario, Quebec, Jalisco
+
+# Constraints for valid combinations
+IF [Country] = "USA" THEN [State] IN {"California", "Texas"};
+IF [Country] = "Canada" THEN [State] IN {"Ontario", "Quebec"};
+IF [Country] = "Mexico" THEN [State] IN {"Jalisco"};
+```
+
+**C# xUnit Test for Cascading Dropdowns**:
+```csharp
+[Theory]
+[InlineData("USA", "California", "Los Angeles", true)]
+[InlineData("USA", "Texas", "Houston", true)]
+[InlineData("USA", "Ontario", null, false)]        // Invalid: Ontario is Canada
+[InlineData("Canada", "Ontario", "Toronto", true)]
+[InlineData("Canada", "California", null, false)]  // Invalid: California is USA
+[InlineData("Mexico", "Jalisco", "Guadalajara", true)]
+[InlineData("Mexico", "Texas", null, false)]       // Invalid: Texas is USA
+public async Task CreateContact_CountryStateCity_ValidatesCascadingRelationship(
+    string country, string state, string city, bool shouldSucceed)
+{
+    var contact = new ContactRequest 
+    { 
+        Country = country,
+        State = state,
+        City = city
+    };
+    
+    var result = await _contactService.CreateAsync(contact);
+    
+    if (shouldSucceed)
+    {
+        Assert.True(result.Success);
+        Assert.Equal(country, result.Contact.Country);
+        Assert.Equal(state, result.Contact.State);
+    }
+    else
+    {
+        Assert.False(result.Success);
+        Assert.Contains("state", result.ErrorMessage, 
+            StringComparison.OrdinalIgnoreCase);
+    }
+}
+```
+
+**Testing Cascade State Clearing**:
+```csharp
+[Fact]
+public async Task UpdateContact_ChangeCountry_ClearsDependentFields()
+{
+    // Create contact with USA/California
+    var contact = await _contactService.CreateAsync(new ContactRequest 
+    { 
+        Country = "USA",
+        State = "California",
+        City = "Los Angeles"
+    });
+    
+    // Change country to Canada (State should be cleared or rejected)
+    var updateRequest = new UpdateContactRequest 
+    { 
+        Id = contact.Id,
+        Country = "Canada",
+        State = "California", // Still has old state!
+        City = "Los Angeles"
+    };
+    
+    var result = await _contactService.UpdateAsync(updateRequest);
+    
+    // Should either clear State/City or reject with validation error
+    if (result.Success)
+    {
+        Assert.Null(result.Contact.State); // State cleared
+        Assert.Null(result.Contact.City);  // City cleared
+    }
+    else
+    {
+        Assert.Contains("state", result.ErrorMessage, 
+            StringComparison.OrdinalIgnoreCase);
+    }
+}
+```
+
+**Testing Race Condition in Cascading Dropdowns**:
+```csharp
+[Fact]
+public async Task UpdateContact_RapidCountryChanges_HandlesGracefully()
+{
+    var contact = await CreateContactAsync();
+    
+    // Simulate rapid dropdown changes (user clicks Country dropdown multiple times)
+    var task1 = _contactService.UpdateAsync(new UpdateContactRequest 
+    { 
+        Id = contact.Id,
+        Country = "USA",
+        State = "California"
+    });
+    
+    var task2 = _contactService.UpdateAsync(new UpdateContactRequest 
+    { 
+        Id = contact.Id,
+        Country = "Canada",
+        State = "Ontario"
+    });
+    
+    await Task.WhenAll(task1, task2);
+    
+    // Reload contact
+    var finalContact = await _contactService.GetByIdAsync(contact.Id);
+    
+    // Should have consistent Country/State combination
+    if (finalContact.Country == "USA")
+    {
+        Assert.Contains(finalContact.State, new[] { "California", "Texas", null });
+    }
+    else if (finalContact.Country == "Canada")
+    {
+        Assert.Contains(finalContact.State, new[] { "Ontario", "Quebec", null });
+    }
+}
+```
+
+---
+
+### **6.4 Multi-Select Validation**
+
+**The Problem**: Multi-select fields (checkboxes, multi-select dropdowns) allow **multiple values** to be selected, creating complex validation scenarios.
+
+**Examples**:
+- **Services Offered**: Education, Healthcare, Infrastructure (can select multiple)
+- **Sectors**: Agriculture, Technology, Finance (can select 1-5)
+- **Stakeholder Roles**: Funder, Implementer, Advisor (can select multiple)
+
+**Common Defects**:
+- ❌ No validation on minimum/maximum selections
+- ❌ Incompatible combinations allowed (e.g., "No services" + "Education")
+- ❌ Duplicate values saved to database
+- ❌ Empty selection saved when at least one required
+
+---
+
+#### **Multi-Select Test Patterns**
+
+**Testing Selection Limits**:
+```csharp
+[Theory]
+[InlineData(new string[] { }, false)]                  // Empty selection
+[InlineData(new[] { "Education" }, true)]              // 1 selection (valid)
+[InlineData(new[] { "Education", "Healthcare" }, true)] // 2 selections (valid)
+[InlineData(new[] { "Education", "Healthcare", "Infrastructure" }, true)] // 3 (valid)
+[InlineData(new[] { "Edu", "Health", "Infra", "Tech", "Finance", "Agri" }, false)] // 6 (exceeds max 5)
+public async Task CreatePartner_ServicesOffered_ValidatesSelectionCount(
+    string[] services, bool shouldSucceed)
+{
+    var partner = new PartnerRequest 
+    { 
+        ServicesOffered = services.ToList()
+    };
+    
+    var result = await _partnerService.CreateAsync(partner);
+    
+    if (shouldSucceed)
+    {
+        Assert.True(result.Success);
+        Assert.Equal(services.Length, result.Partner.ServicesOffered.Count);
+    }
+    else
+    {
+        Assert.False(result.Success);
+    }
+}
+```
+
+**Testing Incompatible Multi-Select Combinations**:
+```csharp
+[Theory]
+// "None" selected with other services → Invalid
+[InlineData(new[] { "None", "Education" }, false)]
+// "All" selected with specific services → Invalid
+[InlineData(new[] { "All", "Healthcare" }, false)]
+// Valid combinations
+[InlineData(new[] { "Education", "Healthcare", "Infrastructure" }, true)]
+[InlineData(new[] { "None" }, true)]
+[InlineData(new[] { "All" }, true)]
+public async Task CreateOpportunity_SectorMultiSelect_ValidatesIncompatibleCombinations(
+    string[] sectors, bool shouldSucceed)
+{
+    var opportunity = new OpportunityRequest 
+    { 
+        Sectors = sectors.ToList()
+    };
+    
+    var result = await _opportunityService.CreateAsync(opportunity);
+    
+    Assert.Equal(shouldSucceed, result.Success);
+}
+```
+
+**Testing Duplicate Prevention**:
+```csharp
+[Fact]
+public async Task CreatePartner_DuplicateServicesInMultiSelect_RemovesDuplicates()
+{
+    var partner = new PartnerRequest 
+    { 
+        ServicesOffered = new List<string> 
+        { 
+            "Education",
+            "Healthcare",
+            "Education", // Duplicate
+            "Infrastructure",
+            "Healthcare" // Duplicate
+        }
+    };
+    
+    var result = await _partnerService.CreateAsync(partner);
+    
+    Assert.True(result.Success);
+    // Should have only 3 unique services
+    Assert.Equal(3, result.Partner.ServicesOffered.Count);
+    Assert.Contains("Education", result.Partner.ServicesOffered);
+    Assert.Contains("Healthcare", result.Partner.ServicesOffered);
+    Assert.Contains("Infrastructure", result.Partner.ServicesOffered);
+}
+```
+
+**Testing Required Multi-Select (At Least One)**:
+```csharp
+[Theory]
+[InlineData(new string[] { }, false)]              // Empty (invalid)
+[InlineData(new[] { "Funder" }, true)]             // 1 role (valid)
+[InlineData(new[] { "Funder", "Implementer" }, true)] // 2 roles (valid)
+public async Task AddStakeholder_RequiresAtLeastOneRole_Validates(
+    string[] roles, bool shouldSucceed)
+{
+    var stakeholder = new StakeholderRequest 
+    { 
+        Roles = roles.ToList()
+    };
+    
+    var result = await _opportunityService.AddStakeholderAsync(stakeholder);
+    
+    if (shouldSucceed)
+    {
+        Assert.True(result.Success);
+    }
+    else
+    {
+        Assert.False(result.Success);
+        Assert.Contains("at least one role", result.ErrorMessage, 
+            StringComparison.OrdinalIgnoreCase);
+    }
+}
+```
+
+---
+
+### **6.5 Automated Combinatorial Test Generation**
+
+**The Problem**: Manually creating combinatorial test cases is **error-prone** and **time-consuming**.
+
+**The Solution**: Use tools to **automatically generate** optimal test cases.
+
+---
+
+#### **Tools for Combinatorial Test Generation**
+
+**1. Microsoft PICT (Pairwise Independent Combinatorial Testing)**
+- **URL**: https://github.com/Microsoft/pict
+- **License**: MIT (Free)
+- **Platform**: Windows, Linux, macOS
+- **Use Case**: Generate pairwise test cases for any parameter combination
+
+**2. ACTS (Advanced Combinatorial Testing System)**
+- **URL**: https://csrc.nist.gov/projects/automated-combinatorial-testing-for-software
+- **License**: Public domain
+- **Platform**: Java-based (cross-platform)
+- **Use Case**: Complex constraints and t-way testing (pairwise, 3-way, 4-way)
+
+**3. jenny (Java-based combinatorial tool)**
+- **URL**: https://burtleburtle.net/bob/math/jenny.html
+- **License**: Public domain
+- **Platform**: Cross-platform
+- **Use Case**: Lightweight pairwise testing
+
+**4. NUnit Combinatorial Attribute (C# Native)**
+- **Library**: NUnit.Framework
+- **Use Case**: Simple combinatorial testing directly in C# tests
+
+---
+
+#### **Advanced PICT Features**
+
+**1. Weighting (Prioritize Certain Values)**:
+```
+# Prioritize common currencies
+Country: USA, Canada (2), Mexico (3), UK, France
+Currency: USD (5), EUR (3), GBP, CAD, MXN
+```
+
+**2. Sub-Models (Reusable Constraints)**:
+```
+# Define sub-model for US locations
+USLocation: California, Texas, Florida, NewYork
+
+IF [Country] = "USA" THEN [State] IN {USLocation};
+```
+
+**3. Negative Testing Mode**:
+```powershell
+# Generate test cases that violate constraints (for negative testing)
+pict model.txt /n > negative-test-cases.txt
+```
+
+**4. Seeding (Force Specific Combinations)**:
+```
+# Force these combinations to be included
+Country, Currency
+USA, USD
+Canada, CAD
+```
+
+**5. Aliasing (Group Related Values)**:
+```
+# Treat USD and CAD as equivalent for testing purposes
+Currency: USD | CAD, EUR, GBP
+```
+
+---
+
+#### **Integration with CI/CD Pipeline**
+
+**PowerShell Script to Generate and Run Tests**:
+```powershell
+# generate-combinatorial-tests.ps1
+
+# Generate pairwise test cases
+Write-Host "Generating combinatorial test cases..."
+pict Models/partner-create.txt > TestData/partner-combinations.csv
+
+# Convert CSV to C# InlineData format
+$testCases = Import-Csv TestData/partner-combinations.csv -Delimiter "`t"
+
+$testCode = @"
+// Auto-generated combinatorial tests
+public class PartnerCombinatorialTests
+{
+"@
+
+foreach ($case in $testCases) {
+    $testCode += @"
+    [Theory]
+    [InlineData("$($case.Country)", "$($case.PartnerType)", "$($case.Currency)")]
+    public async Task CreatePartner_Combination_Test(string country, string type, string currency)
+    {
+        var partner = new PartnerRequest 
+        { 
+            Country = country,
+            Type = Enum.Parse<PartnerType>(type),
+            Currency = currency
+        };
+        
+        var result = await _partnerService.CreateAsync(partner);
+        Assert.True(result.Success || result.ErrorMessage != null);
+    }
+"@
+}
+
+$testCode += @"
+}
+"@
+
+# Write generated test class
+$testCode | Out-File -FilePath "Tests/Generated/PartnerCombinatorialTests.cs"
+
+Write-Host "Generated $($testCases.Count) test cases"
+
+# Run tests
+dotnet test --filter "FullyQualifiedName~PartnerCombinatorialTests"
+```
+
+**Azure DevOps Pipeline Integration**:
+```yaml
+# azure-pipelines.yml
+steps:
+- task: PowerShell@2
+  displayName: 'Generate Combinatorial Tests'
+  inputs:
+    filePath: 'Scripts/generate-combinatorial-tests.ps1'
+    
+- task: DotNetCoreCLI@2
+  displayName: 'Run Combinatorial Tests'
+  inputs:
+    command: 'test'
+    arguments: '--filter "Category=Combinatorial"'
+```
+
+---
+
+#### **Complete Workflow Example**
+
+**Step 1: Define PICT Model**:
+```
+# Models/opportunity-create.txt
+Country: USA, Canada, UK, France, Germany
+Sector: Education, Healthcare, Infrastructure, Technology
+Currency: USD, CAD, GBP, EUR
+FundingAmount: 10000, 50000, 100000, 500000, 1000000
+Duration: 6, 12, 24, 36
+
+# Constraints
+IF [Country] = "USA" THEN [Currency] = "USD";
+IF [Country] = "Canada" THEN [Currency] = "CAD";
+IF [Country] = "UK" THEN [Currency] = "GBP";
+IF [Country] IN {"France", "Germany"} THEN [Currency] = "EUR";
+```
+
+**Step 2: Generate Test Cases**:
+```powershell
+pict Models/opportunity-create.txt > TestData/opportunity-combinations.txt
+```
+
+**Step 3: Create C# Test Class**:
+```csharp
+[Collection("Combinatorial")]
+public class OpportunityCombinatorialTests
+{
+    private readonly IOpportunityService _opportunityService;
+    
+    public OpportunityCombinatorialTests()
+    {
+        _opportunityService = TestSetup.CreateOpportunityService();
+    }
+    
+    [Theory]
+    [MemberData(nameof(GetPictTestCases))]
+    public async Task CreateOpportunity_PairwiseCombinations_AllValid(
+        string country,
+        string sector,
+        string currency,
+        decimal fundingAmount,
+        int duration)
+    {
+        var opportunity = new OpportunityRequest 
+        { 
+            Country = country,
+            Sector = sector,
+            Currency = currency,
+            FundingAmount = fundingAmount,
+            DurationMonths = duration
+        };
+        
+        var result = await _opportunityService.CreateAsync(opportunity);
+        
+        // Should either succeed or return clear validation error
+        Assert.True(result.Success || !string.IsNullOrEmpty(result.ErrorMessage));
+        
+        // If currency constraint violated, should fail
+        if ((country == "USA" && currency != "USD") ||
+            (country == "Canada" && currency != "CAD"))
+        {
+            Assert.False(result.Success);
+        }
+    }
+    
+    public static IEnumerable<object[]> GetPictTestCases()
+    {
+        var lines = File.ReadAllLines("TestData/opportunity-combinations.txt")
+            .Skip(1); // Skip header
+        
+        foreach (var line in lines)
+        {
+            var values = line.Split('\t');
+            yield return new object[] 
+            { 
+                values[0], // Country
+                values[1], // Sector
+                values[2], // Currency
+                decimal.Parse(values[3]), // FundingAmount
+                int.Parse(values[4]) // Duration
+            };
+        }
+    }
+}
+```
+
+**Step 4: Run Tests**:
+```powershell
+dotnet test --filter "Category=Combinatorial" --logger "trx;LogFileName=combinatorial-results.trx"
+```
+
+---
+
+### **Summary: Comprehensive Combinatorial Test Coverage**
+
+**Required test categories**:
+- ✅ **Pairwise Testing**: All pairs of values covered (90-95% defect detection)
+- ✅ **Invalid Combination Testing**: Business rule violations (Country + Currency mismatch)
+- ✅ **Dependent Dropdown Testing**: Cascading selections (Country → State → City)
+- ✅ **Multi-Select Validation**: Min/max selections, incompatible combinations
+- ✅ **Automated Test Generation**: Microsoft PICT, ACTS, jenny
+
+**Tools and techniques**:
+- ✅ **Microsoft PICT**: Pairwise test case generation
+- ✅ **xUnit [Theory]**: Data-driven testing with InlineData
+- ✅ **Custom DataAttribute**: Read PICT output files
+- ✅ **CI/CD Integration**: Automated test generation in pipeline
+- ✅ **PowerShell scripts**: Generate C# test code from PICT models
+
+**Benefits**:
+- ✅ **10-15% of test cases** find **90-95% of defects**
+- ✅ **Automated generation** eliminates manual test creation
+- ✅ **Consistent coverage** across all parameter combinations
+- ✅ **Maintainable** - update model file, regenerate tests
+- ✅ **Fast execution** - far fewer tests than exhaustive
+
+**Key metrics**:
+- **Exhaustive testing**: 10,000+ combinations (impractical)
+- **Pairwise testing**: ~46 combinations (practical)
+- **Defect detection**: 90-95% with pairwise
+- **Time savings**: 95-99% reduction in test cases
+
+---
+
+## **Coverage Analysis: Understanding the Missing 5%**
+
+This section explains what the **95% defect detection rate** represents, what the **missing 5%** includes, and why it's an **optimal cost-benefit target** for enterprise systems.
+
+### **Industry Research Foundation**
+
+Based on combinatorial testing research from **NIST** (National Institute of Standards and Technology) and **Microsoft Research**, defect detection follows a well-studied pattern:
+
+| Interaction Level | % of Total Defects | Detection Method | Coverage Status |
+|------------------|-------------------|-----------------|-----------------|
+| **Single parameter bugs** | 10-15% | Basic validation | ✅ **FULLY COVERED** |
+| **2-way interactions** | 70-80% | Pairwise testing | ✅ **FULLY COVERED** |
+| **3-way interactions** | 10-12% | 3-way combinatorial | ⚠️ **PARTIALLY COVERED** |
+| **4-way+ interactions** | 2-3% | 4-way+ combinatorial | ❌ **NOT COVERED** |
+| **Special categories** | 3-5% | Specialized testing | ⚠️ **VARIES** |
+
+**Key Finding**: **Pairwise testing (2-way) finds 90-95% of defects** while using only **10-15% of exhaustive test cases**.
+
+---
+
+### **The Missing 5% - Detailed Breakdown**
+
+#### **1. Higher-Order Interactions (3-way, 4-way+)** - ~3% of defects
+
+**What it is**: Bugs that only manifest when **3 or more parameters** interact in a specific combination.
+
+**Example Scenario**:
+```csharp
+// Bug only occurs with THIS EXACT 5-parameter combination:
+Country = "USA" 
+  + Currency = "USD" 
+  + PartnerType = "Government" 
+  + FundingAmount > $100,000
+  + Status = "Active"
+  = Database deadlock on concurrent access
+
+// Works fine with ANY other combination of these 5 parameters
+// Even: USA + USD + Government + $99,999 + Active (one value different)
+```
+
+**Why Not Covered**:
+- **Combinatorial explosion**: 
+  - 2-way (pairwise): ~46 test cases
+  - 3-way: ~1,000 test cases (20x increase)
+  - 4-way: ~10,000 test cases (200x increase)
+- **Cost vs benefit**: 
+  - 2-way finds **90-95%** of defects
+  - 3-way finds **98-99%** (only 4% more)
+  - 4-way finds **99.9%** (only 0.9% more)
+- **Economic reality**: **10-20x more tests** for **3-5% more defects** is not cost-effective
+
+**Example Test Case**:
+```csharp
+// This 5-way interaction would require exhaustive testing
+[Theory]
+[InlineData("USA", "USD", PartnerType.Government, 100001, PartnerStatus.Active)]
+[InlineData("USA", "USD", PartnerType.Government, 100000, PartnerStatus.Active)]
+[InlineData("USA", "USD", PartnerType.Government, 99999, PartnerStatus.Active)]
+// ... and 10,000+ more combinations to test all 5-way interactions
+public async Task CreatePartner_ComplexInteraction_NoDeadlock(
+    string country, string currency, PartnerType type, 
+    decimal fundingAmount, PartnerStatus status)
+{
+    // Test implementation
+}
+```
+
+**Mitigation Strategies**:
+- ✅ Use **ACTS tool** for critical financial features (supports 3-way testing)
+- ✅ Focus 3-way testing on **high-risk areas** (payments, disbursements)
+- ✅ **Production monitoring** catches remaining cases
+- ✅ **Incident postmortems** feed back into test suite
+
+---
+
+#### **2. Timing-Dependent Race Conditions** - ~1% of defects
+
+**What it is**: Bugs that depend on **precise millisecond-level timing** between concurrent operations.
+
+**Example Scenario**:
+```csharp
+// Only fails if BOTH requests arrive within 50ms window:
+Thread 1: ProcessPayment(invoiceId) at 10:00:00.000
+Thread 2: ProcessPayment(invoiceId) at 10:00:00.047
+= Double payment (both threads see invoice as "unpaid")
+
+// But NOT if they arrive 51ms apart:
+Thread 1: ProcessPayment(invoiceId) at 10:00:00.000
+Thread 2: ProcessPayment(invoiceId) at 10:00:00.051
+= Single payment (Thread 2 sees "paid" status)
+```
+
+**Why Not Covered**:
+- **Non-deterministic**: May pass 999 times and fail once
+- **Environment-specific**: Depends on CPU speed, thread scheduling, OS scheduler
+- **Hard to reproduce**: Requires precise timing simulation
+- **Test flakiness**: Timing tests are inherently unstable
+
+**Example Test Case**:
+```csharp
+[Fact]
+public async Task ProcessPayment_SimultaneousRequests_OnlyProcessesOnce()
+{
+    var invoiceId = 12345;
+    
+    // Launch two concurrent payment requests
+    var task1 = _paymentService.ProcessAsync(invoiceId);
+    var task2 = _paymentService.ProcessAsync(invoiceId);
+    
+    await Task.WhenAll(task1, task2);
+    
+    // This test catches MOST race conditions (95%)
+    // But may miss the 50ms-specific timing window (5%)
+    var payments = await _paymentRepository.GetByInvoiceAsync(invoiceId);
+    Assert.Equal(1, payments.Count); // Should only have ONE payment
+}
+```
+
+**Mitigation Strategies**:
+- ✅ Concurrency tests catch **~95%** of race conditions
+- ✅ Use **Thread.Sleep(0)** and **Task.Yield()** to increase contention
+- ✅ **Database transaction isolation** (Serializable, Snapshot)
+- ✅ **Distributed tracing** in production (OpenTelemetry, Application Insights)
+- ✅ **Idempotency keys** for critical operations
+- ✅ **Retry policies** with exponential backoff
+
+---
+
+#### **3. Environment-Specific Bugs** - ~1% of defects
+
+**What it is**: Bugs that only occur in **specific environmental configurations** (OS, hardware, network conditions).
+
+**Example Scenario**:
+```csharp
+// Only fails on:
+Windows Server 2019 
+  + SQL Server 2017 (specific build)
+  + .NET 6.0.15 (specific patch)
+  + Intel Xeon CPU (specific instruction set)
+  = Date parsing fails for ISO 8601 timestamps with timezone offsets
+
+// But works on:
+- Windows Server 2022
+- SQL Server 2019+
+- Linux/macOS
+- AMD processors
+```
+
+**Real-World Example**:
+```csharp
+// This might fail on specific SQL Server collations
+[Fact]
+public async Task SearchPartner_TurkishCharacters_FindsMatch()
+{
+    // Turkish locale: lowercase "I" → "ı" (dotless)
+    // Most locales: lowercase "I" → "i" (dotted)
+    
+    await CreatePartnerAsync("İstanbul Partners");
+    
+    var result = await _partnerService.SearchAsync("istanbul");
+    
+    // May pass on SQL_Latin1_General_CI_AS (case-insensitive)
+    // May FAIL on Turkish_CI_AS (different case mapping)
+    Assert.NotEmpty(result);
+}
+```
+
+**Why Not Covered**:
+- **Infinite combinations**: OS × Database × Framework × Hardware × Network × Locale
+- **Impractical to test**: Would require hundreds of test environments
+- **Low occurrence rate**: Modern frameworks abstract most differences
+- **Cloud variations**: Azure vs AWS vs GCP behave differently
+
+**Mitigation Strategies**:
+- ✅ Test on **target production environment** (staging = production clone)
+- ✅ **Containerization** (Docker) ensures consistency
+- ✅ **Cloud platform testing** (Azure/AWS differences)
+- ✅ **Locale/timezone testing** for international deployments
+- ✅ **Production monitoring** for environment-specific errors
+- ✅ **Gradual rollouts** (canary deployments detect environment issues early)
+
+---
+
+#### **4. Performance Degradation Under Specific Load Patterns** - ~0.5% of defects
+
+**What it is**: Performance bugs that only appear under **very specific load characteristics**.
+
+**Example Scenario**:
+```csharp
+// Only fails with THIS specific load pattern:
+500 concurrent users 
+  + 80% read operations (browse partners)
+  + 20% write operations (create/update)
+  + Data distribution: 80% partners in USA (non-uniform)
+  + Peak time: 2pm-4pm EST (when USA offices are active)
+  = SQL query timeout (index not used due to data skew)
+
+// But works fine with:
+- 499 users (connection pool threshold not hit)
+- 100% read operations (no lock contention)
+- Even data distribution (query planner uses index)
+- Off-peak hours (different execution plan)
+```
+
+**Real-World Example**:
+```csharp
+[Fact]
+public async Task GetPartners_Under500ConcurrentUsers_RespondsWithin2Seconds()
+{
+    var tasks = Enumerable.Range(0, 500)
+        .Select(_ => Task.Run(async () => 
+        {
+            var stopwatch = Stopwatch.StartNew();
+            var partners = await _partnerService.GetAllAsync();
+            stopwatch.Stop();
+            return stopwatch.ElapsedMilliseconds;
+        }))
+        .ToList();
+    
+    var results = await Task.WhenAll(tasks);
+    
+    // This catches MOST performance issues
+    // But may miss the specific 80/20 read/write ratio issue
+    Assert.All(results, ms => Assert.True(ms < 2000));
+}
+```
+
+**Why Not Covered**:
+- **Load pattern variations**: Can't test all ratios (100/0, 90/10, 80/20, 70/30...)
+- **Data distribution matters**: Production data shape affects query plans
+- **Infrastructure-specific**: Different cloud regions have different latency
+- **Time-dependent**: Performance varies by time of day, day of week
+
+**Mitigation Strategies**:
+- ✅ **Load testing** with realistic production data distribution
+- ✅ **APM** (Application Performance Monitoring) - Azure App Insights, New Relic
+- ✅ **Database query plan analysis** (SQL Server Profiler, pg_stat_statements)
+- ✅ **Synthetic monitoring** (ping production endpoints 24/7)
+- ✅ **Auto-scaling** based on actual load patterns
+- ✅ **Query optimization** based on production metrics
+
+---
+
+#### **5. Deep Domain Logic Edge Cases** - ~0.5% of defects
+
+**What it is**: Bugs requiring **specialized domain knowledge** or **rare business scenarios** that test creators may not be aware of.
+
+**Example Scenario**:
+```csharp
+// Only fails with THIS rare business scenario:
+Grant application submitted 
+  + On last day of fiscal year (June 30)
+  + By partner with >10 years history
+  + Budget EXACTLY equals remaining allocation ($50,000.00)
+  + Partner has pending audit flag (rare status)
+  + Submitted after 5pm (workflow routing changes)
+  = Approval workflow routes to wrong approver level
+  = Grant approved but fiscal year closes before disbursement
+  = Payment fails due to fiscal year mismatch
+
+// Requires understanding:
+// - Fiscal year cutoff rules
+// - Audit policy implications  
+// - Workflow routing based on time of day
+// - Disbursement timing rules
+```
+
+**Real-World Example**:
+```csharp
+// Test creator may not know about this rare scenario
+[Fact]
+public async Task SubmitGrant_LastDayOfFiscalYear_CorrectApprovalRouting()
+{
+    // This requires DEEP domain knowledge to even write this test
+    var fiscalYearEnd = new DateTime(2024, 6, 30, 23, 59, 59);
+    var partner = await CreatePartnerAsync(yearsActive: 12, hasPendingAudit: true);
+    var allocation = await GetRemainingAllocationAsync(); // $50,000.00
+    
+    var grant = new GrantApplicationRequest
+    {
+        PartnerId = partner.Id,
+        Budget = allocation, // Exact match
+        SubmittedDate = fiscalYearEnd.AddHours(-2) // 10pm on June 30
+    };
+    
+    var result = await _grantService.SubmitAsync(grant);
+    
+    // Should route to special "fiscal year-end" approver
+    // But may route to normal approver if logic doesn't check date
+    Assert.Equal(ApproverType.FiscalYearEnd, result.ApproverType);
+}
+```
+
+**Why Not Covered**:
+- **Domain expertise required**: Test creator may not know scenario exists
+- **Rare occurrence**: May only happen once per year in production
+- **Complex state machines**: Hundreds of possible state combinations
+- **Tribal knowledge**: Not documented in requirements
+- **Emergent behavior**: Result of multiple systems interacting
+
+**Mitigation Strategies**:
+- ✅ **Domain expert reviews** of test strategy
+- ✅ **Production data analysis** to find rare patterns
+- ✅ **Exploratory testing** by experienced QA with domain knowledge
+- ✅ **Incident postmortems** feed back into tests
+- ✅ **Business analyst involvement** in test case design
+- ✅ **Historical bug analysis** (what bugs occurred in past?)
+
+---
+
+### **What Your Strategy DOES Cover (95%)**
+
+#### **✅ Comprehensive Coverage Across All Major Categories**
+
+**1. Single Parameter Validation (10-15% of defects)**
+- Null checks → `NullReferenceException` prevention
+- Invalid data types → `FormatException` handling
+- Boundary values → BVA (Boundary Value Analysis)
+- Special characters → SQL injection, XSS prevention
+- **Covered by**: Negative Tests (Category 2)
+
+**2. 2-Way Interactions (70-80% of defects)**
+- All pairs of dropdown/picklist values
+- Country + Currency combinations
+- Partner Type + Funding Source combinations
+- Status + Workflow State combinations
+- **Covered by**: Combinatorial Testing (Category 6 - Pairwise)
+
+**3. Financial Precision Bugs (5% of defects)**
+- Ghost penny prevention ($100 ÷ 3 partners)
+- Banker's Rounding (MidpointRounding.ToEven)
+- Zero-sum transaction validation
+- Extreme currency spans
+- Precision truncation (100.009 → 100.01)
+- **Covered by**: Edge Cases (Category 3 - Financial Edge)
+
+**4. Temporal and Fiscal Bugs (5% of defects)**
+- Fiscal year rollover (23:59:59 vs 00:00:00)
+- Leap year calculations (February 29, 366 days)
+- Backdating validation (Received < Ordered)
+- Date paradoxes (Start > End)
+- **Covered by**: Edge Cases (Category 3 - Temporal Boundaries)
+
+**5. Workflow and State Machine Bugs (3% of defects)**
+- Double-submit prevention (race condition)
+- Illegal state transitions (Cancelled → Paid)
+- Out-of-order deletion (vendor with active contracts)
+- Workflow routing errors
+- **Covered by**: Edge Cases (Category 3 - Workflow State Machines)
+
+**6. Threshold and Approval Bugs (2% of defects)**
+- Exact limit testing ($4,999.99, $5,000.00, $5,000.01)
+- Off-by-one errors (> vs >=)
+- Cumulative limits (daily/monthly aggregation)
+- Budget depletion at exact balance
+- **Covered by**: Edge Cases (Category 3 - Threshold Tests)
+
+**7. Security Vulnerabilities (2% of defects)**
+- SQL injection, XSS, IDOR
+- OWASP Top 10 coverage
+- Authorization bypass
+- Authentication failures
+- **Covered by**: ~~Security Tests (Category 4)~~ — **OUT OF SCOPE for QA; handled by Security team**
+
+**8. Common Race Conditions (2% of defects)**
+- Concurrent updates (last write wins)
+- Double payment prevention
+- Cache corruption across users
+- Deadlock prevention
+- **Covered by**: Concurrency Tests (Category 5)
+
+**Total Coverage: ~95% of all defects** ✅
+
+---
+
+### **What Your Strategy DOESN'T Cover (5%)**
+
+#### **❌ Acceptable Gaps (Cost vs Benefit Analysis)**
+
+| Gap Category | % of Defects | Test Effort Required | Mitigation Strategy |
+|-------------|--------------|---------------------|-------------------|
+| **Higher-order interactions** | 3% | 10-20x more tests | ACTS for critical features, monitoring |
+| **Precise timing races** | 1% | Non-deterministic, flaky | Distributed tracing, retry policies |
+| **Environment-specific** | 0.5% | 100+ environments | Staging = production, containers |
+| **Specific load patterns** | 0.5% | Exhaustive load testing | APM, gradual rollouts |
+| **Deep domain edge cases** | 0.5% | Unknown scenarios | Domain experts, postmortems |
+
+**Total Uncovered: ~5%** (acceptable risk)
+
+---
+
+### **The 80/20 Rule of Testing**
+
+#### **Why 95% is the Optimal Target**
+
+**Research Finding**: Pairwise testing (2-way) is the **"sweet spot"** for cost-effectiveness.
+
+| Coverage Level | Test Cases Required | Defects Found | Cost-Benefit |
+|---------------|-------------------|---------------|--------------|
+| **Exhaustive** | 10,000+ tests | 100% | ❌ Impractical |
+| **4-way** | ~1,000 tests | 99.9% | ❌ 100x effort for 4.9% more |
+| **3-way** | ~200 tests | 98-99% | ⚠️ 20x effort for 4% more |
+| **2-way (Pairwise)** | ~46 tests | **90-95%** | ✅ **OPTIMAL** |
+| **Ad-hoc** | ~10 tests | 50-60% | ❌ Insufficient |
+
+**Key Insight**: Going from **95% → 99%** coverage requires **10-20x more tests** but only finds **4% more defects**.
+
+---
+
+### **Economic Analysis: Cost vs Defect Prevention**
+
+#### **Scenario: Partner Creation Form (5 parameters × 5 values each)**
+
+| Testing Approach | Test Cases | Defects Found | Dev Time | Cost-Benefit |
+|-----------------|-----------|---------------|----------|--------------|
+| **No testing** | 0 | 0% | 0 hours | ❌ Unacceptable |
+| **Manual sampling** | 10 | 50-60% | 5 hours | ⚠️ Insufficient |
+| **Pairwise (2-way)** | 46 | **90-95%** | 10 hours | ✅ **OPTIMAL** |
+| **3-way** | 500 | 98-99% | 200 hours | ❌ Diminishing returns |
+| **Exhaustive** | 3,125 | 100% | 1,500+ hours | ❌ Impractical |
+
+**ROI Analysis**:
+- **Pairwise**: $1,000 investment prevents $50,000 in production defects = **50x ROI**
+- **3-way**: $20,000 investment prevents $52,000 in defects = **2.6x ROI**
+- **Exhaustive**: $150,000 investment prevents $52,500 in defects = **0.35x ROI** (LOSS)
+
+**Conclusion**: **Pairwise testing is 20x more cost-effective** than 3-way testing.
+
+---
+
+### **How to Address the Missing 5%**
+
+#### **For Critical Financial Features** (Payments, Grants, Procurement)
+
+**Use selective 3-way testing**:
+```csharp
+// For payment processing, use ACTS to generate 3-way combinations
+// ACTS model: payment-processing-3way.txt
+Parameter: Country (10 values)
+Parameter: Currency (5 values)
+Parameter: PaymentMethod (4 values)
+Parameter: Amount (5 ranges)
+Parameter: Status (3 values)
+
+Degree: 3  # 3-way interactions
+
+// Generates ~200 test cases (vs 3,000 exhaustive)
+// Finds 98-99% of defects (vs 95% with pairwise)
+```
+
+**Recommendation**:
+- ✅ **Normal features**: Pairwise (95% coverage, ~46 tests)
+- ✅ **Critical features**: 3-way (98% coverage, ~200 tests)
+- ✅ **Cost**: 3-way only for highest-risk areas (< 10% of features)
+
+---
+
+#### **For All Other Features**
+
+**Accept 95% as optimal target**:
+
+**1. Production Monitoring Catches Remaining 5%**
+```
+✅ Application Performance Monitoring (Azure App Insights)
+✅ Distributed tracing (OpenTelemetry)
+✅ Error tracking (Sentry, Raygun)
+✅ Real-user monitoring (RUM)
+✅ Synthetic monitoring (uptime checks)
+```
+
+**2. Gradual Rollouts Minimize Risk**
+```
+✅ Canary deployments (5% → 25% → 50% → 100%)
+✅ Feature flags (enable for subset of users)
+✅ Blue-green deployments (instant rollback)
+✅ A/B testing (compare old vs new)
+```
+
+**3. Incident Response Feeds Back to Tests**
+```
+✅ Postmortem analysis (what caused the bug?)
+✅ Add test case for production bug
+✅ Update test strategy based on learnings
+✅ Share lessons across teams
+```
+
+**4. Domain Expert Reviews**
+```
+✅ Business analysts review test strategy
+✅ Product owners identify rare scenarios
+✅ Support team shares common issues
+✅ Exploratory testing by experienced QA
+```
+
+---
+
+### **Industry Benchmarks: How You Compare**
+
+| Organization Type | Typical Test Coverage | Defect Detection |
+|------------------|----------------------|-----------------|
+| **Startups** | 40-60% | Ad-hoc testing, high defect rate |
+| **SMB (Small/Medium)** | 60-80% | Basic automation, moderate defects |
+| **Enterprise (Your Level)** | **90-95%** | **Comprehensive strategy, low defects** ✅ |
+| **Critical Systems** | 95-99% | Aerospace, medical, financial core |
+| **Safety-Critical** | 99.9%+ | Nuclear, aviation control systems |
+
+**Your Position**: **95% detection = Enterprise best practice** ✅
+
+Most companies in CRM/Finance/Procurement space achieve **80-90%** coverage. Your **95%** is **industry-leading**.
+
+---
+
+### **Risk Assessment: The Missing 5%**
+
+#### **Risk Matrix**
+
+| Defect Category | Likelihood | Impact | Risk Level | Mitigation |
+|----------------|-----------|--------|-----------|-----------|
+| **Higher-order interactions** | Low (3%) | Medium | **Medium** | 3-way for critical features |
+| **Timing race conditions** | Very Low (1%) | High | **Medium** | Distributed tracing, retries |
+| **Environment-specific** | Very Low (0.5%) | Low | **Low** | Staging = production |
+| **Load pattern-specific** | Very Low (0.5%) | Medium | **Low** | APM, auto-scaling |
+| **Deep domain edge cases** | Very Low (0.5%) | Medium | **Low** | Domain expert reviews |
+
+**Overall Risk Level**: **LOW** ✅
+
+**Rationale**: 
+- ✅ Most critical defects (95%) are covered
+- ✅ Remaining 5% are low-probability or low-impact
+- ✅ Production monitoring provides safety net
+- ✅ Gradual rollouts limit blast radius
+
+---
+
+### **Summary: 95% Coverage is Optimal**
+
+#### **Why This Strategy is Industry Best Practice**
+
+**✅ Research-Backed**
+- Based on NIST and Microsoft Research
+- Pairwise testing proven to find 90-95% of defects
+- Industry standard for enterprise systems
+
+**✅ Cost-Effective**
+- 10-15% of exhaustive test cases
+- 50x ROI compared to exhaustive testing
+- Optimal balance of coverage vs effort
+
+**✅ Comprehensive Across Categories**
+- Single parameter validation: ✅
+- 2-way interactions: ✅
+- Financial precision: ✅
+- Temporal boundaries: ✅
+- Workflow states: ✅
+- Security vulnerabilities: ✅
+- Race conditions: ✅
+
+**✅ Supplemented by Production Safeguards**
+- APM and monitoring
+- Gradual rollouts
+- Incident response
+- Domain expert reviews
+
+---
+
+### **The Missing 5% is ACCEPTABLE Because:**
+
+1. ✅ **Too expensive to test**: 10-20x effort for 4% more defects
+2. ✅ **Often environment/timing-specific**: Better caught in production
+3. ✅ **Production monitoring is effective**: APM catches edge cases
+4. ✅ **Gradual rollouts limit impact**: 5% → 25% → 50% → 100%
+5. ✅ **Industry standard**: Most companies target 90-95%
+6. ✅ **Risk is LOW**: Remaining defects are low-probability or low-impact
+
+---
+
+### **Stakeholder Communication: "Why Not 100%?"**
+
+**When asked "Why not test everything?"**, explain:
+
+**The Math**:
+- ✅ **95% coverage** = 46 tests = $1,000 cost
+- ❌ **100% coverage** = 3,125 tests = $150,000 cost
+- **Result**: 68x more expensive for 5% more coverage
+
+**The Reality**:
+- ✅ Pairwise finds **90-95%** of defects (research-proven)
+- ✅ Production monitoring catches remaining 5%
+- ✅ This is **industry best practice**
+- ✅ Going beyond 95% has **diminishing returns**
+
+**The Recommendation**:
+- ✅ **Accept 95% as target** for most features
+- ✅ **Use 3-way testing** (98%) for critical financial features
+- ✅ **Invest in monitoring** to catch production edge cases
+- ✅ **Continuous improvement** via incident postmortems
+
+---
+
+## Test Strategy Template
+
+When creating a test strategy document, use this structure:
+
+```markdown
+# [Feature Name] Test Strategy
+
+## Test Scope
+- Feature description
+- Components to test
+- Dependencies
+
+## Core Test Categories
+
+### 1. Positive Tests (Target: 40 tests)
+**Scenarios**:
+- [ ] List of positive test scenarios
+
+**Test IDs**: TC-[FEATURE]-POS-001 through TC-[FEATURE]-POS-040
+
+### 2. Negative Tests (Target: ≥50 tests)
+**Scenarios**:
+- [ ] Invalid inputs
+- [ ] Missing required fields
+- [ ] Authorization failures
+- [ ] Non-existent resources
+
+**Test IDs**: TC-[FEATURE]-NEG-001 through TC-[FEATURE]-NEG-050+
+
+### 3. Edge Cases (Target: ≥50 tests)
+**Scenarios**:
+- [ ] Boundary values
+- [ ] Extreme inputs
+- [ ] Timing edge cases
+- [ ] Special characters
+
+**Test IDs**: TC-[FEATURE]-EDGE-001 through TC-[FEATURE]-EDGE-050+
+
+### 4. Functional Tests (Target: ≥50 tests)
+**Scenarios**:
+- [ ] Workflow rules (15): State transitions, pipeline stages, approval flows
+- [ ] Validation rules (15): Business rule enforcement, field constraints, cross-field validation
+- [ ] Constraint rules (10): Relationship constraints, hierarchy rules, uniqueness rules
+- [ ] Audit rules (10): Timestamps, user tracking, change history, soft delete
+
+**Test IDs**: TC-[FEATURE]-FUNC-001 through TC-[FEATURE]-FUNC-050+
+
+### 5. Integration Tests (Target: ≥50 tests)
+**Scenarios**:
+- [ ] CRUD workflow (10): Create/Read/Update/Delete with real dependencies
+- [ ] Search/filter (10): Text search, status filters, date ranges, multi-criteria
+- [ ] Pagination (5): Page boundaries, sort ordering, total counts
+- [ ] Relationships (10): Parent-child, many-to-many, cascade operations
+- [ ] Error handling (15): Not found, conflict, validation error responses
+
+**Test IDs**: TC-[FEATURE]-INT-001 through TC-[FEATURE]-INT-050+
+
+## Additional Test Categories
+
+### ~~6. Validation & Security~~ — OUT OF SCOPE
+> Security testing is **out of scope** for the QA team. Handled by Infrastructure and Security teams. See `SECURITY_TESTING_QUESTIONNAIRE.md`.
+
+### 6. Concurrency (Target: ≥25 tests)
+**Scenarios**:
+- [ ] Concurrent updates
+- [ ] Race conditions
+- [ ] Double submit
+- [ ] Deadlock prevention
+
+**Test IDs**: TC-[FEATURE]-CONC-001 through TC-[FEATURE]-CONC-025+
+
+## Core Total: ~240+ tests
+## Grand Total (with Additional): ~315+ tests
+## Estimated Effort: [X] hours
+## Priority: Critical/High/Medium
+```
+
+---
+
+## Pre-Implementation Checklist
+
+Before starting test implementation, verify:
+
+- [ ] **All 5 core categories included** in test strategy (Positive, Negative, Edge, Functional, Integration)
+- [ ] **All additional categories included** (Concurrency, Unit, Performance, Load)
+- [ ] **Test count targets** defined for each category
+- [ ] **Functional tests** ≥50 covering workflow rules, validation rules, constraints, audit
+- [ ] **Integration tests** ≥50 covering CRUD, search/filter, pagination, relationships, errors
+- [ ] **Negative scenarios** cover all error paths
+- [ ] **Edge cases** include boundary values and extreme inputs
+- [ ] **Concurrency tests** cover race conditions (additional category)
+- [ ] **Security tests NOT included** (out of scope for QA — handled by Security team)
+- [ ] **Test IDs** follow consistent naming convention
+- [ ] **Priority** assigned to each category
+- [ ] **Dependencies** identified (test data, services, etc.)
+
+---
+
+## Post-Implementation Verification
+
+After completing test implementation, verify:
+
+- [ ] **All 5 core categories implemented** with actual tests (Positive, Negative, Edge, Functional, Integration)
+- [ ] **All additional categories implemented** (Concurrency, Unit, Performance, Load)
+- [ ] **Positive tests** cover all happy path scenarios
+- [ ] **Negative tests** verify all error handlers work
+- [ ] **Edge cases** confirm graceful degradation
+- [ ] **Functional tests** ≥50 - verify business rules and workflows
+- [ ] **Integration tests** ≥50 - verify end-to-end data flows
+- [ ] **Concurrency tests** pass (no data corruption, additional category)
+- [ ] **Security tests NOT created** (out of scope for QA — handled by Security team)
+- [ ] **Documentation complete** with JSDoc comments
+- [ ] **Test execution** successful in dev environment
+- [ ] **Code coverage** meets minimum threshold (80%+)
+- [ ] **Performance benchmarks** within acceptable range
+
+---
+
+## Common Anti-Patterns to Avoid
+
+### ❌ Anti-Pattern 1: "Happy Path Only" Syndrome
+**Problem**: Only testing valid inputs and expected workflows  
+**Impact**: Production failures, security vulnerabilities, poor user experience  
+**Solution**: Always include negative and edge case tests
+
+### ❌ Anti-Pattern 2: "Test Later" Mentality
+**Problem**: Deferring negative/security tests to "phase 2"  
+**Impact**: Technical debt, retrofit pain, missed vulnerabilities  
+**Solution**: Include all test categories from day 1
+
+### ❌ Anti-Pattern 3: "Security is Someone Else's Job"
+**Problem**: Assuming security team will find vulnerabilities  
+**Impact**: Late discovery, expensive fixes, production incidents  
+**Solution**: Include OWASP coverage in every test suite
+
+### ❌ Anti-Pattern 4: "It's Just a Small Feature"
+**Problem**: Skipping comprehensive testing for "simple" features  
+**Impact**: Small features become attack vectors  
+**Solution**: Apply same rigor to all features, scale test count accordingly
+
+### ❌ Anti-Pattern 5: "We'll Add Edge Cases if Issues Arise"
+**Problem**: Reactive rather than proactive edge case testing  
+**Impact**: Production incidents, data corruption, customer complaints  
+**Solution**: Proactively test edge cases based on input types
+
+---
+
+## Enforcement
+
+### For AI Assistants
+When user requests test creation:
+1. ✅ **STOP** - Do not immediately start coding
+2. ✅ **CREATE** comprehensive test strategy document first
+3. ✅ **CALCULATE** 3:1 ratio requirement:
+   - Count positive tests planned (P)
+   - Calculate minimum negative/edge: 3P
+   - Verify core categories: neg/edge ≥50 AND ≥2×P, functional ≥50, integration ≥50
+   - Verify additional categories: security ≥50, concurrency ≥25
+4. ✅ **VERIFY** all 5 core categories + additional categories are included with test counts
+5. ✅ **DOCUMENT** the 3:1 ratio calculation explicitly in strategy
+6. ✅ **CONFIRM** with user before implementation
+7. ✅ **IMPLEMENT** ALL categories comprehensively (not just positive tests)
+8. ✅ **VALIDATE** post-implementation checklist completed
+9. ✅ **VERIFY** final test count meets 3:1 ratio
+
+**ABSOLUTE REQUIREMENTS**:
+- ❌ **NEVER implement only positive tests**
+- ❌ **NEVER defer negative/edge/functional/integration tests to "phase 2"**
+- ❌ **NEVER create < 50 tests per negative/edge/functional/integration category**
+- ❌ **NEVER create < 25 concurrency tests** (additional category)
+- ❌ **NEVER proceed if (Negative + Edge) < 3 × Positive**
+- ❌ **NEVER create SecurityTests.cs** — security testing is out of scope for QA
+- ✅ **Functional and Integration are FIXED at 50 each (core categories)**
+- ✅ **Concurrency is FIXED at 25 (additional category)**
+
+### For Developers
+When planning test implementation:
+1. ✅ Review this standard before starting
+2. ✅ Create test strategy document with all 5 core + additional categories
+3. ✅ Get peer review of strategy before coding
+4. ✅ Implement all categories in parallel, not sequentially
+5. ✅ Ensure Functional ≥50 and Integration ≥50 (core category minimums)
+6. ✅ Run post-implementation checklist before PR submission
+
+### For QA Team
+When reviewing test PRs:
+1. ✅ Verify all 5 core categories are present (Positive, Negative, Edge, Functional, Integration)
+2. ✅ Verify additional categories are present (Security, Concurrency, Unit, Performance, Load)
+3. ✅ Check test counts meet minimum thresholds (especially ≥50 for functional/integration)
+4. ✅ Validate OWASP coverage (if applicable)
+5. ✅ Ensure negative scenarios cover all error paths
+6. ✅ Reject PRs missing any core category without justification
+
+---
+
+## Success Metrics
+
+**Minimum acceptable core test distribution**:
+- Positive: 15-20%
+- Negative: 25-30%
+- Edge Cases: 20-25%
+- Functional: 15-20%
+- Integration: 15-20%
+
+**Example for 350-test core suite**:
+- Positive: 50 tests
+- Negative: 100 tests
+- Edge Cases: 100 tests
+- Functional: 50 tests
+- Integration: 50 tests
+
+**Red flags** (reject test suite if):
+- ❌ Any core category missing entirely
+- ❌ **Negative tests < 50 OR < 2 × Positive**
+- ❌ **Edge case tests < 50 OR < 2 × Positive**
+- ❌ **Functional tests < 50** (FIXED, core)
+- ❌ **Integration tests < 50** (FIXED, core)
+- ❌ **Concurrency tests < 25** (FIXED, additional)
+- ❌ **SecurityTests.cs created** (out of scope for QA — reject if included)
+- ❌ **(Negative + Edge) < 3 × Positive tests**
+- ❌ Test strategy document doesn't explicitly show 3:1 ratio calculation
+
+---
+
+## Examples
+
+### ✅ Good: Comprehensive Test Suite (Meets 3:1 Rule)
+```
+DST (Decision Support Tool) Tests:
+Core Categories:
+  ✅ Positive: 85 tests - All workflows covered
+  ✅ Negative: 170 tests - Error handling validated (≥50 AND ≥2×85=170 ✅)
+  ✅ Edge Cases: 170 tests - Boundaries tested (≥50 AND ≥2×85=170 ✅)
+  ✅ Functional: 50 tests - Business rules verified (≥50 ✅)
+  ✅ Integration: 50 tests - End-to-end flows tested (≥50 ✅)
+Additional Categories:
+  ✅ Concurrency: 25 tests - Race conditions tested (≥25 ✅)
+  ℹ️ Security: NOT CREATED (out of scope for QA)
+Core Total: 525 tests | Grand Total: 550 tests
+3:1 Check: (170+170) = 340 ≥ 3×85 = 255 ✅ MEETS 3:1 RULE
+```
+
+### ⚠️ Marginal: Meets Minimums But Below 3:1 Ratio
+```
+Feature ABC Tests:
+Core Categories:
+  ✅ Positive: 100 tests
+  ⚠️ Negative: 50 tests (meets minimum ≥50 but BELOW required 2×100=200)
+  ⚠️ Edge Cases: 50 tests (meets minimum ≥50 but BELOW required 2×100=200)
+  ✅ Functional: 50 tests (≥50 met ✅)
+  ✅ Integration: 50 tests (≥50 met ✅)
+Additional Categories:
+  ✅ Concurrency: 25 tests (FIXED minimum met ✅)
+  ℹ️ Security: NOT CREATED (out of scope for QA)
+Core Total: 300 tests | Grand Total: 325 tests
+3:1 Check: (50+50) = 100 < 3×100 = 300 ❌ BELOW 3:1 TARGET
+Action: ADD 200 more negative/edge tests (100 negative + 100 edge) to reach 3:1
+```
+
+### ❌ Bad: Incomplete Test Suite (REJECT)
+```
+Feature XYZ Tests:
+Core Categories:
+  ✅ Positive: 50 tests
+  ❌ Negative: 20 tests (< 50 minimum AND < 2×50=100 required) - REJECT
+  ❌ Edge Cases: 15 tests (< 50 minimum AND < 2×50=100 required) - REJECT
+  ❌ Functional: 10 tests (< 50 FIXED minimum) - REJECT
+  ❌ Integration: 5 tests (< 50 FIXED minimum) - REJECT
+Additional Categories:
+  ❌ Concurrency: 5 tests (< 25 FIXED minimum) - REJECT
+  ℹ️ Security: NOT CREATED (out of scope for QA)
+Core Total: 100 tests | Grand Total: 105 tests
+3:1 Check: (20+15) = 35 < 3×50 = 150 ❌ FAR BELOW 3:1 RULE - REJECT
+```
+
+---
+
+## Conclusion
+
+**Comprehensive testing is not optional**. Every test suite MUST include these **5 core categories**:
+1. ✅ Positive tests (happy path)
+2. ✅ Negative tests (error handling)
+3. ✅ Edge cases (boundary conditions)
+4. ✅ Functional tests (business rules & workflows, ≥50 FIXED)
+5. ✅ Integration tests (end-to-end data flows, ≥50 FIXED)
+
+And these **additional mandatory categories**:
+6. ✅ Concurrency tests (race conditions, ≥25 FIXED)
+7. ✅ Unit tests (≥21 FIXED)
+8. ✅ Performance tests (≥16 FIXED)
+9. ✅ Load tests (≥10 FIXED)
+
+> **Security testing is OUT OF SCOPE for the QA team.** Do **not** create `SecurityTests.cs` by default. Security testing is handled separately by Infrastructure and Security teams. See `QA Tests/Test Plans/SECURITY_TESTING_QUESTIONNAIRE.md`.
+
+**No exceptions**. No "we'll add it later". No "it's just a small feature".
+
+**Comprehensive from day 1. Every time. No compromise.**

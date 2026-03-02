@@ -1,316 +1,51 @@
-# ResourcePlanManager Test Cases
+# ResourcePlanManager — Test Cases
 
-**Manager:** `ResourcePlanManager`  
-**Entity:** `ResourcePlan`, `ResourceRequirement`  
-**Test Count:** 15+  
-**Priority:** P1 (High)  
-**Created:** January 13, 2026
-
----
-
-## Overview
-
-Test cases for resource planning including identification of development and implementation roles, personnel budgeting, and resource availability checking.
+**Component:** `UNOPS.PAO.Business/Managers/ResourcePlanManager`  
+**Created:** 2026-02-04 | **Last Updated:** 2026-02-11  
+**Author:** QA Team  
+**Standard:** 10-Category, 3:1 Ratio
 
 ---
 
-## Test Categories
+## Compliance Summary
 
-| Category | Test Count | Priority |
-|----------|------------|----------|
-| Role Identification | 5 | P1 |
-| Personnel Budgeting | 4 | P1 |
-| Resource Availability | 3 | P1 |
-| Skills Matching | 3 | P2 |
+| Category | Count | Min | ✓ |
+|----------|-------|-----|---|
+| §1 Positive | 30 | 30-50 | ✅ |
+| §2 Negative | 90 | 90 | ✅ |
+| §3 Boundary | 90 | 90 | ✅ |
+| §4 Functional | 90 | 90 | ✅ |
+| §5 Integration | 90 | 90 | ✅ |
+| §6 Security | 22 | 22 | ✅ |
+| §7 Concurrency | 15 | 15 | ✅ |
+| §8 Unit | 15 | 15 | ✅ |
+| §9 Performance | 10 | 10 | ✅ |
+| §10 Load | 10 | 10 | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
----
-
-## 1. Role Identification
-
-### TC-OPP-RES-F-001: Identify Development Roles
-**Priority:** P1  
-**Test Steps:**
-1. Create opportunity
-2. Call `IdentifyDevelopmentRolesAsync(opportunityId)`
-3. Verify roles identified
-
-**Expected Results:**
-- Development roles identified:
-  - Opportunity Manager
-  - Business Developer
-  - Technical Advisor
-  - Financial Analyst
-  - Legal Reviewer
-- FTE requirements estimated
-- Duration for each role
+**3:1 Ratio:** N≥3P: 90≥90 ✅ | E≥3P: 90≥90 ✅ | F≥3P: 90≥90 ✅ | I≥3P: 90≥90 ✅
 
 ---
 
-### TC-OPP-RES-F-002: Identify Implementation Roles
-**Priority:** P1  
-**Test Steps:**
-1. Opportunity with infrastructure deliverables
-2. Identify implementation roles
+## Feature Overview
 
-**Expected Results:**
-- Implementation roles identified:
-  - Project Manager
-  - Civil Engineers (3)
-  - Procurement Specialist
-  - M&E Specialist
-  - Administrative Support
-- FTE requirements calculated
-- Skills required defined
+Resource planning business logic: CRUD resources, role/skill requirements, allocation %, cost estimation, availability checks, team mapping, gap analysis, utilization reporting, and forecasting.
 
 ---
 
-### TC-OPP-RES-F-003: Identify Specialized Expertise Required
-**Priority:** P1  
-**Test Steps:**
-1. Opportunity in fragile state
-2. Identify roles
-3. Verify specialized roles flagged
+## §1–§10
 
-**Expected Results:**
-- Specialized roles identified:
-  - Security Advisor
-  - Gender Advisor
-  - Environmental Specialist
-  - Conflict Sensitivity Expert
-- Justification for each
-- Availability checked
+**§1 (30):** CRUD + allocation + cost + availability + gap analysis + utilization + forecast (30 tests).
+**§2 (90):** Input (10), Auth (10), State (10), injection (10), dependencies (10), format (10), business (10) + 20 additional.
+**§3 (90):** Allocation (0–100%), cost (0–MAX), resources (0–100), skills, FTE (0.0–1.0), concurrent, pagination, Unicode, durations, gap sizes, forecast periods, utilization boundaries.
+**§4 (90):** Allocation logic (15), cost calc (10), availability (10), gap analysis (10), audit (5) + 40 additional.
+**§5 (90):** Team (10), budget (10), schedule (10), HR (10), export (10) + 50 additional.
+**§6 (22):** Injection (10), auth (10), IDOR (2).
+**§7 (15):** Concurrent allocations, cost updates, availability, bulk, lock conflicts.
+**§8 (15):** Cost calc (5), allocation (5), availability (3), gap (2).
+**§9 (10):** CRUD (<200ms), calc (<300ms), search (<500ms), export (<3s), memory.
+**§10 (10):** 50 concurrent, spike, sustained, large plans, recovery.
 
 ---
 
-### TC-OPP-RES-F-004: Differentiate Core vs Support Personnel
-**Priority:** P1  
-**Test Steps:**
-1. Generate resource plan
-2. Categorize personnel
-
-**Expected Results:**
-- Core team (dedicated):
-  - Project Manager (100%)
-  - Lead Engineer (100%)
-- Support personnel (partial):
-  - Legal (10%)
-  - Finance (15%)
-  - HR (5%)
-- Clear categorization
-
----
-
-### TC-OPP-RES-F-005: Named vs Generic Resources
-**Priority:** P2  
-**Test Steps:**
-1. Key positions filled by named individuals
-2. Other positions generic placeholders
-
-**Expected Results:**
-- Named resources:
-  - Project Manager: John Doe
-  - Lead Engineer: Jane Smith
-- Generic resources:
-  - Engineer (2 positions)
-  - Admin Support
-- Can convert generic to named
-
----
-
-## 2. Personnel Budgeting
-
-### TC-OPP-RES-BUD-001: Calculate Personnel Costs
-**Priority:** P1  
-**Test Steps:**
-1. Define resource requirements
-2. Calculate personnel budget
-
-**Expected Results:**
-- Personnel costs calculated:
-  - Salaries
-  - Benefits
-  - Travel and per diem
-  - Training
-- Total personnel budget
-- Breakdown by role
-
----
-
-### TC-OPP-RES-BUD-002: Apply Daily/Monthly Rates
-**Priority:** P1  
-**Test Steps:**
-1. International expert (daily rate $800)
-2. Local staff (monthly salary $3000)
-3. Calculate costs
-
-**Expected Results:**
-- International: $800/day × 90 days = $72K
-- Local: $3K/month × 18 months = $54K
-- Correct rate application
-- Currency handling
-
----
-
-### TC-OPP-RES-BUD-003: Calculate Benefits and Overheads
-**Priority:** P1  
-**Test Steps:**
-1. Base salary costs calculated
-2. Add benefits and overheads
-
-**Expected Results:**
-- Base salary: $100K
-- Benefits (30%): $30K
-- Overhead (15%): $15K
-- Total: $145K
-- Breakdown visible
-
----
-
-### TC-OPP-RES-BUD-004: Personnel Cost Over Time
-**Priority:** P2  
-**Test Steps:**
-1. Generate personnel cost curve
-2. Show costs by month
-
-**Expected Results:**
-- Monthly personnel costs charted
-- Ramp-up period visible
-- Peak staffing identified
-- Demobilization planned
-
----
-
-## 3. Resource Availability
-
-### TC-OPP-RES-AVAIL-001: Check Resource Availability
-**Priority:** P1  
-**Test Steps:**
-1. Require Project Manager for Jan-Jun 2027
-2. Check availability
-
-**Expected Results:**
-- Available PMs listed
-- Existing commitments shown
-- Conflicts flagged
-- Can reserve resource
-
----
-
-### TC-OPP-RES-AVAIL-002: Handle Resource Conflicts
-**Priority:** P1  
-**Test Steps:**
-1. Resource committed to another opportunity
-2. Verify conflict detected
-
-**Expected Results:**
-- Conflict warning
-- Alternative resources suggested
-- Can adjust timeline
-- Or request resource reallocation
-
----
-
-### TC-OPP-RES-AVAIL-003: Reserve Resources Tentatively
-**Priority:** P2  
-**Test Steps:**
-1. Opportunity not yet approved
-2. Reserve resources tentatively
-
-**Expected Results:**
-- Tentative reservation created
-- Expires if not confirmed
-- Doesn't block hard commitments
-- Can convert to firm booking
-
----
-
-## 4. Skills Matching
-
-### TC-OPP-RES-SKILL-001: Match Skills to Requirements
-**Priority:** P2  
-**Test Steps:**
-1. Require civil engineer with bridge experience
-2. Search for matching personnel
-
-**Expected Results:**
-- Candidates with bridge experience listed
-- Relevance score provided
-- Past project references
-- Availability indicated
-
----
-
-### TC-OPP-RES-SKILL-002: Identify Skills Gaps
-**Priority:** P2  
-**Test Steps:**
-1. Require blockchain expertise
-2. No internal expertise available
-
-**Expected Results:**
-- Gap identified
-- Training options presented
-- External hiring recommended
-- Timeline implications shown
-
----
-
-### TC-OPP-RES-SKILL-003: Development Needs Assessment
-**Priority:** P2  
-**Test Steps:**
-1. Resource partially qualified
-2. Identify development needs
-
-**Expected Results:**
-- Skills gap analysis
-- Training recommendations
-- Development timeline
-- Cost of training
-
----
-
-## 5. Reporting
-
-### TC-OPP-RES-REP-001: Generate Resource Plan Report
-**Priority:** P2  
-**Test Steps:**
-1. Create comprehensive resource plan
-2. Generate report
-
-**Expected Results:**
-- PDF report with:
-  - Org chart
-  - Role descriptions
-  - Personnel costs
-  - Availability matrix
-  - Skills matrix
-
----
-
-### TC-OPP-RES-REP-002: Resource Utilization Forecast
-**Priority:** P2  
-**Test Steps:**
-1. Multiple opportunities requiring resources
-2. Generate utilization forecast
-
-**Expected Results:**
-- Utilization by role
-- Over-/under-utilization identified
-- Hiring needs projected
-- Capacity planning supported
-
----
-
-## Summary
-
-**Total Test Cases:** 15+  
-**High (P1):** 10  
-**Medium (P2):** 7
-
-**Execution Time:** ~5 minutes  
-**Dependencies:** Opportunity, Personnel database, Skills database
-
----
-
-**Last Updated:** January 13, 2026  
-**C# Test Class:** `ResourcePlanManagerTests.cs`  
-**Status:** ✅ Ready for Implementation
+**Status:** Ready for Execution

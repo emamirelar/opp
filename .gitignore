@@ -313,6 +313,11 @@ dmypy.json
 UNOPS.PAO.Server/appsettings.Development.json
 UNOPS.PAO.Server/appsettings.Local.json
 
+# Local test database configuration - machine-specific, never commit
+QA Tests/C# Tests/UNOPS.PAO.Business.Tests/appsettings.Testing.json
+QA Tests/C# Tests/UNOPS.PAO.FastTests/appsettings.Testing.json
+QA Tests/Integration Tests/appsettings.Testing.json
+
 # Logs folders
 logs/
 **/logs/
@@ -331,3 +336,18 @@ Keywords/
 Test Listeners/
 Libs/
 Include/
+
+# Test output folders (generated at runtime, never commit)
+test-results/
+playwright-report/
+**/test-results/
+**/playwright-report/
+
+# Cloud SQL proxy binaries (local tool, machine-specific)
+cloud_sql_proxy
+cloud_sql_proxy.exe
+
+# Cursor IDE internals (machine-specific, not team config)
+.cursor/agents/
+.cursor/mcp.json
+.cursor/skills/

@@ -25,6 +25,17 @@ public class MockUserInfoService : IUserInfoService
 
     public Task<object?> GetUserInfoWithOrgSettingsAsync(string email)
     {
+        if (string.Equals(email, "testuser@unops.org", StringComparison.OrdinalIgnoreCase))
+        {
+            return Task.FromResult<object?>(new
+            {
+                UserId = 123,
+                UserEmail = "testuser@unops.org",
+                FirstName = "Test",
+                LastName = "User",
+                OrgUnit = "HQ"
+            });
+        }
         return Task.FromResult<object?>(null);
     }
 

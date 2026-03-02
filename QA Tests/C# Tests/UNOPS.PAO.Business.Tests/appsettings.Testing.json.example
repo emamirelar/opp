@@ -1,0 +1,32 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "",
+    "DbContext": "",
+    "DbSchema": "public",
+    "UseIamAuthentication": false
+  },
+  "IsUNOPSOverride": true,
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "Microsoft.EntityFrameworkCore": "Warning"
+    }
+  },
+  "AISettings": {
+    "DisableExternalCalls": true,
+    "ModelName": "gemini-pro",
+    "ProjectId": "test-project",
+    "Location": "us-central1"
+  },
+  "GoogleCloud": {
+    "ProjectId": "test-project",
+    "PubSubTopic": "test-topic",
+    "BucketName": "test-bucket",
+    "UseMockServices": true
+  },
+  "ExchangeRate": {
+    "ApiKey": "test-key",
+    "BaseUrl": "https://test-api.example.com"
+  }
+}

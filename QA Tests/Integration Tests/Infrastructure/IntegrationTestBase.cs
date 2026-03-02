@@ -10,7 +10,7 @@ using Xunit;
 
 namespace UNOPS.PAO.IntegrationTests.Infrastructure;
 
-public abstract class IntegrationTestBase : IClassFixture<PAOWebApplicationFactory<Program>>
+public abstract class IntegrationTestBase
 {
     protected readonly PAOWebApplicationFactory<Program> Factory;
     protected readonly HttpClient Client;
@@ -110,14 +110,10 @@ public abstract class IntegrationTestBase : IClassFixture<PAOWebApplicationFacto
 
     protected async Task ResetDatabaseAsync()
     {
-        using var scope = Factory.Services.CreateScope();
-        var unopsDb = scope.ServiceProvider.GetRequiredService<UNOPSAppDbContext>();
-        var coreDb = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        
-        await unopsDb.Database.EnsureDeletedAsync();
-        await unopsDb.Database.EnsureCreatedAsync();
-        
-        await coreDb.Database.EnsureDeletedAsync();
-        await coreDb.Database.EnsureCreatedAsync();
+        // NOTE: With a real PostgreSQL test database we do NOT drop and recreate —
+        // that would destroy the entire schema between test runs.  Instead we rely
+        // on idempotent seeding (PAOWebApplicationFactory.SeedTestData) and test
+        // isolation via unique identifiers in test data.
+        await Task.CompletedTask;
     }
 }

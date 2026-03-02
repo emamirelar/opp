@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Tests.Managers
 {
@@ -35,9 +36,8 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         private void SeedTestData()
         {
-            var partner = new Partner
+            var partner = new UNOPSPartner
             {
-                Id = 1,
                 Name = "Link Test Partner",
                 CreatedBy = 1,
                 LastModifiedBy = 1,
@@ -47,9 +47,8 @@ namespace UNOPS.PAO.Business.Tests.Managers
             _context.Partners.Add(partner);
             _context.SaveChanges();
 
-            var links = Enumerable.Range(1, 15).Select(i => new Link
+            var links = Enumerable.Range(1, 15).Select(i => new UNOPSLink
             {
-                Id = i,
                 Name = $"Link {i}",
                 Url = $"https://example.com/link{i}",
                 CreatedBy = 1,
@@ -66,7 +65,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_LM_F001_CreateLink_ValidData_Succeeds()
         {
-            var link = new Link
+            var link = new UNOPSLink
             {
                 Name = "New Test Link",
                 Url = "https://test.example.com/new",
@@ -83,7 +82,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_LM_F002_CreateLink_WithName_Succeeds()
         {
-            var link = new Link
+            var link = new UNOPSLink
             {
                 Name = "Named Link",
                 Url = "https://named.example.com",
@@ -125,7 +124,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
         [Fact]
         public async Task TC_LM_F017_GetLinkById_Exists_ReturnsLink()
         {
-            var link = await _context.Links.FirstOrDefaultAsync(l => l.Id == 1);
+            var link = await _context.Links.FirstOrDefaultAsync(l => l.Name == "Link 1");
             Assert.NotNull(link);
             Assert.Equal("Link 1", link.Name);
         }

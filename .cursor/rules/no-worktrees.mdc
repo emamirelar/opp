@@ -1,0 +1,21 @@
+---
+description: Prevents AI from using worktrees/sandboxes - all edits must be made directly in the primary file tree
+alwaysApply: true
+---
+
+# No Worktrees / Direct File Operations Only
+
+All AI operations must be performed directly in the primary working directory.
+
+## Constraints
+
+- **NEVER** use "Agent Mode" or "Composer" worktrees/sandboxes
+- **ALWAYS** perform edits directly in the primary file tree
+- Propose multi-file changes for manual approval instead of using isolated sandboxes
+- Use the local terminal only; do not run background processes in a worktree
+
+## Rationale
+
+- Ensures all changes are visible and trackable in the main repository
+- Prevents confusion from isolated environments
+- Maintains consistency with the project's git workflow

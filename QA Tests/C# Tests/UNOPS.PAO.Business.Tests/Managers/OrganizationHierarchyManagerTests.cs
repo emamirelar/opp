@@ -8,39 +8,42 @@ using Xunit;
 namespace UNOPS.PAO.Business.Tests.Managers;
 
 /// <summary>
-/// Unit tests for OrganizationHierarchyManager
+/// Unit tests for OrganizationHierarchyManager against PostgreSQL.
+/// Uses test markers and auto-generated IDs for data isolation.
 /// </summary>
 public class OrganizationHierarchyManagerTests : ManagerTestBase
 {
+    private readonly string _testMarker = $"OHM_{Guid.NewGuid():N}";
+
     [Fact]
     public async Task GetOrganizationById_Should_ReturnOrganization_When_Exists()
     {
         // Arrange
         var org = new OrganizationHierarchy
         {
-            Id = 1,
-            Code = "ORG001",
-            Name = "Test Organization",
+            Code = $"ORG001_{_testMarker}",
+            Name = $"Test Organization {_testMarker}",
             Type = OrganizationUnitType.OrgUnit,
             Description = "Test Organization Description"
         };
         await Context.OrganizationHierarchies.AddAsync(org);
         await SaveChangesAsync();
+        RegisterTableCleanup("OrganizationHierarchies", $"\"Id\" = {org.Id}");
 
         // Act
-        var result = await Context.OrganizationHierarchies.FindAsync(1);
+        var result = await Context.OrganizationHierarchies.FindAsync(org.Id);
 
         // Assert
         result.Should().NotBeNull();
-        result!.Name.Should().Be("Test Organization");
-        result.Code.Should().Be("ORG001");
+        result!.Name.Should().Contain("Test Organization");
+        result.Code.Should().Contain("ORG001_");
     }
 
     [Fact]
     public async Task GetOrganizationById_Should_ReturnNull_When_NotExists()
     {
         // Act
-        var result = await Context.OrganizationHierarchies.FindAsync(999);
+        var result = await Context.OrganizationHierarchies.FindAsync(999999);
 
         // Assert
         result.Should().BeNull();
@@ -52,21 +55,22 @@ public class OrganizationHierarchyManagerTests : ManagerTestBase
         // Arrange
         var orgs = new List<OrganizationHierarchy>
         {
-            new() { Id = 1, Code = "REG1", Name = "Region 1", Type = OrganizationUnitType.Region, Description = "Region Description" },
-            new() { Id = 2, Code = "HUB1", Name = "Hub 1", Type = OrganizationUnitType.Hub, Description = "Hub Description" },
-            new() { Id = 3, Code = "OU1", Name = "Org Unit 1", Type = OrganizationUnitType.OrgUnit, Description = "OrgUnit Description" }
+            new() { Code = $"REG1_{_testMarker}", Name = $"Region 1 {_testMarker}", Type = OrganizationUnitType.Region, Description = "Region Description" },
+            new() { Code = $"HUB1_{_testMarker}", Name = $"Hub 1 {_testMarker}", Type = OrganizationUnitType.Hub, Description = "Hub Description" },
+            new() { Code = $"OU1_{_testMarker}", Name = $"Org Unit 1 {_testMarker}", Type = OrganizationUnitType.OrgUnit, Description = "OrgUnit Description" }
         };
         await Context.OrganizationHierarchies.AddRangeAsync(orgs);
         await SaveChangesAsync();
+        foreach (var o in orgs) RegisterTableCleanup("OrganizationHierarchies", $"\"Id\" = {o.Id}");
 
         // Act
         var result = await Context.OrganizationHierarchies
-            .Where(o => o.Type == OrganizationUnitType.Hub)
+            .Where(o => o.Name.Contains(_testMarker) && o.Type == OrganizationUnitType.Hub)
             .ToListAsync();
 
         // Assert
         result.Should().HaveCount(1);
-        result.First().Name.Should().Be("Hub 1");
+        result.First().Name.Should().Contain("Hub 1");
     }
 
     [Fact]
@@ -75,15 +79,18 @@ public class OrganizationHierarchyManagerTests : ManagerTestBase
         // Arrange
         var orgs = new List<OrganizationHierarchy>
         {
-            new() { Id = 1, Code = "OU1", Name = "Org Unit 1", Type = OrganizationUnitType.OrgUnit, Description = "Description 1" },
-            new() { Id = 2, Code = "HUB1", Name = "Hub 1", Type = OrganizationUnitType.Hub, Description = "Description 2" },
-            new() { Id = 3, Code = "REG1", Name = "Region 1", Type = OrganizationUnitType.Region, Description = "Description 3" }
+            new() { Code = $"OU1_{_testMarker}", Name = $"Org Unit 1 {_testMarker}", Type = OrganizationUnitType.OrgUnit, Description = "Description 1" },
+            new() { Code = $"HUB1_{_testMarker}", Name = $"Hub 1 {_testMarker}", Type = OrganizationUnitType.Hub, Description = "Description 2" },
+            new() { Code = $"REG1_{_testMarker}", Name = $"Region 1 {_testMarker}", Type = OrganizationUnitType.Region, Description = "Description 3" }
         };
         await Context.OrganizationHierarchies.AddRangeAsync(orgs);
         await SaveChangesAsync();
+        foreach (var o in orgs) RegisterTableCleanup("OrganizationHierarchies", $"\"Id\" = {o.Id}");
 
         // Act
-        var result = await Context.OrganizationHierarchies.ToListAsync();
+        var result = await Context.OrganizationHierarchies
+            .Where(o => o.Name.Contains(_testMarker))
+            .ToListAsync();
 
         // Assert
         result.Should().HaveCount(3);
@@ -95,37 +102,42 @@ public class OrganizationHierarchyManagerTests : ManagerTestBase
         // Arrange
         var parent = new OrganizationHierarchy
         {
-            Id = 1,
-            Code = "PARENT",
-            Name = "Parent Org",
+            Code = $"PARENT_{_testMarker}",
+            Name = $"Parent Org {_testMarker}",
             Type = OrganizationUnitType.Region,
             Description = "Parent Organization"
         };
+        await Context.OrganizationHierarchies.AddAsync(parent);
+        await SaveChangesAsync();
+        RegisterTableCleanup("OrganizationHierarchies", $"\"Id\" = {parent.Id}");
+
         var child = new OrganizationHierarchy
         {
-            Id = 2,
-            Code = "CHILD",
-            Name = "Child Org",
+            Code = $"CHILD_{_testMarker}",
+            Name = $"Child Org {_testMarker}",
             Type = OrganizationUnitType.OrgUnit,
             Description = "Child Organization",
-            ParentId = 1
+            ParentId = parent.Id
         };
-        await Context.OrganizationHierarchies.AddRangeAsync(parent, child);
+        await Context.OrganizationHierarchies.AddAsync(child);
         await SaveChangesAsync();
+        RegisterTableCleanup("OrganizationHierarchies", $"\"Id\" = {child.Id}");
 
         // Act
-        var childResult = await Context.OrganizationHierarchies.FindAsync(2);
+        var childResult = await Context.OrganizationHierarchies.FindAsync(child.Id);
 
         // Assert
         childResult.Should().NotBeNull();
-        childResult!.ParentId.Should().Be(1);
+        childResult!.ParentId.Should().Be(parent.Id);
     }
 
     [Fact]
-    public async Task GetOrganizations_Should_ReturnEmpty_When_NoOrganizations()
+    public async Task GetOrganizations_Should_ReturnEmpty_When_NoMatchingOrganizations()
     {
         // Act
-        var result = await Context.OrganizationHierarchies.ToListAsync();
+        var result = await Context.OrganizationHierarchies
+            .Where(o => o.Name == "NONEXISTENT_ORG_MARKER_ZZZZZ")
+            .ToListAsync();
 
         // Assert
         result.Should().BeEmpty();
@@ -137,23 +149,28 @@ public class OrganizationHierarchyManagerTests : ManagerTestBase
         // Arrange
         var parent = new OrganizationHierarchy
         {
-            Id = 1,
-            Code = "PARENT",
-            Name = "Parent",
+            Code = $"PARENT_{_testMarker}",
+            Name = $"Parent {_testMarker}",
             Type = OrganizationUnitType.Region,
             Description = "Parent Description"
         };
+        await Context.OrganizationHierarchies.AddAsync(parent);
+        await SaveChangesAsync();
+        RegisterTableCleanup("OrganizationHierarchies", $"\"Id\" = {parent.Id}");
+
         var children = new List<OrganizationHierarchy>
         {
-            new() { Id = 2, Code = "CHILD1", Name = "Child 1", Type = OrganizationUnitType.Hub, Description = "Child 1 Description", ParentId = 1 },
-            new() { Id = 3, Code = "CHILD2", Name = "Child 2", Type = OrganizationUnitType.Hub, Description = "Child 2 Description", ParentId = 1 }
+            new() { Code = $"CHILD1_{_testMarker}", Name = $"Child 1 {_testMarker}", Type = OrganizationUnitType.Hub, Description = "Child 1 Description", ParentId = parent.Id },
+            new() { Code = $"CHILD2_{_testMarker}", Name = $"Child 2 {_testMarker}", Type = OrganizationUnitType.Hub, Description = "Child 2 Description", ParentId = parent.Id }
         };
-        await Context.OrganizationHierarchies.AddAsync(parent);
         await Context.OrganizationHierarchies.AddRangeAsync(children);
         await SaveChangesAsync();
+        foreach (var c in children) RegisterTableCleanup("OrganizationHierarchies", $"\"Id\" = {c.Id}");
 
         // Act
-        var result = await Context.OrganizationHierarchies.Where(o => o.ParentId == 1).ToListAsync();
+        var result = await Context.OrganizationHierarchies
+            .Where(o => o.ParentId == parent.Id)
+            .ToListAsync();
 
         // Assert
         result.Should().HaveCount(2);

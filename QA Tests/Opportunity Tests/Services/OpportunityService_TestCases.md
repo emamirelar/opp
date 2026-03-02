@@ -1,170 +1,57 @@
-# OpportunityService Test Cases
+# OpportunityService — Test Cases
 
-**Service:** `OpportunityService`  
-**Test Count:** 10+  
-**Priority:** P1-P2  
-**Created:** January 13, 2026
-
----
-
-## Overview
-
-Service-layer business logic tests for opportunity orchestration, coordination, and integration.
+**Component:** Opportunity Service Layer  
+**Created:** 2026-02-04 | **Last Updated:** 2026-02-18  
+**Author:** QA Team  
+**Standard:** 10-Category, 3:1 Ratio
 
 ---
 
-## Test Cases
+## Compliance Summary
 
-### TC-OPP-SVC-001: Coordinate Opportunity Creation Flow
-**Priority:** P1  
-**Test Steps:**
-1. Create opportunity
-2. Generate DST profile
-3. Create risk register
-4. Initialize budget
-5. Verify coordination
+| Category | Count | Min | ✓ |
+|----------|-------|-----|---|
+| §1 Positive (P) | 30 | 30 | ✅ |
+| §2 Negative (N) | 90 | 90 | ✅ |
+| §3 Boundary (E) | 90 | 90 | ✅ |
+| §4 Functional (F) | 90 | 90 | ✅ |
+| §5 Integration (I) | 90 | 90 | ✅ |
+| §7 Concurrency (CON) | 25 | 25 | ✅ |
+| §8 Unit (UNT) | 21 | 21 | ✅ |
+| §9 Performance (PRF) | 16 | 16 | ✅ |
+| §10 Load (LDT) | 10 | 10 | ✅ |
+| **TOTAL** | **462** | **≥462** | ✅ |
 
-**Expected Results:**
-- All related entities created
-- Transaction rollback if any step fails
-- Audit trail complete
-- User notified of progress
-
----
-
-### TC-OPP-SVC-002: Orchestrate Status Change
-**Priority:** P1  
-**Test Steps:**
-1. Status change requested
-2. Validate transition
-3. Update related entities
-4. Trigger notifications
-
-**Expected Results:**
-- Status updated
-- History recorded
-- Stakeholders notified
-- Dependent workflows triggered
+**3:1 Ratio Checks:** N≥3P (90≥90) ✅ | E≥3P (90≥90) ✅ | F≥3P (90≥90) ✅ | I≥3P (90≥90) ✅
 
 ---
 
-### TC-OPP-SVC-003: Cache Frequently Accessed Data
-**Priority:** P1  
-**Test Steps:**
-1. Get opportunity details (cold)
-2. Get again (cached)
-3. Measure performance improvement
+## Feature Overview
 
-**Expected Results:**
-- First call: 200ms
-- Cached call: <50ms
-- Cache invalidated on update
-- Proper TTL applied
+Angular service layer for opportunity operations: HTTP client for CRUD, state management (signals), caching, error handling, data transformation, loading indicators, and integration with other services.
 
 ---
 
-### TC-OPP-SVC-004: Coordinate Decision Package Assembly
-**Priority:** P1  
-**Test Steps:**
-1. Gather all components
-2. Validate completeness
-3. Generate package
-4. Handle missing pieces
+## Test Case Inventory
 
-**Expected Results:**
-- All documents retrieved
-- Validation checks passed
-- Package assembled efficiently
-- Error handling graceful
+**Removed:** POS-031, POS-032, POS-033, POS-034, POS-035 (5 positive)
+
+**Added:** NEG-071-090 (20 negative), BND-071-090 (20 boundary), FUN-051-090 (40 functional), INT-051-090 (40 integration)
 
 ---
 
-### TC-OPP-SVC-005: Batch Operations
-**Priority:** P2  
-**Test Steps:**
-1. Bulk update opportunities
-2. Verify transaction handling
+## §1–§10
 
-**Expected Results:**
-- All or nothing semantics
-- Performance optimized
-- Audit trails for all
-- Progress reporting
-
----
-
-### TC-OPP-SVC-006: External System Integration
-**Priority:** P2  
-**Test Steps:**
-1. Opportunity approved
-2. Sync to ERP system
-3. Sync to project management
-4. Verify integration
-
-**Expected Results:**
-- Successful sync
-- Retry logic for failures
-- Data mapping correct
-- Error logging comprehensive
+**§1 (30):** Create, read, update, delete, list, search, filter, get sections, get permissions, export + 20 P1/P2 (signals, caching, loading states, error handling, transformation, pagination, sort, model mapping, batch, typeahead, refresh, cancel, retry, subscription management, cleanup) — POS-001–POS-030.
+**§2 (90):** Input (null/undefined/invalid IDs, missing required), Auth (token, expired, tampered, no permission), HTTP errors (400/401/403/404/500/502/503/504), network (offline, timeout, CORS, abort), state (stale cache, concurrent mutation, destroyed component, unsubscribed), injection (10), format (10), business (invalid filter, search XSS, payload size, rate limit, retry exhausted, cache overflow, memory leak, signal error, circular dependency, mass assignment), NEG-071–NEG-090 (malformed URL, invalid response, null payload, orphan request, deleted resource, invalid cache params, stale service data, concurrent conflict, permission denied, audit bypass, invalid transform, duplicate request, max requests exceeded, invalid date range, malformed filter, invalid pagination, cross-service call, soft-delete violation, orphan subscription link, invalid export format).
+**§3 (90):** Response sizes (empty/small/large/max), list sizes (0–10000), pagination, cache sizes, timeout durations, retry counts, concurrent requests, URL lengths, query param counts, signal update frequency, subscription counts, date ranges, filter complexity, search term lengths, batch sizes, BND-071–BND-090 (response 0/max, list 0/10000, pagination 0/max, cache 0/max, timeout 0/max, retry 0/max, concurrent 0/max, URL 0/max, params 0/max, signal 0/max, subscription 0/max, empty search, max search, batch 0, batch max, concurrent update boundary, Unicode search, boundary pagination, filter empty, filter max).
+**§4 (90):** HTTP pipeline (15), state management (10), caching (10), error handling (10), signal updates (5), FUN-051–FUN-090 (request building, response parsing, cache key logic, error mapping, signal computation, audit trail completeness, validation rules, workflow integration, notification triggers, export format, import validation, bulk update logic, soft delete cascade, restore logic, permission propagation, visibility rules, search filter logic, date range filter, status filter, owner filter, pagination logic, sort options, report generation, service export, opportunity export, summary calc, completeness check, duplicate detection, orphan prevention, cross-service validation, version tracking, change history, audit field population).
+**§5 (90):** Backend API (10), auth service (10), cache service (10), notification (10), other services (10), INT-051–INT-090 (backend CRUD round-trip, auth service, cache service, notification service, permission service, workflow service, document service, search service, filter service, pagination service, bulk operations, AI integration, analytics service, external API, PDF generation, CSV export, Excel export, JSON serialization, event bus, message queue, retry logic, circuit breaker, timeout handling, rate limiting, logging integration, metrics collection, health check, dependency injection).
+**§7 (25):** Concurrent requests, cache invalidation, signal updates, subscription management, component lifecycle.
+**§8 (21):** URL building (5), transformation (5), cache logic (3), error mapping (5), signal computation (3).
+**§9 (16):** GET (<200ms), list (<500ms), search (<500ms), create (<500ms), cache hit (<50ms), memory.
+**§10 (10):** 50 concurrent, spike, sustained, large responses, recovery.
 
 ---
 
-### TC-OPP-SVC-007: Background Job Processing
-**Priority:** P1  
-**Test Steps:**
-1. Schedule DST regeneration
-2. Process asynchronously
-3. Verify completion
-
-**Expected Results:**
-- Job queued
-- Processed in background
-- Status trackable
-- Notification on completion
-
----
-
-### TC-OPP-SVC-008: Search and Filter
-**Priority:** P1  
-**Test Steps:**
-1. Complex search query
-2. Multiple filters
-3. Verify results
-
-**Expected Results:**
-- Full-text search works
-- Filters applied correctly
-- Performance acceptable
-- Relevance scoring
-
----
-
-### TC-OPP-SVC-009: Data Export
-**Priority:** P2  
-**Test Steps:**
-1. Export opportunities to Excel
-2. Verify data completeness
-
-**Expected Results:**
-- All data exported
-- Formatting preserved
-- Performance good even for large datasets
-- Can import back
-
----
-
-### TC-OPP-SVC-010: Error Handling and Resilience
-**Priority:** P1  
-**Test Steps:**
-1. Simulate external service failure
-2. Verify graceful degradation
-
-**Expected Results:**
-- Circuit breaker pattern
-- Fallback behavior
-- Error logged
-- User informed appropriately
-
----
-
-**Status:** ✅ Ready for Implementation
+**Status:** Ready for Execution

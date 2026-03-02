@@ -1,0 +1,66 @@
+# PowerShell Shell Environment — MANDATORY
+
+## The Rule
+
+The user's shell is **PowerShell** on Windows. ALL shell commands MUST use PowerShell-compatible syntax. **NEVER** use bash/sh/zsh syntax.
+
+---
+
+## Git Commits — No Heredoc
+
+PowerShell does NOT support bash heredoc (`<<'EOF'`). Use one of these alternatives:
+
+### Option 1: Simple double-quoted string (preferred for short messages)
+
+```powershell
+git commit -m "Short commit message here"
+```
+
+### Option 2: PowerShell backtick for line breaks (for multi-line messages)
+
+```powershell
+git commit -m "First line`n`nSecond paragraph here"
+```
+
+### Option 3: PowerShell variable for complex messages
+
+```powershell
+$msg = @"
+First line
+
+Detailed description here.
+"@
+git commit -m $msg
+```
+
+> **CRITICAL**: The `@"` must be the LAST thing on its opening line, and `"@` must be at the START of its closing line (column 0). PowerShell here-strings are strict about this.
+
+---
+
+## Other Bash-isms to Avoid
+
+| Bash Syntax | PowerShell Equivalent |
+|---|---|
+| `&&` (chain commands) | `; if ($LASTEXITCODE -eq 0) {` or just use `;` |
+| `\|\|` (fallback) | `; if ($LASTEXITCODE -ne 0) {` |
+| `$(command)` in strings | `$(command)` works in PS too, but beware context |
+| `export VAR=val` | `$env:VAR = "val"` |
+| `cat file` | `Get-Content file` or just use the Read tool |
+| `grep` | `Select-String` or use the Grep tool |
+| `find` | `Get-ChildItem -Recurse` or use the Glob tool |
+| `rm -rf` | `Remove-Item -Recurse -Force` |
+| `mkdir -p` | `New-Item -ItemType Directory -Force` |
+| `> /dev/null 2>&1` | `| Out-Null` or `*> $null` |
+| `echo` | `Write-Output` (or just use response text) |
+| Single quotes in heredoc | Use PowerShell here-string `@'...'@` |
+
+---
+
+## Reminder
+
+Before every Shell tool call, verify:
+
+- [ ] No `<<` heredoc syntax
+- [ ] No bash-only operators (`&&`, `||` as control flow)
+- [ ] Paths use backslash or forward-slash (both work in PS)
+- [ ] String quoting is PowerShell-compatible
