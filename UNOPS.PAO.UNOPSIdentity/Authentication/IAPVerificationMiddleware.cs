@@ -225,7 +225,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                                 _logger.LogInformation("IAPVerificationMiddleware - Looking up user by email: {Email}", extractedEmail);
 
                                 // Check if the extracted value is a numeric ID instead of an email
-                                PAOIdentityUser user = null;
+                                PAOIdentityUser? user = null;
                                 if (long.TryParse(extractedEmail, out _))
                                 {
                                     // This is a numeric user ID, not an email
@@ -459,24 +459,24 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             var publicKey = await GetPublicKeyAsync(kid);
             
             // Get the expected audience
-            string projectNumber = _configuration["IAP:ProjectNumber"];
+            string? projectNumber = _configuration["IAP:ProjectNumber"];
             
             // Try multiple audience formats
             List<string> audiences = new List<string>();
             
             // Add configured audience if available
-            string configuredAudience = _configuration["IAP:Audience"];
+            string? configuredAudience = _configuration["IAP:Audience"];
             if (!string.IsNullOrEmpty(configuredAudience))
             {
                 audiences.Add(configuredAudience);
             }
             
             // Cloud Run format
-            string region = _configuration["IAP:Region"];
-            string serviceName = _configuration["IAP:ServiceName"];
+            string? region = _configuration["IAP:Region"];
+            string? serviceName = _configuration["IAP:ServiceName"];
             
             // Backend service format
-            string backendServiceId = _configuration["IAP:BackendServiceId"];
+            string? backendServiceId = _configuration["IAP:BackendServiceId"];
             if (!string.IsNullOrEmpty(projectNumber) && 
                 !string.IsNullOrEmpty(backendServiceId))
             {
@@ -486,9 +486,9 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             _logger.LogDebug("Trying JWT validation with audience formats: {@Audiences}", audiences);
             
             // Try each audience until one works
-            SecurityToken validatedToken = null;
-            ClaimsPrincipal validatedPrincipal = null;
-            Exception lastException = null;
+            SecurityToken? validatedToken = null;
+            ClaimsPrincipal? validatedPrincipal = null;
+            Exception? lastException = null;
             
             foreach (var audience in audiences)
             {
@@ -528,7 +528,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             }
             
             // Extract the email claim from the validated token - try multiple possible claim types
-            string userEmail = null;
+            string? userEmail = null;
             
             // Common claim types for email in IAP tokens
             var emailClaimTypes = new[] { 
@@ -556,6 +556,11 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
 
             // Add user identity claims if not already present
             var identity = validatedPrincipal.Identity as ClaimsIdentity;
+            if (identity == null)
+            {
+                throw new SecurityTokenException("Validated principal has no ClaimsIdentity");
+            }
+
             if (!string.IsNullOrEmpty(subClaim))
             {
                 if (subClaim.Contains("@"))
@@ -578,7 +583,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         if (gcipJson.RootElement.TryGetProperty("email", out var emailElement))
                         {
                             userEmail = emailElement.GetString();
-                            userEmail = userEmail.Contains(":") ? userEmail.Split(':').Last() : userEmail;
+                            userEmail = !string.IsNullOrEmpty(userEmail) && userEmail.Contains(":") ? userEmail.Split(':').Last() : userEmail;
                             _logger.LogDebug("Found email in gcip claim: {Email}", userEmail);
                         }
                     }
@@ -646,7 +651,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             {
                 if (!validatedPrincipal.HasClaim(c => c.Type == claim.Type && c.Value == claim.Value))
                 {
-                    identity.AddClaim(new Claim(claim.Type, claim.Value));
+                    identity.AddClaim(new Claim(claim.Type, claim.Value ?? ""));
                 }
             }
             

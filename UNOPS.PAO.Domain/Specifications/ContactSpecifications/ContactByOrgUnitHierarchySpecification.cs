@@ -30,7 +30,8 @@ public class ContactByOrgUnitHierarchySpecification : BaseSpecification<Contact>
         }
 
         // Filter by Partner existence - the actual org unit filtering will be done via manual join
-        return c => c.Partner != null;
+        Expression<Func<Contact, bool>> result = c => c.Partner != null;
+        return result!;
     }
     
     /// <summary>

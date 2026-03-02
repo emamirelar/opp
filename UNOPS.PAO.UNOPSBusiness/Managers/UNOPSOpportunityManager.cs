@@ -1285,6 +1285,11 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
     public async Task<OpportunityModel?> UpdateOpportunityAsync(UpdateOpportunityRequest model)
     {
+        if (string.IsNullOrWhiteSpace(model?.Name))
+        {
+            throw new BusinessException("Name is required.");
+        }
+
         var entity = await context.Opportunities
             .Include(o => o.FundingPartners.Where(fp => !fp.IsDeleted))
             .Include(o => o.ClientPartners.Where(cp => !cp.IsDeleted))
@@ -3660,6 +3665,11 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         CreateOpportunityFromInteractionsRequest request,
         int currentUserId)
     {
+        if (string.IsNullOrWhiteSpace(request?.Name))
+        {
+            throw new BusinessException("Name is required.");
+        }
+
         // Deduplicate SDGs by ID (plain integer array)
         var uniqueSdGs = request.SdGs?.Distinct().ToList() ?? new List<int>();
         
