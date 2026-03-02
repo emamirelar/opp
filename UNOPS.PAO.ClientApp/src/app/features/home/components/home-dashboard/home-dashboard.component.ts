@@ -1187,7 +1187,7 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
    * Generate Opportunity Statement PDF for opportunity ID 58 and upload to GCS.
    */
   generateTestPdf() {
-    const opportunityId = 5;
+    const opportunityId = 58;
     this.testPdfLoading.set(true);
     this.opportunityService
       .generateStatementPdf({
