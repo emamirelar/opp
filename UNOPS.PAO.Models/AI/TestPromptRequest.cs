@@ -3,7 +3,7 @@ namespace UNOPS.PAO.Models.AI;
 public class TestPromptRequest
 {
     // Core request - the AiPrompt table will define the rest
-    public string Type { get; set; } // Maps to AiPrompt.Type (e.g., "partner_summary")
+    public string Type { get; set; } = null!; // Maps to AiPrompt.Type (e.g., "partner_summary")
     public int? Id { get; set; }     // Entity ID to analyze (optional - for Entity ID mode)
     public string? TestData { get; set; } // Test data (optional - for Test Data mode)
     

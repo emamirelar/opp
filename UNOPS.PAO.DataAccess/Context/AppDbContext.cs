@@ -21,82 +21,83 @@ public class AppDbContext : AuditableDbContext<int, int>
 
     protected AppDbContext(DbContextOptions options, UserResolverService<int> userResolverService, IDbContextSchema schema) : base(options, userResolverService, schema)
     {
+        _userResolverService = userResolverService;
     }
 
-    public DbSet<PAOUser> PAOUsers { get; set; }
-    public DbSet<Currency> Currencies { get; set; }
-    public DbSet<Country> Countries { get; set; }
-    public DbSet<PartnerAgreement> PartnerAgreements { get; set; }
+    public DbSet<PAOUser> PAOUsers { get; set; } = null!;
+    public DbSet<Currency> Currencies { get; set; } = null!;
+    public DbSet<Country> Countries { get; set; } = null!;
+    public DbSet<PartnerAgreement> PartnerAgreements { get; set; } = null!;
 
-    public DbSet<EligibleEntity> EligibleEntities { get; set; }
+    public DbSet<EligibleEntity> EligibleEntities { get; set; } = null!;
 
-    public DbSet<EntityUserRole> EntityUserRoles { get; set; }
+    public DbSet<EntityUserRole> EntityUserRoles { get; set; } = null!;
 
-    public DbSet<Contact> Contacts { get; set; }
-    public DbSet<Interaction> Interactions { get; set; }
-    public DbSet<Partner> Partners { get; set; }
-    public DbSet<PartnerTree> PartnerTrees { get; set; }
-    public DbSet<Document> Documents { get; set; }
-    public DbSet<DocumentRelationship> DocumentRelationships { get; set; }
-    public DbSet<OrganizationUnitRelationship> OrganizationUnitRelationships { get; set; }
-    public DbSet<DocumentType> DocumentTypes { get; set; }
-    public DbSet<UNOPS.PAO.Domain.Entities.Link> Links { get; set; }
-    public DbSet<OrganizationHierarchy> OrganizationHierarchies { get; set; }
-    public DbSet<LiaisonOffice> LiaisonOffices { get; set; }
+    public DbSet<Contact> Contacts { get; set; } = null!;
+    public DbSet<Interaction> Interactions { get; set; } = null!;
+    public DbSet<Partner> Partners { get; set; } = null!;
+    public DbSet<PartnerTree> PartnerTrees { get; set; } = null!;
+    public DbSet<Document> Documents { get; set; } = null!;
+    public DbSet<DocumentRelationship> DocumentRelationships { get; set; } = null!;
+    public DbSet<OrganizationUnitRelationship> OrganizationUnitRelationships { get; set; } = null!;
+    public DbSet<DocumentType> DocumentTypes { get; set; } = null!;
+    public DbSet<UNOPS.PAO.Domain.Entities.Link> Links { get; set; } = null!;
+    public DbSet<OrganizationHierarchy> OrganizationHierarchies { get; set; } = null!;
+    public DbSet<LiaisonOffice> LiaisonOffices { get; set; } = null!;
 
-    public DbSet<EntityEmbeddings> EntityEmbeddings { get; set; }
-    public DbSet<InteractionContact> InteractionContacts { get; set; }
-    public DbSet<InteractionUser> InteractionUsers { get; set; }
-    public DbSet<InteractionPartner> InteractionPartners { get; set; }
-    public DbSet<UserProfile> UserProfile { get; set; }
-    public DbSet<UserPreference> UserPreferences { get; set; }
+    public DbSet<EntityEmbeddings> EntityEmbeddings { get; set; } = null!;
+    public DbSet<InteractionContact> InteractionContacts { get; set; } = null!;
+    public DbSet<InteractionUser> InteractionUsers { get; set; } = null!;
+    public DbSet<InteractionPartner> InteractionPartners { get; set; } = null!;
+    public DbSet<UserProfile> UserProfile { get; set; } = null!;
+    public DbSet<UserPreference> UserPreferences { get; set; } = null!;
 
-    public DbSet<Notification> Notifications { get; set; }
-    public DbSet<SavedFilter> SavedFilters { get; set; }
+    public DbSet<Notification> Notifications { get; set; } = null!;
+    public DbSet<SavedFilter> SavedFilters { get; set; } = null!;
 
     // Opportunity and related entities
-    public DbSet<Opportunity> Opportunities { get; set; }
-    public DbSet<OpportunityFundingPartner> OpportunityFundingPartners { get; set; }
-    public DbSet<OpportunityClientPartner> OpportunityClientPartners { get; set; }
-    public DbSet<OpportunityStakeholder> OpportunityStakeholders { get; set; }
-    public DbSet<OpportunityDeliverable> OpportunityDeliverables { get; set; }
-    public DbSet<OpportunityCountry> OpportunityCountries { get; set; }
-    public DbSet<OpportunitySDG> OpportunitySDGs { get; set; }
-    public DbSet<OpportunitySDGTarget> OpportunitySDGTargets { get; set; }
-    public DbSet<OpportunitySDGIndicator> OpportunitySDGIndicators { get; set; }
-    public DbSet<OpportunityUNCFOutcome> OpportunityUNCFOutcomes { get; set; }
-    public DbSet<OpportunityUNCFIndicator> OpportunityUNCFIndicators { get; set; }
-    public DbSet<OpportunityUNOPSMission> OpportunityUNOPSMissions { get; set; }
-    public DbSet<OpportunityInteraction> OpportunityInteractions { get; set; }
-    public DbSet<OpportunityCollaborator> OpportunityCollaborators { get; set; }
+    public DbSet<Opportunity> Opportunities { get; set; } = null!;
+    public DbSet<OpportunityFundingPartner> OpportunityFundingPartners { get; set; } = null!;
+    public DbSet<OpportunityClientPartner> OpportunityClientPartners { get; set; } = null!;
+    public DbSet<OpportunityStakeholder> OpportunityStakeholders { get; set; } = null!;
+    public DbSet<OpportunityDeliverable> OpportunityDeliverables { get; set; } = null!;
+    public DbSet<OpportunityCountry> OpportunityCountries { get; set; } = null!;
+    public DbSet<OpportunitySDG> OpportunitySDGs { get; set; } = null!;
+    public DbSet<OpportunitySDGTarget> OpportunitySDGTargets { get; set; } = null!;
+    public DbSet<OpportunitySDGIndicator> OpportunitySDGIndicators { get; set; } = null!;
+    public DbSet<OpportunityUNCFOutcome> OpportunityUNCFOutcomes { get; set; } = null!;
+    public DbSet<OpportunityUNCFIndicator> OpportunityUNCFIndicators { get; set; } = null!;
+    public DbSet<OpportunityUNOPSMission> OpportunityUNOPSMissions { get; set; } = null!;
+    public DbSet<OpportunityInteraction> OpportunityInteractions { get; set; } = null!;
+    public DbSet<OpportunityCollaborator> OpportunityCollaborators { get; set; } = null!;
 
     // Infrastructure entities
-    public DbSet<EntityRole> EntityRoles { get; set; }
-    public DbSet<EntityRolePerson> EntityRolePersons { get; set; }
-    public DbSet<AuditLog> AuditLogs { get; set; }
-    public DbSet<ProposedInitiativeType> ProposedInitiativeTypes { get; set; }
-    public DbSet<Comment> Comments { get; set; }
+    public DbSet<EntityRole> EntityRoles { get; set; } = null!;
+    public DbSet<EntityRolePerson> EntityRolePersons { get; set; } = null!;
+    public DbSet<AuditLog> AuditLogs { get; set; } = null!;
+    public DbSet<ProposedInitiativeType> ProposedInitiativeTypes { get; set; } = null!;
+    public DbSet<Comment> Comments { get; set; } = null!;
 
     // Artifacts system entities
-    public DbSet<ArtifactDataType> ArtifactDataTypes { get; set; }
-    public DbSet<ArtifactType> ArtifactTypes { get; set; }
-    public DbSet<EntityArtifact> EntityArtifacts { get; set; }
-    public DbSet<ArtifactExtractionRule> ArtifactExtractionRules { get; set; }
+    public DbSet<ArtifactDataType> ArtifactDataTypes { get; set; } = null!;
+    public DbSet<ArtifactType> ArtifactTypes { get; set; } = null!;
+    public DbSet<EntityArtifact> EntityArtifacts { get; set; } = null!;
+    public DbSet<ArtifactExtractionRule> ArtifactExtractionRules { get; set; } = null!;
 
     // External Data Service entities (Read-Only)
-    public DbSet<SDG> SDGs { get; set; }
-    public DbSet<SDGTarget> SDGTargets { get; set; }
-    public DbSet<SDGIndicator> SDGIndicators { get; set; }
-    public DbSet<UNCFOutcome> UNCFOutcomes { get; set; }
-    public DbSet<UNCFIndicator> UNCFIndicators { get; set; }
-    public DbSet<UNCFMetadata> UNCFMetadatas { get; set; }
-    public DbSet<UNOPSMission> UNOPSMissions { get; set; }
-    public DbSet<ExchangeRate> ExchangeRates { get; set; }
+    public DbSet<SDG> SDGs { get; set; } = null!;
+    public DbSet<SDGTarget> SDGTargets { get; set; } = null!;
+    public DbSet<SDGIndicator> SDGIndicators { get; set; } = null!;
+    public DbSet<UNCFOutcome> UNCFOutcomes { get; set; } = null!;
+    public DbSet<UNCFIndicator> UNCFIndicators { get; set; } = null!;
+    public DbSet<UNCFMetadata> UNCFMetadatas { get; set; } = null!;
+    public DbSet<UNOPSMission> UNOPSMissions { get; set; } = null!;
+    public DbSet<ExchangeRate> ExchangeRates { get; set; } = null!;
     
     // Output catalog entities
-    public DbSet<Unit> Units { get; set; }
-    public DbSet<ProjectCategory> ProjectCategories { get; set; }
-    public DbSet<Output> Outputs { get; set; }
+    public DbSet<Unit> Units { get; set; } = null!;
+    public DbSet<ProjectCategory> ProjectCategories { get; set; } = null!;
+    public DbSet<Output> Outputs { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
