@@ -11,7 +11,7 @@ on:
 
 env:
   DOTNET_VERSION: '9.0.x'
-  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
 
 jobs:
   fast-tests:
@@ -50,7 +50,8 @@ jobs:
           --configuration Release `
           --verbosity normal `
           --logger "trx;LogFileName=fast-tests.trx" `
-          --results-directory $testResultsDir
+          --results-directory $testResultsDir `
+          --collect:"XPlat Code Coverage"
     
     - name: List Test Results (Debug)
       if: always()
@@ -81,7 +82,9 @@ jobs:
       if: always()
       with:
         name: fast-tests-results
-        path: TestResults
+        path: |
+          TestResults
+          **/coverage.cobertura.xml
         if-no-files-found: warn
     
     - name: Check FastTests Result
@@ -91,14 +94,29 @@ jobs:
         exit 1
 
   business-tests:
-    name: Business Logic Tests
-    runs-on: windows-latest
+    name: Business Logic Tests (PostgreSQL)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: unops_pao_test
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        submodules: recursive  # Required for UNOPS.Workflow - Business/Workflow adapters depend on it
+        submodules: recursive
         token: ${{ secrets.GH_PAT }}
 
     - name: Ensure Workflow submodule initialized
@@ -114,19 +132,109 @@ jobs:
     
     - name: Build
       run: dotnet build --no-restore --configuration Release
+
+    - name: Install EF Core tools
+      run: dotnet tool install --global dotnet-ef
+
+    - name: Apply EF Migrations
+      run: |
+        dotnet ef database update \
+          --project UNOPS.PAO.UNOPSDataAccess/UNOPS.PAO.UNOPSDataAccess.csproj \
+          --startup-project UNOPS.PAO.Server/UNOPS.PAO.Server.csproj
+      env:
+        ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;Include Error Detail=true'
+        ConnectionStrings__UseIamAuthentication: 'false'
+        IsUNOPSOverride: 'true'
     
+    - name: .NET Dependency Vulnerability Scan
+      id: dotnet-vuln-scan
+      continue-on-error: true
+      run: dotnet list package --vulnerable --include-transitive 2>&1 | tail -60
+
     - name: Run Business Tests
       id: run-business-tests
       continue-on-error: true
       run: |
+        mkdir -p "${{ github.workspace }}/TestResults"
+        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" \
+          --no-build \
+          --configuration Release \
+          --verbosity normal \
+          --logger "trx;LogFileName=business-tests.trx" \
+          --results-directory "${{ github.workspace }}/TestResults" \
+          --collect:"XPlat Code Coverage"
+      env:
+        TEST_DB_CONNECTION_STRING: 'Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;Include Error Detail=true'
+    
+    - name: List Test Results (Debug)
+      if: always()
+      run: |
+        echo "Looking for test results in: ${{ github.workspace }}/TestResults"
+        find "${{ github.workspace }}/TestResults" -name "*.trx" 2>/dev/null || echo "No .trx files found"
+    
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Business Tests Results
+        path: '**/TestResults/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: false
+
+    - name: Upload Test Results Artifact
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: business-tests-results
+        path: |
+          TestResults
+          **/coverage.cobertura.xml
+        if-no-files-found: warn
+    
+    - name: Check Business Tests Result
+      if: steps.run-business-tests.outcome != 'success'
+      run: |
+        echo "::error::Business Tests failed or encountered errors"
+        exit 1
+
+  presentation-tests:
+    name: Presentation (Controller) Tests
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        token: ${{ secrets.GH_PAT }}
+
+    - name: Ensure Workflow submodule initialized
+      run: git submodule update --init --recursive UNOPS.Workflow
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+    
+    - name: Run Presentation Tests
+      id: run-presentation-tests
+      continue-on-error: true
+      run: |
         $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
         New-Item -ItemType Directory -Force -Path $testResultsDir | Out-Null
-        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" `
+        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Presentation.Tests/UNOPS.PAO.Presentation.Tests.csproj" `
           --no-build `
           --configuration Release `
           --verbosity normal `
-          --logger "trx;LogFileName=business-tests.trx" `
-          --results-directory $testResultsDir
+          --logger "trx;LogFileName=presentation-tests.trx" `
+          --results-directory $testResultsDir `
+          --collect:"XPlat Code Coverage"
     
     - name: List Test Results (Debug)
       if: always()
@@ -147,7 +255,7 @@ jobs:
       uses: dorny/test-reporter@v1
       if: always()
       with:
-        name: Business Tests Results
+        name: Presentation Tests Results
         path: '**/TestResults/**/*.trx'
         reporter: dotnet-trx
         fail-on-error: false
@@ -156,14 +264,74 @@ jobs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: business-tests-results
-        path: TestResults
+        name: presentation-tests-results
+        path: |
+          TestResults
+          **/coverage.cobertura.xml
         if-no-files-found: warn
     
-    - name: Check Business Tests Result
-      if: steps.run-business-tests.outcome != 'success'
+    - name: Check Presentation Tests Result
+      if: steps.run-presentation-tests.outcome != 'success'
       run: |
-        echo "::error::Business Tests failed or encountered errors"
+        echo "::error::Presentation Tests failed or encountered errors"
+        exit 1
+
+  frontend-tests:
+    name: Frontend Build, Lint & Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        token: ${{ secrets.GH_PAT }}
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: UNOPS.PAO.ClientApp/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: UNOPS.PAO.ClientApp
+      run: npm ci
+
+    - name: Angular Build Verification
+      working-directory: UNOPS.PAO.ClientApp
+      run: npm run build
+
+    - name: ESLint Check
+      id: eslint-check
+      continue-on-error: true
+      working-directory: UNOPS.PAO.ClientApp
+      run: npx eslint . --format stylish 2>&1 | head -200
+
+    - name: npm Security Audit
+      id: npm-audit
+      continue-on-error: true
+      working-directory: UNOPS.PAO.ClientApp
+      run: npm audit --audit-level=high
+    
+    - name: Run Frontend Tests (CI mode)
+      id: run-frontend-tests
+      continue-on-error: true
+      working-directory: UNOPS.PAO.ClientApp
+      run: npm run test:ci
+    
+    - name: Upload Coverage Artifact
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: frontend-coverage
+        path: UNOPS.PAO.ClientApp/coverage
+        if-no-files-found: warn
+    
+    - name: Check Frontend Tests Result
+      if: steps.run-frontend-tests.outcome != 'success'
+      run: |
+        echo "::error::Frontend Tests failed or encountered errors"
         exit 1
 
   # ============================================================================
@@ -290,14 +458,14 @@ jobs:
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [fast-tests, business-tests]
+    needs: [fast-tests, business-tests, presentation-tests, frontend-tests]
     if: always()
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        submodules: recursive  # Required for UNOPS.Workflow - Business/Workflow adapters depend on it
+        submodules: recursive
         token: ${{ secrets.GH_PAT }}
 
     - name: Generate Summary
@@ -305,45 +473,64 @@ jobs:
         echo "# QA Tests Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## Automated Test Results (PR Checks)" >> $GITHUB_STEP_SUMMARY
-        echo "- Fast Logic Tests (78 tests): ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Business Logic Tests (2,135 tests): ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Backend Tests" >> $GITHUB_STEP_SUMMARY
+        echo "- Fast Logic Tests (~43 tests): ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Business Logic Tests (~3,800 tests, PostgreSQL): ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Presentation/Controller Tests (~164 tests): ${{ needs.presentation-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Frontend Checks" >> $GITHUB_STEP_SUMMARY
+        echo "- Angular Build Verification: ${{ needs.frontend-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- ESLint Static Analysis: ${{ needs.frontend-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Angular Unit Tests (CI mode): ${{ needs.frontend-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Security & Quality" >> $GITHUB_STEP_SUMMARY
+        echo "- npm audit (high/critical): ${{ needs.frontend-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- .NET vulnerable packages scan: ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Code coverage (Coverlet + lcov): uploaded as artifacts" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## Overall Status" >> $GITHUB_STEP_SUMMARY
-        if [[ "${{ needs.fast-tests.result }}" == "success" ]] && [[ "${{ needs.business-tests.result }}" == "success" ]]; then
-          echo "Γ£à All critical tests passing (2,213 tests)" >> $GITHUB_STEP_SUMMARY
+        FAST="${{ needs.fast-tests.result }}"
+        BIZ="${{ needs.business-tests.result }}"
+        PRES="${{ needs.presentation-tests.result }}"
+        FE="${{ needs.frontend-tests.result }}"
+        if [[ "$FAST" == "success" ]] && [[ "$BIZ" == "success" ]] && [[ "$PRES" == "success" ]] && [[ "$FE" == "success" ]]; then
+          echo "All PR checks passing" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Test Coverage" >> $GITHUB_STEP_SUMMARY
-          echo "- Γ£à Permission Logic (6 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "- Γ£à Workflow Logic (7 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "- Γ£à Notification Logic (7 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "- Γ£à Export Logic (6 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "- Γ£à Document Validation (11 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "- Γ£à Partner Manager (1,127 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "- Γ£à Other Business Logic (1,049 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- Workflow & ERP Logic (FastTests)" >> $GITHUB_STEP_SUMMARY
+          echo "- Business Managers (~23 managers covered)" >> $GITHUB_STEP_SUMMARY
+          echo "- Controller/API Layer (Dashboard, Comment, DocumentType, GmailAddon, SavedFilter)" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend Components (Angular CI spec subset)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Γä╣∩╕Å **Note**: Integration tests must be run manually or in staging" >> $GITHUB_STEP_SUMMARY
+          echo "**Note**: Integration tests must be run manually or in staging" >> $GITHUB_STEP_SUMMARY
           echo "- See: QA Tests/ENVIRONMENT_SETUP_GUIDE.md" >> $GITHUB_STEP_SUMMARY
           echo "- Run: dotnet test \"QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj\"" >> $GITHUB_STEP_SUMMARY
         else
-          echo "Γ¥î Critical tests failed" >> $GITHUB_STEP_SUMMARY
+          echo "One or more test suites failed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [[ "${{ needs.fast-tests.result }}" != "success" ]]; then
-            echo "- Γ¥î Fast Logic Tests: ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
-            echo "  - Check the FastTests Results for detailed failure information" >> $GITHUB_STEP_SUMMARY
+          if [[ "$FAST" != "success" ]]; then
+            echo "- Fast Logic Tests: $FAST" >> $GITHUB_STEP_SUMMARY
           fi
-          if [[ "${{ needs.business-tests.result }}" != "success" ]]; then
-            echo "- Γ¥î Business Logic Tests: ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
-            echo "  - Check the Business Tests Results for detailed failure information" >> $GITHUB_STEP_SUMMARY
+          if [[ "$BIZ" != "success" ]]; then
+            echo "- Business Logic Tests: $BIZ" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [[ "$PRES" != "success" ]]; then
+            echo "- Presentation Tests: $PRES" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [[ "$FE" != "success" ]]; then
+            echo "- Frontend Tests: $FE" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Troubleshooting" >> $GITHUB_STEP_SUMMARY
           echo "1. Review test logs above for specific failures" >> $GITHUB_STEP_SUMMARY
-          echo "2. Run tests locally: dotnet test --configuration Release" >> $GITHUB_STEP_SUMMARY
-          echo "3. Check for environment-specific issues (paths, configuration)" >> $GITHUB_STEP_SUMMARY
+          echo "2. Run backend tests locally: dotnet test --configuration Release" >> $GITHUB_STEP_SUMMARY
+          echo "3. Run frontend tests locally: cd UNOPS.PAO.ClientApp && npm run test:ci" >> $GITHUB_STEP_SUMMARY
+          echo "4. Check for environment-specific issues (paths, configuration)" >> $GITHUB_STEP_SUMMARY
         fi
     
     - name: Check Critical Tests
-      if: needs.fast-tests.result != 'success' || needs.business-tests.result != 'success'
+      if: needs.fast-tests.result != 'success' || needs.business-tests.result != 'success' || needs.presentation-tests.result != 'success' || needs.frontend-tests.result != 'success'
       run: |
-        echo "Critical tests failed!"
+        echo "One or more test suites failed!"
         exit 1

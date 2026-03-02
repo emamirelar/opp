@@ -622,4 +622,24 @@ Ongoing
 
 ---
 
-*Last updated: 2026-02-24 — Phase 12 complete. Fixed assertion gaps across UserProfile, UserManagement, EntityConfiguration, and PartnerTree edge/negative test files (~44 tests targeted: added `InternalServerError` to `BeOneOf` sets missing it, fixed strict `.Be(OK)` assertions, fixed content-type assertion for problem+json). QA-020 (.NET 9 PipeWriter bug) closed — `Microsoft.AspNetCore.Mvc.Testing` 9.0.0 confirmed in both integration test projects. B2/B3 (DEF-013/DEF-014) root cause clarified: managers don't exist (full feature implementation needed). Baseline before Phase 12 run: **751 failing, 2,686 passing**. Expected after Phase 12: **~711 failing, ~2,726 passing**.*
+---
+
+## Future CI/CD Improvements (Backlog)
+
+Items to pick up when capacity allows, in priority order:
+
+| ID | Item | Impact | Effort | Status |
+|---|---|---|---|---|
+| **F1** | Add PostgreSQL service container to GitHub Actions (`services: postgres:15`) so Business.Tests run against real Postgres instead of SQLite in-memory. Unlocks ~239 currently-skipped tests (Z.EntityFramework.Extensions, `similarity()`, `pg_trgm`) and catches DB-specific regressions. | High | Medium | Done (2026-03-02) |
+| **F2** | Add code coverage reporting (Coverlet + lcov) — collect `XPlat Code Coverage` in all .NET test jobs, upload `coverage.cobertura.xml` as artifacts, upload Angular lcov from `npm run test:ci`. | Medium | Low | Done (2026-03-02) |
+| **F3** | Enable a smoke-test subset of Integration Tests in PR checks (CRUD for Partner, Contact, Opportunity, Interaction through real API). F1 prerequisite is now done. | High | High | Pending |
+| **F4** | Add Playwright E2E critical-path tests to PR checks (login, create partner, create opportunity). Requires Angular dev server + Playwright in CI. | Medium | High | Pending |
+| **F5** | Angular build verification (`npm run build`) gate on PRs — catches TypeScript/template compilation errors before merge. | High | Low | Done (2026-03-02) |
+| **F6** | ESLint static analysis step on PRs (non-blocking, reports warnings). | Medium | Low | Done (2026-03-02) |
+| **F7** | Security scanning on PRs — `npm audit --audit-level=high` and `dotnet list package --vulnerable` (non-blocking, reports in logs). | Medium | Low | Done (2026-03-02) |
+
+---
+
+*Last updated: 2026-03-02 — Added Tier 1 CI improvements: Angular build verification (F5), ESLint static analysis (F6), security scanning (F7), Coverlet/lcov code coverage (F2). All wired into existing PR workflow jobs.*
+
+*Previously updated: 2026-02-24 — Phase 12 complete. Fixed assertion gaps across UserProfile, UserManagement, EntityConfiguration, and PartnerTree edge/negative test files (~44 tests targeted: added `InternalServerError` to `BeOneOf` sets missing it, fixed strict `.Be(OK)` assertions, fixed content-type assertion for problem+json). QA-020 (.NET 9 PipeWriter bug) closed — `Microsoft.AspNetCore.Mvc.Testing` 9.0.0 confirmed in both integration test projects. B2/B3 (DEF-013/DEF-014) root cause clarified: managers don't exist (full feature implementation needed). Baseline before Phase 12 run: **751 failing, 2,686 passing**. Expected after Phase 12: **~711 failing, ~2,726 passing**.*
