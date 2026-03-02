@@ -984,7 +984,7 @@ public class WorkflowController : BaseController
     }
 
     /// <summary>
-    /// Cancels an opportunity. Only available to Opportunity Manager from IDENTIFY & PROFILE stage.
+    /// Cancels an opportunity. Only available to Opportunity Manager from IDENTIFY and PROFILE stage.
     /// Sets the opportunity to CANCELLED stage and marks entity as Closed.
     /// </summary>
     /// <param name="request">The cancel request</param>
@@ -1068,7 +1068,7 @@ public class WorkflowController : BaseController
 
     /// <summary>
     /// Reopens an opportunity. Only available to Opportunity Manager from NO GO or CANCELLED stage.
-    /// Sets the opportunity back to IDENTIFY & PROFILE stage.
+    /// Sets the opportunity back to IDENTIFY and PROFILE stage.
     /// </summary>
     /// <param name="request">The reopen request</param>
     /// <returns>Reopen result</returns>

@@ -13,7 +13,6 @@ using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Text.Json;
 using static UNOPS.PAO.UNOPSBusiness.Services.AdvancedSearchService;
 using UNOPS.PAO.Models.Shared;
 
@@ -193,6 +192,7 @@ public class ContactController : BaseController
     /// <param name="ascending">Sort direction - true for ascending, false for descending (default: true)</param>
     /// <param name="partnerId">Optional partner ID to filter contacts by specific partner</param>
     /// <param name="export">Whether to export results as file instead of returning JSON (default: false)</param>
+    /// <param name="filterActive">Whether to apply global filters, default: true</param>
     /// <example_uses>
     /// Show me all contacts
     /// List all contacts in the system
@@ -247,7 +247,9 @@ public class ContactController : BaseController
     /// </summary>
     /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
     /// <param name="query">Text to search across contact name, email, title, and other basic fields</param>
+    /// <param name="partnerId">Optional partner ID to filter contacts by partner</param>
     /// <param name="export">Whether to export all results without pagination</param>
+    /// <param name="filterActive">Whether to apply global filters, default: true</param>
     /// <example_uses>
     /// Search for contacts named John
     /// Find contacts with @unicef.org email
@@ -341,6 +343,9 @@ public class ContactController : BaseController
     /// <param name="pageSize">Number of items per page (default: 20)</param>
     /// <param name="orderBy">Field to order by (optional)</param>
     /// <param name="ascending">Sort direction (default: true)</param>
+    /// <param name="partnerId">Optional partner ID to filter contacts by partner</param>
+    /// <param name="export">Whether to export all results without pagination</param>
+    /// <param name="filterActive">Whether to apply global filters, default: true</param>
     /// <example_uses>
     /// Find contacts from UNICEF partner organization
     /// Show contacts in Finance department created this month
@@ -877,8 +882,8 @@ public class ContactController : BaseController
             return Ok(new {
                 success = true,
                 entityType = "Contact",
-                recordId = (object)null,
-                duplicateInfo = (object)null,
+                recordId = (object?)null,
+                duplicateInfo = (object?)null,
                 warning = "Duplicate detection temporarily unavailable"
             });
         }

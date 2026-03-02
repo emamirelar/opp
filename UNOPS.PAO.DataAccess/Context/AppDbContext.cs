@@ -16,6 +16,7 @@ public class AppDbContext : AuditableDbContext<int, int>
     public AppDbContext(DbContextOptions<AppDbContext> options, UserResolverService<int> userResolverService, IDbContextSchema schema)
         : base(options, userResolverService, schema)
     {
+        _userResolverService = userResolverService;
     }
 
     protected AppDbContext(DbContextOptions options, UserResolverService<int> userResolverService, IDbContextSchema schema) : base(options, userResolverService, schema)

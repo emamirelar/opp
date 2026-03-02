@@ -367,7 +367,7 @@ namespace UNOPS.PAO.Presentation.Controllers.Partners
                 // Group by country (using liaison office country as proxy)
                 var countryGroups = partners
                     .Where(p => p.LiaisonOffice != null && !string.IsNullOrEmpty(p.LiaisonOffice.Country))
-                    .GroupBy(p => p.LiaisonOffice.Country)
+                    .GroupBy(p => p.LiaisonOffice!.Country!)
                     .Select(g => new
                     {
                         Country = g.Key,

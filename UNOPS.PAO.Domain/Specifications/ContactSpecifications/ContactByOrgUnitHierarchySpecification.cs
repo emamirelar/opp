@@ -12,7 +12,7 @@ public class ContactByOrgUnitHierarchySpecification : BaseSpecification<Contact>
 {
     private readonly List<int> _orgUnitHierarchyIds;
     
-    public ContactByOrgUnitHierarchySpecification(List<int> orgUnitHierarchyIds)
+    public ContactByOrgUnitHierarchySpecification(List<int>? orgUnitHierarchyIds)
         : base(BuildCriteria(orgUnitHierarchyIds))
     {
         _orgUnitHierarchyIds = orgUnitHierarchyIds ?? new List<int>();
@@ -20,7 +20,8 @@ public class ContactByOrgUnitHierarchySpecification : BaseSpecification<Contact>
         AddInclude(c => c.Partner);
     }
 
-    private static Expression<Func<Contact, bool>> BuildCriteria(List<int> orgUnitHierarchyIds)
+    [return: System.Diagnostics.CodeAnalysis.NotNull]
+    private static Expression<Func<Contact, bool>> BuildCriteria(List<int>? orgUnitHierarchyIds)
     {
         if (orgUnitHierarchyIds == null || orgUnitHierarchyIds.Count == 0)
         {

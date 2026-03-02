@@ -4910,9 +4910,11 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         {
             entityName = request.EntityName;
             entityId = request.EntityId.Value;
-            markdown = await GetMarkdownForPdfGenerationAsync(entityName, entityId);
-            if (string.IsNullOrEmpty(markdown) && !string.IsNullOrEmpty(request.Data))
+            // When Data is provided (e.g. approval PDF with audit trail), use it; otherwise fetch from DB
+            if (!string.IsNullOrEmpty(request.Data))
                 markdown = request.Data;
+            else
+                markdown = await GetMarkdownForPdfGenerationAsync(entityName, entityId);
         }
         else
         {

@@ -166,7 +166,12 @@ public static class AdvancedSearchHelper
         // Apply legacy field name mapping for backward compatibility
         parsedCriteria = MapLegacyFieldNames(parsedCriteria);
         
-        ValidateSearchCriteria(parsedCriteria ?? new List<SearchCriteria>(), allowedFields);
+        if (parsedCriteria == null)
+        {
+            throw new ArgumentException("Search criteria cannot be empty");
+        }
+
+        ValidateSearchCriteria(parsedCriteria, allowedFields);
         return parsedCriteria;
     }
 
