@@ -782,6 +782,7 @@ public class WorkflowController : BaseController
                     .Select(o => new
                     {
                         o.OpportunityStatementMarkdown,
+                        o.ResponsibleOrgUnitId,
                         ResponsibleOrgUnitName = o.ResponsibleOrgUnit != null ? o.ResponsibleOrgUnit.Name : null,
                         ProposedInitiativeTypeName = o.ProposedInitiativeType != null ? o.ProposedInitiativeType.Name : null
                     })
@@ -789,7 +790,9 @@ public class WorkflowController : BaseController
 
                 if (opportunity?.OpportunityStatementMarkdown != null)
                 {
-                    var auditTrail = BuildAuditTrailMarkdownForApproval(history, opportunity.ResponsibleOrgUnitName, opportunity.ProposedInitiativeTypeName);
+                    var auditTrail = await BuildAuditTrailMarkdownForApprovalAsync(
+                        history, request.EntityId, opportunity.ResponsibleOrgUnitId,
+                        opportunity.ResponsibleOrgUnitName, opportunity.ProposedInitiativeTypeName);
                     var combinedMarkdown = opportunity.OpportunityStatementMarkdown + "\n\n" + auditTrail;
 
                     var dateStr = DateTime.UtcNow.ToString("yyyyMMdd");
@@ -1385,10 +1388,13 @@ public class WorkflowController : BaseController
 
     /// <summary>
     /// Builds the audit trail markdown section for the approved opportunity statement PDF.
-    /// Mirrors the frontend buildAuditTrailMarkdown logic.
+    /// Enriches workflow history with user details (position, DOA) matching GetWorkflowHistory.
+    /// Uses CreatedDate for submission (when submitted), CompletedOn for approval (when decision made).
     /// </summary>
-    private static string BuildAuditTrailMarkdownForApproval(
+    private async Task<string> BuildAuditTrailMarkdownForApprovalAsync(
         List<WorkflowHistoryModel> history,
+        int opportunityId,
+        int? responsibleOrgUnitId,
         string? responsibleOrgUnitName,
         string? proposedInitiativeTypeName)
     {
@@ -1403,6 +1409,16 @@ public class WorkflowController : BaseController
         var initiativeType = proposedInitiativeTypeName ?? "initiative";
         var acknowledgmentStatement = $"I confirm that, based on the information presented in the Opportunity Statement, I give approval for UNOPS Org Unit \"{orgUnitCode}\" to continue development of this Opportunity as a {initiativeType}.";
 
+        // Submission: use CreatedDate (when submitted); CompletedOn gets set during approval so would be wrong
+        var submitDate = submitRecord != null ? submitRecord.CreatedDate : (DateTime?)null;
+        var (submitUserName, submitPosition, _) = await GetUserDetailsForAuditTrailAsync(submitRecord?.User?.Id ?? 0);
+        var submitRemarks = submitRecord?.Comment ?? "None provided";
+
+        // Approval: use CompletedOn (when decision was made)
+        var approveDate = approveRecord?.CompletedOn ?? approveRecord?.CreatedDate;
+        var (approveUserName, approvePosition, approveDoa) = await GetUserDetailsForAuditTrailAsync(
+            approveRecord?.User?.Id ?? 0, opportunityId, responsibleOrgUnitId);
+
         return $@"
 ---
 
@@ -1411,23 +1427,64 @@ public class WorkflowController : BaseController
 ### Submission Details
 | Field | Value |
 |-------|-------|
-| **Date of Submission** | {FormatDate(submitRecord?.CompletedOn ?? submitRecord?.CreatedDate)} |
-| **Submitted By** | {submitRecord?.User?.Name ?? "N/A"} |
-| **Position Title** | N/A |
-| **Remarks for Decision Maker** | {submitRecord?.Comment ?? "None provided"} |
+| **Date of Submission** | {FormatDate(submitDate)} |
+| **Submitted By** | {submitUserName} |
+| **Position Title** | {submitPosition} |
+| **Remarks for Decision Maker** | {submitRemarks} |
 
 ### Decision Details
 | Field | Value |
 |-------|-------|
-| **Date of Decision** | {FormatDate(approveRecord?.CompletedOn ?? approveRecord?.CreatedDate)} |
-| **Decision Maker** | {approveRecord?.User?.Name ?? "N/A"} |
-| **DOA Level** | N/A |
-| **Position Title** | N/A |
+| **Date of Decision** | {FormatDate(approveDate)} |
+| **Decision Maker** | {approveUserName} |
+| **DOA Level** | {approveDoa} |
+| **Position Title** | {approvePosition} |
 | **Acknowledged Statement** | {acknowledgmentStatement} |
 | **Decision Rationale** | {approveRecord?.Comment ?? "None provided"} |
 
 ---
 ";
+    }
+
+    /// <summary>
+    /// Gets user display name and position for audit trail. For approver, also looks up DOA level.
+    /// </summary>
+    private async Task<(string userName, string position, string? doaLevel)> GetUserDetailsForAuditTrailAsync(
+        int userId, int? opportunityId = null, int? responsibleOrgUnitId = null)
+    {
+        if (userId <= 0)
+            return ("N/A", "N/A", null);
+
+        var user = await _context.PAOUsers
+            .AsNoTracking()
+            .Include(u => u.UserProfile)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null)
+            return ("N/A", "N/A", null);
+
+        var userName = user.UserProfile?.Name ?? user.Email ?? "N/A";
+        var position = user.UserProfile?.Position ?? "N/A";
+
+        string? doaLevel = null;
+        if (opportunityId.HasValue && responsibleOrgUnitId.HasValue)
+        {
+            var doaEntityUserRole = await _context.EntityUserRoles
+                .AsNoTracking()
+                .Include(eur => eur.EntityRole)
+                .Where(eur => eur.UserId == userId
+                    && eur.EntityId == responsibleOrgUnitId.Value
+                    && eur.EntityType == "OrganizationHierarchy"
+                    && eur.EntityRole != null
+                    && eur.EntityRole.Code != null
+                    && eur.EntityRole.Code.StartsWith("DoA"))
+                .FirstOrDefaultAsync();
+
+            if (doaEntityUserRole?.EntityRole != null)
+                doaLevel = doaEntityUserRole.EntityRole.Name ?? doaEntityUserRole.EntityRole.Code;
+        }
+
+        return (userName, position, doaLevel ?? "N/A");
     }
 
     /// <summary>
