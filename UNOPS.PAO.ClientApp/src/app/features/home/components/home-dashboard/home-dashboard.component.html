@@ -200,18 +200,6 @@
                 tooltipPosition="bottom"
                 [tooltipOptions]="{ showDelay: 300, hideDelay: 150, positionStyle: 'absolute' }">
               </button>
-              <button 
-                pButton 
-                type="button" 
-                label="Test PDF"
-                icon="pi pi-file-pdf" 
-                class="p-button-outlined p-button-sm"
-                [loading]="testPdfLoading()"
-                (click)="generateTestPdf()"
-                pTooltip="Generate test PDF and upload to GCS"
-                tooltipPosition="bottom"
-                [tooltipOptions]="{ showDelay: 300, hideDelay: 150, positionStyle: 'absolute' }">
-              </button>
               
               <!-- UNCOMMENT BELOW TO ENABLE DUMMY DATA TESTING FOR "VIEW ALL" FUNCTIONALITY -->
               <!-- 
@@ -292,18 +280,6 @@
                 [loading]="loading()"
                 (click)="refreshDashboard()"
                 pTooltip="{{ 'dashboard.refresh' | translate }}"
-                tooltipPosition="bottom"
-                [tooltipOptions]="{ showDelay: 300, hideDelay: 150, positionStyle: 'absolute' }">
-              </button>
-              <button 
-                pButton 
-                type="button" 
-                label="Test PDF"
-                icon="pi pi-file-pdf" 
-                class="p-button-outlined p-button-sm"
-                [loading]="testPdfLoading()"
-                (click)="generateTestPdf()"
-                pTooltip="Generate test PDF and upload to GCS"
                 tooltipPosition="bottom"
                 [tooltipOptions]="{ showDelay: 300, hideDelay: 150, positionStyle: 'absolute' }">
               </button>

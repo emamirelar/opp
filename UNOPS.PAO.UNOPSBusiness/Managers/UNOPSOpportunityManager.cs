@@ -21,6 +21,8 @@ using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Business.Mapping;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.Models.Documents;
+using UNOPS.PAO.UNOPSDomain.Entities;
+using UNOPS.PAO.Utilities.Helpers;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -4931,7 +4933,65 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         }
 
         var filename = !string.IsNullOrEmpty(request.Filename) ? request.Filename : "Generated_Document";
-        return await ConvertMarkdownToPdfAndUploadToGcsAsync(markdown, entityName, entityId, filename);
+        var result = await ConvertMarkdownToPdfAndUploadToGcsAsync(markdown, entityName, entityId, filename);
+
+        // Create document record when PDF is for an Opportunity (so it appears in the documents list)
+        if (result.Success && !string.IsNullOrEmpty(result.GcsPath)
+            && string.Equals(entityName, "Opportunity", StringComparison.OrdinalIgnoreCase) && entityId > 0)
+        {
+            try
+            {
+                await CreateOpportunityStatementDocumentRecordAsync(entityId, result.GcsPath, filename);
+            }
+            catch (Exception ex)
+            {
+                // Log but don't fail - PDF was uploaded successfully
+                // Document record creation is best-effort for visibility in UI
+                System.Diagnostics.Debug.WriteLine($"Failed to create document record for PDF: {ex.Message}");
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Creates a document record for an Opportunity Statement PDF that was uploaded to GCS.
+    /// </summary>
+    private async Task CreateOpportunityStatementDocumentRecordAsync(int opportunityId, string gcsPath, string filename)
+    {
+        var statementDocType = await uNOPSAppDbContext.DocumentTypes
+            .AsNoTracking()
+            .Where(dt => dt.EntityType == "Opportunity" && dt.Name == "Opportunity Statement" && !dt.IsDeleted)
+            .Select(dt => dt.Id)
+            .FirstOrDefaultAsync();
+
+        if (statementDocType <= 0)
+            return;
+
+        var fileName = filename.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) ? filename : $"{filename}.pdf";
+        var document = new UNOPSDocument
+        {
+            Name = fileName,
+            Type = "application/pdf",
+            StoragePath = gcsPath,
+            DocumentTypeId = statementDocType,
+            LinkedFile = false,
+            AITranscribed = false
+        };
+
+        await uNOPSAppDbContext.Documents.AddAsync(document);
+        await uNOPSAppDbContext.SaveChangesAsync();
+
+        var relationship = new DocumentRelationship
+        {
+            Document = document,
+            EntityId = opportunityId,
+            Name = DocumentParentEntityType.Opportunity.ToString(),
+            EntityType = DocumentParentEntityType.Opportunity.GetEntityTypeName()
+        };
+
+        await uNOPSAppDbContext.DocumentRelationships.AddAsync(relationship);
+        await uNOPSAppDbContext.SaveChangesAsync();
     }
 
     /// <summary>
