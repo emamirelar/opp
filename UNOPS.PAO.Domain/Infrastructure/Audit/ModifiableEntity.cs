@@ -1,10 +1,10 @@
-﻿using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Entities;
 
 namespace UNOPS.PAO.Domain.Infrastructure;
 
 public class ModifiableEntity<TId, TUserId>: BaseBusinessEntity<TId>, IModifiableEntity<TId, TUserId>
 {
-    public TUserId CreatedBy { get; set; }
+    public TUserId CreatedBy { get; set; } = default!;
     public DateTime CreatedDate { get; set; }
     public TUserId? LastModifiedBy { get; set; }
     public DateTime? LastModifiedDate { get; set; }

@@ -1,5 +1,11 @@
 namespace UNOPS.PAO.Domain.Specifications;
 
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type
+#pragma warning disable CS8601 // Possible null reference assignment
+#pragma warning disable CS8602 // Dereference of a possibly null reference
+#pragma warning disable CS8603 // Possible null reference return
+#pragma warning disable CS8604 // Possible null reference argument
+
 using System;
 using System.Linq;
 using System.Linq.Expressions;
@@ -83,7 +89,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
 
 
                         // Create the comparison expression
-                        Expression comparisonExpr = null;
+                        Expression? comparisonExpr = null;
                         
                         if (propertyAccess.Type == typeof(string))
                         {
@@ -1400,4 +1406,10 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
     }
 
     #endregion
-} 
+}
+
+#pragma warning restore CS8600
+#pragma warning restore CS8601
+#pragma warning restore CS8602
+#pragma warning restore CS8603
+#pragma warning restore CS8604 

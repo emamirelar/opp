@@ -3,6 +3,7 @@ namespace UNOPS.PAO.Domain.Specifications.PartnerSpecifications;
 using System;
 using System.Linq.Expressions;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Domain.Specifications.Interfaces;
 
 /// <summary>
@@ -76,9 +77,9 @@ public class PartnerCompositeSpecification : GenericCompositeSpecification<Partn
             "liaisonofficeid" => (Expression<Func<Partner, object>>)(p => p.LiaisonOfficeId ?? 0),
             "partnerfocalpointuserid" => (Expression<Func<Partner, object>>)(p => p.PartnerFocalPointUserId ?? 0),
             "erpdimvalue" => (Expression<Func<Partner, object>>)(p => p.ErpDimValue ?? 0),
-            "partnerlevystatus" => (Expression<Func<Partner, object>>)(p => p.PartnerLevyStatus ?? default!),
+            "partnerlevystatus" => (Expression<Func<Partner, object>>)(p => (object)(p.PartnerLevyStatus ?? default(PartnerLevyStatus))),
             "duediligencerequired" => (Expression<Func<Partner, object>>)(p => p.DueDiligenceRequired),
-            "duediligenceapproval" => (Expression<Func<Partner, object>>)(p => p.DueDiligenceApproval ?? default!),
+            "duediligenceapproval" => (Expression<Func<Partner, object>>)(p => (object)(p.DueDiligenceApproval ?? default(DueDiligenceApproval))),
             "duediligenceapprovaldate" => (Expression<Func<Partner, object>>)(p => p.DueDiligenceApprovalDate ?? DateTime.MinValue),
             "duediligenceexpirydate" => (Expression<Func<Partner, object>>)(p => p.DueDiligenceExpiryDate ?? DateTime.MinValue),
             "partnerapprovaldate" => (Expression<Func<Partner, object>>)(p => p.PartnerApprovalDate ?? DateTime.MinValue),

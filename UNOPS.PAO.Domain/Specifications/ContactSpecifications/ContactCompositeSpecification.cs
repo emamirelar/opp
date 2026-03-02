@@ -59,21 +59,22 @@ public class ContactCompositeSpecification : GenericCompositeSpecification<Conta
     /// </summary>
     /// <param name="orderByField">The field name to order by</param>
     /// <returns>The ordering expression</returns>
+    [return: System.Diagnostics.CodeAnalysis.NotNull]
     private static Expression<Func<Contact, object>> GetOrderByExpression(string? orderByField)
     {
         return orderByField?.ToLowerInvariant() switch
         {
-            "firstname" => c => c.FirstName,
-            "lastname" => c => c.LastName,
-            "email" => c => c.Email,
-            "title" => c => c.Title,
-            "department" => c => c.Department,
-            "phone" => c => c.Phone,
-            "mobile" => c => c.Mobile,
+            "firstname" => c => c.FirstName ?? "",
+            "lastname" => c => c.LastName ?? "",
+            "email" => c => c.Email ?? "",
+            "title" => c => c.Title ?? "",
+            "department" => c => c.Department ?? "",
+            "phone" => c => c.Phone ?? "",
+            "mobile" => c => c.Mobile ?? "",
             "createddate" => c => c.CreatedDate,
-            "partner" => c => c.Partner.Name,
-            "partnername" => c => c.Partner.Name,
-            _ => c => c.LastName // Default to LastName if no field specified or unknown field
+            "partner" => c => (object)(c.Partner != null ? c.Partner.Name : ""),
+            "partnername" => c => (object)(c.Partner != null ? c.Partner.Name : ""),
+            _ => c => c.LastName ?? "" // Default to LastName if no field specified or unknown field
         };
     }
 } 

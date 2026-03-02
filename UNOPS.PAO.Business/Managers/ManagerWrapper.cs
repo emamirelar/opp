@@ -24,7 +24,7 @@ public class ManagerWrapper : IManagerWrapper
     private IDocumentTypeManager documentTypeManager;
 
     private IGeminiManager geminiManager;
-    private IImageGenerationManager imageGenerationManager;
+    private IImageGenerationManager imageGenerationManager = null!; // Overridden in UNOPSManagerWrapper
     private ILinkManager linkManager;
     private IUserDataManager userDataManager;
     private IUserManagementManager userManagementManager;
@@ -35,7 +35,7 @@ public class ManagerWrapper : IManagerWrapper
     private IAuditLogManager auditLogManager;
     private IEntityArtifactManager entityArtifactManager;
     private IAiRetrieverManager aiRetrieverManager;
-    private IRiskManager riskManager;
+    private IRiskManager riskManager = null!; // Overridden in UNOPSManagerWrapper
     
     public ManagerWrapper(IMapper mapper, AppDbContext context,
                           UserManager<PAOIdentityUser> userManager, 

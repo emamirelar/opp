@@ -20,6 +20,7 @@ public class ContactByOrgUnitHierarchySpecification : BaseSpecification<Contact>
         AddInclude(c => c.Partner);
     }
 
+    [return: System.Diagnostics.CodeAnalysis.NotNull]
     private static Expression<Func<Contact, bool>> BuildCriteria(List<int>? orgUnitHierarchyIds)
     {
         if (orgUnitHierarchyIds == null || orgUnitHierarchyIds.Count == 0)
