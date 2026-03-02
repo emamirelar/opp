@@ -13,9 +13,6 @@ env:
   DOTNET_VERSION: '9.0.x'
   PYTHON_VERSION: '3.11'
 
-# Submodules (UNOPS.Workflow, UNOPS.PAO.ExternalDataService) are in private repos.
-# Add REPO_ACCESS_TOKEN secret: GitHub Settings → Secrets → Actions → New repository secret
-# Create a Fine-grained PAT with Contents + Metadata read access to this repo and submodule repos.
 jobs:
   fast-tests:
     name: Fast Logic Tests
@@ -24,13 +21,7 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        submodules: recursive  # Required for UNOPS.Workflow - Business/Workflow adapters depend on it
-        token: ${{ secrets.REPO_ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
-
-    - name: Ensure Workflow submodule initialized
-      run: git submodule update --init --recursive UNOPS.Workflow
-
+    
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
@@ -56,27 +47,23 @@ jobs:
           --results-directory $testResultsDir
     
     - name: List Test Results (Debug)
-      id: fast-test-results
       if: always()
       run: |
         $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
         echo "Looking for test results in: $testResultsDir"
-        $hasResults = "false"
         if (Test-Path $testResultsDir) {
           Get-ChildItem -Path $testResultsDir -Recurse -Filter "*.trx" -ErrorAction SilentlyContinue | ForEach-Object { 
             Write-Host "Found: $($_.FullName)"
           }
           $trxCount = (Get-ChildItem -Path $testResultsDir -Filter "*.trx" -Recurse -ErrorAction SilentlyContinue).Count
           echo "Total .trx files found: $trxCount"
-          if ($trxCount -gt 0) { $hasResults = "true" }
         } else {
           echo "ERROR: TestResults directory does not exist at $testResultsDir"
         }
-        echo "has_results=$hasResults" >> $env:GITHUB_OUTPUT
     
     - name: Publish Test Results
       uses: dorny/test-reporter@v1
-      if: always() && steps.fast-test-results.outputs.has_results == 'true'
+      if: always()
       with:
         name: FastTests Results
         path: '**/TestResults/**/*.trx'
@@ -104,9 +91,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        submodules: recursive  # Required - UNOPS.PAO.Business depends on UNOPS.Workflow
-        token: ${{ secrets.REPO_ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
     
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -133,27 +117,23 @@ jobs:
           --results-directory $testResultsDir
     
     - name: List Test Results (Debug)
-      id: business-test-results
       if: always()
       run: |
         $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
         echo "Looking for test results in: $testResultsDir"
-        $hasResults = "false"
         if (Test-Path $testResultsDir) {
           Get-ChildItem -Path $testResultsDir -Recurse -Filter "*.trx" -ErrorAction SilentlyContinue | ForEach-Object { 
             Write-Host "Found: $($_.FullName)"
           }
           $trxCount = (Get-ChildItem -Path $testResultsDir -Filter "*.trx" -Recurse -ErrorAction SilentlyContinue).Count
           echo "Total .trx files found: $trxCount"
-          if ($trxCount -gt 0) { $hasResults = "true" }
         } else {
           echo "ERROR: TestResults directory does not exist at $testResultsDir"
         }
-        echo "has_results=$hasResults" >> $env:GITHUB_OUTPUT
     
     - name: Publish Test Results
       uses: dorny/test-reporter@v1
-      if: always() && steps.business-test-results.outputs.has_results == 'true'
+      if: always()
       with:
         name: Business Tests Results
         path: '**/TestResults/**/*.trx'
@@ -260,8 +240,6 @@ jobs:
   #   steps:
   #   - name: Checkout code
   #     uses: actions/checkout@v4
-  #     with:
-  #       submodules: recursive  # Required for UNOPS.Workflow
   #   
   #   - name: Setup Python
   #     uses: actions/setup-python@v5
@@ -304,9 +282,7 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 1  # Summary job only needs repo metadata, not submodules
-
+    
     - name: Generate Summary
       run: |
         echo "# QA Tests Summary" >> $GITHUB_STEP_SUMMARY
