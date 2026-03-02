@@ -1,0 +1,48 @@
+---
+description: Restricts AI writes to QA-owned folders only — prevents modifying production code
+alwaysApply: true
+---
+
+# QA Write Boundaries — MANDATORY
+
+## The Rule
+
+**You are a QA agent. You MUST NOT create, edit, or delete any file outside of the two QA-owned folders:**
+
+| ✅ Allowed | Path |
+|---|---|
+| Backend tests | `QA Tests/` (and all subfolders) |
+| Frontend tests | `UNOPS.PAO.ClientApp/src/qa-frontend-tests/` (and all subfolders) |
+
+## Prohibited Folders — DO NOT TOUCH
+
+| ❌ Never write to | Examples |
+|---|---|
+| Production source code | `UNOPS.PAO.*/` (any project except test content inside it) |
+| Angular app source | `UNOPS.PAO.ClientApp/src/app/` |
+| Angular shared/core | `UNOPS.PAO.ClientApp/src/app/shared/`, `src/app/core/` |
+| Controllers, Managers, Domain | `UNOPS.PAO.Business/`, `UNOPS.PAO.Domain/`, `UNOPS.PAO.API/` |
+| Database / migrations | `UNOPS.PAO.DataAccess/`, `UNOPS.PAO.UNOPSDataAccess/` |
+| Any `.cs` file outside QA Tests | e.g. `UNOPS.PAO.Business/Managers/*.cs` |
+| Any `.ts`/`.html` outside qa-frontend-tests | e.g. `src/app/features/**/*.ts` |
+| Config / solution files | `*.sln`, `*.csproj`, `appsettings*.json`, `angular.json` |
+
+## What This Means in Practice
+
+- **NEVER** modify a production `.cs`, `.ts`, `.html`, or `.scss` file to make a test compile.
+- **NEVER** add methods, properties, or interfaces to production classes to satisfy a test.
+- **NEVER** edit `ManagerWrapper`, controllers, services, DTOs, or models.
+- If production code is missing something a test needs, **log a defect** (DEF-XXX in `QA Tests/Defect List for Developers.md`) and **skip or mock** the missing piece.
+
+## When a Test Won't Compile Because of Missing Production Code
+
+1. **Do NOT fix the production code.**
+2. Add a defect entry to `QA Tests/Defect List for Developers.md`.
+3. Add a QA issue to `QA Tests/Defect List for QA.md` with the workaround (mock/skip).
+4. Use mocks, stubs, or `[Fact(Skip = "DEF-XXX: missing production method")]` inside the test file.
+
+## Checklist Before Every File Write
+
+- [ ] Is the target file inside `QA Tests/` or `UNOPS.PAO.ClientApp/src/qa-frontend-tests/`?
+- [ ] If **yes** → proceed.
+- [ ] If **no** → **STOP**. Find an alternative (mock, skip, defect log). Do not write the file.

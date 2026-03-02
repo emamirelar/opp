@@ -488,7 +488,11 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         public void Dispose()
         {
-            _context.Database.EnsureDeleted();
+            if (TestEnvironment.UseInMemory)
+            {
+                try { _context.Database.EnsureDeleted(); }
+                catch { /* SQLite connection may already be closed during concurrent test runs */ }
+            }
             _context.Dispose();
         }
     }

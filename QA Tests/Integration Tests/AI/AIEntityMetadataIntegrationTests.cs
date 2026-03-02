@@ -3,7 +3,8 @@ using System.Linq;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
+using UNOPS.PAO.IntegrationTests.Infrastructure;
+using UNOPS.PAO.Server;
 using Xunit;
 
 namespace UNOPS.PAO.IntegrationTests.AI
@@ -13,12 +14,12 @@ namespace UNOPS.PAO.IntegrationTests.AI
     /// Tests the new get_json_for_entity tool and AI agent's ability to use it.
     /// NOTE: These tests require the AI service to be running and may be skipped in CI/CD.
     /// </summary>
-    [Collection("AI Tests")]
-    public class AIEntityMetadataIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+    [Collection("Integration Tests")]
+    public class AIEntityMetadataIntegrationTests
     {
-        private readonly WebApplicationFactory<Program> _factory;
+        private readonly PAOWebApplicationFactory<Program> _factory;
 
-        public AIEntityMetadataIntegrationTests(WebApplicationFactory<Program> factory)
+        public AIEntityMetadataIntegrationTests(PAOWebApplicationFactory<Program> factory)
         {
             _factory = factory;
         }
@@ -27,7 +28,7 @@ namespace UNOPS.PAO.IntegrationTests.AI
         public async Task AIAgent_AsksForOpportunityDetails_ProvidesMetadata()
         {
             // Arrange: Create HTTP client
-            var client = _factory.CreateClient();
+            var client = _factory.CreateAuthenticatedClient();
 
             // Create a chat request asking about Opportunity entity
             var chatRequest = new
@@ -55,7 +56,7 @@ namespace UNOPS.PAO.IntegrationTests.AI
         public async Task AIAgent_AsksForSpecificEndpoint_ProvidesEndpointDetails()
         {
             // Arrange: Create HTTP client
-            var client = _factory.CreateClient();
+            var client = _factory.CreateAuthenticatedClient();
 
             // Create a chat request asking about specific endpoint
             var chatRequest = new
@@ -80,7 +81,7 @@ namespace UNOPS.PAO.IntegrationTests.AI
         public async Task AIAgent_AsksAboutNonExistentEntity_HandlesGracefully()
         {
             // Arrange: Create HTTP client
-            var client = _factory.CreateClient();
+            var client = _factory.CreateAuthenticatedClient();
 
             // Create a chat request about non-existent entity
             var chatRequest = new

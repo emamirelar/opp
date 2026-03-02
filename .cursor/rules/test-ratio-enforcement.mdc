@@ -1,0 +1,62 @@
+---
+description: Enforces the 3:1 test ratio rule whenever tests are created or updated
+globs: 
+alwaysApply: true
+---
+
+# Test Ratio Enforcement — MANDATORY
+
+## The Rule
+
+Every time you create or update tests, **ALL FOUR** of the following MUST hold individually:
+
+```
+Negative       >= 3 × Positive
+Edge/Boundary  >= 3 × Positive
+Functional     >= 3 × Positive
+Integration    >= 3 × Positive
+```
+
+This is non-negotiable. If **any** ratio is not met, you are NOT done.
+
+## Classification Guide
+
+| Category | What qualifies | Examples |
+|----------|---------------|----------|
+| **Positive** | Happy path — feature works as designed | Valid submit succeeds, correct data returned, status changes correctly |
+| **Negative** | Invalid/missing input, unauthorized, expected failures | Empty required field returns 400, deleted record not found, wrong role denied |
+| **Edge/Boundary** | Boundary values, soft-delete interactions, type mismatches, fallback paths | Soft-deleted parent with active child, wrong EntityType, nullable FK edge, concurrent modification, max/min values |
+| **Functional** | Business rules, validation logic, state transitions, computed values | Audit fields populated, permissions enforced, workflow transitions, data transformations |
+| **Integration** | End-to-end flows, cross-service interactions, API contracts | Full CRUD through API, service-to-DB round-trip, multi-component workflows |
+
+## Mandatory Checklist (MUST print before completing any test task)
+
+Every time you finish creating or modifying tests, you MUST output this table:
+
+```
+### 3:1 Ratio Compliance Check
+| Category          | Count | Tests                          |
+|-------------------|-------|--------------------------------|
+| Positive (P)      | X     | [list test names]              |
+| Negative (N)      | X     | [list test names]              |
+| Edge/Boundary (E) | X     | [list test names]              |
+| Functional (F)    | X     | [list test names]              |
+| Integration (I)   | X     | [list test names]              |
+| **N ≥ 3P?**       | ✅/❌ | N >= 3 × P                     |
+| **E ≥ 3P?**       | ✅/❌ | E >= 3 × P                     |
+| **F ≥ 3P?**       | ✅/❌ | F >= 3 × P                     |
+| **I ≥ 3P?**       | ✅/❌ | I >= 3 × P                     |
+```
+
+If **any** check is ❌, you MUST add more tests in that category before proceeding.
+
+## Common Mistakes to Avoid
+
+- ❌ Counting a "verify X does NOT happen" test as positive — it's negative
+- ❌ Counting a "verify exact call count" test as positive — it's functional/negative
+- ❌ Treating fallback/alternate-path success as positive — it's edge
+- ❌ Creating tests without checking the ratio at all
+- ❌ Deferring negative/edge/functional/integration tests to "later" — they must be created NOW
+- ❌ Proceeding after printing a failing ratio check
+- ❌ Only checking the combined (N+E) ratio — each category must pass individually
+- ❌ Having fewer functional or integration tests than 3× positive

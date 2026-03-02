@@ -3,34 +3,44 @@ using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.UNOPSDomain.Entities;
 using Xunit;
 
 namespace UNOPS.PAO.Business.Tests.Managers;
 
 /// <summary>
-/// Unit tests for ContactManager
+/// Unit tests for ContactManager against PostgreSQL.
+/// Uses UNOPSContact and creates parent Partners for FK constraints.
+/// Uses test markers to filter own data from the shared database.
 /// </summary>
 public class ContactManagerTests : ManagerTestBase
 {
+    private readonly string _testMarker = $"CMT_{Guid.NewGuid():N}";
+
     [Fact]
     public async Task GetContactById_Should_ReturnContact_When_Exists()
     {
         // Arrange
-        var contact = new Contact
+        var partnerId = await CreateTestPartnerAsync($"Partner_{_testMarker}");
+        var contact = new UNOPSContact
         {
-            Id = 1,
-            Name = "John Doe",
+            Name = $"John Doe {_testMarker}",
             FirstName = "John",
             LastName = "Doe",
-            Email = "john.doe@example.com",
+            Email = $"john.doe_{_testMarker}@example.com",
             Title = "Manager",
-            Status = EntityStatus.Active
+            PartnerId = partnerId,
+            Status = EntityStatus.Active,
+            CreatedBy = 1,
+            LastModifiedBy = 1,
+            LastModifiedDate = DateTime.UtcNow
         };
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
+        RegisterTableCleanup("Contacts", $"\"Id\" = {contact.Id}");
 
         // Act
-        var result = await Context.Contacts.FindAsync(1);
+        var result = await Context.Contacts.FindAsync(contact.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -42,7 +52,7 @@ public class ContactManagerTests : ManagerTestBase
     public async Task GetContactById_Should_ReturnNull_When_NotExists()
     {
         // Act
-        var result = await Context.Contacts.FindAsync(999);
+        var result = await Context.Contacts.FindAsync(999999);
 
         // Assert
         result.Should().BeNull();
@@ -52,16 +62,20 @@ public class ContactManagerTests : ManagerTestBase
     public async Task GetContacts_Should_ReturnAllContacts()
     {
         // Arrange
-        var contacts = new List<Contact>
+        var partnerId = await CreateTestPartnerAsync($"Partner_{_testMarker}");
+        var contacts = new List<UNOPSContact>
         {
-            new() { Id = 1, Name = "John Doe", FirstName = "John", LastName = "Doe", Email = "john@test.com", Title = "Manager", Status = EntityStatus.Active },
-            new() { Id = 2, Name = "Jane Smith", FirstName = "Jane", LastName = "Smith", Email = "jane@test.com", Title = "Director", Status = EntityStatus.Active }
+            new() { Name = $"John Doe {_testMarker}", FirstName = "John", LastName = "Doe", Email = $"john_{_testMarker}@test.com", Title = "Manager", PartnerId = partnerId, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new() { Name = $"Jane Smith {_testMarker}", FirstName = "Jane", LastName = "Smith", Email = $"jane_{_testMarker}@test.com", Title = "Director", PartnerId = partnerId, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
         };
         await Context.Contacts.AddRangeAsync(contacts);
         await SaveChangesAsync();
+        foreach (var c in contacts) RegisterTableCleanup("Contacts", $"\"Id\" = {c.Id}");
 
         // Act
-        var result = await Context.Contacts.ToListAsync();
+        var result = await Context.Contacts
+            .Where(c => c.Name.Contains(_testMarker))
+            .ToListAsync();
 
         // Assert
         result.Should().HaveCount(2);
@@ -71,43 +85,53 @@ public class ContactManagerTests : ManagerTestBase
     public async Task CreateContact_Should_PersistContact()
     {
         // Arrange
-        var contact = new Contact
+        var partnerId = await CreateTestPartnerAsync($"Partner_{_testMarker}");
+        var contact = new UNOPSContact
         {
-            Id = 1,
-            Name = "New Contact",
+            Name = $"New Contact {_testMarker}",
             FirstName = "New",
             LastName = "Contact",
-            Email = "new@test.com",
+            Email = $"new_{_testMarker}@test.com",
             Title = "Analyst",
-            Status = EntityStatus.Active
+            PartnerId = partnerId,
+            Status = EntityStatus.Active,
+            CreatedBy = 1,
+            LastModifiedBy = 1,
+            LastModifiedDate = DateTime.UtcNow
         };
 
         // Act
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
+        RegisterTableCleanup("Contacts", $"\"Id\" = {contact.Id}");
 
         // Assert
-        var result = await Context.Contacts.FindAsync(1);
+        var result = await Context.Contacts.FindAsync(contact.Id);
         result.Should().NotBeNull();
-        result!.Email.Should().Be("new@test.com");
+        result!.Email.Should().Contain(_testMarker);
     }
 
     [Fact]
     public async Task UpdateContact_Should_UpdateFields()
     {
         // Arrange
-        var contact = new Contact
+        var partnerId = await CreateTestPartnerAsync($"Partner_{_testMarker}");
+        var contact = new UNOPSContact
         {
-            Id = 1,
-            Name = "Original Name",
+            Name = $"Original Name {_testMarker}",
             FirstName = "Original",
             LastName = "Name",
-            Email = "original@test.com",
+            Email = $"original_{_testMarker}@test.com",
             Title = "Manager",
-            Status = EntityStatus.Active
+            PartnerId = partnerId,
+            Status = EntityStatus.Active,
+            CreatedBy = 1,
+            LastModifiedBy = 1,
+            LastModifiedDate = DateTime.UtcNow
         };
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
+        RegisterTableCleanup("Contacts", $"\"Id\" = {contact.Id}");
 
         // Act
         contact.FirstName = "Updated";
@@ -115,7 +139,7 @@ public class ContactManagerTests : ManagerTestBase
 
         // Assert
         Context.ChangeTracker.Clear();
-        var result = await Context.Contacts.FindAsync(1);
+        var result = await Context.Contacts.FindAsync(contact.Id);
         result!.FirstName.Should().Be("Updated");
     }
 
@@ -123,18 +147,23 @@ public class ContactManagerTests : ManagerTestBase
     public async Task DeleteContact_Should_SoftDelete()
     {
         // Arrange
-        var contact = new Contact
+        var partnerId = await CreateTestPartnerAsync($"Partner_{_testMarker}");
+        var contact = new UNOPSContact
         {
-            Id = 1,
-            Name = "ToDelete Contact",
+            Name = $"ToDelete Contact {_testMarker}",
             FirstName = "ToDelete",
             LastName = "Contact",
-            Email = "delete@test.com",
+            Email = $"delete_{_testMarker}@test.com",
             Title = "Manager",
-            Status = EntityStatus.Active
+            PartnerId = partnerId,
+            Status = EntityStatus.Active,
+            CreatedBy = 1,
+            LastModifiedBy = 1,
+            LastModifiedDate = DateTime.UtcNow
         };
         await Context.Contacts.AddAsync(contact);
         await SaveChangesAsync();
+        RegisterTableCleanup("Contacts", $"\"Id\" = {contact.Id}");
 
         // Act
         contact.IsDeleted = true;
@@ -143,7 +172,7 @@ public class ContactManagerTests : ManagerTestBase
 
         // Assert
         Context.ChangeTracker.Clear();
-        var result = await Context.Contacts.FindAsync(1);
+        var result = await Context.Contacts.FindAsync(contact.Id);
         result!.IsDeleted.Should().BeTrue();
     }
 
@@ -151,20 +180,21 @@ public class ContactManagerTests : ManagerTestBase
     public async Task GetContactsByPartner_Should_ReturnFilteredContacts()
     {
         // Arrange
-        var partner = new Partner { Id = 1, Name = "Test Partner", Status = EntityStatus.Active };
-        await Context.Partners.AddAsync(partner);
-        
-        var contacts = new List<Contact>
+        var partner1Id = await CreateTestPartnerAsync($"Test Partner 1 {_testMarker}");
+        var partner2Id = await CreateTestPartnerAsync($"Other Partner 2 {_testMarker}");
+
+        var contacts = new List<UNOPSContact>
         {
-            new() { Id = 1, Name = "John Doe", FirstName = "John", LastName = "Doe", Email = "john@test.com", Title = "Manager", PartnerId = 1, Status = EntityStatus.Active },
-            new() { Id = 2, Name = "Jane Smith", FirstName = "Jane", LastName = "Smith", Email = "jane@test.com", Title = "Director", PartnerId = 1, Status = EntityStatus.Active },
-            new() { Id = 3, Name = "Bob Wilson", FirstName = "Bob", LastName = "Wilson", Email = "bob@test.com", Title = "Analyst", PartnerId = 2, Status = EntityStatus.Active }
+            new() { Name = $"John Doe {_testMarker}", FirstName = "John", LastName = "Doe", Email = $"john_{_testMarker}@test.com", Title = "Manager", PartnerId = partner1Id, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new() { Name = $"Jane Smith {_testMarker}", FirstName = "Jane", LastName = "Smith", Email = $"jane_{_testMarker}@test.com", Title = "Director", PartnerId = partner1Id, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new() { Name = $"Bob Wilson {_testMarker}", FirstName = "Bob", LastName = "Wilson", Email = $"bob_{_testMarker}@test.com", Title = "Analyst", PartnerId = partner2Id, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
         };
         await Context.Contacts.AddRangeAsync(contacts);
         await SaveChangesAsync();
+        foreach (var c in contacts) RegisterTableCleanup("Contacts", $"\"Id\" = {c.Id}");
 
         // Act
-        var result = await Context.Contacts.Where(c => c.PartnerId == 1).ToListAsync();
+        var result = await Context.Contacts.Where(c => c.PartnerId == partner1Id).ToListAsync();
 
         // Assert
         result.Should().HaveCount(2);
@@ -174,20 +204,21 @@ public class ContactManagerTests : ManagerTestBase
     public async Task SearchContacts_Should_FilterByName()
     {
         // Arrange
-        var contacts = new List<Contact>
+        var partnerId = await CreateTestPartnerAsync($"Partner_{_testMarker}");
+        var contacts = new List<UNOPSContact>
         {
-            new() { Id = 1, Name = "John Doe", FirstName = "John", LastName = "Doe", Email = "john@test.com", Title = "Manager", Status = EntityStatus.Active },
-            new() { Id = 2, Name = "Jane Doe", FirstName = "Jane", LastName = "Doe", Email = "jane@test.com", Title = "Director", Status = EntityStatus.Active },
-            new() { Id = 3, Name = "Bob Smith", FirstName = "Bob", LastName = "Smith", Email = "bob@test.com", Title = "Analyst", Status = EntityStatus.Active }
+            new() { Name = $"John Doe {_testMarker}", FirstName = "John", LastName = $"Doe_{_testMarker}", Email = $"john_{_testMarker}@test.com", Title = "Manager", PartnerId = partnerId, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new() { Name = $"Jane Doe {_testMarker}", FirstName = "Jane", LastName = $"Doe_{_testMarker}", Email = $"jane_{_testMarker}@test.com", Title = "Director", PartnerId = partnerId, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow },
+            new() { Name = $"Bob Smith {_testMarker}", FirstName = "Bob", LastName = $"Smith_{_testMarker}", Email = $"bob_{_testMarker}@test.com", Title = "Analyst", PartnerId = partnerId, Status = EntityStatus.Active, CreatedBy = 1, LastModifiedBy = 1, LastModifiedDate = DateTime.UtcNow }
         };
         await Context.Contacts.AddRangeAsync(contacts);
         await SaveChangesAsync();
+        foreach (var c in contacts) RegisterTableCleanup("Contacts", $"\"Id\" = {c.Id}");
 
         // Act
-        var result = await Context.Contacts.Where(c => c.LastName == "Doe").ToListAsync();
+        var result = await Context.Contacts.Where(c => c.LastName == $"Doe_{_testMarker}").ToListAsync();
 
         // Assert
         result.Should().HaveCount(2);
     }
 }
-

@@ -261,9 +261,11 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             {
                 new OrganizationUnitRelationship
                 {
+                    Name = $"Partner-{partnerId1}-OrgUnit-{orgUnitId}", // Required by ModifiableDeletableEntity
                     OrganizationHierarchyId = orgUnitId,
                     EntityId = partnerId1,
-                    EntityType = nameof(UNOPSPartner)
+                    EntityType = nameof(UNOPSPartner),
+                    Status = Domain.Entities.EntityStatus.Active
                 }
             };
             
@@ -288,9 +290,11 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             {
                 new OrganizationUnitRelationship
                 {
+                    Name = $"Partner-{partnerId2}-OrgUnit-999", // Required by ModifiableDeletableEntity
                     OrganizationHierarchyId = 999,
                     EntityId = partnerId2,
-                    EntityType = nameof(UNOPSPartner)
+                    EntityType = nameof(UNOPSPartner),
+                    Status = Domain.Entities.EntityStatus.Active
                 }
             };
             
@@ -425,9 +429,11 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             {
                 new OrganizationUnitRelationship
                 {
+                    Name = $"Partner-{partnerId1}-OrgUnit-{parentOrgUnitId}", // Required by ModifiableDeletableEntity
                     OrganizationHierarchyId = parentOrgUnitId,
                     EntityId = partnerId1,
-                    EntityType = nameof(UNOPSPartner)
+                    EntityType = nameof(UNOPSPartner),
+                    Status = Domain.Entities.EntityStatus.Active
                 }
             };
             
@@ -452,9 +458,11 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             {
                 new OrganizationUnitRelationship
                 {
+                    Name = $"Partner-{partnerId2}-OrgUnit-{childOrgUnitId}", // Required by ModifiableDeletableEntity
                     OrganizationHierarchyId = childOrgUnitId,
                     EntityId = partnerId2,
-                    EntityType = nameof(UNOPSPartner)
+                    EntityType = nameof(UNOPSPartner),
+                    Status = Domain.Entities.EntityStatus.Active
                 }
             };
             
