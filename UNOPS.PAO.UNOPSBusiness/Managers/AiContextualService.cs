@@ -1330,9 +1330,10 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                 // Handle single text value (existing behavior)
                                 dynamic entityId;
                                 int id;
-                                if (text?.Value != null)
+                                // Unwrap JValue to underlying value; text may already be string (e.g. from proposedInitiativeTypeId)
+                                if (text is JValue jVal && jVal.Value != null)
                                 {
-                                    text = text.Value;
+                                    text = jVal.Value;
                                 }
                                 
                                 // Check if 'text' is already a numeric value (long/int)
