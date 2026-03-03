@@ -373,6 +373,8 @@ jobs:
       continue-on-error: true
       working-directory: UNOPS.PAO.ClientApp
       run: npm run test:ci
+      env:
+        CHROME_BIN: /usr/bin/google-chrome-stable
     
     - name: Upload Coverage Artifact
       uses: actions/upload-artifact@v4

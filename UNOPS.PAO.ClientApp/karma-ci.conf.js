@@ -9,7 +9,13 @@ module.exports = function (config) {
   baseConfig(config);
 
   config.set({
-    browsers: ['ChromeHeadless'],
+    browsers: ['ChromeHeadlessNoSandbox'],
+    customLaunchers: {
+      ChromeHeadlessNoSandbox: {
+        base: 'ChromeHeadless',
+        flags: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']
+      }
+    },
     singleRun: true,
     restartOnFileChange: false,
     reporters: ['progress'],
