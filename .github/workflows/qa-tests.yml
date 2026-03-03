@@ -188,7 +188,8 @@ jobs:
       run: |
         dotnet ef database update \
           --project UNOPS.PAO.UNOPSDataAccess/UNOPS.PAO.UNOPSDataAccess.csproj \
-          --startup-project UNOPS.PAO.Server/UNOPS.PAO.Server.csproj
+          --startup-project UNOPS.PAO.Server/UNOPS.PAO.Server.csproj \
+          --connection "Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;Include Error Detail=true"
       env:
         ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;Include Error Detail=true'
         ConnectionStrings__UseIamAuthentication: 'false'

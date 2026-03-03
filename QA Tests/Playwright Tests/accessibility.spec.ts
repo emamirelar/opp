@@ -159,7 +159,7 @@ test.describe('Accessibility Compliance', () => {
         const ariaLabel = await usernameInput.getAttribute('aria-label');
         const id = await usernameInput.getAttribute('id');
         const placeholder = await usernameInput.getAttribute('placeholder');
-        const hasLabel = ariaLabel || placeholder || (id && (await page.locator(`label[for="${id}"]`).count()) > 0;
+        const hasLabel = ariaLabel || placeholder || (id && (await page.locator(`label[for="${id}"]`).count()) > 0);
         expect(hasLabel).toBe(true);
       }
 
@@ -167,7 +167,7 @@ test.describe('Accessibility Compliance', () => {
         const ariaLabel = await passwordInput.getAttribute('aria-label');
         const id = await passwordInput.getAttribute('id');
         const placeholder = await passwordInput.getAttribute('placeholder');
-        const hasLabel = ariaLabel || placeholder || (id && (await page.locator(`label[for="${id}"]`).count()) > 0;
+        const hasLabel = ariaLabel || placeholder || (id && (await page.locator(`label[for="${id}"]`).count()) > 0);
         expect(hasLabel).toBe(true);
       }
     });
