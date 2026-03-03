@@ -339,12 +339,10 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: UNOPS.PAO.ClientApp/package-lock.json
     
     - name: Install dependencies
       working-directory: UNOPS.PAO.ClientApp
-      run: npm ci
+      run: npm install
 
     - name: Angular Build Verification
       working-directory: UNOPS.PAO.ClientApp
@@ -398,12 +396,10 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: UNOPS.PAO.ClientApp/package-lock.json
 
     - name: Install Angular dependencies
       working-directory: UNOPS.PAO.ClientApp
-      run: npm ci
+      run: npm install
 
     - name: Build Angular app
       working-directory: UNOPS.PAO.ClientApp
