@@ -192,12 +192,12 @@ public class AppDbContext : AuditableDbContext<int, int>
         {
             entity.Property(e => e.EmailAddresses)
                   .HasConversion(
-                      v => string.Join(',', v),
-                      v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList(),
+                      v => string.Join(',', v ?? new List<string>()),
+                      v => (v ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).ToList(),
                             new ValueComparer<List<string>>(
-                                (c1, c2) => c1.SequenceEqual(c2),
-                                  c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
-                                  c => c.ToList()))
+                                (c1, c2) => (c1 ?? new List<string>()).SequenceEqual(c2 ?? new List<string>()),
+                                  c => (c ?? new List<string>()).Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                                  c => (c ?? new List<string>()).ToList()))
                   .HasColumnType("text");
 
             entity.HasMany(i => i.InteractionContacts)

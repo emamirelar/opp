@@ -21,14 +21,14 @@ public class UserInfoService : IUserInfoService
     {
         // Convert both the input email and database email to lowercase for case-insensitive comparison
         return await _context.UserProfile
-            .FirstOrDefaultAsync(u => u.UserEmail.ToLower() == email.ToLower());
+            .FirstOrDefaultAsync(u => (u.UserEmail ?? "").ToLower() == email.ToLower());
     }
 
     public async Task<object?> GetUserInfoWithOrgSettingsAsync(string email)
     {
         // Convert both the input email and database email to lowercase for case-insensitive comparison
         var result = await _context.UserProfile
-            .Where(u => u.UserEmail.ToLower() == email.ToLower())
+            .Where(u => (u.UserEmail ?? "").ToLower() == email.ToLower())
             .GroupJoin(_context.OrganizationHierarchies.Where(oh => oh.Type == OrganizationUnitType.OrgUnit),
                 userProfile => userProfile.OrgUnit,
                 orgHierarchy => orgHierarchy.Code,
@@ -120,7 +120,7 @@ public class UserInfoService : IUserInfoService
 
         var emailList = emails.Select(e => e.ToLower()).ToList();
         return await _context.UserProfile
-            .Where(u => emailList.Contains(u.UserEmail.ToLower()))
+            .Where(u => emailList.Contains((u.UserEmail ?? "").ToLower()))
             .ToListAsync();
     }
 } 
