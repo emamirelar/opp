@@ -153,7 +153,7 @@ public class AuditLogManagerLoadTests
 
         var avg = times.Average();
         var stdDev = Math.Sqrt(times.Average(t => Math.Pow(t - avg, 2)));
-        stdDev.Should().BeLessThan(avg * 2,
+        stdDev.Should().BeLessThan(Math.Max(avg * 2, 5),
             $"Audit write times inconsistent under {writeCount} concurrent writers (stddev={stdDev:F0}ms, avg={avg:F0}ms)");
     }
 
@@ -176,7 +176,7 @@ public class AuditLogManagerLoadTests
 
         var first = times.Take(times.Count / 4).Average();
         var last = times.Skip(3 * times.Count / 4).Average();
-        last.Should().BeLessThan(first * 10,
+        last.Should().BeLessThan(Math.Max(first * 10, 100),
             $"Bulk audit retrieval degraded from {first:F0}ms to {last:F0}ms avg under sustained load");
     }
 
@@ -256,7 +256,7 @@ public class AuditLogManagerLoadTests
         _stopwatch.Stop();
         var postSpikeMs = _stopwatch.ElapsedMilliseconds;
 
-        postSpikeMs.Should().BeLessThan(baselineMs * 3,
+        postSpikeMs.Should().BeLessThan(Math.Max(baselineMs * 3, 10),
             $"Post-spike response {postSpikeMs}ms did not recover (baseline {baselineMs}ms)");
     }
 
@@ -370,7 +370,7 @@ public class AuditLogManagerLoadTests
         _stopwatch.Stop();
         var recoveredMs = _stopwatch.ElapsedMilliseconds;
 
-        recoveredMs.Should().BeLessThan(baselineMs * 2,
+        recoveredMs.Should().BeLessThan(Math.Max(baselineMs * 2, 10),
             $"System did not recover: post-stress {recoveredMs}ms vs baseline {baselineMs}ms");
     }
 

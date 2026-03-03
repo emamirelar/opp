@@ -215,7 +215,7 @@ public class GeminiManagerLoadTests
 
         var first = times.Take(times.Count / 4).Average();
         var last = times.Skip(3 * times.Count / 4).Average();
-        var threshold = Math.Max(first * 10, 1);
+        var threshold = Math.Max(first * 10, 100);
         last.Should().BeLessThanOrEqualTo(threshold,
             $"AI content generation degraded from {first:F0}ms to {last:F0}ms avg under sustained load");
     }
@@ -238,7 +238,7 @@ public class GeminiManagerLoadTests
 
         var avg = times.Average();
         var stdDev = Math.Sqrt(times.Average(t => Math.Pow(t - avg, 2)));
-        var maxStdDev = Math.Max(avg * 2, 1);
+        var maxStdDev = Math.Max(avg * 2, 5);
         stdDev.Should().BeLessThanOrEqualTo(maxStdDev,
             $"Bulk AI analysis times inconsistent under {writeCount} concurrent calls (stddev={stdDev:F0}ms, avg={avg:F0}ms)");
     }

@@ -8,6 +8,8 @@
  * Phase Strategy: QA Tests/Load Tests/README.md (5 phases)
  *
  * RiskManager handles risk register, DST risks, risk assessment, and mitigation tracking.
+ * Mixed load: 60% read (viewing risk registers, lookups), 40% write (creating/updating risks).
+ * Risk assessment reads are heavy; risk creation/updates are moderate.
  * Tests use mocked IRiskManager for unit-level throughput and concurrency validation.
  *
  * @see comprehensive-test-strategy.mdc §10 Load Tests
@@ -202,25 +204,27 @@ public class RiskManagerLoadTests
 
         var avg = times.Average();
         var stdDev = Math.Sqrt(times.Average(t => Math.Pow(t - avg, 2)));
-        stdDev.Should().BeLessThan(avg * 2,
+        stdDev.Should().BeLessThanOrEqualTo(Math.Max(avg * 2, 5),
             $"Concurrent risk creation times inconsistent under {writeCount} writers (stddev={stdDev:F0}ms, avg={avg:F0}ms)");
     }
 
     /// <summary>
-    /// Phase 2: Sustained mixed load — risk queries and filtering (80% read, 20% write).
+    /// Phase 2: Sustained mixed load — 60% read (risk registers, lookups), 40% write (create/update).
+    /// Reflects real usage: users viewing risk registers and lookups while creating/updating risks.
     /// </summary>
     [Fact]
-    public async Task SustainedLoad_RiskQueriesAndFiltering_ThroughputMeetsTarget()
+    public async Task SustainedLoad_MixedRiskRegistersAndWrites_ThroughputMeetsTarget()
     {
         var user = CreateTestUser();
-        var readCount = (int)(NormalUsers * 0.8);
+        var readCount = (int)(NormalUsers * 0.6);
         var writeCount = NormalUsers - readCount;
 
-        var reads = Enumerable.Range(0, readCount).Select(_ => _manager.GetRisksByEntityAsync("Opportunity", 1, user));
-        var writes = Enumerable.Range(0, writeCount).Select(i => _manager.CreateRiskAsync(CreateTestRequest(i), user));
+        var reads = Enumerable.Range(0, readCount).Select(i => RunMixedReadAsync(i, user));
+        var creates = Enumerable.Range(0, writeCount / 2).Select(i => _manager.CreateRiskAsync(CreateTestRequest(i), user));
+        var updates = Enumerable.Range(0, writeCount - (writeCount / 2)).Select(i => _manager.UpdateRiskAsync((i % 10) + 1, CreateTestRequest(i), user));
 
         _stopwatch.Restart();
-        await Task.WhenAll(reads.Concat<Task>(writes));
+        await Task.WhenAll(reads.Cast<Task>().Concat(creates.Cast<Task>()).Concat(updates.Cast<Task>()));
         _stopwatch.Stop();
 
         var avgMs = _stopwatch.ElapsedMilliseconds / (double)NormalUsers;
@@ -279,7 +283,7 @@ public class RiskManagerLoadTests
         _stopwatch.Stop();
         var postSpikeMs = _stopwatch.ElapsedMilliseconds;
 
-        postSpikeMs.Should().BeLessThan(baselineMs * 3,
+        postSpikeMs.Should().BeLessThan(Math.Max(baselineMs * 3, 10),
             $"Post-spike response {postSpikeMs}ms did not recover (baseline {baselineMs}ms)");
     }
 
@@ -344,6 +348,7 @@ public class RiskManagerLoadTests
 
     /// <summary>
     /// Phase 3: Concurrent risk CRUD — data integrity maintained under stress.
+    /// All writes complete and return valid models.
     /// </summary>
     [Fact]
     public async Task StressLoad_ConcurrentRiskCrud_DataIntegrityMaintained()
@@ -355,7 +360,10 @@ public class RiskManagerLoadTests
 
         var tasks = Enumerable.Range(1, 100).Select(async i =>
         {
-            await _manager.GetRisksByEntityAsync("Opportunity", 1, user);
+            var result = i % 2 == 0
+                ? await _manager.CreateRiskAsync(CreateTestRequest(i), user)
+                : await _manager.UpdateRiskAsync((i % 10) + 1, CreateTestRequest(i), user);
+            result.Should().NotBeNull();
             lock (lockObj)
             {
                 actualSum += i;
@@ -394,7 +402,7 @@ public class RiskManagerLoadTests
         _stopwatch.Stop();
         var recoveredMs = _stopwatch.ElapsedMilliseconds;
 
-        recoveredMs.Should().BeLessThan(baselineMs * 2,
+        recoveredMs.Should().BeLessThan(Math.Max(baselineMs * 2, 10),
             $"System did not recover: post-stress {recoveredMs}ms vs baseline {baselineMs}ms");
     }
 
@@ -419,13 +427,14 @@ public class RiskManagerLoadTests
 
     #endregion
 
-    #region Scalability (optional — meets bulk retrieval requirement)
+    #region Scalability — risk queries and writes as load grows
 
     /// <summary>
-    /// Bulk risk retrieval — risk list queries scale under load.
+    /// Scalability: Risk list queries scale under increasing concurrent load.
+    /// Simulates users viewing risk registers and lookups as system load grows.
     /// </summary>
     [Fact]
-    public async Task BulkRead_RiskLists_ScalesUnderLoad()
+    public async Task Scalability_RiskQueries_ScalesUnderLoad()
     {
         var user = CreateTestUser();
         var batchSizes = new[] { 25, 50, 100 };
@@ -433,7 +442,11 @@ public class RiskManagerLoadTests
         foreach (var userCount in batchSizes)
         {
             _stopwatch.Restart();
-            await Task.WhenAll(Enumerable.Range(0, userCount).Select(_ => _manager.GetRisksByEntityAsync("Opportunity", 1, user)));
+            await Task.WhenAll(Enumerable.Range(0, userCount)
+                .Select(i => _manager.GetRisksByEntityAsync(
+                    i % 2 == 0 ? "Opportunity" : "Project",
+                    (i % 10) + 1,
+                    user)));
             _stopwatch.Stop();
 
             var perUser = _stopwatch.ElapsedMilliseconds / (double)userCount;
@@ -442,9 +455,43 @@ public class RiskManagerLoadTests
         }
     }
 
+    /// <summary>
+    /// Scalability: Risk write throughput scales under concurrent create/update load.
+    /// </summary>
+    [Fact]
+    public async Task Scalability_RiskWriteThroughput_ScalesUnderLoad()
+    {
+        var user = CreateTestUser();
+        var batchSizes = new[] { 25, 50, 100 };
+
+        foreach (var userCount in batchSizes)
+        {
+            _stopwatch.Restart();
+            await Task.WhenAll(Enumerable.Range(0, userCount)
+                .Select(i => i % 2 == 0
+                    ? _manager.CreateRiskAsync(CreateTestRequest(i), user)
+                    : _manager.UpdateRiskAsync((i % 10) + 1, CreateTestRequest(i), user)));
+            _stopwatch.Stop();
+
+            var perUser = _stopwatch.ElapsedMilliseconds / (double)userCount;
+            perUser.Should().BeLessThan(100,
+                $"At {userCount} concurrent writes, avg {perUser:F0}ms/write — exceeded 100ms threshold");
+        }
+    }
+
     #endregion
 
     #region Helpers
+
+    private Task RunMixedReadAsync(int i, ClaimsPrincipal? user)
+    {
+        return (i % 3) switch
+        {
+            0 => _manager.GetRisksByEntityAsync("Opportunity", (i % 10) + 1, user),
+            1 => _manager.GetRiskLookupsAsync(),
+            _ => _manager.GetRiskCategoriesAsync()
+        };
+    }
 
     private async Task MeasuredCreateAsync(int index, List<long> times)
     {

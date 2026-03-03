@@ -398,7 +398,7 @@ test.describe('CEW — Back Navigation', () => {
     await page.waitForLoadState('domcontentloaded');
 
     expect(page.url()).not.toBe(urlBeforeBack);
-    expect(page.url().length).toBeGreaterThan(0);
+    expect(page.url()).toContain('/partnerships/');
   });
 
   test('CEW-012: Browser back from Opportunity detail returns to previous page', async ({ page }) => {
@@ -613,8 +613,7 @@ test.describe('CEW — Error Handling', () => {
 
     const hasError = await page.locator('text=/error|not found|404/i').isVisible().catch(() => false);
     const stillOnContacts = page.url().includes('/contacts');
-    const bodyVisible = await page.locator('body').isVisible();
-    expect(hasError || stillOnContacts || bodyVisible).toBe(true);
+    expect(hasError || stillOnContacts).toBe(true);
   });
 });
 
@@ -700,8 +699,7 @@ test.describe('CEW — Edge Cases', () => {
     const emptyMsg = page.locator('text=/no data|empty|0 records/i');
     const hasListview = await listview.isVisible({ timeout: 8000 }).catch(() => false);
     const hasEmptyMsg = await emptyMsg.isVisible({ timeout: 3000 }).catch(() => false);
-    const bodyVisible = await page.locator('body').isVisible();
-    expect(hasListview || hasEmptyMsg || bodyVisible).toBe(true);
+    expect(hasListview || hasEmptyMsg).toBe(true);
   });
 
   test('CEW-028: Deep URL to partner Opportunities tab loads', async ({ page }) => {
@@ -726,8 +724,7 @@ test.describe('CEW — Edge Cases', () => {
       await tabs.nth(i).click({ timeout: 2000 }).catch(() => {});
       await page.waitForLoadState('domcontentloaded');
     }
-    const bodyVisible = await page.locator('body').isVisible();
-    expect(bodyVisible).toBe(true);
+    await expect(page.locator('app-listview, [data-testid], h1, h2').first()).toBeVisible({ timeout: 5000 });
   });
 });
 

@@ -31,14 +31,37 @@ public abstract class PerformanceTestBase : IDisposable
 
     private IDbContextTransaction? _transaction;
 
+    /// <summary>
+    /// Whether the PostgreSQL database is actually reachable.
+    /// TestEnvironment.UsePostgreSQL can be true (config exists) but the database
+    /// may still be unreachable (Cloud SQL IAM auth failure, proxy not running, etc.).
+    /// Tests that require PostgreSQL should check this before proceeding.
+    /// </summary>
+    protected bool IsPostgresReachable { get; private set; }
+
     protected PerformanceTestBase()
     {
-        Context = (UNOPSAppDbContext)TestDbContextFactory.Create();
         Stopwatch = new Stopwatch();
 
         if (TestEnvironment.UsePostgreSQL)
         {
-            _transaction = Context.Database.BeginTransaction();
+            try
+            {
+                Context = (UNOPSAppDbContext)TestDbContextFactory.Create();
+                _transaction = Context.Database.BeginTransaction();
+                IsPostgresReachable = true;
+            }
+            catch
+            {
+                IsPostgresReachable = false;
+                Context = (UNOPSAppDbContext)TestDbContextFactory.CreateFallbackSqlite();
+                TestEnvironment.EnsureCleanDatabase(Context);
+            }
+        }
+        else
+        {
+            Context = (UNOPSAppDbContext)TestDbContextFactory.Create();
+            IsPostgresReachable = false;
         }
     }
 

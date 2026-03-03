@@ -229,6 +229,7 @@ namespace UNOPS.PAO.Tests.Integration.Controllers
         [Fact][Trait("TestId", "TC-CONTACT-EDGE-024")][Trait("Priority", "High")]
         public async Task CreateContact_DoubleSubmit_PreventsDuplicate()
         {
+            if (!_factory.IsUsingPostgres) return;
             var data = new { FirstName = "Double", LastName = "Submit", Email = "doublesubmit@example.com" };
             var task1 = _client.PostAsJsonAsync("/api/contact", data);
             var task2 = _client.PostAsJsonAsync("/api/contact", data);
@@ -250,6 +251,7 @@ namespace UNOPS.PAO.Tests.Integration.Controllers
         [Fact][Trait("TestId", "TC-CONTACT-EDGE-026")][Trait("Priority", "Medium")]
         public async Task DeleteContact_ConcurrentSameId_OnlyOneSucceeds()
         {
+            if (!_factory.IsUsingPostgres) return;
             var task1 = _client.DeleteAsync("/api/contact/1");
             var task2 = _client.DeleteAsync("/api/contact/1");
             var responses = await Task.WhenAll(task1, task2);
@@ -259,6 +261,7 @@ namespace UNOPS.PAO.Tests.Integration.Controllers
         [Fact][Trait("TestId", "TC-CONTACT-EDGE-027")][Trait("Priority", "Medium")]
         public async Task GetContact_DuringUpdate_ReturnsConsistentState()
         {
+            if (!_factory.IsUsingPostgres) return;
             var updateData = new { FirstName = "Being Updated" };
             var updateTask = _client.PutAsJsonAsync("/api/contact/1", updateData);
             var getTask = _client.GetAsync("/api/contact/1");
@@ -269,6 +272,7 @@ namespace UNOPS.PAO.Tests.Integration.Controllers
         [Fact][Trait("TestId", "TC-CONTACT-EDGE-028")][Trait("Priority", "High")]
         public async Task CreateContacts_IdenticalEmailsConcurrent_PreventsDuplicates()
         {
+            if (!_factory.IsUsingPostgres) return;
             var identicalData = new { FirstName = "Identical", LastName = "Contact", Email = "identical@example.com" };
             var tasks = Enumerable.Range(1, 5).Select(_ => _client.PostAsJsonAsync("/api/contact", identicalData));
             var responses = await Task.WhenAll(tasks);

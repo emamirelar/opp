@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Services;
 using UNOPS.PAO.Domain.Entities;
+using OpportunityEntity = UNOPS.PAO.Domain.Entities.Opportunity;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Opportunities;
@@ -195,7 +196,7 @@ public class OpportunityValidationTests : IDisposable
         int? responsibleOrgUnitId = null,
         string? challenges = null)
     {
-        var opportunity = new Domain.Entities.Opportunity
+        var opportunity = new OpportunityEntity
         {
             Name = name ?? $"Test Opportunity {_testMarker}",
             Description = description ?? "Test Description",

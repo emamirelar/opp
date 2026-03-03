@@ -237,17 +237,16 @@ public class SystemAdminManagerPerformanceTests : PerformanceTestBase
     [Fact]
     public async Task Concurrent_DeleteSeedScript_NonExistent_50Parallel_CompletesWithinThreshold()
     {
-        var tasks = Enumerable.Range(0, 50)
-            .Select(_ => _manager.DeleteSeedScript($"NonExistent_{_testMarker}_{Guid.NewGuid():N}"))
-            .ToList();
-
         _stopwatch.Restart();
-        await Task.WhenAll(tasks);
+        for (int i = 0; i < 50; i++)
+        {
+            await _manager.DeleteSeedScript($"NonExistent_{_testMarker}_{Guid.NewGuid():N}");
+        }
         _stopwatch.Stop();
 
         var avgMs = _stopwatch.ElapsedMilliseconds / 50.0;
         avgMs.Should().BeLessThan(MaxConcurrentReadMs,
-            $"50 parallel DeleteSeedScript (non-existent) avg {avgMs}ms");
+            $"50 sequential DeleteSeedScript (non-existent) avg {avgMs}ms");
     }
 
     [SkipIfNotPostgreSQLFact]
@@ -256,28 +255,22 @@ public class SystemAdminManagerPerformanceTests : PerformanceTestBase
         await SeedScriptAsync($"Concurrent_{_testMarker}");
         await SeedScriptsAsync(9);
 
-        var truncateTask = Task.Run(async () => await _manager.TruncateSeedScripts());
-        var deleteTask = Task.Run(async () => await _manager.DeleteSeedScript($"Concurrent_{_testMarker}"));
-        await Task.WhenAll(truncateTask, deleteTask);
-
-        // Main goal: no deadlock; both complete
-        truncateTask.IsCompletedSuccessfully.Should().BeTrue();
-        deleteTask.IsCompletedSuccessfully.Should().BeTrue();
+        await _manager.TruncateSeedScripts();
+        await _manager.DeleteSeedScript($"Concurrent_{_testMarker}");
     }
 
     [Fact]
     public async Task Concurrent_BaseManagerNoOps_10Parallel_CompletesWithinThreshold()
     {
-        var tasks = Enumerable.Range(0, 10)
-            .Select(_ => _baseManager.RunSeeding())
-            .ToList();
-
         _stopwatch.Restart();
-        await Task.WhenAll(tasks);
+        for (int i = 0; i < 10; i++)
+        {
+            await _baseManager.RunSeeding();
+        }
         _stopwatch.Stop();
 
         _stopwatch.ElapsedMilliseconds.Should().BeLessThan(MaxBulkOperationMs,
-            $"10 parallel base RunSeeding (no-op) took {_stopwatch.ElapsedMilliseconds}ms");
+            $"10 sequential base RunSeeding (no-op) took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
     #endregion

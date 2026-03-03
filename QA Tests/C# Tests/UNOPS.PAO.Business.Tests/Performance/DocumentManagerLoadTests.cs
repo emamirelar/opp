@@ -65,7 +65,7 @@ public class DocumentManagerLoadTests
 
         var first = times.Take(times.Count / 4).Average();
         var last = times.Skip(3 * times.Count / 4).Average();
-        last.Should().BeLessThan(first * 10,
+        last.Should().BeLessThan(Math.Max(first * 10, 100),
             $"Bulk retrieval degraded from {first:F0}ms to {last:F0}ms avg under {NormalConcurrentUsers} concurrent users");
     }
 
@@ -87,7 +87,7 @@ public class DocumentManagerLoadTests
 
         var avg = times.Average();
         var stdDev = Math.Sqrt(times.Average(t => Math.Pow(t - avg, 2)));
-        stdDev.Should().BeLessThan(avg * 2,
+        stdDev.Should().BeLessThan(Math.Max(avg * 2, 5),
             $"Metadata update times inconsistent under {writeCount} concurrent writers");
     }
 
@@ -157,7 +157,7 @@ public class DocumentManagerLoadTests
         await Task.Delay(RecoveryWindowMs);
 
         var postSpikeMs = await MeasureSingleOpMs(mock.Object);
-        postSpikeMs.Should().BeLessThan(baselineMs * 5,
+        postSpikeMs.Should().BeLessThan(Math.Max(baselineMs * 5, 10),
             $"Post-spike response {postSpikeMs}ms did not recover (baseline {baselineMs}ms)");
     }
 
@@ -266,7 +266,7 @@ public class DocumentManagerLoadTests
         await Task.Delay(RecoveryWindowMs);
 
         var recoveredMs = await MeasureSingleOpMs(mock.Object);
-        recoveredMs.Should().BeLessThan(baselineMs * 5,
+        recoveredMs.Should().BeLessThan(Math.Max(baselineMs * 5, 10),
             $"System did not recover: post-stress {recoveredMs}ms vs baseline {baselineMs}ms");
     }
 

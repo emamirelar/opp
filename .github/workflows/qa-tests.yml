@@ -14,6 +14,53 @@ env:
   NODE_VERSION: '20'
 
 jobs:
+  smoke-tests:
+    name: Smoke Tests (Fast Gate)
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        token: ${{ secrets.GH_PAT }}
+
+    - name: Ensure Workflow submodule initialized
+      run: git submodule update --init --recursive UNOPS.Workflow
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+
+    - name: Run Smoke Tests
+      run: |
+        mkdir -p "${{ github.workspace }}/TestResults"
+        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" \
+          --no-build \
+          --configuration Release \
+          --verbosity normal \
+          --filter "Category=Smoke" \
+          --logger "trx;LogFileName=smoke-tests.trx" \
+          --results-directory "${{ github.workspace }}/TestResults"
+      env:
+        USE_INMEMORY_DB: 'true'
+
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Smoke Tests Results
+        path: '**/TestResults/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: true
+
   fast-tests:
     name: Fast Logic Tests
     runs-on: windows-latest
@@ -95,6 +142,7 @@ jobs:
 
   business-tests:
     name: Business Logic Tests (PostgreSQL)
+    needs: [smoke-tests]
     runs-on: ubuntu-latest
 
     services:
@@ -334,6 +382,114 @@ jobs:
         echo "::error::Frontend Tests failed or encountered errors"
         exit 1
 
+  playwright-smoke:
+    name: Playwright E2E Smoke Tests
+    needs: [smoke-tests]
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        token: ${{ secrets.GH_PAT }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: UNOPS.PAO.ClientApp/package-lock.json
+
+    - name: Install Angular dependencies
+      working-directory: UNOPS.PAO.ClientApp
+      run: npm ci
+
+    - name: Build Angular app
+      working-directory: UNOPS.PAO.ClientApp
+      run: npm run build
+
+    - name: Install Playwright dependencies
+      working-directory: QA Tests
+      run: |
+        npm ci
+        npm install -g serve
+        npx playwright install chromium --with-deps
+
+    - name: Serve Angular app & run Playwright smoke tests
+      working-directory: QA Tests
+      run: |
+        # Serve the built Angular app in the background
+        serve ../UNOPS.PAO.ClientApp/dist/UNOPS.PAO.ClientApp/browser -l 4200 -s &
+        SERVER_PID=$!
+
+        # Wait for the server to be ready
+        echo "Waiting for Angular app to be available on port 4200..."
+        for i in $(seq 1 30); do
+          if curl -s http://localhost:4200 > /dev/null 2>&1; then
+            echo "Angular app is ready."
+            break
+          fi
+          sleep 1
+        done
+
+        # Run Playwright smoke tests (Chromium only, mocked APIs, broad coverage)
+        # Covers: auth, dashboard, all CRM entities, navigation, notifications,
+        # comments, forms, search, documents, accessibility, workflow, RBAC,
+        # profile, admin, partner detail, opportunity detail, cross-entity nav
+        npx playwright test \
+          --project=chromium \
+          --reporter=line \
+          --reporter=html \
+          login.spec.ts \
+          home.spec.ts \
+          dashboard.spec.ts \
+          partners.spec.ts \
+          partner-item.spec.ts \
+          partner-features.spec.ts \
+          contacts.spec.ts \
+          contact-item.spec.ts \
+          opportunities.spec.ts \
+          opportunity-sections.spec.ts \
+          opportunity-creation.spec.ts \
+          interactions.spec.ts \
+          navigation-tabs.spec.ts \
+          notifications.spec.ts \
+          comments.spec.ts \
+          form-validation.spec.ts \
+          search-listviews.spec.ts \
+          document-management.spec.ts \
+          accessibility.spec.ts \
+          saved-filters.spec.ts \
+          admin-features.spec.ts \
+          workflow.spec.ts \
+          role-access-control.spec.ts \
+          profile-settings.spec.ts \
+          cross-entity-navigation.spec.ts \
+          entity-artifacts.spec.ts \
+          || TEST_EXIT=$?
+
+        # Clean up the server
+        kill $SERVER_PID 2>/dev/null || true
+
+        exit ${TEST_EXIT:-0}
+      env:
+        CI: 'true'
+        BASE_URL: 'http://localhost:4200'
+        SKIP_WEB_SERVER: '1'
+        HEADLESS: 'true'
+
+    - name: Upload Playwright Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-smoke-report
+        path: |
+          QA Tests/TestResults/playwright-html-report
+          QA Tests/TestResults/playwright-artifacts
+        if-no-files-found: warn
+        retention-days: 14
+
   # ============================================================================
   # INTEGRATION TESTS - Run manually or in staging environment
   # ============================================================================
@@ -458,7 +614,7 @@ jobs:
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [fast-tests, business-tests, presentation-tests, frontend-tests]
+    needs: [smoke-tests, fast-tests, business-tests, presentation-tests, frontend-tests, playwright-smoke]
     if: always()
     
     steps:
@@ -474,6 +630,9 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## Automated Test Results (PR Checks)" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Smoke Tests (Fast Gate)" >> $GITHUB_STEP_SUMMARY
+        echo "- Smoke Tests (~14 tests, SQLite): ${{ needs.smoke-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Backend Tests" >> $GITHUB_STEP_SUMMARY
         echo "- Fast Logic Tests (~43 tests): ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- Business Logic Tests (~3,800 tests, PostgreSQL): ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
@@ -484,17 +643,22 @@ jobs:
         echo "- ESLint Static Analysis: ${{ needs.frontend-tests.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- Angular Unit Tests (CI mode): ${{ needs.frontend-tests.result }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### E2E Browser Tests" >> $GITHUB_STEP_SUMMARY
+        echo "- Playwright Smoke Tests (~25 specs, Chromium): ${{ needs.playwright-smoke.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Security & Quality" >> $GITHUB_STEP_SUMMARY
         echo "- npm audit (high/critical): ${{ needs.frontend-tests.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- .NET vulnerable packages scan: ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- Code coverage (Coverlet + lcov): uploaded as artifacts" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## Overall Status" >> $GITHUB_STEP_SUMMARY
+        SMOKE="${{ needs.smoke-tests.result }}"
         FAST="${{ needs.fast-tests.result }}"
         BIZ="${{ needs.business-tests.result }}"
         PRES="${{ needs.presentation-tests.result }}"
         FE="${{ needs.frontend-tests.result }}"
-        if [[ "$FAST" == "success" ]] && [[ "$BIZ" == "success" ]] && [[ "$PRES" == "success" ]] && [[ "$FE" == "success" ]]; then
+        PW="${{ needs.playwright-smoke.result }}"
+        if [[ "$SMOKE" == "success" ]] && [[ "$FAST" == "success" ]] && [[ "$BIZ" == "success" ]] && [[ "$PRES" == "success" ]] && [[ "$FE" == "success" ]] && [[ "$PW" == "success" ]]; then
           echo "All PR checks passing" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Test Coverage" >> $GITHUB_STEP_SUMMARY
@@ -502,6 +666,7 @@ jobs:
           echo "- Business Managers (~23 managers covered)" >> $GITHUB_STEP_SUMMARY
           echo "- Controller/API Layer (Dashboard, Comment, DocumentType, GmailAddon, SavedFilter)" >> $GITHUB_STEP_SUMMARY
           echo "- Frontend Components (Angular CI spec subset)" >> $GITHUB_STEP_SUMMARY
+          echo "- E2E Browser Tests: Login, Dashboard, Partners, Contacts, Opportunities, Interactions, Navigation, Notifications, Comments, Forms, Search, Docs, Accessibility" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Note**: Integration tests must be run manually or in staging" >> $GITHUB_STEP_SUMMARY
           echo "- See: QA Tests/ENVIRONMENT_SETUP_GUIDE.md" >> $GITHUB_STEP_SUMMARY
@@ -509,6 +674,9 @@ jobs:
         else
           echo "One or more test suites failed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          if [[ "$SMOKE" != "success" ]]; then
+            echo "- Smoke Tests: $SMOKE" >> $GITHUB_STEP_SUMMARY
+          fi
           if [[ "$FAST" != "success" ]]; then
             echo "- Fast Logic Tests: $FAST" >> $GITHUB_STEP_SUMMARY
           fi
@@ -521,16 +689,20 @@ jobs:
           if [[ "$FE" != "success" ]]; then
             echo "- Frontend Tests: $FE" >> $GITHUB_STEP_SUMMARY
           fi
+          if [[ "$PW" != "success" ]]; then
+            echo "- Playwright E2E Smoke: $PW" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Troubleshooting" >> $GITHUB_STEP_SUMMARY
           echo "1. Review test logs above for specific failures" >> $GITHUB_STEP_SUMMARY
           echo "2. Run backend tests locally: dotnet test --configuration Release" >> $GITHUB_STEP_SUMMARY
           echo "3. Run frontend tests locally: cd UNOPS.PAO.ClientApp && npm run test:ci" >> $GITHUB_STEP_SUMMARY
-          echo "4. Check for environment-specific issues (paths, configuration)" >> $GITHUB_STEP_SUMMARY
+          echo "4. Run Playwright tests locally: cd \"QA Tests\" && npx playwright test --project=chromium" >> $GITHUB_STEP_SUMMARY
+          echo "5. Check for environment-specific issues (paths, configuration)" >> $GITHUB_STEP_SUMMARY
         fi
     
     - name: Check Critical Tests
-      if: needs.fast-tests.result != 'success' || needs.business-tests.result != 'success' || needs.presentation-tests.result != 'success' || needs.frontend-tests.result != 'success'
+      if: needs.smoke-tests.result != 'success' || needs.fast-tests.result != 'success' || needs.business-tests.result != 'success' || needs.presentation-tests.result != 'success' || needs.frontend-tests.result != 'success' || needs.playwright-smoke.result != 'success'
       run: |
         echo "One or more test suites failed!"
         exit 1

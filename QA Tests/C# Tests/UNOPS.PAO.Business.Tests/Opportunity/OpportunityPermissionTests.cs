@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Services;
 using UNOPS.PAO.Domain.Entities;
+using OpportunityEntity = UNOPS.PAO.Domain.Entities.Opportunity;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Opportunities;
@@ -228,7 +229,7 @@ public class OpportunityPermissionTests : IDisposable
         int? responsibleOrgUnitId = null,
         int? createdBy = null)
     {
-        var opportunity = new Domain.Entities.Opportunity
+        var opportunity = new OpportunityEntity
         {
             Name = name ?? $"Test Opportunity {_testMarker}",
             Description = description ?? "Test Description",
@@ -384,9 +385,9 @@ public class OpportunityPermissionTests : IDisposable
         _mockPermissionService.Setup(p => p.GetUserOrgUnitAsync(It.IsAny<ClaimsPrincipal>()))
             .ReturnsAsync(_orgHierarchyId.ToString());
 
-        _mockPermissionService.Setup(p => p.ApplyAccessControlFiltersAsync(It.IsAny<IQueryable<Domain.Entities.Opportunity>>(),
+        _mockPermissionService.Setup(p => p.ApplyAccessControlFiltersAsync(It.IsAny<IQueryable<OpportunityEntity>>(),
             It.IsAny<ClaimsPrincipal>(), "View", "Opportunity"))
-            .ReturnsAsync((IQueryable<Domain.Entities.Opportunity> query, ClaimsPrincipal user, string action, string entityName) =>
+            .ReturnsAsync((IQueryable<OpportunityEntity> query, ClaimsPrincipal user, string action, string entityName) =>
                 (object)query.Where(o => o.ResponsibleOrgUnitId == _orgHierarchyId));
 
         var result = await _manager.GetAllOpportunitiesAsync();
@@ -438,9 +439,9 @@ public class OpportunityPermissionTests : IDisposable
         _mockPermissionService.Setup(p => p.GetEntityPermissionsAsync("Opportunity", null))
             .ReturnsAsync(permissions);
 
-        _mockPermissionService.Setup(p => p.ApplyAccessControlFiltersAsync(It.IsAny<IQueryable<Domain.Entities.Opportunity>>(),
+        _mockPermissionService.Setup(p => p.ApplyAccessControlFiltersAsync(It.IsAny<IQueryable<OpportunityEntity>>(),
             It.IsAny<ClaimsPrincipal>(), "View", "Opportunity"))
-            .ReturnsAsync((IQueryable<Domain.Entities.Opportunity> query, ClaimsPrincipal user, string action, string entityName) =>
+            .ReturnsAsync((IQueryable<OpportunityEntity> query, ClaimsPrincipal user, string action, string entityName) =>
                 (object)query);
 
         var result = await _manager.GetAllOpportunitiesAsync();

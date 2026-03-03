@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Services;
 using UNOPS.PAO.Domain.Entities;
+using OpportunityEntity = UNOPS.PAO.Domain.Entities.Opportunity;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Opportunities;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
@@ -222,7 +223,7 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
         string? challenges = null,
         DateTime? createdDate = null)
     {
-        var opportunity = new Domain.Entities.Opportunity
+        var opportunity = new OpportunityEntity
         {
             Name = name ?? $"Test Opportunity {_testMarker}",
             Description = description ?? "Test Description",
@@ -727,7 +728,7 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
         var oppId2 = await CreateTestOpportunityAsync(name: "Partner Opp 2", description: "Test Description");
 
         // Link opportunity to partner via FundingPartners
-        _context.Set<Domain.Entities.OpportunityFundingPartner>().Add(new Domain.Entities.OpportunityFundingPartner
+        _context.Set<OpportunityFundingPartner>().Add(new OpportunityFundingPartner
         {
             OpportunityId = oppId1,
             PartnerId = partner.Id,

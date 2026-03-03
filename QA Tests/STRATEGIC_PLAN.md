@@ -456,6 +456,101 @@ Root cause confirmed across all four failing namespaces: InMemory DB causes `500
 2. Investigate remaining EntityConfigNegativeTests, PartnerTreeNegativeTests for similar assertion issues
 3. After developer fixes (DEF-038 through DEF-044), re-run to measure total improvement
 
+**A1 Phase 13 — Completed 2026-03-03:**
+
+Full suite baseline established across both test projects.
+
+**Integration Tests (`UNOPS.PAO.IntegrationTests`):**
+
+| Status | Phase 11 Baseline | Phase 13 Result | Delta |
+|---|---|---|---|
+| ✅ Passing | 2,686 | **5,655** | **+2,969** ✅ |
+| ❌ Failing | 751 | **112** | **-639** ✅ (85% reduction) |
+| ⏭️ Skipped | 43 | **348** | +305 (new test skip guards) |
+| Total | 3,480 | **6,115** | **+2,635 new tests** |
+| Pass Rate | 77.2% | **92.5%** | **+15.3 points** ✅ |
+
+**Integration Test Failures by Category (112 total):**
+
+| Category | Count | Root Cause |
+|---|---|---|
+| RealApi.Opportunity | 68 | Cloud SQL IAM auth failures (leonardc user lacks table perms) |
+| AI Authorization | 12 | Restricted user gets 500 instead of 403 (DEF defect) |
+| PartnerAnalytics | 8 | Analytics endpoints returning errors |
+| Documents | 5 | Document download returning 500 instead of 404 |
+| PartnerEdge | 4 | Concurrent operation edge cases |
+| ContactEdge | 4 | Concurrent operation edge cases |
+| InteractionEdge | 4 | Concurrent operation edge cases |
+| Performance | 2 | Threshold exceeded (spike load + perf SLA) |
+| DirectPostgres | 2 | Cloud SQL IAM auth for direct write |
+| UnitTests | 2 | OrgUnit specification logic |
+| UserProfile | 1 | Response time >5s |
+
+**Business Tests (`UNOPS.PAO.Business.Tests`):**
+
+| Status | Phase 13 Result |
+|---|---|
+| ✅ Passing | **1,115** |
+| ❌ Failing | **75** |
+| ⏭️ Skipped | **82** |
+| Total | **1,272** |
+| Pass Rate | **87.7%** |
+| Duration | 14m 29s (aborted at 15min session timeout) |
+
+**Business Test Failures by Namespace (75 total):**
+
+| Namespace | Count | Root Cause |
+|---|---|---|
+| DashboardServiceTests | 18 | NullReferenceException in UserResolverService (test infra) |
+| ValuesManagerPerformanceTests | 15 | LiaisonOffices/FocalPoints — null source (DEF-013/DEF-014) |
+| UNOPSDocumentManagerTests | 8 | Missing document storage/route config |
+| UNOPSOpportunityManagerTests | 6 | FK constraint / missing async methods |
+| RiskManagerPerformanceTests | 6 | Cloud SQL IAM auth failures |
+| LinkManagerPerformanceTests | 4 | Cloud SQL IAM auth failures |
+| EntityArtifactPerformanceTests | 3 | Cloud SQL IAM auth failures |
+| InteractionPerformanceTests | 3 | Cloud SQL IAM auth failures |
+| DocumentManagerPerformanceTests | 3 | Cloud SQL IAM auth failures |
+| PartnerTreePerformanceTests | 2 | Cloud SQL IAM auth failures |
+| OrgUnitHierarchyServiceTests | 2 | Test infrastructure (UserResolver null) |
+| Specification Tests | 4 | InMemory DB limitations |
+| OpportunityAdvancedFeaturesTests | 1 | Missing method |
+
+**Combined Phase 13 Baseline:**
+
+| Metric | Integration | Business | Combined |
+|---|---|---|---|
+| ✅ Passing | 5,655 | 1,115 | **6,770** |
+| ❌ Failing | 112 | 75 | **187** |
+| ⏭️ Skipped | 348 | 82 | **430** |
+| Total | 6,115 | 1,272 | **7,387** |
+| Pass Rate | 92.5% | 87.7% | **91.6%** |
+
+**Key Insights:**
+1. **Massive test growth**: Total tests increased from 3,480 to 7,387 (+3,907 new tests, 112% increase)
+2. **Failure rate dramatically improved**: 751 → 187 failures (75% reduction) despite 2x more tests
+3. **Cloud SQL IAM auth** is the largest single failure category (~30+ tests across both projects)
+4. **DEF-013/DEF-014** (LiaisonOffice/FocalPoint managers) account for ~15 failures
+5. **DashboardServiceTests** (18 failures) is a test infrastructure issue, not production code
+6. **Business Tests had a hung test** requiring 15min session timeout — likely a load test waiting on Cloud SQL
+
+**TOP-5 E2E Coverage Gaps Status (Playwright Tests):**
+
+| Gap | Status | Tests |
+|---|---|---|
+| Gap 1: Cross-Entity Workflows | ✅ Complete | 33 tests in `cross-entity-workflows.spec.ts` |
+| Gap 2: Form Validation | ✅ Complete | 11 + 25 tests in `form-validation*.spec.ts` |
+| Gap 3: Interactions List | ✅ Complete | 13 tests + POM exists |
+| Gap 4: AI Assistant | ✅ Already covered | Existing `ai-assistant.spec.ts` |
+| Gap 5: API Error Handling | ✅ Complete | 26 tests in `api-error-handling.spec.ts` |
+
+All 5 E2E coverage gaps have been addressed since the plan was written.
+
+**Next actions (A1 Phase 14):**
+1. Fix DashboardServiceTests (18 failures) — test infrastructure issue with UserResolverService null
+2. Investigate hung business test (caused 25+ min hang before timeout) — likely a load test
+3. After DevOps fixes Cloud SQL IAM permissions, re-run to measure improvement (~30+ tests)
+4. After developer fixes DEF-013/DEF-014, re-run to measure ValuesManager improvement (~15 tests)
+
 ### A2 Detail — QA-019: AdvancedSearchService + InMemory DB ✅ Resolved (2026-02-20)
 - **Root cause:** `AdvancedSearchService` executes raw SQL (`FromSqlRaw`/`ExecuteSqlRaw`) and
   PostgreSQL-specific functions (`similarity()`, `ILIKE`) which InMemory DB does not support.

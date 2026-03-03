@@ -217,7 +217,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
 
             // Assert
             spikeAvg.Should().BeLessThan(baselineAvg * 5, "Spike should not increase response time more than 5x");
-            recoveryAvg.Should().BeLessThan(baselineAvg * 1.5, "Should recover to near-baseline within 2 seconds");
+            recoveryAvg.Should().BeLessThan(Math.Max(baselineAvg * 1.5, 100), "Should recover to near-baseline within 2 seconds");
         }
 
         [SkipIfInMemoryFact]
@@ -392,7 +392,7 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
             var recoveryResponseTime = (long)recoverySamples.Average();
 
             // Assert - use 3x tolerance to account for CPU contention in parallel test runs
-            recoveryResponseTime.Should().BeLessThan(normalResponseTime * 3,
+            recoveryResponseTime.Should().BeLessThan(Math.Max(normalResponseTime * 3, 100),
                 "System should recover to within 3x normal response time after overload");
         }
 

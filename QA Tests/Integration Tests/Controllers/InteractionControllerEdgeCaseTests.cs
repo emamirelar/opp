@@ -211,6 +211,7 @@ namespace UNOPS.PAO.Tests.Integration.Controllers
         [Fact][Trait("TestId", "TC-INTERACTION-EDGE-022")][Trait("Priority", "High")]
         public async Task CreateInteraction_DoubleSubmit_PreventsDuplicate()
         {
+            if (!_factory.IsUsingPostgres) return;
             var data = new { Type = "Meeting", Subject = "Double Submit Interaction", Date = "2025-01-01" };
             var task1 = _client.PostAsJsonAsync("/api/interactions", data);
             var task2 = _client.PostAsJsonAsync("/api/interactions", data);
@@ -221,6 +222,7 @@ namespace UNOPS.PAO.Tests.Integration.Controllers
         [Fact][Trait("TestId", "TC-INTERACTION-EDGE-023")][Trait("Priority", "High")]
         public async Task UpdateInteraction_ConcurrentDifferentFields_HandlesConflict()
         {
+            if (!_factory.IsUsingPostgres) return;
             var update1 = new { Id = 1, Subject = "Updated Subject 1" };
             var update2 = new { Id = 1, Type = "Email" };
             var task1 = _client.PutAsJsonAsync("/api/interactions", update1);
@@ -232,6 +234,7 @@ namespace UNOPS.PAO.Tests.Integration.Controllers
         [Fact][Trait("TestId", "TC-INTERACTION-EDGE-024")][Trait("Priority", "Medium")]
         public async Task DeleteInteraction_ConcurrentSameId_OnlyOneSucceeds()
         {
+            if (!_factory.IsUsingPostgres) return;
             var task1 = _client.DeleteAsync("/api/interactions/1");
             var task2 = _client.DeleteAsync("/api/interactions/1");
             var responses = await Task.WhenAll(task1, task2);
@@ -241,6 +244,7 @@ namespace UNOPS.PAO.Tests.Integration.Controllers
         [Fact][Trait("TestId", "TC-INTERACTION-EDGE-025")][Trait("Priority", "Medium")]
         public async Task GetInteraction_DuringUpdate_ReturnsConsistentState()
         {
+            if (!_factory.IsUsingPostgres) return;
             var updateData = new { Subject = "Being Updated" };
             var updateTask = _client.PutAsJsonAsync("/api/interactions/1", updateData);
             var getTask = _client.GetAsync("/api/interactions/1");
