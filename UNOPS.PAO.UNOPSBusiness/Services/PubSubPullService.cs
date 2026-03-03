@@ -42,8 +42,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
         {
             _logger = logger;
             _configuration = configuration;
-            ProjectId = configuration.GetSection("PubSub")["ProjectId"];
-            SubscriptionId = configuration.GetSection("PubSub")["SubscriptionId"];
+            ProjectId = configuration.GetSection("PubSub")["ProjectId"] ?? string.Empty;
+            SubscriptionId = configuration.GetSection("PubSub")["SubscriptionId"] ?? string.Empty;
             _dbContextFactory = dbContextFactory;
             _managerWrapper = managerWrapper;
         }

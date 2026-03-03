@@ -30,7 +30,7 @@ namespace UNOPS.PAO.Server.Infrastructure
                 // Log IAP headers
                 if (context.Request.Headers.TryGetValue("X-Goog-Authenticated-User-Email", out var emailHeader))
                 {
-                    _logger.LogInformation("IAP Email Header: {Header}", emailHeader);
+                    _logger.LogInformation("IAP Email Header: {Header}", emailHeader!);
                     
                     // Extract and log the actual email part
                     var emailParts = emailHeader.ToString().Split(':', 2);

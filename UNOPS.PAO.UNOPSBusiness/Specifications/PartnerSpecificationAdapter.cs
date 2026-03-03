@@ -28,7 +28,7 @@ public class PartnerSpecificationAdapter : ISpecification<Partner>
             // Convert the UNOPSPartner criteria to Partner criteria
             var originalCriteria = _unosPartnerSpecification.Criteria;
             if (originalCriteria == null)
-                return null;
+                return _ => true;
 
             // Create a parameter for Partner
             var parameter = Expression.Parameter(typeof(Partner), "p");
@@ -55,15 +55,15 @@ public class PartnerSpecificationAdapter : ISpecification<Partner>
     public List<Func<IQueryable<Partner>, IIncludableQueryable<Partner, object>>> IncludeExpressions =>
         new List<Func<IQueryable<Partner>, IIncludableQueryable<Partner, object>>>();
 
-    public Expression<Func<Partner, object>> OrderBy => 
+    public Expression<Func<Partner, object>>? OrderBy => 
         _unosPartnerSpecification.OrderBy != null ? ConvertOrderBy(_unosPartnerSpecification.OrderBy) : null;
 
-    public Expression<Func<Partner, object>> OrderByDescending => 
+    public Expression<Func<Partner, object>>? OrderByDescending => 
         _unosPartnerSpecification.OrderByDescending != null ? ConvertOrderBy(_unosPartnerSpecification.OrderByDescending) : null;
 
     public List<(Expression<Func<Partner, object>> KeySelector, bool Ascending)> OrderByExpressions =>
         _unosPartnerSpecification.OrderByExpressions
-            .Select(expr => (ConvertOrderBy(expr.KeySelector), expr.Ascending))
+            .Select(expr => (ConvertOrderBy(expr.KeySelector)!, expr.Ascending))
             .ToList();
 
     public int Skip => _unosPartnerSpecification.Skip;

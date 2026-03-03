@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
@@ -22,7 +21,6 @@ public class OutputEmbeddingSeeder
 {
     private readonly UNOPSAppDbContext _context;
     private readonly IConfiguration _configuration;
-    private readonly ILogger _logger;
     private readonly dynamic _geminiManager; // IGeminiManager - dynamic to avoid circular dependency
 
     // Instance constructor for actual embedding generation
@@ -34,7 +32,6 @@ public class OutputEmbeddingSeeder
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _geminiManager = geminiManager ?? throw new ArgumentNullException(nameof(geminiManager));
-        _logger = null; // Logger is optional, GeminiManager has its own
     }
 
     /// <summary>
@@ -174,7 +171,7 @@ public class OutputEmbeddingSeeder
                 {
                     Level = level,
                     Text = text,
-                    Definition = definition,
+                    Definition = definition ?? string.Empty,
                     Hierarchy = text
                 });
 

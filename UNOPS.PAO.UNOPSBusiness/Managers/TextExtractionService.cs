@@ -43,7 +43,6 @@ public class TextExtractionService
         string fileType = FindFileType(file);
         string extractedText = "";
         string fileTypeText = "";
-        string fileUrl = "";
             
         if (fileType == "image") {
             fileTypeText = "(Image uploaded by User)";

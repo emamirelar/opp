@@ -1473,12 +1473,12 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     }
 
 
-    public virtual async Task<InteractionModel> FindGmailInteractionAsync(GmailInteractionRequest model)
+    public virtual async Task<InteractionModel?> FindGmailInteractionAsync(GmailInteractionRequest model)
     {
         var entity = await context.Interactions
                             .FirstOrDefaultAsync(x => x.GmailThreadId == model.GmailThreadId && x.GmailMessageId == model.GmailMessageId && !x.IsDeleted);
 
-        return mapper.Map<InteractionModel>(entity);
+        return entity == null ? null : mapper.Map<InteractionModel>(entity);
     }
 
     public virtual async Task<InteractionModel?> CreateGmailInteractionAsync(InteractionRequest model)

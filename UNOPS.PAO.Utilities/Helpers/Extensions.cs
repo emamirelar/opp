@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 
 namespace UNOPS.PAO.Utilities.Helpers;
 
@@ -75,7 +75,7 @@ public static class Extensions
         }
         catch (ReflectionTypeLoadException e)
         {
-            return e.Types.Where(t => t != null);
+            return e.Types.Where(t => t != null).Cast<Type>();
         }
     }
 
@@ -122,15 +122,16 @@ public static class Extensions
     /// </summary>
     /// <param name="type">Type which might be inheriting from the other class.</param>
     /// <param name="baseClass">Base class which should be implemented by <paramref name="type" />.</param>
-    /// <returns>Type implementing the <paramref name="baseClass" />.</returns>
-    public static Type GetBaseClassOfType(this Type type, Type baseClass)
+    /// <returns>Type implementing the <paramref name="baseClass" />, or null if not found.</returns>
+    public static Type? GetBaseClassOfType(this Type type, Type baseClass)
     {
         if (type == baseClass)
         {
             return baseClass;
         }
 
-        if (type.BaseType == null)
+        var baseType = type.BaseType;
+        if (baseType is null)
         {
             return null;
         }
@@ -138,27 +139,30 @@ public static class Extensions
         if (baseClass.IsGenericType)
         {
             // T1 : T2<int>
-            if (type.BaseType.IsConstructedGenericType)
+            if (baseType.IsConstructedGenericType)
             {
                 var genericType = baseClass.IsConstructedGenericType
-                    ? type.BaseType
-                    : type.BaseType.GetGenericTypeDefinition();
+                    ? baseType
+                    : baseType.GetGenericTypeDefinition();
 
                 if (genericType == baseClass)
                 {
-                    return type.BaseType.ContainsGenericParameters
-                        ? type.BaseType.GetGenericTypeDefinition()
-                        : type.BaseType;
+                    return baseType.ContainsGenericParameters
+                        ? baseType.GetGenericTypeDefinition()
+                        : baseType;
                 }
             }
         }
 
-        // T1 : T2
-        return type.BaseType.GetBaseClassOfType(baseClass);
+#pragma warning disable CS8602 // baseType is non-null after check above
+#pragma warning disable CS8603 // Method returns Type? - null is valid
+        return baseType.GetBaseClassOfType(baseClass);
+#pragma warning restore CS8603
+#pragma warning restore CS8602
     }
 
     public static object GetPropertyValue(this object src, string propName)
     {
-        return src.GetType().GetProperty(propName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).GetValue(src, null);
+        return src.GetType().GetProperty(propName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)?.GetValue(src, null)!;
     }
 }

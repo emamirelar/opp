@@ -46,7 +46,7 @@ public class GoogleCloudStorageService
     {
         _storageClient = StorageClient.Create();
         _configuration = configuration;
-        _bucketName = configuration.GetValue<string>("AISettings:GoogleCloudStorageBucketName");
+        _bucketName = configuration.GetValue<string>("AISettings:GoogleCloudStorageBucketName") ?? string.Empty;
     }
 
     private async Task<string> UploadToGCS(Stream stream, string objectName, string contentType)
@@ -57,7 +57,7 @@ public class GoogleCloudStorageService
             await _storageClient.UploadObjectAsync(_bucketName, objectName, contentType, stream);
             return $"https://storage.cloud.google.com/{_bucketName}/{objectName}";
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return ""; // Handle errors as needed
         }
@@ -129,7 +129,7 @@ public class GoogleCloudStorageService
             
             return null; // No duplicate found
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // If checking fails, return null to proceed with upload
             return null;
@@ -244,7 +244,7 @@ public class GoogleCloudStorageService
     }
 
     // Generate a signed URL for secure access to a private object
-    public async Task<string> GenerateSignedUrlAsync(string objectName, TimeSpan expiration, HttpMethod httpMethod = null)
+    public async Task<string> GenerateSignedUrlAsync(string objectName, TimeSpan expiration, HttpMethod? httpMethod = null)
     {
         try
         {
@@ -294,7 +294,7 @@ public class GoogleCloudStorageService
                 var signedUrl = await GenerateSignedUrlAsync(objectName, expiration);
                 signedUrls.Add(objectName, signedUrl);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Log error but continue with other objects
                 signedUrls.Add(objectName, null);

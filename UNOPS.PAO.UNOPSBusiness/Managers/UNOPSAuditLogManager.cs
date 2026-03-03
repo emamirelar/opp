@@ -19,14 +19,14 @@ public class UNOPSAuditLogManager : BaseUNOPSManager, IAuditLogManager
         IMapper mapper,
         UNOPSAppDbContext context,
         IConfiguration configuration,
-        UserManager<PAOIdentityUser> userManager = null,
-        IPermissionService permissionService = null,
-        IHttpContextAccessor httpContextAccessor = null)
+        UserManager<PAOIdentityUser>? userManager = null,
+        IPermissionService? permissionService = null,
+        IHttpContextAccessor? httpContextAccessor = null)
         : base(mapper, context, configuration, userManager, "AuditLog", permissionService, httpContextAccessor)
     {
     }
 
-    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
+    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal? user = null)
     {
         var auditLog = await _context.AuditLogs
             .AsNoTracking() // ✅ Read-only query - no updates needed

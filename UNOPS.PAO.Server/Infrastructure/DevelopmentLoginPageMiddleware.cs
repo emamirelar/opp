@@ -40,7 +40,7 @@ public class DevelopmentLoginPageMiddleware
         // Check if a user email was provided in the query string (for direct login)
         if (context.Request.Query.TryGetValue("user", out var email))
         {
-            _logger.LogInformation("Direct login requested for: {Email}", email);
+            _logger.LogInformation("Direct login requested for: {Email}", email!);
             
             // Clear any existing cookies before setting new ones
             foreach (var cookie in context.Request.Cookies.Keys)
@@ -49,7 +49,7 @@ public class DevelopmentLoginPageMiddleware
             }
             
             // Set the cookie directly
-            context.Response.Cookies.Append("dev-user-email", email, new CookieOptions
+            context.Response.Cookies.Append("dev-user-email", email!, new CookieOptions
             {
                 HttpOnly = false,
                 Secure = false,

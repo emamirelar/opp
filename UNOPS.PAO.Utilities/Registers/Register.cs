@@ -62,8 +62,11 @@ public abstract class Register<T>
     /// <returns>Instance of <typeparamref name="TItem" />.</returns>
     public T GetInstance<TItem>()
     {
-        registeredTypes.TryGetValue(typeof(TItem), out var key);
-        return GetInstance(key);
+        if (registeredTypes.TryGetValue(typeof(TItem), out var key) && key != null)
+        {
+            return GetInstance(key);
+        }
+        throw new ApplicationException($"Type '{typeof(TItem).FullName}' is not registered with '{GetType().FullName}'.");
     }
 
     /// <summary>
@@ -82,6 +85,10 @@ public abstract class Register<T>
         foreach (var type in typesToRegister)
         {
             var attribute = type.GetCustomAttribute<RegisterEntryAttribute>();
+            if (attribute == null)
+            {
+                continue;
+            }
             registeredTypes.TryAdd(type, attribute.Key);
             factories.TryAdd(attribute.Key, () => (T)container.GetInstance(type));
         }

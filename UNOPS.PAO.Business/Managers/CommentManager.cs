@@ -218,7 +218,7 @@ public class CommentManager : ICommentManager
     /// <summary>
     /// Update an existing comment
     /// </summary>
-    public async Task<CommentModel> UpdateCommentAsync(UpdateCommentRequest request)
+    public async Task<CommentModel?> UpdateCommentAsync(UpdateCommentRequest request)
     {
         var comment = await repository.GetByIdAsync(request.Id);
         if (comment == null || comment.IsDeleted)
@@ -238,7 +238,7 @@ public class CommentManager : ICommentManager
         await repository.UpdateAsync(comment);
         await context.SaveChangesAsync();
 
-        return (await GetCommentByIdAsync(comment.Id))!;
+        return await GetCommentByIdAsync(comment.Id);
     }
 
     /// <summary>

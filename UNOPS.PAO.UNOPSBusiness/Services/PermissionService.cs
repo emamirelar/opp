@@ -390,7 +390,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
         /// Checks if user can perform the specified action on the entity
         /// For Opportunity entities with "update" action, also checks if user is a team member (stakeholder)
         /// </summary>
-        public async Task<bool> CanPerformActionAsync(string entityName, string action, ClaimsPrincipal user, object entity = null)
+        public async Task<bool> CanPerformActionAsync(string entityName, string action, ClaimsPrincipal user, object? entity = null)
         {
             // First check entity-level permissions
             var hasEntityPermission = await HasPermissionAsync(user, entityName, action);
@@ -429,7 +429,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
         /// <summary>
         /// Gets all permissions the current user has for a given entity
         /// </summary>
-        public async Task<object> GetEntityPermissionsAsync(string entityName, object entity = null)
+        public async Task<object> GetEntityPermissionsAsync(string entityName, object? entity = null)
         {
             // Get the current user from HttpContext
             var httpContext = _httpContextAccessor.HttpContext;

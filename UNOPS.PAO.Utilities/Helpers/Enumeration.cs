@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace UNOPS.PAO.Utilities.Helpers;
 
@@ -18,23 +19,24 @@ public abstract class Enumeration<T> : IComparable
         throw new NotImplementedException();
     }
 
+    public override int GetHashCode() => HashCode.Combine(GetType(), Value);
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (obj is not Enumeration<T> otherValue) return false;
 
-        var typeMatches = GetType().Equals(obj.GetType());
-        var valueMatches = Value.Equals(otherValue.Value);
+        var typeMatches = GetType().Equals(otherValue.GetType());
+        var valueMatches = EqualityComparer<T>.Default.Equals(Value, otherValue.Value);
 
         return typeMatches && valueMatches;
     }
 
-    public static IEnumerable<T> GetAll<T>() where T : Enumeration<T>
+    public static IEnumerable<TEnum> GetAll<TEnum>() where TEnum : Enumeration<T>
     {
-        return typeof(T).GetFields(BindingFlags.Public |
+        return typeof(TEnum).GetFields(BindingFlags.Public |
                                    BindingFlags.Static |
                                    BindingFlags.DeclaredOnly)
             .Select(f => f.GetValue(null))
-            .Cast<T>();
+            .Cast<TEnum>();
     }
 }

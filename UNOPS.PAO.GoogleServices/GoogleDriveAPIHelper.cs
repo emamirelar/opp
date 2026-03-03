@@ -422,10 +422,13 @@ public class GoogleDriveAPIHelper
 
     public async Task ReadFilesContent(IList<File> files, List<object> list, Func<MemoryStream, File, object> callback)
     {
+        if (driveService == null)
+            throw new InvalidOperationException("Drive service is not configured. Call ConfigureClient first.");
+
         if (files.Count > 0)
             foreach (var file in files)
             {
-                var request = driveService.Files.Get(file.Id);
+                var request = driveService.Files.Get(file.Id ?? "");
                 request.SupportsTeamDrives = true;
 
                 // Add a handler which will be notified on progress changes.

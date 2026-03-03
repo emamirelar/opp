@@ -25,7 +25,7 @@ public class AiPromptCacheService : IAiPromptCacheService
         _logger = logger;
     }
 
-    public async Task<string?> GetCachedResultAsync(string promptType, string entityId)
+    public Task<string?> GetCachedResultAsync(string promptType, string entityId)
     {
         try
         {
@@ -36,22 +36,22 @@ public class AiPromptCacheService : IAiPromptCacheService
                 var cacheEntry = cachedData as AiPromptCacheEntry;
                 _logger.LogDebug("Retrieved AI prompt result from cache for prompt {PromptType}, entity {EntityId}", 
                     promptType, entityId);
-                return cacheEntry?.GeminiResult;
+                return Task.FromResult(cacheEntry?.GeminiResult);
             }
             
             _logger.LogDebug("AI prompt result not found in cache for prompt {PromptType}, entity {EntityId}", 
                 promptType, entityId);
-            return null;
+            return Task.FromResult<string?>(null);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving AI prompt result from cache for prompt {PromptType}, entity {EntityId}", 
                 promptType, entityId);
-            return null;
+            return Task.FromResult<string?>(null);
         }
     }
 
-    public async Task<AiPromptCacheEntry?> GetCachedEntryAsync(string promptType, string entityId)
+    public Task<AiPromptCacheEntry?> GetCachedEntryAsync(string promptType, string entityId)
     {
         try
         {
@@ -62,22 +62,22 @@ public class AiPromptCacheService : IAiPromptCacheService
                 var cacheEntry = cachedData as AiPromptCacheEntry;
                 _logger.LogDebug("Retrieved AI prompt entry from cache for prompt {PromptType}, entity {EntityId}", 
                     promptType, entityId);
-                return cacheEntry;
+                return Task.FromResult(cacheEntry);
             }
             
             _logger.LogDebug("AI prompt entry not found in cache for prompt {PromptType}, entity {EntityId}", 
                 promptType, entityId);
-            return null;
+            return Task.FromResult<AiPromptCacheEntry?>(null);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving AI prompt entry from cache for prompt {PromptType}, entity {EntityId}", 
                 promptType, entityId);
-            return null;
+            return Task.FromResult<AiPromptCacheEntry?>(null);
         }
     }
 
-    public async Task SetCachedResultAsync(string promptType, string entityId, string fullyFormedSystemInstructions, 
+    public Task SetCachedResultAsync(string promptType, string entityId, string fullyFormedSystemInstructions, 
         string fullyFormedUserPrompt, string geminiResult, int cacheInvalidationMinutes)
     {
         try
@@ -109,9 +109,10 @@ public class AiPromptCacheService : IAiPromptCacheService
             _logger.LogError(ex, "Error caching AI prompt result for prompt {PromptType}, entity {EntityId}", 
                 promptType, entityId);
         }
+        return Task.CompletedTask;
     }
 
-    public async Task InvalidateCache(string promptType, string entityId)
+    public Task InvalidateCache(string promptType, string entityId)
     {
         try
         {
@@ -124,6 +125,7 @@ public class AiPromptCacheService : IAiPromptCacheService
             _logger.LogError(ex, "Error invalidating AI prompt cache for prompt {PromptType}, entity {EntityId}", 
                 promptType, entityId);
         }
+        return Task.CompletedTask;
     }
 
     public void InvalidateAllForPrompt(string promptType)
