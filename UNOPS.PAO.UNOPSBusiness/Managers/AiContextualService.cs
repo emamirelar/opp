@@ -1221,6 +1221,21 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     foreach (var dependent in dependentsList)
                     {
                         var text = responseObject[dependent];
+                        // When ID field is null but corresponding Name field has text, use it for resolution (AI returns name-only for dependents like proposedInitiativeTypeId)
+                        if (text == null)
+                        {
+                            var nameField = dependent.Replace("Id", "Name").Replace("Ids", "Names");
+                            if (!string.IsNullOrEmpty(nameField))
+                            {
+                                var nameValue = responseObject[nameField];
+                                if (nameValue != null)
+                                {
+                                    var nameStr = nameValue is string s ? s : nameValue.ToString();
+                                    if (!string.IsNullOrWhiteSpace(nameStr))
+                                        text = nameStr;
+                                }
+                            }
+                        }
                         if (text != null)
                         {
                             // Special case: OrganizationUnitRelationships (many-to-many)

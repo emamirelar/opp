@@ -11,6 +11,10 @@ public class ApplyOpportunityAiChangesRequest
     public string? Description { get; set; }
     public int? ResponsibleOrgUnitId { get; set; }
     public int? ProposedInitiativeTypeId { get; set; }
+    /// <summary>
+    /// Initiative type name for backend resolution when ProposedInitiativeTypeId is null (e.g. from AI dependents)
+    /// </summary>
+    public string? ProposedInitiativeTypeName { get; set; }
     public int? DeliveryModality { get; set; }
     public List<OpportunityDeliverableRequest>? Deliverables { get; set; }
 
