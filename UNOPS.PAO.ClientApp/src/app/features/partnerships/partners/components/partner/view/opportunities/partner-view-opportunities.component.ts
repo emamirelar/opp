@@ -540,7 +540,10 @@ export class PartnerViewOpportunitiesComponent implements OnInit {
     // Open the new opportunity in a new tab if we have an ID
     if (opportunity && opportunity.id) {
       const url = this.router.serializeUrl(
-        this.router.createUrlTree(['/partnerships/opportunities', opportunity.id])
+        this.router.createUrlTree(
+          ['/partnerships/opportunities', opportunity.id],
+          { queryParams: { fromCreate: 'true' } }
+        )
       );
       window.open(url, '_blank');
     }
