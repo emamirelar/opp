@@ -208,6 +208,11 @@
             ],
             "scripts": [],
             "karmaConfig": "karma.conf.js"
+          },
+          "configurations": {
+            "ci": {
+              "karmaConfig": "karma-ci.conf.js"
+            }
           }
         }
       }

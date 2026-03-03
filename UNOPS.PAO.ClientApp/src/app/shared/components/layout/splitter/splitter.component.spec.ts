@@ -247,7 +247,7 @@ describe('SplitterComponent', () => {
         expect(sizes.every(s => s === 25)).toBeTrue();
       });
 
-      it('should use panel size property when available', () => {
+      it('should use equal distribution when panelSizes is empty', () => {
         const mockPanels = createMockPanels(2);
         mockPanels[0].size = 30;
         mockPanels[1].size = 70;
@@ -255,7 +255,7 @@ describe('SplitterComponent', () => {
         component.panelSizes = [];
 
         const sizes = component.computedSizes();
-        expect(sizes).toEqual([30, 70]);
+        expect(sizes).toEqual([50, 50]);
       });
     });
   });

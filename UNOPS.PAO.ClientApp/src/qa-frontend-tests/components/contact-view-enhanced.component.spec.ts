@@ -114,6 +114,7 @@ class MockContactViewEnhancedComponent {
   communications = signal<any[]>([]);
   activeTab = signal<string>('overview');
   communicationFilter = signal<string>('all');
+  recordPermissions = signal<any>({ permissions: { canUpdate: true, canDelete: true, canRead: true } });
 
   setActiveTab(tab: string) {
     this.activeTab.set(tab);
@@ -147,7 +148,7 @@ describe('ContactViewEnhancedComponent', () => {
     await TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, MockContactViewEnhancedComponent],
       providers: [
-        { provide: ActivatedRoute, useValue: { params: of({ id: 1 }) } }
+        { provide: ActivatedRoute, useValue: { params: of({ id: 1 }), queryParams: of({}), snapshot: { paramMap: { get: () => null } } } }
       ]
     }).compileComponents();
 

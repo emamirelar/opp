@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EntityTagsComponent } from './entity-tags.component';
+import { TranslateModule, TranslateLoader, TranslateFakeLoader } from '@ngx-translate/core';
 
 describe('EntityTagsComponent', () => {
   let component: EntityTagsComponent;
@@ -7,7 +8,12 @@ describe('EntityTagsComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [EntityTagsComponent]
+      imports: [
+        EntityTagsComponent,
+        TranslateModule.forRoot({
+          loader: { provide: TranslateLoader, useClass: TranslateFakeLoader }
+        })
+      ]
     })
     .compileComponents();
 
@@ -27,9 +33,8 @@ describe('EntityTagsComponent', () => {
   });
 
   it('should display tags when provided', () => {
-    component.tags = [
-      { tag: 'Test Tag', color: 'bg-blue-500' }
-    ];
+    const tags = [{ tag: 'Test Tag', color: 'bg-blue-500' }];
+    fixture.componentRef.setInput('tags', tags);
     fixture.detectChanges();
     const compiled = fixture.nativeElement;
     expect(compiled.textContent).toContain('Test Tag');

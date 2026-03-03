@@ -1126,6 +1126,229 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     });
   });
 
+  // ==========================================
+  // DOCUMENT ENDPOINTS - Required for document tabs and AI comparison
+  // ==========================================
+
+  // Mock /api/document/entity/{entityType}/{entityId} - Document list for entity
+  await page.route(url => /\/api\/document\/entity\/\w+\/\d+/.test(url.toString()), async (route) => {
+    const url = route.request().url();
+    const match = url.match(/\/api\/document\/entity\/(\w+)\/(\d+)/);
+    const entityType = match?.[1] || 'Partner';
+    const entityId = match?.[2] || '1';
+    mockLog(`[API Mock] Intercepted: /api/document/entity/${entityType}/${entityId}`);
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 1, name: 'Partnership Agreement.pdf', type: 'Contract', size: 245000, createdDate: '2024-06-01T00:00:00Z', aiTranscribed: true, mimeType: 'application/pdf' },
+        { id: 2, name: 'Meeting Notes.docx', type: 'Report', size: 52000, createdDate: '2024-06-10T00:00:00Z', aiTranscribed: false, mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+      ]),
+    });
+  });
+
+  // Mock /api/document-transcribe (POST) - AI document transcription
+  await page.route(url => url.toString().includes('/api/document-transcribe'), async (route) => {
+    mockLog('[API Mock] Intercepted: POST /api/document-transcribe');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        name: 'Transcribed Document',
+        description: 'AI-extracted description from document content',
+        estimatedValue: 1500000,
+        currency: 'USD',
+        sector: 'Infrastructure',
+        country: 'Kenya',
+        transcriptionStatus: 'completed',
+      }),
+    });
+  });
+
+  // Mock /api/auditlog/latest - Latest audit log entry (used by AI comparison)
+  await page.route(url => url.toString().includes('/api/auditlog/latest'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/auditlog/latest');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: 1,
+        entityId: 1,
+        entityType: 'Opportunity',
+        action: 'Update',
+        jsonData: JSON.stringify({
+          name: 'Infrastructure Development Program',
+          description: 'Current description before AI changes',
+          estimatedValue: 1500000,
+        }),
+        createdDate: new Date().toISOString(),
+        createdBy: 'system',
+      }),
+    });
+  });
+
+  // Mock /api/auditlog - Audit log list
+  await page.route(url => {
+    const urlString = url.toString();
+    return urlString.includes('/api/auditlog') && !urlString.includes('/api/auditlog/latest');
+  }, async (route) => {
+    mockLog('[API Mock] Intercepted: /api/auditlog');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([]),
+    });
+  });
+
+  // ==========================================
+  // ADDITIONAL REFERENCE DATA - CachedDataService and form dropdowns
+  // ==========================================
+
+  // Mock /api/values/partner-groups - Partner group dropdown
+  await page.route(url => url.toString().includes('/api/values/partner-groups'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/values/partner-groups');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 1, name: 'UN Agencies' },
+        { id: 2, name: 'Bilateral Partners' },
+        { id: 3, name: 'IFIs' },
+        { id: 4, name: 'Private Sector' },
+        { id: 5, name: 'Civil Society' },
+      ]),
+    });
+  });
+
+  // Mock /api/values/users/search - User search for DOA/team dialogs
+  await page.route(url => url.toString().includes('/api/values/users/search'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/values/users/search');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 1, name: 'Test User 1', email: 'user1@unops.org', position: 'Programme Manager' },
+        { id: 2, name: 'Test User 2', email: 'user2@unops.org', position: 'Project Officer' },
+        { id: 3, name: 'Test User 3', email: 'user3@unops.org', position: 'Director' },
+      ]),
+    });
+  });
+
+  // Mock /api/values/sdg - Sustainable Development Goals
+  await page.route(url => {
+    const urlString = url.toString();
+    return urlString.includes('/api/values/sdg') && !urlString.includes('/api/values/sdg-indicators');
+  }, async (route) => {
+    mockLog('[API Mock] Intercepted: /api/values/sdg');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 1, name: 'No Poverty', number: 1 },
+        { id: 2, name: 'Zero Hunger', number: 2 },
+        { id: 3, name: 'Good Health and Well-being', number: 3 },
+        { id: 4, name: 'Quality Education', number: 4 },
+        { id: 5, name: 'Gender Equality', number: 5 },
+        { id: 13, name: 'Climate Action', number: 13 },
+      ]),
+    });
+  });
+
+  // Mock /api/values/sdg-indicators - SDG Indicators
+  await page.route(url => url.toString().includes('/api/values/sdg-indicators'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/values/sdg-indicators');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 1, sdgId: 1, name: '1.1 Eradicate extreme poverty' },
+        { id: 2, sdgId: 1, name: '1.2 Reduce poverty by half' },
+        { id: 3, sdgId: 4, name: '4.1 Quality primary and secondary education' },
+      ]),
+    });
+  });
+
+  // Mock /api/values/currency - Currency dropdown
+  await page.route(url => url.toString().includes('/api/values/currency'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/values/currency');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 'USD', name: 'US Dollar', code: 'USD', symbol: '$' },
+        { id: 'EUR', name: 'Euro', code: 'EUR', symbol: '€' },
+        { id: 'GBP', name: 'British Pound', code: 'GBP', symbol: '£' },
+        { id: 'CHF', name: 'Swiss Franc', code: 'CHF', symbol: 'CHF' },
+        { id: 'DKK', name: 'Danish Krone', code: 'DKK', symbol: 'kr' },
+      ]),
+    });
+  });
+
+  // Mock /api/partner/{id}/interactions - Partner interactions for Create Opportunity
+  await page.route(url => /\/api\/partner\/\d+\/interactions/.test(url.toString()), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/partner/{id}/interactions');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 1, subject: 'Initial Engagement Meeting', type: 'Meeting', date: '2024-06-15T10:00:00Z' },
+        { id: 2, subject: 'Follow-up Call', type: 'Call', date: '2024-07-01T14:00:00Z' },
+      ]),
+    });
+  });
+
+  // Mock /api/interactions-brief - Brief interaction list for Create Opportunity dialog
+  await page.route(url => url.toString().includes('/api/interactions-brief'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/interactions-brief');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 1, subject: 'Initial Engagement Meeting', partnerId: 1, partnerName: 'UNICEF Regional Office' },
+        { id: 2, subject: 'Follow-up Call', partnerId: 2, partnerName: 'Red Cross International' },
+      ]),
+    });
+  });
+
+  // Mock /api/values/gemini-models - AI model selection
+  await page.route(url => url.toString().includes('/api/values/gemini-models'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/values/gemini-models');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 'gemini-pro', name: 'Gemini Pro' },
+        { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' },
+      ]),
+    });
+  });
+
+  // Mock /api/opportunity/{id}/apply-ai-changes (POST) - Apply AI-suggested changes
+  await page.route(url => /\/api\/opportunity\/\d+\/apply-ai-changes/.test(url.toString()), async (route) => {
+    const url = route.request().url();
+    const id = url.match(/\/api\/opportunity\/(\d+)/)?.[1] || '1';
+    mockLog(`[API Mock] Intercepted: POST /api/opportunity/${id}/apply-ai-changes`);
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: parseInt(id),
+        name: 'Updated Opportunity',
+        success: true,
+      }),
+    });
+  });
+
+  // Mock /api/contact/{id}/profile-picture - Contact profile picture
+  await page.route(url => /\/api\/contact\/\d+\/profile-picture/.test(url.toString()), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/contact/{id}/profile-picture');
+    await route.fulfill({
+      status: 404,
+      contentType: 'application/json',
+      body: JSON.stringify({ message: 'No profile picture' }),
+    });
+  });
+
   // Catch-all for any other /api/ and /user/ calls - return smart defaults based on URL pattern
   await page.route(url => {
     const urlString = url.toString();
@@ -1142,11 +1365,19 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
            !urlString.includes('/api/values/liaison-offices') &&
            !urlString.includes('/api/values/contacts') &&
            !urlString.includes('/api/values/users/paged') &&
+           !urlString.includes('/api/values/users/search') &&
            !urlString.includes('/api/values/salutations') &&
            !urlString.includes('/api/values/status') &&
            !urlString.includes('/api/values/pronouns') &&
            !urlString.includes('/api/values/countries') &&
            !urlString.includes('/api/values/states') &&
+           !urlString.includes('/api/values/partner-groups') &&
+           !urlString.includes('/api/values/sdg') &&
+           !urlString.includes('/api/values/currency') &&
+           !urlString.includes('/api/values/gemini-models') &&
+           !urlString.includes('/api/document-transcribe') &&
+           !urlString.includes('/api/auditlog') &&
+           !urlString.includes('/api/interactions-brief') &&
            // Exclude the entity list endpoints (handled above)
            !/\/api\/partner(\?|$)/.test(urlString) &&
            !/\/api\/partner\/search/.test(urlString) &&
@@ -1162,10 +1393,14 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
            // from the catch-all AND not matched by the specific mock, causing proxy hangs
            !/\/api\/partner\/\d+$/.test(urlString) &&
            !/\/api\/partner\/\d+\/permissions/.test(urlString) &&
+           !/\/api\/partner\/\d+\/interactions/.test(urlString) &&
            !/\/api\/opportunity\/\d+$/.test(urlString) &&
            !/\/api\/opportunity\/\d+\/permissions/.test(urlString) &&
+           !/\/api\/opportunity\/\d+\/apply-ai-changes/.test(urlString) &&
            !/\/api\/contact\/\d+$/.test(urlString) &&
+           !/\/api\/contact\/\d+\/profile-picture/.test(urlString) &&
            !/\/api\/interaction\/\d+$/.test(urlString) &&
+           !/\/api\/document\/entity\//.test(urlString) &&
            // Exclude only workflow URLs with entity AND id (handled above)
            !/\/api\/workflow\/\w+\/\d+/.test(urlString) &&
            !urlString.includes('/api/workflow/');

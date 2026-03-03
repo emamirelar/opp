@@ -72,6 +72,7 @@ This document tracks **production code defects** discovered during testing. Thes
 | DEF-054 | 🟢 Low | DoA3Fallback controller does not implement ILogger logging | WorkflowController | 2026-03-02 | Open | Controller submit operations lack logging. 5 tests skipped in PNO-1197 FunctionalTests. |
 | DEF-055 | 🟡 Medium | WorkflowController.Reject throws NullReferenceException on null EntityName | WorkflowController | 2026-03-02 | Open | Should return 400 BadRequest instead of crashing. 1 test skipped in PNO-1166 NegativeTests. |
 | DEF-056 | 🟡 Medium | Reopen workflow sets EntityStatus to Draft(4) instead of Active(1) | WorkflowController | 2026-03-02 | Open | When reopening from CANCELLED, status should be Active(1) not Draft(4). 1 test skipped in PNO-1166 IntegrationTests. |
+| DEF-057 | 🟢 Low | Partner name `Validators.required` does not reject whitespace-only input | PartnerEditDialogComponent | 2026-03-02 | Open | Angular `Validators.required` only checks for null/undefined/empty string, not whitespace-only strings like `"   "`. Partner Description should use a custom validator (e.g., `Validators.pattern(/\S/)`) to reject whitespace-only names. Affected test: form-validation-negative TC-N02. |
 
 ---
 

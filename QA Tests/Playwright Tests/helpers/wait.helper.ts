@@ -182,7 +182,8 @@ export async function waitForAngularReady(page: Page): Promise<void> {
 /**
  * Wait for PrimeNG dialog to be visible and ready
  * NOTE: This waits for feature dialogs (p-dialog), NOT confirmation dialogs (p-confirmDialog)
- * PrimeNG renders: <p-dialog> component wrapper -> <div class="p-dialog" role="dialog">
+ * PrimeNG v19 renders: <p-dialog> → <div class="p-dialog" role="dialog">
+ * The role attribute is on the INNER div, not on the p-dialog component element.
  * @param page - Playwright page object
  * @param timeout - Optional timeout in milliseconds
  */
@@ -191,14 +192,9 @@ export async function waitForDialog(page: Page, timeout?: number): Promise<void>
   
   console.log('[Wait] Waiting for dialog to appear...');
   
-  // Wait for a visible p-dialog that is NOT:
-  //   - a confirmDialog  (role="alertdialog")
-  //   - an error dialog  (ng-reflect-header="Error" — always present but hidden in DOM)
-  // PrimeNG keeps ALL dialog elements in the DOM even when closed; the visible state
-  // check below is the reliable way to find the feature dialog that just opened.
-  const dialog = page.locator(
-    'p-dialog:not([role="alertdialog"]):not([ng-reflect-header="Error"]), .p-dynamic-dialog'
-  ).first();
+  // PrimeNG v19: role="dialog" is on the inner div, role="alertdialog" is on confirm dialogs.
+  // Use the Playwright role locator to find visible feature dialogs, excluding alertdialogs.
+  const dialog = page.locator('[role="dialog"]:visible, .p-dynamic-dialog:visible').first();
   await dialog.waitFor({ state: 'visible', timeout: maxTimeout });
   
   // Wait for dialog animation to complete

@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TypewriterMarkdownComponent } from './typewriter-markdown.component';
+import { MarkdownService } from 'ngx-markdown';
+import { of } from 'rxjs';
 
 describe('TypewriterMarkdownComponent', () => {
   let component: TypewriterMarkdownComponent;
@@ -7,7 +9,17 @@ describe('TypewriterMarkdownComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TypewriterMarkdownComponent]
+      imports: [TypewriterMarkdownComponent],
+      providers: [
+        {
+          provide: MarkdownService,
+          useValue: {
+            parse: () => '',
+            compile: () => '',
+            reload$: of(null) // MarkdownModule uses reload$.pipe()
+          }
+        }
+      ]
     })
     .compileComponents();
 

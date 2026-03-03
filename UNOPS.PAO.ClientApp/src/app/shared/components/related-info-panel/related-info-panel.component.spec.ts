@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -16,6 +17,8 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 // Mock component for testing
 @Component({
   selector: 'app-related-info-panel',
+  standalone: true,
+  imports: [CommonModule],
   template: `
     <div class="related-info-panel" [class.collapsed]="collapsed()">
       <header class="panel-header" (click)="toggleCollapse()">
@@ -109,8 +112,7 @@ describe('RelatedInfoPanelComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [MockRelatedInfoPanelComponent],
-      imports: [NoopAnimationsModule]
+      imports: [NoopAnimationsModule, MockRelatedInfoPanelComponent]
     }).compileComponents();
 
     fixture = TestBed.createComponent(MockRelatedInfoPanelComponent);

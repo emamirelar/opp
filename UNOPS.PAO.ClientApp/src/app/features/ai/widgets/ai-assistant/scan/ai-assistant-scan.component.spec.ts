@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AiAssistantScanComponent } from './ai-assistant-scan.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 describe('AiAssistantScanComponent', () => {
   let component: AiAssistantScanComponent;
@@ -7,7 +8,10 @@ describe('AiAssistantScanComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AiAssistantScanComponent]
+      imports: [
+        AiAssistantScanComponent,
+        TranslateModule.forRoot()
+      ]
     })
     .compileComponents();
 

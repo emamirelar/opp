@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { AiAssistantService } from './ai-assistant.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { DialogService } from 'primeng/dynamicdialog';
 
 describe('AiAssistantService', () => {
   let service: AiAssistantService;
@@ -8,7 +9,10 @@ describe('AiAssistantService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [AiAssistantService]
+      providers: [
+        AiAssistantService,
+        { provide: DialogService, useValue: {} }
+      ]
     });
     service = TestBed.inject(AiAssistantService);
   });

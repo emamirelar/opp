@@ -192,7 +192,7 @@ export default defineConfig({
             command: `dotnet run --no-launch-profile --project "${path.join(REPO_ROOT, 'QA Tests', 'TestApiServer')}"`,
             url: API_BASE_URL,
             reuseExistingServer: true,
-            timeout: 120_000,
+            timeout: 300_000,
             stdout: 'pipe',
             stderr: 'pipe',
           },
@@ -201,7 +201,7 @@ export default defineConfig({
             url: BASE_URL,
             cwd: CLIENT_APP,
             reuseExistingServer: true,
-            timeout: 120_000,
+            timeout: 300_000,
             stdout: 'pipe',
             stderr: 'pipe',
             env: {

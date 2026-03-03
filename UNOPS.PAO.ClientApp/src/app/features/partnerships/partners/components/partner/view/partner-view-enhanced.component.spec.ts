@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { CommonModule } from '@angular/common';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
@@ -57,6 +58,8 @@ class MockPartnerService {
 // Mock enhanced partner view component
 @Component({
   selector: 'app-partner-view-enhanced',
+  standalone: true,
+  imports: [CommonModule],
   template: `
     <div class="partner-view-enhanced">
       <div class="layout-header">
@@ -134,6 +137,7 @@ class MockPartnerViewEnhancedComponent {
   documents = signal<any[]>([]);
   engagements = signal<any[]>([]);
   activeTab = signal<string>('overview');
+  recordPermissions = signal<any>({ permissions: { canUpdate: true, canDelete: true, canRead: true } });
 
   setActiveTab(tab: string) {
     this.activeTab.set(tab);
@@ -152,10 +156,9 @@ describe('PartnerViewEnhancedComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [MockPartnerViewEnhancedComponent],
-      imports: [NoopAnimationsModule],
+      imports: [NoopAnimationsModule, MockPartnerViewEnhancedComponent],
       providers: [
-        { provide: ActivatedRoute, useValue: { params: of({ id: 1 }) } }
+        { provide: ActivatedRoute, useValue: { params: of({ id: 1 }), queryParams: of({}), snapshot: { paramMap: { get: () => null } } } }
       ]
     }).compileComponents();
 
