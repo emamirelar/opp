@@ -698,8 +698,8 @@ The following items were previously logged as developer defects but have been re
 
 ## Defect Statistics (Updated 2026-03-03)
 
-- **Total Open:** 32 (DEF-008, DEF-013, DEF-014, DEF-020, DEF-021, DEF-023, DEF-024, DEF-025–DEF-050, DEF-052–DEF-059)
-- **NEW (2026-03-03):** DEF-057 (Partner name whitespace-only input), DEF-058 (OpportunityManager invalid Stakeholders.Contact include path), DEF-059 (PartnerManager GetPartnerWithContactsAndInteractions 805ms, 4x over SLA)
+- **Total Open:** 33 (DEF-008, DEF-013, DEF-014, DEF-020, DEF-021, DEF-023, DEF-024, DEF-025–DEF-050, DEF-052–DEF-060)
+- **NEW (2026-03-03):** DEF-057 (Partner name whitespace-only input), DEF-058 (OpportunityManager invalid Stakeholders.Contact include path), DEF-059 (PartnerManager GetPartnerWithContactsAndInteractions 805ms, 4x over SLA), DEF-060 (EF Migration Init references AspNetUsers before Identity tables exist)
 - **NEW (2026-03-02):** DEF-054 (DoA3Fallback missing ILogger logging), DEF-055 (Reject NullReferenceException on null EntityName), DEF-056 (Reopen sets Draft instead of Active)
 - **DEF-051 reclassified (2026-03-02):** AutoMapper mock overload mismatch in test, not a production defect.
 - **Total Partially Resolved:** 1 (DEF-008 — DoA3 fallback added via PNO-1197, remaining gaps in email notifications and UI)
@@ -707,7 +707,7 @@ The following items were previously logged as developer defects but have been re
 - **Total Reclassified:** 6 (DEF-005, DEF-007, DEF-009, DEF-015, DEF-022 → moved to appropriate trackers; DEF-051 → QA mock issue)
 - 🔴 **Critical:** 0
 - 🟠 **High Priority:** 16 (DEF-008, DEF-020, DEF-021, DEF-023, DEF-024, DEF-033, DEF-034, DEF-038, DEF-039, DEF-040, DEF-042, DEF-043, DEF-045, DEF-053, DEF-058, DEF-059)
-- 🟡 **Medium Priority:** 22 (DEF-013, DEF-014, DEF-025–DEF-032, DEF-035–DEF-037, DEF-041, DEF-044, DEF-047–DEF-050, DEF-052, DEF-055, DEF-056)
+- 🟡 **Medium Priority:** 23 (DEF-013, DEF-014, DEF-025–DEF-032, DEF-035–DEF-037, DEF-041, DEF-044, DEF-047–DEF-050, DEF-052, DEF-055, DEF-056, DEF-060)
 - 🟢 **Low Priority:** 4 (DEF-046, DEF-051, DEF-054, DEF-057)
 - **2026-03-03 New Tests Added:** AiContextualServiceProcessPlaceholderTests (39 tests, 39/39 passed), DocumentControllerUNOPSTests (39 tests, 21 passed, 18 skipped pending DEF-053), 3 Playwright E2E spec files (api-error-handling, form-validation-negative, interactions-enhanced), 15+ new Playwright API mocks
 - **2026-03-03 Full Run (after QA-089 concurrent DbContext fixes):** FastTests: 78/78 passed (100%). Presentation.Tests: 154/154 passed (100%). Business.Tests: 4,627 total — 4,329 passed, 57 failed, 241 skipped (93.6%). Integration Tests: 6,132 total — 5,662 passed, 115 failed, 355 skipped (92.3%). **TOTAL: 11,069 tests — 10,223 passed (92.4%), 172 failed, 596 skipped.** 75 concurrent DbContext tests (QA-089) fixed — all 75 now pass. New tests added: 39 AiContextualService + 39 DocumentController UNOPS.
@@ -1811,3 +1811,45 @@ This exception is thrown **during the constructor** of `UNOPSGeminiManager`, whi
 **Actual:** `ArgumentNullException` crashes the entire request pipeline
 
 **Related QA:** QA-088 (GoogleCredential mock ineffective in PAOWebApplicationFactory)
+
+---
+
+### DEF-060: EF Migration Init References AspNetUsers Before Identity Tables Are Created
+
+| Field | Value |
+|---|---|
+| **ID** | DEF-060 |
+| **Severity** | 🟡 Medium |
+| **Title** | EF Migration Init references AspNetUsers before Identity tables exist |
+| **Component** | UNOPS.PAO.UNOPSDataAccess / Migrations |
+| **Date** | 2026-03-03 |
+| **Status** | Open |
+| **Reporter** | QA Team (CI pipeline) |
+
+**Description:**
+
+When running `dotnet ef database update` against a fresh empty PostgreSQL database (as in CI), the `20250113190031_Init` migration attempts to create `UserProfile` with a foreign key constraint `FK_UserProfile_AspNetUsers_UserId` referencing `public."AspNetUsers"`. However, `AspNetUsers` has not been created by any prior migration, causing the migration to fail with `42P01: relation "public.AspNetUsers" does not exist`.
+
+**Root Cause:** The ASP.NET Identity tables (`AspNetUsers`, `AspNetRoles`, etc.) are expected to exist before the `Init` migration runs, but there is no migration that creates them first. The Identity schema is likely auto-created by a different context or startup path that doesn't run during `dotnet ef database update`.
+
+**Proper Fix:**
+- Ensure a migration that creates the Identity tables (`AspNetUsers`, `AspNetRoles`, `AspNetUserRoles`, etc.) runs before the `Init` migration
+- Or include the Identity table creation in the `Init` migration itself
+- Or add a separate migration with a timestamp before `20250113190031` that creates the Identity schema
+
+**Wrong Fix:** ❌ Removing the FK constraint from `UserProfile` to `AspNetUsers`
+
+**Workaround:** CI workflow uses `continue-on-error: true` on the migration step so model-level tests still execute. DB-dependent tests may fail due to missing schema.
+
+**Repro Steps:**
+1. Start a fresh empty PostgreSQL database
+2. Run `dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess --startup-project UNOPS.PAO.Server`
+3. Migration `20250113190031_Init` fails at `CREATE TABLE UserProfile` with FK to `AspNetUsers`
+
+**Expected:** All migrations apply successfully on a fresh database
+**Actual:** `PostgresException 42P01: relation "public.AspNetUsers" does not exist`
+
+**Environment:** CI (GitHub Actions with fresh PostgreSQL 15 container)
+**Error:** `Npgsql.PostgresException (0x80004005): 42P01: relation "public.AspNetUsers" does not exist`
+
+**Impact:** Blocks CI Business Logic Tests from running against a real database. Model-level tests unaffected.
