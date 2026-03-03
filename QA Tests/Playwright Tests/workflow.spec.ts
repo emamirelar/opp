@@ -215,10 +215,8 @@ test.describe('Workflow - History & Tabs', () => {
 
     if (historyVisible) {
       await historyTab.click();
-      await page.waitForTimeout(500);
-
-      // History content should appear (table or timeline)
       const historyContent = stageWorkflow.locator('p-table, app-timeline, .history, table').first();
+      await historyContent.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
       const contentVisible = await historyContent.isVisible({ timeout: 3000 }).catch(() => false);
       expect(contentVisible).toBeTruthy();
     }

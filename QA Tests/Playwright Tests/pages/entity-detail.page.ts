@@ -20,7 +20,7 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
 import { assertVisible } from '../helpers/assertions.helper';
-import { waitForDialog, waitForPageReady } from '../helpers/wait.helper';
+import { waitForDialog, waitForPageReady, waitForLoadingToComplete } from '../helpers/wait.helper';
 
 export abstract class EntityDetailPage extends BasePage {
   protected abstract entityName: string;
@@ -263,14 +263,13 @@ export abstract class EntityDetailPage extends BasePage {
    */
   async verifyMobileResponsive(): Promise<void> {
     await this.page.setViewportSize({ width: 375, height: 667 });
-    await this.page.waitForTimeout(1000);
-    
-    // Just verify the page didn't crash — header may rearrange in mobile
     const headerVisible = await this.header.isVisible().catch(() => false);
     if (!headerVisible) {
       // On mobile, the layout may collapse — just check the page has content
       const bodyContent = this.page.locator('body');
-      await assertVisible(bodyContent);
+      await assertVisible(bodyContent, 10000);
+    } else {
+      await assertVisible(this.header, 10000);
     }
   }
   
@@ -280,7 +279,7 @@ export abstract class EntityDetailPage extends BasePage {
    */
   async waitForPermissionsToLoad(): Promise<void> {
     await this.waitForPermissions();
-    await this.page.waitForTimeout(1000); // Extra time for UI updates
+    await waitForLoadingToComplete(this.page);
   }
   
   /**

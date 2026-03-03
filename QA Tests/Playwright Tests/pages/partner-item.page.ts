@@ -20,7 +20,7 @@
 import { Page, Locator } from '@playwright/test';
 import { EntityDetailPage } from './entity-detail.page';
 import { assertVisible } from '../helpers/assertions.helper';
-import { waitForElementReady } from '../helpers/wait.helper';
+import { waitForElementReady, waitForVisible, waitForLoadingToComplete } from '../helpers/wait.helper';
 
 export class PartnerItemPage extends EntityDetailPage {
   protected entityName = 'partner';
@@ -353,7 +353,7 @@ export class PartnerItemPage extends EntityDetailPage {
     const seeMore = this.seeMoreButton;
     if (await seeMore.isVisible().catch(() => false)) {
       await seeMore.click();
-      await this.page.waitForTimeout(500);
+      await waitForVisible(this.partnerStatus.or(this.partnerAttributes), 5000).catch(() => {});
     }
   }
   
@@ -363,7 +363,7 @@ export class PartnerItemPage extends EntityDetailPage {
   async clickPartnerTreeButton(): Promise<void> {
     if (await this.partnerTreeButton.isVisible().catch(() => false)) {
       await this.partnerTreeButton.click();
-      await this.page.waitForTimeout(1000);
+      await waitForLoadingToComplete(this.page);
     }
   }
   

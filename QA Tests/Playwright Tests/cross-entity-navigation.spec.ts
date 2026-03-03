@@ -17,6 +17,7 @@ import {
   waitForPermissions,
   waitForLoadingToComplete,
   waitForPageReady,
+  waitForMinimumElapsed,
 } from './helpers/wait.helper';
 import { PartnerItemPage } from './pages/partner-item.page';
 import { ContactItemPage } from './pages/contact-item.page';
@@ -380,7 +381,7 @@ test.describe('Cross-Entity Navigation — Edge', () => {
     const count = await tabs.count();
     for (let i = 0; i < Math.min(5, count); i++) {
       await tabs.nth(i).click({ timeout: 2000 }).catch(() => {});
-      await page.waitForTimeout(200);
+      await waitForMinimumElapsed(page, 200);
     }
     const pageStable = await page.locator('body').isVisible();
     expect(pageStable).toBeTruthy();

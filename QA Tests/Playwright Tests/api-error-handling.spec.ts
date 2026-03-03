@@ -15,6 +15,7 @@ import {
   waitForPermissions,
   waitForLoadingToComplete,
   waitForTableData,
+  waitForHidden,
 } from './helpers/wait.helper';
 import { PartnersPage } from './pages/partners.page';
 import { OpportunityItemPage } from './pages/opportunity-item.page';
@@ -330,7 +331,7 @@ test.describe('API Error Handling — Functional', () => {
       await expect(toast).toBeVisible({ timeout: 10000 });
       if (await closeBtn.isVisible().catch(() => false)) {
         await closeBtn.first().click();
-        await toast.first().waitFor({ state: 'hidden', timeout: 5000 });
+        await waitForHidden(toast.first(), 5000);
       }
     });
   });

@@ -6,6 +6,7 @@
 
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
+import { waitForLoadingToComplete, waitForTableData, waitForVisible } from '../helpers/wait.helper';
 
 // ==========================================
 // Translation Workbench Page
@@ -74,7 +75,7 @@ export class TranslationWorkbenchPage extends BasePage {
 
   async searchTranslation(key: string): Promise<void> {
     await this.searchInput.fill(key);
-    await this.page.waitForTimeout(1000);
+    await waitForTableData(this.page);
   }
 
   async getRowCount(): Promise<number> {
@@ -83,8 +84,10 @@ export class TranslationWorkbenchPage extends BasePage {
 
   async selectLanguage(language: string): Promise<void> {
     await this.languageSelector.click();
-    await this.page.locator(`.p-select-option:has-text("${language}"), .p-dropdown-item:has-text("${language}")`).first().click();
-    await this.page.waitForTimeout(500);
+    const option = this.page.locator(`.p-select-option:has-text("${language}"), .p-dropdown-item:has-text("${language}")`).first();
+    await waitForVisible(option);
+    await option.click();
+    await waitForLoadingToComplete(this.page);
   }
 }
 
@@ -196,7 +199,7 @@ export class EntityManagerPage extends BasePage {
 
   async clickEntity(entityName: string): Promise<void> {
     await this.page.locator(`[data-testid="entity-card-${entityName}"], .entity-card:has-text("${entityName}")`).first().click();
-    await this.page.waitForTimeout(1000);
+    await waitForLoadingToComplete(this.page);
   }
 
   /**
@@ -267,13 +270,15 @@ export class EntityArtifactManagerPage extends BasePage {
 
   async clickBulkUpdate(): Promise<void> {
     await this.bulkUpdateButton.click();
-    await this.page.waitForTimeout(1000);
+    await waitForLoadingToComplete(this.page);
   }
 
   async selectEntity(entityName: string): Promise<void> {
     await this.entitySelector.click();
-    await this.page.locator(`.p-select-option:has-text("${entityName}"), .p-dropdown-item:has-text("${entityName}")`).first().click();
-    await this.page.waitForTimeout(500);
+    const option = this.page.locator(`.p-select-option:has-text("${entityName}"), .p-dropdown-item:has-text("${entityName}")`).first();
+    await waitForVisible(option);
+    await option.click();
+    await waitForLoadingToComplete(this.page);
   }
 
   get searchOrFilterInput(): Locator {
@@ -372,7 +377,7 @@ export class UserManagementPage extends BasePage {
 
   async searchUser(query: string): Promise<void> {
     await this.searchInput.fill(query);
-    await this.page.waitForTimeout(1000);
+    await waitForTableData(this.page);
   }
 
   async clickAddUser(): Promise<void> {
@@ -382,6 +387,6 @@ export class UserManagementPage extends BasePage {
 
   async clickUserRow(index: number): Promise<void> {
     await this.userRows.nth(index).click();
-    await this.page.waitForTimeout(1000);
+    await waitForLoadingToComplete(this.page);
   }
 }

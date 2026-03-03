@@ -14,7 +14,12 @@
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
-import { waitForPermissions, waitForLoadingToComplete, waitForTableData } from './helpers/wait.helper';
+import {
+  waitForPermissions,
+  waitForLoadingToComplete,
+  waitForTableData,
+  waitForVisible,
+} from './helpers/wait.helper';
 import { getTimeout } from './helpers/test-config';
 
 // ---------------------------------------------------------------------------
@@ -331,10 +336,10 @@ test.describe('PNO-1196: Closed Status UI', () => {
         const filterDropdown = page.locator('p-select, .p-select').filter({ hasText: /stage|status/i }).first();
         if (await stageFilter.isVisible().catch(() => false)) {
           await stageFilter.click();
-          await page.waitForTimeout(500);
+          await waitForVisible(page.locator('[role="listbox"], .p-select-overlay').first(), 5000).catch(() => {});
         } else if (await filterDropdown.isVisible().catch(() => false)) {
           await filterDropdown.click();
-          await page.waitForTimeout(500);
+          await waitForVisible(page.locator('[role="listbox"], .p-select-overlay').first(), 5000).catch(() => {});
         }
       });
 

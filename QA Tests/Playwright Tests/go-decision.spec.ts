@@ -787,7 +787,7 @@ test.describe('PNO-1197 — DoA Level 3 Fallback', () => {
       expect(onlyL2Count).toBeLessThanOrEqual(0);
     }
 
-    expect(true).toBeTruthy();
+    expect(page.url()).toContain('opportunities');
   });
 
   // EDGE: Submit requirements panel should handle missing org unit gracefully
@@ -1063,7 +1063,7 @@ test.describe('DEF-008 — Remaining Gaps: UI Components & Field Validations', (
       expect(editVisible).toBeFalsy();
     }
 
-    expect(true).toBeTruthy();
+    expect(page.url()).toContain('opportunities');
   });
 
   test('TC-075: [N] In-workflow indicator does NOT appear on draft opportunity card in list', async ({ page }) => {
@@ -1519,11 +1519,10 @@ test.describe('DEF-008 — Remaining Gaps: UI Components & Field Validations', (
 
       // Confirm button should still be available after filling remarks
       const confirmBtn = page.getByRole('button', { name: /confirm|proceed|yes|submit/i }).first();
-      const confirmEnabled = await confirmBtn.isVisible({ timeout: 5000 }).catch(() => false);
-      expect(confirmEnabled || true).toBeTruthy();
+      await expect(confirmBtn).toBeVisible({ timeout: 5000 });
     }
 
-    expect(true).toBeTruthy();
+    expect(page.url()).toContain('opportunities');
   });
 
   test('TC-095: [I] DoA pathway approver shown on detail page matches approver from submit requirements', async ({ page }) => {

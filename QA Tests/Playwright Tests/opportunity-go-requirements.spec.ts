@@ -162,8 +162,7 @@ test.describe('GO Requirements — Individual Field Checks', () => {
       const reqPanel = page.locator('app-requirements-validation, [data-testid="requirements-panel"]');
       if (await reqPanel.isVisible({ timeout: 5000 }).catch(() => false)) {
         const fieldItem = reqPanel.getByText(new RegExp(field, 'i')).first();
-        const isListed = await fieldItem.isVisible({ timeout: 3000 }).catch(() => false);
-        expect(isListed || true).toBeTruthy();
+        await expect(fieldItem).toBeVisible({ timeout: 3000 });
       }
     });
   }

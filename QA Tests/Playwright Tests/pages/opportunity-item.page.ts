@@ -38,7 +38,7 @@
 import { Page, Locator } from '@playwright/test';
 import { EntityDetailPage } from './entity-detail.page';
 import { assertVisible } from '../helpers/assertions.helper';
-import { waitForElementReady } from '../helpers/wait.helper';
+import { waitForElementReady, waitForLoadingToComplete } from '../helpers/wait.helper';
 
 export class OpportunityItemPage extends EntityDetailPage {
   protected entityName = 'opportunity';
@@ -599,7 +599,7 @@ export class OpportunityItemPage extends EntityDetailPage {
   async clickSubmitButton(): Promise<void> {
     if (await this.isSubmitButtonVisible()) {
       await this.submitButton.click();
-      await this.page.waitForTimeout(1000);
+      await waitForLoadingToComplete(this.page);
     }
   }
   
@@ -616,7 +616,7 @@ export class OpportunityItemPage extends EntityDetailPage {
   async clickApproveButton(): Promise<void> {
     if (await this.isApproveButtonVisible()) {
       await this.approveButton.click();
-      await this.page.waitForTimeout(1000);
+      await waitForLoadingToComplete(this.page);
     }
   }
   
@@ -633,7 +633,7 @@ export class OpportunityItemPage extends EntityDetailPage {
   async clickActivateButton(): Promise<void> {
     if (await this.isActivateButtonVisible()) {
       await this.activateButton.click();
-      await this.page.waitForTimeout(1000);
+      await waitForLoadingToComplete(this.page);
     }
   }
   

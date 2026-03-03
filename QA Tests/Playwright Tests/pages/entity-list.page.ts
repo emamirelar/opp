@@ -6,7 +6,7 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
 import { assertVisible, assertPageHeader, assertListviewVisible } from '../helpers/assertions.helper';
-import { waitForTableData, waitForDialog } from '../helpers/wait.helper';
+import { waitForTableData, waitForDialog, waitForLoadingToComplete } from '../helpers/wait.helper';
 
 export abstract class EntityListPage extends BasePage {
   protected abstract entityName: string;
@@ -148,7 +148,7 @@ export abstract class EntityListPage extends BasePage {
    */
   async clickFirstRow(): Promise<void> {
     await this.tableRows.first().click();
-    await this.page.waitForTimeout(1000);
+    await waitForLoadingToComplete(this.page);
   }
   
   /**
@@ -157,7 +157,7 @@ export abstract class EntityListPage extends BasePage {
   async search(searchText: string): Promise<void> {
     if (await this.searchInput.isVisible().catch(() => false)) {
       await this.searchInput.fill(searchText);
-      await this.page.waitForTimeout(1000); // Wait for search debounce
+      await waitForTableData(this.page);
     }
   }
   
@@ -166,9 +166,7 @@ export abstract class EntityListPage extends BasePage {
    */
   async verifyMobileResponsive(): Promise<void> {
     await this.page.setViewportSize({ width: 375, height: 667 });
-    await this.page.waitForTimeout(1000);
-    
-    await assertVisible(this.header);
-    await assertVisible(this.listview);
+    await assertVisible(this.header, 10000);
+    await assertVisible(this.listview, 10000);
   }
 }

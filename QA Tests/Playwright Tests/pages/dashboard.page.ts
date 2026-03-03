@@ -6,6 +6,7 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
 import { assertVisible } from '../helpers/assertions.helper';
+import { waitForLoadingToComplete } from '../helpers/wait.helper';
 
 export class DashboardPage extends BasePage {
   constructor(page: Page) {
@@ -88,7 +89,7 @@ export class DashboardPage extends BasePage {
   async clickRefresh(): Promise<void> {
     if (await this.refreshButton.isVisible().catch(() => false)) {
       await this.refreshButton.click();
-      await this.page.waitForTimeout(1000);
+      await waitForLoadingToComplete(this.page);
     }
   }
   
@@ -129,9 +130,7 @@ export class DashboardPage extends BasePage {
    */
   async verifyMobileResponsive(): Promise<void> {
     await this.page.setViewportSize({ width: 375, height: 667 });
-    await this.page.waitForTimeout(1000);
-    
-    await assertVisible(this.page.locator('.max-w-7xl'));
-    await assertVisible(this.panels.first());
+    await assertVisible(this.page.locator('.max-w-7xl'), 10000);
+    await assertVisible(this.panels.first(), 10000);
   }
 }

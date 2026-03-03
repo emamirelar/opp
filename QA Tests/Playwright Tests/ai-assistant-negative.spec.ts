@@ -3,7 +3,7 @@
  *
  * Tests negative scenarios, API errors, edge cases, functional behavior,
  * and integration flows for the AI Assistant panel. Complements ai-assistant.spec.ts
- * which covers basic visibility. All tests use setupAPIMocks() — no real backend.
+ * which covers basic visibility. Tests use authenticateWithRealBackend — no setupAPIMocks.
  *
  * Test Categories (3:1 ratio):
  * - Positive (2): Happy path open/ready
@@ -19,16 +19,23 @@
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
-import { setupAPIMocks } from './helpers/api-mocks.helper';
-import { waitForPermissions } from './helpers/wait.helper';
+import {
+  waitForPermissions,
+  waitForLoadingToComplete,
+  waitForVisible,
+  waitForHidden,
+  waitForElementReady,
+  waitForMinimumElapsed,
+} from './helpers/wait.helper';
+import { AIAssistantPage } from './pages/ai-assistant.page';
+
 const ADMIN_USER = 'test@playwright.local';
 
 // AI panel selectors (data-testid where available, fallback to component/class)
-const AI_TOGGLE = '[data-ai-assistant-toggle], .ai-assistant-toggle, button:has([alt*="AI"])';
+const AI_TOGGLE = '[data-ai-assistant-toggle], .ai-assistant-toggle, button:has([alt*="AI"]), [data-testid="ai-assistant-toggle"]';
 const AI_PANEL = 'app-ai-assistant-panel, .ai-assistant-panel, app-ai-assistant';
 const AI_INPUT = '#messageInput, .ai-input-area textarea, app-ai-assistant textarea, [data-testid="ai-prompt-input"]';
 const AI_SEND = 'app-ai-assistant button[type="submit"], [data-testid="ai-send-button"], app-ai-assistant button:has(i.pi-send)';
-const AI_RESPONSE = '[data-testid="ai-response"], app-ai-assistant .response-area, app-typewriter-markdown';
 const AI_LOADING = 'app-ai-assistant .loading, app-ai-assistant p-progressSpinner, [data-testid="ai-loading"]';
 const AI_CLOSE = '[data-testid="ai-close-button"], app-ai-assistant button:has(i.pi-times)';
 const AI_WELCOME = '.ai-welcome-screen, .ai-new-chat-screen, .ai-chat-container';
@@ -39,7 +46,7 @@ const GEMINI_MODELS_URL = /\/api\/values\/gemini-models/;
 
 async function openAIPanel(page: import('@playwright/test').Page): Promise<void> {
   const toggle = page.locator(AI_TOGGLE).first();
-  await toggle.waitFor({ state: 'visible', timeout: 10000 });
+  await waitForVisible(toggle, 10000);
   await toggle.click();
   await page.waitForLoadState('domcontentloaded');
   const panel = page.locator(AI_PANEL).first();
@@ -100,19 +107,16 @@ test.describe('AIN — AI Assistant Negative/Error/Edge Tests', () => {
     });
 
     await openAIPanel(page);
-    const input = page.locator(AI_INPUT).first();
-    const sendBtn = page.locator(AI_SEND).first();
-    if (await input.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await input.fill('Hello');
-      if (await sendBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await sendBtn.click();
-        await page.waitForTimeout(3000);
-      }
+    const aiPage = new AIAssistantPage(page);
+    if (await aiPage.isPromptInputReady()) {
+      await aiPage.sendPrompt('Hello');
+      await waitForLoadingToComplete(page);
     }
 
     const body = await page.textContent('body');
-    const hasError = body && (/error|failed|something went wrong/i.test(body) || body.includes('500'));
-    expect(hasError || body!.length > 100).toBeTruthy();
+    expect(body).toBeTruthy();
+    const hasError = body && (/error|failed|something went wrong|500|internal server/i.test(body));
+    expect(hasError).toBeTruthy();
   });
 
   test('AIN-N02: AI API returns 403 (unauthorized) → Permission denied message', async ({ page }) => {
@@ -129,19 +133,17 @@ test.describe('AIN — AI Assistant Negative/Error/Edge Tests', () => {
     });
 
     await openAIPanel(page);
-    const input = page.locator(AI_INPUT).first();
-    const sendBtn = page.locator(AI_SEND).first();
-    if (await input.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await input.fill('Test');
-      if (await sendBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await sendBtn.click();
-        await page.waitForTimeout(3000);
-      }
+    const aiPage = new AIAssistantPage(page);
+    if (await aiPage.isPromptInputReady()) {
+      await aiPage.sendPrompt('Test');
+      await waitForLoadingToComplete(page);
     }
 
     const body = await page.textContent('body');
     expect(body).toBeTruthy();
     expect(body!.length).toBeGreaterThan(50);
+    const hasForbidden = body && (/forbidden|permission denied|403/i.test(body));
+    expect(hasForbidden).toBeTruthy();
   });
 
   test('AIN-N03: AI API returns empty response → Graceful handling', async ({ page }) => {
@@ -158,14 +160,10 @@ test.describe('AIN — AI Assistant Negative/Error/Edge Tests', () => {
     });
 
     await openAIPanel(page);
-    const input = page.locator(AI_INPUT).first();
-    const sendBtn = page.locator(AI_SEND).first();
-    if (await input.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await input.fill('Empty response test');
-      if (await sendBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await sendBtn.click();
-        await page.waitForTimeout(2000);
-      }
+    const aiPage = new AIAssistantPage(page);
+    if (await aiPage.isPromptInputReady()) {
+      await aiPage.sendPrompt('Empty response test');
+      await waitForLoadingToComplete(page);
     }
 
     const panel = page.locator(AI_PANEL).first();
@@ -182,37 +180,33 @@ test.describe('AIN — AI Assistant Negative/Error/Edge Tests', () => {
     });
 
     await openAIPanel(page);
-    const input = page.locator(AI_INPUT).first();
-    const sendBtn = page.locator(AI_SEND).first();
-    if (await input.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await input.fill('Timeout test');
-      if (await sendBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await sendBtn.click();
-        await page.waitForTimeout(5000);
-      }
+    const aiPage = new AIAssistantPage(page);
+    if (await aiPage.isPromptInputReady()) {
+      await aiPage.sendPrompt('Timeout test');
+      const loading = page.locator(AI_LOADING).first();
+      await waitForHidden(loading, 15000);
     }
 
     const loading = page.locator(AI_LOADING).first();
     const loadingVisible = await loading.isVisible({ timeout: 2000 }).catch(() => false);
-    expect(loadingVisible === false || true).toBeTruthy();
+    expect(loadingVisible).toBe(false);
   });
 
   test('AIN-N05: Send very long prompt (>5000 chars) → Handled gracefully', async ({ page }) => {
     const longPrompt = 'x'.repeat(5500);
     await openAIPanel(page);
 
-    const input = page.locator(AI_INPUT).first();
-    if (await input.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await input.fill(longPrompt);
-      const sendBtn = page.locator(AI_SEND).first();
-      if (await sendBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await sendBtn.click();
-        await page.waitForTimeout(2000);
+    const aiPage = new AIAssistantPage(page);
+    if (await aiPage.isPromptInputReady()) {
+      await aiPage.promptInput.fill(longPrompt);
+      if (await aiPage.sendButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await aiPage.sendButton.click();
+        await waitForLoadingToComplete(page);
       }
     }
 
-    const body = await page.textContent('body');
-    expect(body).toBeTruthy();
+    const panel = page.locator(AI_PANEL).first();
+    await expect(panel).toBeVisible({ timeout: 5000 });
   });
 
   test('AIN-N06: AI panel on page with no entity context → Works or shows generic state', async ({ page }) => {
@@ -224,25 +218,26 @@ test.describe('AIN — AI Assistant Negative/Error/Edge Tests', () => {
     const toggleVisible = await toggle.isVisible({ timeout: 8000 }).catch(() => false);
     if (toggleVisible) {
       await toggle.click();
-      await page.waitForTimeout(2000);
+      await waitForLoadingToComplete(page);
       const panel = page.locator(AI_PANEL).first();
       const panelVisible = await panel.isVisible({ timeout: 5000 }).catch(() => false);
-      expect(panelVisible || true).toBeTruthy();
+      expect(panelVisible).toBe(true);
     } else {
-      expect(true).toBeTruthy();
+      const body = await page.textContent('body');
+      expect(body).toBeTruthy();
     }
   });
 
   test('AIN-N07: Rapid repeated clicks on AI toggle → No duplicate panels', async ({ page }) => {
     const toggle = page.locator(AI_TOGGLE).first();
-    await toggle.waitFor({ state: 'visible', timeout: 10000 });
+    await waitForVisible(toggle, 10000);
 
     for (let i = 0; i < 5; i++) {
       await toggle.click();
-      await page.waitForTimeout(100);
+      await waitForMinimumElapsed(page, 100);
     }
 
-    await page.waitForTimeout(500);
+    await waitForElementReady(toggle);
     const panels = page.locator(AI_PANEL);
     const count = await panels.count();
     expect(count).toBeLessThanOrEqual(2);
@@ -259,9 +254,9 @@ test.describe('AIN — AI Assistant Negative/Error/Edge Tests', () => {
     await waitForPermissions(page);
 
     const toggle = page.locator(AI_TOGGLE).first();
-    await toggle.waitFor({ state: 'visible', timeout: 8000 });
+    await waitForVisible(toggle, 8000);
     await toggle.click();
-    await page.waitForTimeout(1000);
+    await waitForLoadingToComplete(page);
 
     const panel = page.locator(AI_PANEL).first();
     await expect(panel).toBeVisible({ timeout: 5000 });
@@ -269,42 +264,45 @@ test.describe('AIN — AI Assistant Negative/Error/Edge Tests', () => {
 
   test('AIN-E02: AI panel toggle (open/close) 3 times rapidly → Stable state', async ({ page }) => {
     const toggle = page.locator(AI_TOGGLE).first();
-    await toggle.waitFor({ state: 'visible', timeout: 10000 });
+    await waitForVisible(toggle, 10000);
 
     for (let i = 0; i < 3; i++) {
       await toggle.click();
-      await page.waitForTimeout(200);
+      await waitForMinimumElapsed(page, 200);
     }
 
-    await page.waitForTimeout(500);
-    const panel = page.locator(AI_PANEL).first();
-    const panelVisible = await panel.isVisible({ timeout: 3000 }).catch(() => false);
-    expect(panelVisible === true || panelVisible === false).toBeTruthy();
+    await waitForElementReady(toggle);
+    const panels = page.locator(AI_PANEL);
+    const panelCount = await panels.count();
+    const toggleStillVisible = await toggle.isVisible({ timeout: 2000 }).catch(() => false);
+    expect(toggleStillVisible).toBe(true);
+    expect(panelCount).toBeLessThanOrEqual(2);
   });
 
   test('AIN-E03: AI panel on mobile viewport → Still accessible', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.waitForTimeout(500);
+    await waitForLoadingToComplete(page);
 
     const toggle = page.locator(AI_TOGGLE).first();
     const toggleVisible = await toggle.isVisible({ timeout: 8000 }).catch(() => false);
     if (toggleVisible) {
       await toggle.click();
-      await page.waitForTimeout(1500);
+      await waitForLoadingToComplete(page);
       const panelOrContent = page.locator(AI_PANEL).or(page.locator('.ai-chat-container')).first();
       await expect(panelOrContent).toBeVisible({ timeout: 5000 });
     } else {
-      expect(true).toBeTruthy();
+      const body = await page.textContent('body');
+      expect(body).toBeTruthy();
     }
   });
 
   test('AIN-E04: AI panel with special characters in prompt → No XSS or crash', async ({ page }) => {
     await openAIPanel(page);
 
-    const input = page.locator(AI_INPUT).first();
-    if (await input.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await input.fill('<script>alert(1)</script> & "quotes" \'apostrophe\'');
-      await page.waitForTimeout(500);
+    const aiPage = new AIAssistantPage(page);
+    if (await aiPage.isPromptInputReady()) {
+      await aiPage.promptInput.fill('<script>alert(1)</script> & "quotes" \'apostrophe\'');
+      await waitForElementReady(aiPage.promptInput);
     }
 
     const body = await page.textContent('body');
@@ -339,18 +337,16 @@ test.describe('AIN — AI Assistant Negative/Error/Edge Tests', () => {
     });
 
     await openAIPanel(page);
-    const input = page.locator(AI_INPUT).first();
-    const sendBtn = page.locator(AI_SEND).first();
-    if (await input.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await input.fill('Format test');
-      if (await sendBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await sendBtn.click();
-        await page.waitForTimeout(3000);
-      }
+    const aiPage = new AIAssistantPage(page);
+    if (await aiPage.isPromptInputReady()) {
+      await aiPage.sendPrompt('Format test');
+      await waitForLoadingToComplete(page);
     }
 
     const body = await page.textContent('body');
     expect(body).toBeTruthy();
+    const hasMarkdownContent = body && (body.includes('Heading') || body.includes('Bold') || body.includes('italic'));
+    expect(hasMarkdownContent).toBeTruthy();
   });
 
   // ==========================================================================
@@ -392,20 +388,14 @@ test.describe('AIN — AI Assistant Negative/Error/Edge Tests', () => {
     });
 
     await openAIPanel(page);
-    const input = page.locator(AI_INPUT).first();
-    const sendBtn = page.locator(AI_SEND).first();
-    if (await input.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await input.fill('Loading test');
-      if (await sendBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await sendBtn.click();
-        await page.waitForTimeout(500);
-        const loading = page.locator(AI_LOADING).first();
-        const loadingVisible = await loading.isVisible({ timeout: 2000 }).catch(() => false);
-        resolveRequest();
-        expect(loadingVisible === true || loadingVisible === false).toBeTruthy();
-      } else {
-        resolveRequest();
-      }
+    const aiPage = new AIAssistantPage(page);
+    if (await aiPage.isPromptInputReady()) {
+      await aiPage.sendPrompt('Loading test');
+      const loading = page.locator(AI_LOADING).first();
+      const loadingAppeared = await loading.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false);
+      resolveRequest();
+      const loadingDisappeared = await loading.waitFor({ state: 'hidden', timeout: 5000 }).then(() => true).catch(() => false);
+      expect(loadingAppeared || loadingDisappeared).toBe(true);
     } else {
       resolveRequest();
     }
@@ -417,7 +407,8 @@ test.describe('AIN — AI Assistant Negative/Error/Edge Tests', () => {
     const closeBtn = page.locator(AI_CLOSE).first();
     if (await closeBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await closeBtn.click();
-      await page.waitForTimeout(500);
+      const panel = page.locator(AI_PANEL).first();
+      await waitForHidden(panel, 5000).catch(() => {});
     }
 
     const toggle = page.locator(AI_TOGGLE).first();
@@ -430,16 +421,20 @@ test.describe('AIN — AI Assistant Negative/Error/Edge Tests', () => {
 
     const hasIcon = await toggle.locator('img, i, [class*="ai"]').first().isVisible().catch(() => false);
     const ariaLabel = await toggle.getAttribute('aria-label');
-    expect(hasIcon || ariaLabel !== null || true).toBeTruthy();
+    const hasAccessibleLabel = hasIcon || ariaLabel !== null || (await toggle.textContent())?.trim().length > 0;
+    expect(hasAccessibleLabel).toBe(true);
   });
 
   test('AIN-F06: AI panel transcribe button visible on opportunity detail', async ({ page }) => {
     await openAIPanel(page);
 
-    const transcribe = page.locator('app-ai-transcribe, [data-testid="ai-transcribe"]').first();
-    const scanBtn = page.locator('[data-testid="ai-scan-button"], app-ai-assistant-scan').first();
-    const hasTranscribeOrScan = await transcribe.or(scanBtn).isVisible({ timeout: 5000 }).catch(() => false);
-    expect(hasTranscribeOrScan || true).toBeTruthy();
+    const aiPage = new AIAssistantPage(page);
+    const panelVisible = await aiPage.isAssistantOpen();
+    expect(panelVisible).toBe(true);
+    const transcribeOrScan = aiPage.transcribeComponent.or(aiPage.scanButton);
+    const hasTranscribeOrScan = await transcribeOrScan.isVisible({ timeout: 5000 }).catch(() => false);
+    const hasPromptInput = await aiPage.isPromptInputReady();
+    expect(hasTranscribeOrScan || hasPromptInput).toBe(true);
   });
 
   // ==========================================================================
@@ -514,14 +509,10 @@ test.describe('AIN — AI Assistant Negative/Error/Edge Tests', () => {
     });
 
     await openAIPanel(page);
-    const input = page.locator(AI_INPUT).first();
-    const sendBtn = page.locator(AI_SEND).first();
-    if (await input.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await input.fill('Test');
-      if (await sendBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await sendBtn.click();
-        await page.waitForTimeout(2000);
-      }
+    const aiPage = new AIAssistantPage(page);
+    if (await aiPage.isPromptInputReady()) {
+      await aiPage.sendPrompt('Test');
+      await waitForLoadingToComplete(page);
     }
 
     const header = page.locator('[data-testid="opportunity-detail-header"]').first();
