@@ -16,6 +16,6 @@ public class UNOPSContactByTitleSpecification : BaseSpecification<UNOPSContact>
         : base(string.IsNullOrEmpty(title) ? c => true : c => c.Title == title)
     {
         // Include related entities
-        AddInclude(c => c.Partner);
+        AddInclude(c => c.Partner!);
     }
 }

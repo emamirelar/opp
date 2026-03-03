@@ -19,7 +19,7 @@ public class UNOPSContactByOrgUnitHierarchySpecification : BaseSpecification<UNO
     {
         _orgUnitHierarchyIds = orgUnitHierarchyIds ?? new List<int>();
         // Include related entities
-        AddInclude(c => c.Partner);
+        AddInclude(c => c.Partner!);
     }
 
     private static Expression<Func<UNOPSContact, bool>> BuildCriteria(List<int> orgUnitHierarchyIds)
@@ -54,8 +54,7 @@ public class UNOPSContactByOrgUnitHierarchySpecification : BaseSpecification<UNO
             .ToList(); // Materialize the IDs first
 
         // Now filter the contacts using the materialized partner IDs
-        return query.Where(contact => 
-            contact.PartnerId != null && 
+        return query.Where(contact =>
             validPartnerIds.Contains(contact.PartnerId));
     }
 }

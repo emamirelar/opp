@@ -1393,7 +1393,7 @@ export class OpportunityDocumentsComponent implements OnInit {
             notes: deliverable.notes || null,
           }));
       }
-      // Handle all other properties - pass through as-is
+      // Handle all other properties - pass through as-is (includes proposedInitiativeTypeId, proposedInitiativeTypeName, implementationStartDate, etc.)
       else {
         transformed[key] = value;
       }

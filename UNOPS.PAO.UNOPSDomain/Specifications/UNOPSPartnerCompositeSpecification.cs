@@ -1,7 +1,9 @@
 namespace UNOPS.PAO.UNOPSDomain.Specifications;
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
+using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.Domain.Specifications.Interfaces;
 using UNOPS.PAO.UNOPSDomain.Entities;
@@ -19,7 +21,8 @@ public class UNOPSPartnerCompositeSpecification : GenericCompositeSpecification<
         : base(filter)
     {
         // Include related entities
-        AddInclude(p => p.PartnerGroup);
+        AddInclude(p => p.PartnerGroup!);
+        AddInclude(p => p.LiaisonOffice!);
         
         // Apply dynamic ordering based on filter properties
         ApplyDynamicOrdering(filter);
@@ -55,30 +58,33 @@ public class UNOPSPartnerCompositeSpecification : GenericCompositeSpecification<
     /// </summary>
     /// <param name="orderByField">The field name to order by</param>
     /// <returns>The ordering expression</returns>
+    [return: NotNull]
     private static Expression<Func<UNOPSPartner, object>> GetOrderByExpression(string? orderByField)
     {
-        return orderByField?.ToLowerInvariant() switch
+        var orderKey = orderByField?.ToLowerInvariant() ?? string.Empty;
+        Expression<Func<UNOPSPartner, object>> result = orderKey switch
         {
             "partnerdescription" => p => p.Name ?? "",
             "partnershortdescription" => p => p.PartnerShortDescription ?? "",
             "partnerlongdescription" => p => p.PartnerLongDescription ?? "",
             "systemstatus" => p => p.Status,
             "createddate" => p => p.CreatedDate,
-            "partnercategoryid" => p => p.PartnerCategoryId,
+            "partnercategoryid" => p => p.PartnerCategoryId ?? 0,
             "partnergroupid" => p => p.PartnerGroupId ?? 0,
             "erpdimvalue" => p => p.ErpDimValue ?? 0,
-            "partnerliaisonoffice" => p => p.LiaisonOffice.Name ?? "",
+            "partnerliaisonoffice" => p => (p.LiaisonOffice != null ? p.LiaisonOffice.Name : null) ?? "",
             "unandstateentity" => p => p.UNAndStateEntity,
-            "partnerappro​valstatus" => p => p.PartnerApprovalStatus,
+            "partnerapprovalstatus" => p => p.PartnerApprovalStatus,
             "partnerapprovaldate" => p => p.PartnerApprovalDate ?? DateTime.MinValue,
             "keyglobalpartner" => p => p.KeyGlobalPartner,
             "unsecretariatpartner" => p => p.UNSecretariatPartner,
-            "duediligencerequired" => p => p.DueDiligenceRequired,
-            "duediligenceapproval" => p => p.DueDiligenceApproval,
-            "partnerlevystatus" => p => p.PartnerLevyStatus,
+            "duediligencerequired" => p => (object)(p.DueDiligenceRequired ?? default(DueDiligenceRequired)),
+            "duediligenceapproval" => p => (object)(p.DueDiligenceApproval ?? default(DueDiligenceApproval)),
+            "partnerlevystatus" => p => (object)(p.PartnerLevyStatus ?? default(PartnerLevyStatus)),
             "pooledfundnew" => p => p.PooledFund,
             "cancreatenewopportunities" => p => p.CanCreateNewOpportunities,
             _ => p => p.Name ?? "" // Default to PartnerDescription if no field specified or unknown field
         };
+        return result;
     }
 }

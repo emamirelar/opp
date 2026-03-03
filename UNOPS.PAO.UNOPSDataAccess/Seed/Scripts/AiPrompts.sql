@@ -1663,8 +1663,7 @@ Create a comprehensive summary including their complete profile, interaction his
 ### Organizational & Initiative Type (camelCase)
 - **responsibleOrgUnitId** (int?): ID of the responsible organizational unit (use null if extracting text name)
 - **responsibleOrgUnitName** (string?): Name of the responsible organizational unit (e.g., "Global Infrastructure Unit", "East Africa Regional Office")
-- **proposedInitiativeTypeId** (int?): Type identifier for the proposed initiative (use null if extracting text name). **MUST add "proposedInitiativeTypeId" to dependents array** for backend resolution to dropdown ID.
-- **proposedInitiativeTypeName** (string?): **Proposed initiative to be developed** - Name of the proposed initiative type (dropdown in Team section). **ONLY these three values can be resolved - use exactly one**: "Project", "Programme", or "Portfolio". Any other value (e.g., "Initiative", "Activity", "Program") CANNOT be resolved. Map document content: "Project" = single initiative with defined scope; "Programme" = collection of related projects; "Portfolio" = collection of programmes and projects. If unclear, default to "Project". **ALWAYS add "proposedInitiativeTypeId" to dependents** so the backend can resolve the text name to the dropdown ID.
+- **proposedInitiativeTypeId** (string|int?): **Put the initiative type NAME as text here** (same pattern as other dependents - the "Id" suffix maps to the table name for resolution). Use **exactly one** of: "Project", "Programme", or "Portfolio". Map document content: "Project" = single initiative with defined scope; "Programme" = collection of related projects; "Portfolio" = collection of programmes and projects. Map "Program" → "Programme"; map "Initiative", "Activity" → "Project". If unclear, use "Project". **MUST add "proposedInitiativeTypeId" to dependents array** - the backend resolves the text to the ID via ProposedInitiativeTypes table (Id→Types, pluralized).
 
 ### Financial & Timeline (camelCase)
 - **initiativeBudgetUSD** (decimal?): Total proposed budget in USD when NO PARTNER-SPECIFIC breakdown is available. Use this ONLY when the document mentions a total/overall budget without specifying which partner is contributing what amount. Convert to numeric: "$65 million" → 65000000
@@ -1723,12 +1722,13 @@ Create a comprehensive summary including their complete profile, interaction his
 
 **CRITICAL**: When extracting data, you will encounter text names (e.g., "Kenya", "World Bank") that need to be converted to IDs later.
 
-**For ALL ID fields that contain text names instead of numeric IDs:**
-1. Set the ID field (responsibleOrgUnitId, proposedInitiativeTypeId) to **null**
-2. Populate the corresponding Name field with the extracted text
-3. **Add the field name to the "dependents" array** so the system knows to resolve these text names to IDs using similarity matching
+**For ID fields that need text-to-ID resolution:**
+1. **Put the extracted text in the Id field** - the backend derives the table name from the field: replace "Id" suffix → entity name → pluralized table (e.g. proposedInitiativeTypeId → ProposedInitiativeTypes)
+2. **Add the field name to the "dependents" array** so the system resolves the text to the numeric ID
 
-**For proposedInitiativeTypeName specifically:** Use ONLY "Project", "Programme", or "Portfolio". Any other value cannot be resolved by the backend. Map "Program" → "Programme"; map "Initiative", "Activity", or similar → "Project" (or the closest of the three). If unclear, use "Project".
+**For proposedInitiativeTypeId:** Put the text ("Project", "Programme", or "Portfolio") directly in **proposedInitiativeTypeId**. Use ONLY these three values. Map "Program" → "Programme"; map "Initiative", "Activity" → "Project".
+
+**For responsibleOrgUnitId:** Put text in responsibleOrgUnitName, keep responsibleOrgUnitId as null (or put text in the Id field - both work).
 
 **For Collection Fields (fundingPartners, clientPartners, stakeholders, teamMembers, deliverables, countries, sdGs, unopsMissions):**
 - Extract as **simple arrays of text strings**
@@ -1738,9 +1738,9 @@ Create a comprehensive summary including their complete profile, interaction his
 **Example mapping:**
 - If you extract "Kenya" → Add "Kenya" to **countries** array, add "countries" to dependents
 - If you extract "World Bank" as funder → Add "World Bank" to **fundingPartners** array, add "fundingPartners" to dependents
-- If you extract content indicating a "single initiative with defined scope" → Set proposedInitiativeTypeId = null, proposedInitiativeTypeName = "Project", add "proposedInitiativeTypeId" to dependents
-- If you extract content indicating "multiple related projects" → Set proposedInitiativeTypeId = null, proposedInitiativeTypeName = "Programme", add "proposedInitiativeTypeId" to dependents
-- If you extract content indicating "collection of programmes/projects" → Set proposedInitiativeTypeName = "Portfolio". **NEVER use any value other than Project, Programme, or Portfolio** - other values cannot be resolved
+- If you extract content indicating a "single initiative with defined scope" → Set **proposedInitiativeTypeId = "Project"**, add "proposedInitiativeTypeId" to dependents (backend resolves via ProposedInitiativeTypes table)
+- If you extract content indicating "multiple related projects" → Set **proposedInitiativeTypeId = "Programme"**, add "proposedInitiativeTypeId" to dependents
+- If you extract content indicating "collection of programmes/projects" → Set **proposedInitiativeTypeId = "Portfolio"**, add "proposedInitiativeTypeId" to dependents. **NEVER use any value other than Project, Programme, or Portfolio**
 - If you extract "Jane Smith - UNOPS Project Manager" → Add to **teamMembers** array, add "teamMembers" to dependents
 
 ## Analysis Instructions
@@ -1756,7 +1756,7 @@ Create a comprehensive summary including their complete profile, interaction his
    - Multi-donor or pooled funding indicators (for **isPooledFunding** field)
    - Partner organization names (funding sources → **fundingPartners**, client entities → **clientPartners**)
    - Organizational unit names (for **responsibleOrgUnitName** field)
-   - Initiative type names (for **proposedInitiativeTypeName** field - ONLY "Project", "Programme", or "Portfolio"; map any other wording to the closest of these three)
+   - Initiative type names (put in **proposedInitiativeTypeId** as text - ONLY "Project", "Programme", or "Portfolio"; map any other wording to the closest of these three)
    - Geographic locations, country names (for **countries** array)
    - SDG references (SDG 1, SDG 6, Goal 9, etc. → **sdGs** array)
    - UNOPS Strategic Mission alignments (references to climate, energy, health, digital, etc. → **unopsMissions** array)
@@ -1812,8 +1812,7 @@ Return a valid JSON object with the extracted opportunity data. **ALL property n
   "description": "Comprehensive infrastructure development initiative to design, construct, and operationalize modern water treatment facilities serving 2 million beneficiaries. Key components include construction of 3 water treatment plants, rehabilitation of 200 km pipelines, installation of 50 community water points, and training programs for 500 local technicians.",
   "responsibleOrgUnitId": null,
   "responsibleOrgUnitName": "Global Infrastructure Unit",
-  "proposedInitiativeTypeId": null,
-  "proposedInitiativeTypeName": "Project",
+  "proposedInitiativeTypeId": "Project",
   "initiativeBudgetUSD": null,
   "partnerBudgets": [
     {"partnerName": "World Bank", "amount": 25000000, "currency": "USD"},
@@ -2915,8 +2914,7 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 ### Organizational & Initiative Type (camelCase)
 - **responsibleOrgUnitId** (int?): Always set to null (will be resolved from text name). **Add "responsibleOrgUnitId" to dependents array** for resolution.
 - **responsibleOrgUnitName** (string?): **Org Unit Responsible for Opportunity development** - Extract from UNOPS participants'' org units in interactions, or document content. Examples: "East Africa Regional Office", "Global Infrastructure Unit", "B5308"
-- **proposedInitiativeTypeId** (int?): Always set to null (will be resolved from text name). **MUST add "proposedInitiativeTypeId" to dependents array** for backend resolution to dropdown ID.
-- **proposedInitiativeTypeName** (string?): **Proposed initiative to be developed** - Infer from interaction content AND document types/names (dropdown in Team section). **ONLY these three values can be resolved - use exactly one**: "Project", "Programme", or "Portfolio". Any other value (e.g., "Initiative", "Activity", "Program") CANNOT be resolved. If unclear, default to "Project". **ALWAYS add "proposedInitiativeTypeId" to dependents** so the backend can resolve the text name to the dropdown ID.
+- **proposedInitiativeTypeId** (string): **Put the initiative type NAME as text here** (same as other dependents - Id field gets text, backend resolves via ProposedInitiativeTypes table). Infer from interaction content AND document types/names. Use **exactly one** of: "Project", "Programme", or "Portfolio". Map "Program" → "Programme"; map "Initiative", "Activity" → "Project". If unclear, default to "Project". **MUST add "proposedInitiativeTypeId" to dependents array**.
 
 ### Financial & Timeline (camelCase)
 - **initiativeBudgetUSD** (decimal?): Total proposed budget in USD when NO PARTNER-SPECIFIC breakdown is available. Use this ONLY when interactions/documents mention a total budget without specifying which partner is contributing. Convert to numeric: "$5 million" → 5000000
@@ -2997,12 +2995,9 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 
 **CRITICAL**: You will be extracting text names that need to be converted to IDs later.
 
-**For ALL ID fields that contain text names instead of numeric IDs:**
-1. Set the ID field (responsibleOrgUnitId, proposedInitiativeTypeId) to **null**
-2. Populate the corresponding Name field with the extracted/inferred text
-3. **Add the field name to the "dependents" array** so the system knows to resolve these text names to IDs using similarity matching
+**For proposedInitiativeTypeId:** Put the text ("Project", "Programme", or "Portfolio") directly in **proposedInitiativeTypeId**. The backend derives the table name (ProposedInitiativeTypes) from the field and resolves the text to the ID. **Add "proposedInitiativeTypeId" to dependents array**.
 
-**For proposedInitiativeTypeName specifically:** Use ONLY "Project", "Programme", or "Portfolio". Any other value cannot be resolved by the backend. Map "Program" → "Programme"; map "Initiative", "Activity", or similar → "Project" (or the closest of the three). If unclear, use "Project".
+**For responsibleOrgUnitId:** Put text in responsibleOrgUnitName, keep responsibleOrgUnitId as null. Add "responsibleOrgUnitId" to dependents.
 
 **For Collection Fields (fundingPartners, clientPartners, stakeholders, deliverables, countries, sdGs, unopsMissions):**
 - Extract as **simple arrays of text strings**
@@ -3129,8 +3124,7 @@ Return a valid JSON object with the proposed opportunity data. **ALL property na
   "description": "Comprehensive water infrastructure initiative to improve access to clean water across East Africa, based on discussions with Ministry of Water and Sanitation representatives over the past 6 months and supporting documents including feasibility studies and technical assessments. The program will focus on constructing water treatment facilities, rehabilitating distribution networks, and building local technical capacity for sustainable operations.",
   "responsibleOrgUnitId": null,
   "responsibleOrgUnitName": "East Africa Regional Office",
-  "proposedInitiativeTypeId": null,
-  "proposedInitiativeTypeName": "Programme",
+  "proposedInitiativeTypeId": "Programme",
   "initiativeBudgetUSD": null,
   "partnerBudgets": [
     {"partnerName": "World Bank", "amount": 30000000, "currency": "USD"},
