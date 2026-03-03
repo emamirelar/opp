@@ -63,7 +63,7 @@ public class EmailTemplateRenderer : IEmailTemplateRenderer
         );
     }
 
-    private async Task<string> RenderHtmlTemplateAsync<T>(string htmlTemplate, T model)
+    private Task<string> RenderHtmlTemplateAsync<T>(string htmlTemplate, T model)
     {
         var renderedTemplate = htmlTemplate;
         if (model != null)
@@ -77,6 +77,6 @@ public class EmailTemplateRenderer : IEmailTemplateRenderer
             }
         }
 
-        return renderedTemplate;
+        return Task.FromResult(renderedTemplate);
     }
 }

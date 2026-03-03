@@ -48,7 +48,9 @@ public class GoogleDriveAPIHelper
             // In localhost the secret manager will be null and so the PrivateKey is defined in appsettings.json
         }
 
+#pragma warning disable CS0618 // Type or member is obsolete - FromJsonParameters still works; CredentialFactory requires file path
         var credentials = GoogleCredential.FromJsonParameters(credentialParams);
+#pragma warning restore CS0618
 
         var client = BigQueryClient.Create(credentialParams.ProjectId, credentials);
 
@@ -105,7 +107,9 @@ public class GoogleDriveAPIHelper
             }
         }
 
+#pragma warning disable CS0618 // Type or member is obsolete - FromJsonParameters still works; CredentialFactory requires file path
         return GoogleCredential.FromJsonParameters(credentialParams);
+#pragma warning restore CS0618
     }
 
     //file Upload to the Google Drive.
@@ -452,6 +456,11 @@ public class GoogleDriveAPIHelper
 
     public async Task MoveToFolder(File file, string targetFolderId)
     {
+        if (driveService == null)
+        {
+            throw new InvalidOperationException("Drive service is not configured. Call ConfigureClient() first.");
+        }
+
         var driveFileRequest = driveService.Files.Get(file.Id);
         driveFileRequest.SupportsTeamDrives = true;
         driveFileRequest.Fields = "parents";
@@ -469,6 +478,11 @@ public class GoogleDriveAPIHelper
 
     public async Task<string> CreateFolderIfNotExists(string folderName, string parentFolderId)
     {
+        if (driveService == null)
+        {
+            throw new InvalidOperationException("Drive service is not configured. Call ConfigureClient() first.");
+        }
+
         await semaphore.WaitAsync();
         try
         {

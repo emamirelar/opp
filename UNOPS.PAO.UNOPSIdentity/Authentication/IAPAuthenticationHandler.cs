@@ -36,11 +36,10 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         IOptionsMonitor<IAPAuthenticationOptions> options,
         ILoggerFactory logger,
         UrlEncoder encoder,
-        ISystemClock clock,
         UserManager<PAOIdentityUser> userManager,
         RoleManager<PAOIdentityRole> roleManager,
-        IConfiguration configuration) 
-        : base(options, logger, encoder, clock)
+        IConfiguration configuration)
+        : base(options, logger, encoder)
     {
         _userManager = userManager;
         _roleManager = roleManager;
@@ -66,9 +65,15 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var jwtSecret = _configuration["JWTSettings:Secret"];
-                var key = Encoding.ASCII.GetBytes(jwtSecret);
+                if (string.IsNullOrEmpty(jwtSecret))
+                {
+                    _logger.LogWarning("JWTSettings:Secret not configured, skipping Bearer token validation");
+                }
+                else
+                {
+                    var key = Encoding.ASCII.GetBytes(jwtSecret);
 
-                var validationParameters = new TokenValidationParameters
+                    var validationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
                     ValidateAudience = true,
@@ -77,9 +82,10 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
                     ValidIssuer = _configuration["JWTSettings:validIssuer"],
                     ValidAudience = _configuration["JWTSettings:validAudience"],
                     IssuerSigningKey = new SymmetricSecurityKey(key)
-                };
+                    };
 
-                bearerPrincipal = tokenHandler.ValidateToken(bearerToken, validationParameters, out _);
+                    bearerPrincipal = tokenHandler.ValidateToken(bearerToken, validationParameters, out _);
+                }
             }
             catch (Exception ex)
             {
@@ -357,12 +363,12 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
 
         // Log authenticated user details before impersonation
         var authenticatedUserRoles = await _userManager.GetRolesAsync(user);
-        _logger.LogInformation("🔍 [AUTH] Authenticated user: {Email}, Roles: {Roles}", 
-            user.Email, string.Join(", ", authenticatedUserRoles));
+        _logger.LogInformation("🔍 [AUTH] Authenticated user: {Email}, Roles: {Roles}",
+            user.Email ?? "", string.Join(", ", authenticatedUserRoles));
 
         // Handle user impersonation if enabled and requested
         PAOIdentityUser effectiveUser = user;
-        string authenticatedUserEmail = user.Email;
+        string authenticatedUserEmail = user.Email ?? "";
         bool isImpersonating = false;
         
         // Diagnostic logging for impersonation setup
@@ -454,10 +460,10 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
             identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, effectiveUser.Id.ToString()));
         
         if (!identity.HasClaim(c => c.Type == ClaimTypes.Name))
-            identity.AddClaim(new Claim(ClaimTypes.Name, effectiveUser.UserName));
+            identity.AddClaim(new Claim(ClaimTypes.Name, effectiveUser.UserName ?? ""));
         
         if (!identity.HasClaim(c => c.Type == ClaimTypes.Email))
-            identity.AddClaim(new Claim(ClaimTypes.Email, effectiveUser.Email));
+            identity.AddClaim(new Claim(ClaimTypes.Email, effectiveUser.Email ?? ""));
         
         if (!identity.HasClaim(c => c.Type == "IsInternal"))
             identity.AddClaim(new Claim("IsInternal", effectiveUser.IsInternal.ToString()));
@@ -466,8 +472,8 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         if (isImpersonating)
         {
             identity.AddClaim(new Claim("IsImpersonating", "true"));
-            identity.AddClaim(new Claim("AuthenticatedServiceAccount", authenticatedUserEmail));
-            identity.AddClaim(new Claim("ImpersonatedUser", effectiveUser.Email));
+            identity.AddClaim(new Claim("AuthenticatedServiceAccount", authenticatedUserEmail ?? ""));
+            identity.AddClaim(new Claim("ImpersonatedUser", effectiveUser.Email ?? ""));
             _logger.LogInformation("🔐 [IMPERSONATION-AUDIT] Request authenticated as {ServiceAccount}, acting as {ImpersonatedUser}",
                 authenticatedUserEmail, effectiveUser.Email);
         }
@@ -511,7 +517,7 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
             appConfig?.GetValue<bool>("Development:IAPSimulation:Enabled", false) == true)
         {
             // Set a dev auth cookie to persist authentication (use effective user for consistency)
-            Response.Cookies.Append("DevIAPAuth", effectiveUser.Email, new Microsoft.AspNetCore.Http.CookieOptions
+            Response.Cookies.Append("DevIAPAuth", effectiveUser.Email ?? "", new Microsoft.AspNetCore.Http.CookieOptions
             {
                 HttpOnly = true,
                 Secure = Request.IsHttps,
@@ -563,9 +569,7 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         }
         
         // Primary Authentication: JWT Verification
-        bool jwtVerified = false;
         ClaimsPrincipal? jwtPrincipal = null;
-        string? verifiedEmail = null;
 
         if (Request.Headers.TryGetValue("X-Goog-IAP-JWT-Assertion", out var jwtHeaderValues))
         {
@@ -575,8 +579,7 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
                 jwtPrincipal = await VerifyIapJwtAndGetPrincipalAsync(jwt);
                 if (jwtPrincipal != null)
                 {
-                    jwtVerified = true;
-                    verifiedEmail = jwtPrincipal.FindFirstValue(ClaimTypes.Email);
+                    var verifiedEmail = jwtPrincipal.FindFirstValue(ClaimTypes.Email);
                     _logger.LogDebug("Successfully verified JWT for user: {Email}", verifiedEmail);
                     return true;
                 }
@@ -632,9 +635,9 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         _logger.LogDebug("Will try JWT validation with audiences: {Audiences}", string.Join(", ", audiences));
         
         // Try each audience format
-        SecurityToken validatedToken = null;
-        ClaimsPrincipal validatedPrincipal = null;
-        Exception lastException = null;
+        SecurityToken? validatedToken = null;
+        ClaimsPrincipal? validatedPrincipal = null;
+        Exception? lastException = null;
         
         foreach (var audience in audiences)
         {
@@ -674,7 +677,7 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         }
         
         // Extract the email claim from the validated token - try multiple possible claim types
-        string email = null;
+        string? email = null;
         
         // Common claim types for email in IAP tokens
         var emailClaimTypes = new[] { 
@@ -700,9 +703,10 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         // If still no email, check for the subject claim which might have the email
         if (string.IsNullOrEmpty(email))
         {
-            if (!string.IsNullOrEmpty(jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value) && (jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value).Contains("@"))
+            var subValue = jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+            if (!string.IsNullOrEmpty(subValue) && subValue.Contains("@"))
             {
-                email = (jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value);
+                email = subValue;
                 _logger.LogDebug("Using subject claim as email: {Email}", email);
             }
         }
@@ -734,9 +738,10 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         {
             foreach (var claim in jsonToken.Claims)
             {
-                if (claim.Value.Contains("@") && claim.Value.Contains("."))
+                var claimValue = claim.Value;
+                if (!string.IsNullOrEmpty(claimValue) && claimValue.Contains("@") && claimValue.Contains("."))
                 {
-                    email = claim.Value;
+                    email = claimValue;
                     _logger.LogDebug("Found potential email in claim {ClaimType}: {Email}", claim.Type, email);
                     break;
                 }
@@ -768,6 +773,11 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         
         // Add user identity claims if not already present
         var identity = validatedPrincipal.Identity as ClaimsIdentity;
+        if (identity == null)
+        {
+            throw new SecurityTokenException("Validated principal has no ClaimsIdentity");
+        }
+
         if (!validatedPrincipal.HasClaim(c => c.Type == ClaimTypes.Name))
         {
             identity.AddClaim(new Claim(ClaimTypes.Name, email));
@@ -785,7 +795,7 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         {
             if (!validatedPrincipal.HasClaim(c => c.Type == claim.Type && c.Value == claim.Value))
             {
-                identity.AddClaim(new Claim(claim.Type, claim.Value));
+                identity.AddClaim(new Claim(claim.Type, claim.Value ?? ""));
             }
         }
         

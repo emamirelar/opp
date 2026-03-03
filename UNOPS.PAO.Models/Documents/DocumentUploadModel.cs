@@ -3,9 +3,9 @@ using UNOPS.PAO.Domain.Enums;
 
 namespace UNOPS.PAO.Models.Documents;
 
-public class DocumentUploadModel: DocumentBaseCreateModel
+public class DocumentUploadModel : DocumentBaseCreateModel
 {
-    public IFormFile File { get; set; }
+    public IFormFile? File { get; set; }
     
     /// <summary>
     /// Flag to indicate if file should be uploaded to Google Cloud Storage
@@ -21,12 +21,12 @@ public class DocumentUploadModel: DocumentBaseCreateModel
     /// <summary>
     /// Google Drive link (optional - for files sourced from Drive)
     /// </summary>
-    public string? Link { get; set; }
+    public new string? Link { get; set; }
     
     /// <summary>
     /// Google Drive file ID (optional - for files sourced from Drive)
     /// </summary>
-    public string? GoogleId { get; set; }
+    public new string? GoogleId { get; set; }
 
     public bool? AITranscribed { get; set; }
 }
