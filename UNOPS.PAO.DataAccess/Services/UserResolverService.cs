@@ -11,19 +11,19 @@ public interface IEmailToUserIdResolver
 
 public class UserResolverService<TUserId>
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly string _userEmail;
-    private readonly int _userId;
-    private readonly IEmailToUserIdResolver _userLookupService;
+    private readonly IHttpContextAccessor? _httpContextAccessor;
+    private readonly string? _userEmail;
+    private readonly IEmailToUserIdResolver? _userLookupService;
 
-    public UserResolverService(IHttpContextAccessor context, IEmailToUserIdResolver userLookupService = null)
+    public UserResolverService(IHttpContextAccessor context, IEmailToUserIdResolver? userLookupService = null)
     {
         _httpContextAccessor = context;
         _userLookupService = userLookupService;
     }
 
-    public UserResolverService(string userEmail)
+    public UserResolverService(string? userEmail)
     {
+        _httpContextAccessor = null;
         _userEmail = userEmail;
     }
 
@@ -31,19 +31,19 @@ public class UserResolverService<TUserId>
     {
         // First try to get email from the email claim (this contains the actual email)
         // Identity.Name might contain the Firebase UID (sub claim) which is not what we want
-        var emailClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Email)?.Value;
+        var emailClaim = _httpContextAccessor?.HttpContext?.User?.FindFirst(ClaimTypes.Email)?.Value;
         if (!string.IsNullOrEmpty(emailClaim))
         {
             return emailClaim;
         }
         
         // Fallback to Identity.Name only if no email claim exists
-        return _userEmail ?? _httpContextAccessor.HttpContext?.User?.Identity?.Name;
+        return _userEmail ?? _httpContextAccessor?.HttpContext?.User?.Identity?.Name;
     }
 
     public string? GetUserName()
     {
-        return _userEmail ?? _httpContextAccessor.HttpContext?.User?.Identity?.Name;
+        return _userEmail ?? _httpContextAccessor?.HttpContext?.User?.Identity?.Name;
     }
 
     public bool IsImpersonator()
@@ -54,11 +54,10 @@ public class UserResolverService<TUserId>
 
     public TUserId GetCurrentUserId()
     {
-        var context = _httpContextAccessor.HttpContext;
+        var context = _httpContextAccessor?.HttpContext;
         if (context == null)
         {
-            // Console.WriteLine("[UserResolverService] Warning: HttpContext is null, returning default user ID");
-            return default;
+            return default!;
         }
             
         var user = context.User;
@@ -80,10 +79,9 @@ public class UserResolverService<TUserId>
                         return (TUserId)Convert.ChangeType(userId, typeof(TUserId));
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // Log but continue to other authentication methods
-                    // Console.WriteLine($"[UserResolverService] Error resolving impersonated user ID: {ex.Message}");
                 }
             }
         }
@@ -93,7 +91,7 @@ public class UserResolverService<TUserId>
         if (context.Request.Headers.TryGetValue("X-Goog-Authenticated-User-Email", out var headerValue) ||
             context.Request.Headers.TryGetValue("X-Dev-IAP-Simulation", out _))
         {
-            string email = null;
+            string? email = null;
             
             // Try to get email from the header first
             if (!string.IsNullOrEmpty(headerValue))
@@ -125,10 +123,9 @@ public class UserResolverService<TUserId>
                         }
                         // Console.WriteLine($"[UserResolverService] Failed to resolve email to user ID, got: {userId}");
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         // Log but don't throw to avoid breaking the app
-                        // Console.WriteLine($"[UserResolverService] Error resolving user ID from email: {ex.Message}");
                     }
                 }
                 
@@ -162,7 +159,6 @@ public class UserResolverService<TUserId>
         }
 
         // If all else fails, return default
-        // Console.WriteLine("[UserResolverService] No authentication found, returning default");
-        return default;
+        return default!;
     }
 }

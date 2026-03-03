@@ -49,14 +49,12 @@ using UNOPS.PAO.DataAccess.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
-using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.Models.Contacts;
 using UNOPS.PAO.Models.Interactions;
 using UNOPS.PAO.Models.Partners;
 using UNOPS.PAO.Models.AI;
 using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Models.Opportunities;
-using UNOPS.PAO.Domain.Infrastructure;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -1134,7 +1132,7 @@ public class UNOPSGeminiManager : IGeminiManager
         }
     }
 
-    public async Task<dynamic> GenerateEmbeddings(string entityName)
+    public async Task<dynamic> GenerateEmbeddings(string? entityName)
     {
         var tableNames = _context.GetType()
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)

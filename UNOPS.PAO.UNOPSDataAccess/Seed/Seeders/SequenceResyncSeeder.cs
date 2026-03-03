@@ -75,12 +75,15 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                 try
                 {
                     // Use GREATEST to ensure the sequence is set to at least 1 (sequences can't be 0)
+                    // tableName and sequenceName come from hardcoded list - not user input
+#pragma warning disable EF1002 // SQL identifiers cannot be parameterized
                     await context.Database.ExecuteSqlRawAsync($@"
                         SELECT setval(
                             'public.""{sequenceName}""',
                             GREATEST((SELECT COALESCE(MAX(""Id""), 0) FROM public.""{tableName}""), 1)
                         );
                     ");
+#pragma warning restore EF1002
 
                     Console.WriteLine($"  ✅ {tableName}: Sequence resynchronized");
                 }

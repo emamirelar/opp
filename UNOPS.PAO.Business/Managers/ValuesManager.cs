@@ -1,4 +1,4 @@
-﻿namespace UNOPS.PAO.Business.Managers;
+namespace UNOPS.PAO.Business.Managers;
 
 using AutoMapper;
 using UNOPS.PAO.Business.Repositories;
@@ -18,7 +18,6 @@ using UNOPS.PAO.Models.Values;
 using UNOPS.PAO.Models.SDG;
 using UNOPS.PAO.Models.UNCF;
 using UNOPS.PAO.Models;
-using UNOPS.PAO.Models.OrganizationUnits;
 
 public class ValuesManager : IApplicationService
 {

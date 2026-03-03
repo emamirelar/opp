@@ -2460,7 +2460,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         ClaimsPrincipal user, 
         string searchText, 
         int maxResults = 50,
-        PaginationRequest request = null)
+        PaginationRequest? request = null)
     {
         try
         {
@@ -2523,7 +2523,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         string searchText, 
         bool includeInactive = false,
         int maxResults = 50,
-        PaginationRequest request = null)
+        PaginationRequest? request = null)
     {
         return await SmartSearchPartnersAsync(user, searchText, maxResults, request);
     }

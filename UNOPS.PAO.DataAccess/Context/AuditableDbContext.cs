@@ -50,27 +50,27 @@ public class AuditableDbContext<TId, TUserId> : DbContext, IDbContextSchema
                 // Only set CreatedBy if it hasn't been explicitly set or is default value
                 if (EqualityComparer<TUserId>.Default.Equals(currentCreatedBy, defaultUserId))
                 {
-                    created.SetCreateAuditData(_currentUserId);
+                    created.SetCreateAuditData(_currentUserId!);
                 }
                 else
                 {
                     // CreatedBy was explicitly set, only set CreatedDate
                     created.CreatedDate = DateTime.UtcNow.ToUniversalTime();
                 }
-                
-                created.SetUpdateAuditData(_currentUserId);
+
+                created.SetUpdateAuditData(_currentUserId!);
             }
             
             if (entry is { Entity: IModifiableEntity<TId, TUserId> modifiable, State: EntityState.Modified})
             {
-                modifiable.SetUpdateAuditData(_currentUserId);
+                modifiable.SetUpdateAuditData(_currentUserId!);
             }
 
             if (entry is { Entity: IDeletableEntity<TUserId> deletable, State: EntityState.Deleted })
             {
                 // Perform soft delete
                 entry.State = EntityState.Modified;
-                deletable.SetDeleteAuditData(_currentUserId);
+                deletable.SetDeleteAuditData(_currentUserId!);
             }
         }
     }

@@ -32,7 +32,7 @@ public class UserProfileCacheService : IUserProfileCacheService
         return $"{CACHE_KEY_PREFIX}{userId}";
     }
 
-    public async Task<object?> GetCachedUserProfileAsync(string userId)
+    public Task<object?> GetCachedUserProfileAsync(string userId)
     {
         try
         {
@@ -40,20 +40,20 @@ public class UserProfileCacheService : IUserProfileCacheService
             if (_cache.TryGetValue(cacheKey, out var cachedProfile))
             {
                 _logger.LogDebug("Retrieved user profile from cache for user: {UserId}", userId);
-                return cachedProfile;
+                return Task.FromResult<object?>(cachedProfile);
             }
             
             _logger.LogDebug("User profile not found in cache for user: {UserId}", userId);
-            return null;
+            return Task.FromResult<object?>(null);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving user profile from cache for user: {UserId}", userId);
-            return null;
+            return Task.FromResult<object?>(null);
         }
     }
 
-    public async Task SetCachedUserProfileAsync(string userId, object userProfile)
+    public Task SetCachedUserProfileAsync(string userId, object userProfile)
     {
         try
         {
@@ -72,6 +72,7 @@ public class UserProfileCacheService : IUserProfileCacheService
         {
             _logger.LogError(ex, "Error caching user profile for user: {UserId}", userId);
         }
+        return Task.CompletedTask;
     }
 
     public void InvalidateUserProfileCache(string userId)
@@ -88,7 +89,7 @@ public class UserProfileCacheService : IUserProfileCacheService
         }
     }
 
-    public async Task<Dictionary<int, string>> GetCachedUserNamesBatchAsync(IEnumerable<int> userIds)
+    public Task<Dictionary<int, string>> GetCachedUserNamesBatchAsync(IEnumerable<int> userIds)
     {
         var result = new Dictionary<int, string>();
         var uncachedUserIds = new List<int>();
@@ -115,13 +116,13 @@ public class UserProfileCacheService : IUserProfileCacheService
         {
             _logger.LogError(ex, "Error retrieving user names from cache");
             // Return empty result and let caller handle all users as uncached
-            return new Dictionary<int, string>();
+            return Task.FromResult(new Dictionary<int, string>());
         }
 
-        return result;
+        return Task.FromResult(result);
     }
 
-    public async Task SetCachedUserNamesBatchAsync(Dictionary<int, string> userNames)
+    public Task SetCachedUserNamesBatchAsync(Dictionary<int, string> userNames)
     {
         try
         {
@@ -145,5 +146,6 @@ public class UserProfileCacheService : IUserProfileCacheService
         {
             _logger.LogError(ex, "Error caching user names batch");
         }
+        return Task.CompletedTask;
     }
 }

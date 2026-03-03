@@ -125,7 +125,7 @@ public class BaseEngagementManager : BaseUNOPSManager, IBaseEngagementManager
     /// Implementation of abstract method from BaseUNOPSManager
     /// Gets basic entity data for AI prompts and generic operations
     /// </summary>
-    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
+    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal? user = null)
     {
         if (user != null)
         {

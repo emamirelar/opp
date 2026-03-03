@@ -42,7 +42,7 @@ public class SearchResult
 {
     public int EntityId { get; set; }
     public float Score { get; set; }
-    public string SearchType { get; set; }
+    public string SearchType { get; set; } = string.Empty;
 }
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers
@@ -54,23 +54,23 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         private readonly IConfiguration _configuration;
         public readonly UNOPSAppDbContext _context;
         private readonly DataRepository<AiPrompt> _promptRepository;
-        private readonly GoogleCredential _credentials;
+        private readonly GoogleCredential? _credentials;
         protected readonly PubSubPublisher _pubSubPublisher;
         private readonly string _connectionString;
-        private readonly IAiPromptCacheService _aiPromptCacheService;
-        private readonly ILogger _logger;
+        private readonly IAiPromptCacheService? _aiPromptCacheService;
+        private readonly ILogger? _logger;
         private readonly bool _disableExternalCalls;
 
         public AiContextualService(
             IConfiguration configuration,
             UNOPSAppDbContext context,
-            GoogleCredential credentials,
-            IAiPromptCacheService aiPromptCacheService = null,
-            ILogger logger = null)
+            GoogleCredential? credentials = null,
+            IAiPromptCacheService? aiPromptCacheService = null,
+            ILogger? logger = null)
         {
             _configuration = configuration;
             _context = context;
-            _connectionString = configuration.GetValue<string>("ConnectionStrings:DbSchema");
+            _connectionString = configuration.GetValue<string>("ConnectionStrings:DbSchema") ?? string.Empty;
             _credentials = credentials;
             _promptRepository = new DataRepository<AiPrompt>(context);
             _pubSubPublisher = new PubSubPublisher(configuration);
@@ -78,9 +78,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             _logger = logger; // Optional logger for keyword generation
             _disableExternalCalls = configuration.GetValue<bool>("AISettings:DisableExternalCalls") ||
                 string.Equals(configuration["ASPNETCORE_ENVIRONMENT"], "Testing", StringComparison.OrdinalIgnoreCase);
-            var projectId = _configuration.GetValue<string>("AISettings:ProjectId");
-            var location = _configuration.GetValue<string>("AISettings:Location");
-            var model = _configuration.GetValue<string>("AISettings:EmbeddingModelName");
+            var projectId = _configuration.GetValue<string>("AISettings:ProjectId") ?? string.Empty;
+            var location = _configuration.GetValue<string>("AISettings:Location") ?? string.Empty;
+            var model = _configuration.GetValue<string>("AISettings:EmbeddingModelName") ?? string.Empty;
             _endpoint = $"projects/{projectId}/locations/{location}/publishers/google/models/{model}";
             _predictionClient = _disableExternalCalls ? null : PredictionServiceClient.Create(); // gRPC Client
         }
@@ -120,7 +120,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     if (!simplePathPattern.IsMatch(propertyPath))
                         continue; // Skip JSON-like content (e.g. " \"isAligned\": true")
 
-                    var value = GetNestedPropertyValue(dataObject, propertyPath);
+                    var value = dataObject != null ? GetNestedPropertyValue(dataObject, propertyPath) : null;
 
                     if (value != null)
                     {
@@ -147,7 +147,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         /// <summary>
         /// Gets nested property value from JObject using dot notation (e.g., "partner.name")
         /// </summary>
-        private string GetNestedPropertyValue(JObject dataObject, string propertyPath)
+        private string? GetNestedPropertyValue(JObject dataObject, string propertyPath)
         {
             try
             {
@@ -324,7 +324,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return result;
         }
 
-        public async Task<List<SearchResult>> ExecuteEmbeddingSearchMultiple(string entityName, string embeddingVector, float embeddingThreshold = 0.7f, int resultLimit = 10, string whereCondition = null)
+        public async Task<List<SearchResult>> ExecuteEmbeddingSearchMultiple(string entityName, string embeddingVector, float embeddingThreshold = 0.7f, int resultLimit = 10, string? whereCondition = null)
         {
             var sql = "SELECT entityId, score, search_type FROM public.retrieve_embedding_search_multiple(@entityName, @embedding, @embeddingThreshold, @resultLimit, @where)";
             
@@ -361,7 +361,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return results;
         }
 
-        public async Task<List<SearchResult>> RetrieveSimilarityIds(string entityName, string similarityCriteria, string vectorEmbedding=null, float similarityThreshold=0.3f, float embeddingThreshold=0.7f, string whereCondition=null)
+        public async Task<List<SearchResult>> RetrieveSimilarityIds(string entityName, string similarityCriteria, string? vectorEmbedding=null, float similarityThreshold=0.3f, float embeddingThreshold=0.7f, string? whereCondition=null)
         {
             var sql = "SELECT entityId, score, search_type FROM public.retrieve_similarity_results(@entityName, @text, @embedding, @similarityThreshold, @embeddingThreshold, @where)";
 
@@ -404,13 +404,13 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return results;
         }
 
-        public async Task<string> ReadFileData(string fileId, string sheetName = null)
+        public async Task<string> ReadFileData(string fileId, string? sheetName = null)
         {
             try
             {
                 var service = new SheetsService(new BaseClientService.Initializer
                 {
-                    HttpClientInitializer = _credentials,
+                    HttpClientInitializer = _credentials ?? await GoogleCredential.GetApplicationDefaultAsync(),
                     ApplicationName = "GoogleSheetsReader",
                 });
                 var spreadsheet = service.Spreadsheets.Get(fileId).Execute();
@@ -490,7 +490,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         }).ToList();
     }
 
-    public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData, string entityId = null, bool bypassCache = false)
+    public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData, string? entityId = null, bool bypassCache = false)
     {
         try
         {
@@ -563,7 +563,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         string relatedJsonData, 
         string documentStoragePath, 
         string documentMimeType,
-        string entityId = null, 
+        string? entityId = null, 
         bool bypassCache = false)
     {
         try
@@ -643,7 +643,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         AiPrompt promptData, 
         string relatedJsonData, 
         List<(string storagePath, string mimeType)> documents,
-        string entityId = null, 
+        string? entityId = null, 
         bool bypassCache = false)
     {
         try
@@ -723,7 +723,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
     }
 
     // Common function to handle Gemini API calls
-    public async Task<string> CallGeminiApi(dynamic prompt, AiPrompt promptData, string systemInstructions = null)
+    public async Task<string> CallGeminiApi(dynamic prompt, AiPrompt promptData, string? systemInstructions = null)
     {
         if (_disableExternalCalls)
         {
@@ -794,7 +794,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             await _pubSubPublisher.PublishMessageAsync(new List<MyPubSubMessage> { message });
         }
 
-        public async Task<dynamic> GetRequestBody(dynamic prompt, AiPrompt promptData, string systemInstructions = null)
+        public async Task<dynamic> GetRequestBody(dynamic prompt, AiPrompt promptData, string? systemInstructions = null)
         {
             dynamic contentConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.ContentConfig);
             dynamic generationConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.GenerationConfig);
@@ -945,8 +945,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             int userId, 
             string entityName, 
             bool isAsync = false,
-            Func<int, int, List<dynamic>, Task<bool>> progressCallback = null,
-            string fileId = null,
+            Func<int, int, List<dynamic>, Task<bool>>? progressCallback = null,
+            string? fileId = null,
             int? notificationId = null)
         {
             var finalResponse = new List<dynamic>();
@@ -1330,9 +1330,10 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                 // Handle single text value (existing behavior)
                                 dynamic entityId;
                                 int id;
-                                if (text?.Value != null)
+                                // Unwrap JValue to underlying value; text may already be string (e.g. from proposedInitiativeTypeId)
+                                if (text is JValue jVal && jVal.Value != null)
                                 {
-                                    text = text.Value;
+                                    text = jVal.Value;
                                 }
                                 
                                 // Check if 'text' is already a numeric value (long/int)
@@ -3167,7 +3168,7 @@ Keywords:";
         /// <param name="textArray">Array of text values to convert to objects</param>
         /// <param name="dependent">The dependent field name being processed</param>
         /// <param name="partnerBudgets">Optional array of partner budget allocations (used for funding partners)</param>
-        private async Task<JArray> BuildOpportunityCollectionObjects(JArray textArray, string dependent, JArray partnerBudgets = null)
+        private async Task<JArray> BuildOpportunityCollectionObjects(JArray textArray, string dependent, JArray? partnerBudgets = null)
         {
             var objectsArray = new JArray();
             
@@ -3828,8 +3829,8 @@ Keywords:";
         public int HighConfidence { get; set; }
         public int MediumConfidence { get; set; }
         public int LowConfidence { get; set; }
-        public DuplicateMatch TopDuplicate { get; set; }
-        public dynamic AllDuplicates { get; set; }
+        public DuplicateMatch TopDuplicate { get; set; } = null!;
+        public dynamic AllDuplicates { get; set; } = null!;
     }
 
     /// <summary>
@@ -3838,11 +3839,11 @@ Keywords:";
     public class DuplicateMatch
     {
         public int EntityId { get; set; }
-        public string EntityType { get; set; }
+        public string EntityType { get; set; } = string.Empty;
         public double Score { get; set; }
-        public string MatchReason { get; set; }
-        public dynamic MatchedData { get; set; }
-        public string SearchType { get; set; }
+        public string MatchReason { get; set; } = string.Empty;
+        public dynamic MatchedData { get; set; } = null!;
+        public string SearchType { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -3864,7 +3865,7 @@ Keywords:";
     public class InternalDuplicateGroup
     {
         public int MasterIndex { get; set; }
-        public dynamic MasterRecord { get; set; }
+        public dynamic MasterRecord { get; set; } = null!;
         public List<int> DuplicateIndices { get; set; } = new List<int>();
         public List<dynamic> DuplicateRecords { get; set; } = new List<dynamic>();
         public List<string> MatchReasons { get; set; } = new List<string>();

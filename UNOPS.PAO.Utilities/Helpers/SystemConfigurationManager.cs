@@ -1,11 +1,11 @@
-﻿namespace UNOPS.PAO.Utilities.Helpers;
+namespace UNOPS.PAO.Utilities.Helpers;
 
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 
 public class SystemConfigurationManager
 {
-    private readonly IWebHostEnvironment environment;
+    private readonly IWebHostEnvironment? environment;
 
     public SystemConfigurationManager(IWebHostEnvironment environment)
     {
@@ -14,6 +14,7 @@ public class SystemConfigurationManager
 
     public SystemConfigurationManager()
     {
+        environment = null;
     }
 
     public IConfigurationRoot GetConfiguration()
