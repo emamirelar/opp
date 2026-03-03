@@ -21,7 +21,6 @@ using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Domain.Specifications;
 using System.Security.Claims;
 using UNOPS.PAO.Business.Extensions;
-using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Models.Partners;
 using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Models.Integrations;

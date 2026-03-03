@@ -11,7 +11,7 @@ public class CloudRunHelper
 {
     private readonly IMemoryCache _cache;
     private readonly ILogger<CloudRunHelper> _logger;
-    private readonly GoogleCredential _credential;
+    private readonly GoogleCredential _credential = null!;
 
     public CloudRunHelper(ILogger<CloudRunHelper> logger, GoogleCredential? credential = null)
     {
@@ -129,14 +129,14 @@ public class CloudRunHelper
                     oidcTokenOptions?.TargetAudience ?? "null");
                 
                 _logger?.LogInformation("GetIdTokenAsync: Calling GetOidcTokenAsync...");
-                var oidcToken = await _credential.GetOidcTokenAsync(oidcTokenOptions);
+                var oidcToken = await _credential!.GetOidcTokenAsync(oidcTokenOptions);
                 _logger?.LogInformation("GetIdTokenAsync: OIDC token received. Type: {TokenType}", 
                     oidcToken?.GetType()?.Name ?? "null");
                 
                 // Note: Despite the confusing name, GetAccessTokenAsync() on an OidcToken 
                 // actually returns the ID token string, not an access token
                 _logger?.LogInformation("GetIdTokenAsync: Calling GetAccessTokenAsync on OIDC token...");
-                var idToken = await oidcToken.GetAccessTokenAsync();
+                var idToken = await (oidcToken ?? throw new InvalidOperationException("OIDC token is null")).GetAccessTokenAsync();
                 
                 _logger?.LogInformation("GetIdTokenAsync: ID token generated successfully. Length: {TokenLength}, Starts with: {TokenPrefix}", 
                     idToken?.Length ?? 0, 
@@ -236,7 +236,7 @@ public class CloudRunHelper
         try
         {
             var resolvedServiceUrl = await GetCloudRunServiceUrl(projectId, location, serviceName);
-            var serviceClient = new CloudRunServiceClient(resolvedServiceUrl, _credential, _logger);
+            var serviceClient = new CloudRunServiceClient(resolvedServiceUrl, _credential!, _logger);
             return await serviceClient.CreateAuthenticatedHttpClient();
         }
         catch (Exception ex)
@@ -254,7 +254,7 @@ public class CloudRunHelper
             _logger.LogInformation("CloudRunHelper: CreateAuthenticatedHttpClientForUrl called with serviceUrl: {ServiceUrl}", serviceUrl);
             _logger.LogInformation("CloudRunHelper: Using credential type: {CredentialType}", _credential?.GetType()?.Name ?? "null");
             
-            var serviceClient = new CloudRunServiceClient(serviceUrl, _credential, _logger);
+            var serviceClient = new CloudRunServiceClient(serviceUrl, _credential!, _logger);
             _logger.LogInformation("CloudRunHelper: Created CloudRunServiceClient, calling CreateAuthenticatedHttpClient...");
             
             var httpClient = await serviceClient.CreateAuthenticatedHttpClient();

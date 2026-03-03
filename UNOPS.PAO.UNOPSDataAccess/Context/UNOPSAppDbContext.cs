@@ -28,7 +28,7 @@ public class UNOPSAppDbContext : AppDbContext
     public DbSet<EntityPermission> EntityPermissions { get; set; }
     
     // Reference data tables
-    public DbSet<LiaisonOffice> LiaisonOffices { get; set; }
+    public new DbSet<LiaisonOffice> LiaisonOffices { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -480,7 +480,7 @@ public class UNOPSAppDbContext : AppDbContext
     public new DbSet<UNOPSPartner> Partners { get; set; }
     public new DbSet<UNOPSLink> Links { get; set; }
 
-    public new DbSet<AiChatSession> AiChatSession { get; set; }
+    public DbSet<AiChatSession> AiChatSession { get; set; }
     public new DbSet<UNOPSDocument> Documents { get; set; }
     //Removed OrganizationHierarchies and OrganizationUnitRelationships from UNOPSAppDbContext to avoid shadowing issue as they are already present in AppDbContext
     public new DbSet<UNOPSPartnerTree> PartnerTrees { get; set; }

@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Business.Interfaces;
@@ -25,7 +25,7 @@ public class UserDataManager : IUserDataManager
         var user = context.PAOUsers.FirstOrDefault(u => u.Id == id);
         if (user == null)
             return Task.FromResult<PAOUserModel?>(null);
-        return Task.FromResult(mapper.Map<PAOUserModel>(user));
+        return Task.FromResult<PAOUserModel?>(mapper.Map<PAOUserModel>(user));
     }
 
     public Task<PAOUserModel?> GetUserByEmailAsync(string email)
@@ -33,7 +33,7 @@ public class UserDataManager : IUserDataManager
         var user = context.PAOUsers.FirstOrDefault(u => u.Email == email);
         if (user == null)
             return Task.FromResult<PAOUserModel?>(null);
-        return Task.FromResult(mapper.Map<PAOUserModel>(user));
+        return Task.FromResult<PAOUserModel?>(mapper.Map<PAOUserModel>(user));
     }
 
     public Task<PAOUserModel?> GetCurrentUserAsync()

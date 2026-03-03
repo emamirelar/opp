@@ -14,7 +14,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers;
 public class GoogleDriveDocumentManager : IGoogleDriveDocumentManager
 {
     private readonly IConfiguration _configuration;
-    private DriveService _driveService;
+    private DriveService _driveService = null!;
     private static readonly int MaxRetries = 5;
     private static readonly int InitialRetryDelayMs = 1000;
     private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
@@ -96,7 +96,7 @@ public class GoogleDriveDocumentManager : IGoogleDriveDocumentManager
         };
     }
 
-    public Dictionary<string, string> CopyFile(string fileId, string fileName, string parentFolderId, string mimeType = "application/octet-stream", string userToImpersonate = null)
+    public Dictionary<string, string> CopyFile(string fileId, string fileName, string parentFolderId, string mimeType = "application/octet-stream", string? userToImpersonate = null)
     {
         _driveService = InitializeDriveService(userToImpersonate);
 

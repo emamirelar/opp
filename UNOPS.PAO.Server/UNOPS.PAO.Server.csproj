@@ -4,6 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <NoWarn>$(NoWarn);CS0105;CS0618;CS8600;CS8601;CS8602;CS8604</NoWarn>
     <SpaRoot>..\UNOPS.PAO.ClientApp</SpaRoot>
     <SpaProxyLaunchCommand>npm start</SpaProxyLaunchCommand>
     <SpaProxyServerUrl>https://localhost:44426</SpaProxyServerUrl>

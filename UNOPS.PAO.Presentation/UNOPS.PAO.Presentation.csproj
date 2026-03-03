@@ -8,7 +8,7 @@
     <!-- Enable XML Documentation Generation for Tools.json Automation -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
-    <NoWarn>$(NoWarn);1591;1571;1572;1573;1587</NoWarn> <!-- Suppress XML doc warnings: missing, duplicate param, wrong param, invalid placement -->
+    <NoWarn>$(NoWarn);1591;1571;1572;1573;1587;CS8601;CS8603</NoWarn> <!-- Suppress XML doc warnings + nullability -->
   </PropertyGroup>
 
   <ItemGroup>

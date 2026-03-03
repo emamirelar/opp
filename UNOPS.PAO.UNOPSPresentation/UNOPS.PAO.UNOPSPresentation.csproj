@@ -1,9 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);CS0108;CS8600;CS8602;CS8604;CS8619</NoWarn>
   </PropertyGroup>
 
 	<ItemGroup>

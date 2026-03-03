@@ -19,7 +19,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Utilities
         /// <param name="scriptsSubdirectory">Optional subdirectory within Scripts (default is root)</param>
         /// <exception cref="FileNotFoundException">Thrown when the SQL script file cannot be found</exception>
         /// <exception cref="InvalidOperationException">Thrown when script execution fails</exception>
-        public static void ExecuteSqlScript(MigrationBuilder migrationBuilder, string scriptFileName, string scriptsSubdirectory = null)
+        public static void ExecuteSqlScript(MigrationBuilder migrationBuilder, string scriptFileName, string? scriptsSubdirectory = null)
         {
             if (migrationBuilder == null)
                 throw new ArgumentNullException(nameof(migrationBuilder));
@@ -44,7 +44,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Utilities
         /// <param name="migrationBuilder">The migration builder instance</param>
         /// <param name="scriptFileNames">Array of SQL script file names to execute in order</param>
         /// <param name="scriptsSubdirectory">Optional subdirectory within Scripts (default is root)</param>
-        public static void ExecuteSqlScripts(MigrationBuilder migrationBuilder, string[] scriptFileNames, string scriptsSubdirectory = null)
+        public static void ExecuteSqlScripts(MigrationBuilder migrationBuilder, string[] scriptFileNames, string? scriptsSubdirectory = null)
         {
             if (migrationBuilder == null)
                 throw new ArgumentNullException(nameof(migrationBuilder));
@@ -65,7 +65,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Utilities
         /// <param name="scriptsSubdirectory">Optional subdirectory within Scripts</param>
         /// <returns>The content of the SQL script</returns>
         /// <exception cref="FileNotFoundException">Thrown when the SQL script file cannot be found</exception>
-        public static string ReadSqlScript(string scriptFileName, string scriptsSubdirectory = null)
+        public static string ReadSqlScript(string scriptFileName, string? scriptsSubdirectory = null)
         {
             if (string.IsNullOrWhiteSpace(scriptFileName))
                 throw new ArgumentException("Script file name cannot be null or empty", nameof(scriptFileName));
@@ -74,7 +74,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Utilities
             {
                 // Get the current assembly location
                 var assemblyLocation = Assembly.GetExecutingAssembly().Location;
-                var assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
+                var assemblyDirectory = Path.GetDirectoryName(assemblyLocation)
+                    ?? throw new InvalidOperationException("Could not determine assembly directory");
                 
                 // Find scripts in the local Scripts folder
                 var scriptPath = FindLocalScript(assemblyDirectory, scriptFileName, scriptsSubdirectory);
@@ -97,7 +98,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Utilities
         /// <param name="scriptFileName">The name of the SQL script file</param>
         /// <param name="scriptsSubdirectory">Optional subdirectory within UNOPS.PAO.Scripts</param>
         /// <returns>True if the script file exists, false otherwise</returns>
-        public static bool ScriptExists(string scriptFileName, string scriptsSubdirectory = null)
+        public static bool ScriptExists(string scriptFileName, string? scriptsSubdirectory = null)
         {
             try
             {
@@ -117,7 +118,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Utilities
         /// <param name="scriptFileName">The script file name</param>
         /// <param name="scriptsSubdirectory">Optional subdirectory</param>
         /// <returns>The full path to the script file</returns>
-        private static string FindLocalScript(string assemblyDirectory, string scriptFileName, string scriptsSubdirectory)
+        private static string FindLocalScript(string assemblyDirectory, string scriptFileName, string? scriptsSubdirectory)
         {
             // Look for Scripts folder relative to the assembly directory
             var scriptsPath = Path.Combine(assemblyDirectory, "Scripts");
