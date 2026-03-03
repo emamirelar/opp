@@ -24,7 +24,7 @@ public class ContactCompositeSpecification : GenericCompositeSpecification<Conta
         : base(filter)
     {
         // Include the related partner
-        AddInclude(c => c.Partner);
+        AddInclude(c => c.Partner!);
         
         // Apply dynamic ordering based on filter properties
         ApplyDynamicOrdering(filter);

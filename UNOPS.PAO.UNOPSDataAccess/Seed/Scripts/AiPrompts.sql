@@ -1663,8 +1663,8 @@ Create a comprehensive summary including their complete profile, interaction his
 ### Organizational & Initiative Type (camelCase)
 - **responsibleOrgUnitId** (int?): ID of the responsible organizational unit (use null if extracting text name)
 - **responsibleOrgUnitName** (string?): Name of the responsible organizational unit (e.g., "Global Infrastructure Unit", "East Africa Regional Office")
-- **proposedInitiativeTypeId** (int?): Type identifier for the proposed initiative (use null if extracting text name)
-- **proposedInitiativeTypeName** (string?): Name of the proposed initiative type. **VALID VALUES ONLY**: "Project", "Programme", or "Portfolio". Map document content to one of these three types: "Project" = single initiative with defined scope; "Programme" = collection of related projects; "Portfolio" = collection of programmes and projects. Add "proposedInitiativeTypeId" to dependents array for resolution.
+- **proposedInitiativeTypeId** (int?): Type identifier for the proposed initiative (use null if extracting text name). **MUST add "proposedInitiativeTypeId" to dependents array** for backend resolution to dropdown ID.
+- **proposedInitiativeTypeName** (string?): **Proposed initiative to be developed** - Name of the proposed initiative type (dropdown in Team section). **ONLY these three values can be resolved - use exactly one**: "Project", "Programme", or "Portfolio". Any other value (e.g., "Initiative", "Activity", "Program") CANNOT be resolved. Map document content: "Project" = single initiative with defined scope; "Programme" = collection of related projects; "Portfolio" = collection of programmes and projects. If unclear, default to "Project". **ALWAYS add "proposedInitiativeTypeId" to dependents** so the backend can resolve the text name to the dropdown ID.
 
 ### Financial & Timeline (camelCase)
 - **initiativeBudgetUSD** (decimal?): Total proposed budget in USD when NO PARTNER-SPECIFIC breakdown is available. Use this ONLY when the document mentions a total/overall budget without specifying which partner is contributing what amount. Convert to numeric: "$65 million" → 65000000
@@ -1687,7 +1687,7 @@ Create a comprehensive summary including their complete profile, interaction his
 - **isTargetSigningDateFirm** (boolean?): Whether the signing date is a firm deadline from the partner
 - **signingDateNotes** (string?, max 1000 characters): Notes about the signing date (e.g., partner deadline, submission closing date). MUST NOT exceed 1000 characters.
 - **submissionDeadline** (DateTime?): Partner submission or proposal deadline (ISO 8601 format)
-- **implementationStartDate** (DateTime?): When implementation is expected to start (ISO 8601 format)
+- **implementationStartDate** (DateTime?): When implementation is expected to start (ISO 8601 format). **CRITICAL DEFAULT**: If targetSigningDate is extracted but implementationStartDate is NOT mentioned in the document, set implementationStartDate = targetSigningDate (same value). The UI defaults implementation start date to target signing date when not explicitly set.
 - **targetDeliveryDate** (DateTime?): Target delivery or completion date (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ)
 
 ### Strategic Information (camelCase)
@@ -1728,6 +1728,8 @@ Create a comprehensive summary including their complete profile, interaction his
 2. Populate the corresponding Name field with the extracted text
 3. **Add the field name to the "dependents" array** so the system knows to resolve these text names to IDs using similarity matching
 
+**For proposedInitiativeTypeName specifically:** Use ONLY "Project", "Programme", or "Portfolio". Any other value cannot be resolved by the backend. Map "Program" → "Programme"; map "Initiative", "Activity", or similar → "Project" (or the closest of the three). If unclear, use "Project".
+
 **For Collection Fields (fundingPartners, clientPartners, stakeholders, teamMembers, deliverables, countries, sdGs, unopsMissions):**
 - Extract as **simple arrays of text strings**
 - Add the collection field name to the "dependents" array
@@ -1738,6 +1740,7 @@ Create a comprehensive summary including their complete profile, interaction his
 - If you extract "World Bank" as funder → Add "World Bank" to **fundingPartners** array, add "fundingPartners" to dependents
 - If you extract content indicating a "single initiative with defined scope" → Set proposedInitiativeTypeId = null, proposedInitiativeTypeName = "Project", add "proposedInitiativeTypeId" to dependents
 - If you extract content indicating "multiple related projects" → Set proposedInitiativeTypeId = null, proposedInitiativeTypeName = "Programme", add "proposedInitiativeTypeId" to dependents
+- If you extract content indicating "collection of programmes/projects" → Set proposedInitiativeTypeName = "Portfolio". **NEVER use any value other than Project, Programme, or Portfolio** - other values cannot be resolved
 - If you extract "Jane Smith - UNOPS Project Manager" → Add to **teamMembers** array, add "teamMembers" to dependents
 
 ## Analysis Instructions
@@ -1753,13 +1756,13 @@ Create a comprehensive summary including their complete profile, interaction his
    - Multi-donor or pooled funding indicators (for **isPooledFunding** field)
    - Partner organization names (funding sources → **fundingPartners**, client entities → **clientPartners**)
    - Organizational unit names (for **responsibleOrgUnitName** field)
-   - Initiative type names (for **proposedInitiativeTypeName** field)
+   - Initiative type names (for **proposedInitiativeTypeName** field - ONLY "Project", "Programme", or "Portfolio"; map any other wording to the closest of these three)
    - Geographic locations, country names (for **countries** array)
    - SDG references (SDG 1, SDG 6, Goal 9, etc. → **sdGs** array)
    - UNOPS Strategic Mission alignments (references to climate, energy, health, digital, etc. → **unopsMissions** array)
    - Dates for signing, delivery, completion (for **targetSigningDate**, **targetDeliveryDate** fields)
    - Proposal submission deadlines (for **submissionDeadline** field)
-   - Implementation start dates (for **implementationStartDate** field)
+   - Implementation start dates (for **implementationStartDate** field). **When targetSigningDate is extracted but implementationStartDate is NOT mentioned, set implementationStartDate = targetSigningDate**
    - Firm deadline indicators (for **isTargetSigningDateFirm**, **signingDateNotes** fields)
    - Deliverables, outputs, or project components (for **deliverables** array)
    - Stakeholder names and roles (for **stakeholders** array - external stakeholders)
@@ -1772,13 +1775,15 @@ Create a comprehensive summary including their complete profile, interaction his
 
 2. **Use null or empty arrays** for fields where no information is available in the document
 
-3. **Format dates** as ISO 8601 timestamps (YYYY-MM-DDTHH:mm:ss.sssZ)
+3. **Implementation start date default**: When you extract **targetSigningDate** but **implementationStartDate** is NOT mentioned, set implementationStartDate = targetSigningDate (same ISO 8601 value). The UI defaults implementation start to signing date when not set.
 
-4. **Extract numeric values** from text (e.g., "$1.5 million" → 1500000, "USD 65 million" → 65000000)
+4. **Format dates** as ISO 8601 timestamps (YYYY-MM-DDTHH:mm:ss.sssZ)
 
-5. **Preserve original language** and terminology from the document
+5. **Extract numeric values** from text (e.g., "$1.5 million" → 1500000, "USD 65 million" → 65000000)
 
-6. **Always include the "dependents" array** listing all fields that need ID resolution
+6. **Preserve original language** and terminology from the document
+
+7. **Always include the "dependents" array** listing all fields that need ID resolution (including responsibleOrgUnitId, proposedInitiativeTypeId)
 
 **EXAMPLE - What to Extract:**
 - Document says "Sustainable Water Infrastructure Development Program" → Extract as **name**
@@ -2908,10 +2913,10 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 - **description** (string): Expand and enhance the user-provided description by incorporating relevant details from interactions (discussion points, objectives, scope mentioned in meetings/emails) AND documents (key points from document names and descriptions)
 
 ### Organizational & Initiative Type (camelCase)
-- **responsibleOrgUnitId** (int?): Always set to null (will be resolved from text name)
-- **responsibleOrgUnitName** (string?): Extract the UNOPS organizational unit mentioned in interactions (look at users'' org units from interaction participants)
-- **proposedInitiativeTypeId** (int?): Always set to null (will be resolved from text name)
-- **proposedInitiativeTypeName** (string?): Infer the initiative type from interaction content AND document types/names. **VALID VALUES ONLY**: "Project", "Programme", or "Portfolio". Map content to one of these three types: "Project" = single initiative with defined scope; "Programme" = collection of related projects; "Portfolio" = collection of programmes and projects. Add "proposedInitiativeTypeId" to dependents array for resolution.
+- **responsibleOrgUnitId** (int?): Always set to null (will be resolved from text name). **Add "responsibleOrgUnitId" to dependents array** for resolution.
+- **responsibleOrgUnitName** (string?): **Org Unit Responsible for Opportunity development** - Extract from UNOPS participants'' org units in interactions, or document content. Examples: "East Africa Regional Office", "Global Infrastructure Unit", "B5308"
+- **proposedInitiativeTypeId** (int?): Always set to null (will be resolved from text name). **MUST add "proposedInitiativeTypeId" to dependents array** for backend resolution to dropdown ID.
+- **proposedInitiativeTypeName** (string?): **Proposed initiative to be developed** - Infer from interaction content AND document types/names (dropdown in Team section). **ONLY these three values can be resolved - use exactly one**: "Project", "Programme", or "Portfolio". Any other value (e.g., "Initiative", "Activity", "Program") CANNOT be resolved. If unclear, default to "Project". **ALWAYS add "proposedInitiativeTypeId" to dependents** so the backend can resolve the text name to the dropdown ID.
 
 ### Financial & Timeline (camelCase)
 - **initiativeBudgetUSD** (decimal?): Total proposed budget in USD when NO PARTNER-SPECIFIC breakdown is available. Use this ONLY when interactions/documents mention a total budget without specifying which partner is contributing. Convert to numeric: "$5 million" → 5000000
@@ -2934,7 +2939,7 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 - **isTargetSigningDateFirm** (boolean?): Whether the signing date is a firm deadline from the partner (extract if mentioned as "deadline", "firm date", etc.)
 - **signingDateNotes** (string?, max 1000 characters): Notes about the signing date (e.g., partner deadline, submission requirements). MUST NOT exceed 1000 characters.
 - **submissionDeadline** (DateTime?): Partner submission or proposal deadline (ISO 8601 format)
-- **implementationStartDate** (DateTime?): When implementation is expected to start (ISO 8601 format)
+- **implementationStartDate** (DateTime?): When implementation is expected to start (ISO 8601 format). **CRITICAL DEFAULT**: If targetSigningDate is extracted but implementationStartDate is NOT mentioned, set implementationStartDate = targetSigningDate (same value). The UI defaults implementation start date to target signing date when not explicitly set.
 - **targetDeliveryDate** (DateTime?): Extract or infer target delivery/completion dates from interactions or documents (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ)
 
 ### Strategic Information (camelCase)
@@ -2996,6 +3001,8 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 1. Set the ID field (responsibleOrgUnitId, proposedInitiativeTypeId) to **null**
 2. Populate the corresponding Name field with the extracted/inferred text
 3. **Add the field name to the "dependents" array** so the system knows to resolve these text names to IDs using similarity matching
+
+**For proposedInitiativeTypeName specifically:** Use ONLY "Project", "Programme", or "Portfolio". Any other value cannot be resolved by the backend. Map "Program" → "Programme"; map "Initiative", "Activity", or similar → "Project" (or the closest of the three). If unclear, use "Project".
 
 **For Collection Fields (fundingPartners, clientPartners, stakeholders, deliverables, countries, sdGs, unopsMissions):**
 - Extract as **simple arrays of text strings**
@@ -3100,7 +3107,9 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 - If no dates mentioned: Use null
 - If no specific deliverables: Infer from project type and document names
 - If SDGs not mentioned: Infer from sector and themes
-- If org unit not clear: Use most common org unit from UNOPS participants
+- **Implementation start date**: When targetSigningDate is extracted but implementationStartDate is NOT mentioned, set implementationStartDate = targetSigningDate (same value). The UI defaults implementation start to signing date when not set.
+- If org unit not clear: Use most common org unit from UNOPS participants. **MUST add "responsibleOrgUnitId" to dependents**
+- **Proposed initiative to be developed**: Infer from context but **ONLY use "Project", "Programme", or "Portfolio"** - no other values can be resolved. If unclear, default to "Project". **MUST add "proposedInitiativeTypeId" to dependents** for backend dropdown resolution
 
 ## Response Format
 
@@ -3159,7 +3168,7 @@ Return a valid JSON object with the proposed opportunity data. **ALL property na
     {"sdgNumber": 17, "sdgName": "Partnerships for the Goals", "isPrimary": false}
   ],
   "unopsMissions": ["Triple Planetary Crisis", "Energy Transition"],
-  "dependents": ["responsibleOrgUnitName", "proposedInitiativeTypeName", "fundingPartners", "clientPartners", "stakeholders", "deliverables", "countries", "sdGs", "unopsMissions"]
+  "dependents": ["responsibleOrgUnitId", "proposedInitiativeTypeId", "fundingPartners", "clientPartners", "stakeholders", "deliverables", "countries", "sdGs", "unopsMissions"]
 }
 ```
 
@@ -3171,7 +3180,7 @@ Return a valid JSON object with the proposed opportunity data. **ALL property na
 - Infer intelligent values based on interaction context, themes, and document metadata
 - **ALWAYS return empty arrays [] for collections when no data found, NEVER null**
 - **CRITICAL: ALWAYS include these fields in the "dependents" array** (even if you provide text values):
-  ["responsibleOrgUnitName", "proposedInitiativeTypeName", "fundingPartners", "clientPartners", "stakeholders", "deliverables", "countries", "sdGs", "unopsMissions"]
+  ["responsibleOrgUnitId", "proposedInitiativeTypeId", "fundingPartners", "clientPartners", "stakeholders", "deliverables", "countries", "sdGs", "unopsMissions"]
 - The backend will convert text names to database IDs - you just provide the text values and list ALL fields in dependents
 - **CRITICAL FIELD LENGTH LIMITS** - Do NOT exceed these character limits:
   * name: max 255 characters
@@ -3570,11 +3579,13 @@ You receive JSON with:
 | Direct/Indirect Beneficiaries: [Information not available] or "To be determined during development" | estimatedDirectBeneficiaries / beneficiariesToBeDetermined equivalent | YES. |
 | Other sections: [Information not available] | corresponding field empty, "Not specified", or "No [X]" | YES. |
 
+**BUDGET VALIDATION:** The opportunity has a **calculated total budget** shown in **budgetDisplay**. This is the authoritative value for Budget validation. budgetDisplay = stats.totalFundingUSD when partner budgets exist (sum of FundingPartners amounts), else initiativeBudgetUSD when set, else "Budget not yet specified". **Compare the statement''s Budget section ONLY against budgetDisplay** — do NOT compare against initiativeBudgetUSD alone. initiativeBudgetUSD is the "estimated initiative budget" used only when there are no partner-specific budgets; when partner budgets exist, the total is the sum (stats.totalFundingUSD). If the statement shows the same amount as budgetDisplay, treat as aligned. Do NOT flag a "contradiction" when statement shows budgetDisplay value but initiativeBudgetUSD differs (e.g. statement USD 68,000,000, initiativeBudgetUSD 65,000,000, budgetDisplay USD 68,000,000 → ALIGNED, because budgetDisplay is correct).
+
 **HOW TO VALIDATE**  
 1. Take the statement (existingStatementMarkdown or opportunityData.opportunityStatementMarkdown).
 2. For each section, check the corresponding field(s) in opportunityData using the table above.
 3. If the statement and data match the equivalence table (placeholder vs "No X" / empty), treat as aligned — do not add a misalignment item.
-4. Only add to misalignmentItems when there is a **real contradiction** (e.g. statement says "Country: Kenya" but data says "Country: Uganda"; statement names a different Opportunity Manager than in data; statement shows $10M but data shows $50M).
+4. Only add to misalignmentItems when there is a **real contradiction** (e.g. statement says "Country: Kenya" but data says "Country: Uganda"; statement names a different Opportunity Manager than in data; statement shows $10M but budgetDisplay shows $50M). For Budget: use budgetDisplay as the data source, not initiativeBudgetUSD.
 
 **EXAMPLE — all aligned (return isAligned: true, misalignmentItems: [], no other output)**  
 Statement: Unit/manager [Information not available] ([Information not available]), Rosemarie Joy Beckett (rosemarieb@unops.org); UNCF [Information not available]; Primary SDG(s) [Information not available]; Client: No client partners specified; Budget [Information not available]; Key Risks [Information not available].  

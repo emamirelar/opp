@@ -17,7 +17,7 @@ public class ContactByOrgUnitHierarchySpecification : BaseSpecification<Contact>
     {
         _orgUnitHierarchyIds = orgUnitHierarchyIds ?? new List<int>();
         // Include related entities
-        AddInclude(c => c.Partner);
+        AddInclude(c => c.Partner!);
     }
 
     [return: System.Diagnostics.CodeAnalysis.NotNull]
