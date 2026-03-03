@@ -394,6 +394,7 @@ jobs:
     name: Playwright E2E Smoke Tests
     needs: [smoke-tests]
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
     - name: Checkout code
@@ -445,6 +446,9 @@ jobs:
         # profile, admin, partner detail, opportunity detail, cross-entity nav
         npx playwright test \
           --project=chromium \
+          --timeout=15000 \
+          --retries=0 \
+          --max-failures=20 \
           --reporter=line \
           --reporter=html \
           login.spec.ts \
