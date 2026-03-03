@@ -11,7 +11,7 @@ public class DocumentBaseCreateModel : DocumentBaseModel
     {
         get
         {
-            return EntityNames.ByName(ParentEntityName) switch
+            return EntityNames.ByName(ParentEntityName ?? "") switch
             {
                 EntityNames.Contact => DocumentParentEntityType.Contact,
                 EntityNames.Partner => DocumentParentEntityType.Partner,

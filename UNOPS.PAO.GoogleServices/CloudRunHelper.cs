@@ -17,23 +17,24 @@ public class CloudRunHelper
     {
         _cache = new MemoryCache(new MemoryCacheOptions());
         _logger = logger;
-        
+
         _logger.LogInformation("CloudRunHelper: Initializing with credential parameter: {HasCredential}", credential != null);
-        
+
         var defaultCredential = GoogleCredential.GetApplicationDefault();
-        _logger.LogInformation("CloudRunHelper: Retrieved default credential. Type: {CredentialType}", 
+        _logger.LogInformation("CloudRunHelper: Retrieved default credential. Type: {CredentialType}",
             defaultCredential?.GetType()?.Name ?? "null");
-            
+
         if (credential != null)
         {
-            _logger.LogInformation("CloudRunHelper: Using provided credential. Type: {CredentialType}", 
+            _logger.LogInformation("CloudRunHelper: Using provided credential. Type: {CredentialType}",
                 credential.GetType().Name);
             _credential = credential.CreateScoped("https://www.googleapis.com/auth/cloud-platform");
         }
         else
         {
             _logger.LogInformation("CloudRunHelper: Using default credential with cloud-platform scope");
-            _credential = defaultCredential.CreateScoped("https://www.googleapis.com/auth/cloud-platform");
+            _credential = (defaultCredential ?? throw new InvalidOperationException("Application default credentials are not available"))
+                .CreateScoped("https://www.googleapis.com/auth/cloud-platform");
         }
         
         _logger.LogInformation("CloudRunHelper: Final credential type: {CredentialType}, IsCreateScoped: {IsScoped}", 
@@ -206,7 +207,11 @@ public class CloudRunHelper
             }
 
             var resolvedServiceUrl = uriElement.GetString();
-            
+            if (resolvedServiceUrl == null)
+            {
+                throw new InvalidOperationException($"Cloud Run service URL is null for {serviceName} in {location}");
+            }
+
             if (string.IsNullOrEmpty(resolvedServiceUrl))
             {
                 throw new InvalidOperationException($"Cloud Run service URL is empty for {serviceName} in {location}");

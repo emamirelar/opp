@@ -44,7 +44,8 @@ public class IAPAuthHelper
             defaultCredential?.GetType()?.Name ?? "null");
 
         // Create scoped credential for cloud platform access
-        _credential = defaultCredential.CreateScoped("https://www.googleapis.com/auth/cloud-platform");
+        _credential = (defaultCredential ?? throw new InvalidOperationException("Application default credentials are not available"))
+            .CreateScoped("https://www.googleapis.com/auth/cloud-platform");
         _logger.LogInformation("IAPAuthHelper: Credential initialized successfully");
     }
 
@@ -72,7 +73,6 @@ public class IAPAuthHelper
             _logger.LogInformation("🔐 Method 1: Trying impersonation of service account: {ServiceAccount}", 
                 _settings.ServiceAccount);
 
-            GoogleCredential credentialToUse;
             string idToken;
 
             try
@@ -126,7 +126,7 @@ public class IAPAuthHelper
                 !string.IsNullOrEmpty(idToken) && idToken.Length > 20 ? idToken.Substring(0, 20) + "..." : idToken ?? "null");
 
             // Step 3: Exchange for GCIP token if needed (for IAP with Identity Platform)
-            string finalToken = idToken;
+            string finalToken = idToken ?? string.Empty;
             if (useIdentityPlatform && !string.IsNullOrEmpty(idToken))
             {
                 _logger.LogInformation("🔐 Exchanging Google ID token for GCIP token");
@@ -141,7 +141,7 @@ public class IAPAuthHelper
             _cache.Set(cacheKey, finalToken, cacheOptions);
 
             _logger.LogInformation("✅ Successfully generated and cached OIDC token");
-            return finalToken;
+            return finalToken ?? string.Empty;
         }
         catch (Exception ex)
         {

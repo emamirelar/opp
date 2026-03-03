@@ -34,7 +34,7 @@ source:
     WHERE
       Effective_Date = CURRENT_DATE()
       AND Employment_Status = 'N'
-      AND Employment_Type IN ('OPSSTAFF', 'OPSNONSTAFF')
+      AND Employment_Type IN ('OPSSTAFF', 'OPSNONSTAFF', 'EXTAFFILIATE')
       AND UPPER(Resource_Email_Address_Primary) LIKE '%UNOPS.ORG'
       QUALIFY ROW_NUMBER() OVER (
           PARTITION BY PARSE_NUMERIC(Resource)

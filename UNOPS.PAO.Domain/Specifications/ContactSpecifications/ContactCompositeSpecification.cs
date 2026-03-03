@@ -24,7 +24,7 @@ public class ContactCompositeSpecification : GenericCompositeSpecification<Conta
         : base(filter)
     {
         // Include the related partner
-        AddInclude(c => c.Partner);
+        AddInclude(c => c.Partner!);
         
         // Apply dynamic ordering based on filter properties
         ApplyDynamicOrdering(filter);
@@ -73,10 +73,10 @@ public class ContactCompositeSpecification : GenericCompositeSpecification<Conta
             "phone" => c => c.Phone ?? "",
             "mobile" => c => c.Mobile ?? "",
             "createddate" => c => c.CreatedDate,
-            "partner" => c => (object)(c.Partner != null ? c.Partner.Name : ""),
-            "partnername" => c => (object)(c.Partner != null ? c.Partner.Name : ""),
+            "partner" => c => (object)(c.Partner != null ? c.Partner.Name ?? "" : ""),
+            "partnername" => c => (object)(c.Partner != null ? c.Partner.Name ?? "" : ""),
             _ => c => c.LastName ?? "" // Default to LastName if no field specified or unknown field
         };
-        return result;
+        return result!;
     }
 } 

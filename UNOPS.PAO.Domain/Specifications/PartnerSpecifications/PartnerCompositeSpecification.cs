@@ -61,12 +61,12 @@ public class PartnerCompositeSpecification : GenericCompositeSpecification<Partn
         Expression<Func<Partner, object>> result = orderKey switch
         {
             "name" => (Expression<Func<Partner, object>>)(p => p.Name ?? ""),
-            "partnershortdescription" => (Expression<Func<Partner, object>>)(p => p.PartnerShortDescription ?? ""),
-            "partnerlongdescription" => (Expression<Func<Partner, object>>)(p => p.PartnerLongDescription ?? ""),
+            "partnershortdescription" => (Expression<Func<Partner, object>>)(p => (object)(p.PartnerShortDescription ?? "")),
+            "partnerlongdescription" => (Expression<Func<Partner, object>>)(p => (object)(p.PartnerLongDescription ?? "")),
             "status" => (Expression<Func<Partner, object>>)(p => p.Status),
             "createddate" => (Expression<Func<Partner, object>>)(p => p.CreatedDate),
-            "lastmodifieddate" => (Expression<Func<Partner, object>>)(p => p.LastModifiedDate),
-            "partnercategoryid" => (Expression<Func<Partner, object>>)(p => p.PartnerCategoryId),
+            "lastmodifieddate" => (Expression<Func<Partner, object>>)(p => p.LastModifiedDate!),
+            "partnercategoryid" => (Expression<Func<Partner, object>>)(p => p.PartnerCategoryId!),
             "partnergroupid" => (Expression<Func<Partner, object>>)(p => p.PartnerGroupId ?? 0),
             "partnerapprovalstatus" => (Expression<Func<Partner, object>>)(p => p.PartnerApprovalStatus),
             "keyglobalpartner" => (Expression<Func<Partner, object>>)(p => p.KeyGlobalPartner),
@@ -77,14 +77,14 @@ public class PartnerCompositeSpecification : GenericCompositeSpecification<Partn
             "liaisonofficeid" => (Expression<Func<Partner, object>>)(p => p.LiaisonOfficeId ?? 0),
             "partnerfocalpointuserid" => (Expression<Func<Partner, object>>)(p => p.PartnerFocalPointUserId ?? 0),
             "erpdimvalue" => (Expression<Func<Partner, object>>)(p => p.ErpDimValue ?? 0),
-            "partnerlevystatus" => (Expression<Func<Partner, object>>)(p => (object)(p.PartnerLevyStatus ?? default(PartnerLevyStatus))),
-            "duediligencerequired" => (Expression<Func<Partner, object>>)(p => p.DueDiligenceRequired),
+            "partnerlevystatus" => (Expression<Func<Partner, object>>)(p => (object)((int)(p.PartnerLevyStatus ?? default(PartnerLevyStatus)))),
+            "duediligencerequired" => (Expression<Func<Partner, object>>)(p => p.DueDiligenceRequired!),
             "duediligenceapproval" => (Expression<Func<Partner, object>>)(p => (object)(p.DueDiligenceApproval ?? default(DueDiligenceApproval))),
             "duediligenceapprovaldate" => (Expression<Func<Partner, object>>)(p => p.DueDiligenceApprovalDate ?? DateTime.MinValue),
             "duediligenceexpirydate" => (Expression<Func<Partner, object>>)(p => p.DueDiligenceExpiryDate ?? DateTime.MinValue),
             "partnerapprovaldate" => (Expression<Func<Partner, object>>)(p => p.PartnerApprovalDate ?? DateTime.MinValue),
             _ => (Expression<Func<Partner, object>>)(p => p.Name ?? "") // Default to Name if no field specified or unknown field
         };
-        return result;
+        return result!;
     }
 } 
