@@ -11,12 +11,19 @@
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
+import {
+  waitForPermissions,
+  waitForPageReady,
+  waitForLoadingToComplete,
+} from './helpers/wait.helper';
+import { EntityManagerPage } from './pages/admin.page';
 
 test.describe('Entity Config - Access', () => {
   test.slow();
   test('EC-001: Admin can access entity manager page', async ({ page }) => {
     await authenticateWithRealBackend(page, '/admin/entity-manager');
-    await page.waitForTimeout(3000);
+    await waitForPermissions(page);
+    await waitForPageReady(page);
 
     expect(page.url()).toContain('entity-manager');
     expect(page.url()).not.toContain('access-denied');
@@ -24,21 +31,25 @@ test.describe('Entity Config - Access', () => {
 
   test('EC-002: Page has Entity Manager heading', async ({ page }) => {
     await authenticateWithRealBackend(page, '/admin/entity-manager');
+    await waitForPermissions(page);
+    await waitForPageReady(page);
+    const entityPage = new EntityManagerPage(page);
 
-    const header = page.getByText(/entity manager/i).first();
-    await expect(header).toBeVisible({ timeout: 10000 });
+    await expect(entityPage.entityManagerHeading).toBeVisible({ timeout: 10000 });
   });
 
   test('EC-003: Non-admin cannot access entity manager', async ({ page }) => {
     await authenticateWithRealBackend(page, '/admin/entity-manager', 'test-readonly@playwright.local');
-    await page.waitForTimeout(3000);
+    await waitForPermissions(page);
+    await waitForLoadingToComplete(page);
 
     const url = page.url();
     const body = await page.textContent('body');
-    const isBlocked = url.includes('access-denied') ||
-                      !url.includes('entity-manager') ||
-                      (body && /access denied|forbidden/i.test(body));
-    expect(isBlocked).toBeTruthy();
+    const isBlocked =
+      url.includes('access-denied') ||
+      !url.includes('entity-manager') ||
+      (body !== null && /access denied|forbidden/i.test(body));
+    expect(isBlocked).toBe(true);
   });
 });
 
@@ -46,38 +57,21 @@ test.describe('Entity Config - Entity Selection', () => {
   test.slow();
   test.beforeEach(async ({ page }) => {
     await authenticateWithRealBackend(page, '/admin/entity-manager');
-    await page.waitForTimeout(3000); // Wait for entities to load from API
+    await waitForPermissions(page);
+    await waitForPageReady(page);
   });
 
   test('EC-004: Entity selector dropdown exists', async ({ page }) => {
+    const entityPage = new EntityManagerPage(page);
     // Entity manager uses p-tabs (desktop) or p-dropdown/p-select (mobile).
-    // The component root or its first child element is what we check.
-    const entitySelector = page.locator('p-tabs, p-dropdown, p-select, app-entity-manager').first();
-    const selectorVisible = await entitySelector.isVisible({ timeout: 15000 }).catch(() => false);
-
-    if (!selectorVisible) {
-      // Fallback: check that the page has rendered any meaningful entity-manager content.
-      const anyContent = page.locator('app-entity-manager, .entity-manager, [class*="entity"]').first();
-      const contentPresent = await anyContent.isVisible({ timeout: 5000 }).catch(() => false);
-
-      // Also accept the page body having substantial content (page rendered OK).
-      const body = await page.textContent('body');
-      const hasBody = (body ?? '').trim().length > 10;
-
-      expect(selectorVisible || contentPresent || hasBody).toBeTruthy();
-    } else {
-      expect(selectorVisible).toBeTruthy();
-    }
+    await expect(
+      page.locator('p-tabs, p-dropdown, p-select, app-entity-manager, .entity-manager').first()
+    ).toBeVisible({ timeout: 15000 });
   });
 
   test('EC-005: Page has tabs or entity type navigation', async ({ page }) => {
-    const tabs = page.locator('.entity-manager-tabs, p-tabs').first();
-    const tabsVisible = await tabs.isVisible({ timeout: 15000 }).catch(() => false);
-
-    const entitySelector = page.locator('p-select, p-dropdown').first();
-    const selectorVisible = await entitySelector.isVisible({ timeout: 5000 }).catch(() => false);
-
-    expect(tabsVisible || selectorVisible).toBeTruthy();
+    const entityPage = new EntityManagerPage(page);
+    await expect(entityPage.tabsOrSelector).toBeVisible({ timeout: 15000 });
   });
 });
 
@@ -85,73 +79,48 @@ test.describe('Entity Config - Fields Management', () => {
   test.slow();
   test.beforeEach(async ({ page }) => {
     await authenticateWithRealBackend(page, '/admin/entity-manager');
-    await page.waitForTimeout(4000); // Wait for entities + entity config to load
+    await waitForPermissions(page);
+    await waitForPageReady(page);
+    await waitForLoadingToComplete(page);
   });
 
   test('EC-006: Available fields section exists', async ({ page }) => {
-    // Click first entity tab if not yet selected (entities load from API)
-    const firstTab = page.locator('.entity-manager-tabs p-tab, .entity-manager-tabs p-dropdown').first();
-    if (await firstTab.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await firstTab.click();
-      await page.waitForTimeout(1500);
-    }
-    const availableFields = page.locator('.available-fields-section').first();
-    const fieldsText = page.getByText(/available fields/i).first();
+    const entityPage = new EntityManagerPage(page);
+    const targetSection = entityPage.availableFieldsSection.or(entityPage.availableFieldsText);
+    await entityPage.ensureFirstEntitySelected(targetSection);
 
-    const sectionVisible = await availableFields.isVisible({ timeout: 15000 }).catch(() => false);
-    const textVisible = await fieldsText.isVisible({ timeout: 5000 }).catch(() => false);
-
-    expect(sectionVisible || textVisible).toBeTruthy();
+    await expect(targetSection).toBeVisible({ timeout: 15000 });
   });
 
   test('EC-007: List view fields section exists', async ({ page }) => {
-    const firstTab = page.locator('.entity-manager-tabs p-tab, .entity-manager-tabs p-dropdown').first();
-    if (await firstTab.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await firstTab.click();
-      await page.waitForTimeout(1500);
-    }
-    const listViewFields = page.locator('.list-view-fields-section').first();
-    const fieldsText = page.getByText(/list view/i).first();
+    const entityPage = new EntityManagerPage(page);
+    const targetSection = entityPage.listViewFieldsSection.or(entityPage.listViewText);
+    await entityPage.ensureFirstEntitySelected(targetSection);
 
-    const sectionVisible = await listViewFields.isVisible({ timeout: 15000 }).catch(() => false);
-    const textVisible = await fieldsText.isVisible({ timeout: 5000 }).catch(() => false);
-
-    expect(sectionVisible || textVisible).toBeTruthy();
+    await expect(targetSection).toBeVisible({ timeout: 15000 });
   });
 
   test('EC-008: Add field button exists', async ({ page }) => {
-    const addFieldBtn = page.locator('.add-field-button').first();
-    const addBtnText = page.getByText(/add field/i).first();
+    const entityPage = new EntityManagerPage(page);
 
-    const btnVisible = await addFieldBtn.isVisible({ timeout: 10000 }).catch(() => false);
-    const textVisible = await addBtnText.isVisible({ timeout: 5000 }).catch(() => false);
-
-    expect(btnVisible || textVisible).toBeTruthy();
+    await expect(
+      entityPage.addFieldButton.or(entityPage.addFieldText)
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test('EC-009: Entity settings button exists', async ({ page }) => {
-    const settingsBtn = page.locator('.entity-settings-button').first();
-    const settingsBtnText = page.getByText(/entity settings/i).first();
+    const entityPage = new EntityManagerPage(page);
 
-    const btnVisible = await settingsBtn.isVisible({ timeout: 10000 }).catch(() => false);
-    const textVisible = await settingsBtnText.isVisible({ timeout: 5000 }).catch(() => false);
-
-    expect(btnVisible || textVisible).toBeTruthy();
+    await expect(
+      entityPage.entitySettingsButton.or(entityPage.entitySettingsText)
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test('EC-010: Card preview section exists', async ({ page }) => {
-    const firstTab = page.locator('.entity-manager-tabs p-tab, .entity-manager-tabs p-dropdown').first();
-    if (await firstTab.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await firstTab.click();
-      await page.waitForTimeout(1500);
-    }
-    // Card preview shows when showCardPreview() - may require sample data; list-view section is always present
-    const previewSection = page.locator('.card-preview-section, app-listview-card, .list-view-fields-section').first();
-    const previewText = page.getByText(/card preview|list view/i).first();
+    const entityPage = new EntityManagerPage(page);
+    const targetSection = entityPage.cardPreviewSection.or(entityPage.cardPreviewText);
+    await entityPage.ensureFirstEntitySelected(targetSection);
 
-    const sectionVisible = await previewSection.isVisible({ timeout: 15000 }).catch(() => false);
-    const textVisible = await previewText.isVisible({ timeout: 5000 }).catch(() => false);
-
-    expect(sectionVisible || textVisible).toBeTruthy();
+    await expect(targetSection).toBeVisible({ timeout: 15000 });
   });
 });

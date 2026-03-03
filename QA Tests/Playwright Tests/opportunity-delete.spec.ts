@@ -10,7 +10,7 @@
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
-import { waitForPermissions } from './helpers/wait.helper';
+import { waitForHidden, waitForPermissions, waitForPageReady, waitForVisible } from './helpers/wait.helper';
 
 const featureReady = process.env.OPPORTUNITY_DELETE_IMPLEMENTED === 'true';
 
@@ -90,9 +90,10 @@ test.describe('Opportunity Delete — Admin Happy Path', () => {
     });
 
     await test.step('Click cancel in confirmation', async () => {
+      const dialog = page.locator('.p-dialog, p-confirmdialog, [role="alertdialog"], [role="dialog"]').first();
       const cancelBtn = page.locator('.p-dialog button:has-text("Cancel"), .p-dialog button:has-text("No"), [role="alertdialog"] button:has-text("No")').first();
       await cancelBtn.click();
-      await page.waitForTimeout(500);
+      await waitForHidden(dialog, 5000);
     });
 
     await test.step('Assert still on opportunity page', async () => {
@@ -204,7 +205,7 @@ test.describe('Opportunity Delete — List View', () => {
   test('DEL-010: Delete action available in list view context menu', async ({ page }) => {
     await authenticateWithRealBackend(page, OPPORTUNITIES_LIST_URL);
     await waitForPermissions(page);
-    await page.waitForTimeout(3000);
+    await waitForPageReady(page);
 
     const listItem = page.locator('app-listview-card .cursor-pointer, [data-testid="opportunity-list-item"]').first();
     const isVisible = await listItem.isVisible({ timeout: 5000 }).catch(() => false);
@@ -213,21 +214,18 @@ test.describe('Opportunity Delete — List View', () => {
     const moreBtn = page.locator('button:has(i.pi-ellipsis-v), [data-testid="row-actions-button"]').first();
     if (await moreBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await moreBtn.click();
-      await page.waitForTimeout(500);
-
       const deleteMenuItem = page.locator('[role="menuitem"]:has-text("Delete"), .p-menuitem:has-text("Delete")').first();
-      const hasDeleteMenu = await deleteMenuItem.isVisible({ timeout: 3000 }).catch(() => false);
-      expect(hasDeleteMenu).toBeTruthy();
+      await waitForVisible(deleteMenuItem, 5000);
+      await expect(deleteMenuItem).toBeVisible();
     }
   });
 
   test('DEL-011: Deleted opportunity no longer appears in list', async ({ page }) => {
     await authenticateWithRealBackend(page, OPPORTUNITIES_LIST_URL);
     await waitForPermissions(page);
-    await page.waitForTimeout(3000);
+    await waitForPageReady(page);
 
     const listview = page.locator('app-listview');
-    const hasListview = await listview.first().isVisible({ timeout: 10000 }).catch(() => false);
-    expect(hasListview).toBeTruthy();
+    await expect(listview.first()).toBeVisible({ timeout: 10000 });
   });
 });

@@ -145,7 +145,14 @@ export async function authenticateWithRealBackend(
     
     // Override /api/permissions/check/* — route-level permission checks
     // Admin routes (entity-manager, user-management, translations) must return hasAccess: false for restricted users
-    const adminBlockedPaths = ['admin/entity-manager', 'admin/user-management', 'admin/translations', 'admin/ai-prompt-management'];
+    const adminBlockedPaths = [
+      'admin/entity-manager',
+      'admin/user-management',
+      'admin/translations',
+      'admin/ai-prompt-management',
+      'admin/entity-artifacts',
+      'admin/bulk-entity-artifacts',
+    ];
     await page.route(url => url.toString().includes('/api/permissions/check/'), async (route) => {
       const requestUrl = route.request().url();
       const isAdminRoute = adminBlockedPaths.some(p => requestUrl.includes(p));

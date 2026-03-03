@@ -203,8 +203,7 @@ test.describe('Partner Detail Page', () => {
       const opportunityCount = await partnerItemPage.getOpportunitiesCount();
       expect(opportunityCount).toBeGreaterThanOrEqual(0);
     } else {
-      // Section not visible is an acceptable state - log for visibility
-      console.log('Related engagements section not visible for this partner');
+      // Section not visible is an acceptable state for this partner
     }
   });
   
@@ -239,8 +238,7 @@ test.describe('Partner Detail Page', () => {
       const activityCount = await partnerItemPage.getActivityCount();
       expect(activityCount).toBeGreaterThanOrEqual(0);
     } else {
-      // Timeline not visible is acceptable - log for debugging
-      console.log('Activity timeline not visible for this partner');
+      // Timeline not visible is acceptable for this partner
     }
   });
   
@@ -310,8 +308,7 @@ test.describe('Partner Detail Page - Expanded Sections', () => {
     // At least one expanded section should be visible if the partner has data
     const hasExpandedContent = hasStatus || hasAttributes;
     expect(typeof hasExpandedContent).toBe('boolean');
-    // Log result for debugging when data varies
-    console.log(`Expanded sections - status: ${hasStatus}, attributes: ${hasAttributes}`);
+    expect(hasStatus || hasAttributes).toBeTruthy();
   });
   
   /**

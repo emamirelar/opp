@@ -56,10 +56,10 @@ test.describe('Login Flow - UI Tests', () => {
     if (isSignupVisible) {
       // Verify signup button is visible
       await loginPage.assertElementVisible('signup-button');
+    } else {
+      // When signup disabled: verify login form is still present and usable
+      await loginPage.verifyLoginFormVisible();
     }
-    
-    // Test passes regardless - just verifying UI consistency
-    expect(true).toBeTruthy();
   });
 });
 

@@ -12,7 +12,13 @@
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
-import { waitForPermissions, waitForLoadingToComplete } from './helpers/wait.helper';
+import {
+  waitForPermissions,
+  waitForLoadingToComplete,
+  waitForElementReady,
+  waitForNetworkIdle,
+} from './helpers/wait.helper';
+import { OpportunityItemPage } from './pages/opportunity-item.page';
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -50,29 +56,30 @@ test.describe('PNO-731 — Org Unit Selection', () => {
   });
 
   test('TC-001: Org unit dropdown displays on opportunity detail', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPPORTUNITY_ID);
     await test.step('Arrange — navigate to opportunity detail', async () => {
       await page.goto(`http://localhost:4200${OPPORTUNITY_DETAIL_URL}`);
-      await page.waitForLoadState('networkidle');
+      await waitForNetworkIdle(page);
       await waitForLoadingToComplete(page);
     });
 
     await test.step('Assert — org unit field visible', async () => {
-      // opportunity-orgunit (header) or field-responsibleOrgUnitId (team section)
-      const orgUnitDisplay = page.locator('[data-testid="opportunity-orgunit"]');
+      const orgUnitDisplay = oppPage.opportunityOrgUnit;
       const orgUnitField = page.locator('#field-responsibleOrgUnitId');
       const orgUnitLabel = page.getByText(/responsible.*org.*unit|organization.*unit/i);
       const visible =
         (await orgUnitDisplay.isVisible().catch(() => false)) ||
         (await orgUnitField.isVisible().catch(() => false)) ||
         (await orgUnitLabel.first().isVisible().catch(() => false));
-      expect(visible).toBeTruthy();
+      expect(visible).toBe(true);
     });
   });
 
   test('TC-002: Org unit dropdown displays correct options', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPPORTUNITY_ID);
     await test.step('Arrange — navigate to opportunity and enter edit mode', async () => {
       await page.goto(`http://localhost:4200${OPPORTUNITY_DETAIL_URL}`);
-      await page.waitForLoadState('networkidle');
+      await waitForNetworkIdle(page);
       await waitForLoadingToComplete(page);
     });
 
@@ -81,33 +88,31 @@ test.describe('PNO-731 — Org Unit Selection', () => {
       const visible = await editBtn.isVisible({ timeout: 5000 }).catch(() => false);
       if (visible) {
         await editBtn.click();
-        await page.waitForTimeout(1000);
+        await waitForLoadingToComplete(page);
       }
     });
 
-    await test.step('Assert — org unit select has options', async () => {
-      // Org units come from /api/values/organization-units (already mocked)
-      const orgUnitSelect = page.locator('#field-responsibleOrgUnitId p-select, [id="opportunityManager"]').first();
-      const teamSection = page.locator('#section-team, app-opportunity-team-section').first();
-      const hasTeamSection = await teamSection.isVisible().catch(() => false);
-      expect(hasTeamSection || true).toBeTruthy();
+    await test.step('Assert — team section visible with org unit controls', async () => {
+      const teamSection = oppPage.teamSection;
+      await expect(teamSection).toBeVisible({ timeout: 10000 });
     });
   });
 
   test('TC-003: Org unit field shows current value in view mode', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPPORTUNITY_ID);
     await test.step('Arrange — navigate to opportunity detail', async () => {
       await page.goto(`http://localhost:4200${OPPORTUNITY_DETAIL_URL}`);
-      await page.waitForLoadState('networkidle');
+      await waitForNetworkIdle(page);
       await waitForLoadingToComplete(page);
     });
 
-    await test.step('Assert — org unit name displayed', async () => {
+    await test.step('Assert — org unit name or header displayed', async () => {
+      const headerOrgUnit = oppPage.opportunityOrgUnit;
       const orgUnitText = page.getByText(/HQ|Headquarters|organization.*unit/i);
-      const headerOrgUnit = page.locator('[data-testid="opportunity-orgunit"]');
       const hasOrgUnit =
-        (await orgUnitText.first().isVisible().catch(() => false)) ||
-        (await headerOrgUnit.isVisible().catch(() => false));
-      expect(hasOrgUnit || true).toBeTruthy();
+        (await headerOrgUnit.isVisible().catch(() => false)) ||
+        (await orgUnitText.first().isVisible().catch(() => false));
+      expect(hasOrgUnit).toBe(true);
     });
   });
 });
@@ -125,9 +130,10 @@ test.describe('PNO-731 — Stakeholder Refresh', () => {
   });
 
   test('TC-004: Changing org unit triggers stakeholder refresh', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPPORTUNITY_ID);
     await test.step('Arrange — navigate to opportunity', async () => {
       await page.goto(`http://localhost:4200${OPPORTUNITY_DETAIL_URL}`);
-      await page.waitForLoadState('networkidle');
+      await waitForNetworkIdle(page);
       await waitForLoadingToComplete(page);
     });
 
@@ -136,51 +142,47 @@ test.describe('PNO-731 — Stakeholder Refresh', () => {
       const visible = await editBtn.isVisible({ timeout: 5000 }).catch(() => false);
       if (visible) {
         await editBtn.click();
-        await page.waitForTimeout(1000);
+        await waitForLoadingToComplete(page);
         const orgUnitSelect = page.locator('p-select').first();
         const selectVisible = await orgUnitSelect.isVisible().catch(() => false);
         if (selectVisible) {
           await orgUnitSelect.click();
           await page.locator('.p-select-option').first().click();
-          await page.waitForTimeout(500);
+          await waitForLoadingToComplete(page);
         }
       }
     });
 
     await test.step('Assert — stakeholder section visible', async () => {
       const stakeholderSection = page.getByText(/stakeholder|team|role holder/i);
-      const hasStakeholder = await stakeholderSection.first().isVisible().catch(() => false);
-      expect(hasStakeholder || true).toBeTruthy();
+      await expect(stakeholderSection.first()).toBeVisible({ timeout: 10000 });
     });
   });
 
   test('TC-005: Updating opportunity without changing org unit still refreshes stakeholders', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPPORTUNITY_ID);
     await test.step('Arrange — navigate to opportunity with org unit', async () => {
       await page.goto(`http://localhost:4200${OPPORTUNITY_DETAIL_URL}`);
-      await page.waitForLoadState('networkidle');
+      await waitForNetworkIdle(page);
       await waitForLoadingToComplete(page);
     });
 
-    await test.step('Assert — PNO-731: refresh runs when org unit present in update', async () => {
-      // Behavioral assertion: when user saves team section with same org unit,
-      // backend should re-trigger stakeholder auto-population (PNO-731 fix)
-      const teamSection = page.locator('#section-team, app-opportunity-team-section').first();
-      const visible = await teamSection.isVisible().catch(() => false);
-      expect(visible || true).toBeTruthy();
+    await test.step('Assert — PNO-731: team section visible when org unit present', async () => {
+      const teamSection = oppPage.teamSection;
+      await expect(teamSection).toBeVisible({ timeout: 10000 });
     });
   });
 
   test('TC-006: Stakeholder list updates after org unit change', async ({ page }) => {
     await test.step('Arrange — navigate to opportunity', async () => {
       await page.goto(`http://localhost:4200${OPPORTUNITY_DETAIL_URL}`);
-      await page.waitForLoadState('networkidle');
+      await waitForNetworkIdle(page);
       await waitForLoadingToComplete(page);
     });
 
     await test.step('Assert — stakeholder/team content present', async () => {
-      const stakeholderContent = page.getByText(/Test User|Jane Doe|stakeholder|role holder/i);
-      const hasContent = await stakeholderContent.first().isVisible().catch(() => false);
-      expect(hasContent || true).toBeTruthy();
+      const stakeholderContent = page.getByText(/Test User|Jane Doe|stakeholder|role holder|team/i);
+      await expect(stakeholderContent.first()).toBeVisible({ timeout: 10000 });
     });
   });
 });
@@ -197,12 +199,11 @@ test.describe('PNO-731 — Permission Checks on Org Unit Field', () => {
     await waitForPermissions(page);
 
     await page.goto(`http://localhost:4200${OPPORTUNITY_DETAIL_URL}`);
-    await page.waitForLoadState('networkidle');
+    await waitForNetworkIdle(page);
     await waitForLoadingToComplete(page);
 
     const editBtn = page.locator('p-button').filter({ hasText: /edit/i }).first();
-    const editVisible = await editBtn.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(editVisible || true).toBeTruthy();
+    await expect(editBtn).toBeVisible({ timeout: 10000 });
   });
 
   test('TC-008: Readonly user cannot edit org unit field', async ({ page }) => {
@@ -210,12 +211,11 @@ test.describe('PNO-731 — Permission Checks on Org Unit Field', () => {
     await waitForPermissions(page);
 
     await page.goto(`http://localhost:4200${OPPORTUNITY_DETAIL_URL}`);
-    await page.waitForLoadState('networkidle');
+    await waitForNetworkIdle(page);
     await waitForLoadingToComplete(page);
 
     const editBtn = page.locator('p-button').filter({ hasText: /edit/i }).first();
-    const editVisible = await editBtn.isVisible({ timeout: 3000 }).catch(() => false);
-    expect(editVisible).toBeFalsy();
+    await expect(editBtn).not.toBeVisible();
   });
 
   test('TC-009: Collaborator can edit org unit field', async ({ page }) => {
@@ -223,12 +223,11 @@ test.describe('PNO-731 — Permission Checks on Org Unit Field', () => {
     await waitForPermissions(page);
 
     await page.goto(`http://localhost:4200${OPPORTUNITY_DETAIL_URL}`);
-    await page.waitForLoadState('networkidle');
+    await waitForNetworkIdle(page);
     await waitForLoadingToComplete(page);
 
     const editBtn = page.locator('p-button').filter({ hasText: /edit/i }).first();
-    const editVisible = await editBtn.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(editVisible || true).toBeTruthy();
+    await expect(editBtn).toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -271,12 +270,11 @@ test.describe('PNO-731 — Negative & Edge Cases', () => {
     });
 
     await page.goto(`http://localhost:4200${OPPORTUNITY_DETAIL_URL}`);
-    await page.waitForLoadState('networkidle');
+    await waitForNetworkIdle(page);
     await waitForLoadingToComplete(page);
 
     const prereqMessage = page.getByText(/prerequisite|complete.*org.*unit|where section/i);
-    const hasMessage = await prereqMessage.first().isVisible().catch(() => false);
-    expect(hasMessage || true).toBeTruthy();
+    await expect(prereqMessage.first()).toBeVisible({ timeout: 10000 });
   });
 
   test('TC-011: Org unit options loaded from organization-units API', async ({ page }) => {
@@ -287,20 +285,19 @@ test.describe('PNO-731 — Negative & Edge Cases', () => {
     });
 
     await page.goto(`http://localhost:4200${OPPORTUNITY_DETAIL_URL}`);
-    await page.waitForLoadState('networkidle');
+    await waitForNetworkIdle(page);
     await waitForLoadingToComplete(page);
 
-    expect(orgUnitsCalled || true).toBeTruthy();
+    expect(orgUnitsCalled).toBe(true);
   });
 
   test('TC-012: Team section displays stakeholder role holders', async ({ page }) => {
     await page.goto(`http://localhost:4200${OPPORTUNITY_DETAIL_URL}`);
-    await page.waitForLoadState('networkidle');
+    await waitForNetworkIdle(page);
     await waitForLoadingToComplete(page);
 
     const roleHolderSection = page.getByText(/role holder|stakeholder|team/i);
-    const hasSection = await roleHolderSection.first().isVisible().catch(() => false);
-    expect(hasSection || true).toBeTruthy();
+    await expect(roleHolderSection.first()).toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -317,29 +314,30 @@ test.describe('PNO-731 — Integration', () => {
   });
 
   test('TC-013: Full flow — navigate to opportunity, view org unit, view stakeholders', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPPORTUNITY_ID);
     await test.step('Arrange — navigate to opportunity', async () => {
       await page.goto(`http://localhost:4200${OPPORTUNITY_DETAIL_URL}`);
-      await page.waitForLoadState('networkidle');
+      await waitForNetworkIdle(page);
       await waitForPermissions(page);
     });
 
     await test.step('Act — scroll to team section', async () => {
-      const teamSection = page.locator('#section-team');
+      const teamSection = oppPage.teamSection;
       await teamSection.scrollIntoViewIfNeeded().catch(() => {});
-      await page.waitForTimeout(500);
+      await waitForElementReady(teamSection);
     });
 
     await test.step('Assert — org unit and stakeholders visible', async () => {
-      const pageContent = await page.content();
-      const hasOrgUnit = pageContent.toLowerCase().includes('org') || pageContent.includes('unit');
-      const hasStakeholder = pageContent.toLowerCase().includes('stakeholder') || pageContent.includes('team');
-      expect(hasOrgUnit || hasStakeholder).toBeTruthy();
+      const orgUnitVisible = await oppPage.opportunityOrgUnit.isVisible().catch(() => false);
+      const stakeholderSection = page.getByText(/stakeholder|team|role holder/i);
+      const stakeholderVisible = await stakeholderSection.first().isVisible().catch(() => false);
+      expect(orgUnitVisible || stakeholderVisible).toBe(true);
     });
   });
 
   test('TC-014: Opportunity detail URL matches expected pattern', async ({ page }) => {
     await page.goto(`http://localhost:4200${OPPORTUNITY_DETAIL_URL}`);
-    await page.waitForLoadState('networkidle');
+    await waitForNetworkIdle(page);
 
     expect(page.url()).toContain('/partnerships/opportunities/');
     expect(page.url()).toContain(TEST_OPPORTUNITY_ID);
@@ -362,9 +360,9 @@ test.describe('PNO-731 — Integration', () => {
     });
 
     await page.goto(`http://localhost:4200${OPPORTUNITY_DETAIL_URL}`);
-    await page.waitForLoadState('networkidle');
+    await waitForNetworkIdle(page);
     await waitForPermissions(page);
 
-    expect(permissionsCalled || true).toBeTruthy();
+    expect(permissionsCalled).toBe(true);
   });
 });

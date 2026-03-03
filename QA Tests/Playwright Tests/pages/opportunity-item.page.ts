@@ -38,6 +38,7 @@
 import { Page, Locator } from '@playwright/test';
 import { EntityDetailPage } from './entity-detail.page';
 import { assertVisible } from '../helpers/assertions.helper';
+import { waitForElementReady } from '../helpers/wait.helper';
 
 export class OpportunityItemPage extends EntityDetailPage {
   protected entityName = 'opportunity';
@@ -151,6 +152,34 @@ export class OpportunityItemPage extends EntityDetailPage {
   }
   
   /**
+   * Get What section chip/button (scrolls to #section-what)
+   */
+  get whatChip(): Locator {
+    return this.page.locator('button:has-text("What")').first();
+  }
+
+  /**
+   * Get Who section chip/button (scrolls to #section-who)
+   */
+  get whoChip(): Locator {
+    return this.page.locator('button:has-text("Who")').first();
+  }
+
+  /**
+   * Get Related section chip/button (scrolls to #section-related)
+   */
+  get relatedChip(): Locator {
+    return this.page.locator('button:has-text("Related")').first();
+  }
+
+  /**
+   * Get Risks/DST section chip/button (scrolls to #section-risks)
+   */
+  get risksChip(): Locator {
+    return this.page.locator('button:has-text("Risks"), button:has-text("DST")').first();
+  }
+
+  /**
    * Get "Who" section (partners, contacts, stakeholders)
    * No data-testid. Uses section ID #section-who and component selector.
    */
@@ -197,6 +226,22 @@ export class OpportunityItemPage extends EntityDetailPage {
   get relatedSection(): Locator {
     return this.page.locator('#section-related, app-opportunity-related-items').first();
   }
+
+  /**
+   * Get collaboration/comments section
+   * No data-testid. Uses section ID #section-collaboration.
+   */
+  get collaborationSection(): Locator {
+    return this.page.locator('#section-collaboration').first();
+  }
+
+  /**
+   * Get statement section
+   * No data-testid. Uses section ID #section-statement.
+   */
+  get statementSection(): Locator {
+    return this.page.locator('#section-statement').first();
+  }
   
   /**
    * Get interactions section
@@ -220,6 +265,22 @@ export class OpportunityItemPage extends EntityDetailPage {
    */
   get analysisSection(): Locator {
     return this.page.locator('#section-analysis, app-opportunity-analysis-section').first();
+  }
+
+  /**
+   * Get Why section (context, SDGs)
+   * No data-testid. Uses section ID #section-why.
+   */
+  get whySection(): Locator {
+    return this.page.locator('#section-why, app-opportunity-why-section').first();
+  }
+
+  /**
+   * Get Team section (collaborators, org unit)
+   * No data-testid. Uses section ID #section-team.
+   */
+  get teamSection(): Locator {
+    return this.page.locator('#section-team, app-opportunity-team-section').first();
   }
   
   /**
@@ -401,6 +462,50 @@ export class OpportunityItemPage extends EntityDetailPage {
   }
   
   /**
+   * Click What chip and wait for section content to be visible
+   */
+  async openWhatSection(): Promise<void> {
+    const chip = this.whatChip;
+    if (await chip.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await chip.click();
+      await waitForElementReady(this.whatSection, 5000);
+    }
+  }
+
+  /**
+   * Click Who chip and wait for section content to be visible
+   */
+  async openWhoSection(): Promise<void> {
+    const chip = this.whoChip;
+    if (await chip.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await chip.click();
+      await waitForElementReady(this.whoSection, 5000);
+    }
+  }
+
+  /**
+   * Click Related chip and wait for section content to be visible
+   */
+  async openRelatedSection(): Promise<void> {
+    const chip = this.relatedChip;
+    if (await chip.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await chip.click();
+      await waitForElementReady(this.relatedSection, 5000);
+    }
+  }
+
+  /**
+   * Click Risks/DST chip and wait for section content to be visible
+   */
+  async openRisksSection(): Promise<void> {
+    const chip = this.risksChip;
+    if (await chip.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await chip.click();
+      await waitForElementReady(this.dstSection, 5000);
+    }
+  }
+
+  /**
    * Check if "Who" (partners/contacts) section is visible
    */
   async hasWhoSection(): Promise<boolean> {
@@ -440,6 +545,20 @@ export class OpportunityItemPage extends EntityDetailPage {
    */
   async hasDSTSection(): Promise<boolean> {
     return await this.dstSection.isVisible().catch(() => false);
+  }
+
+  /**
+   * Check if Why section is visible
+   */
+  async hasWhySection(): Promise<boolean> {
+    return await this.whySection.isVisible().catch(() => false);
+  }
+
+  /**
+   * Check if Team section is visible
+   */
+  async hasTeamSection(): Promise<boolean> {
+    return await this.teamSection.isVisible().catch(() => false);
   }
   
   /**

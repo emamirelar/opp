@@ -16,7 +16,12 @@ import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
 import { InteractionsPage } from './pages/interactions.page';
 import { InteractionItemPage } from './pages/interaction-item.page';
-import { waitForPermissions } from './helpers/wait.helper';
+import {
+  waitForPermissions,
+  waitForLoadingToComplete,
+  waitForVisible,
+  waitForPageReady,
+} from './helpers/wait.helper';
 
 const ADMIN_USER = 'test@playwright.local';
 const READONLY_USER = 'test-readonly@playwright.local';
@@ -33,10 +38,10 @@ test.describe('Interactions Enhanced — Positive', () => {
     page,
   }) => {
     await test.step('Arrange — navigate to interactions list', async () => {
-      await page.goto(`${BASE_URL}/partnerships/interactions`);
-      await page.waitForLoadState('domcontentloaded');
-      await waitForPermissions(page);
-      await page.waitForTimeout(2000);
+      const interactionsPage = new InteractionsPage(page);
+      await interactionsPage.navigateTo();
+      await waitForLoadingToComplete(page);
+      await waitForVisible(interactionsPage.getListview());
     });
 
     await test.step('Assert — cards/rows visible, count matches mock', async () => {
@@ -54,10 +59,11 @@ test.describe('Interactions Enhanced — Positive', () => {
     await test.step('Act — navigate directly to interaction detail', async () => {
       // QA-094: Cards don't render in headless mode (canRenderContent width detection issue)
       // Navigate directly to detail page instead of clicking cards
-      await page.goto(`${BASE_URL}/partnerships/interactions/1`);
-      await page.waitForLoadState('domcontentloaded');
+      const itemPage = new InteractionItemPage(page);
+      await itemPage.navigate(1);
       await waitForPermissions(page);
-      await page.waitForTimeout(3000);
+      await waitForLoadingToComplete(page);
+      await waitForVisible(itemPage.header, 10000).catch(() => {});
     });
 
     await test.step('Assert — detail page loaded', async () => {
@@ -79,8 +85,7 @@ test.describe('Interactions Enhanced — Negative', () => {
     await authenticateWithRealBackend(page, '/partnerships/interactions', ADMIN_USER);
     await waitForPermissions(page);
     await page.goto(`${BASE_URL}/partnerships/interactions/99999`);
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(3000);
+    await waitForPageReady(page);
 
     const hasError = await page.locator('text=/error|not found|404/i').isVisible().catch(() => false);
     const hasRedirect = !page.url().includes('/99999');
@@ -90,12 +95,10 @@ test.describe('Interactions Enhanced — Negative', () => {
 
   test('TC-004: Readonly user → New Interaction button hidden', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/interactions', READONLY_USER);
-    await page.goto(`${BASE_URL}/partnerships/interactions`);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
-    await page.waitForTimeout(2000);
-
     const interactionsPage = new InteractionsPage(page);
+    await interactionsPage.navigateTo();
+    await waitForLoadingToComplete(page);
+
     const newVisible = await interactionsPage.isNewButtonVisible();
     expect(newVisible).toBe(false);
   });
@@ -115,8 +118,7 @@ test.describe('Interactions Enhanced — Negative', () => {
       }
     );
     await page.goto(`${BASE_URL}/partnerships/interactions`);
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(3000);
+    await waitForPageReady(page);
 
     const hasError = await page
       .locator('text=/error|errorLoadingData|error loading/i')
@@ -130,10 +132,8 @@ test.describe('Interactions Enhanced — Negative', () => {
     page,
   }) => {
     await authenticateWithRealBackend(page, '/partnerships/interactions/1', READONLY_USER);
-    await page.goto(`${BASE_URL}/partnerships/interactions/1`);
-    await page.waitForLoadState('domcontentloaded');
     await waitForPermissions(page);
-    await page.waitForTimeout(2000);
+    await waitForLoadingToComplete(page);
 
     const editBtn = page.locator('[data-testid="edit-interaction-button"]');
     const editVisible = await editBtn.isVisible().catch(() => false);
@@ -153,8 +153,7 @@ test.describe('Interactions Enhanced — Negative', () => {
       }
     );
     await page.goto(`${BASE_URL}/partnerships/interactions/1`);
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(3000);
+    await waitForPageReady(page);
 
     const errorSelectors = [
       'text=/error|errorLoadingData|error loading|server error/i',
@@ -173,7 +172,10 @@ test.describe('Interactions Enhanced — Negative', () => {
     // (Angular global error handler may show toast briefly or redirect)
     const pageStable = await page.locator('body').isVisible();
     const notOnDetailContent = !(await page.locator('text=/Test Interaction 1/i').first().isVisible().catch(() => false));
-    expect(hasError || (pageStable && notOnDetailContent)).toBeTruthy();
+    expect(
+      hasError || (pageStable && notOnDetailContent),
+      'API 500 for detail should show error or stable page without detail content'
+    ).toBe(true);
   });
 
   test('TC-008: Search with non-matching term → empty state shown', async ({ page }) => {
@@ -195,19 +197,16 @@ test.describe('Interactions Enhanced — Negative', () => {
         });
       }
     );
-    await page.goto(`${BASE_URL}/partnerships/interactions`);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
-    await page.waitForTimeout(2000);
-
     const interactionsPage = new InteractionsPage(page);
+    await interactionsPage.navigateTo();
+    await waitForLoadingToComplete(page);
     await interactionsPage.searchInteractions('xyznonexistent123');
-    await page.waitForTimeout(2000);
+    await waitForLoadingToComplete(page);
 
     const emptyMsg = interactionsPage.getEmptyStateMessage();
     const hasEmpty = await emptyMsg.isVisible().catch(() => false);
     const count = await interactionsPage.getInteractionCount();
-    expect(hasEmpty || count === 0).toBeTruthy();
+    expect(hasEmpty || count === 0, 'Non-matching search should show empty state or zero count').toBe(true);
   });
 });
 
@@ -230,28 +229,25 @@ test.describe('Interactions Enhanced — Edge', () => {
         });
       }
     );
-    await page.goto(`${BASE_URL}/partnerships/interactions`);
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
-
     const interactionsPage = new InteractionsPage(page);
+    await interactionsPage.navigateTo();
+    await waitForLoadingToComplete(page);
+
     const emptyMsg = interactionsPage.getEmptyStateMessage();
     const hasEmpty = await emptyMsg.isVisible().catch(() => false);
     const count = await interactionsPage.getInteractionCount();
-    expect(hasEmpty || count === 0).toBeTruthy();
+    expect(hasEmpty || count === 0, 'Empty list should show empty message or zero count').toBe(true);
   });
 
   test('TC-010: Search with special characters → no crash, empty results shown', async ({
     page,
   }) => {
     await authenticateWithRealBackend(page, '/partnerships/interactions', ADMIN_USER);
-    await page.goto(`${BASE_URL}/partnerships/interactions`);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
-
     const interactionsPage = new InteractionsPage(page);
+    await interactionsPage.navigateTo();
+
     await interactionsPage.searchInteractions('!@#$%^&*()');
-    await page.waitForTimeout(2000);
+    await waitForLoadingToComplete(page);
 
     const listview = interactionsPage.getListview();
     await expect(listview).toBeVisible({ timeout: 5000 });
@@ -259,14 +255,12 @@ test.describe('Interactions Enhanced — Edge', () => {
 
   test('TC-011: Very long search query (200+ chars) → handled gracefully', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/interactions', ADMIN_USER);
-    await page.goto(`${BASE_URL}/partnerships/interactions`);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
+    const interactionsPage = new InteractionsPage(page);
+    await interactionsPage.navigateTo();
 
     const longQuery = 'a'.repeat(250);
-    const interactionsPage = new InteractionsPage(page);
     await interactionsPage.searchInteractions(longQuery);
-    await page.waitForTimeout(2000);
+    await waitForLoadingToComplete(page);
 
     const listview = interactionsPage.getListview();
     await expect(listview).toBeVisible({ timeout: 5000 });
@@ -274,20 +268,16 @@ test.describe('Interactions Enhanced — Edge', () => {
 
   test('TC-012: Navigate list → detail → back → forward → list still correct', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/interactions', ADMIN_USER);
-    await page.goto(`${BASE_URL}/partnerships/interactions`);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
-
     const interactionsPage = new InteractionsPage(page);
+    await interactionsPage.navigateTo();
+
     const countBefore = await interactionsPage.getInteractionCount();
 
     // Navigate to detail via URL (QA-094: cards don't render in headless)
-    await page.goto(`${BASE_URL}/partnerships/interactions/1`);
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+    const itemPage = new InteractionItemPage(page);
+    await itemPage.navigate(1);
     await page.goBack();
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+    await waitForLoadingToComplete(page);
 
     const countAfter = await interactionsPage.getInteractionCount();
     expect(countAfter).toBe(countBefore);
@@ -297,16 +287,13 @@ test.describe('Interactions Enhanced — Edge', () => {
     page,
   }) => {
     await authenticateWithRealBackend(page, '/partnerships/interactions', ADMIN_USER);
-    await page.goto(`${BASE_URL}/partnerships/interactions`);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
-
     const interactionsPage = new InteractionsPage(page);
+    await interactionsPage.navigateTo();
+
     const countBefore = await interactionsPage.getInteractionCount();
 
     await page.reload();
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(3000);
+    await waitForLoadingToComplete(page);
 
     const countAfter = await interactionsPage.getInteractionCount();
     expect(countAfter).toBe(countBefore);
@@ -316,18 +303,15 @@ test.describe('Interactions Enhanced — Edge', () => {
     page,
   }) => {
     await authenticateWithRealBackend(page, '/partnerships/interactions', ADMIN_USER);
-    await page.goto(`${BASE_URL}/partnerships/interactions`);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
+    const interactionsPage = new InteractionsPage(page);
+    const itemPage = new InteractionItemPage(page);
+    await interactionsPage.navigateTo();
 
     // QA-094: Cards don't render in headless — test rapid URL navigation instead
-    await page.goto(`${BASE_URL}/partnerships/interactions/1`);
-    await page.waitForTimeout(300);
-    await page.goto(`${BASE_URL}/partnerships/interactions/2`);
-    await page.waitForTimeout(300);
-    await page.goto(`${BASE_URL}/partnerships/interactions`);
-    await page.waitForTimeout(1000);
-    await expect(page.locator('body')).toBeVisible();
+    await itemPage.navigate(1);
+    await itemPage.navigate(2);
+    await interactionsPage.navigateTo();
+    await waitForVisible(interactionsPage.getListview());
   });
 });
 
@@ -338,18 +322,16 @@ test.describe('Interactions Enhanced — Functional', () => {
 
   test('TC-015: Export button visible for admin, hidden for readonly', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/interactions', ADMIN_USER);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
-    await page.waitForTimeout(2000);
-
     const interactionsPage = new InteractionsPage(page);
+    await interactionsPage.navigateTo();
+    await waitForLoadingToComplete(page);
+
     const adminExportVisible = await interactionsPage.isExportButtonVisible();
     expect(adminExportVisible).toBe(true);
 
     await authenticateWithRealBackend(page, '/partnerships/interactions', READONLY_USER);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
-    await page.waitForTimeout(2000);
+    await interactionsPage.navigateTo();
+    await waitForLoadingToComplete(page);
 
     const readonlyExportVisible = await interactionsPage.isExportButtonVisible();
     expect(readonlyExportVisible).toBe(false);
@@ -357,18 +339,16 @@ test.describe('Interactions Enhanced — Functional', () => {
 
   test('TC-016: Import button visible for admin, hidden for readonly', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/interactions', ADMIN_USER);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
-    await page.waitForTimeout(2000);
-
     const interactionsPage = new InteractionsPage(page);
+    await interactionsPage.navigateTo();
+    await waitForLoadingToComplete(page);
+
     const adminImportVisible = await interactionsPage.isImportButtonVisible();
     expect(adminImportVisible).toBe(true);
 
     await authenticateWithRealBackend(page, '/partnerships/interactions', READONLY_USER);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
-    await page.waitForTimeout(2000);
+    await interactionsPage.navigateTo();
+    await waitForLoadingToComplete(page);
 
     const readonlyImportVisible = await interactionsPage.isImportButtonVisible();
     expect(readonlyImportVisible).toBe(false);
@@ -378,53 +358,50 @@ test.describe('Interactions Enhanced — Functional', () => {
     page,
   }) => {
     await authenticateWithRealBackend(page, '/partnerships/interactions', ADMIN_USER);
-    await page.goto(`${BASE_URL}/partnerships/interactions`);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
-    await page.waitForTimeout(3000);
+    const interactionsPage = new InteractionsPage(page);
+    await interactionsPage.navigateTo();
+    await waitForLoadingToComplete(page);
 
     const hasQuarterly = await page.getByText('Quarterly Partnership Review').isVisible({ timeout: 5000 }).catch(() => false);
     const hasMeeting = await page.getByText('Meeting').isVisible({ timeout: 3000 }).catch(() => false);
     const hasUNICEF = await page.getByText('UNICEF').isVisible({ timeout: 3000 }).catch(() => false);
     const hasRecords = await page.getByText(/Showing \d+ records/i).isVisible({ timeout: 3000 }).catch(() => false);
-    expect(hasQuarterly || hasMeeting || hasUNICEF || hasRecords).toBeTruthy();
+    expect(
+      hasQuarterly || hasMeeting || hasUNICEF || hasRecords,
+      'Cards should show subject, type, partner, or record count'
+    ).toBe(true);
   });
 
   test('TC-018: Search filters interactions correctly', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/interactions', ADMIN_USER);
-    await page.goto(`${BASE_URL}/partnerships/interactions`);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
-
     const interactionsPage = new InteractionsPage(page);
+    await interactionsPage.navigateTo();
     await interactionsPage.searchInteractions('Quarterly');
-    await page.waitForTimeout(2000);
+    await waitForLoadingToComplete(page);
 
     // QA-094: Cards don't render in headless, check for record count or card text
     const hasQuarterly = await page.getByText('Quarterly Partnership Review').isVisible().catch(() => false);
     const hasRecords = await page.getByText(/Showing \d+ records?/i).isVisible({ timeout: 3000 }).catch(() => false);
     const listviewVisible = await interactionsPage.getListview().isVisible().catch(() => false);
-    expect(hasQuarterly || hasRecords || listviewVisible).toBeTruthy();
+    expect(
+      hasQuarterly || hasRecords || listviewVisible,
+      'Search should show filtered results or listview'
+    ).toBe(true);
   });
 
   test('TC-019: Page header/title shows Interactions', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/interactions', ADMIN_USER);
-    await page.goto(`${BASE_URL}/partnerships/interactions`);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
-
     const interactionsPage = new InteractionsPage(page);
+    await interactionsPage.navigateTo();
     const title = await interactionsPage.getPageTitle();
     expect(title.toLowerCase()).toContain('interaction');
   });
 
   test('TC-020: List shows correct total count', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/interactions', ADMIN_USER);
-    await page.goto(`${BASE_URL}/partnerships/interactions`);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
-
     const interactionsPage = new InteractionsPage(page);
+    await interactionsPage.navigateTo();
+
     const count = await interactionsPage.getInteractionCount();
     expect(count).toBeGreaterThanOrEqual(1);
     expect(count).toBeLessThanOrEqual(10);
@@ -443,14 +420,12 @@ test.describe('Interactions Enhanced — Integration', () => {
 
     const countBefore = await interactionsPage.getInteractionCount();
     // QA-094: Navigate via URL instead of card click (cards don't render in headless)
-    await page.goto(`${BASE_URL}/partnerships/interactions/1`);
-    await page.waitForLoadState('domcontentloaded');
+    const itemPage = new InteractionItemPage(page);
+    await itemPage.navigate(1);
     await expect(page).toHaveURL(/\/partnerships\/interactions\/\d+/);
 
     await page.goBack();
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
-    await page.waitForTimeout(2000);
+    await waitForLoadingToComplete(page);
 
     const countAfter = await interactionsPage.getInteractionCount();
     expect(countAfter).toBe(countBefore);
@@ -460,11 +435,8 @@ test.describe('Interactions Enhanced — Integration', () => {
     page,
   }) => {
     await authenticateWithRealBackend(page, '/home', ADMIN_USER);
-    await page.goto(`${BASE_URL}/partnerships/interactions`);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
-
     const interactionsPage = new InteractionsPage(page);
+    await interactionsPage.navigateTo();
     const listview = interactionsPage.getListview();
     await expect(listview).toBeVisible({ timeout: 10000 });
   });
@@ -473,11 +445,9 @@ test.describe('Interactions Enhanced — Integration', () => {
     page,
   }) => {
     await authenticateWithRealBackend(page, '/partnerships/partners', ADMIN_USER);
-    await page.goto(`${BASE_URL}/partnerships/interactions`);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
-
     const interactionsPage = new InteractionsPage(page);
+    await interactionsPage.navigateTo();
+
     const listview = interactionsPage.getListview();
     await expect(listview).toBeVisible({ timeout: 10000 });
   });
@@ -486,15 +456,10 @@ test.describe('Interactions Enhanced — Integration', () => {
     page,
   }) => {
     await authenticateWithRealBackend(page, '/partnerships/interactions/1', ADMIN_USER);
-    await page.goto(`${BASE_URL}/partnerships/interactions/1`);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
-
-    await page.goto(`${BASE_URL}/partnerships/interactions`);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
+    await waitForLoadingToComplete(page);
 
     const interactionsPage = new InteractionsPage(page);
+    await interactionsPage.navigateTo();
     const listview = interactionsPage.getListview();
     await expect(listview).toBeVisible({ timeout: 10000 });
   });
@@ -503,17 +468,16 @@ test.describe('Interactions Enhanced — Integration', () => {
     page,
   }) => {
     await authenticateWithRealBackend(page, '/partnerships/interactions', ADMIN_USER);
-    await page.goto(`${BASE_URL}/partnerships/interactions`);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForPermissions(page);
+    const interactionsPage = new InteractionsPage(page);
+    await interactionsPage.navigateTo();
 
     // QA-094: Cards don't render in headless — navigate directly to detail
-    await page.goto(`${BASE_URL}/partnerships/interactions/1`);
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+    const itemPage = new InteractionItemPage(page);
+    await itemPage.navigate(1);
+    await waitForVisible(itemPage.header, 10000).catch(() => {});
 
-    const hasSubject = await page.locator('text=/interaction|Test|meeting/i').first().isVisible().catch(() => false);
-    expect(hasSubject || page.url().includes('/interactions/')).toBeTruthy();
+    expect(page.url()).toMatch(/\/interactions\/\d+/);
+    // QA-094: Content may not render in headless; URL confirms navigation to detail
   });
 
   test('TC-026: Multiple navigations between list and detail → all stable', async ({
@@ -524,13 +488,12 @@ test.describe('Interactions Enhanced — Integration', () => {
     await interactionsPage.navigateTo();
 
     // QA-094: Use URL navigation instead of card clicks (cards don't render in headless)
+    const itemPage = new InteractionItemPage(page);
     for (let i = 0; i < 3; i++) {
-      await page.goto(`${BASE_URL}/partnerships/interactions/1`);
-      await page.waitForLoadState('domcontentloaded');
+      await itemPage.navigate(1);
       await expect(page).toHaveURL(/\/partnerships\/interactions\/\d+/);
       await page.goBack();
-      await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(1000);
+      await waitForLoadingToComplete(page);
     }
 
     const listview = interactionsPage.getListview();

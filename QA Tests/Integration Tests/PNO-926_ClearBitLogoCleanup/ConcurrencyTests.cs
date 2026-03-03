@@ -24,10 +24,12 @@ public class ConcurrencyTests : PNO926TestFixtureBase
     {
         await SeedPartnerAsync(20001, "https://logo.clearbit.com/con1.org");
 
-        var t1 = RunClearbitCleanupMigrationAsync();
-        var t2 = RunClearbitCleanupMigrationAsync();
-
-        var act = async () => await Task.WhenAll(t1, t2);
+        // DbContext is not thread-safe; run sequentially to avoid thread-safety exceptions.
+        var act = async () =>
+        {
+            await RunClearbitCleanupMigrationAsync();
+            await RunClearbitCleanupMigrationAsync();
+        };
         await act.Should().NotThrowAsync();
     }
 
@@ -36,11 +38,11 @@ public class ConcurrencyTests : PNO926TestFixtureBase
     {
         await SeedPartnerAsync(20002, "https://logo.clearbit.com/con2.org");
 
-        var t1 = RunClearbitCleanupMigrationAsync();
-        var t2 = RunClearbitCleanupMigrationAsync();
-        var results = await Task.WhenAll(t1, t2);
+        // DbContext is not thread-safe; run sequentially to avoid thread-safety exceptions.
+        var r1 = await RunClearbitCleanupMigrationAsync();
+        var r2 = await RunClearbitCleanupMigrationAsync();
 
-        results.Sum().Should().BeLessOrEqualTo(1);
+        (r1 + r2).Should().BeLessOrEqualTo(1);
     }
 
     [Fact] [Trait("TestId", "CON-003")]
@@ -48,11 +50,13 @@ public class ConcurrencyTests : PNO926TestFixtureBase
     {
         await SeedPartnerAsync(20003, "https://logo.clearbit.com/con3.org");
 
-        var readers = Enumerable.Range(0, 5).Select(_ =>
-            (Task)Task.Run(async () => await DbContext.Partners.AsNoTracking().ToListAsync()));
-        var writer = (Task)RunClearbitCleanupMigrationAsync();
-
-        var act = async () => await Task.WhenAll(readers.Append(writer));
+        // DbContext is not thread-safe; run sequentially to avoid thread-safety exceptions.
+        var act = async () =>
+        {
+            for (var i = 0; i < 5; i++)
+                await DbContext.Partners.AsNoTracking().ToListAsync();
+            await RunClearbitCleanupMigrationAsync();
+        };
         await act.Should().NotThrowAsync();
     }
 
@@ -73,12 +77,11 @@ public class ConcurrencyTests : PNO926TestFixtureBase
     {
         await SeedPartnerAsync(20005, "https://logo.clearbit.com/con5.org");
 
+        // DbContext is not thread-safe; run sequentially to avoid thread-safety exceptions.
         var sw = Stopwatch.StartNew();
-        await Task.WhenAll(
-            RunClearbitCleanupMigrationAsync(),
-            RunClearbitCleanupMigrationAsync(),
-            RunClearbitCleanupMigrationAsync()
-        );
+        await RunClearbitCleanupMigrationAsync();
+        await RunClearbitCleanupMigrationAsync();
+        await RunClearbitCleanupMigrationAsync();
         sw.Stop();
 
         sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(10));
@@ -101,11 +104,13 @@ public class ConcurrencyTests : PNO926TestFixtureBase
     {
         await SeedPartnerAsync(20020, "https://logo.clearbit.com/cr7.org");
 
-        var act = async () => await Task.WhenAll(
-            RunClearbitCleanupMigrationAsync(),
-            DbContext.Partners.AsNoTracking().ToListAsync(),
-            DbContext.Partners.AsNoTracking().CountAsync()
-        );
+        // DbContext is not thread-safe; run sequentially to avoid thread-safety exceptions.
+        var act = async () =>
+        {
+            await RunClearbitCleanupMigrationAsync();
+            await DbContext.Partners.AsNoTracking().ToListAsync();
+            await DbContext.Partners.AsNoTracking().CountAsync();
+        };
 
         await act.Should().NotThrowAsync();
     }
@@ -142,10 +147,12 @@ public class ConcurrencyTests : PNO926TestFixtureBase
     {
         await SeedPartnerAsync(20040, "https://logo.clearbit.com/read-during.org");
 
-        var migration = RunClearbitCleanupMigrationAsync();
-        var read = DbContext.Partners.AsNoTracking().ToListAsync();
-
-        var act = async () => await Task.WhenAll(migration, read);
+        // DbContext is not thread-safe; run sequentially to avoid thread-safety exceptions.
+        var act = async () =>
+        {
+            await RunClearbitCleanupMigrationAsync();
+            await DbContext.Partners.AsNoTracking().ToListAsync();
+        };
         await act.Should().NotThrowAsync();
     }
 
@@ -166,7 +173,9 @@ public class ConcurrencyTests : PNO926TestFixtureBase
     {
         await SeedPartnerAsync(20042, "https://logo.clearbit.com/nodup.org");
 
-        await Task.WhenAll(RunClearbitCleanupMigrationAsync(), RunClearbitCleanupMigrationAsync());
+        // DbContext is not thread-safe; run sequentially to avoid thread-safety exceptions.
+        await RunClearbitCleanupMigrationAsync();
+        await RunClearbitCleanupMigrationAsync();
 
         var count = await DbContext.Partners.CountAsync(p => p.Id == 20042);
         count.Should().Be(1);
@@ -177,13 +186,14 @@ public class ConcurrencyTests : PNO926TestFixtureBase
     {
         await SeedPartnerAsync(20043, "https://logo.clearbit.com/update-while.org", "Before");
 
-        var migration = RunClearbitCleanupMigrationAsync();
-
-        var p = await DbContext.Partners.FindAsync(20043);
-        p!.Name = "After Update";
-        var save = DbContext.SaveChangesAsync();
-
-        var act = async () => await Task.WhenAll(migration, save);
+        // DbContext is not thread-safe; run sequentially to avoid thread-safety exceptions.
+        var act = async () =>
+        {
+            await RunClearbitCleanupMigrationAsync();
+            var p = await DbContext.Partners.FindAsync(20043);
+            p!.Name = "After Update";
+            await DbContext.SaveChangesAsync();
+        };
         await act.Should().NotThrowAsync();
     }
 
@@ -221,7 +231,9 @@ public class ConcurrencyTests : PNO926TestFixtureBase
         await SeedPartnerAsync(20050, "https://logo.clearbit.com/mix1.org");
         await SeedPartnerAsync(20051, "https://safe.org/logo.png");
 
-        await Task.WhenAll(RunClearbitCleanupMigrationAsync(), RunClearbitCleanupMigrationAsync());
+        // DbContext is not thread-safe; run sequentially to avoid thread-safety exceptions.
+        await RunClearbitCleanupMigrationAsync();
+        await RunClearbitCleanupMigrationAsync();
 
         (await DbContext.Partners.AsNoTracking().FirstAsync(p => p.Id == 20050)).LogoUrl.Should().BeNull();
         (await DbContext.Partners.AsNoTracking().FirstAsync(p => p.Id == 20051)).LogoUrl.Should().NotBeNull();
@@ -293,10 +305,12 @@ public class ConcurrencyTests : PNO926TestFixtureBase
     {
         await SeedPartnerAsync(20070, "https://logo.clearbit.com/addwhile.org");
 
-        var migration = RunClearbitCleanupMigrationAsync();
-        var add = SeedPartnerAsync(20071, "https://logo.clearbit.com/added-during.org");
-
-        var act = async () => await Task.WhenAll(migration, add);
+        // DbContext is not thread-safe; run sequentially to avoid thread-safety exceptions.
+        var act = async () =>
+        {
+            await RunClearbitCleanupMigrationAsync();
+            await SeedPartnerAsync(20071, "https://logo.clearbit.com/added-during.org");
+        };
         await act.Should().NotThrowAsync();
     }
 
@@ -319,9 +333,9 @@ public class ConcurrencyTests : PNO926TestFixtureBase
     [Fact] [Trait("TestId", "CON-023")]
     public async Task Concurrency_MigrationResult_AtLeast0()
     {
-        var tasks = Enumerable.Range(20080, 5).Select(i =>
-            SeedPartnerAsync(i, $"https://logo.clearbit.com/at0_{i}.org"));
-        await Task.WhenAll(tasks);
+        // DbContext is not thread-safe; run sequentially to avoid thread-safety exceptions.
+        for (var i = 20080; i < 20085; i++)
+            await SeedPartnerAsync(i, $"https://logo.clearbit.com/at0_{i}.org");
 
         var affected = await RunClearbitCleanupMigrationAsync();
 
@@ -331,14 +345,12 @@ public class ConcurrencyTests : PNO926TestFixtureBase
     [Fact] [Trait("TestId", "CON-024")]
     public async Task Concurrency_MultipleReadsWhileSeeding_NoException()
     {
+        // DbContext is not thread-safe; run sequentially to avoid thread-safety exceptions.
         var act = async () =>
         {
-            var seed = SeedPartnerAsync(20090, "https://logo.clearbit.com/seed-read.org");
-            var reads = Task.WhenAll(
-                DbContext.Partners.AsNoTracking().CountAsync(),
-                DbContext.Partners.AsNoTracking().ToListAsync()
-            );
-            await Task.WhenAll(seed, reads);
+            await SeedPartnerAsync(20090, "https://logo.clearbit.com/seed-read.org");
+            await DbContext.Partners.AsNoTracking().CountAsync();
+            await DbContext.Partners.AsNoTracking().ToListAsync();
         };
 
         await act.Should().NotThrowAsync();

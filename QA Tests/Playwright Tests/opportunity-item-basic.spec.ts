@@ -1,236 +1,194 @@
 /**
  * @fileoverview Opportunity Detail Page - Phase 1A Basic Tests
- * Tests that can be written WITHOUT data-testid attributes
- * Uses generic selectors: text, roles, PrimeNG components, CSS classes
- * 
- * @updated 2026-01-30 - Migrated to real backend authentication
+ * Uses OpportunityItemPage POM and meaningful assertions.
+ *
+ * @updated 2026-03-03 - Fixed quality issues: POM usage, proper waits, meaningful assertions
  */
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
-import { assertUrlMatches } from './helpers/assertions.helper';
+import { assertUrlMatches, assertVisible } from './helpers/assertions.helper';
+import { waitForLoadingToComplete, waitForPermissions } from './helpers/wait.helper';
+import { OpportunityItemPage } from './pages/opportunity-item.page';
 
 /**
  * Opportunity Detail Page - Phase 1A Tests
- * 
- * These tests use generic selectors and don't require specific data-testid attributes.
- * They test basic functionality, navigation, and layout.
- * 
+ *
+ * Uses OpportunityItemPage POM with data-testid and section selectors.
+ * Tests basic functionality, navigation, and layout.
+ *
  * NOTE: Tests use real backend with existing opportunity data (ID 1).
  * Ensure database has at least one opportunity record before running tests.
  * Opportunity routes are under /partnerships/opportunities (not /opportunities).
  */
 test.describe('Opportunity Detail Page - Phase 1A Basic Tests', () => {
   test.slow();
-  // Use existing opportunity ID from database (assumes setup scripts have run)
   const testOpportunityId = 1;
-  
+
   test.beforeEach(async ({ page }) => {
-    // Authenticate with real backend and navigate to opportunity detail page
-    // Note: Opportunities are under /partnerships/opportunities path
     await authenticateWithRealBackend(page, `/partnerships/opportunities/${testOpportunityId}`);
-    
-    // Wait for page load
     await page.waitForLoadState('load', { timeout: 15000 });
-    await page.waitForTimeout(2000); // Angular routing init
+    await waitForPermissions(page);
+    await waitForLoadingToComplete(page);
   });
-  
+
   /**
    * Navigation Tests
    */
   test('should navigate to opportunity detail page successfully', async ({ page }) => {
     await assertUrlMatches(page, new RegExp(`/opportunities/${testOpportunityId}`));
   });
-  
+
   test('should display opportunity detail page URL', async ({ page }) => {
     const currentUrl = page.url();
     expect(currentUrl).toContain('/partnerships/opportunities/');
     expect(currentUrl).toContain(testOpportunityId.toString());
   });
-  
+
   test('should have valid page title', async ({ page }) => {
     const title = await page.title();
     expect(title.length).toBeGreaterThan(0);
   });
-  
+
   /**
    * Page Layout Tests
    */
   test('should display opportunity information panel', async ({ page }) => {
-    // Look for "Opportunity" text
-    const infoPanel = page.locator('p-panel, div').filter({ 
-      hasText: /opportunity/i 
-    });
-    
-    const hasPanel = await infoPanel.first().isVisible().catch(() => false);
-    expect(hasPanel || true).toBeTruthy();
+    const header = page.locator('[data-testid="opportunity-detail-header"], app-opportunity-view').first();
+    await assertVisible(header);
   });
-  
+
   test('should display at least one panel', async ({ page }) => {
-    const panels = page.locator('p-panel');
-    const panelCount = await panels.count();
-    expect(panelCount).toBeGreaterThan(0);
+    const pom = new OpportunityItemPage(page, testOpportunityId);
+    const hasOverview = await pom.hasOverviewSection();
+    const hasWhat = await pom.hasWhatSection();
+    const hasWho = await pom.hasWhoSection();
+    const hasWhen = await pom.hasScheduleSection();
+    const hasRelated = await pom.hasInteractionsSection();
+    const hasDocuments = await pom.hasDocumentsSection();
+    expect(hasOverview || hasWhat || hasWho || hasWhen || hasRelated || hasDocuments).toBe(true);
   });
-  
+
   test('should display main content container', async ({ page }) => {
-    const mainContent = page.locator('.flex, .grid, [class*="container"]').first();
-    await expect(mainContent).toBeVisible();
+    const mainContent = page.locator('app-opportunity-view, #section-overview').first();
+    await assertVisible(mainContent);
   });
-  
+
   test('should display card elements', async ({ page }) => {
-    // Look for PrimeNG panels, cards, or surface elements that form card-like containers
-    const cards = page.locator('p-panel, p-card, .unops-card, .unops-surface-elevated, .bg-unops-surface-primary, [class*="p-panel"]');
-    const cardCount = await cards.count();
-    // May not have cards if using different layout - pass if any content is visible
-    const mainContent = page.locator('.flex, .grid, main');
-    const hasContent = await mainContent.first().isVisible().catch(() => false);
-    expect(cardCount > 0 || hasContent).toBeTruthy();
+    const pom = new OpportunityItemPage(page, testOpportunityId);
+    const hasWhat = await pom.hasWhatSection();
+    const hasOverview = await pom.hasOverviewSection();
+    expect(hasWhat || hasOverview).toBe(true);
   });
-  
+
   /**
    * Button Tests
    */
   test('should display action buttons', async ({ page }) => {
-    await page.waitForTimeout(2000);
-    
-    const buttons = page.locator('button, p-button');
-    const buttonCount = await buttons.count();
-    expect(buttonCount).toBeGreaterThan(0);
+    await waitForLoadingToComplete(page);
+    const pom = new OpportunityItemPage(page, testOpportunityId);
+    const hasWorkflow = await pom.hasWorkflowActions();
+    const hasEdit = await pom.isEditButtonVisible();
+    const hasDelete = await pom.isDeleteButtonVisible();
+    expect(hasWorkflow || hasEdit || hasDelete).toBe(true);
   });
-  
+
   test('should display edit button for users with edit permission', async ({ page }) => {
-    await page.waitForTimeout(2000);
-    
-    const editButton = page.locator('button').filter({ hasText: /edit/i })
-      .or(page.locator('button i.pi-pencil').locator('..'));
-    
-    const isVisible = await editButton.first().isVisible().catch(() => false);
-    expect(isVisible || true).toBeTruthy();
+    await waitForLoadingToComplete(page);
+    const pom = new OpportunityItemPage(page, testOpportunityId);
+    const hasEdit = await pom.isEditButtonVisible();
+    const hasWorkflow = await pom.hasWorkflowActions();
+    expect(hasEdit || hasWorkflow).toBe(true);
   });
-  
+
   test('should display delete button for users with delete permission', async ({ page }) => {
-    await page.waitForTimeout(2000);
-    
-    const deleteButton = page.locator('button').filter({ hasText: /delete/i })
-      .or(page.locator('button i.pi-trash').locator('..'));
-    
-    const isVisible = await deleteButton.first().isVisible().catch(() => false);
-    expect(isVisible || true).toBeTruthy();
+    await waitForLoadingToComplete(page);
+    const pom = new OpportunityItemPage(page, testOpportunityId);
+    const hasDelete = await pom.isDeleteButtonVisible();
+    const hasWorkflow = await pom.hasWorkflowActions();
+    expect(hasDelete || hasWorkflow).toBe(true);
   });
-  
+
   test('should display workflow action buttons', async ({ page }) => {
-    await page.waitForTimeout(2000);
-    
-    // Look for workflow buttons (submit, approve, activate, etc.)
-    const workflowButtons = page.locator('button').filter({ 
-      hasText: /submit|approve|activate|reject/i 
-    });
-    
-    const hasWorkflowButton = await workflowButtons.first().isVisible().catch(() => false);
-    expect(hasWorkflowButton || true).toBeTruthy();
+    await waitForLoadingToComplete(page);
+    const pom = new OpportunityItemPage(page, testOpportunityId);
+    const hasWorkflow = await pom.hasWorkflowActions();
+    expect(hasWorkflow).toBe(true);
   });
-  
+
   /**
    * Opportunity Information Tests
    */
   test('should display opportunity title or name', async ({ page }) => {
-    // Look for prominent headings
-    const headings = page.locator('h1, h2, .text-2xl, .text-3xl');
-    const headingCount = await headings.count();
-    expect(headingCount).toBeGreaterThan(0);
+    const title = page.locator('[data-testid="opportunity-title"], h1').first();
+    const isVisible = await title.isVisible().catch(() => false);
+    expect(isVisible).toBe(true);
   });
-  
+
   test('should display opportunity value label', async ({ page }) => {
-    // Look for "value" or "amount" text
-    const valueLabel = page.getByText(/value|amount|budget/i);
-    const hasValue = await valueLabel.first().isVisible().catch(() => false);
-    
-    expect(hasValue || true).toBeTruthy();
+    const pom = new OpportunityItemPage(page, testOpportunityId);
+    const hasWhat = await pom.hasWhatSection();
+    expect(hasWhat).toBe(true);
   });
-  
+
   test('should display opportunity stage or status', async ({ page }) => {
-    // Look for "stage" or "status" text
-    const stageLabel = page.getByText(/stage|status|phase/i);
-    const hasStage = await stageLabel.first().isVisible().catch(() => false);
-    
-    expect(hasStage || true).toBeTruthy();
+    const badges = page.locator('[data-testid="opportunity-stage"], [data-testid="opportunity-status"], p-badge');
+    const hasBadge = await badges.first().isVisible().catch(() => false);
+    expect(hasBadge).toBe(true);
   });
-  
+
   test('should display opportunity dates', async ({ page }) => {
-    // Look for "date" or "deadline" text
-    const dateLabel = page.getByText(/date|deadline|start|end/i);
-    const hasDate = await dateLabel.first().isVisible().catch(() => false);
-    
-    expect(hasDate || true).toBeTruthy();
+    const pom = new OpportunityItemPage(page, testOpportunityId);
+    const hasSchedule = await pom.hasScheduleSection();
+    expect(hasSchedule).toBe(true);
   });
-  
+
   /**
    * Section Tests
    */
   test('should display budget section', async ({ page }) => {
-    const budgetSection = page.locator('p-panel, div').filter({ 
-      hasText: /budget|financial|cost/i 
-    });
-    
-    const hasSection = await budgetSection.first().isVisible().catch(() => false);
-    expect(hasSection || true).toBeTruthy();
+    const pom = new OpportunityItemPage(page, testOpportunityId);
+    const hasBudget = await pom.hasBudgetSection();
+    expect(hasBudget).toBe(true);
   });
-  
+
   test('should display schedule section', async ({ page }) => {
-    const scheduleSection = page.locator('p-panel, div').filter({ 
-      hasText: /schedule|timeline|dates/i 
-    });
-    
-    const hasSection = await scheduleSection.first().isVisible().catch(() => false);
-    expect(hasSection || true).toBeTruthy();
+    const pom = new OpportunityItemPage(page, testOpportunityId);
+    const hasSchedule = await pom.hasScheduleSection();
+    expect(hasSchedule).toBe(true);
   });
-  
+
   test('should display partners section', async ({ page }) => {
-    const partnersSection = page.locator('p-panel, div').filter({ 
-      hasText: /partners|organizations/i 
-    });
-    
-    const hasSection = await partnersSection.first().isVisible().catch(() => false);
-    expect(hasSection || true).toBeTruthy();
+    const pom = new OpportunityItemPage(page, testOpportunityId);
+    const hasPartners = await pom.hasPartnersSection();
+    expect(hasPartners).toBe(true);
   });
-  
+
   test('should display contacts section', async ({ page }) => {
-    const contactsSection = page.locator('p-panel, div').filter({ 
-      hasText: /contacts/i 
-    });
-    
-    const hasSection = await contactsSection.first().isVisible().catch(() => false);
-    expect(hasSection || true).toBeTruthy();
+    const pom = new OpportunityItemPage(page, testOpportunityId);
+    const hasContacts = await pom.hasContactsSection();
+    expect(hasContacts).toBe(true);
   });
-  
+
   test('should display interactions section', async ({ page }) => {
-    const interactionsSection = page.locator('p-panel, div').filter({ 
-      hasText: /interactions/i 
-    });
-    
-    const hasSection = await interactionsSection.first().isVisible().catch(() => false);
-    expect(hasSection || true).toBeTruthy();
+    const pom = new OpportunityItemPage(page, testOpportunityId);
+    const hasInteractions = await pom.hasInteractionsSection();
+    expect(hasInteractions).toBe(true);
   });
-  
+
   test('should display documents section', async ({ page }) => {
-    const documentsSection = page.locator('p-panel, div').filter({ 
-      hasText: /documents/i 
-    });
-    
-    const hasSection = await documentsSection.first().isVisible().catch(() => false);
-    expect(hasSection || true).toBeTruthy();
+    const pom = new OpportunityItemPage(page, testOpportunityId);
+    const hasDocuments = await pom.hasDocumentsSection();
+    expect(hasDocuments).toBe(true);
   });
-  
+
   test('should display DST section if applicable', async ({ page }) => {
-    // Look for "DST" or "Decision Support Tool"
-    const dstSection = page.locator('p-panel, div').filter({ 
-      hasText: /DST|decision support/i 
-    });
-    
-    const hasSection = await dstSection.first().isVisible().catch(() => false);
-    expect(hasSection || true).toBeTruthy();
+    const pom = new OpportunityItemPage(page, testOpportunityId);
+    const hasDST = await pom.hasDSTSection();
+    const hasOverview = await pom.hasOverviewSection();
+    expect(hasDST || hasOverview).toBe(true);
   });
-  
+
   /**
    * Content Tests
    */
@@ -239,108 +197,93 @@ test.describe('Opportunity Detail Page - Phase 1A Basic Tests', () => {
     expect(bodyText).toBeTruthy();
     expect(bodyText!.length).toBeGreaterThan(100);
   });
-  
+
   test('should display icons', async ({ page }) => {
     const icons = page.locator('i, .pi, .material-icons, .material-symbols-outlined, svg');
     const iconCount = await icons.count();
     expect(iconCount).toBeGreaterThan(0);
   });
-  
+
   /**
    * Tabs Tests
    */
   test('should display tabs if tabs component exists', async ({ page }) => {
     const tabs = page.locator('p-tabs, p-tabview, [role="tablist"]');
     const hasTabs = await tabs.isVisible().catch(() => false);
-    
+
     if (hasTabs) {
       const tabItems = page.locator('[role="tab"]');
       expect(await tabItems.count()).toBeGreaterThan(0);
     }
-    
-    expect(true).toBeTruthy();
   });
-  
+
   /**
    * Responsive Design Tests
    */
   test('should display correctly on desktop', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 720 });
-    await page.waitForTimeout(500);
-    
-    const panels = page.locator('p-panel');
-    await expect(panels.first()).toBeVisible();
+    await waitForLoadingToComplete(page);
+    const header = page.locator('[data-testid="opportunity-detail-header"], app-opportunity-view').first();
+    await assertVisible(header);
   });
-  
+
   test('should display correctly on tablet', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
-    await page.waitForTimeout(1000);
-    
+    await waitForLoadingToComplete(page);
     const mainContent = page.locator('body');
-    await expect(mainContent).toBeVisible();
+    await assertVisible(mainContent);
   });
-  
+
   test('should display correctly on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.waitForTimeout(1000);
-    
-    const panels = page.locator('p-panel');
-    await expect(panels.first()).toBeVisible();
+    await waitForLoadingToComplete(page);
+    const header = page.locator('[data-testid="opportunity-detail-header"], app-opportunity-view').first();
+    await assertVisible(header);
   });
-  
+
   /**
    * Table/List Tests
    */
   test('should display tables if data exists', async ({ page }) => {
-    await page.waitForTimeout(2000);
-    
+    await waitForLoadingToComplete(page);
     const tables = page.locator('p-table, .p-datatable, table');
     const hasTable = await tables.first().isVisible().catch(() => false);
-    
+
     if (hasTable) {
       expect(await tables.count()).toBeGreaterThan(0);
     }
-    
-    expect(true).toBeTruthy();
   });
-  
+
   /**
    * Loading State Tests
    */
   test('should not display loading indicators after page loads', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
-    
-    // Look for specific loading indicators (not generic class patterns)
-    // Use more specific selectors to avoid matching "upload", "download", etc.
-    const loadingSpinner = page.locator('.p-progressspinner, .pi-spin, .pi-spinner, .animate-pulse.skeleton, [data-testid="loading"]');
+    await page.waitForLoadState('networkidle').catch(() => {});
+    await waitForLoadingToComplete(page);
+    const loadingSpinner = page.locator(
+      '.p-progressspinner, .pi-spin, .pi-spinner, .animate-pulse.skeleton, [data-testid="loading"]'
+    );
     const isLoading = await loadingSpinner.first().isVisible().catch(() => false);
-    
-    // Allow test to pass - loading state may or may not be present
-    expect(!isLoading || true).toBeTruthy();
+    expect(isLoading).toBe(false);
   });
-  
+
   /**
    * Error Handling Tests
    */
   test('should not display error messages on valid opportunity', async ({ page }) => {
-    // Look for specific error message components, not generic class patterns
-    // p-message with error severity, or specific error components
-    const errorMessages = page.locator('p-message[severity="error"], .p-message-error, [role="alert"][aria-live="assertive"]');
+    const errorMessages = page.locator(
+      'p-message[severity="error"], .p-message-error, [role="alert"][aria-live="assertive"]'
+    );
     const hasError = await errorMessages.first().isVisible().catch(() => false);
-    
-    // Allow test to pass - just verify no critical error messages
-    expect(!hasError || true).toBeTruthy();
+    expect(hasError).toBe(false);
   });
-  
+
   /**
    * Workflow Tests
    */
   test('should display workflow status badge', async ({ page }) => {
-    // Look for badges or status indicators
-    const badges = page.locator('.badge, p-badge, .p-tag, p-tag, [class*="status"]');
+    const badges = page.locator('[data-testid="opportunity-stage"], [data-testid="opportunity-status"], p-badge');
     const hasBadge = await badges.first().isVisible().catch(() => false);
-    
-    expect(hasBadge || true).toBeTruthy();
+    expect(hasBadge).toBe(true);
   });
 });

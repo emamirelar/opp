@@ -10,7 +10,13 @@
 
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
-import { waitForPermissions } from '../helpers/wait.helper';
+import {
+  waitForPermissions,
+  waitForDialog,
+  waitForLoadingToComplete,
+  waitForVisible,
+  waitForPageReady,
+} from '../helpers/wait.helper';
 
 export class InteractionsPage extends BasePage {
   constructor(page: Page) {
@@ -38,10 +44,11 @@ export class InteractionsPage extends BasePage {
 
   /**
    * Get count of visible interaction cards/rows.
-   * First waits briefly for cards to render after data loads.
+   * Waits for listview to be visible before counting.
    */
   async getInteractionCount(): Promise<number> {
-    await this.page.waitForTimeout(1000);
+    await waitForLoadingToComplete(this.page);
+    await waitForVisible(this.getListview(), 10000).catch(() => {});
     const cards = this.getInteractionCards();
     const count = await cards.count();
     if (count > 0) return count;
@@ -66,7 +73,7 @@ export class InteractionsPage extends BasePage {
     } else {
       await cards.nth(index).click({ timeout: 10000 });
     }
-    await this.page.waitForTimeout(1000);
+    await waitForLoadingToComplete(this.page);
   }
 
   /**
@@ -78,7 +85,7 @@ export class InteractionsPage extends BasePage {
       '[data-testid="new-interaction-button"], .interaction-new-button'
     ).first();
     await btn.click();
-    await this.page.waitForTimeout(500);
+    await waitForDialog(this.page);
   }
 
   /**
@@ -93,7 +100,7 @@ export class InteractionsPage extends BasePage {
     ).first();
     await searchInput.fill(query);
     await this.page.keyboard.press('Enter');
-    await this.page.waitForTimeout(1500); // Debounce + API response
+    await waitForLoadingToComplete(this.page);
   }
 
   /**
@@ -164,5 +171,52 @@ export class InteractionsPage extends BasePage {
     return this.page.locator(
       '[data-testid="interactions-listview"], .interaction-listview, app-listview'
     ).first();
+  }
+
+  /**
+   * Get Create Opportunity button locator (for visibility checks)
+   * Flexible: class, text, or data-testid for interactions list
+   */
+  getCreateOpportunityButton(): Locator {
+    return this.page
+      .locator(
+        '.interaction-create-opportunity-button, button:has-text("New Opportunity"), [data-testid="create-opportunity-button"]'
+      )
+      .first();
+  }
+
+  /**
+   * Check if Create Opportunity button is visible
+   */
+  async isCreateOpportunityButtonVisible(): Promise<boolean> {
+    return await this.getCreateOpportunityButton().isVisible().catch(() => false);
+  }
+
+  /**
+   * Open Create Opportunity dialog from interactions list.
+   * Waits for page ready, clicks New Opportunity button, then waits for dialog.
+   */
+  async openCreateOpportunityDialog(): Promise<void> {
+    await waitForPageReady(this.page);
+    await this.getCreateOpportunityButton().click({ timeout: 10000 });
+    await waitForDialog(this.page);
+  }
+
+  /**
+   * Get search input locator
+   */
+  getSearchInput(): Locator {
+    return this.page
+      .locator(
+        'input.quick-search, app-listview input[type="text"], [placeholder*="Search"]'
+      )
+      .first();
+  }
+
+  /**
+   * Check if search input is visible
+   */
+  async isSearchInputVisible(): Promise<boolean> {
+    return await this.getSearchInput().isVisible().catch(() => false);
   }
 }

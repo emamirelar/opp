@@ -279,8 +279,7 @@ test.describe('Partner Detail - Positive Role Access', () => {
     const visible = await isActionButtonVisible(page, {
       text: /edit|save|update/i,
     });
-    // Admin should have edit access
-    expect(true).toBeTruthy(); // Pass - edit availability verified by permissions mock
+    expect(visible).toBe(true);
   });
 
   test('POS_PD03 - Partner User can view partner detail', async ({ page }) => {
@@ -1119,8 +1118,6 @@ test.describe('Role Permission Matrix - Cross-Entity Verification', () => {
       await waitForRolePermissions(page);
 
       const url = page.url();
-      const pageName = pageUrl.split('/').pop();
-      console.log(`[Matrix] Admin checking ${pageName}: ${url}`);
 
       // Admin should not be redirected
       expect(url).not.toContain('access-denied');
@@ -1146,9 +1143,6 @@ test.describe('Role Permission Matrix - Cross-Entity Verification', () => {
       });
       const exportVisible = await isActionButtonVisible(page, { testId: 'export-button', text: /export/i });
 
-      const pageName = config.url.split('/').pop();
-      console.log(`[Matrix] GenUser on ${pageName}: create=${createVisible}, export=${exportVisible}`);
-
       expect(createVisible).toBe(false);
       expect(exportVisible).toBe(false);
     }
@@ -1171,9 +1165,6 @@ test.describe('Role Permission Matrix - Cross-Entity Verification', () => {
       });
       const exportVisible = await isActionButtonVisible(page, { testId: 'export-button', text: /export/i });
       const importVisible = await isActionButtonVisible(page, { testId: 'import-button', text: /import/i });
-
-      const pageName = config.url.split('/').pop();
-      console.log(`[Matrix] PartnerUser on ${pageName}: create=${createVisible}, export=${exportVisible}, import=${importVisible}`);
 
       expect(createVisible).toBe(true);
       expect(exportVisible).toBe(false);
@@ -1313,10 +1304,10 @@ test.describe('Role Access - Edge Cases', () => {
   test('EDGE_07 - All five roles can access home page', async ({ page }) => {
     for (const role of ALL_ROLES) {
       await authenticateAsRole(page, role, HOME_URL);
-      await page.waitForTimeout(2000);
+      await waitForRolePermissions(page);
 
       const url = page.url();
-      console.log(`[Edge] ${role.name} -> ${url}`);
+      expect(url).not.toContain('access-denied');
 
       // All roles should be able to access home
       const bodyText = await page.locator('body').textContent();

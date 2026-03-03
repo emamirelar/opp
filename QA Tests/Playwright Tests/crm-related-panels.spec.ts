@@ -16,12 +16,13 @@
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
+import { waitForPageReady, waitForVisible } from './helpers/wait.helper';
 
 test.describe('Partner Detail - Tabs & Related Panels', () => {
   test.slow();
   test.beforeEach(async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/partners/1');
-    await page.waitForTimeout(2000); // Wait for partner detail to render
+    await waitForPageReady(page);
   });
 
   test('PTR-031: Partner detail page renders with header', async ({ page }) => {
@@ -41,15 +42,13 @@ test.describe('Partner Detail - Tabs & Related Panels', () => {
   });
 
   test('PTR-033: Partner has Details tab (default active)', async ({ page }) => {
-    // The details tab should be the default active tab
-    await page.waitForTimeout(3000);
-    
     // URL should be at partner detail (details tab)
     expect(page.url()).toMatch(/partners\/\d+/);
     
     // Partner title should be visible (details content loaded)
     const partnerTitle = page.locator('[data-testid="partner-title"]').first();
-    await expect(partnerTitle).toBeVisible({ timeout: 10000 });
+    await waitForVisible(partnerTitle, 10000);
+    await expect(partnerTitle).toBeVisible();
   });
 
   test('PTR-034: Partner links section is visible', async ({ page }) => {
@@ -113,13 +112,13 @@ test.describe('Partner Detail - Tabs & Related Panels', () => {
   test('PTR-039: Desktop layout shows tabs and content together', async ({ page }) => {
     // Set desktop viewport
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.waitForTimeout(500);
     
     // Both header and tabs should be visible
     const header = page.locator('[data-testid="partner-detail-header"]').first();
     const tabs = page.locator('[data-testid="tabs-desktop"]').first();
     
-    await expect(header).toBeVisible({ timeout: 10000 });
+    await waitForVisible(header, 10000);
+    await expect(header).toBeVisible();
     
     const tabsVisible = await tabs.isVisible({ timeout: 5000 }).catch(() => false);
     // Tabs should be present on desktop
@@ -129,17 +128,15 @@ test.describe('Partner Detail - Tabs & Related Panels', () => {
   test('PTR-039b: Mobile layout uses dropdown for tabs', async ({ page }) => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 812 });
-    await page.waitForTimeout(500);
     
-    // Mobile dropdown should be visible
-    const mobileDropdown = page.locator('[data-testid="tabs-mobile-dropdown"]').first();
-    const dropdownVisible = await mobileDropdown.isVisible({ timeout: 5000 }).catch(() => false);
-    
-    // Either mobile dropdown is visible or the content is stacked
+    // Header must be visible (mobile layout renders content)
     const header = page.locator('[data-testid="partner-detail-header"]').first();
-    await expect(header).toBeVisible({ timeout: 10000 });
+    await waitForVisible(header, 10000);
+    await expect(header).toBeVisible();
     
-    expect(dropdownVisible || true).toBeTruthy(); // Header visibility is the minimum
+    // Mobile dropdown should be visible for tab navigation
+    const mobileDropdown = page.locator('[data-testid="tabs-mobile-dropdown"]').first();
+    await expect(mobileDropdown).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -147,7 +144,7 @@ test.describe('Contact Detail - Tabs & Related Panels', () => {
   test.slow();
   test.beforeEach(async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/contacts/1');
-    await page.waitForTimeout(2000); // Wait for contact detail to render
+    await waitForPageReady(page);
   });
 
   test('CON-019: Contact detail page renders with header', async ({ page }) => {

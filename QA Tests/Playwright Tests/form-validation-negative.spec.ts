@@ -10,7 +10,17 @@
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
-import { waitForPermissions, waitForDialog } from './helpers/wait.helper';
+import {
+  waitForPermissions,
+  waitForDialog,
+  waitForPageReady,
+  waitForLoadingToComplete,
+  waitForVisible,
+  waitForHidden,
+} from './helpers/wait.helper';
+import { PartnersPage } from './pages/partners.page';
+import { ContactsPage } from './pages/contacts.page';
+import { InteractionsPage } from './pages/interactions.page';
 
 const ADMIN_USER = 'test@playwright.local';
 const FRONTEND_URL = 'http://localhost:4200';
@@ -18,18 +28,6 @@ const FRONTEND_URL = 'http://localhost:4200';
 const PARTNERS_URL = '/partnerships/partners';
 const CONTACTS_URL = '/partnerships/contacts';
 const INTERACTIONS_URL = '/partnerships/interactions';
-
-/** Helper to click New button - uses data-testid or fallback to button text/class */
-async function clickNewButton(page: any, entityType: 'partner' | 'contact' | 'interaction'): Promise<void> {
-  const selectors = [
-    `[data-testid="new-${entityType}-button"]`,
-    `[data-testid="create-button"]`,
-    `.${entityType}-new-button`,
-    `button:has-text("New")`,
-  ].join(', ');
-  await page.locator(selectors).first().click();
-  await waitForDialog(page);
-}
 
 test.describe('Form Validation — Partner Create/Edit', () => {
   test.slow();
@@ -41,12 +39,13 @@ test.describe('Form Validation — Partner Create/Edit', () => {
 
   // ========== POSITIVE (2) ==========
   test('TC-P01: Partner create with valid name → Save → Success toast, dialog closes', async ({ page }) => {
+    const partnersPage = new PartnersPage(page);
     await test.step('Arrange — navigate and open new partner dialog', async () => {
       await page.goto(`${FRONTEND_URL}${PARTNERS_URL}`);
       await page.waitForLoadState('domcontentloaded');
       await waitForPermissions(page);
-      await page.waitForTimeout(1500);
-      await clickNewButton(page, 'partner');
+      await waitForLoadingToComplete(page);
+      await partnersPage.clickNewButton();
     });
 
     await test.step('Act — fill required fields and save', async () => {
@@ -57,17 +56,19 @@ test.describe('Form Validation — Partner Create/Edit', () => {
       const liaisonSelect = dialog.locator('p-select[formcontrolname="liaisonOfficeId"]').first();
       if (await liaisonSelect.isVisible({ timeout: 3000 }).catch(() => false)) {
         await liaisonSelect.click();
+        await waitForVisible(page.locator('.p-select-option').first());
         await page.locator('.p-select-option').first().click();
       }
       // Select partner group (required for activation)
       const groupSelect = dialog.locator('p-select[formcontrolname="partnerGroupId"]').first();
       if (await groupSelect.isVisible({ timeout: 3000 }).catch(() => false)) {
         await groupSelect.click();
+        await waitForVisible(page.locator('.p-select-option').first());
         await page.locator('.p-select-option').first().click();
       }
 
       await dialog.locator('p-button[label*="Save"], button:has-text("Save")').first().click();
-      await page.waitForTimeout(2000);
+      await waitForLoadingToComplete(page);
     });
 
     await test.step('Assert — success toast and dialog closed', async () => {
@@ -93,18 +94,19 @@ test.describe('Form Validation — Contact Create/Edit', () => {
   test('TC-C01: Contact create with valid data (first name, last name, email, partner) → Save → Success', async ({
     page,
   }) => {
+    const contactsPage = new ContactsPage(page);
     await test.step('Arrange — navigate and open new contact dialog', async () => {
       await page.goto(`${FRONTEND_URL}${CONTACTS_URL}`);
       await page.waitForLoadState('domcontentloaded');
       await waitForPermissions(page);
-      await page.waitForTimeout(1500);
-      await clickNewButton(page, 'contact');
+      await waitForLoadingToComplete(page);
+      await contactsPage.clickNewButton();
     });
 
     await test.step('Act — fill required fields and save', async () => {
       const dialog = page.locator('[role="dialog"]:visible').first();
       await dialog.locator('p-select[formcontrolname="partnerId"]').first().click();
-      await page.waitForTimeout(500);
+      await waitForVisible(page.locator('.p-select-option').first());
       await page.locator('.p-select-option').first().click();
 
       await dialog.locator('input[formcontrolname="firstName"]').first().fill('Test');
@@ -114,17 +116,16 @@ test.describe('Form Validation — Contact Create/Edit', () => {
       await dialog.locator('input[formcontrolname="title"]').first().fill('Test Title');
 
       await dialog.locator('p-button[label*="Save"], button:has-text("Save")').first().click();
-      await page.waitForTimeout(2000);
+      await waitForLoadingToComplete(page);
     });
 
-    await test.step('Assert — success toast or dialog closed or form submitted', async () => {
-      const toast = page.locator('.p-toast-message-success, .p-toast-message');
-      const toastVisible = await toast.isVisible().catch(() => false);
-      const dialogVisible = await page.locator('[role="dialog"]:visible').first().isVisible().catch(() => false);
-      // With mocked API, dialog may stay open if POST isn't mocked, or close on success
-      // Verify the form was at least submitted (no validation errors blocking)
+    await test.step('Assert — no validation errors (valid data submitted), success or dialog closed', async () => {
       const hasValidationErrors = await page.locator('p-message[severity="error"]').first().isVisible().catch(() => false);
-      expect(toastVisible || !dialogVisible || !hasValidationErrors).toBeTruthy();
+      expect(hasValidationErrors).toBe(false);
+      const successToast = page.locator('.p-toast-message-success');
+      const successVisible = await successToast.isVisible().catch(() => false);
+      const dialogClosed = !(await page.locator('[role="dialog"]:visible').first().isVisible().catch(() => false));
+      expect(successVisible || dialogClosed).toBe(true);
     });
   });
 });
@@ -138,16 +139,16 @@ test.describe('Form Validation — NEGATIVE (6+)', () => {
   });
 
   test('TC-N01: Partner create — empty name → Click save → Validation error visible', async ({ page }) => {
+    const partnersPage = new PartnersPage(page);
     await page.goto(`${FRONTEND_URL}${PARTNERS_URL}`);
     await page.waitForLoadState('domcontentloaded');
     await waitForPermissions(page);
-    await page.waitForTimeout(1500);
-    await clickNewButton(page, 'partner');
+    await waitForLoadingToComplete(page);
+    await partnersPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     await dialog.locator('input[formcontrolname="name"]').first().clear();
     await dialog.locator('p-button[label*="Save"], button:has-text("Save")').first().click();
-    await page.waitForTimeout(500);
 
     const validationMsg = dialog.locator(
       'p-message[severity="error"], small.p-error, .p-invalid, [class*="p-invalid"], [class*="error"]'
@@ -158,17 +159,17 @@ test.describe('Form Validation — NEGATIVE (6+)', () => {
   test.skip('TC-N02: Partner create — name with only spaces → Validation error', async ({ page }) => {
     // DEF-057: Angular Validators.required does not reject whitespace-only input.
     // Partner name "   " passes validation when it should be rejected.
+    const partnersPage = new PartnersPage(page);
     await page.goto(`${FRONTEND_URL}${PARTNERS_URL}`);
     await page.waitForLoadState('domcontentloaded');
     await waitForPermissions(page);
-    await page.waitForTimeout(1500);
-    await clickNewButton(page, 'partner');
+    await waitForLoadingToComplete(page);
+    await partnersPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     await dialog.locator('input[formcontrolname="name"]').first().fill('   ');
     await dialog.locator('input[formcontrolname="name"]').first().blur();
     await dialog.locator('p-button[label*="Save"], button:has-text("Save")').first().click();
-    await page.waitForTimeout(500);
 
     const validationMsg = dialog.locator(
       'p-message[severity="error"], small.p-error, .p-invalid, [class*="p-invalid"]'
@@ -186,11 +187,12 @@ test.describe('Form Validation — NEGATIVE (Contact)', () => {
   });
 
   test('TC-N03: Contact create — empty partner (required) → Validation error', async ({ page }) => {
+    const contactsPage = new ContactsPage(page);
     await page.goto(`${FRONTEND_URL}${CONTACTS_URL}`);
     await page.waitForLoadState('domcontentloaded');
     await waitForPermissions(page);
-    await page.waitForTimeout(1500);
-    await clickNewButton(page, 'contact');
+    await waitForLoadingToComplete(page);
+    await contactsPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     await dialog.locator('input[formcontrolname="firstName"]').first().fill('Test');
@@ -199,7 +201,6 @@ test.describe('Form Validation — NEGATIVE (Contact)', () => {
     // Do NOT select partner — required field left empty
 
     await dialog.locator('p-button[label*="Save"], button:has-text("Save")').first().click();
-    await page.waitForTimeout(500);
 
     const validationMsg = dialog.locator(
       'p-message[severity="error"], small.p-error, .p-invalid, [class*="p-invalid"]'
@@ -208,20 +209,21 @@ test.describe('Form Validation — NEGATIVE (Contact)', () => {
   });
 
   test('TC-N04: Contact create — empty last name → Validation error', async ({ page }) => {
+    const contactsPage = new ContactsPage(page);
     await page.goto(`${FRONTEND_URL}${CONTACTS_URL}`);
     await page.waitForLoadState('domcontentloaded');
     await waitForPermissions(page);
-    await page.waitForTimeout(1500);
-    await clickNewButton(page, 'contact');
+    await waitForLoadingToComplete(page);
+    await contactsPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     await dialog.locator('input[formcontrolname="firstName"]').first().fill('Test');
     await dialog.locator('input[formcontrolname="email"]').first().fill('test@example.com');
     await dialog.locator('p-select[formcontrolname="partnerId"]').first().click();
+    await waitForVisible(page.locator('.p-select-option').first());
     await page.locator('.p-select-option').first().click();
 
     await dialog.locator('p-button[label*="Save"], button:has-text("Save")').first().click();
-    await page.waitForTimeout(500);
 
     const validationMsg = dialog.locator(
       'p-message[severity="error"], small.p-error, .p-invalid, [class*="p-invalid"]'
@@ -232,21 +234,22 @@ test.describe('Form Validation — NEGATIVE (Contact)', () => {
   test('TC-N05: Contact create — invalid email format (e.g. "not-an-email") → Email validation error', async ({
     page,
   }) => {
+    const contactsPage = new ContactsPage(page);
     await page.goto(`${FRONTEND_URL}${CONTACTS_URL}`);
     await page.waitForLoadState('domcontentloaded');
     await waitForPermissions(page);
-    await page.waitForTimeout(1500);
-    await clickNewButton(page, 'contact');
+    await waitForLoadingToComplete(page);
+    await contactsPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     await dialog.locator('input[formcontrolname="firstName"]').first().fill('Test');
     await dialog.locator('input[formcontrolname="lastName"]').first().fill('Contact');
     await dialog.locator('input[formcontrolname="email"]').first().fill('not-an-email');
     await dialog.locator('p-select[formcontrolname="partnerId"]').first().click();
+    await waitForVisible(page.locator('.p-select-option').first());
     await page.locator('.p-select-option').first().click();
 
     await dialog.locator('p-button[label*="Save"], button:has-text("Save")').first().click();
-    await page.waitForTimeout(500);
 
     const validationMsg = dialog.locator(
       'p-message[severity="error"], small.p-error, .p-invalid, [class*="p-invalid"]'
@@ -264,18 +267,18 @@ test.describe('Form Validation — NEGATIVE (Interaction)', () => {
   });
 
   test('TC-N06: Interaction create — empty subject → Validation error', async ({ page }) => {
+    const interactionsPage = new InteractionsPage(page);
     await page.goto(`${FRONTEND_URL}${INTERACTIONS_URL}`);
     await page.waitForLoadState('domcontentloaded');
     await waitForPermissions(page);
-    await page.waitForTimeout(1500);
-    await clickNewButton(page, 'interaction');
+    await waitForLoadingToComplete(page);
+    await interactionsPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     const subjectInput = dialog.locator('input[formcontrolname="subject"]').first();
     await subjectInput.clear();
     await subjectInput.blur();
     await dialog.locator('p-button[label*="Save"], button:has-text("Save")').first().click();
-    await page.waitForTimeout(500);
 
     const validationMsg = dialog.locator(
       'p-message[severity="error"], small.p-error, .p-invalid, [class*="p-invalid"]'
@@ -295,9 +298,11 @@ test.describe('Form Validation — EDGE (6+)', () => {
   test('TC-E01: Max-length input (paste 300 chars into name field) → Accepted or truncated to max', async ({
     page,
   }) => {
+    const partnersPage = new PartnersPage(page);
     await page.goto(`${FRONTEND_URL}${PARTNERS_URL}`);
     await page.waitForLoadState('domcontentloaded');
-    await clickNewButton(page, 'partner');
+    await waitForLoadingToComplete(page);
+    await partnersPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     const longName = 'A'.repeat(300);
@@ -311,9 +316,11 @@ test.describe('Form Validation — EDGE (6+)', () => {
   test('TC-E02: Special characters in partner name (e.g. `<script>alert`) → Accepted as text, no XSS', async ({
     page,
   }) => {
+    const partnersPage = new PartnersPage(page);
     await page.goto(`${FRONTEND_URL}${PARTNERS_URL}`);
     await page.waitForLoadState('domcontentloaded');
-    await clickNewButton(page, 'partner');
+    await waitForLoadingToComplete(page);
+    await partnersPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     const xssInput = "<script>alert('xss')</script>";
@@ -327,15 +334,18 @@ test.describe('Form Validation — EDGE (6+)', () => {
   test('TC-E03: Unicode characters in contact name (e.g. "Müller", "田中") → Accepted without error', async ({
     page,
   }) => {
+    const contactsPage = new ContactsPage(page);
     await page.goto(`${FRONTEND_URL}${CONTACTS_URL}`);
     await page.waitForLoadState('domcontentloaded');
-    await clickNewButton(page, 'contact');
+    await waitForLoadingToComplete(page);
+    await contactsPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     await dialog.locator('input[formcontrolname="firstName"]').first().fill('Müller');
     await dialog.locator('input[formcontrolname="lastName"]').first().fill('田中');
     await dialog.locator('input[formcontrolname="email"]').first().fill('test@example.com');
     await dialog.locator('p-select[formcontrolname="partnerId"]').first().click();
+    await waitForVisible(page.locator('.p-select-option').first());
     await page.locator('.p-select-option').first().click();
 
     const firstName = await dialog.locator('input[formcontrolname="firstName"]').first().inputValue();
@@ -345,9 +355,11 @@ test.describe('Form Validation — EDGE (6+)', () => {
   });
 
   test('TC-E04: Very long email address → Handled gracefully', async ({ page }) => {
+    const contactsPage = new ContactsPage(page);
     await page.goto(`${FRONTEND_URL}${CONTACTS_URL}`);
     await page.waitForLoadState('domcontentloaded');
-    await clickNewButton(page, 'contact');
+    await waitForLoadingToComplete(page);
+    await contactsPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     const longEmail = 'a'.repeat(200) + '@example.com';
@@ -355,25 +367,30 @@ test.describe('Form Validation — EDGE (6+)', () => {
     await dialog.locator('input[formcontrolname="firstName"]').first().fill('Test');
     await dialog.locator('input[formcontrolname="lastName"]').first().fill('Contact');
     await dialog.locator('p-select[formcontrolname="partnerId"]').first().click();
+    await waitForVisible(page.locator('.p-select-option').first());
     await page.locator('.p-select-option').first().click();
 
     await dialog.locator('p-button[label*="Save"], button:has-text("Save")').first().click();
-    await page.waitForTimeout(500);
+    await waitForLoadingToComplete(page);
 
     const validationMsg = dialog.locator('p-message[severity="error"]');
     const validationCount = await validationMsg.count();
-    expect(validationCount).toBeGreaterThanOrEqual(0);
+    const successToast = page.locator('.p-toast-message-success');
+    const successVisible = await successToast.isVisible().catch(() => false);
+    expect(validationCount >= 1 || successVisible).toBe(true);
   });
 
   test('TC-E05: Close dialog without saving → No data persisted, no error', async ({ page }) => {
+    const partnersPage = new PartnersPage(page);
     await page.goto(`${FRONTEND_URL}${PARTNERS_URL}`);
     await page.waitForLoadState('domcontentloaded');
-    await clickNewButton(page, 'partner');
+    await waitForLoadingToComplete(page);
+    await partnersPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     await dialog.locator('input[formcontrolname="name"]').first().fill('Unsaved Partner');
     await dialog.locator('p-button[label*="Cancel"], button:has-text("Cancel")').first().click();
-    await page.waitForTimeout(500);
+    await waitForHidden(dialog, 5000);
 
     await expect(dialog).not.toBeVisible();
     const errorToast = page.locator('.p-toast-message-error');
@@ -381,21 +398,24 @@ test.describe('Form Validation — EDGE (6+)', () => {
   });
 
   test('TC-E06: Reopen dialog after validation error → Previous errors cleared', async ({ page }) => {
+    const partnersPage = new PartnersPage(page);
     await page.goto(`${FRONTEND_URL}${PARTNERS_URL}`);
     await page.waitForLoadState('domcontentloaded');
-    await clickNewButton(page, 'partner');
+    await waitForLoadingToComplete(page);
+    await partnersPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     await dialog.locator('p-button[label*="Save"], button:has-text("Save")').first().click();
-    await page.waitForTimeout(500);
 
-    const validationBefore = await dialog.locator('p-message[severity="error"]').count();
+    const validationMsg = dialog.locator('p-message[severity="error"]');
+    await expect(validationMsg.first()).toBeVisible({ timeout: 5000 });
+    const validationBefore = await validationMsg.count();
     expect(validationBefore).toBeGreaterThan(0);
 
     await dialog.locator('p-button[label*="Cancel"], button:has-text("Cancel")').first().click();
-    await page.waitForTimeout(500);
+    await waitForHidden(dialog, 5000);
 
-    await clickNewButton(page, 'partner');
+    await partnersPage.clickNewButton();
     const newDialog = page.locator('[role="dialog"]:visible').first();
     const validationAfter = await newDialog.locator('p-message[severity="error"]').count();
     expect(validationAfter).toBe(0);
@@ -413,43 +433,53 @@ test.describe('Form Validation — FUNCTIONAL (6+)', () => {
   test('TC-F01: Submit button state reflects form validity (disabled when invalid, enabled when valid)', async ({
     page,
   }) => {
+    const partnersPage = new PartnersPage(page);
     await page.goto(`${FRONTEND_URL}${PARTNERS_URL}`);
     await page.waitForLoadState('domcontentloaded');
-    await clickNewButton(page, 'partner');
+    await waitForLoadingToComplete(page);
+    await partnersPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     const saveButton = dialog.locator('p-button[label*="Save"], button:has-text("Save")').first();
 
-    const isDisabled = await saveButton.locator('button').isDisabled().catch(() => false);
-    expect(typeof isDisabled).toBe('boolean');
+    const isDisabledWhenEmpty = await saveButton.locator('button').isDisabled().catch(() => false);
+    await dialog.locator('input[formcontrolname="name"]').first().fill('Valid Name');
+    await dialog.locator('input[formcontrolname="partnerShortDescription"]').first().fill('VP');
+    const isEnabledWhenValid = !(await saveButton.locator('button').isDisabled().catch(() => true));
+    expect(isDisabledWhenEmpty).toBe(true);
+    expect(isEnabledWhenValid).toBe(true);
   });
 
   test('TC-F02: Validation errors clear when user corrects the field', async ({ page }) => {
+    const partnersPage = new PartnersPage(page);
     await page.goto(`${FRONTEND_URL}${PARTNERS_URL}`);
     await page.waitForLoadState('domcontentloaded');
-    await clickNewButton(page, 'partner');
+    await waitForLoadingToComplete(page);
+    await partnersPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     await dialog.locator('input[formcontrolname="name"]').first().clear();
     await dialog.locator('p-button[label*="Save"], button:has-text("Save")').first().click();
-    await page.waitForTimeout(500);
 
-    const validationBefore = await dialog.locator('p-message[severity="error"]').count();
+    const validationMsg = dialog.locator('p-message[severity="error"]');
+    await expect(validationMsg.first()).toBeVisible({ timeout: 5000 });
+    const validationBefore = await validationMsg.count();
     expect(validationBefore).toBeGreaterThan(0);
 
     await dialog.locator('input[formcontrolname="name"]').first().fill('Valid Name');
-    await page.waitForTimeout(500);
+    await waitForLoadingToComplete(page);
 
     const validationAfter = await dialog.locator('p-message[severity="error"]').count();
-    expect(validationAfter).toBeLessThanOrEqual(validationBefore);
+    expect(validationAfter).toBeLessThan(validationBefore);
   });
 
   test('TC-F03: Required field indicator (*) visible on mandatory fields', async ({ page }) => {
+    const partnersPage = new PartnersPage(page);
     await page.goto(`${FRONTEND_URL}${PARTNERS_URL}`);
     await page.waitForLoadState('domcontentloaded');
     await waitForPermissions(page);
-    await page.waitForTimeout(1500);
-    await clickNewButton(page, 'partner');
+    await waitForLoadingToComplete(page);
+    await partnersPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     const labelsWithAsterisk = dialog.locator('label').filter({ hasText: /\*|required/i });
@@ -457,48 +487,61 @@ test.describe('Form Validation — FUNCTIONAL (6+)', () => {
   });
 
   test('TC-F04: Tab through fields → Focus moves correctly', async ({ page }) => {
+    const partnersPage = new PartnersPage(page);
     await page.goto(`${FRONTEND_URL}${PARTNERS_URL}`);
     await page.waitForLoadState('domcontentloaded');
-    await clickNewButton(page, 'partner');
+    await waitForLoadingToComplete(page);
+    await partnersPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     const firstInput = dialog.locator('input[formcontrolname="name"]').first();
     await firstInput.focus();
     await page.keyboard.press('Tab');
-    await page.waitForTimeout(200);
+    await page.waitForFunction(
+      () => {
+        const el = document.activeElement;
+        return el && ['INPUT', 'BUTTON', 'SELECT', 'DIV', 'SPAN'].includes(el.tagName);
+      },
+      { timeout: 2000 }
+    );
 
     const focused = await page.evaluate(() => document.activeElement?.tagName);
     expect(['INPUT', 'BUTTON', 'SELECT', 'DIV', 'SPAN']).toContain(focused);
   });
 
   test('TC-F05: Form resets when dialog is reopened after successful creation', async ({ page }) => {
+    const partnersPage = new PartnersPage(page);
     await page.goto(`${FRONTEND_URL}${PARTNERS_URL}`);
     await page.waitForLoadState('domcontentloaded');
-    await clickNewButton(page, 'partner');
+    await waitForLoadingToComplete(page);
+    await partnersPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     await dialog.locator('input[formcontrolname="name"]').first().fill('First Partner');
     await dialog.locator('p-button[label*="Cancel"], button:has-text("Cancel")').first().click();
-    await page.waitForTimeout(500);
+    await waitForHidden(dialog, 5000);
 
-    await clickNewButton(page, 'partner');
+    await partnersPage.clickNewButton();
     const newDialog = page.locator('[role="dialog"]:visible').first();
     const nameValue = await newDialog.locator('input[formcontrolname="name"]').first().inputValue();
     expect(nameValue).toBe('');
   });
 
   test('TC-F06: Multiple validation errors show simultaneously', async ({ page }) => {
+    const partnersPage = new PartnersPage(page);
     await page.goto(`${FRONTEND_URL}${PARTNERS_URL}`);
     await page.waitForLoadState('domcontentloaded');
-    await clickNewButton(page, 'partner');
+    await waitForLoadingToComplete(page);
+    await partnersPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     await dialog.locator('input[formcontrolname="name"]').first().clear();
     await dialog.locator('input[formcontrolname="partnerShortDescription"]').first().clear();
     await dialog.locator('p-button[label*="Save"], button:has-text("Save")').first().click();
-    await page.waitForTimeout(500);
 
-    const validationCount = await dialog.locator('p-message[severity="error"]').count();
+    const validationMsg = dialog.locator('p-message[severity="error"]');
+    await expect(validationMsg.first()).toBeVisible({ timeout: 5000 });
+    const validationCount = await validationMsg.count();
     expect(validationCount).toBeGreaterThanOrEqual(1);
   });
 });
@@ -512,10 +555,12 @@ test.describe('Form Validation — INTEGRATION (6+)', () => {
   });
 
   test('TC-I01: Create partner → Navigate to partner detail → Data matches', async ({ page }) => {
+    const partnersPage = new PartnersPage(page);
     await test.step('Arrange — create partner', async () => {
       await page.goto(`${FRONTEND_URL}${PARTNERS_URL}`);
       await page.waitForLoadState('domcontentloaded');
-      await clickNewButton(page, 'partner');
+      await waitForLoadingToComplete(page);
+      await partnersPage.clickNewButton();
 
       const dialog = page.locator('[role="dialog"]:visible').first();
       await dialog.locator('input[formcontrolname="name"]').first().fill('Integration Test Partner');
@@ -524,78 +569,82 @@ test.describe('Form Validation — INTEGRATION (6+)', () => {
       const liaisonSelect = dialog.locator('p-select[formcontrolname="liaisonOfficeId"]').first();
       if (await liaisonSelect.isVisible({ timeout: 3000 }).catch(() => false)) {
         await liaisonSelect.click();
+        await waitForVisible(page.locator('.p-select-option').first());
         await page.locator('.p-select-option').first().click();
       }
 
       await dialog.locator('p-button[label*="Save"], button:has-text("Save")').first().click();
-      await page.waitForTimeout(2000);
+      await waitForLoadingToComplete(page);
     });
 
     await test.step('Act — navigate to partner detail', async () => {
       // QA-094: Cards don't render in headless - navigate directly via URL
       await page.goto(`${FRONTEND_URL}/partnerships/partners/1`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(2000);
+      await waitForPageReady(page);
     });
 
     await test.step('Assert — detail page shows partner data', async () => {
-      expect(page.url()).toContain('/partnerships/partners/');
-      const hasContent = await page.locator('text=/Partner|Description/i').first().isVisible().catch(() => false);
-      expect(hasContent || page.url().includes('/partners/')).toBeTruthy();
+      expect(page.url()).toMatch(/\/partnerships\/partners\/\d+/);
+      await expect(page.locator('body')).toBeVisible();
     });
   });
 
   test('TC-I02: Create contact from contacts list → Contact appears in list', async ({ page }) => {
+    const contactsPage = new ContactsPage(page);
     await page.goto(`${FRONTEND_URL}${CONTACTS_URL}`);
     await page.waitForLoadState('domcontentloaded');
-    await clickNewButton(page, 'contact');
+    await waitForLoadingToComplete(page);
+    await contactsPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     await dialog.locator('p-select[formcontrolname="partnerId"]').first().click();
+    await waitForVisible(page.locator('.p-select-option').first());
     await page.locator('.p-select-option').first().click();
     await dialog.locator('input[formcontrolname="firstName"]').first().fill('Integration');
     await dialog.locator('input[formcontrolname="lastName"]').first().fill('Contact');
     await dialog.locator('input[formcontrolname="email"]').first().fill('integration@example.com');
 
     await dialog.locator('p-button[label*="Save"], button:has-text("Save")').first().click();
-    await page.waitForTimeout(2000);
+    await waitForLoadingToComplete(page);
 
-    // QA-094: Cards don't render in headless. Check for listview or record count text
-    const listview = page.locator('app-listview, [data-testid="contact-list"]');
-    const hasRecords = page.locator('text=/Showing \\d+ records?/i');
-    const hasListOrRecords = await listview.first().isVisible({ timeout: 5000 }).catch(() => false)
-      || await hasRecords.first().isVisible({ timeout: 3000 }).catch(() => false);
-    expect(hasListOrRecords).toBeTruthy();
+    await expect(page.locator('[role="dialog"]:visible').first()).not.toBeVisible({ timeout: 10000 });
+    expect(page.url()).toContain('/partnerships/contacts');
   });
 
   test('TC-I03: Open new partner dialog → Fill valid data → Save → Close → Reopen → Form is clean', async ({
     page,
   }) => {
+    const partnersPage = new PartnersPage(page);
     await page.goto(`${FRONTEND_URL}${PARTNERS_URL}`);
     await page.waitForLoadState('domcontentloaded');
-    await clickNewButton(page, 'partner');
+    await waitForLoadingToComplete(page);
+    await partnersPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     await dialog.locator('input[formcontrolname="name"]').first().fill('Clean Form Test');
     await dialog.locator('p-button[label*="Cancel"], button:has-text("Cancel")').first().click();
-    await page.waitForTimeout(500);
+    await waitForHidden(dialog, 5000);
 
-    await clickNewButton(page, 'partner');
+    await partnersPage.clickNewButton();
     const newDialog = page.locator('[role="dialog"]:visible').first();
     const nameValue = await newDialog.locator('input[formcontrolname="name"]').first().inputValue();
     expect(nameValue).toBe('');
   });
 
   test('TC-I04: Attempt invalid submit → Fix errors → Submit successfully', async ({ page }) => {
+    const partnersPage = new PartnersPage(page);
     await page.goto(`${FRONTEND_URL}${PARTNERS_URL}`);
     await page.waitForLoadState('domcontentloaded');
-    await clickNewButton(page, 'partner');
+    await waitForLoadingToComplete(page);
+    await partnersPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     await dialog.locator('p-button[label*="Save"], button:has-text("Save")').first().click();
-    await page.waitForTimeout(500);
 
-    const validationBefore = await dialog.locator('p-message[severity="error"]').count();
+    const validationMsg = dialog.locator('p-message[severity="error"]');
+    await expect(validationMsg.first()).toBeVisible({ timeout: 5000 });
+    const validationBefore = await validationMsg.count();
     expect(validationBefore).toBeGreaterThan(0);
 
     await dialog.locator('input[formcontrolname="name"]').first().fill('Fixed Partner');
@@ -603,22 +652,24 @@ test.describe('Form Validation — INTEGRATION (6+)', () => {
     const liaisonSelect = dialog.locator('p-select[formcontrolname="liaisonOfficeId"]').first();
     if (await liaisonSelect.isVisible({ timeout: 3000 }).catch(() => false)) {
       await liaisonSelect.click();
+      await waitForVisible(page.locator('.p-select-option').first());
       await page.locator('.p-select-option').first().click();
     }
 
     await dialog.locator('p-button[label*="Save"], button:has-text("Save")').first().click();
-    await page.waitForTimeout(2000);
+    await waitForLoadingToComplete(page);
 
-    const dialogClosed = !(await dialog.isVisible().catch(() => false));
-    expect(dialogClosed).toBeTruthy();
+    await expect(page.locator('[role="dialog"]:visible').first()).not.toBeVisible({ timeout: 10000 });
   });
 
   test('TC-I05: Navigate away from page with open dialog → Return → Dialog state is clean', async ({
     page,
   }) => {
+    const partnersPage = new PartnersPage(page);
     await page.goto(`${FRONTEND_URL}${PARTNERS_URL}`);
     await page.waitForLoadState('domcontentloaded');
-    await clickNewButton(page, 'partner');
+    await waitForLoadingToComplete(page);
+    await partnersPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     await dialog.locator('input[formcontrolname="name"]').first().fill('Navigate Away Test');
@@ -628,7 +679,8 @@ test.describe('Form Validation — INTEGRATION (6+)', () => {
 
     await page.goto(`${FRONTEND_URL}${PARTNERS_URL}`);
     await page.waitForLoadState('domcontentloaded');
-    await clickNewButton(page, 'partner');
+    await waitForLoadingToComplete(page);
+    await partnersPage.clickNewButton();
 
     const newDialog = page.locator('[role="dialog"]:visible').first();
     const nameValue = await newDialog.locator('input[formcontrolname="name"]').first().inputValue();
@@ -636,9 +688,11 @@ test.describe('Form Validation — INTEGRATION (6+)', () => {
   });
 
   test('TC-I06: Create multiple entities in sequence → All succeed', async ({ page }) => {
+    const partnersPage = new PartnersPage(page);
     await page.goto(`${FRONTEND_URL}${PARTNERS_URL}`);
     await page.waitForLoadState('domcontentloaded');
-    await clickNewButton(page, 'partner');
+    await waitForLoadingToComplete(page);
+    await partnersPage.clickNewButton();
 
     const dialog = page.locator('[role="dialog"]:visible').first();
     await dialog.locator('input[formcontrolname="name"]').first().fill('First Partner');
@@ -646,26 +700,26 @@ test.describe('Form Validation — INTEGRATION (6+)', () => {
     const liaisonSelect1 = dialog.locator('p-select[formcontrolname="liaisonOfficeId"]').first();
     if (await liaisonSelect1.isVisible({ timeout: 3000 }).catch(() => false)) {
       await liaisonSelect1.click();
+      await waitForVisible(page.locator('.p-select-option').first());
       await page.locator('.p-select-option').first().click();
     }
     await dialog.locator('p-button[label*="Save"], button:has-text("Save")').first().click();
-    await page.waitForTimeout(2000);
+    await waitForLoadingToComplete(page);
 
-    await clickNewButton(page, 'partner');
+    await partnersPage.clickNewButton();
     const dialog2 = page.locator('[role="dialog"]:visible').first();
     await dialog2.locator('input[formcontrolname="name"]').first().fill('Second Partner');
     await dialog2.locator('input[formcontrolname="partnerShortDescription"]').first().fill('FP2');
     const liaisonSelect2 = dialog2.locator('p-select[formcontrolname="liaisonOfficeId"]').first();
     if (await liaisonSelect2.isVisible({ timeout: 3000 }).catch(() => false)) {
       await liaisonSelect2.click();
+      await waitForVisible(page.locator('.p-select-option').first());
       await page.locator('.p-select-option').first().click();
     }
     await dialog2.locator('p-button[label*="Save"], button:has-text("Save")').first().click();
-    await page.waitForTimeout(2000);
+    await waitForLoadingToComplete(page);
 
-    // QA-094: Cards don't render in headless. Check for listview or record count
-    const hasRecords = await page.locator('text=/Showing \\d+ records?/i').first().isVisible({ timeout: 5000 }).catch(() => false);
-    const hasListview = await page.locator('app-listview').first().isVisible({ timeout: 3000 }).catch(() => false);
-    expect(hasRecords || hasListview).toBeTruthy();
+    expect(page.url()).toContain('/partnerships/partners');
+    await expect(page.locator('.p-toast-message-error')).not.toBeVisible();
   });
 });

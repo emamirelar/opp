@@ -73,6 +73,8 @@ This document tracks **production code defects** discovered during testing. Thes
 | DEF-055 | 🟡 Medium | WorkflowController.Reject throws NullReferenceException on null EntityName | WorkflowController | 2026-03-02 | Open | Should return 400 BadRequest instead of crashing. 1 test skipped in PNO-1166 NegativeTests. |
 | DEF-056 | 🟡 Medium | Reopen workflow sets EntityStatus to Draft(4) instead of Active(1) | WorkflowController | 2026-03-02 | Open | When reopening from CANCELLED, status should be Active(1) not Draft(4). 1 test skipped in PNO-1166 IntegrationTests. |
 | DEF-057 | 🟢 Low | Partner name `Validators.required` does not reject whitespace-only input | PartnerEditDialogComponent | 2026-03-02 | Open | Angular `Validators.required` only checks for null/undefined/empty string, not whitespace-only strings like `"   "`. Partner Description should use a custom validator (e.g., `Validators.pattern(/\S/)`) to reject whitespace-only names. Affected test: form-validation-negative TC-N02. |
+| DEF-058 | 🟠 High | OpportunityManager.GetOpportunityAsync includes invalid `Stakeholders.Contact` navigation path | OpportunityManager | 2026-03-03 | Open | `GetOpportunityAsync()` includes string-based include path `Stakeholders.Contact` but `OpportunityStakeholder` has no `Contact` navigation property. Causes `InvalidIncludePathError` at runtime. **Proper Fix:** Remove `Stakeholders.Contact` from the include chain or add the missing navigation property to the entity model. **Wrong Fix:** ❌ Suppressing the `InvalidIncludePathError` warning. Affected tests: 9 tests in OpportunityPerformanceTests + 4 tests in OpportunitySections/PerformanceTests (workaround: direct Context queries). |
+| DEF-059 | 🟠 High | PartnerManager.GetPartnerWithContactsAndInteractionsAsync exceeds 200ms SLA (805ms) | PartnerManager | 2026-03-03 | Open | `GetPartnerWithContactsAndInteractionsAsync()` takes ~805ms for a single partner with contacts and interactions, exceeding the 200ms SLA threshold by 4x. Likely caused by Cartesian product explosion from multiple `.Include()` chains loading contacts, interactions, and their related entities in a single query. **Root Cause:** Too many `Include`/`ThenInclude` statements in one query create Cartesian product (see entity-framework-performance-optimization rule). **Proper Fix:**<br/>• Split into separate queries: main partner + contacts query + interactions query<br/>• Add `.AsNoTracking()` if read-only<br/>• Consider parallel execution with `IDbContextFactory` if 3+ collection queries<br/>**Wrong Fix:** ❌ Raising the SLA threshold to match current behavior.<br/>**Repro:** Run `PartnerPerformanceTests.GetPartnerWithContactsAndInteractions_NoCartesianExplosion_CompletesWithinThreshold` in isolation — fails at 805ms vs 200ms threshold. |
 
 ---
 
@@ -693,18 +695,21 @@ The following items were previously logged as developer defects but have been re
 
 ---
 
-## Defect Statistics (Updated 2026-03-02)
+## Defect Statistics (Updated 2026-03-03)
 
-- **Total Open:** 29 (DEF-008, DEF-013, DEF-014, DEF-020, DEF-021, DEF-023, DEF-024, DEF-025–DEF-050, DEF-052–DEF-056)
+- **Total Open:** 32 (DEF-008, DEF-013, DEF-014, DEF-020, DEF-021, DEF-023, DEF-024, DEF-025–DEF-050, DEF-052–DEF-059)
+- **NEW (2026-03-03):** DEF-057 (Partner name whitespace-only input), DEF-058 (OpportunityManager invalid Stakeholders.Contact include path), DEF-059 (PartnerManager GetPartnerWithContactsAndInteractions 805ms, 4x over SLA)
 - **NEW (2026-03-02):** DEF-054 (DoA3Fallback missing ILogger logging), DEF-055 (Reject NullReferenceException on null EntityName), DEF-056 (Reopen sets Draft instead of Active)
 - **DEF-051 reclassified (2026-03-02):** AutoMapper mock overload mismatch in test, not a production defect.
 - **Total Partially Resolved:** 1 (DEF-008 — DoA3 fallback added via PNO-1197, remaining gaps in email notifications and UI)
 - **Total Resolved:** 6 (DEF-010, DEF-011, DEF-012, DEF-017, DEF-018, DEF-019)
 - **Total Reclassified:** 6 (DEF-005, DEF-007, DEF-009, DEF-015, DEF-022 → moved to appropriate trackers; DEF-051 → QA mock issue)
 - 🔴 **Critical:** 0
-- 🟠 **High Priority:** 14 (DEF-008, DEF-020, DEF-021, DEF-023, DEF-024, DEF-033, DEF-034, DEF-038, DEF-039, DEF-040, DEF-042, DEF-043, DEF-045, DEF-053)
+- 🟠 **High Priority:** 16 (DEF-008, DEF-020, DEF-021, DEF-023, DEF-024, DEF-033, DEF-034, DEF-038, DEF-039, DEF-040, DEF-042, DEF-043, DEF-045, DEF-053, DEF-058, DEF-059)
 - 🟡 **Medium Priority:** 22 (DEF-013, DEF-014, DEF-025–DEF-032, DEF-035–DEF-037, DEF-041, DEF-044, DEF-047–DEF-050, DEF-052, DEF-055, DEF-056)
-- 🟢 **Low Priority:** 3 (DEF-046, DEF-051, DEF-054)
+- 🟢 **Low Priority:** 4 (DEF-046, DEF-051, DEF-054, DEF-057)
+- **2026-03-03 New Tests Added:** AiContextualServiceProcessPlaceholderTests (39 tests, 39/39 passed), DocumentControllerUNOPSTests (39 tests, 21 passed, 18 skipped pending DEF-053), 3 Playwright E2E spec files (api-error-handling, form-validation-negative, interactions-enhanced), 15+ new Playwright API mocks
+- **2026-03-03 Full Run (after QA-089 concurrent DbContext fixes):** FastTests: 78/78 passed (100%). Presentation.Tests: 154/154 passed (100%). Business.Tests: 4,627 total — 4,329 passed, 57 failed, 241 skipped (93.6%). Integration Tests: 6,132 total — 5,662 passed, 115 failed, 355 skipped (92.3%). **TOTAL: 11,069 tests — 10,223 passed (92.4%), 172 failed, 596 skipped.** 75 concurrent DbContext tests (QA-089) fixed — all 75 now pass. New tests added: 39 AiContextualService + 39 DocumentController UNOPS.
 - **2026-03-02 Re-run (after QA fixes):** Business Tests: 2,781 total — **2,592 passed**, 13 failed (all pre-existing DEFs), 176 skipped, 2 hung (QA-092, now resolved with timeouts). PartnerControllerTests: **52/52 passed**. PNO-1146 suite: **52/52 passed** (21 previously skipped tests un-skipped via QA-091 fix). All 13 Business Test failures are tracked: DEF-047 (5 tests), DEF-048 (2 tests), DEF-049 (2 tests), DEF-050 (1 test), DEF-024 (1 test), PartnerByOrgUnit specification (2 tests).
 - **2026-03-02 Full Run (PostgreSQL available):** Cloud SQL Proxy running — full execution across all C# suites. FastTests: 78/78 passed. Presentation Tests: 154/154 passed. Business Tests: 4,301 total — 3,982 passed, 78 failed, 241 skipped. Integration Tests: 5,592 total — 5,241 passed, 211 failed, 140 skipped. **4 new production defects discovered** (DEF-047–DEF-050). 78 Business Test failures: 27 QA-084, 36 QA-085, 5 DEF-047/048, 3 DEF-049, 1 DEF-050, 2 specification test data, 1 QA-087, 1 DEF-024, 2 PartnerByOrgUnit. 211 Integration Test failures: 51 QA-086 (fixture), 37 null responses, 31 DEF-045, 7 DEF-021, 6 DEF-027, and various existing DEFs.
 - **2026-02-20 Update:** DEF-015 reclassified to QA/Backlog (test coverage gap, not a production defect). DEF-022 reclassified to QA-068 (Playwright mock issue, not a production authorization defect).

@@ -46,6 +46,13 @@ export class DashboardPage extends BasePage {
   get activityDots(): Locator {
     return this.page.locator('.w-2.h-2.rounded-full');
   }
+
+  /**
+   * Get activity cards
+   */
+  get activityCards(): Locator {
+    return this.page.locator('.hover\\:border-unops-info\\/50');
+  }
   
   /**
    * Navigate to dashboard
@@ -104,10 +111,17 @@ export class DashboardPage extends BasePage {
   }
   
   /**
-   * Check if activity section has data
+   * Check if activity section has data (dots)
    */
   async hasActivityData(): Promise<boolean> {
     return await this.activityDots.first().isVisible().catch(() => false);
+  }
+
+  /**
+   * Check if activity section has cards
+   */
+  async hasActivityCards(): Promise<boolean> {
+    return await this.activityCards.first().isVisible().catch(() => false);
   }
   
   /**

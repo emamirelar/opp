@@ -12,38 +12,42 @@
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
+import { waitForPermissions, waitForPageReady } from './helpers/wait.helper';
+import { UserManagementPage } from './pages/admin.page';
 
 test.describe('User Management - Access Control', () => {
   test.slow();
   test('UM-001: Admin can access user management page', async ({ page }) => {
     await authenticateWithRealBackend(page, '/admin/user-management');
-    await page.waitForTimeout(3000);
+    await waitForPermissions(page);
+    await waitForPageReady(page);
 
-    // Page should load (not redirected)
     expect(page.url()).toContain('user-management');
     expect(page.url()).not.toContain('access-denied');
   });
 
   test('UM-002: Page has a header/title', async ({ page }) => {
     await authenticateWithRealBackend(page, '/admin/user-management');
-    await page.waitForTimeout(3000); // Wait for permissions and user list to load
+    await waitForPermissions(page);
+    await waitForPageReady(page);
 
-    // Header uses title.userManagement: "Manage User Permissions" - match user, manage, or permission
-    const header = page.getByText(/user|manage|permission/i).first();
-    await expect(header).toBeVisible({ timeout: 10000 });
+    const userMgmtPage = new UserManagementPage(page);
+    await expect(userMgmtPage.pageHeader).toBeVisible({ timeout: 10000 });
   });
 
   test('UM-003: Non-admin cannot access user management', async ({ page }) => {
     await authenticateWithRealBackend(page, '/admin/user-management', 'test-readonly@playwright.local');
-    await page.waitForTimeout(3000);
+    await waitForPermissions(page);
+    await waitForPageReady(page);
 
     const url = page.url();
-    const body = await page.textContent('body');
-    const isBlocked = url.includes('access-denied') ||
-                      url.includes('login') ||
-                      !url.includes('user-management') ||
-                      (body && /access denied|forbidden|unauthorized/i.test(body));
-    expect(isBlocked).toBeTruthy();
+    const body = await page.textContent('body') ?? '';
+    const isBlocked =
+      url.includes('access-denied') ||
+      url.includes('login') ||
+      !url.includes('user-management') ||
+      /access denied|forbidden|unauthorized/i.test(body);
+    expect(isBlocked).toBe(true);
   });
 });
 
@@ -51,11 +55,13 @@ test.describe('User Management - Search & Filters', () => {
   test.slow();
   test.beforeEach(async ({ page }) => {
     await authenticateWithRealBackend(page, '/admin/user-management');
+    await waitForPermissions(page);
+    await waitForPageReady(page);
   });
 
   test('UM-004: Search input is visible', async ({ page }) => {
-    const searchInput = page.locator('#search, input[type="text"]').first();
-    await expect(searchInput).toBeVisible({ timeout: 10000 });
+    const userMgmtPage = new UserManagementPage(page);
+    await expect(userMgmtPage.searchInput).toBeVisible({ timeout: 10000 });
   });
 
   test('UM-005: Role filter multiselect is visible', async ({ page }) => {
@@ -65,17 +71,12 @@ test.describe('User Management - Search & Filters', () => {
 
   test('UM-006: Org unit filter is visible', async ({ page }) => {
     const orgFilter = page.locator('#orgUnitFilter, p-multiSelect').nth(1);
-    const orgFilterVisible = await orgFilter.isVisible({ timeout: 5000 }).catch(() => false);
-
-    // Org unit filter should be present
-    expect(orgFilterVisible).toBeTruthy();
+    await expect(orgFilter).toBeVisible({ timeout: 5000 });
   });
 
   test('UM-007: Clear filters button exists', async ({ page }) => {
     const clearBtn = page.getByText(/clear filters/i).first();
-    const clearVisible = await clearBtn.isVisible({ timeout: 5000 }).catch(() => false);
-
-    expect(clearVisible).toBeTruthy();
+    await expect(clearBtn).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -83,44 +84,35 @@ test.describe('User Management - User List', () => {
   test.slow();
   test.beforeEach(async ({ page }) => {
     await authenticateWithRealBackend(page, '/admin/user-management');
+    await waitForPermissions(page);
+    await waitForPageReady(page);
   });
 
   test('UM-008: User list table is visible', async ({ page }) => {
-    const table = page.locator('p-table, table').first();
-    await expect(table).toBeVisible({ timeout: 10000 });
+    const userMgmtPage = new UserManagementPage(page);
+    await expect(userMgmtPage.userTable).toBeVisible({ timeout: 10000 });
   });
 
   test('UM-009: User list has column headers', async ({ page }) => {
-    const table = page.locator('p-table, table').first();
-    await expect(table).toBeVisible({ timeout: 10000 });
+    const userMgmtPage = new UserManagementPage(page);
+    await expect(userMgmtPage.userTable).toBeVisible({ timeout: 10000 });
 
-    // Should have Name, Email, Org Unit, Roles columns
-    const nameHeader = table.getByText(/name/i).first();
-    const emailHeader = table.getByText(/email/i).first();
-
-    const nameVisible = await nameHeader.isVisible({ timeout: 5000 }).catch(() => false);
-    const emailVisible = await emailHeader.isVisible({ timeout: 5000 }).catch(() => false);
-
-    expect(nameVisible || emailVisible).toBeTruthy();
+    const nameHeader = userMgmtPage.userTable.getByText(/name/i).first();
+    const emailHeader = userMgmtPage.userTable.getByText(/email/i).first();
+    await expect(nameHeader.or(emailHeader)).toBeVisible({ timeout: 5000 });
   });
 
   test('UM-010: User list has rows', async ({ page }) => {
-    const table = page.locator('p-table, table').first();
-    await expect(table).toBeVisible({ timeout: 10000 });
+    const userMgmtPage = new UserManagementPage(page);
+    await expect(userMgmtPage.userTable).toBeVisible({ timeout: 10000 });
 
-    const rows = table.locator('tbody tr, .p-datatable-tbody tr');
-    const rowCount = await rows.count();
-
-    // Should have at least one user row
+    const rowCount = await userMgmtPage.userRows.count();
     expect(rowCount).toBeGreaterThan(0);
   });
 
   test('UM-011: Paginator is visible for user list', async ({ page }) => {
     const paginator = page.locator('p-paginator').first();
-    const paginatorVisible = await paginator.isVisible({ timeout: 10000 }).catch(() => false);
-
-    // Paginator should be present
-    expect(paginatorVisible).toBeTruthy();
+    await expect(paginator).toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -128,36 +120,29 @@ test.describe('User Management - Actions', () => {
   test.slow();
   test.beforeEach(async ({ page }) => {
     await authenticateWithRealBackend(page, '/admin/user-management');
+    await waitForPermissions(page);
+    await waitForPageReady(page);
   });
 
   test('UM-012: Refresh button is visible', async ({ page }) => {
     const refreshBtn = page.getByText(/refresh/i).first();
-    const refreshVisible = await refreshBtn.isVisible({ timeout: 10000 }).catch(() => false);
-
     const refreshIcon = page.locator('button .pi-refresh, button[icon*="refresh"]').first();
-    const iconVisible = await refreshIcon.isVisible({ timeout: 3000 }).catch(() => false);
-
-    expect(refreshVisible || iconVisible).toBeTruthy();
+    await expect(refreshBtn.or(refreshIcon)).toBeVisible({ timeout: 10000 });
   });
 
   test('UM-013: Import button is visible for admin', async ({ page }) => {
     const importBtn = page.getByText(/import/i).first();
-    const importVisible = await importBtn.isVisible({ timeout: 10000 }).catch(() => false);
-
-    expect(importVisible).toBeTruthy();
+    await expect(importBtn).toBeVisible({ timeout: 10000 });
   });
 
   test('UM-014: User row has action buttons', async ({ page }) => {
-    await page.waitForTimeout(2000); // Wait for user list to load
-    const table = page.locator('p-table, table').first();
-    await expect(table).toBeVisible({ timeout: 10000 });
+    const userMgmtPage = new UserManagementPage(page);
+    await expect(userMgmtPage.userTable).toBeVisible({ timeout: 10000 });
 
-    // Actions column has edit button - p-button with pi-pencil (visible when canUpdate)
-    const anyRowButton = table.locator('tbody tr button, td button').first();
-    const actionsVisible = await anyRowButton.isVisible({ timeout: 5000 }).catch(() => false);
+    const rowCount = await userMgmtPage.userRows.count();
+    expect(rowCount).toBeGreaterThan(0);
 
-    // Fallback: table has data rows from mock
-    const rowCount = await table.locator('tbody tr').count();
-    expect(actionsVisible || rowCount > 0).toBeTruthy();
+    const anyRowButton = userMgmtPage.userTable.locator('tbody tr button, td button').first();
+    await expect(anyRowButton.or(userMgmtPage.userRows.first())).toBeVisible({ timeout: 5000 });
   });
 });

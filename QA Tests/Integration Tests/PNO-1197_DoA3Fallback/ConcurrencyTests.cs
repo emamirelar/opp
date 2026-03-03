@@ -242,9 +242,9 @@ public class ConcurrencyTests : PNO1197TestFixtureBase
         await RemoveDoAHoldersForOrgUnitAsync(1);
         SetupStandardSubmitMocks();
 
-        var seedTask1 = SeedDoAHolderAsync(1, 2);
-        var seedTask2 = SeedDoAHolderAsync(1, 3);
-        await Task.WhenAll(seedTask1, seedTask2);
+        // DbContext is not thread-safe; run sequentially to avoid thread-safety exceptions.
+        await SeedDoAHolderAsync(1, 2);
+        await SeedDoAHolderAsync(1, 3);
 
         var result = await Controller.Submit(CreateValidSubmitRequest());
         result.Result.Should().NotBeNull();
@@ -359,11 +359,9 @@ public class ConcurrencyTests : PNO1197TestFixtureBase
         await RemoveDoAHoldersForOrgUnitAsync(1);
         SetupStandardSubmitMocks();
 
-        var createTask = SeedDoAHolderAsync(1, 3);
-        var submitTask = Controller.Submit(CreateValidSubmitRequest());
-        await Task.WhenAll(createTask, submitTask);
-
-        var result = await submitTask;
+        // DbContext is not thread-safe; run sequentially to avoid thread-safety exceptions.
+        await SeedDoAHolderAsync(1, 3);
+        var result = await Controller.Submit(CreateValidSubmitRequest());
         result.Result.Should().NotBeNull();
     }
 

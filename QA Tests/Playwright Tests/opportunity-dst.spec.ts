@@ -13,12 +13,13 @@
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
+import { waitForLoadingToComplete } from './helpers/wait.helper';
 
 test.describe('Opportunity DST / Analysis Section', () => {
   test.slow();
   test.beforeEach(async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/opportunities/1');
-    await page.waitForTimeout(2000); // Wait for opportunity sections to render
+    await waitForLoadingToComplete(page);
   });
 
   test('OPP-051: Analysis section renders on opportunity detail', async ({ page }) => {
@@ -58,7 +59,6 @@ test.describe('Opportunity DST / Analysis Section', () => {
 
     await analysisChip.scrollIntoViewIfNeeded();
     await analysisChip.click();
-    await page.waitForTimeout(500);
 
     const analysisSection = page.locator('#section-analysis').first();
     await expect(analysisSection).toBeVisible({ timeout: 10000 });

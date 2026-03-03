@@ -188,7 +188,8 @@ export class AIAssistantPage extends BasePage {
   async startNewSession(): Promise<void> {
     if (await this.newSessionButton.isVisible().catch(() => false)) {
       await this.newSessionButton.click();
-      await this.page.waitForTimeout(1000);
+      // Wait for prompt input to be ready (new session state) instead of arbitrary timeout
+      await this.promptInput.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     }
   }
 }

@@ -13,6 +13,7 @@
 import { test, expect } from '@playwright/test';
 import { WorkflowPage } from './pages/workflow.page';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
+import { waitForVisible } from './helpers/wait.helper';
 
 // ============================================================================
 // WORKFLOW DISPLAY
@@ -86,7 +87,7 @@ test.describe('Workflow - Display', () => {
     const buttonCount = await buttons.count();
 
     // Workflow should have at least the primary action button
-    expect(buttonCount).toBeGreaterThanOrEqual(0);
+    expect(buttonCount).toBeGreaterThanOrEqual(1);
   });
 });
 

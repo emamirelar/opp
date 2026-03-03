@@ -17,6 +17,12 @@ public abstract class PerformanceTestBase : IDisposable
     protected UNOPSAppDbContext Context { get; private set; }
     protected Stopwatch Stopwatch { get; private set; }
 
+    /// <summary>
+    /// Test user ID used for CreatedBy/LastModifiedBy when seeding entities.
+    /// Must exist in AspNetUsers — call EnsureTestUserAsync() before seeding when using PostgreSQL.
+    /// </summary>
+    protected const int TestUserId = 1;
+
     // Performance thresholds (in milliseconds)
     protected const int FastOperationThreshold = 100;
     protected const int NormalOperationThreshold = 500;
@@ -37,16 +43,36 @@ public abstract class PerformanceTestBase : IDisposable
     }
 
     /// <summary>
+    /// Ensures a minimal test user (Id=1) exists in AspNetUsers.
+    /// Required before inserting entities with CreatedBy FK (e.g. Opportunities).
+    /// No-op for SQLite (FK enforcement disabled).
+    /// </summary>
+    protected async Task EnsureTestUserAsync()
+    {
+        if (!TestEnvironment.UsePostgreSQL)
+            return;
+
+        await Context.Database.ExecuteSqlRawAsync(
+            "INSERT INTO \"AspNetUsers\" (\"Id\", \"Email\", \"NormalizedEmail\", \"UserName\", \"NormalizedUserName\", " +
+            "\"EmailConfirmed\", \"PasswordHash\", \"SecurityStamp\", \"ConcurrencyStamp\", " +
+            "\"PhoneNumberConfirmed\", \"TwoFactorEnabled\", \"LockoutEnabled\", \"AccessFailedCount\", \"IsInternal\") " +
+            "SELECT 1, 'perf@test.local', 'PERF@TEST.LOCAL', 'perf@test.local', 'PERF@TEST.LOCAL', " +
+            "true, 'x', 'x', 'x', false, false, true, 0, true " +
+            "WHERE NOT EXISTS (SELECT 1 FROM \"AspNetUsers\" WHERE \"Id\" = 1)");
+    }
+
+    /// <summary>
     /// Creates a test partner in the database and returns its auto-generated ID.
     /// </summary>
     protected async Task<int> CreateTestPartnerAsync(string name = "Perf Test Partner")
     {
+        await EnsureTestUserAsync();
         var partner = new UNOPSPartner
         {
             Name = name,
             Status = EntityStatus.Active,
-            CreatedBy = 1,
-            LastModifiedBy = 1,
+            CreatedBy = TestUserId,
+            LastModifiedBy = TestUserId,
             LastModifiedDate = DateTime.UtcNow
         };
         await Context.Partners.AddAsync(partner);

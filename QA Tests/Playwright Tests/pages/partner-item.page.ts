@@ -20,6 +20,7 @@
 import { Page, Locator } from '@playwright/test';
 import { EntityDetailPage } from './entity-detail.page';
 import { assertVisible } from '../helpers/assertions.helper';
+import { waitForElementReady } from '../helpers/wait.helper';
 
 export class PartnerItemPage extends EntityDetailPage {
   protected entityName = 'partner';
@@ -79,6 +80,14 @@ export class PartnerItemPage extends EntityDetailPage {
    */
   get documentsSection(): Locator {
     return this.getByTestId('partner-documents-section');
+  }
+
+  /**
+   * Get upload document button
+   * Uses actual data-testid="upload-document-button" from partner-view
+   */
+  get uploadDocumentButton(): Locator {
+    return this.getByTestId('upload-document-button');
   }
   
   /**
@@ -243,6 +252,56 @@ export class PartnerItemPage extends EntityDetailPage {
     return 0;
   }
   
+  /**
+   * Get Opportunities tab (navigates to /partnerships/partners/:id/opportunities)
+   */
+  get opportunitiesTab(): Locator {
+    return this.page.locator(
+      'button:has-text("Opportunities"), [role="tab"]:has-text("Opportunities"), a[href*="/opportunities"]'
+    ).first();
+  }
+
+  /**
+   * Get opportunities listview when on partner opportunities tab
+   */
+  get opportunitiesListview(): Locator {
+    return this.page.locator(
+      'app-partner-view-opportunities app-listview, .opportunity-listview, app-listview'
+    ).first();
+  }
+
+  /**
+   * Get opportunities list container (app-partner-opportunities or listview)
+   */
+  get opportunitiesListContainer(): Locator {
+    return this.page.locator(
+      'app-partner-opportunities, app-partner-view-opportunities, [data-testid*="partner-opportunities"]'
+    ).first();
+  }
+
+  /**
+   * Get search input in opportunities tab
+   */
+  get opportunitiesSearchInput(): Locator {
+    return this.page.locator(
+      'input[placeholder*="Search"], input[placeholder*="search"], [data-testid="opportunity-search"]'
+    ).first();
+  }
+
+  /**
+   * Click Opportunities tab and wait for content to load
+   */
+  async openOpportunitiesTab(): Promise<void> {
+    const tab = this.opportunitiesTab;
+    if (await tab.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await tab.click();
+      const content = this.page.locator(
+        'app-partner-view-opportunities, .opportunity-listview, app-partner-opportunities'
+      ).first();
+      await waitForElementReady(content, 10000);
+    }
+  }
+
   /**
    * Check if opportunities section is visible
    * The partner detail page shows related engagements, not a dedicated opportunities section

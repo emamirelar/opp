@@ -11,9 +11,16 @@
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
-import { waitForPermissions } from './helpers/wait.helper';
+import {
+  waitForPermissions,
+  waitForLoadingToComplete,
+  waitForTableData,
+} from './helpers/wait.helper';
 import { PartnersPage } from './pages/partners.page';
 import { OpportunityItemPage } from './pages/opportunity-item.page';
+import { ContactsPage } from './pages/contacts.page';
+import { PartnerItemPage } from './pages/partner-item.page';
+import { DashboardPage } from './pages/dashboard.page';
 
 const ADMIN_USER = 'test@playwright.local';
 
@@ -40,16 +47,13 @@ test.describe('API Error Handling — Positive', () => {
     await test.step('Arrange — navigate to partner list', async () => {
       await page.goto(`${FRONTEND_URL}/partnerships/partners`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(1500);
+      await waitForTableData(page);
     });
 
     await test.step('Assert — list content visible', async () => {
       const partnersPage = new PartnersPage(page);
-      const listview = page.locator('[data-testid="partners-listview"], app-listview').first();
-      const tableRows = page.locator('tbody tr, .p-datatable-tbody tr');
-      const hasListview = await listview.isVisible().catch(() => false);
-      const rowCount = await tableRows.count().catch(() => 0);
-      expect(hasListview || rowCount > 0).toBeTruthy();
+      const listview = partnersPage.listview.or(page.locator('app-listview').first());
+      await expect(listview).toBeVisible({ timeout: 10000 });
     });
   });
 
@@ -57,14 +61,13 @@ test.describe('API Error Handling — Positive', () => {
     await test.step('Arrange — navigate to opportunity detail', async () => {
       await page.goto(`${FRONTEND_URL}/partnerships/opportunities/${TEST_RECORDS.opportunityId}`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(3000);
+      await waitForLoadingToComplete(page);
     });
 
     await test.step('Assert — opportunity content visible', async () => {
       const oppPage = new OpportunityItemPage(page, TEST_RECORDS.opportunityId);
-      const titleVisible = await oppPage.opportunityTitle.isVisible().catch(() => false);
-      const headerVisible = await page.locator('[data-testid="opportunity-detail-header"], app-opportunity-view').first().isVisible().catch(() => false);
-      expect(titleVisible || headerVisible).toBeTruthy();
+      const header = page.locator('[data-testid="opportunity-detail-header"], app-opportunity-view').first();
+      await expect(oppPage.opportunityTitle.or(header)).toBeVisible({ timeout: 10000 });
     });
   });
 });
@@ -101,17 +104,15 @@ test.describe('API Error Handling — Negative', () => {
     await test.step('Act — navigate to partner list', async () => {
       await page.goto(`${FRONTEND_URL}/partnerships/partners`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(2000);
+      await waitForLoadingToComplete(page);
     });
 
     await test.step('Assert — error feedback shown, no blank screen', async () => {
       const toast = page.locator('.p-toast-message, .p-toast-message-error');
       const errorMessage = page.locator('p-message[severity="error"], [class*="error"], .p-message-error');
-      const hasToast = await toast.isVisible().catch(() => false);
-      const hasErrorMsg = await errorMessage.isVisible().catch(() => false);
       const body = page.locator('body');
       await expect(body).toBeVisible();
-      expect(hasToast || hasErrorMsg || true).toBeTruthy();
+      await expect(toast.or(errorMessage)).toBeVisible({ timeout: 10000 });
     });
   });
 
@@ -132,17 +133,14 @@ test.describe('API Error Handling — Negative', () => {
     await test.step('Act — navigate to opportunity detail', async () => {
       await page.goto(`${FRONTEND_URL}/partnerships/opportunities/${TEST_RECORDS.opportunityId}`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(3000);
+      await waitForLoadingToComplete(page);
     });
 
     await test.step('Assert — not found or error feedback shown', async () => {
       const notFound = page.getByText(/not found|404|error/i);
       const toast = page.locator('.p-toast-message');
       const errorMsg = page.locator('p-message[severity="error"], .p-message-error');
-      const hasNotFound = await notFound.isVisible().catch(() => false);
-      const hasToast = await toast.isVisible().catch(() => false);
-      const hasErrorMsg = await errorMsg.isVisible().catch(() => false);
-      expect(hasNotFound || hasToast || hasErrorMsg || true).toBeTruthy();
+      await expect(notFound.or(toast).or(errorMsg)).toBeVisible({ timeout: 10000 });
     });
   });
 
@@ -162,15 +160,16 @@ test.describe('API Error Handling — Negative', () => {
     await test.step('Act — navigate to partner list', async () => {
       await page.goto(`${FRONTEND_URL}/partnerships/partners`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(3000);
+      await waitForLoadingToComplete(page);
     });
 
     await test.step('Assert — app remains functional, no crash', async () => {
       const body = page.locator('body');
       await expect(body).toBeVisible();
-      const spinner = page.locator('p-progressSpinner');
-      const spinnerVisible = await spinner.isVisible().catch(() => false);
-      expect(true).toBeTruthy();
+      const listview = page.locator('[data-testid="partners-listview"], app-listview').first();
+      const toast = page.locator('.p-toast-message');
+      const errorMsg = page.locator('p-message[severity="error"], .p-message-error');
+      await expect(listview.or(toast).or(errorMsg)).toBeVisible({ timeout: 10000 });
     });
   });
 });
@@ -212,15 +211,15 @@ test.describe('API Error Handling — Edge', () => {
     await test.step('Act — navigate to partner detail', async () => {
       await page.goto(`${FRONTEND_URL}/partnerships/partners/${TEST_RECORDS.partnerId}`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(2000);
+      await waitForLoadingToComplete(page);
     });
 
     await test.step('Assert — edit/delete buttons hidden or disabled', async () => {
-      const editBtn = page.locator('[data-testid="edit-partner-button"], button:has-text("Edit"), p-button:has-text("Edit")').first();
-      const deleteBtn = page.locator('[data-testid="delete-partner-button"], button:has-text("Delete"), p-button:has-text("Delete")').first();
-      const editVisible = await editBtn.isVisible().catch(() => false);
-      const deleteVisible = await deleteBtn.isVisible().catch(() => false);
-      expect(true).toBeTruthy();
+      const partnerPage = new PartnerItemPage(page, TEST_RECORDS.partnerId);
+      const editBtn = partnerPage.getByTestId('edit-partner-button');
+      const deleteBtn = partnerPage.getByTestId('delete-partner-button');
+      await expect(editBtn).not.toBeVisible({ timeout: 5000 });
+      await expect(deleteBtn).not.toBeVisible({ timeout: 5000 });
     });
   });
 
@@ -244,17 +243,15 @@ test.describe('API Error Handling — Edge', () => {
     await test.step('Act — navigate to partner list', async () => {
       await page.goto(`${FRONTEND_URL}/partnerships/partners`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(2000);
+      await waitForTableData(page);
     });
 
     await test.step('Assert — no data message or empty state, no crash', async () => {
+      const partnersPage = new PartnersPage(page);
       const noData = page.getByText(/no (records|data|partners)|empty/i);
-      const listview = page.locator('[data-testid="partners-listview"], app-listview').first();
-      const hasNoData = await noData.isVisible().catch(() => false);
-      const hasListview = await listview.isVisible().catch(() => false);
       const body = page.locator('body');
       await expect(body).toBeVisible();
-      expect(hasNoData || hasListview || true).toBeTruthy();
+      await expect(partnersPage.listview.or(noData)).toBeVisible({ timeout: 10000 });
     });
   });
 
@@ -278,17 +275,16 @@ test.describe('API Error Handling — Edge', () => {
     await test.step('Act — navigate to partner list, then to contacts', async () => {
       await page.goto(`${FRONTEND_URL}/partnerships/partners`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(1500);
+      await waitForLoadingToComplete(page);
       await page.goto(`${FRONTEND_URL}/partnerships/contacts`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(2000);
+      await waitForTableData(page);
     });
 
     await test.step('Assert — contacts page loads, app still functional', async () => {
-      const contactsHeader = page.locator('[data-testid="contacts-header"], [data-testid="contacts-title"]');
-      const url = page.url();
-      expect(url).toContain('contacts');
-      expect(true).toBeTruthy();
+      const contactsPage = new ContactsPage(page);
+      expect(page.url()).toContain('contacts');
+      await expect(contactsPage.listview.or(contactsPage.header)).toBeVisible({ timeout: 10000 });
     });
   });
 });
@@ -325,18 +321,17 @@ test.describe('API Error Handling — Functional', () => {
     await test.step('Act — navigate to partner list', async () => {
       await page.goto(`${FRONTEND_URL}/partnerships/partners`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(2000);
+      await waitForLoadingToComplete(page);
     });
 
     await test.step('Assert — toast visible, dismissible', async () => {
       const toast = page.locator('.p-toast-message');
       const closeBtn = page.locator('.p-toast-message-close-icon');
-      const hasToast = await toast.isVisible().catch(() => false);
-      if (hasToast && (await closeBtn.isVisible().catch(() => false))) {
+      await expect(toast).toBeVisible({ timeout: 10000 });
+      if (await closeBtn.isVisible().catch(() => false)) {
         await closeBtn.first().click();
-        await page.waitForTimeout(500);
+        await toast.first().waitFor({ state: 'hidden', timeout: 5000 });
       }
-      expect(true).toBeTruthy();
     });
   });
 
@@ -360,15 +355,16 @@ test.describe('API Error Handling — Functional', () => {
     await test.step('Act — navigate to partners (error), then to contacts', async () => {
       await page.goto(`${FRONTEND_URL}/partnerships/partners`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(2000);
+      await waitForLoadingToComplete(page);
       await page.goto(`${FRONTEND_URL}/partnerships/contacts`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(3000);
+      await waitForTableData(page);
     });
 
     await test.step('Assert — contacts page loads', async () => {
-      const url = page.url();
-      expect(url).toContain('contacts');
+      const contactsPage = new ContactsPage(page);
+      expect(page.url()).toContain('contacts');
+      await expect(contactsPage.listview.or(contactsPage.header)).toBeVisible({ timeout: 10000 });
     });
   });
 
@@ -407,16 +403,16 @@ test.describe('API Error Handling — Functional', () => {
     await test.step('Act — navigate (error), then reload', async () => {
       await page.goto(`${FRONTEND_URL}/partnerships/partners`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(1500);
+      await waitForLoadingToComplete(page);
       await page.reload();
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(2000);
+      await waitForTableData(page);
     });
 
     await test.step('Assert — data visible after reload', async () => {
-      const rows = page.locator('tbody tr, .p-datatable-tbody tr');
-      const rowCount = await rows.count().catch(() => 0);
-      expect(rowCount >= 0).toBeTruthy();
+      const partnersPage = new PartnersPage(page);
+      const rowCount = await partnersPage.tableRows.count();
+      expect(rowCount).toBeGreaterThanOrEqual(1);
     });
   });
 });
@@ -453,17 +449,16 @@ test.describe('API Error Handling — Integration', () => {
     await test.step('Act — partner list (500) then contacts', async () => {
       await page.goto(`${FRONTEND_URL}/partnerships/partners`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(1500);
+      await waitForLoadingToComplete(page);
       await page.goto(`${FRONTEND_URL}/partnerships/contacts`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(2000);
+      await waitForTableData(page);
     });
 
     await test.step('Assert — contacts loads successfully', async () => {
+      const contactsPage = new ContactsPage(page);
       expect(page.url()).toContain('contacts');
-      const listview = page.locator('[data-testid="contacts-listview"], app-listview').first();
-      const hasListview = await listview.isVisible().catch(() => false);
-      expect(hasListview || true).toBeTruthy();
+      await expect(contactsPage.listview.or(contactsPage.header)).toBeVisible({ timeout: 10000 });
     });
   });
 
@@ -484,14 +479,15 @@ test.describe('API Error Handling — Integration', () => {
     await test.step('Act — navigate to partner detail', async () => {
       await page.goto(`${FRONTEND_URL}/partnerships/partners/${TEST_RECORDS.partnerId}`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(2000);
+      await waitForLoadingToComplete(page);
     });
 
     await test.step('Assert — partner content visible, no crash', async () => {
+      const partnerPage = new PartnerItemPage(page, TEST_RECORDS.partnerId);
       const infoPanel = page.getByText('Partner Information', { exact: false });
       const body = page.locator('body');
       await expect(body).toBeVisible();
-      expect(true).toBeTruthy();
+      await expect(partnerPage.partnerName.or(infoPanel)).toBeVisible({ timeout: 10000 });
     });
   });
 
@@ -515,20 +511,20 @@ test.describe('API Error Handling — Integration', () => {
     await test.step('Act — home → partners (500) → home', async () => {
       await page.goto(`${FRONTEND_URL}/`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(1500);
+      await waitForLoadingToComplete(page);
       await page.goto(`${FRONTEND_URL}/partnerships/partners`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(1500);
+      await waitForLoadingToComplete(page);
       await page.goto(`${FRONTEND_URL}/`);
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForTimeout(2000);
+      await waitForLoadingToComplete(page);
     });
 
     await test.step('Assert — dashboard loads', async () => {
-      const url = page.url();
-      expect(url).not.toContain('/partnerships/partners');
-      const body = page.locator('body');
-      await expect(body).toBeVisible();
+      const dashboardPage = new DashboardPage(page);
+      expect(page.url()).not.toContain('/partnerships/partners');
+      await expect(page.locator('body')).toBeVisible();
+      await expect(dashboardPage.panels.first().or(dashboardPage.welcomeHeader)).toBeVisible({ timeout: 10000 });
     });
   });
 });

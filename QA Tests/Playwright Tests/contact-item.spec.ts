@@ -320,7 +320,6 @@ test.describe('Contact Detail Page - Documents & Links', () => {
       expect(hasPartnerLink).toBe(true);
     } else {
       // Contact may not have an associated partner
-      console.log('Partner section not visible — contact may not have an associated partner');
     }
   });
   

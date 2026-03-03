@@ -30,6 +30,7 @@
 import { Page, Locator } from '@playwright/test';
 import { EntityDetailPage } from './entity-detail.page';
 import { assertVisible } from '../helpers/assertions.helper';
+import { waitForDialog, waitForPageReady } from '../helpers/wait.helper';
 
 export class InteractionItemPage extends EntityDetailPage {
   protected entityName = 'interaction';
@@ -158,9 +159,12 @@ export class InteractionItemPage extends EntityDetailPage {
   
   /**
    * Navigate to interaction detail page
+   * @param interactionId - Interaction ID
    */
-  async navigate(interactionId: string | number): Promise<void> {
-    await this.navigateToDetail(interactionId);
+  override async navigate(interactionId: string | number): Promise<void> {
+    this.recordId = interactionId;
+    await this.goto(`/partnerships/interactions/${interactionId}`);
+    await waitForPageReady(this.page);
   }
   
   /**
@@ -322,7 +326,7 @@ export class InteractionItemPage extends EntityDetailPage {
   async clickCreateOpportunityButton(): Promise<void> {
     if (await this.isCreateOpportunityButtonVisible()) {
       await this.createOpportunityButton.click();
-      await this.page.waitForTimeout(1000);
+      await waitForDialog(this.page);
     }
   }
   

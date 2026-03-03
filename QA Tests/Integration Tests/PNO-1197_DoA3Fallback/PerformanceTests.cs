@@ -189,7 +189,7 @@ public class PerformanceTests : PNO1197TestFixtureBase
     }
 
     [Fact]
-    public async Task PERF_007_RequirementsWithDoAFallback_LessThan600ms()
+    public async Task PERF_007_RequirementsWithDoAFallback_LessThan2s()
     {
         await SeedOpportunityAsync(1, "IDENTIFY & PROFILE");
         await RemoveDoAHoldersForOrgUnitAsync(1);
@@ -200,8 +200,8 @@ public class PerformanceTests : PNO1197TestFixtureBase
         await Controller.Submit(CreateValidSubmitRequest());
         sw.Stop();
 
-        // Relaxed threshold for CI environment variability (original: 600ms)
-        sw.ElapsedMilliseconds.Should().BeLessThan(5000);
+        sw.ElapsedMilliseconds.Should().BeLessThan(2000,
+            $"DoA fallback submit took {sw.ElapsedMilliseconds}ms, expected <2000ms");
     }
 
     [Fact]
@@ -302,32 +302,43 @@ public class PerformanceTests : PNO1197TestFixtureBase
         await SeedOpportunityAsync(1, "IDENTIFY & PROFILE");
         SetupStandardSubmitMocks();
 
-        // Warm-up call to allow JIT compilation and caching before timing measurement
-        try { await Controller.Submit(CreateValidSubmitRequest()); } catch { /* ignore warm-up failures */ }
+        // Warm-up call for JIT
+        try { await Controller.Submit(CreateValidSubmitRequest()); } catch { }
 
         var times = new List<long>();
         for (var i = 0; i < 5; i++)
         {
             var sw = Stopwatch.StartNew();
-            try { await Controller.Submit(CreateValidSubmitRequest()); } catch { /* controller may fail in in-memory mode */ }
+            try { await Controller.Submit(CreateValidSubmitRequest()); } catch { }
             sw.Stop();
             times.Add(sw.ElapsedMilliseconds);
         }
 
-        if (times.Count == 0) return;
+        times.Should().NotBeEmpty();
         var max = times.Max();
-        var min = times.Min();
-        // Allow 2000ms variance to account for JIT, in-memory DB overhead, and CI resource constraints
-        (max - min).Should().BeLessThan(2000);
+        var avg = times.Average();
+        max.Should().BeLessThan(1000, "no individual call should exceed 1s after warm-up");
+        avg.Should().BeLessThan(500, "average submit time should be under 500ms after warm-up");
     }
 
     [Fact]
-    public void PERF_014_DbContext_DisposedAfterDoACheck()
+    public async Task PERF_014_DoAValidation_MemoryStable()
     {
-        DbContext.Should().NotBeNull();
-        DbContext.Database.EnsureCreated();
-        DbContext.ChangeTracker.Clear();
-        Assert.True(true);
+        await SeedOpportunityAsync(1, "IDENTIFY & PROFILE");
+        SetupStandardSubmitMocks();
+
+        GC.Collect();
+        var memBefore = GC.GetTotalMemory(forceFullCollection: true);
+
+        for (var i = 0; i < 10; i++)
+        {
+            try { await Controller.Submit(CreateValidSubmitRequest()); } catch { }
+        }
+
+        GC.Collect();
+        var memAfter = GC.GetTotalMemory(forceFullCollection: true);
+        var growthMb = (memAfter - memBefore) / 1_048_576.0;
+        growthMb.Should().BeLessThan(50, "10 DoA validations should not cause significant memory growth");
     }
 
     [Fact]

@@ -16,9 +16,11 @@
  * @since 2026-02-02
  */
 
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { OpportunityItemPage } from './pages/opportunity-item.page';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
+import { assertUrlMatches } from './helpers/assertions.helper';
+import { waitForDialog, waitForLoadingToComplete, waitForPermissions } from './helpers/wait.helper';
 
 /**
  * Test configuration for oUP integration
@@ -148,7 +150,7 @@ test.describe('Opportunity+ to oUP Integration Flow', () => {
     // Click New Opportunity button
     const newButton = page.locator('[data-testid="new-opportunity-button"]');
     await newButton.click();
-    await page.waitForTimeout(2000);
+    await waitForDialog(page);
     
     // Fill in opportunity details
     await page.fill('[data-testid="opportunity-name-input"]', TEST_OPPORTUNITY_DATA.name);
@@ -156,18 +158,14 @@ test.describe('Opportunity+ to oUP Integration Flow', () => {
     
     // Save opportunity
     await page.click('[data-testid="save-opportunity-button"]');
-    await page.waitForTimeout(2000);
+    await waitForLoadingToComplete(page);
     
     // Get opportunity ID from URL
     const currentUrl = page.url();
     const opportunityId = currentUrl.match(/opportunities\/(\d+)/)?.[1];
     expect(opportunityId).toBeTruthy();
     
-    console.log(`[INT-001] Created opportunity ID: ${opportunityId}`);
-    
     // Step 3: Wait for sync (1-5 minutes)
-    console.log('[INT-001] Waiting for Pub/Sub sync to oUP...');
-    
     // TODO: Implement oUP API check for engagement creation
     // const engagementCreated = await waitForSync(async () => {
     //   return await checkEngagementInOup(opportunityId);
@@ -177,34 +175,40 @@ test.describe('Opportunity+ to oUP Integration Flow', () => {
     // Step 4: Verify in oUP (requires oUP access)
     // TODO: Navigate to oUP and verify engagement
     
-    expect(true).toBeTruthy(); // Placeholder until oUP access configured
+    await assertUrlMatches(page, /partnerships\/opportunities\/\d+/);
   });
 
   test('INT-002: Integration Flow - Update Existing Engagement', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
+    
     // This test requires an existing opportunity with linked engagement
     // TODO: Implement when oUP access is configured
-    
-    expect(true).toBeTruthy();
   });
 
   test('INT-003: Integration Trigger on Every Save', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
+    
     // Verify current temporary behavior: sync on every save
     // TODO: Implement when oUP access is configured
-    
-    expect(true).toBeTruthy();
   });
 
   test('INT-004: Message Transport Latency Verification', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
+    
     // Measure sync latency between save and oUP update
     // Expected: 1-5 minutes
-    
-    expect(true).toBeTruthy();
   });
 });
 
@@ -224,30 +228,38 @@ test.describe('Field Mapping Validation', () => {
   test('FM-001: Key Information Section Mapping', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
+    
     /**
      * Validate mappings:
      * - Opportunity Name → Engagement Name
      * - Description → Engagement Description
      * - Proposed Budget → NOT MAPPED
      */
-    
-    expect(true).toBeTruthy();
   });
 
   test('FM-002: Products and Services Section Mapping', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
+    
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
     
     /**
      * Validate mappings:
      * - Delivery Modality → Engagement Name
      * - Products & Services → Project Category (derived)
      */
-    
-    expect(true).toBeTruthy();
   });
 
   test('FM-003: SDG and UN Framework Mapping', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
+    
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
     
     /**
      * Validate mappings:
@@ -255,12 +267,14 @@ test.describe('Field Mapping Validation', () => {
      * - SDG Alignment → SDG Contributions
      * - UN Cooperation Framework → UN Cooperation Framework
      */
-    
-    expect(true).toBeTruthy();
   });
 
   test('FM-004: Partners and Budget Mapping', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
+    
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
     
     /**
      * Validate mappings:
@@ -268,23 +282,27 @@ test.describe('Field Mapping Validation', () => {
      * - Funding Partners → Partners → Funding Source
      * - Client Partners → Partners → Client
      */
-    
-    expect(true).toBeTruthy();
   });
 
   test('FM-005: Geographic Implementation Mapping', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
+    
     /**
      * Validate mappings:
      * - Implementation Countries → Countries of Implementation
      */
-    
-    expect(true).toBeTruthy();
   });
 
   test('FM-006: Timeline and Dates Mapping', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
+    
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
     
     /**
      * Validate mappings:
@@ -292,12 +310,14 @@ test.describe('Field Mapping Validation', () => {
      * - Implementation Start Date → Implementation Start Date
      * - Target Delivery Date → Implementation End Date
      */
-    
-    expect(true).toBeTruthy();
   });
 
   test('FM-007: Team and Stakeholders Mapping', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
+    
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
     
     /**
      * Validate mappings:
@@ -307,12 +327,14 @@ test.describe('Field Mapping Validation', () => {
      * - DOA2 → Engagement Authority DoA2
      * - DOA3 → Engagement Authority DoA3
      */
-    
-    expect(true).toBeTruthy();
   });
 
   test('FM-008: Unmapped Fields Verification', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
+    
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
     
     /**
      * Verify NOT mapped fields:
@@ -324,8 +346,6 @@ test.describe('Field Mapping Validation', () => {
      * - Additional Notes
      * - Work breakdown structure
      */
-    
-    expect(true).toBeTruthy();
   });
 });
 
@@ -345,49 +365,54 @@ test.describe('High-Risk Checklist Mapping', () => {
   test('HR-001: Single High-Risk Mapping', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
+    
     /**
      * Test: Add single high risk "No Host Country Agreement"
      * Expected: Survey question 1.1.1 = Yes, risk in Risk Register
      */
-    
-    expect(true).toBeTruthy();
   });
 
   test('HR-002: Multiple High-Risks Mapping', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
+    
     /**
      * Test: Add 4 different high risks
      * Expected: 4 survey questions = Yes, 4 risks in Risk Register
      */
-    
-    expect(true).toBeTruthy();
   });
 
   test('HR-003: All 17 High-Risk Types Mapping', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
+    
     /**
      * Test: Add all 17 predefined high risks
      * Expected: All 17 survey questions = Yes, 17 risks in Risk Register
      */
-    
-    for (const risk of HIGH_RISK_ITEMS) {
-      console.log(`[HR-003] Testing risk: ${risk.oppPlusName} → ${risk.oupId}`);
-    }
-    
-    expect(true).toBeTruthy();
+    expect(HIGH_RISK_ITEMS.length).toBe(17);
   });
 
   test('HR-004: Non-High-Risk Not Mapped', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
+    
     /**
      * Test: Add risk WITHOUT high-risk tag
      * Expected: Risk NOT in Risk Register
      */
-    
-    expect(true).toBeTruthy();
   });
 });
 
@@ -407,6 +432,10 @@ test.describe('Email Notification Validation', () => {
   test('EN-001: New Engagement Email Notification', async ({ page }) => {
     test.skip(!hasEmailCredentials(), 'Email credentials required');
     
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
+    
     /**
      * Validate new engagement email:
      * - From: noreply@unops.org
@@ -415,42 +444,46 @@ test.describe('Email Notification Validation', () => {
      * - Body includes: Opportunity ID, Name, Engagement Number, Stage
      * - Links to oUP and Opportunity+
      */
-    
-    expect(true).toBeTruthy();
   });
 
   test('EN-002: Updated Engagement Email Notification', async ({ page }) => {
     test.skip(!hasEmailCredentials(), 'Email credentials required');
+    
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
     
     /**
      * Validate update email:
      * - Subject: "Engagement Updated from Opportunity+ - [number]"
      * - Indicates update not creation
      */
-    
-    expect(true).toBeTruthy();
   });
 
   test('EN-003: Email Recipient Resolution', async ({ page }) => {
     test.skip(!hasEmailCredentials(), 'Email credentials required');
     
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
+    
     /**
      * Verify email addresses resolved from user IDs
      */
-    
-    expect(true).toBeTruthy();
   });
 
   test('EN-004: Email Links Validation', async ({ page }) => {
     test.skip(!hasEmailCredentials(), 'Email credentials required');
+    
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
     
     /**
      * Verify email links navigate correctly:
      * - oUP link → engagement overview
      * - Opportunity+ link → opportunity details
      */
-    
-    expect(true).toBeTruthy();
   });
 });
 
@@ -467,11 +500,17 @@ test.describe('Deep Linking Validation', () => {
      */
     test.skip(true, 'Go to oUP button only available in production. See documentation.');
     
-    expect(true).toBeTruthy();
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
   });
 
   test('DL-002: View in Opportunity+ Button in oUP', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
+    
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
     
     /**
      * Verify "View in Opportunity+" button:
@@ -479,8 +518,6 @@ test.describe('Deep Linking Validation', () => {
      * - Links to correct Opportunity+ page
      * - URL format: https://opportunityplus.unops.org/#/partnerships/opportunities/<opp_id>
      */
-    
-    expect(true).toBeTruthy();
   });
 });
 
@@ -500,34 +537,40 @@ test.describe('Idempotency Validation', () => {
   test('ID-001: Multiple Saves Without Duplication', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
+    
     /**
      * Test: Save opportunity 5+ times
      * Expected: Only ONE engagement in oUP, no duplicates
      */
-    
-    expect(true).toBeTruthy();
   });
 
   test('ID-002: Rapid Sequential Saves', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
+    
     /**
      * Test: Save rapidly multiple times
      * Expected: Single engagement, no corruption
      */
-    
-    expect(true).toBeTruthy();
   });
 
   test('ID-003: Concurrent User Updates', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
+    
     /**
      * Test: Two users save same opportunity simultaneously
      * Expected: No duplicates, consistent final state
      */
-    
-    expect(true).toBeTruthy();
   });
 });
 
@@ -541,34 +584,40 @@ test.describe('Error Handling', () => {
   test('EH-001: Invalid User Email Resolution', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
+    
     /**
      * Test: Assign non-existent email as Opportunity Manager
      * Expected: Graceful handling, error logged
      */
-    
-    expect(true).toBeTruthy();
   });
 
   test('EH-002: Large Payload Handling', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
+    
     /**
      * Test: Maximum data in all fields
      * Expected: Successful sync without timeout
      */
-    
-    expect(true).toBeTruthy();
   });
 
   test('EH-003: Special Characters in Text Fields', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
+    
     /**
      * Test: Special chars: & < > " ' \n and Unicode
      * Expected: No XML parsing errors, data preserved
      */
-    
-    expect(true).toBeTruthy();
   });
 });
 
@@ -582,24 +631,32 @@ test.describe('Edge Cases', () => {
   test('EC-001: Empty Optional Fields', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
-    expect(true).toBeTruthy();
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
   });
 
   test('EC-002: Maximum Field Lengths', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
-    expect(true).toBeTruthy();
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
   });
 
   test('EC-003: Date Edge Cases', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
-    expect(true).toBeTruthy();
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
   });
 
   test('EC-004: Currency Handling', async ({ page }) => {
     test.skip(!hasOupCredentials(), 'oUP credentials required');
     
-    expect(true).toBeTruthy();
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPermissions(page);
+    await assertUrlMatches(page, /partnerships\/opportunities/);
   });
 });

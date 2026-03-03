@@ -10,7 +10,7 @@
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
-import { waitForPermissions } from './helpers/wait.helper';
+import { waitForPermissions, waitForPageReady, waitForLoadingToComplete } from './helpers/wait.helper';
 
 const featureReady = process.env.OPPORTUNITY_EXPORT_IMPLEMENTED === 'true';
 
@@ -28,17 +28,16 @@ test.describe('Export — Button Visibility', () => {
   test('EXP-001: Export button visible for admin user', async ({ page }) => {
     await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
     await waitForPermissions(page);
-    await page.waitForTimeout(3000);
+    await waitForPageReady(page);
 
     const exportBtn = page.locator('[data-testid="export-button"], button:has-text("Export"), button:has(i.pi-download)').first();
-    const isVisible = await exportBtn.isVisible({ timeout: 10000 }).catch(() => false);
-    expect(isVisible || await page.locator('app-listview').first().isVisible()).toBeTruthy();
+    await expect(exportBtn).toBeVisible({ timeout: 10000 });
   });
 
   test('EXP-002: Export button hidden for read-only user', async ({ page }) => {
     await authenticateWithRealBackend(page, OPPORTUNITIES_URL, READONLY_USER);
     await waitForPermissions(page);
-    await page.waitForTimeout(3000);
+    await waitForPageReady(page);
 
     const exportBtn = page.locator('[data-testid="export-button"]');
     await expect(exportBtn).not.toBeVisible({ timeout: 5000 });
@@ -55,34 +54,31 @@ test.describe('Export — Action Trigger', () => {
   test('EXP-003: Clicking export button triggers export action', async ({ page }) => {
     await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
     await waitForPermissions(page);
-    await page.waitForTimeout(3000);
+    await waitForPageReady(page);
 
     const exportBtn = page.locator('[data-testid="export-button"], button:has-text("Export"), button:has(i.pi-download)').first();
     const isVisible = await exportBtn.isVisible({ timeout: 5000 }).catch(() => false);
     test.skip(!isVisible, 'Export button not visible');
 
     await exportBtn.click();
-    await page.waitForTimeout(2000);
 
     const confirmation = page.locator('.p-toast-message, .p-dialog, [data-testid="export-progress"]').first();
-    const hasResponse = await confirmation.isVisible({ timeout: 10000 }).catch(() => false);
-    expect(hasResponse || true).toBeTruthy();
+    await expect(confirmation).toBeVisible({ timeout: 10000 });
   });
 
   test('EXP-004: Export with filters applies filtered results', async ({ page }) => {
     await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
     await waitForPermissions(page);
-    await page.waitForTimeout(3000);
+    await waitForPageReady(page);
 
     const searchInput = page.locator('[data-testid="search-input"], input[placeholder*="Search"]').first();
     if (await searchInput.isVisible({ timeout: 5000 }).catch(() => false)) {
       await searchInput.fill('test');
       await searchInput.press('Enter');
-      await page.waitForTimeout(2000);
+      await waitForLoadingToComplete(page);
     }
 
     const exportBtn = page.locator('[data-testid="export-button"], button:has-text("Export")').first();
-    const isVisible = await exportBtn.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(isVisible || await page.locator('app-listview').first().isVisible()).toBeTruthy();
+    await expect(exportBtn).toBeVisible({ timeout: 5000 });
   });
 });

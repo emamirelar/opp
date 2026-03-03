@@ -37,32 +37,39 @@ public class PerformanceTests
 
     [Fact]
     [Trait("DEF012", "PERF_001")]
-    public void PERF_001_SingleMap_LessThan5ms()
+    public void PERF_001_SingleMap_CompletesWithin100ms()
     {
         var dest = CreateOpportunity();
         var request = new UpdateOpportunityRequest { Id = 10, Name = "Test" };
+
+        // Warm-up to avoid JIT overhead in measurement
+        _mapper.Map(new UpdateOpportunityRequest { Id = 10, Name = "Warmup" }, CreateOpportunity());
+
         var sw = Stopwatch.StartNew();
         _mapper.Map(request, dest);
         sw.Stop();
-        sw.ElapsedMilliseconds.Should().BeLessThan(500);
+        sw.ElapsedMilliseconds.Should().BeLessThan(100,
+            $"single map took {sw.ElapsedMilliseconds}ms");
     }
 
     [Fact]
     [Trait("DEF012", "PERF_002")]
-    public void PERF_002_MapWithAllNulls_LessThan5ms()
+    public void PERF_002_MapWithAllNulls_CompletesWithin100ms()
     {
+        _mapper.Map(new UpdateOpportunityRequest { Id = 10 }, CreateOpportunity()); // warm-up
         var dest = CreateOpportunity();
         var request = new UpdateOpportunityRequest { Id = 10 };
         var sw = Stopwatch.StartNew();
         _mapper.Map(request, dest);
         sw.Stop();
-        sw.ElapsedMilliseconds.Should().BeLessThan(500);
+        sw.ElapsedMilliseconds.Should().BeLessThan(100);
     }
 
     [Fact]
     [Trait("DEF012", "PERF_003")]
-    public void PERF_003_MapWithAllValues_LessThan5ms()
+    public void PERF_003_MapWithAllValues_CompletesWithin100ms()
     {
+        _mapper.Map(new UpdateOpportunityRequest { Id = 10 }, CreateOpportunity()); // warm-up
         var dest = CreateOpportunity();
         var request = new UpdateOpportunityRequest
         {
@@ -80,32 +87,35 @@ public class PerformanceTests
         var sw = Stopwatch.StartNew();
         _mapper.Map(request, dest);
         sw.Stop();
-        sw.ElapsedMilliseconds.Should().BeLessThan(500);
+        sw.ElapsedMilliseconds.Should().BeLessThan(100);
     }
 
     [Fact]
     [Trait("DEF012", "PERF_004")]
-    public void PERF_004_MapWithPartialValues_LessThan5ms()
+    public void PERF_004_MapWithPartialValues_CompletesWithin100ms()
     {
+        _mapper.Map(new UpdateOpportunityRequest { Id = 10 }, CreateOpportunity()); // warm-up
         var dest = CreateOpportunity();
         var request = new UpdateOpportunityRequest { Id = 10, Name = "P", Description = "D" };
         var sw = Stopwatch.StartNew();
         _mapper.Map(request, dest);
         sw.Stop();
-        sw.ElapsedMilliseconds.Should().BeLessThan(500);
+        sw.ElapsedMilliseconds.Should().BeLessThan(100);
     }
 
     [Fact]
     [Trait("DEF012", "PERF_005")]
-    public void PERF_005_MapWithLargeStrings_LessThan10ms()
+    public void PERF_005_MapWithLargeStrings_CompletesWithin200ms()
     {
+        _mapper.Map(new UpdateOpportunityRequest { Id = 10 }, CreateOpportunity()); // warm-up
         var dest = CreateOpportunity();
         var big = new string('x', 5000);
         var request = new UpdateOpportunityRequest { Id = 10, Name = big, Description = big };
         var sw = Stopwatch.StartNew();
         _mapper.Map(request, dest);
         sw.Stop();
-        sw.ElapsedMilliseconds.Should().BeLessThan(1000);
+        sw.ElapsedMilliseconds.Should().BeLessThan(200,
+            $"large string map took {sw.ElapsedMilliseconds}ms");
     }
 
     #endregion
@@ -226,49 +236,71 @@ public class PerformanceTests
 
     [Fact]
     [Trait("DEF012", "PERF_013")]
-    public void PERF_013_MapperInstance_Reusable()
+    public void PERF_013_MapperReuse_100Maps_CompletesWithin200ms()
     {
+        _mapper.Map(new UpdateOpportunityRequest { Id = 10 }, CreateOpportunity()); // warm-up
+        var sw = Stopwatch.StartNew();
         for (var i = 0; i < 100; i++)
         {
             var d = CreateOpportunity();
             _mapper.Map(new UpdateOpportunityRequest { Id = 10, Name = $"U{i}" }, d);
-            d.Name.Should().Be($"U{i}");
         }
+        sw.Stop();
+        sw.ElapsedMilliseconds.Should().BeLessThan(200,
+            $"100 mapper reuse maps took {sw.ElapsedMilliseconds}ms");
     }
 
     [Fact]
     [Trait("DEF012", "PERF_014")]
-    public void PERF_014_GcPressureFromMaps_Minimal()
+    public void PERF_014_GcPressureFromMaps_200Iterations_MemoryStable()
     {
+        _mapper.Map(new UpdateOpportunityRequest { Id = 10 }, CreateOpportunity()); // warm-up
+        GC.Collect();
+        var memBefore = GC.GetTotalMemory(forceFullCollection: true);
+
         var dest = CreateOpportunity();
         var request = new UpdateOpportunityRequest { Id = 10, Name = "Gc" };
         for (var i = 0; i < 200; i++)
             _mapper.Map(request, dest);
+
+        GC.Collect();
+        var memAfter = GC.GetTotalMemory(forceFullCollection: true);
+        var growthMb = (memAfter - memBefore) / 1_048_576.0;
+        growthMb.Should().BeLessThan(5, "200 map operations should not leak memory");
         dest.Name.Should().Be("Gc");
     }
 
     [Fact]
     [Trait("DEF012", "PERF_015")]
-    public void PERF_015_Map_DoesNotHoldReferences()
+    public void PERF_015_ConcurrentMapperUsage_ThreadSafe_CompletesWithin1s()
     {
-        var dest = CreateOpportunity();
-        var request = new UpdateOpportunityRequest { Id = 10, Name = "Ref" };
-        _mapper.Map(request, dest);
-        request = null;
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        dest.Name.Should().Be("Ref");
+        _mapper.Map(new UpdateOpportunityRequest { Id = 10 }, CreateOpportunity()); // warm-up
+        var sw = Stopwatch.StartNew();
+        var tasks = Enumerable.Range(0, 10).Select(t => Task.Run(() =>
+        {
+            for (var i = 0; i < 50; i++)
+            {
+                var d = CreateOpportunity();
+                _mapper.Map(new UpdateOpportunityRequest { Id = 10, Name = $"T{t}_I{i}" }, d);
+                d.Name.Should().Be($"T{t}_I{i}");
+            }
+        }));
+        Task.WhenAll(tasks).GetAwaiter().GetResult();
+        sw.Stop();
+        sw.ElapsedMilliseconds.Should().BeLessThan(1000,
+            $"500 concurrent maps took {sw.ElapsedMilliseconds}ms");
     }
 
     [Fact]
     [Trait("DEF012", "PERF_016")]
-    public void PERF_016_MapperConfigurationCreation_LessThan100ms()
+    public void PERF_016_MapperConfigurationCreation_CompletesWithin3s()
     {
         var sw = Stopwatch.StartNew();
         var config = new MapperConfiguration(cfg => { cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies()); });
         _ = config.CreateMapper();
         sw.Stop();
-        sw.ElapsedMilliseconds.Should().BeLessThan(5000);
+        sw.ElapsedMilliseconds.Should().BeLessThan(3000,
+            $"MapperConfiguration creation took {sw.ElapsedMilliseconds}ms");
     }
 
     #endregion

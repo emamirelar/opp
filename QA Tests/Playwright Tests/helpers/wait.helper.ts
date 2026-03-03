@@ -133,6 +133,38 @@ export async function waitForVisible(locator: Locator, timeout?: number): Promis
 }
 
 /**
+ * Wait for element to be hidden
+ * @param locator - Playwright locator
+ * @param timeout - Optional timeout in milliseconds
+ */
+export async function waitForHidden(locator: Locator, timeout?: number): Promise<void> {
+  await locator.waitFor({ state: 'hidden', timeout: timeout || getTimeout('default') });
+}
+
+/**
+ * Wait for keyboard focus to move from the given element tag.
+ * Uses page.waitForFunction (no arbitrary timeout) for deterministic focus settling.
+ * @param page - Playwright page object
+ * @param previousTag - Tag name of the previously focused element (e.g. 'BODY', 'A', 'BUTTON')
+ * @param timeout - Optional timeout in milliseconds
+ */
+export async function waitForFocusChange(
+  page: Page,
+  previousTag: string,
+  timeout?: number
+): Promise<void> {
+  const maxTimeout = timeout || 2000;
+  await page.waitForFunction(
+    (tag: string) => {
+      const el = document.activeElement;
+      return el != null && el.tagName !== tag;
+    },
+    previousTag,
+    { timeout: maxTimeout }
+  );
+}
+
+/**
  * Wait for network idle
  * @param page - Playwright page object
  * @param timeout - Optional timeout in milliseconds
@@ -201,6 +233,16 @@ export async function waitForDialog(page: Page, timeout?: number): Promise<void>
   await page.waitForTimeout(500);
   
   console.log('[Wait] Dialog is visible and ready');
+}
+
+/**
+ * Wait for a minimum elapsed time. Use sparingly — only when time must pass
+ * (e.g., timestamp resolution, rate limits). Prefer element/network-based waits when possible.
+ * @param page - Playwright page object
+ * @param ms - Minimum milliseconds to wait
+ */
+export async function waitForMinimumElapsed(page: Page, ms: number): Promise<void> {
+  await page.waitForTimeout(ms);
 }
 
 /**

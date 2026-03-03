@@ -16,13 +16,18 @@
  * @see https://jira.unops.org/browse/PNO-REAL-API
  */
 
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import {
   authenticateRealApi,
   createViaApi,
   deleteViaApi,
   isBackendAvailable,
 } from './helpers/real-api-auth.helper';
+import {
+  waitForDialog,
+  waitForElementReady,
+  waitForPermissions,
+} from './helpers/wait.helper';
 
 const BACKEND_READY = process.env.REAL_API_TESTS === 'true';
 
@@ -61,7 +66,7 @@ test.describe('Opportunity CRUD — Real API', () => {
     });
 
     await test.step('Fill required fields', async () => {
-      await page.waitForTimeout(1000);
+      await waitForDialog(page);
       const nameInput = page.getByTestId('opportunity-name').or(page.locator('input[formcontrolname="name"]'));
       await nameInput.first().fill(`Real API Test ${Date.now()}`);
 
@@ -109,8 +114,7 @@ test.describe('Opportunity CRUD — Real API', () => {
 
     // Verify pagination controls exist
     const paginator = page.locator('p-paginator, .p-paginator').first();
-    // Paginator may or may not be visible depending on data count — just check table loaded
-    expect(await table.isVisible()).toBeTruthy();
+    await expect(table).toBeVisible();
   });
 
   test('OPP-R-004: Update opportunity via section edit', async ({ page }) => {
@@ -129,9 +133,8 @@ test.describe('Opportunity CRUD — Real API', () => {
       ).first();
       if (await editBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
         await editBtn.click();
-        await page.waitForTimeout(1000);
-
         const descField = page.locator('textarea[formcontrolname="description"]').first();
+        await waitForElementReady(descField, 5000);
         if (await descField.isVisible({ timeout: 3000 }).catch(() => false)) {
           await descField.fill('Updated by real-API test');
           const saveBtn = page.locator('button:has-text("Save")').first();
@@ -172,7 +175,7 @@ test.describe('Opportunity CRUD — Real API', () => {
     );
     if (await createBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
       await createBtn.click();
-      await page.waitForTimeout(1000);
+      await waitForDialog(page);
 
       // Try submitting without filling name
       const submitBtn = page.locator('button[type="submit"]').first();
@@ -537,7 +540,7 @@ test.describe('Opportunity CRUD — Real API', () => {
     const beforeBody = await before.json();
     const beforeDate = beforeBody.lastModifiedDate;
 
-    await page.waitForTimeout(1100); // Ensure timestamp differs
+    await waitForPermissions(page); // Ensure timestamp differs (backend uses second precision)
 
     await page.request.patch(`${apiBase}/api/opportunity/${id}/overview`, {
       data: { description: 'Modified to test timestamp' },
@@ -756,7 +759,7 @@ test.describe('Opportunity CRUD — Real API', () => {
 
     if (await createBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
       await createBtn.click();
-      await page.waitForTimeout(1000);
+      await waitForDialog(page);
 
       const nameInput = page.getByTestId('opportunity-name').or(page.locator('input[formcontrolname="name"]'));
       if (await nameInput.first().isVisible({ timeout: 3000 }).catch(() => false)) {

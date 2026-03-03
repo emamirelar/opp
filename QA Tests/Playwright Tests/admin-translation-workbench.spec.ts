@@ -1,24 +1,26 @@
 /**
  * @fileoverview Admin Translation Workbench E2E Tests
  * Tests for the Translation Workbench admin page.
- * 
+ *
  * Route: /admin/translations
  * Component: Currently shows app-coming-soon with featureName="Translation Workbench"
- * 
+ *
  * Since the feature is "Coming Soon", tests verify the page loads
  * and shows the appropriate placeholder.
- * 
+ *
  * All tests are EXECUTABLE - no skips.
  */
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
+import { waitForPageReady, waitForNavigationComplete } from './helpers/wait.helper';
+import { TranslationWorkbenchPage } from './pages/admin.page';
 
 test.describe('Translation Workbench - Access', () => {
   test.slow();
   test('TW-001: Admin can access translation workbench page', async ({ page }) => {
     await authenticateWithRealBackend(page, '/admin/translations');
-    await page.waitForTimeout(3000);
+    await waitForPageReady(page);
 
     expect(page.url()).toContain('translations');
     expect(page.url()).not.toContain('access-denied');
@@ -26,6 +28,7 @@ test.describe('Translation Workbench - Access', () => {
 
   test('TW-002: Translation workbench page loads with content', async ({ page }) => {
     await authenticateWithRealBackend(page, '/admin/translations');
+    await waitForPageReady(page);
 
     const body = await page.textContent('body');
     expect(body).toBeTruthy();
@@ -34,21 +37,18 @@ test.describe('Translation Workbench - Access', () => {
 
   test('TW-003: Translation workbench shows Coming Soon or feature content', async ({ page }) => {
     await authenticateWithRealBackend(page, '/admin/translations');
+    await waitForPageReady(page);
 
-    // Feature shows "Coming Soon" placeholder
-    const comingSoon = page.locator('app-coming-soon').first();
-    const comingSoonVisible = await comingSoon.isVisible({ timeout: 10000 }).catch(() => false);
-
-    // Or translation workbench heading
-    const heading = page.getByText(/translation/i).first();
-    const headingVisible = await heading.isVisible({ timeout: 5000 }).catch(() => false);
+    const twPage = new TranslationWorkbenchPage(page);
+    const comingSoonVisible = await twPage.comingSoon.isVisible({ timeout: 10000 }).catch(() => false);
+    const headingVisible = await twPage.translationHeading.isVisible({ timeout: 5000 }).catch(() => false);
 
     expect(comingSoonVisible || headingVisible).toBeTruthy();
   });
 
   test('TW-004: Non-admin cannot access translation workbench', async ({ page }) => {
     await authenticateWithRealBackend(page, '/admin/translations', 'test-readonly@playwright.local');
-    await page.waitForTimeout(3000);
+    await waitForPageReady(page);
 
     const url = page.url();
     const body = await page.textContent('body');
@@ -66,42 +66,37 @@ test.describe('Translation Workbench - Feature Content', () => {
   });
 
   test('TW-005: Page shows feature name in content', async ({ page }) => {
-    const translationText = page.getByText(/translation/i).first();
-    await expect(translationText).toBeVisible({ timeout: 10000 });
+    const twPage = new TranslationWorkbenchPage(page);
+    await expect(twPage.translationHeading).toBeVisible({ timeout: 10000 });
   });
 
   test('TW-006: Page has visual indicator (icon or image)', async ({ page }) => {
-    const icon = page.locator('i[class*="pi-"], img, svg').first();
-    const hasIcon = await icon.isVisible({ timeout: 5000 }).catch(() => false);
+    const twPage = new TranslationWorkbenchPage(page);
+    const hasIcon = await twPage.visualIndicator.isVisible({ timeout: 5000 }).catch(() => false);
 
-    expect(hasIcon || true).toBeTruthy();
+    expect(hasIcon).toBeTruthy();
   });
 
   test('TW-007: Page accessible from admin sidebar', async ({ page }) => {
-    // Navigate to admin first
     await authenticateWithRealBackend(page, '/admin');
-    await page.waitForTimeout(2000);
+    await waitForPageReady(page);
 
-    const translationLink = page.locator('a[href*="translations"]').first();
-    const linkVisible = await translationLink.isVisible({ timeout: 5000 }).catch(() => false);
+    const twPage = new TranslationWorkbenchPage(page);
+    const linkVisible = await twPage.sidebarTranslationLink.isVisible({ timeout: 5000 }).catch(() => false);
 
-    if (linkVisible) {
-      await translationLink.click();
-      await page.waitForTimeout(2000);
-      expect(page.url()).toContain('translations');
-    }
-    expect(true).toBeTruthy();
+    expect(linkVisible).toBeTruthy();
+    await twPage.sidebarTranslationLink.click();
+    await waitForNavigationComplete(page, /translations/);
+    expect(page.url()).toContain('translations');
   });
 
   test('TW-008: Coming Soon displays correct feature name', async ({ page }) => {
-    const comingSoon = page.locator('app-coming-soon').first();
-    const comingSoonVisible = await comingSoon.isVisible({ timeout: 10000 }).catch(() => false);
+    const twPage = new TranslationWorkbenchPage(page);
+    const comingSoonVisible = await twPage.comingSoon.isVisible({ timeout: 10000 }).catch(() => false);
 
-    if (comingSoonVisible) {
-      const text = await comingSoon.textContent();
-      expect(text?.toLowerCase()).toContain('translation');
-    }
-    expect(true).toBeTruthy();
+    expect(comingSoonVisible).toBeTruthy();
+    const text = await twPage.comingSoon.textContent();
+    expect(text?.toLowerCase()).toContain('translation');
   });
 
   test('TW-009: Page renders without console errors', async ({ page }) => {
@@ -111,10 +106,9 @@ test.describe('Translation Workbench - Feature Content', () => {
     });
 
     await authenticateWithRealBackend(page, '/admin/translations');
-    await page.waitForTimeout(3000);
+    await waitForPageReady(page);
 
-    // No critical errors should occur
     const criticalErrors = errors.filter(e => !e.includes('Warning') && !e.includes('deprecated'));
-    expect(criticalErrors.length).toBeLessThanOrEqual(2);
+    expect(criticalErrors).toHaveLength(0);
   });
 });

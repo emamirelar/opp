@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { DashboardPage } from './pages/dashboard.page';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
+import { waitForElementReady, waitForNetworkIdle } from './helpers/wait.helper';
 
 /**
  * Dashboard Component E2E Tests
@@ -37,16 +38,17 @@ test.describe('Dashboard', () => {
   });
   
   test('should display quick actions for users with permissions', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await waitForNetworkIdle(page);
     
     const hasQuickActions = await dashboardPage.hasQuickActions();
+    const panelCount = await dashboardPage.getPanelCount();
     
-    // Quick actions visibility depends on permissions - test passes either way
-    expect(hasQuickActions || true).toBeTruthy();
+    // Quick actions visibility depends on permissions; dashboard must have panels
+    expect(hasQuickActions || panelCount > 0).toBeTruthy();
   });
   
   test('should display dashboard panels (Actions Required, Recent Activity, My Workspace)', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await waitForNetworkIdle(page);
     
     await dashboardPage.verifyGridLayout();
     
@@ -63,59 +65,33 @@ test.describe('Dashboard', () => {
   });
   
   test('should display recent activity section', async ({ page }) => {
-    // Wait for dashboard to load
-    await page.waitForLoadState('networkidle');
+    await waitForNetworkIdle(page);
     
-    // Look for activity indicators (colored dots, activity items)
-    const activityDots = page.locator('.w-2.h-2.rounded-full');
-    const activityCards = page.locator('.hover\\:border-unops-info\\/50');
+    const hasActivityDots = await dashboardPage.hasActivityData();
+    const hasActivityCards = await dashboardPage.hasActivityCards();
+    const panelCount = await dashboardPage.getPanelCount();
     
-    // Either activity dots or cards should exist
-    const hasActivityDots = await activityDots.first().isVisible().catch(() => false);
-    const hasActivityCards = await activityCards.first().isVisible().catch(() => false);
-    
-    // Activity section may be empty for new users - that's ok
-    expect(hasActivityDots || hasActivityCards || true).toBeTruthy();
+    // Activity section may be empty for new users; dashboard must have panels
+    expect(hasActivityDots || hasActivityCards || panelCount > 0).toBeTruthy();
   });
   
   test('should display my workspace section', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await waitForNetworkIdle(page);
     
-    const workspaceItems = page.locator('[class*="workspace"], [class*="my-"]').first();
-    const panels = page.locator('.bg-unops-surface-primary').first();
-    const workspaceOrPanel = workspaceItems.or(panels);
-    
-    await expect(workspaceOrPanel).toBeVisible({ timeout: 60000 });
+    await expect(dashboardPage.panels.first()).toBeVisible({ timeout: 60000 });
   });
   
   test('should be responsive on mobile', async ({ page }) => {
-    // Switch to mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
+    await waitForElementReady(page.locator('.max-w-7xl'));
     
-    // Wait for layout adjustment
-    await page.waitForTimeout(1000);
-    
-    // Verify dashboard is still visible
-    const dashboard = page.locator('.max-w-7xl');
-    await expect(dashboard).toBeVisible();
-    
-    // Verify content adapts (grid may stack vertically)
-    const content = page.locator('.bg-unops-surface-primary');
-    await expect(content.first()).toBeVisible();
+    await expect(page.locator('.max-w-7xl')).toBeVisible();
+    await expect(dashboardPage.panels.first()).toBeVisible();
   });
   
   test('should handle empty state gracefully', async ({ page }) => {
-    // Wait for dashboard to load
-    await page.waitForLoadState('networkidle');
+    await waitForNetworkIdle(page);
     
-    // Look for empty state messages or placeholder content
-    const emptyStateMessages = page.getByText(/no items|no data|all caught up|get started/i);
-    
-    // Empty states are valid - dashboard should handle them gracefully
-    // Test just verifies no errors occur
-    const dashboard = page.locator('.max-w-7xl');
-    await expect(dashboard).toBeVisible();
-    
-    expect(true).toBeTruthy();
+    await dashboardPage.verifyDashboardVisible();
   });
 });

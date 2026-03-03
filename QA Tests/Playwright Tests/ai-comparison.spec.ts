@@ -11,7 +11,7 @@
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
 import { setupAPIMocks } from './helpers/api-mocks.helper';
-import { waitForPageReady, waitForPermissions, waitForDialog } from './helpers/wait.helper';
+import { waitForPermissions, waitForDialog, waitForHidden } from './helpers/wait.helper';
 import { getTimeout } from './helpers/test-config';
 
 const ADMIN_USER = 'test@playwright.local';
@@ -186,10 +186,8 @@ test.describe('PNO-914 — AI Comparison Component', () => {
       });
 
       await test.step('Assert — dialog closed or success', async () => {
-        await page.waitForTimeout(1000);
         const dialog = page.locator('.ai-comparison-dialog, [role="dialog"]').first();
-        const isVisible = await dialog.isVisible().catch(() => false);
-        expect(true).toBeTruthy();
+        await expect(dialog).not.toBeVisible({ timeout: getTimeout('default') });
       });
     });
 
@@ -203,7 +201,8 @@ test.describe('PNO-914 — AI Comparison Component', () => {
       await test.step('Act — click Cancel', async () => {
         const cancelBtn = page.locator('button:has-text("Cancel")').first();
         await cancelBtn.click({ timeout: getTimeout('default') });
-        await page.waitForTimeout(500);
+        const dialog = page.locator('.ai-comparison-dialog, [role="dialog"]').first();
+        await waitForHidden(dialog, getTimeout('default'));
       });
 
       await test.step('Assert — dialog closed', async () => {

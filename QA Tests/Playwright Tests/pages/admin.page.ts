@@ -44,6 +44,26 @@ export class TranslationWorkbenchPage extends BasePage {
     return this.page.locator('p-table td input, p-table td textarea, .p-cell-editing input').first();
   }
 
+  /** Coming Soon placeholder (when feature is not yet implemented) */
+  get comingSoon(): Locator {
+    return this.page.locator('app-coming-soon').first();
+  }
+
+  /** Translation-related heading or text */
+  get translationHeading(): Locator {
+    return this.page.getByText(/translation/i).first();
+  }
+
+  /** Visual indicator (icon, image, or svg) */
+  get visualIndicator(): Locator {
+    return this.page.locator('i[class*="pi-"], img, svg').first();
+  }
+
+  /** Link to translation workbench in admin sidebar (when on /admin) */
+  get sidebarTranslationLink(): Locator {
+    return this.page.locator('a[href*="translations"]').first();
+  }
+
   async navigate(): Promise<void> {
     await this.goto('/admin/translations');
   }
@@ -81,6 +101,10 @@ export class EntityManagerPage extends BasePage {
     return this.page.locator('[data-testid="entity-manager-header"], h1, h2').first();
   }
 
+  get entityManagerHeading(): Locator {
+    return this.page.getByText(/entity manager/i).first();
+  }
+
   get entityList(): Locator {
     return this.page.locator('[data-testid="entity-list"], p-table, .p-datatable').first();
   }
@@ -101,6 +125,61 @@ export class EntityManagerPage extends BasePage {
     return this.page.locator('[data-testid="field-list"], .field-list');
   }
 
+  /** Entity selector: p-tabs (desktop) or p-dropdown/p-select (mobile) */
+  get entitySelector(): Locator {
+    return this.page.locator('p-tabs, p-dropdown, p-select, app-entity-manager').first();
+  }
+
+  /** First entity tab for selection */
+  get firstEntityTab(): Locator {
+    return this.page.locator('.entity-manager-tabs p-tab, .entity-manager-tabs p-dropdown').first();
+  }
+
+  /** Tabs or entity type navigation */
+  get tabsOrSelector(): Locator {
+    return this.page.locator('.entity-manager-tabs, p-tabs, p-select, p-dropdown').first();
+  }
+
+  get availableFieldsSection(): Locator {
+    return this.page.locator('.available-fields-section').first();
+  }
+
+  get availableFieldsText(): Locator {
+    return this.page.getByText(/available fields/i).first();
+  }
+
+  get listViewFieldsSection(): Locator {
+    return this.page.locator('.list-view-fields-section').first();
+  }
+
+  get listViewText(): Locator {
+    return this.page.getByText(/list view/i).first();
+  }
+
+  get addFieldButton(): Locator {
+    return this.page.locator('.add-field-button').first();
+  }
+
+  get addFieldText(): Locator {
+    return this.page.getByText(/add field/i).first();
+  }
+
+  get entitySettingsButton(): Locator {
+    return this.page.locator('.entity-settings-button').first();
+  }
+
+  get entitySettingsText(): Locator {
+    return this.page.getByText(/entity settings/i).first();
+  }
+
+  get cardPreviewSection(): Locator {
+    return this.page.locator('.card-preview-section, app-listview-card, .list-view-fields-section').first();
+  }
+
+  get cardPreviewText(): Locator {
+    return this.page.getByText(/card preview|list view/i).first();
+  }
+
   async navigate(): Promise<void> {
     await this.goto('/admin/entity-manager');
   }
@@ -118,6 +197,17 @@ export class EntityManagerPage extends BasePage {
   async clickEntity(entityName: string): Promise<void> {
     await this.page.locator(`[data-testid="entity-card-${entityName}"], .entity-card:has-text("${entityName}")`).first().click();
     await this.page.waitForTimeout(1000);
+  }
+
+  /**
+   * Ensure first entity tab is selected; clicks it if visible and waits for content.
+   * Uses waitForVisible on target section instead of fixed timeout.
+   */
+  async ensureFirstEntitySelected(targetSection: Locator): Promise<void> {
+    if (await this.firstEntityTab.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await this.firstEntityTab.click();
+      await targetSection.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
+    }
   }
 }
 
@@ -184,6 +274,44 @@ export class EntityArtifactManagerPage extends BasePage {
     await this.entitySelector.click();
     await this.page.locator(`.p-select-option:has-text("${entityName}"), .p-dropdown-item:has-text("${entityName}")`).first().click();
     await this.page.waitForTimeout(500);
+  }
+
+  get searchOrFilterInput(): Locator {
+    return this.page.locator('[data-testid="artifact-search"], input[placeholder*="search"], input[type="text"]').first();
+  }
+
+  get fieldConfigText(): Locator {
+    return this.page.getByText(/field|column|attribute|property|label/i).first();
+  }
+}
+
+// ==========================================
+// Bulk Entity Artifacts Page
+// ==========================================
+
+export class BulkEntityArtifactsPage extends BasePage {
+  constructor(page: Page) {
+    super(page);
+  }
+
+  get pageHeader(): Locator {
+    return this.page.locator('[data-testid="bulk-entity-artifacts-header"], h1, h2').first();
+  }
+
+  get entityTypeSelector(): Locator {
+    return this.page.locator('p-select, p-dropdown, select').first();
+  }
+
+  get applyButton(): Locator {
+    return this.page.locator('button').filter({ hasText: /apply|update|execute|save/i }).first();
+  }
+
+  async navigate(): Promise<void> {
+    await this.goto('/admin/bulk-entity-artifacts');
+  }
+
+  async isPageLoaded(): Promise<boolean> {
+    return await this.entityTypeSelector.isVisible().catch(() => false);
   }
 }
 

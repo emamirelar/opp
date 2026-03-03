@@ -121,13 +121,21 @@ public class PerformanceTests : PNO1196TestFixtureBase
     }
 
     [Fact] [Trait("TestId", "PERF-007")]
-    public async Task Reject_MockSetup_CompletesWithin100Ms()
+    public async Task Reject_WithLargeRationale_CompletesWithin2Seconds()
     {
+        await SeedOpportunityAsync(9200, "GO");
+        await SeedPendingWorkflowTaskAsync(9200, 10200);
+        MockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 9200))
+            .Returns(new WorkflowLog { Id = 10200, RequiresApproval = true });
+        MockWorkflowManager.Setup(x => x.Reject(It.IsAny<WorkflowLog>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+
+        var largeRationale = string.Concat(Enumerable.Repeat("Performance test with detailed rationale explaining the rejection. ", 50));
         var sw = Stopwatch.StartNew();
-        MockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 9200)).Returns((WorkflowLog?)null);
+        var result = await Controller.Reject(BuildRejectRequest(9200, rationale: largeRationale));
         sw.Stop();
 
-        sw.Elapsed.Should().BeLessThan(TimeSpan.FromMilliseconds(100));
+        result.Should().BeOfType<OkObjectResult>();
+        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(2));
     }
 
     [Fact] [Trait("TestId", "PERF-008")]
@@ -161,17 +169,19 @@ public class PerformanceTests : PNO1196TestFixtureBase
     }
 
     [Fact] [Trait("TestId", "PERF-010")]
-    public async Task DbQuery_FilterByStage_CompletesWithin200Ms()
+    public async Task DbQuery_FilterByStage_CompletesWithin1Second()
     {
+        for (var i = 9300; i <= 9309; i++)
+            await SeedOpportunityAsync(i, "NO GO", EntityStatus.Closed);
+
         var sw = Stopwatch.StartNew();
-        var goOpps = await DbContext.Opportunities
+        var noGoOpps = await DbContext.Opportunities
             .Where(o => o.Stage == "NO GO" && !o.IsDeleted)
             .ToListAsync();
         sw.Stop();
 
-        // Threshold relaxed to 5s to accommodate EF Core query compilation and in-memory DB startup overhead.
-        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(5));
-        goOpps.Should().NotBeNull();
+        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(1));
+        noGoOpps.Should().HaveCountGreaterThanOrEqualTo(10);
     }
 
     [Fact] [Trait("TestId", "PERF-011")]
@@ -193,20 +203,50 @@ public class PerformanceTests : PNO1196TestFixtureBase
     }
 
     [Fact] [Trait("TestId", "PERF-012")]
-    public async Task Reject_InMemoryDb_FasterThanRealDb()
+    public async Task Reject_MultipleSequentialRejects_MemoryStable()
     {
-        DbContext.Database.IsInMemory().Should().BeTrue();
-        var sw = Stopwatch.StartNew();
-        await SeedOpportunityAsync(9204, "GO");
-        sw.Stop();
-        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(1));
+        GC.Collect();
+        var memBefore = GC.GetTotalMemory(forceFullCollection: true);
+
+        for (var i = 9400; i <= 9409; i++)
+        {
+            await SeedOpportunityAsync(i, "GO");
+            await SeedPendingWorkflowTaskAsync(i, 10400 + i);
+            MockWorkflowManager.Setup(x => x.PendingTask("Opportunity", i))
+                .Returns(new WorkflowLog { Id = 10400 + i, RequiresApproval = true });
+        }
+        MockWorkflowManager.Setup(x => x.Reject(It.IsAny<WorkflowLog>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+
+        for (var i = 9400; i <= 9409; i++)
+            await Controller.Reject(BuildRejectRequest(i));
+
+        GC.Collect();
+        var memAfter = GC.GetTotalMemory(forceFullCollection: true);
+        var growthMb = (memAfter - memBefore) / 1_048_576.0;
+        growthMb.Should().BeLessThan(50, "10 reject operations should not cause significant memory growth");
     }
 
     [Fact] [Trait("TestId", "PERF-013")]
-    public async Task Reject_ControllerInstantiation_CompletesQuickly()
+    public async Task Reject_RepeatedRejectOnSameEntity_StablePerformance()
     {
-        Controller.Should().NotBeNull();
-        await Task.CompletedTask;
+        await SeedOpportunityAsync(9500, "GO");
+        await SeedPendingWorkflowTaskAsync(9500, 10500);
+        MockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 9500))
+            .Returns(new WorkflowLog { Id = 10500, RequiresApproval = true });
+        MockWorkflowManager.Setup(x => x.Reject(It.IsAny<WorkflowLog>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+
+        var times = new List<long>();
+        for (var i = 0; i < 5; i++)
+        {
+            var sw = Stopwatch.StartNew();
+            await Controller.Reject(BuildRejectRequest(9500));
+            sw.Stop();
+            times.Add(sw.ElapsedMilliseconds);
+        }
+
+        times.Max().Should().BeLessThan(2000, "no single reject should take more than 2s");
+        var avg = times.Average();
+        avg.Should().BeLessThan(1000, "average reject time should be under 1s");
     }
 
     [Fact] [Trait("TestId", "PERF-014")]

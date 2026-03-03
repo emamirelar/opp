@@ -426,20 +426,45 @@ public class PerformanceTests : IDisposable
             _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", i)).Returns((WorkflowLog?)null);
         }
 
+        GC.Collect();
+        var memBefore = GC.GetTotalMemory(forceFullCollection: true);
+
         for (var i = 42; i < 52; i++)
         {
             await _controller.GetWorkflowState("Opportunity", i);
         }
-        _dbContext.Opportunities.Count().Should().Be(10);
+
+        GC.Collect();
+        var memAfter = GC.GetTotalMemory(forceFullCollection: true);
+        var growthMb = (memAfter - memBefore) / 1_048_576.0;
+        growthMb.Should().BeLessThan(50, "10 workflow state queries should not cause significant memory growth");
+        _dbContext.Opportunities.Count(o => o.Id >= 42 && o.Id < 52).Should().Be(10);
     }
 
     [Fact]
-    public void PERF_014_DbContext_ProperlyDisposed()
+    public async Task PERF_014_RepeatedRejectCalls_StablePerformance()
     {
-        _dbContext.Should().NotBeNull();
-        _dbContext.Database.EnsureCreated();
-        _dbContext.Dispose();
-        Assert.True(true);
+        await SeedOpportunityAsync(60, "IDENTIFY & PROFILE");
+        var pendingTask = new WorkflowLog { EntityName = "opportunity", EntityId = "60", NewStage = "GO" };
+        _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 60)).Returns(pendingTask);
+        _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("Opportunity", "60")).ReturnsAsync("IDENTIFY & PROFILE");
+        _mockEntityStageProvider.Setup(x => x.GetEntityDisplayNameAsync("Opportunity", "60")).ReturnsAsync("Test");
+        _mockApproverProvider.Setup(x => x.CanUserApproveAsync("Opportunity", 60, It.IsAny<int>(), "IDENTIFY & PROFILE", "GO")).ReturnsAsync(true);
+        _mockWorkflowManager.Setup(x => x.Reject(It.IsAny<WorkflowLog>(), "Opportunity", 60, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+
+        var times = new List<long>();
+        for (var i = 0; i < 5; i++)
+        {
+            var request = new RejectWorkflowRequest { EntityName = "opportunity", EntityId = 60, Rationale = "Reject", ConfirmationAcknowledged = true };
+            var sw = Stopwatch.StartNew();
+            await _controller.Reject(request);
+            sw.Stop();
+            times.Add(sw.ElapsedMilliseconds);
+        }
+
+        times.Max().Should().BeLessThan(2000, "no single reject call should degrade over repeated calls");
+        var avg = times.Average();
+        avg.Should().BeLessThan(1000, "average reject time should remain under 1s");
     }
 
     [Fact]

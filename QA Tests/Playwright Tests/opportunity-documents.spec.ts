@@ -10,7 +10,7 @@
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
-import { waitForPermissions } from './helpers/wait.helper';
+import { waitForPermissions, waitForVisible } from './helpers/wait.helper';
 
 const featureReady = process.env.OPPORTUNITY_DOCUMENTS_IMPLEMENTED === 'true';
 
@@ -90,10 +90,9 @@ test.describe('Opportunity Documents — Upload', () => {
       const uploadBtn = docsPanel.locator('button:has-text("Upload"), button:has(i.pi-upload)').first();
       if (await uploadBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
         await uploadBtn.click();
-        await page.waitForTimeout(1000);
         const uploadArea = page.locator('.p-dialog, p-fileupload, [data-testid="upload-dialog"]').first();
-        const hasUploadUI = await uploadArea.isVisible({ timeout: 5000 }).catch(() => false);
-        expect(hasUploadUI).toBeTruthy();
+        await waitForVisible(uploadArea, 5000);
+        await expect(uploadArea).toBeVisible();
       }
     }
   });

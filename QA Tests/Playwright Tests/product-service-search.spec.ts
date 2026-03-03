@@ -10,6 +10,7 @@
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
+import { waitForVisible } from './helpers/wait.helper';
 
 test.describe('Product/Service - What Section Display', () => {
   test.slow();
@@ -37,9 +38,9 @@ test.describe('Product/Service - What Section Display', () => {
     const whatChip = page.getByText(/what/i).first();
     await expect(whatChip).toBeVisible({ timeout: 10000 });
     await whatChip.click();
-    await page.waitForTimeout(500);
 
     const whatSection = page.locator('#section-what').first();
+    await waitForVisible(whatSection, 5000);
     await expect(whatSection).toBeVisible();
   });
 
