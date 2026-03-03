@@ -142,7 +142,7 @@ public class CloudRunHelper
                     idToken?.Length ?? 0, 
                     !string.IsNullOrEmpty(idToken) && idToken.Length > 10 ? idToken.Substring(0, 10) + "..." : idToken ?? "null");
                 
-                return idToken;
+                return idToken!;
             }
             catch (Exception ex)
             {

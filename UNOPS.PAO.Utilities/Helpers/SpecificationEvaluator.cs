@@ -24,7 +24,7 @@ public static class SpecificationEvaluator
         }
         
         // Apply ordering
-        IOrderedQueryable<T> orderedQuery = null;
+        IOrderedQueryable<T>? orderedQuery = null;
         if (specification.OrderBy != null)
         {
             orderedQuery = query.OrderBy(specification.OrderBy);

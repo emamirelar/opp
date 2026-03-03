@@ -45,7 +45,7 @@ public static class QueryExtensions
     }
 
     public static TSource SingleOrException<TSource>(this IQueryable<TSource> source,
-        Expression<Func<TSource, bool>> predicate = null)
+        Expression<Func<TSource, bool>>? predicate = null)
     {
         var item = predicate != null
             ? source.SingleOrDefault(predicate)
@@ -133,7 +133,7 @@ public static class QueryExtensions
 
         Type type = typeof(QueryExtensions);
         var filterMethod = type.GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .Single(mi => mi.Name == nameof(ApplyFilters) && mi.ReturnType == typeof(IQueryable<TEntity>));
+            .SingleOrDefault(mi => mi.Name == nameof(ApplyFilters) && mi.ReturnType == typeof(IQueryable<TEntity>));
 
         if (filterMethod == null)
         {
@@ -141,7 +141,8 @@ public static class QueryExtensions
                 $"No implementation for {nameof(ApplyFilters)} with parameter type {typeof(TEntity)}.");
         }
 
-        return (IQueryable<TEntity>)filterMethod.Invoke(null, new object[] { entity, filter });
+        var result = filterMethod.Invoke(null, new object[] { entity, filter! });
+        return (IQueryable<TEntity>)result!;
     }
 
     public static IQueryable<TEntity> ApplySpecification<TEntity>(this IQueryable<TEntity> query, 
