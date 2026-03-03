@@ -1,6 +1,7 @@
 namespace UNOPS.PAO.UNOPSDomain.Specifications;
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.Domain.Specifications.Interfaces;
@@ -19,7 +20,7 @@ public class UNOPSContactCompositeSpecification : GenericCompositeSpecification<
         : base(filter)
     {
         // Include related entities
-        AddInclude(c => c.Partner);
+        AddInclude(c => c.Partner!);
         
         // Apply dynamic ordering based on filter properties
         ApplyDynamicOrdering(filter);
@@ -54,21 +55,24 @@ public class UNOPSContactCompositeSpecification : GenericCompositeSpecification<
     /// </summary>
     /// <param name="orderByField">The field name to order by</param>
     /// <returns>The ordering expression</returns>
+    [return: NotNull]
     private static Expression<Func<UNOPSContact, object>> GetOrderByExpression(string? orderByField)
     {
-        return orderByField?.ToLowerInvariant() switch
+        var orderKey = orderByField?.ToLowerInvariant() ?? string.Empty;
+        Expression<Func<UNOPSContact, object>> result = orderKey switch
         {
-            "firstname" => c => c.FirstName,
-            "lastname" => c => c.LastName,
-            "email" => c => c.Email,
-            "title" => c => c.Title,
-            "department" => c => c.Department,
-            "phone" => c => c.Phone,
-            "mobile" => c => c.Mobile,
+            "firstname" => c => c.FirstName ?? "",
+            "lastname" => c => c.LastName ?? "",
+            "email" => c => c.Email ?? "",
+            "title" => c => c.Title ?? "",
+            "department" => c => c.Department ?? "",
+            "phone" => c => c.Phone ?? "",
+            "mobile" => c => c.Mobile ?? "",
             "createddate" => c => c.CreatedDate,
-            "partner" => c => c.Partner.Name,
-            "partnername" => c => c.Partner.Name,
-            _ => c => c.LastName // Default to LastName if no field specified or unknown field
+            "partner" => c => (c.Partner != null ? c.Partner.Name : null) ?? "",
+            "partnername" => c => (c.Partner != null ? c.Partner.Name : null) ?? "",
+            _ => c => c.LastName ?? "" // Default to LastName if no field specified or unknown field
         };
+        return result;
     }
 }

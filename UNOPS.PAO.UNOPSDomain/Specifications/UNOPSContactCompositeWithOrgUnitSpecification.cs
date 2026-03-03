@@ -23,14 +23,17 @@ public class UNOPSContactCompositeWithOrgUnitSpecification : BaseCompositeSpecif
         var baseSpec = new UNOPSContactCompositeSpecification(filter);
         
         // Include related entities
-        AddInclude(c => c.Partner);
+        AddInclude(c => c.Partner!);
         
         // Copy includes from base specification
         foreach (var include in baseSpec.Includes)
         {
-            AddInclude(include);
+            if (include != null)
+            {
+                AddInclude(include);
+            }
         }
-        
+
         // Copy include strings from base specification
         foreach (var includeString in baseSpec.IncludeStrings)
         {

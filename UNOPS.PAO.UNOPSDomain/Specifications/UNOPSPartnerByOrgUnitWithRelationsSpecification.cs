@@ -1,11 +1,11 @@
 namespace UNOPS.PAO.UNOPSDomain.Specifications;
 
-using UNOPS.PAO.Domain.Specifications;
-using UNOPS.PAO.UNOPSDomain.Entities;
-using UNOPS.PAO.Domain.Entities;
+using System.Linq;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Specifications;
+using UNOPS.PAO.UNOPSDomain.Entities;
 
 /// <summary>
 /// Specification to filter UNOPS partners by organizational unit hierarchy including indirect relations through contacts
@@ -49,9 +49,9 @@ public class UNOPSPartnerByOrgUnitWithRelationsSpecification : BaseSpecification
             // Case 2: Partner has contacts with interactions involving org unit users
             (orgUnitUserIds != null && 
              orgUnitUserIds.Count > 0 && 
-             p.Contacts.Any(c => 
-                c.Interactions.Any(i => 
-                    i.InteractionUsers.Any(iu => 
+             p.Contacts.Any(c =>
+                (c.Interactions ?? Enumerable.Empty<Interaction>()).Any(i =>
+                    (i.InteractionUsers ?? Enumerable.Empty<InteractionUser>()).Any(iu =>
                         orgUnitUserIds.Contains(iu.UserId.ToString())))));
     }
     

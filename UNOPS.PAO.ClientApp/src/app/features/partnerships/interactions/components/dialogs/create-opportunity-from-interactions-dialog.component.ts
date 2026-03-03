@@ -2109,8 +2109,15 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         createRequest.responsibleOrgUnitId = effectiveOrgUnitId;
       }
 
-      if (this.isFieldSelected('proposedInitiativeTypeName') && opp.proposedInitiativeTypeId) {
-        createRequest.proposedInitiativeTypeId = opp.proposedInitiativeTypeId;
+      // Send proposedInitiativeTypeId when resolved, or proposedInitiativeTypeName for backend resolution (when ID is null from dependents)
+      // Check both proposedInitiativeTypeName (display field) and proposedInitiativeTypeId - AI often returns name-only
+      const hasProposedInitiativeType = opp.proposedInitiativeTypeId ?? opp.proposedInitiativeTypeName;
+      if (hasProposedInitiativeType && (this.isFieldSelected('proposedInitiativeTypeName') || this.isFieldSelected('proposedInitiativeTypeId'))) {
+        if (opp.proposedInitiativeTypeId) {
+          createRequest.proposedInitiativeTypeId = opp.proposedInitiativeTypeId;
+        } else if (opp.proposedInitiativeTypeName) {
+          createRequest.proposedInitiativeTypeName = opp.proposedInitiativeTypeName;
+        }
       }
 
       if (this.isFieldSelected('deliveryModality') && opp.deliveryModality) {
@@ -2186,8 +2193,12 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         createRequest.targetSigningDate = opp.targetSigningDate;
       }
 
-      if (this.isFieldSelected('implementationStartDate') && opp.implementationStartDate) {
-        createRequest.implementationStartDate = opp.implementationStartDate;
+      // Implementation start date: use value from proposal, or default to targetSigningDate when not specified
+      // Include when field selected OR when targetSigningDate is selected (implementation defaults to signing date)
+      const hasImplementationStartDate = opp.implementationStartDate || opp.targetSigningDate;
+      const includeImplementationStartDate = this.isFieldSelected('implementationStartDate') || (this.isFieldSelected('targetSigningDate') && opp.targetSigningDate);
+      if (includeImplementationStartDate && hasImplementationStartDate) {
+        createRequest.implementationStartDate = opp.implementationStartDate || opp.targetSigningDate;
       }
 
       if (this.isFieldSelected('targetDeliveryDate') && opp.targetDeliveryDate) {
@@ -2597,7 +2608,11 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     if (opp.name) selected.set('name', true);
     if (opp.description) selected.set('description', true);
     if (opp.responsibleOrgUnitName) selected.set('responsibleOrgUnitName', true);
-    if (opp.proposedInitiativeTypeName) selected.set('proposedInitiativeTypeName', true);
+    // Proposed initiative type: select when we have name (AI often returns name-only) or ID
+    if (opp.proposedInitiativeTypeName || opp.proposedInitiativeTypeId) {
+      selected.set('proposedInitiativeTypeName', true);
+      selected.set('proposedInitiativeTypeId', true);
+    }
     if (opp.deliveryModality) selected.set('deliveryModality', true);
     if (opp.isPooledFunding !== null && opp.isPooledFunding !== undefined) selected.set('isPooledFunding', true);
     if (opp.initiativeBudgetUSD) selected.set('initiativeBudgetUSD', true);
@@ -2619,10 +2634,10 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     if (opp.miscExternalStakeholders) selected.set('miscExternalStakeholders', true);
     if (opp.externalStakeholderNotes) selected.set('externalStakeholderNotes', true);
 
-    // Timeline (WHEN section)
+    // Timeline (WHEN section) - implementationStartDate can default to targetSigningDate
     if (opp.submissionDeadline) selected.set('submissionDeadline', true);
     if (opp.targetSigningDate) selected.set('targetSigningDate', true);
-    if (opp.implementationStartDate) selected.set('implementationStartDate', true);
+    if (opp.implementationStartDate || opp.targetSigningDate) selected.set('implementationStartDate', true);
     if (opp.targetDeliveryDate) selected.set('targetDeliveryDate', true);
     if (opp.isTargetSigningDateFirm !== null && opp.isTargetSigningDateFirm !== undefined) selected.set('isTargetSigningDateFirm', true);
     if (opp.signingDateNotes) selected.set('signingDateNotes', true);

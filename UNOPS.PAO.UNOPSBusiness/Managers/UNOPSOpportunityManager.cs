@@ -3255,9 +3255,21 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             entity.ResponsibleOrgUnitId = request.ResponsibleOrgUnitId.Value;
         }
 
+        // Proposed initiative type: use ID when present, otherwise resolve from name
         if (request.ProposedInitiativeTypeId.HasValue)
         {
             entity.ProposedInitiativeTypeId = request.ProposedInitiativeTypeId.Value;
+        }
+        else if (!string.IsNullOrWhiteSpace(request.ProposedInitiativeTypeName))
+        {
+            var resolved = await context.Set<ProposedInitiativeType>()
+                .Where(p => p.Name == request.ProposedInitiativeTypeName.Trim() && !p.IsDeleted)
+                .Select(p => (int?)p.Id)
+                .FirstOrDefaultAsync();
+            if (resolved.HasValue)
+            {
+                entity.ProposedInitiativeTypeId = resolved.Value;
+            }
         }
 
         if (request.DeliveryModality.HasValue)
@@ -3682,6 +3694,21 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             .Select(g => g.First())
             .ToList() ?? new List<OpportunityStakeholderRequest>();
         
+        // Resolve proposed initiative type: use ID when present, otherwise resolve from name
+        int? proposedInitiativeTypeId = request.ProposedInitiativeTypeId;
+        if (!proposedInitiativeTypeId.HasValue && !string.IsNullOrWhiteSpace(request.ProposedInitiativeTypeName))
+        {
+            var resolved = await context.Set<ProposedInitiativeType>()
+                .Where(p => p.Name == request.ProposedInitiativeTypeName.Trim() && !p.IsDeleted)
+                .Select(p => (int?)p.Id)
+                .FirstOrDefaultAsync();
+            proposedInitiativeTypeId = resolved;
+        }
+
+        // Default ImplementationStartDate to TargetSigningDate when not specified (align with ApplyAiChanges)
+        var implementationStartDate = request.ImplementationStartDate
+            ?? (request.TargetSigningDate.HasValue ? request.TargetSigningDate : null);
+
         // Build opportunity request from accepted proposal
         var opportunityRequest = new OpportunityRequest
         {
@@ -3689,11 +3716,15 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             Description = request.Description,
             PartnerReference = request.PartnerReference,
             ResponsibleOrgUnitId = request.ResponsibleOrgUnitId,
-            ProposedInitiativeTypeId = request.ProposedInitiativeTypeId,
+            ProposedInitiativeTypeId = proposedInitiativeTypeId,
             DeliveryModality = request.DeliveryModality,
             InitiativeBudgetUSD = request.InitiativeBudgetUSD,
             TargetSigningDate = request.TargetSigningDate,
+            ImplementationStartDate = implementationStartDate,
             TargetDeliveryDate = request.TargetDeliveryDate,
+            SubmissionDeadline = request.SubmissionDeadline,
+            IsTargetSigningDateFirm = request.IsTargetSigningDateFirm,
+            SigningDateNotes = request.SigningDateNotes,
             Challenges = request.Challenges,
             ResultsFocus = request.ResultsFocus,
             // Truncate to 510 characters (database column limit)
