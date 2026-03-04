@@ -34,6 +34,8 @@ const RESTRICTED_MOCK_USERS = [
   'doa2@example.com',
   'collaborator@example.com',
   'other-user@example.com',
+  'partner.user@test.local',
+  'general.user@test.local',
 ];
 
 /** Go Decision workflow stages for opportunity */
@@ -1601,6 +1603,67 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
             { id: 1, name: 'Contract', description: 'Contract document' },
             { id: 2, name: 'Report', description: 'Report document' },
             { id: 3, name: 'Proposal', description: 'Proposal document' },
+          ]),
+        });
+      }
+      // Comments endpoint - required for collaboration section
+      else if (url.includes('/api/comment') || url.includes('/api/collaboration')) {
+        const idMatch = url.match(/\/(\d+)\/comments/);
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(idMatch ? [
+            { id: 1, text: 'Initial review completed', author: 'Test User', createdDate: '2024-06-15T10:00:00Z', isPinned: false },
+            { id: 2, text: 'Budget approved for phase 1', author: 'Jane Doe', createdDate: '2024-06-16T14:00:00Z', isPinned: true },
+          ] : []),
+        });
+      }
+      // Entity artifacts endpoint
+      else if (url.includes('/api/entity-artifact')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            records: [
+              { id: 1, name: 'Partner Logo', entityType: 'Partner', artifactType: 'Image', status: 'Active', createdDate: '2024-01-01T00:00:00Z' },
+              { id: 2, name: 'Contact Photo', entityType: 'Contact', artifactType: 'Image', status: 'Active', createdDate: '2024-02-01T00:00:00Z' },
+            ],
+            totalCount: 2,
+          }),
+        });
+      }
+      // Translation endpoint for admin
+      else if (url.includes('/api/translation') || url.includes('/api/translations')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            records: [
+              { id: 1, key: 'partner.name', en: 'Name', fr: 'Nom', es: 'Nombre', pt: 'Nome' },
+              { id: 2, key: 'partner.status', en: 'Status', fr: 'Statut', es: 'Estado', pt: 'Estado' },
+            ],
+            totalCount: 2,
+          }),
+        });
+      }
+      // Link endpoints for partner/entity links
+      else if (url.includes('/api/link') || url.includes('/links')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([
+            { id: 1, title: 'Partner Website', url: 'https://example.org', type: 'External', createdDate: '2024-01-01T00:00:00Z' },
+          ]),
+        });
+      }
+      // AI prompt management endpoint
+      else if (url.includes('/api/ai-prompt') || url.includes('/api/aiprompt')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([
+            { id: 1, name: 'Default Summary Prompt', category: 'Summary', isActive: true },
+            { id: 2, name: 'Risk Assessment Prompt', category: 'Risk', isActive: true },
           ]),
         });
       }

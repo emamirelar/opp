@@ -9,12 +9,12 @@ import { assertVisible, assertContainsText } from '../helpers/assertions.helper'
 import { waitForVisible } from '../helpers/wait.helper';
 
 export class LoginPage extends BasePage {
-  // Selectors
-  private readonly usernameInput = this.getByTestId('username-input');
-  private readonly passwordInput = this.getByTestId('password-input');
-  private readonly loginButton = this.getByTestId('login-button');
-  private readonly signupSection = this.getByTestId('signup-section');
-  private readonly signupButton = this.getByTestId('signup-button');
+  // Selectors (no data-testid in production - use placeholder/role-based)
+  private readonly usernameInput = this.page.getByPlaceholder(/username|email/i).or(this.page.locator('input[type="email"], input[name="username"]')).first();
+  private readonly passwordInput = this.page.getByPlaceholder(/password/i).or(this.page.locator('input[type="password"]')).first();
+  private readonly loginButton = this.page.getByRole('button', { name: /sign in|log in|login/i });
+  private readonly signupSection = this.page.locator('[data-testid="signup-section"]').first();
+  private readonly signupButton = this.page.locator('[data-testid="signup-button"]').first();
   
   constructor(page: Page) {
     super(page);
@@ -38,7 +38,7 @@ export class LoginPage extends BasePage {
    * Fill password field (handles PrimeNG p-password component)
    */
   async fillPassword(password: string): Promise<void> {
-    const passwordField = this.page.locator('[data-testid="password-input"] input');
+    const passwordField = this.page.getByPlaceholder(/password/i).or(this.page.locator('input[type="password"]')).first();
     await passwordField.fill(password);
   }
   
@@ -83,7 +83,7 @@ export class LoginPage extends BasePage {
    * Toggle password visibility
    */
   async togglePasswordVisibility(): Promise<void> {
-    const toggleButton = this.page.locator('[data-testid="password-input"] button').first();
+    const toggleButton = this.page.locator('p-password button, .p-password button').first();
     await toggleButton.click();
   }
   
@@ -91,7 +91,7 @@ export class LoginPage extends BasePage {
    * Get password field type
    */
   async getPasswordFieldType(): Promise<string | null> {
-    return await this.page.locator('[data-testid="password-input"] input').getAttribute('type');
+    return await this.page.locator('input[type="password"]').first().getAttribute('type');
   }
   
   /**

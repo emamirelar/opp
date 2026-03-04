@@ -530,7 +530,6 @@ public class CrossEntitySearchLogicTests
     {
         var contacts = GetTestContacts();
         var searchText = "a";
-        var sortField = "lastName";
         var ascending = true;
         var pageSize = 2;
         var pageIndex = 1;

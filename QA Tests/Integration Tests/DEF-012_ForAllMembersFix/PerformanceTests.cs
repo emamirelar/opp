@@ -272,7 +272,7 @@ public class PerformanceTests
 
     [Fact]
     [Trait("DEF012", "PERF_015")]
-    public void PERF_015_ConcurrentMapperUsage_ThreadSafe_CompletesWithin1s()
+    public async Task PERF_015_ConcurrentMapperUsage_ThreadSafe_CompletesWithin1s()
     {
         _mapper.Map(new UpdateOpportunityRequest { Id = 10 }, CreateOpportunity()); // warm-up
         var sw = Stopwatch.StartNew();
@@ -285,7 +285,7 @@ public class PerformanceTests
                 d.Name.Should().Be($"T{t}_I{i}");
             }
         }));
-        Task.WhenAll(tasks).GetAwaiter().GetResult();
+        await Task.WhenAll(tasks);
         sw.Stop();
         sw.ElapsedMilliseconds.Should().BeLessThan(1000,
             $"500 concurrent maps took {sw.ElapsedMilliseconds}ms");

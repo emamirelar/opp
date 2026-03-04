@@ -237,7 +237,7 @@ test.describe('Workflow - Cross-Entity', () => {
     const workflowVisible = await workflow.isVisible({ timeout: 10000 }).catch(() => false);
 
     // At minimum, partner detail should load
-    const header = page.locator('[data-testid="partner-detail-header"]').first();
+    const header = page.locator('app-partner-view, app-partner-detail').first();
     await expect(header).toBeVisible({ timeout: 10000 });
 
     // Workflow presence depends on entity configuration
@@ -247,14 +247,14 @@ test.describe('Workflow - Cross-Entity', () => {
   test('WF-027: Interaction detail page loads', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/interactions/1');
 
-    const header = page.locator('[data-testid="interaction-detail-header"]').first();
+    const header = page.locator('app-interaction-detail').first();
     await expect(header).toBeVisible({ timeout: 10000 });
   });
 
   test('WF-028: Contact detail page loads', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/contacts/1');
 
-    const header = page.locator('[data-testid="contact-detail-header"]').first();
+    const header = page.locator('app-contact-view, app-contact-tabs').first();
     await expect(header).toBeVisible({ timeout: 10000 });
   });
 });

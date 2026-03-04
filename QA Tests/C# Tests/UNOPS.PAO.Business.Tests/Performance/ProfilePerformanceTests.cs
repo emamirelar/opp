@@ -479,7 +479,7 @@ public class ProfilePerformanceTests : PerformanceTestBase
         return emails;
     }
 
-    private (T Result, long ElapsedMs) Measure<T>(Func<T> fn)
+    private new (T Result, long ElapsedMs) Measure<T>(Func<T> fn)
     {
         _stopwatch.Restart();
         var result = fn();

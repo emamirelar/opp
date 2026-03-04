@@ -19,6 +19,7 @@ using Xunit;
 
 namespace UNOPS.PAO.IntegrationTests.Controllers
 {
+    [Collection("Integration Tests")]
     public class ContactControllerOrgUnitTests : IntegrationTestBase
     {
         private const string BaseUrl = "/api/contact";

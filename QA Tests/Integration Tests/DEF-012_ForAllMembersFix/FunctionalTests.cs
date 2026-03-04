@@ -441,7 +441,7 @@ public class FunctionalTests
 
     [Fact]
     [Trait("DEF012", "FUN_036")]
-    public void FUN_036_MapperHandlesConcurrentAccess()
+    public async Task FUN_036_MapperHandlesConcurrentAccess()
     {
         var tasks = Enumerable.Range(0, 10).Select(_ => System.Threading.Tasks.Task.Run(() =>
         {
@@ -449,8 +449,8 @@ public class FunctionalTests
             _mapper.Map(new UpdateOpportunityRequest { Id = 10, Name = "Concurrent" }, dest);
             return dest.Name;
         })).ToArray();
-        System.Threading.Tasks.Task.WaitAll(tasks);
-        tasks.All(t => t.Result == "Concurrent").Should().BeTrue();
+        var results = await System.Threading.Tasks.Task.WhenAll(tasks);
+        results.All(r => r == "Concurrent").Should().BeTrue();
     }
 
     [Fact]

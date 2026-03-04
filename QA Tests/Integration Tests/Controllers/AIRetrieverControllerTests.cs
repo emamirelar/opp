@@ -75,8 +75,8 @@ public class AIRetrieverControllerTests
     // ==========================================
 
     /// <summary>TC-AIRET-POS-001: Health endpoint is accessible anonymously and returns 200.
-    /// Note: Test factory may return 401 even for [AllowAnonymous] endpoints when using Test-NoAuth header (QA-019).
-    /// Both 200 and 401 are acceptable here — 200 confirms AllowAnonymous works, 401 is a known test infra limitation.</summary>
+    /// DEF-054: IAPVerificationMiddleware returns 401 for Test-NoAuth requests before [AllowAnonymous] can be checked.
+    /// Both 200 and 401 are acceptable until DEF-054 is fixed.</summary>
     [Fact]
     [Trait("TestId", "TC-AIRET-POS-001")]
     public async Task Health_AnonymousRequest_Returns200()
@@ -84,13 +84,11 @@ public class AIRetrieverControllerTests
         using var anon = CreateUnauthenticatedClient();
         var response = await anon.GetAsync(Health);
 
-        // 401 is a known test infrastructure limitation (QA-019): Test-NoAuth header does not
-        // bypass [AllowAnonymous] in the test factory's auth middleware.
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Unauthorized);
     }
 
     /// <summary>TC-AIRET-POS-002: Health endpoint returns healthy status body.
-    /// Note: See QA-019 — anonymous access may return 401 in test environment.</summary>
+    /// DEF-054: IAPVerificationMiddleware returns 401 for Test-NoAuth requests before [AllowAnonymous] can be checked.</summary>
     [Fact]
     [Trait("TestId", "TC-AIRET-POS-002")]
     public async Task Health_AnonymousRequest_ReturnsHealthyBody()
@@ -98,7 +96,6 @@ public class AIRetrieverControllerTests
         using var anon = CreateUnauthenticatedClient();
         var response = await anon.GetAsync(Health);
 
-        // 401 is acceptable in test environment (QA-019)
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Unauthorized);
         if (response.StatusCode == HttpStatusCode.OK)
         {
@@ -481,8 +478,7 @@ public class AIRetrieverControllerTests
     // ==========================================
 
     /// <summary>TC-AIRET-INT-001: Full pipeline — health traverses no auth middleware and returns 200.
-    /// Note: QA-019 — Test-NoAuth header may not bypass [AllowAnonymous] in test factory middleware,
-    /// so 401 is accepted as an alternative in the InMemory test environment.</summary>
+    /// DEF-054: IAPVerificationMiddleware returns 401 for Test-NoAuth requests before [AllowAnonymous] can be checked.</summary>
     [Fact]
     [Trait("TestId", "TC-AIRET-INT-001")]
     public async Task Health_FullPipeline_NoAuthRequired_Returns200()
@@ -490,7 +486,6 @@ public class AIRetrieverControllerTests
         using var anon = CreateUnauthenticatedClient();
         var response = await anon.GetAsync(Health);
 
-        // AllowAnonymous bypasses auth middleware in production; test factory may still return 401 (QA-019)
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Unauthorized);
     }
 
@@ -544,7 +539,7 @@ public class AIRetrieverControllerTests
     }
 
     /// <summary>TC-AIRET-INT-006: Concurrent health checks are all served correctly.
-    /// Note: QA-019 — anonymous clients may receive 401 in the test factory environment.</summary>
+    /// DEF-054: IAPVerificationMiddleware returns 401 for Test-NoAuth requests before [AllowAnonymous] can be checked.</summary>
     [Fact]
     [Trait("TestId", "TC-AIRET-INT-006")]
     public async Task Health_ConcurrentRequests_AllReturn200()
@@ -553,7 +548,6 @@ public class AIRetrieverControllerTests
         var tasks = Enumerable.Range(0, 5).Select(_ => anon.GetAsync(Health)).ToList();
         var responses = await Task.WhenAll(tasks);
 
-        // 401 is acceptable for anonymous clients in the test factory environment (QA-019)
         responses.Should().AllSatisfy(r =>
             r.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Unauthorized));
     }
@@ -598,14 +592,14 @@ public class AIRetrieverControllerTests
         timestamp.Should().BeOnOrAfter(before).And.BeOnOrBefore(after);
     }
 
-    /// <summary>TC-AIRET-INT-009: Authenticated and unauthenticated clients behave correctly within same test session.</summary>
+    /// <summary>TC-AIRET-INT-009: Authenticated and unauthenticated clients behave correctly within same test session.
+    /// DEF-054: IAPVerificationMiddleware returns 401 for Test-NoAuth requests before [AllowAnonymous] can be checked.</summary>
     [Fact]
     [Trait("TestId", "TC-AIRET-INT-009")]
     public async Task AIRetriever_AuthVsUnauth_BehaviorIsConsistentInSameSession()
     {
         using var unauth = CreateUnauthenticatedClient();
 
-        // Health: auth always succeeds; anon may return 401 in test factory (QA-019)
         var healthAuth = await _client.GetAsync(Health);
         var healthUnauth = await unauth.GetAsync(Health);
         healthAuth.StatusCode.Should().Be(HttpStatusCode.OK);

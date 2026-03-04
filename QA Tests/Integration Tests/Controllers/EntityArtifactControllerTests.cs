@@ -71,7 +71,7 @@ public class EntityArtifactControllerTests
     // POSITIVE TESTS (3)
     // ==========================================
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-POS-001")]
     [Trait("Category", "Positive")]
     public async Task GetEntityTypes_AuthenticatedAdmin_Returns200()
@@ -82,7 +82,7 @@ public class EntityArtifactControllerTests
         body.Should().NotBeNullOrEmpty();
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-POS-002")]
     [Trait("Category", "Positive")]
     public async Task GetArtifactTypes_ValidEntityType_Returns200()
@@ -93,7 +93,7 @@ public class EntityArtifactControllerTests
         body.Should().NotBeNullOrEmpty();
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-POS-003")]
     [Trait("Category", "Positive")]
     public async Task GetEntityArtifactsList_ValidParams_Returns200()
@@ -108,7 +108,7 @@ public class EntityArtifactControllerTests
     // NEGATIVE TESTS (9)
     // ==========================================
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-NEG-001")]
     [Trait("Category", "Negative")]
     public async Task GetArtifactTypes_EmptyEntityType_Returns400()
@@ -117,7 +117,7 @@ public class EntityArtifactControllerTests
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-NEG-002")]
     [Trait("Category", "Negative")]
     public async Task Upsert_EmptyBody_Returns400()
@@ -127,7 +127,7 @@ public class EntityArtifactControllerTests
         response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.UnprocessableEntity);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-NEG-003")]
     [Trait("Category", "Negative")]
     public async Task Upsert_InvalidEntityId_Returns400()
@@ -142,7 +142,7 @@ public class EntityArtifactControllerTests
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-NEG-004")]
     [Trait("Category", "Negative")]
     public async Task GetEntityArtifact_EntityIdZero_Returns400()
@@ -182,7 +182,7 @@ public class EntityArtifactControllerTests
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-NEG-008")]
     [Trait("Category", "Negative")]
     public async Task BulkTemplateDownload_EmptyArtifactTypeIds_Returns400()
@@ -192,7 +192,7 @@ public class EntityArtifactControllerTests
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-NEG-009")]
     [Trait("Category", "Negative")]
     public async Task PostWithInvalidContentType_Returns415Or400()
@@ -206,7 +206,7 @@ public class EntityArtifactControllerTests
     // EDGE / BOUNDARY TESTS (9)
     // ==========================================
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-EDGE-001")]
     [Trait("Category", "Edge/Boundary")]
     public async Task GetEntityTypes_NoData_ReturnsEmptyArray()
@@ -218,7 +218,7 @@ public class EntityArtifactControllerTests
         json.RootElement.ValueKind.Should().Be(JsonValueKind.Array);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-EDGE-002")]
     [Trait("Category", "Edge/Boundary")]
     public async Task GetEntityArtifact_EntityIdNegative_Returns400()
@@ -227,7 +227,7 @@ public class EntityArtifactControllerTests
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-EDGE-003")]
     [Trait("Category", "Edge/Boundary")]
     public async Task GetEntityArtifact_EntityIdMaxValue_HandledGracefully()
@@ -236,7 +236,7 @@ public class EntityArtifactControllerTests
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-EDGE-004")]
     [Trait("Category", "Edge/Boundary")]
     public async Task GetEntityRecords_WithSearchTerm_Returns200()
@@ -245,7 +245,7 @@ public class EntityArtifactControllerTests
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-EDGE-005")]
     [Trait("Category", "Edge/Boundary")]
     public async Task GetEntityRecords_EmptySearchTerm_Returns200()
@@ -254,7 +254,7 @@ public class EntityArtifactControllerTests
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-EDGE-006")]
     [Trait("Category", "Edge/Boundary")]
     public async Task GetBulkArtifactTypes_ValidEntityType_Returns200()
@@ -263,7 +263,7 @@ public class EntityArtifactControllerTests
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-EDGE-007")]
     [Trait("Category", "Edge/Boundary")]
     public async Task GetBulkUniqueIdExample_ValidEntityType_Returns200()
@@ -272,7 +272,7 @@ public class EntityArtifactControllerTests
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-EDGE-008")]
     [Trait("Category", "Edge/Boundary")]
     public async Task GetList_EntityIdZero_Returns400()
@@ -281,7 +281,7 @@ public class EntityArtifactControllerTests
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-EDGE-009")]
     [Trait("Category", "Edge/Boundary")]
     public async Task GetDocumentUrl_NonexistentArtifact_Returns404Or400()
@@ -294,7 +294,7 @@ public class EntityArtifactControllerTests
     // FUNCTIONAL TESTS (9)
     // ==========================================
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-FUNC-001")]
     [Trait("Category", "Functional")]
     public async Task GetEntityTypes_ReturnsJsonContentType()
@@ -304,7 +304,7 @@ public class EntityArtifactControllerTests
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-FUNC-002")]
     [Trait("Category", "Functional")]
     public async Task GetEntityTypes_ResponseIsValidJson()
@@ -316,7 +316,7 @@ public class EntityArtifactControllerTests
         act.Should().NotThrow();
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-FUNC-003")]
     [Trait("Category", "Functional")]
     public async Task GetArtifactTypes_ReturnsArray()
@@ -328,7 +328,7 @@ public class EntityArtifactControllerTests
         json.RootElement.ValueKind.Should().Be(JsonValueKind.Array);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-FUNC-004")]
     [Trait("Category", "Functional")]
     public async Task GetList_ReturnsArray()
@@ -340,7 +340,7 @@ public class EntityArtifactControllerTests
         json.RootElement.ValueKind.Should().Be(JsonValueKind.Array);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-FUNC-005")]
     [Trait("Category", "Functional")]
     public async Task GetEntityArtifact_ValidParams_ReturnsOkOrNull()
@@ -351,7 +351,7 @@ public class EntityArtifactControllerTests
         body.Should().NotBeNullOrEmpty();
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-FUNC-006")]
     [Trait("Category", "Functional")]
     public async Task BulkTemplateDownload_ValidRequest_ReturnsCsv()
@@ -365,7 +365,7 @@ public class EntityArtifactControllerTests
         }
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-FUNC-007")]
     [Trait("Category", "Functional")]
     public async Task GetEntityRecords_FilterByEntityType_Returns200()
@@ -374,7 +374,7 @@ public class EntityArtifactControllerTests
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-FUNC-008")]
     [Trait("Category", "Functional")]
     public async Task Authorization_RoleEnforced_AdminClientSucceeds()
@@ -383,7 +383,7 @@ public class EntityArtifactControllerTests
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-FUNC-009")]
     [Trait("Category", "Functional")]
     public async Task GetBulkArtifactTypes_EmptyEntityType_Returns400()
@@ -396,7 +396,7 @@ public class EntityArtifactControllerTests
     // INTEGRATION TESTS (9)
     // ==========================================
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-INT-001")]
     [Trait("Category", "Integration")]
     public async Task AllGetEndpoints_AuthenticatedAdmin_Return200Or400()
@@ -444,7 +444,7 @@ public class EntityArtifactControllerTests
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-INT-004")]
     [Trait("Category", "Integration")]
     public async Task ResponseContentTypes_GetEndpoints_AreJson()
@@ -454,7 +454,7 @@ public class EntityArtifactControllerTests
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-INT-005")]
     [Trait("Category", "Integration")]
     public async Task SequentialCalls_EntityTypes_BothReturn200()
@@ -465,7 +465,7 @@ public class EntityArtifactControllerTests
         r2.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-INT-006")]
     [Trait("Category", "Integration")]
     public async Task MultipleEntityTypes_AllHandled()
@@ -478,7 +478,7 @@ public class EntityArtifactControllerTests
         }
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-INT-007")]
     [Trait("Category", "Integration")]
     public async Task BulkUpsert_EmptyRows_Returns400()
@@ -493,7 +493,7 @@ public class EntityArtifactControllerTests
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-INT-008")]
     [Trait("Category", "Integration")]
     public async Task BulkUpsert_EmptyMapping_Returns400()
@@ -511,7 +511,7 @@ public class EntityArtifactControllerTests
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = "DEF-053/QA-088: UNOPSManagerWrapper.ctor requires UNOPSGeminiManager; GetCredentials throws when Google credential JSON missing")]
+    [Fact]
     [Trait("TestId", "TC-ART-INT-009")]
     [Trait("Category", "Integration")]
     public async Task ApiContract_EntityTypesResponse_IsArray()

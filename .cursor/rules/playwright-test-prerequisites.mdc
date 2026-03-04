@@ -1,0 +1,91 @@
+# Playwright Test Prerequisites — MANDATORY Pre-Flight Checklist
+
+## When This Rule Applies
+
+EVERY time you are about to run Playwright E2E tests (`npx playwright test`), you MUST complete ALL prerequisites below BEFORE launching the test run. Do NOT ask the user to do these steps — do them yourself.
+
+## Pre-Flight Checklist (Execute In Order)
+
+### 1. Start the .NET Backend (if not already running)
+
+**Check first:** Test if port 7123 is listening:
+```powershell
+(Test-NetConnection -ComputerName localhost -Port 7123 -WarningAction SilentlyContinue).TcpTestSucceeded
+```
+
+**If NOT running, start it:**
+```powershell
+$env:ASPNETCORE_ENVIRONMENT = "Development"
+cd "UNOPS.PAO.Server"
+dotnet run --launch-profile https 2>&1
+```
+
+**Known Issue (DEF-062):** `PubSubPullService` does not check its `BackgroundServices:PubSubPullService:Enabled` config flag in `Startup.cs`, and `HostOptions.BackgroundServiceExceptionBehavior` is not configured. If the GCP PubSub permission fails, the entire host crashes. Until a developer fixes this, the backend may not stay running. See `QA Tests/Defect List for Developers.md` for details.
+
+**Verify it started:** Wait 30-45 seconds, then check:
+```powershell
+(Test-NetConnection -ComputerName localhost -Port 7123 -WarningAction SilentlyContinue).TcpTestSucceeded
+```
+
+### 2. Build the Angular Frontend (if not recently built)
+
+```powershell
+cd "UNOPS.PAO.ClientApp"
+npm run build -- --configuration=production
+```
+
+### 3. Start http-server for the Frontend (if not already running)
+
+**Check first:** Test if port 4200 is listening:
+```powershell
+(Test-NetConnection -ComputerName localhost -Port 4200 -WarningAction SilentlyContinue).TcpTestSucceeded
+```
+
+**If NOT running, start it:**
+```powershell
+npx http-server "UNOPS.PAO.ClientApp/dist/unops.pao.client-app/browser" -p 4200 --proxy "http://localhost:4200?" 2>&1
+```
+
+**CRITICAL:** The `--proxy` flag is required for Angular SPA client-side routing. Without it, direct URL navigation returns 404.
+
+### 4. Verify Both Services Are Healthy
+
+```powershell
+# Frontend serves HTML (not 404)
+Invoke-WebRequest -Uri "http://localhost:4200/partnerships/partners" -UseBasicParsing | Select-Object StatusCode
+
+# Backend responds
+Invoke-WebRequest -Uri "http://localhost:5159/api/health" -UseBasicParsing | Select-Object StatusCode
+```
+
+### 5. Run the Playwright Tests
+
+Only after ALL above checks pass:
+```powershell
+cd "QA Tests"
+npx playwright test --project=chromium --reporter=list 2>&1
+```
+
+## NEVER Do These Things
+
+- ❌ Ask the user to start the backend — start it yourself
+- ❌ Ask the user to start http-server — start it yourself
+- ❌ Ask the user to build the frontend — build it yourself
+- ❌ Run Playwright tests without verifying both services are listening
+- ❌ Skip the pre-flight checklist because "the user said they started it"
+- ❌ Assume services from a previous conversation are still running
+
+## Troubleshooting
+
+### Backend crashes immediately after starting
+- Check terminal output for `PubSubPullService` / `PermissionDenied` errors
+- This is DEF-062 — the PubSub background service isn't gated by its Enabled flag
+- The user may need to fix GCP PubSub IAM permissions, or a developer must fix `Startup.cs`
+
+### Frontend returns 404 on deep links
+- Ensure http-server was started with `--proxy "http://localhost:4200?"` flag
+- Kill and restart http-server if the flag was missing
+
+### Tests fail with "Access Denied" / blank page
+- The `authenticateWithRealBackend` helper mocks API calls via `page.route()`
+- If running against real backend, auth mocks may conflict — verify auth setup in `auth.helper.ts`

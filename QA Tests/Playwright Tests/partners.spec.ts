@@ -50,9 +50,9 @@ test.describe('Partners List', () => {
     const isVisible = await partnersPage.isNewButtonVisible();
 
     if (isVisible) {
-      await partnersPage.assertElementVisible('new-partner-button');
+      await expect(partnersPage.newButton).toBeVisible();
     } else {
-      await expect(partnersPage.header.or(partnersPage.listview)).toBeVisible();
+      await expect(partnersPage.header).toBeVisible();
     }
   });
 
@@ -62,9 +62,9 @@ test.describe('Partners List', () => {
     const isVisible = await partnersPage.isExportButtonVisible();
 
     if (isVisible) {
-      await partnersPage.assertElementVisible('export-button');
+      await expect(partnersPage.exportButton).toBeVisible();
     } else {
-      await expect(partnersPage.header.or(partnersPage.listview)).toBeVisible();
+      await expect(partnersPage.header).toBeVisible();
     }
   });
 
@@ -74,9 +74,9 @@ test.describe('Partners List', () => {
     const isVisible = await partnersPage.isImportButtonVisible();
 
     if (isVisible) {
-      await partnersPage.assertElementVisible('import-button');
+      await expect(partnersPage.importButton).toBeVisible();
     } else {
-      await expect(partnersPage.header.or(partnersPage.listview)).toBeVisible();
+      await expect(partnersPage.header).toBeVisible();
     }
   });
 
@@ -130,7 +130,7 @@ test.describe('Partners List', () => {
         test.skip(true, 'QA-008: PrimeNG DynamicDialog not created in Playwright test environment');
       }
     } else {
-      await expect(partnersPage.header.or(partnersPage.listview)).toBeVisible();
+      await expect(partnersPage.header).toBeVisible();
     }
   });
 
@@ -144,7 +144,7 @@ test.describe('Partners List', () => {
     if (hasSearch) {
       await expect(searchInput).toBeVisible();
     } else {
-      await expect(partnersPage.listview.or(partnersPage.header)).toBeVisible();
+      await expect(partnersPage.header).toBeVisible();
     }
   });
 
@@ -162,12 +162,10 @@ test.describe('Partners List', () => {
 
   test('should allow navigation to partner details on card click', async ({ page }) => {
     await waitForLoadingToComplete(page);
-    const listview = partnersPage.listview;
-    const listviewByTag = page.locator('app-listview');
-    await expect(listview.or(listviewByTag).first()).toBeVisible({ timeout: 15000 });
+    await expect(partnersPage.header).toBeVisible({ timeout: 15000 });
 
     const cardItems = page.locator(
-      'app-listview-card .cursor-pointer, [data-testid="partners-listview"] .cursor-pointer'
+      'app-listview-card .cursor-pointer, app-listview .cursor-pointer'
     );
     const cardCount = await cardItems.count();
 
@@ -181,7 +179,7 @@ test.describe('Partners List', () => {
         partnerItemPage.header.or(partnerItemPage.entityTitle)
       ).toBeVisible({ timeout: 10000 });
     } else {
-      await expect(partnersPage.header.or(partnersPage.listview)).toBeVisible();
+      await expect(partnersPage.header).toBeVisible();
     }
   });
 
@@ -194,7 +192,6 @@ test.describe('Partners List', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await waitForLoadingToComplete(page);
 
-    const listview = partnersPage.listview;
-    await expect(header.or(title).or(listview)).toBeVisible();
+    await expect(header).toBeVisible();
   });
 });

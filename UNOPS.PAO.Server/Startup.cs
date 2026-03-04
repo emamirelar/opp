@@ -502,8 +502,10 @@ public class Startup
         
         if (!CurrentEnvironment.IsEnvironment("Testing"))
         {
-            services.AddHostedService<PubSubPullService>(); // Register your background service
-            services.AddHostedService<DueDiligenceNotificationService>(); // Register due diligence notification service
+            if (Configuration.GetValue<bool>("BackgroundServices:PubSubPullService:Enabled"))
+                services.AddHostedService<PubSubPullService>();
+            if (Configuration.GetValue<bool>("BackgroundServices:DueDiligenceNotificationService:Enabled"))
+                services.AddHostedService<DueDiligenceNotificationService>();
         }
         
         // Register URL service for building entity URLs

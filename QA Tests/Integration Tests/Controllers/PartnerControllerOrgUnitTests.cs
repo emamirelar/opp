@@ -77,7 +77,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             return partner;
         }
 
-        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
+        [Fact]
         public async Task GetAll_WithOrgUnitIdFilter_ReturnsPartnersFromOrgUnitAndDescendants()
         {
             // Arrange
@@ -159,7 +159,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             });
         }
 
-        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
+        [Fact]
         public async Task GetAll_WithOrgUnitIdFilter_MiddleLevel_ReturnsPartnersFromSubtree()
         {
             // Arrange
@@ -204,7 +204,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             });
         }
 
-        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
+        [Fact]
         public async Task GetAll_WithOrgUnitIdFilter_LeafNode_ReturnsOnlyLeafPartners()
         {
             // Arrange
@@ -240,7 +240,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             result!.Records.First().Name.Should().Be("Partner at Leaf");
         }
 
-        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
+        [Fact]
         public async Task GetAll_WithOrgUnitIdAndStatusFilter_AppliesBothFilters()
         {
             // Arrange
@@ -273,7 +273,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             result!.Records.First().Name.Should().Be("Active Partner");
         }
 
-        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
+        [Fact]
         public async Task GetAll_WithOrgUnitIdAndNameFilter_AppliesBothFilters()
         {
             // Arrange
@@ -306,7 +306,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             result!.Records.Select(r => r.Name).Should().BeEquivalentTo(new[] { "Alpha Corporation", "Alpha Solutions" });
         }
 
-        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
+        [Fact]
         public async Task GetAll_WithOrgUnitIdAndPagination_ReturnsCorrectPage()
         {
             // Arrange
@@ -343,7 +343,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             });
         }
 
-        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
+        [Fact]
         public async Task GetAll_WithOrgUnitIdAndSearchText_FiltersCorrectly()
         {
             // Arrange
@@ -376,7 +376,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             result!.Records.Select(r => r.Name).Should().BeEquivalentTo(new[] { "Technology Corp", "Tech Solutions" });
         }
 
-        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
+        [Fact]
         public async Task GetAll_WithNonExistentOrgUnitId_ReturnsEmptyResult()
         {
             // Arrange
@@ -404,7 +404,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             result!.Records.Should().BeEmpty();
         }
 
-        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
+        [Fact]
         public async Task GetAll_WithOrgUnitIdButNoPartners_ReturnsEmptyResult()
         {
             // Arrange

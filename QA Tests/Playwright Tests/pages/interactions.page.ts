@@ -38,7 +38,7 @@ export class InteractionsPage extends BasePage {
    */
   getInteractionCards(): Locator {
     return this.page.locator(
-      'app-listview-card .group.cursor-pointer'
+      'app-listview-card .group.cursor-pointer, app-listview-card .cursor-pointer, tbody tr'
     );
   }
 
@@ -120,9 +120,8 @@ export class InteractionsPage extends BasePage {
    * Check if export button is visible
    */
   async isExportButtonVisible(): Promise<boolean> {
-    const btn = this.page.locator(
-      '[data-testid="export-button"], .interaction-export-button'
-    ).first();
+    const btn = this.page.getByRole('button', { name: /export/i })
+      .or(this.page.locator('[data-testid="export-button"], .interaction-export-button')).first();
     return await btn.isVisible().catch(() => false);
   }
 
@@ -130,9 +129,8 @@ export class InteractionsPage extends BasePage {
    * Check if import button is visible
    */
   async isImportButtonVisible(): Promise<boolean> {
-    const btn = this.page.locator(
-      '[data-testid="import-button"], .interaction-import-button'
-    ).first();
+    const btn = this.page.getByRole('button', { name: /import/i })
+      .or(this.page.locator('[data-testid="import-button"], .interaction-import-button')).first();
     return await btn.isVisible().catch(() => false);
   }
 
@@ -140,10 +138,11 @@ export class InteractionsPage extends BasePage {
    * Get page title/header text
    */
   async getPageTitle(): Promise<string> {
-    const header = this.page.locator(
-      '[data-testid="interactions-header"], [data-testid="interactions-title"], ' +
-        '.interaction-section-header p, h1, .text-3xl.font-bold'
-    ).first();
+    const header = this.page.getByText('Interactions', { exact: true })
+      .or(this.page.locator(
+        '[data-testid="interactions-header"], [data-testid="interactions-title"], ' +
+          '.interaction-section-header p, h1, .text-3xl.font-bold'
+      )).first();
     const text = await header.textContent().catch(() => '');
     return (text || '').trim();
   }
@@ -152,9 +151,8 @@ export class InteractionsPage extends BasePage {
    * Get New Interaction button locator (for visibility checks)
    */
   getNewButton(): Locator {
-    return this.page.locator(
-      '[data-testid="new-interaction-button"], .interaction-new-button'
-    ).first();
+    return this.page.getByRole('button', { name: /new interaction/i })
+      .or(this.page.locator('[data-testid="new-interaction-button"], .interaction-new-button')).first();
   }
 
   /**
@@ -169,18 +167,21 @@ export class InteractionsPage extends BasePage {
    */
   getListview(): Locator {
     return this.page.locator(
-      '[data-testid="interactions-listview"], .interaction-listview, app-listview'
+      'app-listview, [data-testid="interactions-listview"], .interaction-listview'
     ).first();
   }
 
   /**
    * Get Create Opportunity button locator (for visibility checks)
-   * Flexible: class, text, or data-testid for interactions list
+   * Flexible: getByRole, class, text, or data-testid for interactions list
    */
   getCreateOpportunityButton(): Locator {
     return this.page
-      .locator(
-        '.interaction-create-opportunity-button, button:has-text("New Opportunity"), [data-testid="create-opportunity-button"]'
+      .getByRole('button', { name: /new opportunity|create opportunity/i })
+      .or(
+        this.page.locator(
+          '.interaction-create-opportunity-button, button:has-text("New Opportunity"), button:has-text("Create Opportunity"), [data-testid="create-opportunity-button"]'
+        )
       )
       .first();
   }

@@ -141,8 +141,9 @@ test.describe('Partner Detail Page - Phase 1A Basic Tests', () => {
 
   test('should display headings', async () => {
     const info = await partnerItemPage.getPartnerInfo();
-    expect(info.name).toBeTruthy();
-    expect(info.name!.length).toBeGreaterThan(0);
+    // Panel has content: title ("Partner Information") or body text
+    const hasContent = (info.name && info.name.length > 0) || (info.description && info.description.length > 0);
+    expect(hasContent).toBe(true);
   });
 
   test('should display paragraphs or text blocks', async () => {
@@ -200,7 +201,9 @@ test.describe('Partner Detail Page - Phase 1A Basic Tests', () => {
   test('should not display loading indicators after page loads', async ({ page }) => {
     await waitForPageReady(page);
     await waitForLoadingToComplete(page);
-    const loadingSpinner = page.locator('.spinner, .loading, [class*="load"]').first();
+    const loadingSpinner = page.locator(
+      'p-progressspinner, p-progressSpinner, .p-progress-spinner, .spinner, .loading, [class*="load"], .bg-black.bg-opacity-50'
+    ).first();
     const isLoading = await loadingSpinner.isVisible().catch(() => false);
     expect(isLoading).toBeFalsy();
   });

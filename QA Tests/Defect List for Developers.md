@@ -38,8 +38,8 @@ This document tracks **production code defects** discovered during testing. Thes
 | DEF-011 | 🟡 Medium | PNO-1171: Reject action appears twice in workflow history | WorkflowHistory | 2026-02-11 | Resolved (2026-02-17) | |
 | DEF-012 | 🟡 Medium | ForAllMembers overrides Ignore() rules in OpportunityMappingProfile | OpportunityMappingProfile | 2026-02-16 | Resolved (2026-02-17) | |
 | DEF-023 | 🟠 High | DEF-012 regression: duplicate UpdateOpportunityRequest map breaks AutoMapper | OpportunityMappingProfile | 2026-02-21 | Open | |
-| DEF-013 | 🟡 Medium | LiaisonOfficeManager not registered in IManagerWrapper | ManagerWrapper | 2026-02-16 | Open | |
-| DEF-014 | 🟡 Medium | FocalPointManager not registered in IManagerWrapper | ManagerWrapper | 2026-02-16 | Open | |
+| ~~DEF-013~~ | ~~🟡 Medium~~ | ~~LiaisonOfficeManager not registered in IManagerWrapper~~ | ~~ManagerWrapper~~ | ~~2026-02-16~~ | **Closed — Won't Fix (2026-03-04)** | Per Anusha (2026-03-04): LiaisonOffice does not have a manager by design. Not a managed entity in Opp+; only selectable as part of Partner. |
+| ~~DEF-014~~ | ~~🟡 Medium~~ | ~~FocalPointManager not registered in IManagerWrapper~~ | ~~ManagerWrapper~~ | ~~2026-02-16~~ | **Closed — Won't Fix (2026-03-04)** | Per Anusha (2026-03-04): FocalPoint does not have a manager by design. Not a managed entity in Opp+; only selectable as part of Partner. |
 | ~~DEF-015~~ | ~~🟡 Medium~~ | ~~DashboardController has zero test coverage — 10+ endpoints~~ | ~~DashboardController~~ | ~~2026-02-16~~ | **Reclassified → Backlog (2026-02-20)** | |
 | ~~DEF-016~~ | ~~🟡 Medium~~ | ~~OpportunityImmutabilityTests: 8 GetOpportunity/Update tests fail — IMapper mock returns null~~ | ~~OpportunityImmutabilityTests~~ | ~~2026-02-16~~ | **Reclassified → QA-061 (2026-02-17)** | |
 | DEF-017 | 🟡 Medium | WorkflowControllerTests: 6 Submit tests fail — endpoint behavior changed in pull | WorkflowController | 2026-02-16 | Resolved (2026-02-17) | |
@@ -76,6 +76,9 @@ This document tracks **production code defects** discovered during testing. Thes
 | DEF-058 | 🟠 High | OpportunityManager.GetOpportunityAsync includes invalid `Stakeholders.Contact` navigation path | OpportunityManager | 2026-03-03 | Open | `GetOpportunityAsync()` includes string-based include path `Stakeholders.Contact` but `OpportunityStakeholder` has no `Contact` navigation property. Causes `InvalidIncludePathError` at runtime. **Proper Fix:** Remove `Stakeholders.Contact` from the include chain or add the missing navigation property to the entity model. **Wrong Fix:** ❌ Suppressing the `InvalidIncludePathError` warning. Affected tests: 9 tests in OpportunityPerformanceTests + 4 tests in OpportunitySections/PerformanceTests (workaround: direct Context queries). |
 | DEF-059 | 🟠 High | PartnerManager.GetPartnerWithContactsAndInteractionsAsync exceeds 200ms SLA (805ms) | PartnerManager | 2026-03-03 | Open | `GetPartnerWithContactsAndInteractionsAsync()` takes ~805ms for a single partner with contacts and interactions, exceeding the 200ms SLA threshold by 4x. Likely caused by Cartesian product explosion from multiple `.Include()` chains loading contacts, interactions, and their related entities in a single query. **Root Cause:** Too many `Include`/`ThenInclude` statements in one query create Cartesian product (see entity-framework-performance-optimization rule). **Proper Fix:**<br/>• Split into separate queries: main partner + contacts query + interactions query<br/>• Add `.AsNoTracking()` if read-only<br/>• Consider parallel execution with `IDbContextFactory` if 3+ collection queries<br/>**Wrong Fix:** ❌ Raising the SLA threshold to match current behavior.<br/>**Repro:** Run `PartnerPerformanceTests.GetPartnerWithContactsAndInteractions_NoCartesianExplosion_CompletesWithinThreshold` in isolation — fails at 805ms vs 200ms threshold. |
 | DEF-060 | 🔴 Critical | InteractionRBACCompositeSpecification.ReplaceCriteria silently fails — RBAC security filters never applied | InteractionRBACCompositeSpecification | 2026-03-03 | Open | `ReplaceCriteria()` uses reflection with `BindingFlags.NonPublic \| BindingFlags.Instance` to set `BaseSpecification.Criteria`, but `Criteria` is a **public** read-only property (`{ get; }`). The reflection lookup returns `null` and `SetValue` is never called. RBAC security expressions for `INTERACTION_READ`, `INTERACTION_MANAGER`, and `PARTNER_MANAGER` roles are built but never applied to the query criteria. All non-admin users see all interactions regardless of role.<br/><br/>**Root Cause:** `BaseSpecification<T>.Criteria` is `public Expression<Func<T, bool>> Criteria { get; }` — no setter, public accessor. `GetProperty("Criteria", BindingFlags.NonPublic \| BindingFlags.Instance)` returns `null` because the property is public.<br/><br/>**Proper Fix:**<br/>• Add a `protected set` accessor to `BaseSpecification<T>.Criteria`: `public Expression<Func<T, bool>> Criteria { get; protected set; }`<br/>• OR change `ReplaceCriteria` to use `BindingFlags.Public \| BindingFlags.Instance` and a writable backing mechanism<br/>• OR override `Criteria` in `InteractionRBACCompositeSpecification` with a settable property<br/><br/>**Wrong Fix:** ❌ Removing the RBAC filtering tests or changing assertions to match the broken behavior.<br/><br/>**Affected tests:** 4 tests skipped in `InteractionRBACSpecificationTests` — `Criteria_InteractionReadRole_ExcludesOtherUsersInteractions`, `Criteria_InteractionReadRole_ExcludesUnassignedInteractions`, `Criteria_InteractionRead_OnlyOwnOrAssigned`, `Criteria_PartnerManagerNoOrgUnit_OnlyCreated`. |
+| DEF-061 | 🟡 Medium | 3,036 compiler warnings across 15 production projects — nullable, async, XML docs, code quality | Multiple (see details) | 2026-03-04 | Open | 15 production projects produce 3,036 compiler warnings during `dotnet build`. Largest offenders: UNOPSBusiness (1,482), Presentation (394), Business (282), Models (268), Domain (260). Categories: ~2,250 nullable reference type warnings (CS8602/CS8603/CS8604/CS8618/CS8625/CS8600/CS8601), 330 XML doc warnings (CS1571/CS1573/CS1572), 164 async-without-await (CS1998), ~148 code quality (CS0108 member hiding, CS0105 duplicate usings, CS0168 unused vars, CS0618 obsolete methods, EF1002 SQL injection). QA test projects have been cleaned to 0 warnings. See DEF-061 details below for full per-project breakdown and recommended fix approach. |
+| DEF-062 | 🟠 High | PubSubPullService ignores `Enabled: false` config — crashes backend on GCP permission error | Startup.cs / PubSubPullService | 2026-03-04 | Open |
+| DEF-063 | 🟡 Medium | IAPVerificationMiddleware runs in Testing environment and blocks [AllowAnonymous] endpoints | IAPVerificationMiddleware / Startup.cs | 2026-03-04 | Open | `app.UseIAPVerification()` (Startup.cs line 108) is unconditional — runs for ALL environments including Testing. Returns 401 for requests without IAP headers (lines 384-390) before `UseAuthentication()` or `UseAuthorization()` can check for `[AllowAnonymous]`. **Fix:** Wrap in `if (!env.IsEnvironment("Testing"))` or add `[AllowAnonymous]` endpoint check in the middleware. Related QA: QA-075. | `Startup.cs` line 505 registers `PubSubPullService` unconditionally for all non-Testing environments. The `BackgroundServices:PubSubPullService:Enabled` flag in `appsettings.Development.json` is never checked. When the authenticated GCP user lacks `pubsub.subscriptions.consume` permission, PubSub throws `RpcException(PermissionDenied)`, and because `HostOptions.BackgroundServiceExceptionBehavior` defaults to `StopHost`, the entire application shuts down. This prevents local development when GCP PubSub permissions are not configured.<br/><br/>**Root Cause:** Two issues: (1) `Startup.ConfigureContainer()` registers `AddHostedService<PubSubPullService>()` without checking `Configuration["BackgroundServices:PubSubPullService:Enabled"]`, (2) `HostOptions.BackgroundServiceExceptionBehavior` is never configured to `Ignore`.<br/><br/>**Proper Fix:**<br/>• Check `Enabled` flag before registration: `if (Configuration.GetValue<bool>("BackgroundServices:PubSubPullService:Enabled")) services.AddHostedService<PubSubPullService>();`<br/>• Same for `DueDiligenceNotificationService`<br/>• Configure `HostOptions`: `services.Configure<HostOptions>(o => o.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.Ignore);`<br/><br/>**Wrong Fix:** ❌ Setting `ASPNETCORE_ENVIRONMENT=Testing` (skips DB context registration entirely). ❌ Granting PubSub permissions to all developers (unnecessary for local dev).<br/><br/>**Workaround:** None available without production code changes. Backend cannot stay running locally if GCP PubSub permissions are not granted to the developer's account. |
 
 ---
 
@@ -319,76 +322,51 @@ However, the Ignore rules create a **false sense of safety**. If a caller ever p
 
 ---
 
-### DEF-013: LiaisonOfficeManager not registered in IManagerWrapper
+### DEF-013: ~~LiaisonOfficeManager not registered in IManagerWrapper~~ — CLOSED (Won't Fix)
 
-**Severity:** 🟡 Medium  
+**Severity:** ~~🟡 Medium~~ → Closed  
 **Component:** ManagerWrapper (`UNOPS.PAO.Business/Managers/ManagerWrapper.cs`)  
 **Date Reported:** 2026-02-16  
-**Status:** Open  
-**Priority:** P2 — Feature implementation incomplete  
-**Related QA:** QA-044
+**Status:** **Closed — Won't Fix (2026-03-04)**  
+**Resolution:** Not a defect. By design.  
+**Related QA:** QA-044 (also closed)
 
-**Description:**
-The `LiaisonOffice` entity exists in the domain model and a `LiaisonOfficeManager` class exists, but the manager is not registered in `IManagerWrapper` or `ManagerWrapper`. This means:
-- The manager cannot be resolved via dependency injection
-- Controller endpoints referencing the manager will fail
-- 9 existing integration tests (`PartnerLiaisonOfficeManagerTests`) cannot execute
+**Resolution Notes (2026-03-04):**
 
-**Root Cause:** Entity and manager partially implemented but not wired into the DI container and facade pattern.
+Per developer clarification (Anusha Swaminathan, 2026-03-04):
+> "LiaisonOffice and FocalPoint do not have managers. They don't need to have managers because they are not being managed in Opp+. We can only select a Liaison Office / Focal Point as part of a Partner."
 
-**Proper Fix:**
-1. Register `LiaisonOfficeManager` in `ManagerWrapper` constructor
-2. Add `ILiaisonOfficeManager` property to `IManagerWrapper` interface
-3. Expose the manager via `ManagerWrapper` public property
-4. Verify all CRUD methods are implemented (`CreateLiaisonOfficeAsync`, `GetLiaisonOfficesByPartnerIdAsync`, `DeleteLiaisonOfficeAsync`)
+**What this means:**
+- LiaisonOffice is a **lookup entity**, not a managed entity
+- There is no `PartnerLiaisonOfficeManager` and none is needed
+- LiaisonOffice data is accessed through `ValuesManager.GetLiaisonOffices()` and the `LiaisonOfficeController`
+- Partners reference LiaisonOffice via `Partner.LiaisonOfficeId` FK
 
-**Wrong Fix:** Do not create test stubs/mocks as a workaround — the manager needs to be properly implemented and registered.
-
-**Impact:** 9 tests blocked (QA-044), liaison office feature non-functional
-
-**Repro Steps:**
-1. Navigate to `IManagerWrapper.cs`
-2. Search for "LiaisonOffice" — no property found
-3. Attempt to call `managerWrapper.LiaisonOfficeManager` — compilation error
-
-**Expected Result:** `IManagerWrapper` exposes a `LiaisonOfficeManager` property.
-
-**Actual Result:** No such property exists; the manager is not registered.
+**QA Action:** 9 `PartnerLiaisonOfficeManagerTests` cancelled (were placeholder tests for a manager that doesn't need to exist). `ValuesManagerPerformanceTests` GetLiaisonOffices test un-skipped.
 
 ---
 
-### DEF-014: FocalPointManager not registered in IManagerWrapper
+### DEF-014: ~~FocalPointManager not registered in IManagerWrapper~~ — CLOSED (Won't Fix)
 
-**Severity:** 🟡 Medium  
+**Severity:** ~~🟡 Medium~~ → Closed  
 **Component:** ManagerWrapper (`UNOPS.PAO.Business/Managers/ManagerWrapper.cs`)  
 **Date Reported:** 2026-02-16  
-**Status:** Open  
-**Priority:** P2 — Feature implementation incomplete  
-**Related QA:** QA-045
+**Status:** **Closed — Won't Fix (2026-03-04)**  
+**Resolution:** Not a defect. By design.  
+**Related QA:** QA-045 (also closed)
 
-**Description:**
-The `FocalPoint` entity exists in the domain model and a `FocalPointManager` class exists, but the manager is not registered in `IManagerWrapper` or `ManagerWrapper`. This follows the same pattern as DEF-013.
+**Resolution Notes (2026-03-04):**
 
-**Root Cause:** Entity and manager partially implemented but not wired into the DI container and facade pattern.
+Per developer clarification (Anusha Swaminathan, 2026-03-04):
+> "LiaisonOffice and FocalPoint do not have managers. They don't need to have managers because they are not being managed in Opp+. We can only select a Liaison Office / Focal Point as part of a Partner."
 
-**Proper Fix:**
-1. Register `FocalPointManager` in `ManagerWrapper` constructor
-2. Add `IFocalPointManager` property to `IManagerWrapper` interface
-3. Expose the manager via `ManagerWrapper` public property
-4. Verify all CRUD methods are implemented
+**What this means:**
+- FocalPoint is a **user FK on Partner** (`Partner.PartnerFocalPointUserId`), not a managed entity
+- There is no `PartnerFocalPointManager` and none is needed
+- "Focal Point" also exists as a Contact role string (tested in `ContactFunctionalTests`)
+- Partners reference FocalPoint via `Partner.PartnerFocalPointUserId` FK
 
-**Wrong Fix:** Do not create test stubs/mocks as a workaround — the manager needs to be properly implemented and registered.
-
-**Impact:** 12 tests blocked (QA-045), focal point feature non-functional
-
-**Repro Steps:**
-1. Navigate to `IManagerWrapper.cs`
-2. Search for "FocalPoint" — no property found
-3. Attempt to call `managerWrapper.FocalPointManager` — compilation error
-
-**Expected Result:** `IManagerWrapper` exposes a `FocalPointManager` property.
-
-**Actual Result:** No such property exists; the manager is not registered.
+**QA Action:** 12 `PartnerFocalPointManagerTests` cancelled (were placeholder tests for a manager that doesn't need to exist).
 
 ---
 
@@ -696,9 +674,16 @@ The following items were previously logged as developer defects but have been re
 
 ---
 
-## Defect Statistics (Updated 2026-03-03)
+## Defect Statistics (Updated 2026-03-04)
 
-- **Total Open:** 33 (DEF-008, DEF-013, DEF-014, DEF-020, DEF-021, DEF-023, DEF-024, DEF-025–DEF-050, DEF-052–DEF-060)
+- **Total Open:** 33 (DEF-008, DEF-020, DEF-021, DEF-023, DEF-024, DEF-025–DEF-050, DEF-052–DEF-062)
+- **2026-03-04 Updates:**
+  - **DEF-013 CLOSED** (Won't Fix): LiaisonOffice does not have a manager by design (per Anusha)
+  - **DEF-014 CLOSED** (Won't Fix): FocalPoint does not have a manager by design (per Anusha)
+  - **DEF-053 Verification Pending**: Anusha reports fix may be in place; 85+ tests un-skipped for CI verification
+  - 21 PartnerLiaisonOffice/FocalPoint placeholder tests cancelled
+  - Integration tests job enabled in CI (`continue-on-error: true`) for Anusha to verify UNOPS.Workflow submodule and DEF-053 fixes
+- **NEW (2026-03-04):** DEF-061 (3,036 compiler warnings across 15 production projects — nullable, async, XML docs, code quality), DEF-062 (PubSubPullService ignores Enabled:false config, crashes backend on GCP permission error)
 - **NEW (2026-03-03):** DEF-057 (Partner name whitespace-only input), DEF-058 (OpportunityManager invalid Stakeholders.Contact include path), DEF-059 (PartnerManager GetPartnerWithContactsAndInteractions 805ms, 4x over SLA), DEF-060 (EF Migration Init references AspNetUsers before Identity tables exist)
 - **NEW (2026-03-02):** DEF-054 (DoA3Fallback missing ILogger logging), DEF-055 (Reject NullReferenceException on null EntityName), DEF-056 (Reopen sets Draft instead of Active)
 - **DEF-051 reclassified (2026-03-02):** AutoMapper mock overload mismatch in test, not a production defect.
@@ -706,8 +691,8 @@ The following items were previously logged as developer defects but have been re
 - **Total Resolved:** 6 (DEF-010, DEF-011, DEF-012, DEF-017, DEF-018, DEF-019)
 - **Total Reclassified:** 6 (DEF-005, DEF-007, DEF-009, DEF-015, DEF-022 → moved to appropriate trackers; DEF-051 → QA mock issue)
 - 🔴 **Critical:** 0
-- 🟠 **High Priority:** 16 (DEF-008, DEF-020, DEF-021, DEF-023, DEF-024, DEF-033, DEF-034, DEF-038, DEF-039, DEF-040, DEF-042, DEF-043, DEF-045, DEF-053, DEF-058, DEF-059)
-- 🟡 **Medium Priority:** 23 (DEF-013, DEF-014, DEF-025–DEF-032, DEF-035–DEF-037, DEF-041, DEF-044, DEF-047–DEF-050, DEF-052, DEF-055, DEF-056, DEF-060)
+- 🟠 **High Priority:** 17 (DEF-008, DEF-020, DEF-021, DEF-023, DEF-024, DEF-033, DEF-034, DEF-038, DEF-039, DEF-040, DEF-042, DEF-043, DEF-045, DEF-053, DEF-058, DEF-059, DEF-062)
+- 🟡 **Medium Priority:** 22 (DEF-025–DEF-032, DEF-035–DEF-037, DEF-041, DEF-044, DEF-047–DEF-050, DEF-052, DEF-055, DEF-056, DEF-060, DEF-061)
 - 🟢 **Low Priority:** 4 (DEF-046, DEF-051, DEF-054, DEF-057)
 - **2026-03-03 New Tests Added:** AiContextualServiceProcessPlaceholderTests (39 tests, 39/39 passed), DocumentControllerUNOPSTests (39 tests, 21 passed, 18 skipped pending DEF-053), 3 Playwright E2E spec files (api-error-handling, form-validation-negative, interactions-enhanced), 15+ new Playwright API mocks
 - **2026-03-03 Full Run (after QA-089 concurrent DbContext fixes):** FastTests: 78/78 passed (100%). Presentation.Tests: 154/154 passed (100%). Business.Tests: 4,627 total — 4,329 passed, 57 failed, 241 skipped (93.6%). Integration Tests: 6,132 total — 5,662 passed, 115 failed, 355 skipped (92.3%). **TOTAL: 11,069 tests — 10,223 passed (92.4%), 172 failed, 596 skipped.** 75 concurrent DbContext tests (QA-089) fixed — all 75 now pass. New tests added: 39 AiContextualService + 39 DocumentController UNOPS.
@@ -1778,9 +1763,15 @@ Since this property is getter-only, EF Core excludes it from INSERT statements. 
 **Severity:** 🟠 High  
 **Component:** `UNOPSGeminiManager` (`UNOPS.PAO.UNOPSBusiness/Managers/UNOPSGeminiManager.cs`)  
 **Date Reported:** 2026-03-02  
-**Status:** Open  
+**Status:** Verification Pending (2026-03-04)  
 **Priority:** P2 — Constructor crash blocks entire ManagerWrapper initialization  
 **Reporter:** QA Team (2026-03-02 verification rerun)
+
+> **Developer Update (Anusha, 2026-03-04):** "DEF-053 should be fixed already. Please check if it works. Otherwise I can add a mock or update the config to `disableexternalcalls`."
+> 
+> **QA Action (2026-03-04):** Removed `[Fact(Skip = "DEF-053...")]` from 85+ integration tests across 5 files so they run (pass or fail) in CI. Integration tests job enabled in `qa-tests.yml` with `continue-on-error: true`. If fix works, tests will pass; if not, failures will be visible in test reporter.
+> 
+> **Files un-skipped:** DocumentControllerUNOPSTests.cs (16), OpportunityControllerCoreTests.cs (24), EntityArtifactControllerTests.cs (34), PartnerControllerOrgUnitTests.cs (11), PartnerControllerOrgUnitFilterTests.cs (6)
 
 **Description:**
 
@@ -1853,3 +1844,102 @@ When running `dotnet ef database update` against a fresh empty PostgreSQL databa
 **Error:** `Npgsql.PostgresException (0x80004005): 42P01: relation "public.AspNetUsers" does not exist`
 
 **Impact:** Blocks CI Business Logic Tests from running against a real database. Model-level tests unaffected.
+
+---
+
+### DEF-061: 3,036 Compiler Warnings Across 15 Production Projects
+
+| Field | Value |
+|---|---|
+| **ID** | DEF-061 |
+| **Severity** | 🟡 Medium |
+| **Title** | 3,036 compiler warnings across 15 production projects |
+| **Component** | Multiple (UNOPSBusiness, Presentation, Business, Models, Domain, and 10 others) |
+| **Date** | 2026-03-04 |
+| **Status** | Open |
+| **Reporter** | QA Team |
+
+**Description:**
+
+A clean `dotnet build` of the solution produces **3,036 compiler warnings** across 15 production code projects. While these do not prevent compilation (0 errors), they indicate nullable reference type misuse, potential null dereferences at runtime, SQL injection risks, obsolete API usage, and code quality issues that should be addressed.
+
+QA test projects (`UNOPS.PAO.Business.Tests`, `UNOPS.PAO.IntegrationTests`, `UNOPS.PAO.Presentation.Tests`, `UNOPS.PAO.FastTests`) have been cleaned to **0 warnings** as part of this audit.
+
+**Warnings Per Project:**
+
+| Project | Count | % of Total |
+|---|---|---|
+| UNOPS.PAO.UNOPSBusiness | 1,482 | 48.8% |
+| UNOPS.PAO.Presentation | 394 | 13.0% |
+| UNOPS.PAO.Business | 282 | 9.3% |
+| UNOPS.PAO.Models | 268 | 8.8% |
+| UNOPS.PAO.Domain | 260 | 8.6% |
+| UNOPS.PAO.UNOPSIdentity | 80 | 2.6% |
+| UNOPS.PAO.UNOPSDomain | 64 | 2.1% |
+| UNOPS.PAO.DataAccess | 56 | 1.8% |
+| UNOPS.PAO.Server | 36 | 1.2% |
+| UNOPS.PAO.Utilities | 30 | 1.0% |
+| UNOPS.PAO.GoogleServices | 28 | 0.9% |
+| UNOPS.PAO.UNOPSPresentation | 28 | 0.9% |
+| UNOPS.PAO.UNOPSDataAccess | 24 | 0.8% |
+| UNOPS.PAO.MailSender | 2 | 0.1% |
+| UNOPS.Workflow.DataAccess | 2 | 0.1% |
+
+**Warnings By Category:**
+
+| Category | Warning Codes | Count | Description |
+|---|---|---|---|
+| **Nullable reference types** | CS8602, CS8603, CS8604, CS8618, CS8625, CS8600, CS8601, CS8619, CS8620, CS8629, CS8605, CS8613, CS8621, CS8714, CS8767, CS8765 | ~2,250 | Possible null dereference, null argument, null return, uninitialized non-nullable property, nullable mismatch |
+| **XML documentation** | CS1571, CS1573, CS1572, CS1570, CS1587 | ~330 | Duplicate param tags, missing param tags, param for nonexistent parameter |
+| **Async without await** | CS1998 | 164 | Async methods that never use `await` — will run synchronously |
+| **Member hiding** | CS0108 | 46 | Member hides inherited member without `new` keyword |
+| **Unused code** | CS0168, CS0219, CS0649, CS0169, CS0414 | 42 | Unused variables, unused fields, unassigned fields |
+| **Duplicate usings** | CS0105 | 22 | Same namespace imported twice |
+| **Obsolete APIs** | CS0618 | 18 | Use of deprecated/obsolete methods |
+| **Unreachable code** | CS0162 | 4 | Dead code after return/throw |
+| **Self-assignment** | CS1717 | 4 | Variable assigned to itself |
+| **SQL injection** | EF1002 | 4 | `ExecuteSqlRaw`/`ExecuteSqlRawAsync` with interpolated strings |
+| **Other** | CS0472, CS0693, CS0659, CS0109 | 8 | Always-true comparisons, type parameter shadowing, etc. |
+
+**Root Cause:** Nullable reference types (`<Nullable>enable</Nullable>`) is enabled across all projects but the codebase has not been fully annotated to be null-safe. Many methods return nullable values without `?` annotations, constructors leave non-nullable properties uninitialized, and null-forgiving operator (`!`) is not used where appropriate.
+
+**Proper Fix (prioritized):**
+
+**Priority 1 — Quick wins (eliminate ~200 warnings):**
+- Remove duplicate `using` directives (CS0105) — 22 warnings, automated via `dotnet format`
+- Remove unused variables/fields (CS0168, CS0219, CS0649, CS0169) — 42 warnings
+- Add `new` keyword for intentional member hiding (CS0108) — 46 warnings
+- Replace `ExecuteSqlRaw` with `ExecuteSql` (EF1002) — 4 warnings
+- Fix self-assignments (CS1717) — 4 warnings
+- Remove unreachable code (CS0162) — 4 warnings
+- Update obsolete API calls (CS0618) — 18 warnings
+
+**Priority 2 — XML docs (eliminate ~330 warnings):**
+- Fix or remove broken XML doc comments (CS1571, CS1573, CS1572, CS1570, CS1587)
+- Alternatively, suppress with `<NoWarn>` if XML docs are not published
+
+**Priority 3 — Async methods (eliminate ~164 warnings):**
+- Remove `async` keyword from methods that don't use `await`
+- Or add `await Task.CompletedTask` where the async signature is required by an interface
+
+**Priority 4 — Nullable annotations (eliminate ~2,250 warnings):**
+- Add `?` annotations to properties/parameters/returns that can be null
+- Add null checks or null-forgiving operator where values are guaranteed non-null
+- Consider setting `<Nullable>annotations</Nullable>` for projects where full enforcement is not yet feasible
+- Focus on the top offender first: `UNOPS.PAO.UNOPSBusiness` (1,482 of 2,250 nullable warnings)
+
+**Wrong Fix:** ❌ Setting `<Nullable>disable</Nullable>` in production projects to hide warnings. ❌ Adding blanket `<NoWarn>` for nullable codes in production projects.
+
+**Workaround:** QA test projects use `<Nullable>annotations</Nullable>` and `<NoWarn>CS1998;CS1571;CS1573;CS1572;CS1570;CS1587</NoWarn>` to eliminate noise in test code. This is standard practice for test projects but should not be applied to production code.
+
+**Repro Steps:**
+1. Run `dotnet clean` on the solution
+2. Run `dotnet build "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" --no-incremental`
+3. Observe ~3,036 warnings from production dependency projects (0 from test projects)
+
+**Expected:** Clean build with 0 warnings across all projects
+**Actual:** 3,036 warnings from 15 production code projects
+
+**Environment:** Dev (Windows 10, .NET 9.0, VS Code)
+
+**Impact:** No tests are directly blocked by these warnings, but they indicate potential runtime `NullReferenceException` risks in production code, mask legitimate new warnings during development, and degrade CI build signal quality.

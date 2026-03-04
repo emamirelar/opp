@@ -21,11 +21,15 @@ export class PartnerTreePage extends BasePage {
   }
 
   get treeContainer(): Locator {
-    return this.page.locator('app-partner-tree, [data-testid="partner-tree"], .partner-tree').first();
+    return this.page.locator(
+      'app-partner-tree, p-treetable, [data-testid="partner-tree"], .partner-tree, .p-treetable'
+    ).first();
   }
 
   get treeNodes(): Locator {
-    return this.page.locator('.p-treenode, [data-testid="tree-node"], app-partner-tree-item');
+    return this.page.locator(
+      '.p-treetable-tbody tr, .p-treenode, [data-testid="tree-node"], app-partner-tree-item, .p-treetable-row'
+    );
   }
 
   get expandableNodes(): Locator {

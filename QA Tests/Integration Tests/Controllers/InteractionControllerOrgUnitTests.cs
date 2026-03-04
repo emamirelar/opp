@@ -22,6 +22,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
     /// <summary>
     /// Integration tests for InteractionController OrgUnit filtering functionality
     /// </summary>
+    [Collection("Integration Tests")]
     public class InteractionControllerOrgUnitTests : IntegrationTestBase
     {
         private const string BaseUrl = "/api/interaction";

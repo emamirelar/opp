@@ -39,6 +39,22 @@ export class PartnerItemPage extends EntityDetailPage {
   }
   
   /**
+   * Get edit button - fallback to role when data-testid missing
+   */
+  override get editButton(): Locator {
+    return this.getByTestId('edit-partner-button')
+      .or(this.page.locator('app-partner-view, app-partner-detail').first().getByRole('button', { name: /edit/i }));
+  }
+
+  /**
+   * Get delete button - fallback to role when data-testid missing
+   */
+  override get deleteButton(): Locator {
+    return this.getByTestId('delete-partner-button')
+      .or(this.page.locator('app-partner-view, app-partner-detail').first().getByRole('button', { name: /delete/i }));
+  }
+
+  /**
    * Get partner category/type display
    * The app shows partner category (not "type") via data-testid="partner-category-group"
    */
@@ -76,25 +92,50 @@ export class PartnerItemPage extends EntityDetailPage {
   }
   
   /**
-   * Get documents section - uses actual data-testid="partner-documents-section"
+   * Get documents section - uses app-document, p-panel with Documents header, or data-testid fallback
    */
   get documentsSection(): Locator {
-    return this.getByTestId('partner-documents-section');
+    return this.getByTestId('partner-documents-section')
+      .or(this.page.locator('app-partner-view app-document').first())
+      .or(this.page.locator('app-partner-view p-panel').filter({ hasText: /doc|document/i }).first())
+      .or(this.page.locator('app-partner-view app-document-list').first());
   }
 
   /**
-   * Get upload document button
-   * Uses actual data-testid="upload-document-button" from partner-view
+   * Get upload document button - partner uses Google Drive (pi-google) or Upload Document label
    */
   get uploadDocumentButton(): Locator {
-    return this.getByTestId('upload-document-button');
+    return this.getByTestId('upload-document-button')
+      .or(this.page.locator('app-partner-view p-button').filter({ hasText: /upload|document/i }).first())
+      .or(this.page.locator('app-partner-view p-button[icon="pi pi-google"]').first())
+      .or(this.page.getByRole('button', { name: /upload/i }).first())
+      .or(this.page.locator('app-partner-view, app-partner-detail').first().locator('p-button').filter({ hasText: /upload/i }).first());
   }
   
   /**
    * Get links section
+   * Uses app-link-list, p-panel with "Links" header, or text containing "Links"
    */
   get linksSection(): Locator {
-    return this.getByTestId('partner-links-section');
+    return this.page
+      .locator('app-partner-view app-link-list, app-partner-view app-links')
+      .or(this.page.locator('app-partner-view p-panel, app-partner-view .p-panel').filter({ hasText: /links/i }))
+      .or(this.page.locator('app-partner-view').getByText(/links/i))
+      .or(this.getByTestId('partner-links-section'))
+      .first();
+  }
+
+  /**
+   * Get add link button (permission-gated)
+   */
+  get addLinkButton(): Locator {
+    return this.page
+      .getByRole('button', { name: /add.*link|new.*link/i })
+      .or(this.page.locator('app-partner-view, app-partner-detail').getByRole('button', { name: /add|link/i }))
+      .or(this.page.locator('app-partner-view p-button, app-partner-view button').filter({ hasText: /add/i }))
+      .or(this.page.locator('app-partner-view').locator('button:has(.pi-plus), p-button:has(.pi-plus)'))
+      .or(this.getByTestId('add-link-button'))
+      .first();
   }
   
   /**
@@ -166,7 +207,8 @@ export class PartnerItemPage extends EntityDetailPage {
   
   /**
    * Get partner information from the page
-   * Collects available partner data using actual DOM elements
+   * Collects available partner data using actual DOM elements.
+   * Partner view uses p-panel with "Partner Information" header and .partner-info-content body.
    */
   async getPartnerInfo(): Promise<{
     name: string | null;
@@ -175,12 +217,11 @@ export class PartnerItemPage extends EntityDetailPage {
     description: string | null;
     website: string | null;
   }> {
-    // Use short timeouts to avoid consuming the entire test timeout
-    // when elements are not yet rendered or only visible after "See More"
     const SHORT_TIMEOUT = 5000;
     
-    // Get partner title text from the panel header
-    const titleLocator = this.getByTestId('partner-title');
+    // Panel header or title: "Partner Information" or data-testid
+    const titleLocator = this.getByTestId('partner-title')
+      .or(this.page.locator('app-partner-view p-panel .unops-text-headline-medium, app-partner-view .p-panel-header').first());
     const titleText = await titleLocator.textContent({ timeout: SHORT_TIMEOUT }).catch(() => null);
     
     // Get status (may require "See More" to be clicked — often not visible)
@@ -196,18 +237,21 @@ export class PartnerItemPage extends EntityDetailPage {
       : null;
     
     // Get partner info from the panel body content
-    const infoContent = this.page.locator('.partner-info-content, .partner-information').first();
+    const infoContent = this.page.locator('app-partner-view .partner-info-content, app-partner-view .partner-information, app-partner-view p-panel').first();
     const bodyVisible = await infoContent.isVisible().catch(() => false);
     const bodyText = bodyVisible
       ? await infoContent.textContent({ timeout: SHORT_TIMEOUT }).catch(() => null)
       : null;
     
+    // name: use title (e.g. "Partner Information") or first meaningful body text
+    const name = titleText?.trim() || (bodyText && bodyText.length > 0 ? bodyText.substring(0, 100).trim() : null);
+    
     return {
-      name: titleText,
+      name: name || titleText,
       type: categoryText,
       status: statusText,
       description: bodyText,
-      website: null, // No dedicated website field in current template
+      website: null,
     };
   }
   

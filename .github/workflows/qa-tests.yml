@@ -480,83 +480,123 @@ jobs:
         retention-days: 14
 
   # ============================================================================
-  # INTEGRATION TESTS - Run manually or in staging environment
+  # INTEGRATION TESTS
   # ============================================================================
-  # Integration tests are commented out for PR checks because they require:
-  # - Database connection with seed data
-  # - Google Cloud credentials (for IAM auth tests)
-  # - AI service running (for AI integration tests)
-  # - Complex authorization setup
-  #
-  # To run integration tests:
-  # 1. Locally: Follow QA Tests/ENVIRONMENT_SETUP_GUIDE.md
-  # 2. Staging: Configure staging environment with required services
-  # 3. Manual: Run "dotnet test QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj"
+  # Enabled 2026-03-04 per Anusha's request to verify:
+  # 1. UNOPS.Workflow submodule checkout works with PAT in CI/CD
+  # 2. DEF-053 fix (UNOPSGeminiManager Google credentials)
+  # 
+  # This job uses continue-on-error so failures don't block PRs.
+  # Tests that fail will be visible in the test report for debugging.
   # ============================================================================
   
-  # integration-tests:
-  #   name: Integration Tests
-  #   runs-on: windows-latest
-  #   
-  #   services:
-  #     postgres:
-  #       image: postgres:15
-  #       env:
-  #         POSTGRES_DB: unops_pao_test
-  #         POSTGRES_USER: test_user
-  #         POSTGRES_PASSWORD: test_password
-  #       ports:
-  #         - 5432:5432
-  #       options: >-
-  #         --health-cmd pg_isready
-  #         --health-interval 10s
-  #         --health-timeout 5s
-  #         --health-retries 5
-  #   
-  #   steps:
-  #   - name: Checkout code
-  #     uses: actions/checkout@v4
-  #   
-  #   - name: Setup .NET
-  #     uses: actions/setup-dotnet@v4
-  #     with:
-  #       dotnet-version: ${{ env.DOTNET_VERSION }}
-  #   
-  #   - name: Restore dependencies
-  #     run: dotnet restore
-  #   
-  #   - name: Build
-  #     run: dotnet build --no-restore --configuration Release
-  #   
-  #   - name: Install EF Core tools
-  #     run: dotnet tool install --global dotnet-ef
-  #   
-  #   - name: Run Migrations
-  #     run: dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess/UNOPS.PAO.UNOPSDataAccess.csproj --startup-project UNOPS.PAO.Server/UNOPS.PAO.Server.csproj
-  #     env:
-  #       ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;'
-  #   
-  #   - name: Run Seed Scripts
-  #     run: |
-  #       $env:PGPASSWORD='test_password'
-  #       psql -h localhost -p 5432 -U test_user -d unops_pao_test -f "UNOPS.PAO.UNOPSDataAccess/Scripts/seed-entities.sql" || echo "Seed script execution attempted"
-  #       psql -h localhost -p 5432 -U test_user -d unops_pao_test -f "UNOPS.PAO.UNOPSDataAccess/Scripts/seed-entity-field-managers.sql" || echo "Seed script execution attempted"
-  #       psql -h localhost -p 5432 -U test_user -d unops_pao_test -f "UNOPS.PAO.UNOPSDataAccess/Scripts/seed-liaison-offices.sql" || echo "Seed script execution attempted"
-  #     shell: pwsh
-  #   
-  #   - name: Run Integration Tests
-  #     run: dotnet test "QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj" --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=integration-tests.trx"
-  #     env:
-  #       ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;'
-  #       ConnectionStrings__UseIamAuthentication: 'false'
-  #   
-  #   - name: Publish Test Results
-  #     uses: dorny/test-reporter@v1
-  #     if: always()
-  #     with:
-  #       name: Integration Tests Results
-  #       path: '**/TestResults/**/*.trx'
-  #       reporter: dotnet-trx
+  integration-tests:
+    name: Integration Tests (Verification)
+    needs: [smoke-tests]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: unops_pao_test
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        token: ${{ secrets.GH_PAT }}
+
+    - name: Ensure Workflow submodule initialized
+      run: git submodule update --init --recursive UNOPS.Workflow
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build
+      id: build-integration
+      continue-on-error: true
+      run: dotnet build --no-restore --configuration Release
+
+    - name: Install EF Core tools
+      if: steps.build-integration.outcome == 'success'
+      run: dotnet tool install --global dotnet-ef
+
+    - name: Apply EF Migrations
+      id: ef-migrations
+      if: steps.build-integration.outcome == 'success'
+      continue-on-error: true
+      run: |
+        dotnet ef database update \
+          --project UNOPS.PAO.UNOPSDataAccess/UNOPS.PAO.UNOPSDataAccess.csproj \
+          --startup-project UNOPS.PAO.Server/UNOPS.PAO.Server.csproj \
+          --connection "Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;Include Error Detail=true"
+      env:
+        ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;Include Error Detail=true'
+        ConnectionStrings__UseIamAuthentication: 'false'
+        IsUNOPSOverride: 'true'
+
+    - name: Report Build/Migration Status
+      if: always()
+      run: |
+        echo "### Integration Tests Build Status" >> $GITHUB_STEP_SUMMARY
+        echo "- Build: ${{ steps.build-integration.outcome }}" >> $GITHUB_STEP_SUMMARY
+        echo "- EF Migrations: ${{ steps.ef-migrations.outcome }}" >> $GITHUB_STEP_SUMMARY
+        if [[ "${{ steps.build-integration.outcome }}" != "success" ]]; then
+          echo "::warning::Integration test BUILD failed — this may indicate UNOPS.Workflow submodule checkout issue (needs PAT fix)"
+        fi
+    
+    - name: Run Integration Tests
+      id: run-integration-tests
+      if: steps.build-integration.outcome == 'success'
+      continue-on-error: true
+      run: |
+        mkdir -p "${{ github.workspace }}/TestResults"
+        dotnet test "QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj" \
+          --no-build \
+          --configuration Release \
+          --verbosity normal \
+          --logger "trx;LogFileName=integration-tests.trx" \
+          --results-directory "${{ github.workspace }}/TestResults"
+      env:
+        ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;Include Error Detail=true'
+        ConnectionStrings__UseIamAuthentication: 'false'
+        IsUNOPSOverride: 'true'
+        DisableExternalCalls: 'true'
+    
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Integration Tests Results
+        path: '**/TestResults/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: false
+
+    - name: Upload Test Results Artifact
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: integration-tests-results
+        path: |
+          TestResults
+        if-no-files-found: warn
 
   # python-tests:
   #   name: Python AI Tests

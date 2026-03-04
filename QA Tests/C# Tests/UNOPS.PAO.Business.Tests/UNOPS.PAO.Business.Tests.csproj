@@ -3,8 +3,9 @@
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <Nullable>annotations</Nullable>
     <IsPackable>false</IsPackable>
+    <NoWarn>CS1998;CS1571;CS1573;CS1572;CS1570;CS1587</NoWarn>
   </PropertyGroup>
 
   <!-- xUnit runner configuration for parallel test execution -->

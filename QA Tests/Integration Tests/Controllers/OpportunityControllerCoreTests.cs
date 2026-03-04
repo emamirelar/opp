@@ -45,7 +45,7 @@ public class OpportunityControllerCoreTests
     // POSITIVE TESTS (3)
     // ==========================================
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-POS-001")]
     public async Task GetAll_AuthenticatedUser_Returns200()
     {
@@ -78,7 +78,7 @@ public class OpportunityControllerCoreTests
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-POS-003")]
     public async Task Search_WithValidQuery_Returns200()
     {
@@ -93,7 +93,7 @@ public class OpportunityControllerCoreTests
     // NEGATIVE TESTS (9)
     // ==========================================
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-NEG-001")]
     public async Task GetById_NonexistentId_Returns404()
     {
@@ -102,7 +102,7 @@ public class OpportunityControllerCoreTests
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-NEG-002")]
     public async Task Create_EmptyBody_Returns400()
     {
@@ -112,7 +112,7 @@ public class OpportunityControllerCoreTests
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-NEG-003")]
     public async Task Update_NonexistentId_Returns404()
     {
@@ -123,7 +123,7 @@ public class OpportunityControllerCoreTests
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-NEG-004")]
     public async Task Delete_NonexistentId_Returns404()
     {
@@ -161,7 +161,7 @@ public class OpportunityControllerCoreTests
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-NEG-008")]
     public async Task Update_InvalidBody_IdMismatch_Returns400()
     {
@@ -172,7 +172,7 @@ public class OpportunityControllerCoreTests
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-NEG-009")]
     public async Task Search_EmptyQuery_Returns400()
     {
@@ -185,7 +185,7 @@ public class OpportunityControllerCoreTests
     // EDGE / BOUNDARY TESTS (9)
     // ==========================================
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-EDGE-001")]
     public async Task GetAll_NoData_Returns200WithEmptyOrPopulatedList()
     {
@@ -198,7 +198,7 @@ public class OpportunityControllerCoreTests
         json.RootElement.TryGetProperty("totalCount", out _).Should().BeTrue();
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-EDGE-002")]
     public async Task GetById_IdZero_Returns404()
     {
@@ -206,7 +206,7 @@ public class OpportunityControllerCoreTests
         response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-EDGE-003")]
     public async Task GetById_NegativeId_Returns404OrBadRequest()
     {
@@ -214,7 +214,7 @@ public class OpportunityControllerCoreTests
         response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-EDGE-004")]
     public async Task GetById_VeryLargeId_Returns404()
     {
@@ -245,7 +245,7 @@ public class OpportunityControllerCoreTests
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-EDGE-007")]
     public async Task GetAll_PaginationPageZero_HandledGracefully()
     {
@@ -254,7 +254,7 @@ public class OpportunityControllerCoreTests
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-EDGE-008")]
     public async Task GetAll_VeryLargePageSize_HandledGracefully()
     {
@@ -288,7 +288,7 @@ public class OpportunityControllerCoreTests
     // FUNCTIONAL TESTS (9)
     // ==========================================
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-FUNC-001")]
     public async Task GetAll_ReturnsCorrectResponseShape()
     {
@@ -327,7 +327,7 @@ public class OpportunityControllerCoreTests
         opp.TryGetProperty("name", out _).Should().BeTrue();
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-FUNC-003")]
     public async Task GetSearchFields_ReturnsFieldList()
     {
@@ -339,7 +339,7 @@ public class OpportunityControllerCoreTests
         json.RootElement.ValueKind.Should().Be(JsonValueKind.Array);
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-FUNC-004")]
     public async Task Search_ReturnsFilteredResults()
     {
@@ -352,7 +352,7 @@ public class OpportunityControllerCoreTests
         json.RootElement.TryGetProperty("totalCount", out _).Should().BeTrue();
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-FUNC-005")]
     public async Task GetAll_PaginationMetadataCorrect()
     {
@@ -481,7 +481,7 @@ public class OpportunityControllerCoreTests
         }
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-INT-002")]
     public async Task GetAll_ResponseContentType_IsApplicationJson()
     {
@@ -491,7 +491,7 @@ public class OpportunityControllerCoreTests
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-INT-003")]
     public async Task GetAll_ListEndpoint_ReturnsArray()
     {
@@ -559,7 +559,7 @@ public class OpportunityControllerCoreTests
         getAfterDelete.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-INT-006")]
     public async Task MultipleCreates_ThenListAll()
     {
@@ -578,7 +578,7 @@ public class OpportunityControllerCoreTests
         total.GetInt32().Should().BeGreaterThanOrEqualTo(0);
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-INT-007")]
     public async Task ConcurrentGets_NoConflict()
     {
@@ -591,7 +591,7 @@ public class OpportunityControllerCoreTests
             r.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-INT-008")]
     public async Task GetAll_VeryLargePageSize_HandlesResponse()
     {
@@ -604,7 +604,7 @@ public class OpportunityControllerCoreTests
         json.RootElement.TryGetProperty("records", out _).Should().BeTrue();
     }
 
-    [Fact(Skip = "DEF-053: Server returns 500 — UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("TestId", "TC-OPP-INT-009")]
     public async Task Search_EmptyQuery_ErrorFollowsProblemDetailsFormat()
     {

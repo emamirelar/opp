@@ -4,19 +4,19 @@ using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.UNOPSDomain.Entities;
 
-namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
+namespace UNOPS.PAO.Business.Tests.Specifications
 {
-    public class TestPartnerSpecification : BaseSpecification<Partner>
+    public class BusinessTestPartnerSpecification : BaseSpecification<Partner>
     {
-        public TestPartnerSpecification(bool matchAll = true) : base(matchAll ? (p => true) : (p => false))
+        public BusinessTestPartnerSpecification(bool matchAll = true) : base(matchAll ? (p => true) : (p => false))
         {
         }
         
-        public TestPartnerSpecification(string status) : base(p => p.Status.ToString() == status)
+        public BusinessTestPartnerSpecification(string status) : base(p => p.Status.ToString() == status)
         {
         }
         
-        public TestPartnerSpecification(Expression<Func<Partner, bool>> criteria) : base(criteria)
+        public BusinessTestPartnerSpecification(Expression<Func<Partner, bool>> criteria) : base(criteria)
         {
         }
     }

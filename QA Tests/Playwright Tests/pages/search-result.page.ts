@@ -66,12 +66,15 @@ export class SearchResultPage extends BasePage {
 
   /**
    * Get global search trigger (topbar)
+   * PrimeNG/topbar: app-global-search-bar, .global-search-container, or search input
    */
   get globalSearchTrigger(): Locator {
     return this.page
-      .locator(
-        '[data-testid="global-search"], input[placeholder*="Search" i], .search-bar, app-global-search-bar'
-      )
+      .locator('app-topbar input[type="search"], app-topbar input[type="text"]')
+      .or(this.page.locator('app-topbar input[placeholder*="Search" i], app-topbar input[placeholder*="earch"]'))
+      .or(this.page.locator('app-global-search-bar, .global-search-container, .global-search input'))
+      .or(this.page.locator('app-global-search-bar input, app-global-search-bar button'))
+      .or(this.page.locator('app-topbar').locator('input[placeholder*="earch"], input[type="search"]'))
       .first();
   }
 

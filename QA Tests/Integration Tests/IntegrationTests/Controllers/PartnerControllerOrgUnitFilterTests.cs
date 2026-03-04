@@ -41,7 +41,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
         
         private int GetNextTestId() => Interlocked.Increment(ref _testIdCounter);
 
-        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
+        [Fact]
         public async Task GetAll_WithOrgUnitId_FiltersPartnersByOrgUnit()
         {
             // Arrange
@@ -62,7 +62,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
                                                     p.Name == "Indirect Partner"); // Indirect partner has contact relation
         }
 
-        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
+        [Fact]
         public async Task GetAll_WithoutOrgUnitId_ReturnsAllAccessiblePartners()
         {
             // Arrange
@@ -81,7 +81,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             result.Records.Should().HaveCountGreaterThan(0);
         }
 
-        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
+        [Fact]
         public async Task GetAll_WithAdvancedSearchAndOrgUnitId_CombinesFilters()
         {
             // Arrange
@@ -103,7 +103,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
                                                     ((p.GetPrimaryOrganizationUnit() != null && p.GetPrimaryOrganizationUnit().Id == orgUnitId) || p.Name == "Indirect Partner"));
         }
 
-        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
+        [Fact]
         public async Task GetAll_WithTextSearchAndOrgUnitId_CombinesFilters()
         {
             // Arrange
@@ -123,7 +123,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             result.Records.First().Name.Should().Be("Direct Partner");
         }
 
-        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
+        [Fact]
         public async Task GetAll_WithOrgUnitHierarchy_IncludesChildOrgUnits()
         {
             // Arrange
@@ -145,7 +145,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             result.Records.Should().Contain(p => p.GetPrimaryOrganizationUnit() != null && p.GetPrimaryOrganizationUnit().Id == childOrgUnitId);
         }
 
-        [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, all authenticated endpoints return 500")]
+        [Fact]
         public async Task GetAll_WithIndirectRelations_IncludesPartnersViaContacts()
         {
             // Arrange

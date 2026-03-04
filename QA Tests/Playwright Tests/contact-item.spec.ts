@@ -163,7 +163,7 @@ test.describe('Contact Detail Page', () => {
     expect(typeof isVisible).toBe('boolean');
     
     if (isVisible) {
-      await contactItemPage.assertElementVisible('edit-contact-button');
+      await expect(contactItemPage.editButton).toBeVisible();
     }
   });
   
@@ -178,7 +178,7 @@ test.describe('Contact Detail Page', () => {
     expect(typeof isVisible).toBe('boolean');
     
     if (isVisible) {
-      await contactItemPage.assertElementVisible('delete-contact-button');
+      await expect(contactItemPage.deleteButton).toBeVisible();
     }
   });
   

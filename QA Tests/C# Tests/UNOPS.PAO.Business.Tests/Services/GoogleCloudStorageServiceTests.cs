@@ -41,9 +41,7 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task UploadFileAsync_WithValidContent_ReturnsFileUrl()
         {
             // Arrange
-            var fileName = "test-document.pdf";
             var content = Encoding.UTF8.GetBytes("Test file content");
-            var contentType = "application/pdf";
 
             // Act & Assert
             // Note: Full implementation requires mocking Google Cloud Storage client
@@ -56,9 +54,7 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task UploadFileAsync_WithEmptyContent_ThrowsArgumentException()
         {
             // Arrange
-            var fileName = "empty-file.pdf";
             var content = Array.Empty<byte>();
-            var contentType = "application/pdf";
 
             // Act & Assert
             // Service should throw ArgumentException for empty content
@@ -69,10 +65,8 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task UploadFileAsync_WithLargeFile_CompletesWithinThreshold()
         {
             // Arrange
-            var fileName = "large-file.pdf";
             var content = new byte[10 * 1024 * 1024]; // 10MB
             new Random().NextBytes(content);
-            var contentType = "application/pdf";
 
             // Act
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -90,7 +84,6 @@ namespace UNOPS.PAO.Business.Tests.Services
             // Arrange
             var fileName = "test file (1) & special.pdf";
             var content = Encoding.UTF8.GetBytes("Test content");
-            var contentType = "application/pdf";
 
             // Act
             var encodedName = Uri.EscapeDataString(fileName);
@@ -123,7 +116,6 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task DownloadFileAsync_ExistingFile_ReturnsContent()
         {
             // Arrange
-            var filePath = "test/existing-file.pdf";
             var expectedContent = Encoding.UTF8.GetBytes("File content");
 
             // Act & Assert
@@ -199,7 +191,6 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task UploadFileAsync_NetworkTimeout_ThrowsTimeoutException()
         {
             // Arrange
-            var fileName = "timeout-test.pdf";
             var content = Encoding.UTF8.GetBytes("Content");
 
             // Act & Assert
@@ -259,31 +250,22 @@ namespace UNOPS.PAO.Business.Tests.Services
         [Fact]
         public async Task DeleteFileAsync_ExistingFile_DeletesSuccessfully()
         {
-            // Arrange
-            var filePath = "test/to-delete.pdf";
-
-            // Act & Assert
-            Assert.NotEmpty(filePath);
+            // Arrange & Assert
+            Assert.NotEmpty("test/to-delete.pdf");
         }
 
         [Fact]
         public async Task DeleteFileAsync_NonExistentFile_CompletesWithoutError()
         {
-            // Arrange
-            var filePath = "test/nonexistent.pdf";
-
-            // Act & Assert
+            // Arrange & Assert
             // Idempotent delete should not throw
-            Assert.NotEmpty(filePath);
+            Assert.NotEmpty("test/nonexistent.pdf");
         }
 
         [Fact]
         public async Task GetFileMetadataAsync_ExistingFile_ReturnsMetadata()
         {
-            // Arrange
-            var filePath = "test/file-with-metadata.pdf";
-
-            // Act
+            // Arrange & Act
             var metadata = new
             {
                 Size = 1024L,
@@ -339,9 +321,6 @@ namespace UNOPS.PAO.Business.Tests.Services
         [Fact]
         public async Task FileExistsAsync_ExistingFile_ReturnsTrue()
         {
-            // Arrange
-            var filePath = "test/exists.pdf";
-
             // Act
             var exists = true; // Simulated
 
@@ -352,9 +331,6 @@ namespace UNOPS.PAO.Business.Tests.Services
         [Fact]
         public async Task FileExistsAsync_NonExistentFile_ReturnsFalse()
         {
-            // Arrange
-            var filePath = "test/nonexistent.pdf";
-
             // Act
             var exists = false; // Simulated
 
@@ -366,7 +342,6 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task GetFileSizeAsync_ExistingFile_ReturnsCorrectSize()
         {
             // Arrange
-            var filePath = "test/sized-file.pdf";
             var expectedSize = 1024L;
 
             // Act

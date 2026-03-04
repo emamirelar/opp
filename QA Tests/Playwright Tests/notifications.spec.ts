@@ -355,14 +355,17 @@ test.describe('Notifications - API Integration', () => {
     await waitForPermissions(page);
     await waitForPageReady(page);
 
-    const bellButton = page.locator('.notifications-container .notifications-button');
-    await waitForVisible(bellButton, 10000);
+    const bellButton = page.locator('.notifications-container .notifications-button, .notifications-container button, [class*="notification"] button').first();
+    const bellVisible = await bellButton.isVisible({ timeout: 10000 }).catch(() => false);
+    expect(bellVisible, 'Notification bell should be visible').toBe(true);
 
-    const notificationsRequest = page.waitForRequest((req) =>
-      req.url().includes('/api/notifications') && req.method() === 'GET'
-    );
-    await bellButton.click();
-    await notificationsRequest;
+    const [request] = await Promise.all([
+      page.waitForRequest(
+        (req) => req.url().includes('/api/notifications') && req.method() === 'GET',
+        { timeout: 15000 }
+      ),
+      bellButton.click(),
+    ]);
 
     expect(apiCalled).toBe(true);
   });

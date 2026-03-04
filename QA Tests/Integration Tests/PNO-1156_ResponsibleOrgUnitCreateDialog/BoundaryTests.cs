@@ -4,6 +4,7 @@
  */
 
 using FluentAssertions;
+using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Opportunities;
 using Xunit;
 

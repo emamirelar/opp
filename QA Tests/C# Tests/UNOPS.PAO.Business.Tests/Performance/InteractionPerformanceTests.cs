@@ -568,7 +568,7 @@ public class InteractionPerformanceTests : PerformanceTestBase
     {
         if (!TestEnvironment.UsePostgreSQL || !_createdInteractionIds.Any()) return;
         var ids = string.Join(",", _createdInteractionIds);
-        await Context.Database.ExecuteSqlRawAsync(
+        await Context.Database.ExecuteSqlAsync(
             $"DELETE FROM public.\"Interactions\" WHERE \"Id\" IN ({ids})");
     }
 

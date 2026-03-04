@@ -81,6 +81,17 @@ test.describe('Translation Workbench - Feature Content', () => {
     await authenticateWithRealBackend(page, '/admin');
     await waitForPageReady(page);
 
+    // Expand admin submenu if needed (sidebar uses nested app-menu)
+    const adminParent = page
+      .locator('app-sidebar, .layout-sidebar')
+      .getByText(/admin/i)
+      .first();
+    const adminVisible = await adminParent.isVisible({ timeout: 3000 }).catch(() => false);
+    if (adminVisible) {
+      await adminParent.click();
+      await page.waitForTimeout(400); // Wait for submenu animation
+    }
+
     const twPage = new TranslationWorkbenchPage(page);
     const linkVisible = await twPage.sidebarTranslationLink.isVisible({ timeout: 5000 }).catch(() => false);
 

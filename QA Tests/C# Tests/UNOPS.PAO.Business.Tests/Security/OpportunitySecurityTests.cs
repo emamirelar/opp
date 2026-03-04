@@ -140,7 +140,6 @@ namespace UNOPS.PAO.Business.Tests.Security
         {
             // Arrange
             var userRoles = new[] { "GENUSER" };
-            var permission = "CanEditOpportunity";
 
             // Act
             var canEdit = userRoles.Contains("PartnerUser") || userRoles.Contains("Administrator");

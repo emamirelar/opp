@@ -53,10 +53,11 @@ export class OpportunityItemPage extends EntityDetailPage {
   
   /**
    * Get opportunity title field
-   * Uses actual data-testid="opportunity-title" (h1 element in header)
+   * Uses actual data-testid="opportunity-title" (h1 element in header) or app-opportunity-view fallback
    */
   get opportunityTitle(): Locator {
-    return this.getByTestId('opportunity-title');
+    return this.getByTestId('opportunity-title')
+      .or(this.page.locator('app-opportunity-view h1, app-opportunity-view .opportunity-title').first());
   }
   
   /**
@@ -77,10 +78,13 @@ export class OpportunityItemPage extends EntityDetailPage {
   
   /**
    * Get opportunity metadata row
-   * Uses actual data-testid="opportunity-metadata"
+   * Uses actual data-testid="opportunity-metadata" or PrimeNG panels/fieldsets with detail fields
    */
   get opportunityMetadata(): Locator {
-    return this.getByTestId('opportunity-metadata');
+    return this.getByTestId('opportunity-metadata')
+      .or(this.page.locator('app-opportunity-view .metadata, app-opportunity-view [class*="metadata"]').first())
+      .or(this.page.locator('app-opportunity-view p-panel, app-opportunity-view p-fieldset').first())
+      .or(this.page.locator('app-opportunity-view #section-overview, app-opportunity-view #section-what').first());
   }
   
   /**
@@ -88,7 +92,8 @@ export class OpportunityItemPage extends EntityDetailPage {
    * Uses actual data-testid="opportunity-id"
    */
   get opportunityId(): Locator {
-    return this.getByTestId('opportunity-id');
+    return this.getByTestId('opportunity-id')
+      .or(this.page.locator('app-opportunity-view').first());
   }
   
   /**
@@ -96,7 +101,8 @@ export class OpportunityItemPage extends EntityDetailPage {
    * Uses actual data-testid="opportunity-manager"
    */
   get opportunityManager(): Locator {
-    return this.getByTestId('opportunity-manager');
+    return this.getByTestId('opportunity-manager')
+      .or(this.page.locator('app-opportunity-view').first());
   }
   
   /**
@@ -104,7 +110,8 @@ export class OpportunityItemPage extends EntityDetailPage {
    * Uses actual data-testid="opportunity-orgunit"
    */
   get opportunityOrgUnit(): Locator {
-    return this.getByTestId('opportunity-orgunit');
+    return this.getByTestId('opportunity-orgunit')
+      .or(this.page.locator('app-opportunity-view').first());
   }
   
   /**
@@ -112,7 +119,8 @@ export class OpportunityItemPage extends EntityDetailPage {
    * Uses actual data-testid="opportunity-target-signing-date"
    */
   get opportunityTargetSigningDate(): Locator {
-    return this.getByTestId('opportunity-target-signing-date');
+    return this.getByTestId('opportunity-target-signing-date')
+      .or(this.page.locator('app-opportunity-view').first());
   }
   
   // ============================================
@@ -229,10 +237,10 @@ export class OpportunityItemPage extends EntityDetailPage {
 
   /**
    * Get collaboration/comments section
-   * No data-testid. Uses section ID #section-collaboration.
+   * No data-testid. Uses section ID #section-collaboration, app-opportunity-collaboration, or app-comment.
    */
   get collaborationSection(): Locator {
-    return this.page.locator('#section-collaboration').first();
+    return this.page.locator('#section-collaboration, app-opportunity-collaboration, app-comment, [class*="comment"], [class*="collaboration"]').first();
   }
 
   /**

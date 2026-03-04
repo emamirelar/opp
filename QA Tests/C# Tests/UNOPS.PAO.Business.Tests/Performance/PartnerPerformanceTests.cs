@@ -41,7 +41,7 @@ public class PartnerPerformanceTests : PerformanceTestBase
     private readonly IPartnerManager _manager;
     private readonly Stopwatch _stopwatch;
     private readonly string _testMarker = $"PerfPartner_{Guid.NewGuid():N}";
-    private const int TestUserId = 1;
+    private new const int TestUserId = 1;
 
     // ── SLA thresholds (TODO: confirm with PERFORMANCE_AND_LOAD_TESTING_QUESTIONNAIRE.md Section A1) ──
     private const int MaxSingleOperationMs = 500;

@@ -169,7 +169,6 @@ namespace UNOPS.PAO.Business.Tests.Opportunity
         public void WHERE_POS_003_RegionSelection_IncludesCountries()
         {
             // Arrange
-            var region = "Sub-Saharan Africa";
             var countriesInRegion = new[] { 
                 new { Name = "Kenya", IsExcluded = false },
                 new { Name = "Nigeria", IsExcluded = false },

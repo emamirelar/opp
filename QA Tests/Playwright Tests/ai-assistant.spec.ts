@@ -54,8 +54,8 @@ test.describe('AI Assistant - Chat Interface', () => {
   test('AI-003: AI chat container exists when panel is open', async ({ page }) => {
     await authenticateWithRealBackend(page, '/');
 
-    // Look for the chat container or welcome screen
-    const chatContainer = page.locator('.ai-chat-container, #chatContainer, app-ai-assistant-panel').first();
+    // Look for the chat container, welcome screen, or AI panel/assistant component
+    const chatContainer = page.locator('.ai-chat-container, #chatContainer, app-ai-assistant-panel, app-ai-panel').first();
     const welcomeScreen = page.locator('.ai-welcome-screen, .ai-new-chat-screen').first();
 
     const chatContainerOrWelcome = chatContainer.or(welcomeScreen);
@@ -109,7 +109,7 @@ test.describe('AI Assistant - Opportunity Integration', () => {
     await authenticateWithRealBackend(page, '/partnerships/opportunities/1');
 
     // At minimum, the opportunity page should load
-    const header = page.locator('[data-testid="opportunity-detail-header"]').first();
+    const header = page.locator('app-opportunity-view').first();
     await expect(header).toBeVisible({ timeout: 10000 });
 
     // AI integration: page loads successfully; AI buttons may or may not be present
@@ -118,7 +118,7 @@ test.describe('AI Assistant - Opportunity Integration', () => {
   test('AI-007: AI panel accessible from opportunity page', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/opportunities/1');
 
-    const header = page.locator('[data-testid="opportunity-detail-header"]').first();
+    const header = page.locator('app-opportunity-view').first();
     await expect(header).toBeVisible({ timeout: 10000 });
 
     // Header visibility confirms opportunity page loads successfully

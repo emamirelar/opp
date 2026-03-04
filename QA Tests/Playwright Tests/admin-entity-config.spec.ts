@@ -86,7 +86,7 @@ test.describe('Entity Config - Fields Management', () => {
 
   test('EC-006: Available fields section exists', async ({ page }) => {
     const entityPage = new EntityManagerPage(page);
-    const targetSection = entityPage.availableFieldsSection.or(entityPage.availableFieldsText);
+    const targetSection = entityPage.availableFieldsText.or(entityPage.availableFieldsSection);
     await entityPage.ensureFirstEntitySelected(targetSection);
 
     await expect(targetSection).toBeVisible({ timeout: 15000 });
@@ -94,7 +94,7 @@ test.describe('Entity Config - Fields Management', () => {
 
   test('EC-007: List view fields section exists', async ({ page }) => {
     const entityPage = new EntityManagerPage(page);
-    const targetSection = entityPage.listViewFieldsSection.or(entityPage.listViewText);
+    const targetSection = entityPage.listViewText.or(entityPage.listViewFieldsSection);
     await entityPage.ensureFirstEntitySelected(targetSection);
 
     await expect(targetSection).toBeVisible({ timeout: 15000 });
@@ -104,7 +104,7 @@ test.describe('Entity Config - Fields Management', () => {
     const entityPage = new EntityManagerPage(page);
 
     await expect(
-      entityPage.addFieldButton.or(entityPage.addFieldText)
+      entityPage.addFieldText.or(entityPage.addFieldButton)
     ).toBeVisible({ timeout: 10000 });
   });
 
@@ -112,13 +112,13 @@ test.describe('Entity Config - Fields Management', () => {
     const entityPage = new EntityManagerPage(page);
 
     await expect(
-      entityPage.entitySettingsButton.or(entityPage.entitySettingsText)
+      entityPage.entitySettingsText.or(entityPage.entitySettingsButton)
     ).toBeVisible({ timeout: 10000 });
   });
 
   test('EC-010: Card preview section exists', async ({ page }) => {
     const entityPage = new EntityManagerPage(page);
-    const targetSection = entityPage.cardPreviewSection.or(entityPage.cardPreviewText);
+    const targetSection = entityPage.cardPreviewText.or(entityPage.cardPreviewSection);
     await entityPage.ensureFirstEntitySelected(targetSection);
 
     await expect(targetSection).toBeVisible({ timeout: 15000 });

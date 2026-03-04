@@ -694,7 +694,7 @@ public class NegativeTests
 
     [Fact]
     [Trait("DEF012", "NEG_058")]
-    public void NEG_058_ConcurrentMaps_Safe()
+    public async Task NEG_058_ConcurrentMaps_Safe()
     {
         var tasks = Enumerable.Range(0, 20).Select(i => Task.Run(() =>
         {
@@ -702,8 +702,8 @@ public class NegativeTests
             _mapper.Map(new UpdateOpportunityRequest { Id = 10, Name = $"Name{i}" }, dest);
             return dest.Name;
         })).ToArray();
-        Task.WaitAll(tasks);
-        tasks.Select(t => t.Result).Should().OnlyHaveUniqueItems();
+        var results = await Task.WhenAll(tasks);
+        results.Should().OnlyHaveUniqueItems();
     }
 
     [Fact]

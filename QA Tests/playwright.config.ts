@@ -50,7 +50,7 @@ export default defineConfig({
   // Set PLAYWRIGHT_WORKERS env var to override (e.g., PLAYWRIGHT_WORKERS=4
   // on machines with ≥32 GB RAM for faster runs).
   // =========================================================================
-  workers: IS_CI ? 1 : parseInt(process.env.PLAYWRIGHT_WORKERS || '2', 10),
+  workers: IS_CI ? 1 : parseInt(process.env.PLAYWRIGHT_WORKERS || '4', 10),
 
   // Allow test files from different projects to run in parallel across workers.
   fullyParallel: true,
@@ -64,14 +64,14 @@ export default defineConfig({
   // Previous value of 30 caused ~275 chromium tests to "Did Not Run" because
   // 30 failures were hit across 4 workers before the suite could complete.
   // =========================================================================
-  maxFailures: IS_CI ? 100 : 100,
+  maxFailures: IS_CI ? 100 : 0,
 
   // Global timeout per test (30 seconds — generous for Angular app load times)
   timeout: 30_000,
 
   // Timeout for each assertion
   expect: {
-    timeout: 10_000,
+    timeout: 5_000,
   },
 
   // Test reporter: line reporter for CI (compact), html for local (detailed)
@@ -100,8 +100,8 @@ export default defineConfig({
 
     // Capture artifacts on failure
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
-    trace: 'on-first-retry',
+    video: 'off',
+    trace: 'off',
   },
 
   // Test projects — all three browser engines + real-API project.

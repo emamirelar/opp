@@ -11,8 +11,12 @@ export class ResponsiveTabsPage {
   constructor(page: Page) {
     this.page = page;
     this.desktopTabsContainer = page.locator('app-responsive-tabs .desktop-tabs, app-responsive-tabs [role="tablist"]');
-    this.mobileDropdownContainer = page.locator('app-responsive-tabs .mobile-dropdown, app-responsive-tabs p-select, app-responsive-tabs p-dropdown');
-    this.mobileDropdown = page.locator('app-responsive-tabs p-select, app-responsive-tabs p-dropdown');
+    this.mobileDropdownContainer = page.locator(
+      'app-responsive-tabs .mobile-dropdown, app-responsive-tabs p-select, app-responsive-tabs p-dropdown, app-responsive-tabs [role="combobox"]'
+    );
+    this.mobileDropdown = page.locator(
+      'app-responsive-tabs p-select, app-responsive-tabs p-dropdown, app-responsive-tabs [role="combobox"], app-responsive-tabs .mobile-dropdown'
+    );
     this.tabButtons = page.locator('app-responsive-tabs [role="tab"]');
     this.activeTab = page.locator('app-responsive-tabs [role="tab"][aria-selected="true"]');
   }

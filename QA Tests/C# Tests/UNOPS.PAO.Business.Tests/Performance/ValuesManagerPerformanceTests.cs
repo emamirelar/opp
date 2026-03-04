@@ -165,7 +165,7 @@ public class ValuesManagerPerformanceTests : PerformanceTestBase
             $"GetOrganizationUnits took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-013/DEF-014: LiaisonOffice and FocalPoint managers not registered in IManagerWrapper")]
+    [Fact]
     public async Task GetLiaisonOffices_SimpleLookup_CompletesWithinThreshold()
     {
         await SeedLiaisonOfficesAsync(30);
@@ -370,7 +370,7 @@ public class ValuesManagerPerformanceTests : PerformanceTestBase
 
     #region Benchmark Report
 
-    [Fact(Skip = "DEF-013/DEF-014: LiaisonOffice and FocalPoint managers not registered in IManagerWrapper")]
+    [Fact]
     public async Task Benchmark_AllOperations_ReportTimings()
     {
         await SeedReferenceDataAsync();
@@ -566,7 +566,7 @@ public class ValuesManagerPerformanceTests : PerformanceTestBase
         await SeedPAOUsersWithProfilesAsync(50);
     }
 
-    private (T Result, long ElapsedMs) Measure<T>(Func<T> fn)
+    private new (T Result, long ElapsedMs) Measure<T>(Func<T> fn)
     {
         _stopwatch.Restart();
         var result = fn();

@@ -1119,7 +1119,6 @@ namespace UNOPS.PAO.Business.Tests.Core
         public void Partner_Create_ForeignKeyViolation_ThrowsException()
         {
             // Arrange
-            var parentId = 99999;
             var parentExists = false;
 
             // Act & Assert
@@ -1134,7 +1133,6 @@ namespace UNOPS.PAO.Business.Tests.Core
         public void Contact_Create_InvalidPartner_ThrowsException()
         {
             // Arrange
-            var partnerId = 99999;
             var partnerExists = false;
 
             // Act & Assert
@@ -1149,7 +1147,6 @@ namespace UNOPS.PAO.Business.Tests.Core
         public void Opportunity_Create_InvalidContact_ThrowsException()
         {
             // Arrange
-            var contactId = 99999;
             var contactExists = false;
 
             // Act & Assert

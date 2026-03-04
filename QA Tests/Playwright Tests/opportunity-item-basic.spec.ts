@@ -261,10 +261,14 @@ test.describe('Opportunity Detail Page - Phase 1A Basic Tests', () => {
     await page.waitForLoadState('networkidle').catch(() => {});
     await waitForLoadingToComplete(page);
     const loadingSpinner = page.locator(
-      '.p-progressspinner, .pi-spin, .pi-spinner, .animate-pulse.skeleton, [data-testid="loading"]'
+      'p-progressspinner, p-progressSpinner, .p-progress-spinner, p-skeleton, .p-skeleton, .pi-spin, .pi-spinner, .animate-pulse, [class*="loading"], .spinner, .bg-black.bg-opacity-50'
     );
-    const isLoading = await loadingSpinner.first().isVisible().catch(() => false);
-    expect(isLoading).toBe(false);
+    const spinnerCount = await loadingSpinner.count();
+    let spinnerVisible = false;
+    if (spinnerCount > 0) {
+      spinnerVisible = await loadingSpinner.first().isVisible({ timeout: 1000 }).catch(() => false);
+    }
+    expect(spinnerVisible).toBe(false);
   });
 
   /**

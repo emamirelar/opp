@@ -53,7 +53,7 @@ public class DocumentControllerUNOPSTests : IntegrationTestBase
 
     #region Positive Tests
 
-    [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, blocking server startup for authenticated requests")]
+    [Fact]
     [Trait("Category", "Positive")]
     [Trait("TestId", "TC-DUNOPS-P01")]
     public async Task GetDocumentsByEntity_ValidPartner_ReturnsListOrEmpty()
@@ -63,7 +63,7 @@ public class DocumentControllerUNOPSTests : IntegrationTestBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NoContent);
     }
 
-    [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, blocking server startup for authenticated requests")]
+    [Fact]
     [Trait("Category", "Positive")]
     [Trait("TestId", "TC-DUNOPS-P02")]
     public async Task GetDocumentsByEntity_ValidContact_ReturnsListOrEmpty()
@@ -73,7 +73,7 @@ public class DocumentControllerUNOPSTests : IntegrationTestBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NoContent);
     }
 
-    [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials, blocking server startup for authenticated requests")]
+    [Fact]
     [Trait("Category", "Positive")]
     [Trait("TestId", "TC-DUNOPS-P03")]
     public async Task DeleteDocument_ValidId_ReturnsSuccessOrNotFound()
@@ -145,7 +145,7 @@ public class DocumentControllerUNOPSTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("Category", "Negative")]
     [Trait("TestId", "TC-DUNOPS-N06")]
     public async Task GetDocumentsByEntity_InvalidEntityType_ReturnsErrorOrEmpty()
@@ -155,7 +155,7 @@ public class DocumentControllerUNOPSTests : IntegrationTestBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.NotFound, HttpStatusCode.OK);
     }
 
-    [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("Category", "Negative")]
     [Trait("TestId", "TC-DUNOPS-N07")]
     public async Task GetDocumentsByEntity_NonExistentEntityId_ReturnsEmptyOrNotFound()
@@ -165,7 +165,7 @@ public class DocumentControllerUNOPSTests : IntegrationTestBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound);
     }
 
-    [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("Category", "Negative")]
     [Trait("TestId", "TC-DUNOPS-N08")]
     public async Task DeleteDocument_NonExistentId_ReturnsNotFoundOrError()
@@ -175,7 +175,7 @@ public class DocumentControllerUNOPSTests : IntegrationTestBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError);
     }
 
-    [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("Category", "Negative")]
     [Trait("TestId", "TC-DUNOPS-N09")]
     public async Task DownloadDocument_NonExistentId_ReturnsNotFoundOrError()
@@ -253,7 +253,7 @@ public class DocumentControllerUNOPSTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("Category", "Edge")]
     [Trait("TestId", "TC-DUNOPS-E07")]
     public async Task GetDocumentsByEntity_Opportunity_ReturnsListOrEmpty()
@@ -263,7 +263,7 @@ public class DocumentControllerUNOPSTests : IntegrationTestBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NoContent);
     }
 
-    [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("Category", "Edge")]
     [Trait("TestId", "TC-DUNOPS-E08")]
     public async Task GetDocumentsByEntity_Interaction_ReturnsListOrEmpty()
@@ -273,7 +273,7 @@ public class DocumentControllerUNOPSTests : IntegrationTestBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NoContent);
     }
 
-    [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("Category", "Edge")]
     [Trait("TestId", "TC-DUNOPS-E09")]
     public async Task GetDocumentsByEntity_MaxIntId_HandlesGracefully()
@@ -344,7 +344,7 @@ public class DocumentControllerUNOPSTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("Category", "Functional")]
     [Trait("TestId", "TC-DUNOPS-F06")]
     public async Task GetDocumentsByEntity_ReturnsJsonContentType()
@@ -468,7 +468,7 @@ public class DocumentControllerUNOPSTests : IntegrationTestBase
         }
     }
 
-    [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("Category", "Integration")]
     [Trait("TestId", "TC-DUNOPS-I06")]
     public async Task GetDocumentsByEntity_ConsistentResponse_AcrossEntityTypes()
@@ -484,7 +484,7 @@ public class DocumentControllerUNOPSTests : IntegrationTestBase
         }
     }
 
-    [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("Category", "Integration")]
     [Trait("TestId", "TC-DUNOPS-I07")]
     public async Task UploadDocument_WithFile_ReturnsSuccessOrError()
@@ -500,7 +500,7 @@ public class DocumentControllerUNOPSTests : IntegrationTestBase
             HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
     }
 
-    [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("Category", "Integration")]
     [Trait("TestId", "TC-DUNOPS-I08")]
     public async Task LinkDocument_ValidPayload_ReturnsResponse()
@@ -518,7 +518,7 @@ public class DocumentControllerUNOPSTests : IntegrationTestBase
             HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
     }
 
-    [Fact(Skip = "DEF-053: UNOPSGeminiManager crashes on missing Google credentials")]
+    [Fact]
     [Trait("Category", "Integration")]
     [Trait("TestId", "TC-DUNOPS-I09")]
     public async Task GetDocumentsByEntity_ResponseIsJsonArray()

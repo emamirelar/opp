@@ -218,7 +218,7 @@ public class DateSearchTests
     [InlineData("2024-13-45")] // Mois/jour invalides
     [InlineData("")]
     [InlineData(null)]
-    public void DateParsing_InvalidFormats_ShouldReturnNull(string invalidInput)
+    public void DateParsing_InvalidFormats_ShouldReturnNull(string? invalidInput)
     {
         // Act - Test invalid date parsing
         var result = TestDateParsing(invalidInput);

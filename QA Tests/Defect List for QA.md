@@ -228,8 +228,8 @@ When InMemory is in use (`IsUsingPostgres = false`), all these tests return earl
 | QA-041 | 🟡 Medium | Playwright full suite crashes after ~287 tests | Test Performance | playwright.config.ts recreated with workers:1 | N/A | 2026-02-11 | Resolved (2026-02-20) |
 | QA-042 | 🟡 Medium | DSTCacheDeduplicationTests blocked — AI/Gemini dependency | Third-party | 28 scaffold tests (placeholder bodies with `true.Should().BeTrue()`). DST vector store service does not exist yet — tests are pre-written for when the service is implemented. No mock can unblock these because there is no real test logic to execute. | N/A | 2026-02-16 | Closed — Deferred Until Service Implemented (2026-03-03) |
 | QA-043 | 🟡 Medium | ExternalDataIntegrationServiceTests blocked — BigQuery config | Third-party | 35 scaffold tests (placeholder bodies with `true.Should().BeTrue()`). External Data Integration Service is not yet configured — tests are pre-written for when BigQuery sync is implemented. No mock can unblock these because there is no real test logic to execute. | N/A | 2026-02-16 | Closed — Deferred Until Service Implemented (2026-03-03) |
-| QA-044 | 🟡 Medium | PartnerLiaisonOfficeManagerTests blocked — entity not implemented | Test Execution | 9 tests skipped. `LiaisonOfficeManager` not registered in `IManagerWrapper`. Tests are placeholder until DEF-013 is resolved by dev team. | DEF-013 | 2026-02-16 | Blocked — Requires DEF-013 Resolution |
-| QA-045 | 🟡 Medium | PartnerFocalPointManagerTests blocked — entity not implemented | Test Execution | 12 tests skipped. `FocalPointManager` not registered in `IManagerWrapper`. Tests are placeholder until DEF-014 is resolved by dev team. | DEF-014 | 2026-02-16 | Blocked — Requires DEF-014 Resolution |
+| ~~QA-044~~ | ~~🟡 Medium~~ | ~~PartnerLiaisonOfficeManagerTests blocked — entity not implemented~~ | ~~Test Execution~~ | 9 tests **cancelled** — LiaisonOffice does not have a dedicated manager by design (per Anusha, 2026-03-04). DEF-013 closed as Won't Fix. | DEF-013 (closed) | 2026-02-16 | **Closed — Tests Cancelled (2026-03-04)** |
+| ~~QA-045~~ | ~~🟡 Medium~~ | ~~PartnerFocalPointManagerTests blocked — entity not implemented~~ | ~~Test Execution~~ | 12 tests **cancelled** — FocalPoint does not have a dedicated manager by design (per Anusha, 2026-03-04). DEF-014 closed as Won't Fix. | DEF-014 (closed) | 2026-02-16 | **Closed — Tests Cancelled (2026-03-04)** |
 | QA-046 | 🟡 Medium | Zero test coverage — 6 UNOPS managers have no tests | Test Coverage | 3 new test files created (189 tests) | N/A | 2026-02-16 | Resolved (2026-02-20) |
 | QA-047 | 🟢 Low | Zero test coverage — 3 controllers have no tests | Test Coverage | 2 new test files created (78 tests) | N/A | 2026-02-16 | Resolved (2026-02-20) |
 | QA-048 | 🔴 Critical | Startup.cs eager PostgreSQL breaks WebApplicationFactory | Infrastructure | ~2,285 HTTP integration tests failing | N/A | 2026-02-16 | Resolved |
@@ -257,7 +257,7 @@ When InMemory is in use (`IsUsingPostgres = false`), all these tests return earl
 | QA-070 | 🟠 High | CI builds fail — `GH_PAT` secret missing/expired, blocking private submodule checkout | Infrastructure | Workaround (`submodules: false`) reverted — CI now requires `GH_PAT` with `repo` scope; also `unops-external-dataservice` submodule is orphaned (no project references it) | DEF-020 | 2026-02-17 | Open — Requires DevOps Action |
 | QA-073 | 🟡 Medium | PNO1197.SecurityTests — unit tests incorrectly test middleware-level authorization | Test Maintenance | New SecurityTests.Http.cs with 39 HTTP integration tests added | N/A | 2026-02-21 | Resolved (2026-02-20) |
 | QA-074 | 🟡 Medium | NEG_013 and NEG_029 Expect IsDeleted Flag Enforcement in DoA Holder Check | Test Maintenance | 2 tests skipped in `PNO-1197_DoA3Fallback/NegativeTests.cs`. NEG_013 tests that a soft-deleted DoA holder role (`IsDeleted=true`) should cause submit to fail. NEG_029 tests that a deactivated role (`Status=Inactive`) should cause submit to fail. Production code `ValidateOpportunityRequirementsAsync` does not filter `!e.IsDeleted` on entity roles — this is a genuine production bug (DEF-008). Tests correctly document expected behavior; per never-weaken-tests rule, skip annotations preserved. | DEF-008 | 2026-02-21 | Blocked — Requires DEF-008 Resolution (2026-03-03) |
-| QA-075 | 🟡 Medium | Test factory auth middleware intercepts [AllowAnonymous] — anonymous health tests return 401 | Mocking | 5 tests in AIRetrieverControllerTests — assertions updated to BeOneOf(200, 401) | DEF-045 | 2026-02-25 | Workaround Applied |
+| QA-075 | 🟡 Medium | IAPVerificationMiddleware blocks [AllowAnonymous] endpoints in Testing env | Mocking | 5 tests in AIRetrieverControllerTests use BeOneOf(OK, Unauthorized); TestAuthHandler improved but IAP middleware runs first (DEF-063) | DEF-063 | 2026-02-25 | Workaround Applied |
 | QA-076 | 🟠 High | AuditLogController returns 500 in InMemory — 36 authenticated tests guarded | Infrastructure | 36 tests guarded with _isPostgresAvailable in AuditLogControllerTests | DEF-045 | 2026-02-25 | Workaround Applied |
 | QA-077 | 🟡 Medium | GlobalSearch tests fail in InMemory — pg_trgm not available | Infrastructure | 6 tests guarded with _isPostgresAvailable in GlobalControllerTests | N/A | 2026-02-25 | Workaround Applied |
 | QA-078 | 🔴 Critical | 75+ test classes each creating own PAOWebApplicationFactory — thread pool starvation | Test Execution | 425 tests failing in Phase 13 full run due to 20+ min init overhead | N/A | 2026-02-25 | Resolved |
@@ -557,43 +557,42 @@ npx playwright test --project=chromium
 
 ---
 
-#### QA-044: PartnerLiaisonOfficeManagerTests blocked — entity not implemented
+#### QA-044: ~~PartnerLiaisonOfficeManagerTests blocked — entity not implemented~~ — CLOSED
 
-**Status:** Open  
+**Status:** **Closed — Tests Cancelled (2026-03-04)**  
 **Category:** Test Execution  
-**Impact:** 9 tests skipped  
-**Date:** 2026-02-16
+**Impact:** ~~9 tests skipped~~ → 9 tests cancelled (not needed)  
+**Date:** 2026-02-16  
+**Resolution Date:** 2026-03-04
 
-**Description:** The `PartnerLiaisonOfficeManagerTests` test suite references the `LiaisonOffice` entity and its manager, which are not yet fully implemented in the backend. The entity exists in the domain model but the manager methods needed by the tests (`CreateLiaisonOfficeAsync`, `GetLiaisonOfficesByPartnerIdAsync`, `DeleteLiaisonOfficeAsync`) are not wired into `IManagerWrapper`.
+**Resolution Notes:**
 
-**Blocked Tests:**
-- 9 tests covering liaison office CRUD and partner association
+Per developer clarification (Anusha Swaminathan, 2026-03-04):
+> "LiaisonOffice and FocalPoint do not have managers. They don't need to have managers because they are not being managed in Opp+. We can only select a Liaison Office / Focal Point as part of a Partner."
 
-**Root Cause:** Backend implementation incomplete — entity defined but manager not fully exposed via `IManagerWrapper`.
-
-**Temporary Fix (QA):** Tests are skipped with appropriate skip reasons.  
-**Permanent Fix:** Backend team to complete `LiaisonOfficeManager` implementation and register it in `IManagerWrapper` and `ManagerWrapper`.
-
-**Related:** DEF-007 (Integration tests out of sync with production code)
+- DEF-013 closed as Won't Fix — no dedicated manager needed
+- 9 placeholder tests in `PartnerLiaisonOfficeManagerTests` cancelled
+- LiaisonOffice coverage remains via `LiaisonOfficeControllerTests`, `LiaisonOfficeServiceTests`, and `ValuesManagerPerformanceTests`
+- `ValuesManagerPerformanceTests.GetLiaisonOffices` test un-skipped
 
 ---
 
-#### QA-045: PartnerFocalPointManagerTests blocked — entity not implemented
+#### QA-045: ~~PartnerFocalPointManagerTests blocked — entity not implemented~~ — CLOSED
 
-**Status:** Open  
+**Status:** **Closed — Tests Cancelled (2026-03-04)**  
 **Category:** Test Execution  
-**Impact:** 12 tests skipped  
-**Date:** 2026-02-16
+**Impact:** ~~12 tests skipped~~ → 12 tests cancelled (not needed)  
+**Date:** 2026-02-16  
+**Resolution Date:** 2026-03-04
 
-**Description:** The `PartnerFocalPointManagerTests` test suite references the `FocalPoint` entity and its manager, which are not yet fully implemented in the backend. Similar to QA-044, the entity model exists but the manager methods are not exposed through `IManagerWrapper`.
+**Resolution Notes:**
 
-**Blocked Tests:**
-- 12 tests covering focal point assignment, CRUD, and partner association
+Per developer clarification (Anusha Swaminathan, 2026-03-04):
+> "LiaisonOffice and FocalPoint do not have managers. They don't need to have managers because they are not being managed in Opp+. We can only select a Liaison Office / Focal Point as part of a Partner."
 
-**Root Cause:** Backend implementation incomplete — entity defined but manager not fully exposed via `IManagerWrapper`.
-
-**Temporary Fix (QA):** Tests are skipped with appropriate skip reasons.  
-**Permanent Fix:** Backend team to complete `FocalPointManager` implementation and register it in `IManagerWrapper` and `ManagerWrapper`.
+- DEF-014 closed as Won't Fix — no dedicated manager needed
+- 12 placeholder tests in `PartnerFocalPointManagerTests` cancelled
+- FocalPoint coverage remains via `ContactFunctionalTests` (Focal Point role), Partner analytics tests (`includeFocalPoint`), and Partner CRUD tests (`PartnerFocalPointUserId` FK)
 
 **Related:** DEF-007 (Integration tests out of sync with production code)
 
@@ -1262,7 +1261,8 @@ Update the permissions mock in the Playwright mock helper to return a denied/blo
 
 ## QA Issue Statistics (Updated 2026-03-03)
 
-- **Total Open:** 7 ⚠️ (QA-014, QA-015, QA-042, QA-043, QA-044, QA-045, QA-088)
+- **Total Open:** 5 ⚠️ (QA-014, QA-015, QA-042, QA-043, QA-088)
+- **2026-03-04 Updates:** QA-044 CLOSED (LiaisonOffice tests cancelled — no manager by design, per Anusha). QA-045 CLOSED (FocalPoint tests cancelled — no manager by design, per Anusha). DEF-053 tests un-skipped for CI verification. Integration tests job enabled in CI.
 - **QA-095 resolved (2026-03-03):** 5 performance tests in AuditLogManagerPerformanceTests (2) and SystemAdminManagerPerformanceTests (3) converted from parallel `Task.WhenAll` to sequential execution. All 38/38 pass.
 - **QA-092 resolved (2026-03-02):** Added proper timeouts (`.WaitAsync()`) to 2 hanging tests — no more indefinite hangs, no tests skipped.
 - **QA-091 resolved (2026-03-02):** Fixed PNO-1146 fixture: registered WorkflowDbContext in mock service provider, added OM seed data, fixed 4 wrong template name assertions, fixed EntityUrl assertion. 21 tests un-skipped, all 52 pass.
@@ -1316,7 +1316,7 @@ Update the permissions mock in the Playwright mock helper to return a denied/blo
 
 - 🔴 **Critical:** 0
 - 🟠 **High Priority:** 1 (QA-014)
-- 🟡 **Medium Priority:** 8 (QA-011, QA-016, QA-019, QA-042, QA-043, QA-044, QA-045, QA-046, QA-047, QA-054, QA-056-057)
+- 🟡 **Medium Priority:** 6 (QA-011, QA-016, QA-019, QA-042, QA-043, QA-046, QA-047, QA-054, QA-056-057) — QA-044 and QA-045 closed (2026-03-04)
   - **QA-036 RESOLVED ✅:** Full audit complete — all page objects rewritten with resilient selectors
 
 ### Test Improvements Applied (2026-02-11 — Full Suite Re-Execution + C# Fix Pass)
@@ -1517,8 +1517,8 @@ Update the permissions mock in the Playwright mock helper to return a denied/blo
 | QA-016 | DEF-008 | Go Decision tests partially blocked by DEF-008 remaining gaps. Core workflow now testable. |
 | QA-016 | DEF-010 | PNO-1193 OM role transfer bug blocks TC-039 |
 | QA-016 | DEF-011 | PNO-1171 duplicate reject in history affects TC-030 accuracy |
-| QA-044 | DEF-013 | LiaisonOfficeManager not registered in IManagerWrapper — 9 tests blocked |
-| QA-045 | DEF-014 | FocalPointManager not registered in IManagerWrapper — 12 tests blocked |
+| ~~QA-044~~ | ~~DEF-013~~ | ~~LiaisonOfficeManager not registered~~ — **CLOSED: Not a defect by design (2026-03-04)** |
+| ~~QA-045~~ | ~~DEF-014~~ | ~~FocalPointManager not registered~~ — **CLOSED: Not a defect by design (2026-03-04)** |
 
 ---
 
@@ -1911,24 +1911,26 @@ QA Tests/Integration Tests/
 
 ---
 
-## QA-075: Test Factory Auth Middleware Intercepts [AllowAnonymous] Endpoints
+## QA-075: IAPVerificationMiddleware Blocks [AllowAnonymous] Endpoints in Testing Environment
 **ID:** QA-075 | **Severity:** 🟡 Medium | **Status:** Workaround Applied | **Date:** 2026-02-25 | **Assigned To:** QA Team
 
 **Category:** Mocking
 
-**Description:** The PAOWebApplicationFactory auth middleware does not honor [AllowAnonymous] when using the Test-NoAuth: true header pattern. Requests from CreateUnauthenticatedClient() to [AllowAnonymous] endpoints (specifically GET /api/ai-retriever/health) return HTTP 401 instead of the expected 200. In production, [AllowAnonymous] correctly bypasses all auth middleware — this is a test-environment-only limitation.
+**Description:** The `IAPVerificationMiddleware` (Startup.cs line 108) runs unconditionally in ALL environments, including Testing. It returns HTTP 401 for any request without IAP headers (lines 384-390 of `IAPVerificationMiddleware.cs`), **before** `UseAuthentication()` or `UseAuthorization()` can check for `[AllowAnonymous]` metadata. This means `CreateUnauthenticatedClient()` requests to `[AllowAnonymous]` endpoints always get 401 in the test environment.
 
-**Root Cause:** The test factory's IAP/custom auth middleware intercepts all requests regardless of [AllowAnonymous] attribute, returning 401 before the attribute can short-circuit authentication.
+**Root Cause:** `app.UseIAPVerification()` at Startup.cs line 108 is NOT wrapped in any environment check. The middleware runs before authentication and returns 401 when no `x-goog-iap-jwt-assertion` or `x-goog-authenticated-user-email` headers are present. `TestAuthHandler` never sees these requests.
 
-**Affected Tests:** TC-AIRET-POS-001, TC-AIRET-POS-002, TC-AIRET-INT-001, TC-AIRET-INT-006, TC-AIRET-INT-009 (5 tests)
+**Improvement Applied (2026-03-04):** `TestAuthHandler` was enhanced to inspect `IAllowAnonymous` endpoint metadata — this is correct defense-in-depth for when DEF-063 is fixed, but does not help currently because the IAP middleware intercepts first.
 
-**Temporary Fix (QA):** Changed assertions from Should().Be(HttpStatusCode.OK) to Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Unauthorized) for anonymous health endpoint tests. Body assertions are conditionally skipped when response is 401.
+**Workaround:** 5 test assertions use `BeOneOf(HttpStatusCode.OK, HttpStatusCode.Unauthorized)` instead of strict `Be(HttpStatusCode.OK)`.
 
-**Permanent Fix:** Either configure PAOWebApplicationFactory to fully bypass auth for [AllowAnonymous]-decorated endpoints (use AllowAnonymousFilter or configure AuthenticationOptions.DefaultScheme for anonymous), or inject a test IAuthorizationMiddlewareResultHandler that respects the attribute.
+**Affected Tests:** TC-AIRET-POS-001, TC-AIRET-POS-002, TC-AIRET-INT-001, TC-AIRET-INT-006, TC-AIRET-INT-009 (plus ~12 additional tests in other controller files with similar patterns)
 
-**Impact:** 5 tests produce lenient assertions instead of strict OK assertions. The production endpoint itself is correct — only the test environment is affected.
+**Permanent Fix:** DEF-063 — Wrap `app.UseIAPVerification()` in `if (!env.IsEnvironment("Testing"))` or add `[AllowAnonymous]` endpoint check in the IAP middleware.
 
-**Related DEF:** N/A (production code is correct)
+**Impact:** 5+ tests produce lenient assertions instead of strict OK assertions. Production endpoints are correct.
+
+**Related DEF:** DEF-063
 
 ---
 
@@ -2049,37 +2051,13 @@ These thresholds still catch genuine performance regressions (a broken DoA check
 ---
 
 ## QA-082: Playwright Tests Fail — Angular App Not Running at localhost:4200
-**ID:** QA-082 | **Severity:** 🟠 High | **Status:** Open | **Date:** 2026-02-25 | **Assigned To:** QA Team
+**ID:** QA-082 | **Severity:** 🟠 High | **Status:** Resolved (2026-03-04) | **Date:** 2026-02-25 | **Assigned To:** QA Team
 
 **Category:** Environment
 
 **Description:** All 17 `search-icons.spec.ts` Playwright tests (PNO-926-v3) fail immediately with `ERR_CONNECTION_REFUSED` because no Angular application is running at `http://localhost:4200`. The Playwright configuration targets `http://localhost:4200` (from `playwright.config.ts: BASE_URL`). Without a running app instance, the browser cannot load any pages and all tests fail at the first `page.goto()` call.
 
-**Repro Steps:**
-1. Run `cd "QA Tests" && npx playwright test "search-icons" --project=chromium`
-2. All 17 tests fail immediately with `ERR_CONNECTION_REFUSED` on `page.goto('/')`
-
-**Expected:** Angular application running at `http://localhost:4200` (via `ng serve` or API+SPA proxy)
-
-**Actual:** `localhost refused to connect` — `ERR_CONNECTION_REFUSED` on every page navigation
-
-**Environment:** Local (Windows 10), Chromium browser
-
-**Impact:** 17 Playwright tests blocked — all PNO-926-v3 search icon E2E tests cannot execute
-
-**Temporary Fix (QA):** Start the Angular app before running Playwright tests:
-```bash
-# Terminal 1: Start the API
-cd UNOPS.PAO.Server && dotnet run
-
-# Terminal 2: Start the Angular app  
-cd UNOPS.PAO.ClientApp && ng serve
-
-# Terminal 3: Run Playwright tests (once app is running)
-cd "QA Tests" && npx playwright test "search-icons" --project=chromium
-```
-
-**Permanent Fix:** Configure Playwright `webServer` in `playwright.config.ts` to auto-start the Angular app before the test run, using the existing `webServer` config pattern from the config file.
+**Resolution (2026-03-04):** The `playwright.config.ts` `webServer` configuration now auto-starts both the TestApiServer (port 5159) and the Angular dev server (`ng serve --port 4200`) before test execution. Both entries use `reuseExistingServer: true`, so if either server is already running, Playwright reuses it. The 5-minute startup timeout (`timeout: 300_000`) accommodates the Angular build time. Additionally, `SKIP_WEB_SERVER=1` environment variable can bypass auto-start when servers are managed externally. All 17 search-icons tests execute successfully when the webServer config is active.
 
 **Related DEF:** N/A
 

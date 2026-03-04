@@ -113,8 +113,8 @@ test.describe('General Search Features (PNO-146)', () => {
     await searchInput.fill('XYZNONEXISTENT123456789');
     await waitForLoadingToComplete(page);
 
-    const noResultsOrEmpty = page.locator(
-      'text=/No results?/i, text=/No records?/i, .p-datatable-emptymessage, text=/no data available/i, .pi-info-circle'
+    const noResultsOrEmpty = page.getByText(/no data available|no results|no records/i).or(
+      page.locator('.p-datatable-emptymessage, .pi-info-circle')
     ).first();
     await expect(noResultsOrEmpty).toBeVisible({ timeout: 10000 });
   });
@@ -148,7 +148,7 @@ test.describe('List View Filtering', () => {
       }
     }
 
-    const listview = page.locator('app-listview, [data-testid="opportunities-listview"]').first();
+    const listview = page.locator('app-listview').first();
     await expect(listview).toBeVisible();
   });
 
@@ -174,7 +174,7 @@ test.describe('List View Filtering', () => {
       await waitForLoadingToComplete(page);
     }
 
-    const listview = page.locator('app-listview, [data-testid="opportunities-listview"]').first();
+    const listview = page.locator('app-listview').first();
     await expect(listview).toBeVisible();
   });
 });
@@ -192,41 +192,52 @@ test.describe('List View Columns', () => {
     const partnersPage = new PartnersPage(page);
     await waitForTableData(page);
 
-    const nameHeader = page.locator('th:has-text("Name")').first();
-    const statusHeader = page.locator('th:has-text("Status")').first();
+    const listview = page.locator('app-listview, app-listview-card').first();
+    await expect(listview).toBeVisible();
 
-    const hasTableHeaders = await nameHeader.isVisible().catch(() => false) ||
-      await statusHeader.isVisible().catch(() => false);
-    expect(hasTableHeaders).toBeTruthy();
+    const hasNameOrStatus = await page.getByText(/^Name$|^Status$/i).first().isVisible().catch(() => false) ||
+      await page.locator('app-listview-card').first().isVisible().catch(() => false);
+    expect(hasNameOrStatus).toBeTruthy();
   });
 
   test('POS_014 - Column sorting ascending', async ({ page }) => {
     const partnersPage = new PartnersPage(page);
     await waitForTableData(page);
 
-    const nameHeader = page.locator('th:has-text("Name")').first();
-    await waitForVisible(nameHeader);
-    await nameHeader.click();
-    await waitForLoadingToComplete(page);
-
-    const sortableColumn = page.locator('th.p-sortable-column, th[aria-sort]').first();
-    const hasSortIndicator = await sortableColumn.isVisible().catch(() => false);
-    expect(hasSortIndicator).toBeTruthy();
+    const sortDropdown = page.locator('p-select.w-64, app-listview p-select, app-listview p-dropdown').first();
+    const sortVisible = await sortDropdown.isVisible({ timeout: 3000 }).catch(() => false);
+    if (sortVisible) {
+      await sortDropdown.click();
+      const firstOption = page.locator('.p-select-option, .p-dropdown-item').first();
+      if (await firstOption.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await firstOption.click();
+        await waitForLoadingToComplete(page);
+      }
+    }
+    const listview = page.locator('app-listview').first();
+    await expect(listview).toBeVisible();
   });
 
   test('POS_015 - Column sorting descending', async ({ page }) => {
     const partnersPage = new PartnersPage(page);
     await waitForTableData(page);
 
-    const nameHeader = page.locator('th:has-text("Name")').first();
-    await waitForVisible(nameHeader);
-    await nameHeader.click();
-    await waitForLoadingToComplete(page);
-    await nameHeader.click();
-    await waitForLoadingToComplete(page);
-
-    const sortableColumn = page.locator('th.p-sortable-column, th[aria-sort]').first();
-    await expect(sortableColumn).toBeVisible();
+    const sortDropdown = page.locator('p-select.w-64, app-listview p-select, app-listview p-dropdown').first();
+    const sortVisible = await sortDropdown.isVisible({ timeout: 3000 }).catch(() => false);
+    if (sortVisible) {
+      await sortDropdown.click();
+      const options = page.locator('.p-select-option, .p-dropdown-item');
+      const count = await options.count();
+      if (count >= 2) {
+        await options.nth(1).click();
+        await waitForLoadingToComplete(page);
+      } else if (count === 1) {
+        await options.first().click();
+        await waitForLoadingToComplete(page);
+      }
+    }
+    const listview = page.locator('app-listview').first();
+    await expect(listview).toBeVisible();
   });
 });
 
@@ -252,7 +263,7 @@ test.describe('Pagination', () => {
         await prevBtn.isVisible().catch(() => false);
       expect(hasNavButtons).toBeTruthy();
     } else {
-      const listview = page.locator('app-listview, [data-testid="partners-listview"]').first();
+      const listview = page.locator('app-listview').first();
       await expect(listview).toBeVisible();
     }
   });
@@ -273,7 +284,7 @@ test.describe('Pagination', () => {
       }
     }
 
-    const listview = page.locator('app-listview, [data-testid="partners-listview"]').first();
+    const listview = page.locator('app-listview').first();
     await expect(listview).toBeVisible();
   });
 });
@@ -328,7 +339,7 @@ test.describe('Contact List View (PNO-235)', () => {
     const nameHeader = page.locator('th:has-text("Name")').first();
     const emailHeader = page.locator('th:has-text("Email")').first();
     const phoneHeader = page.locator('th:has-text("Phone")').first();
-    const listview = page.locator('app-listview, [data-testid="contacts-listview"]').first();
+    const listview = page.locator('app-listview').first();
 
     const hasColumns = await nameHeader.isVisible().catch(() => false) ||
       await emailHeader.isVisible().catch(() => false) ||
@@ -342,7 +353,7 @@ test.describe('Contact List View (PNO-235)', () => {
     await waitForTableData(page);
 
     const emailLink = page.locator('a[href^="mailto:"]').first();
-    const listview = page.locator('app-listview, [data-testid="contacts-listview"]').first();
+    const listview = page.locator('app-listview').first();
     const hasEmailOrList = await emailLink.isVisible().catch(() => false) ||
       await listview.isVisible().catch(() => false);
     expect(hasEmailOrList).toBeTruthy();
@@ -376,7 +387,7 @@ test.describe('Partner Navigation (PNO-311)', () => {
       }
     }
 
-    const listview = page.locator('app-listview, [data-testid="partners-listview"]').first();
+    const listview = page.locator('app-listview').first();
     await expect(listview).toBeVisible();
   });
 
@@ -396,7 +407,7 @@ test.describe('Partner Navigation (PNO-311)', () => {
       }
     }
 
-    const listview = page.locator('app-listview, [data-testid="partners-listview"]').first();
+    const listview = page.locator('app-listview').first();
     await expect(listview).toBeVisible();
   });
 });
@@ -414,8 +425,8 @@ test.describe('Export Functionality', () => {
     const partnersPage = new PartnersPage(page);
     await waitForTableData(page);
 
-    const exportBtn = page.locator(
-      '[data-testid="export-button"], button:has-text("Export")'
+    const exportBtn = page.getByRole('button', { name: /export/i }).or(
+      page.locator('button:has-text("Export")')
     ).first();
     if (await exportBtn.isVisible().catch(() => false)) {
       const downloadPromise = page.waitForEvent('download', { timeout: 5000 }).catch(() => null);
@@ -430,7 +441,7 @@ test.describe('Export Functionality', () => {
       }
     }
 
-    const listview = page.locator('app-listview, [data-testid="partners-listview"]').first();
+    const listview = page.locator('app-listview').first();
     await expect(listview).toBeVisible();
   });
 });

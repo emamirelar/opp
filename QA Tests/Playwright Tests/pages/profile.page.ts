@@ -16,7 +16,14 @@ export class ProfilePage extends BasePage {
   // ==========================================
 
   get profileMenuButton(): Locator {
-    return this.page.locator('app-profile-menubar, [data-testid="profile-menu"], .profile-avatar').first();
+    return this.page
+      .locator('.profile-menu-button, .profile-menu button')
+      .or(this.page.locator('app-topbar .p-avatar, app-topbar button:has(.pi-user), app-topbar button:has(.p-avatar)'))
+      .or(this.page.locator('app-topbar').getByRole('button'))
+      .or(this.page.locator('.profile-avatar'))
+      .or(this.page.locator('button:has(.pi-user), button:has(.p-avatar)'))
+      .or(this.page.locator('app-profile-menubar'))
+      .first();
   }
 
   get profileMenu(): Locator {

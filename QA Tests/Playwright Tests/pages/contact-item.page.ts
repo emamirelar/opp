@@ -36,6 +36,24 @@ export class ContactItemPage extends EntityDetailPage {
   constructor(page: Page, contactId?: string | number) {
     super(page, contactId);
   }
+
+  /**
+   * Get edit button - contact template uses class contact-edit-button on p-button, no data-testid
+   */
+  override get editButton(): Locator {
+    return this.getByTestId('edit-contact-button')
+      .or(this.page.locator('p-button.contact-edit-button, .contact-edit-button, button:has(.pi-pencil)'))
+      .or(this.page.getByRole('button', { name: /edit/i }).first());
+  }
+
+  /**
+   * Get delete button - contact template uses class contact-delete-button on p-button, no data-testid
+   */
+  override get deleteButton(): Locator {
+    return this.getByTestId('delete-contact-button')
+      .or(this.page.locator('p-button.contact-delete-button, .contact-delete-button, button:has(.pi-trash)'))
+      .or(this.page.getByRole('button', { name: /delete/i }).first());
+  }
   
   /**
    * Get contact name display
@@ -85,18 +103,20 @@ export class ContactItemPage extends EntityDetailPage {
   
   /**
    * Get contact partner section
-   * Uses actual data-testid="contact-partner-section" from contact-view.component.html
+   * Fallback: template uses div containing partner link (class contact-partner-link), no data-testid
    */
   get contactPartnerSection(): Locator {
-    return this.getByTestId('contact-partner-section');
+    return this.getByTestId('contact-partner-section')
+      .or(this.page.locator('div:has(a.contact-partner-link)'));
   }
   
   /**
    * Get contact partner link
-   * Uses actual data-testid="contact-partner-link" from contact-view.component.html
+   * Fallback: template uses class contact-partner-link, no data-testid
    */
   get contactPartner(): Locator {
-    return this.getByTestId('contact-partner-link');
+    return this.getByTestId('contact-partner-link')
+      .or(this.page.locator('a.contact-partner-link'));
   }
   
   /**
@@ -112,10 +132,11 @@ export class ContactItemPage extends EntityDetailPage {
   
   /**
    * Get contact info section wrapper
-   * Uses actual data-testid="contact-info-section" from contact-view.component.html
+   * Fallback: template uses class contact-info-content, no data-testid
    */
   get contactInfoSection(): Locator {
-    return this.getByTestId('contact-info-section');
+    return this.getByTestId('contact-info-section')
+      .or(this.page.locator('.contact-info-content'));
   }
   
   /**
@@ -129,34 +150,38 @@ export class ContactItemPage extends EntityDetailPage {
   
   /**
    * Get documents section
-   * Uses actual data-testid="contact-documents-section" from contact-view.component.html
+   * Fallback: template uses app-document with class contact-document-section, no data-testid
    */
   override get documentsSection(): Locator {
-    return this.getByTestId('contact-documents-section');
+    return this.getByTestId('contact-documents-section')
+      .or(this.page.locator('app-document.contact-document-section, .contact-document-section'));
   }
   
   /**
    * Get links section
-   * Uses actual data-testid="contact-links-section" from contact-view.component.html
+   * Fallback: template uses app-link-list with class contact-links-section, no data-testid
    */
   get linksSection(): Locator {
-    return this.getByTestId('contact-links-section');
+    return this.getByTestId('contact-links-section')
+      .or(this.page.locator('app-link-list.contact-links-section, .contact-links-section'));
   }
   
   /**
    * Get upload document button
-   * Uses actual data-testid="upload-document-button" from contact-view.component.html
+   * Fallback: template uses p-button with upload label, no data-testid (permission-gated)
    */
   get uploadDocumentButton(): Locator {
-    return this.getByTestId('upload-document-button');
+    return this.getByTestId('upload-document-button')
+      .or(this.page.locator('app-contact-view p-button').filter({ hasText: /upload|document/i }));
   }
   
   /**
    * Get add link button
-   * Uses actual data-testid="add-link-button" from contact-view.component.html
+   * Fallback: template uses p-button with add link label, no data-testid (permission-gated)
    */
   get addLinkButton(): Locator {
-    return this.getByTestId('add-link-button');
+    return this.getByTestId('add-link-button')
+      .or(this.page.locator('app-contact-view p-button').filter({ hasText: /add.*link|link/i }));
   }
   
   /**

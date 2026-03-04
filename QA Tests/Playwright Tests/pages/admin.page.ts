@@ -62,7 +62,11 @@ export class TranslationWorkbenchPage extends BasePage {
 
   /** Link to translation workbench in admin sidebar (when on /admin) */
   get sidebarTranslationLink(): Locator {
-    return this.page.locator('a[href*="translations"]').first();
+    return this.page
+      .locator(
+        'app-sidebar a[href*="translations"], .layout-sidebar a[href*="translations"], a[routerlink*="translations"], a[href*="/admin/translations"]'
+      )
+      .first();
   }
 
   async navigate(): Promise<void> {
@@ -135,16 +139,24 @@ export class EntityManagerPage extends BasePage {
 
   /** First entity tab for selection */
   get firstEntityTab(): Locator {
-    return this.page.locator('.entity-manager-tabs p-tab, .entity-manager-tabs p-dropdown').first();
+    return this.page.locator(
+      'p-tab, [role="tab"], .entity-manager-tabs p-tab, p-tabs button, p-dropdown'
+    ).first();
   }
 
   /** Tabs or entity type navigation */
   get tabsOrSelector(): Locator {
-    return this.page.locator('.entity-manager-tabs, p-tabs, p-select, p-dropdown').first();
+    return this.page.locator(
+      '.entity-manager-tabs, p-tabs, p-select, p-dropdown, app-entity-manager'
+    ).first();
   }
 
   get availableFieldsSection(): Locator {
-    return this.page.locator('.available-fields-section').first();
+    return this.page
+      .locator('.available-fields-section, app-entity-manager .flex.flex-col')
+      .filter({ hasText: /available fields/i })
+      .or(this.page.locator('div').filter({ hasText: /available fields/i }).first())
+      .first();
   }
 
   get availableFieldsText(): Locator {
@@ -152,15 +164,25 @@ export class EntityManagerPage extends BasePage {
   }
 
   get listViewFieldsSection(): Locator {
-    return this.page.locator('.list-view-fields-section').first();
+    return this.page
+      .locator('.list-view-fields-section, app-entity-manager .flex.flex-col')
+      .filter({ hasText: /list view fields/i })
+      .or(this.page.locator('div').filter({ hasText: /list view/i }).first())
+      .first();
   }
 
   get listViewText(): Locator {
-    return this.page.getByText(/list view/i).first();
+    return this.page.getByText(/list view fields|list view/i).first();
   }
 
   get addFieldButton(): Locator {
-    return this.page.locator('.add-field-button').first();
+    return this.page
+      .locator(
+        'app-entity-manager p-button, app-entity-manager button, .add-field-button'
+      )
+      .filter({ hasText: /add/i })
+      .or(this.page.getByRole('button', { name: /add/i }))
+      .first();
   }
 
   get addFieldText(): Locator {
@@ -168,7 +190,11 @@ export class EntityManagerPage extends BasePage {
   }
 
   get entitySettingsButton(): Locator {
-    return this.page.locator('.entity-settings-button').first();
+    return this.page
+      .locator('app-entity-manager p-button, app-entity-manager button, .entity-settings-button')
+      .filter({ hasText: /settings/i })
+      .or(this.page.getByRole('button', { name: /settings/i }))
+      .first();
   }
 
   get entitySettingsText(): Locator {
@@ -176,7 +202,10 @@ export class EntityManagerPage extends BasePage {
   }
 
   get cardPreviewSection(): Locator {
-    return this.page.locator('.card-preview-section, app-listview-card, .list-view-fields-section').first();
+    return this.page
+      .locator('app-listview-card, .card-preview-section, .list-view-fields-section, p-panel, .p-panel')
+      .filter({ hasText: /card preview|list view/i })
+      .first();
   }
 
   get cardPreviewText(): Locator {
@@ -207,10 +236,17 @@ export class EntityManagerPage extends BasePage {
    * Uses waitForVisible on target section instead of fixed timeout.
    */
   async ensureFirstEntitySelected(targetSection: Locator): Promise<void> {
-    if (await this.firstEntityTab.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await this.firstEntityTab.click();
-      await targetSection.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
+    const tab = this.firstEntityTab.or(this.page.locator('p-tab, [role="tab"], p-tabs button').first());
+    const dropdown = this.page.locator('p-dropdown, p-select').first();
+    if (await tab.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await tab.click();
+      await this.page.waitForTimeout(500);
+    } else if (await dropdown.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await dropdown.click();
+      await this.page.locator('.p-dropdown-item, .p-select-option').first().click({ timeout: 3000 }).catch(() => {});
+      await this.page.waitForTimeout(500);
     }
+    await targetSection.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
   }
 }
 
@@ -346,7 +382,7 @@ export class UserManagementPage extends BasePage {
   }
 
   get searchInput(): Locator {
-    return this.page.locator('[data-testid="user-search"], input[placeholder*="Search"], input[type="search"]').first();
+    return this.page.locator('#search, [data-testid="user-search"], input[placeholder*="Search"], input[type="search"]').first();
   }
 
   get roleDropdown(): Locator {

@@ -33,10 +33,19 @@ export abstract class EntityDetailPage extends BasePage {
   
   /**
    * Get page header locator
-   * Uses data-testid="{entity}-detail-header" which exists in all entity templates
+   * Tries data-testid first, falls back to the entity's view component or panel header
    */
   get header(): Locator {
-    return this.getByTestId(`${this.entityName}-detail-header`);
+    const viewSelectors: Record<string, string> = {
+      partner: 'app-partner-view',
+      contact: 'app-contact-tabs',
+      interaction: 'app-interaction-detail',
+      opportunity: 'app-opportunity-view',
+    };
+    const selector = viewSelectors[this.entityName] || `app-${this.entityName}-view`;
+    return this.getByTestId(`${this.entityName}-detail-header`)
+      .or(this.page.locator(selector))
+      .first();
   }
   
   /**
@@ -50,18 +59,20 @@ export abstract class EntityDetailPage extends BasePage {
   
   /**
    * Get edit button locator
-   * Uses data-testid="edit-{entity}-button" which exists in partner, contact, interaction templates
+   * Uses data-testid="edit-{entity}-button" with role-based fallback (permission-gated)
    */
   get editButton(): Locator {
-    return this.getByTestId(`edit-${this.entityName}-button`);
+    return this.getByTestId(`edit-${this.entityName}-button`)
+      .or(this.page.getByRole('button', { name: /edit/i }).first());
   }
   
   /**
    * Get delete button locator
-   * Uses data-testid="delete-{entity}-button" which exists in partner, contact, interaction templates
+   * Uses data-testid="delete-{entity}-button" with role-based fallback (permission-gated)
    */
   get deleteButton(): Locator {
-    return this.getByTestId(`delete-${this.entityName}-button`);
+    return this.getByTestId(`delete-${this.entityName}-button`)
+      .or(this.page.getByRole('button', { name: /delete/i }).first());
   }
   
   /**
@@ -84,8 +95,9 @@ export abstract class EntityDetailPage extends BasePage {
    */
   get backButton(): Locator {
     // Only match links that explicitly navigate to the entity list — avoid generic icon matches
+    const entityPlural = this.entityName === 'opportunity' ? 'opportunities' : `${this.entityName}s`;
     return this.page.locator(
-      `a[routerLink*="partnerships/${this.entityName}"], a[routerLink*="${this.entityName}s"]`
+      `a[routerLink*="partnerships/${this.entityName}"], a[routerLink*="${entityPlural}"], a[href*="${entityPlural}"]`
     ).first();
   }
   
@@ -115,7 +127,14 @@ export abstract class EntityDetailPage extends BasePage {
    */
   async navigateToDetail(id: string | number): Promise<void> {
     this.recordId = id;
-    await this.goto(`/${this.entityName}s/${id}`);
+    const entityRoutes: Record<string, string> = {
+      partner: '/partnerships/partners',
+      contact: '/partnerships/contacts',
+      interaction: '/partnerships/interactions',
+      opportunity: '/opportunities',
+    };
+    const basePath = entityRoutes[this.entityName] || `/${this.entityName}s`;
+    await this.goto(`${basePath}/${id}`);
     await waitForPageReady(this.page);
   }
   

@@ -6,6 +6,7 @@ using Xunit;
 
 namespace UNOPS.PAO.IntegrationTests.Controllers;
 
+[Collection("Integration Tests")]
 public class AuthenticationBypassTest
 {
     private readonly PAOWebApplicationFactory<Program> _factory;
