@@ -4732,12 +4732,14 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             .ToList();
 
         // Use mission Name (description) only - never codes like TRIPLE_PLANETARY_CRISIS in statement output
-        var unopsMissionsText = unopsMissionsDetails != null && unopsMissionsDetails.Any()
-            ? string.Join("\n", unopsMissionsDetails.Select(m =>
-                string.IsNullOrEmpty(m.Description)
-                    ? $"- {m.MissionName}"
-                    : $"- {m.MissionName}: {m.Description}"))
-            : "No UNOPS Mission alignments";
+        var unopsMissionsText = opportunity.UNOPSMissionsNotApplicable
+            ? "Not Applicable"
+            : (unopsMissionsDetails != null && unopsMissionsDetails.Any()
+                ? string.Join("\n", unopsMissionsDetails.Select(m =>
+                    string.IsNullOrEmpty(m.Description)
+                        ? $"- {m.MissionName}"
+                        : $"- {m.MissionName}: {m.Description}"))
+                : "No UNOPS Mission alignments");
 
         // Return comprehensive dictionary with all opportunity details
         return new Dictionary<string, object>
@@ -4816,6 +4818,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             ["uncfOutcomesCount"] = (uncfOutcomesDetails?.Count ?? 0).ToString(),
             ["unopsMissions"] = unopsMissionsText,
             ["unopsMissionsCount"] = (unopsMissionsDetails?.Count ?? 0).ToString(),
+            ["unopsMissionsNotApplicable"] = opportunity.UNOPSMissionsNotApplicable,
             
             // Statistics
             ["stats.totalFundingUSD"] = stats.TotalFundingUSD.ToString("N2"),

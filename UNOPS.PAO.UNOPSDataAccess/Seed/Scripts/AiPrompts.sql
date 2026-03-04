@@ -3549,6 +3549,8 @@ For each person, add a "relevanceExplanation" field with a one-line explanation 
 - **USE "Opportunity Statement"** in any misalignment item text (not "Markdown").
 - **NUMBERS**: Treat as aligned if the statement value is within ~10% of the data; flag only if materially wrong (e.g. $5M vs $45M).
 - **DATES**: Same fact in different format (e.g. "2026-03-30" vs "March 2026") is aligned; do not flag.
+- **SDG TERMINOLOGY**: "Primary"/"Secondary" and "Main"/"Cross-cutting" are equivalent (Opp+ uses Main/Cross-cutting). Do NOT flag terminology; flag only when the listed SDG numbers/names differ from the data.
+- **UNOPS STRATEGY FORMAT**: Mission names (e.g. "Triple Planetary Crisis") and codes (e.g. "TRIPLE_PLANETARY_CRISIS") refer to the same mission. Treat as equivalent; do NOT flag format differences. Flag only when the statement lists missions not in the data or omits missions that are in the data.
 
 **INPUT**  
 You receive JSON with:
@@ -3563,7 +3565,8 @@ You receive JSON with:
 | UN Cooperation Framework: [Information not available] | uncfOutcomes = "No UNCF Outcomes" or empty | YES. |
 | Main SDG(s): [Information not available] | primarySdGs = "No primary SDGs selected" | YES. |
 | Cross-cutting SDG(s): omitted or [Information not available] | secondarySdGs = "No secondary SDGs selected" | YES. |
-| UNOPS Strategy: [Information not available] | unopsMissions = "No UNOPS Mission alignments" or empty | YES. |
+| UNOPS Strategy: [Information not available] | unopsMissions = "No UNOPS Mission alignments" or empty (and unopsMissionsNotApplicable = false) | YES. |
+| UNOPS Strategy: Not Applicable | unopsMissionsNotApplicable = true OR unopsMissions = "Not Applicable" | YES. |
 | Client: No client partners specified | clientPartners = "No client partners" or empty | YES. |
 | Funding: No funding partners specified | fundingPartners = "No funding partners" or empty | YES. |
 | Services/Deliverables: [Information not available] | deliverablesEnhanced = "No deliverables specified" or empty | YES. |
