@@ -150,7 +150,7 @@ public class BoundaryTests : PNO1156TestFixtureBase
         request.Description = "Full description";
         request.ExpectedImpact = "Impact";
         request.ExpectedOutcomes = "Outcomes";
-        request.SdGs = new List<int> { 1 };
+        request.SdGs = new List<OpportunitySDGRequest> { new() { SDGId = 1, IsPrimary = false } };
         request.Countries = new List<int> { 1 };
 
         // Act
@@ -170,7 +170,7 @@ public class BoundaryTests : PNO1156TestFixtureBase
         // Arrange — manager deduplicates SDGs, Countries; SourceInteractionIds are used by controller
         await EnsureReferenceDataAsync();
         var request = BuildRequest(name: "Dedup Test");
-        request.SdGs = new List<int> { 1, 1, 1 };
+        request.SdGs = new List<OpportunitySDGRequest> { new() { SDGId = 1, IsPrimary = false }, new() { SDGId = 1, IsPrimary = false }, new() { SDGId = 1, IsPrimary = false } };
         request.Countries = new List<int> { 1, 1 };
 
         // Act

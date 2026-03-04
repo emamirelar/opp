@@ -1378,13 +1378,13 @@
                             <div class="flex items-center gap-2">
                               @if (sdg.isPrimary) {
                                 <p-chip
-                                  label="Primary"
+                                  [label]="'label.opportunity.sdgPrimary' | translate"
                                   styleClass="text-xs font-bold"
                                   [style]="{ 'background-color': '#22c55e', 'color': 'white' }"
                                 />
                               } @else {
                                 <p-chip
-                                  label="Secondary"
+                                  [label]="'label.opportunity.sdgSecondary' | translate"
                                   styleClass="text-xs font-bold"
                                   [style]="{ 'background-color': '#0ea5e9', 'color': 'white' }"
                                 />
@@ -1400,52 +1400,84 @@
             }
 
             <!-- UNOPS Strategic Missions Alignment -->
-            @if (proposedOpportunity()!.opportunity.unopsMissions && proposedOpportunity()!.opportunity.unopsMissions!.length > 0) {
+            @if ((proposedOpportunity()!.opportunity.unopsMissions && proposedOpportunity()!.opportunity.unopsMissions!.length > 0) || proposedOpportunity()!.opportunity.unopsMissionsNotApplicable) {
               <div>
                 <div class="flex items-center justify-between mb-4">
                   <label class="block text-sm font-semibold text-gray-700 flex items-center gap-2">
                     <i class="pi pi-building text-blue-600"></i>
-                    {{ 'label.opportunity.alignmentToUNOPSStrategy' | translate }} ({{ proposedOpportunity()!.opportunity.unopsMissions!.length }})
+                    {{ 'label.opportunity.alignmentToUNOPSStrategy' | translate }}
+                    @if (proposedOpportunity()!.opportunity.unopsMissions && proposedOpportunity()!.opportunity.unopsMissions!.length > 0) {
+                      ({{ proposedOpportunity()!.opportunity.unopsMissions!.length }})
+                    }
                   </label>
-                  <div class="flex items-center gap-2">
-                    <p-checkbox
-                      [binary]="true"
-                      [ngModel]="isFieldSelected('unopsMissions')"
-                      (ngModelChange)="toggleField('unopsMissions')"
-                      inputId="field-unopsMissions"
-                    />
-                    <label for="field-unopsMissions" class="cursor-pointer text-sm font-medium text-gray-700">
-                      {{ 'label.selectAll' | translate }}
-                    </label>
-                  </div>
+                  @if (proposedOpportunity()!.opportunity.unopsMissions && proposedOpportunity()!.opportunity.unopsMissions!.length > 0) {
+                    <div class="flex items-center gap-2">
+                      <p-checkbox
+                        [binary]="true"
+                        [ngModel]="isFieldSelected('unopsMissions')"
+                        (ngModelChange)="toggleField('unopsMissions')"
+                        inputId="field-unopsMissions"
+                      />
+                      <label for="field-unopsMissions" class="cursor-pointer text-sm font-medium text-gray-700">
+                        {{ 'label.selectAll' | translate }}
+                      </label>
+                    </div>
+                  }
                 </div>
                 <div class="space-y-3">
-                  @for (mission of proposedOpportunity()!.opportunity.unopsMissions; track $index) {
-                    <div 
+                  @if (proposedOpportunity()!.opportunity.unopsMissions && proposedOpportunity()!.opportunity.unopsMissions!.length > 0) {
+                    @for (mission of proposedOpportunity()!.opportunity.unopsMissions; track $index) {
+                      <div 
+                        class="rounded-lg p-4 transition-shadow cursor-pointer"
+                        [ngClass]="{
+                          'bg-blue-50 border border-blue-300': isFieldSelected('unopsMissions[' + $index + ']'),
+                          'bg-yellow-50 border border-yellow-200 hover:shadow-md': !isFieldSelected('unopsMissions[' + $index + ']')
+                        }"
+                        (click)="toggleField('unopsMissions[' + $index + ']')">
+                        <div class="flex items-start gap-4">
+                          <p-checkbox
+                            [binary]="true"
+                            [ngModel]="isFieldSelected('unopsMissions[' + $index + ']')"
+                            (ngModelChange)="toggleField('unopsMissions[' + $index + ']')"
+                            [inputId]="'unopsMission-' + $index"
+                            (click)="$event.stopPropagation()"
+                          />
+                          <i class="pi pi-check-circle text-2xl text-blue-600"></i>
+                          <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900 mb-1">
+                              {{ mission.name || 'UNOPS Mission ' + ($index + 1) }}
+                            </h4>
+                            @if (mission.code) {
+                              <span class="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded">
+                                {{ mission.code }}
+                              </span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  } @else if (proposedOpportunity()!.opportunity.unopsMissionsNotApplicable) {
+                    <!-- Not Applicable - matches manual screen (opportunity-why-section) -->
+                    <div
                       class="rounded-lg p-4 transition-shadow cursor-pointer"
                       [ngClass]="{
-                        'bg-blue-50 border border-blue-300': isFieldSelected('unopsMissions[' + $index + ']'),
-                        'bg-yellow-50 border border-yellow-200 hover:shadow-md': !isFieldSelected('unopsMissions[' + $index + ']')
+                        'bg-blue-50 border border-blue-300': isFieldSelected('unopsMissionsNotApplicable'),
+                        'bg-gray-50 border border-gray-200 hover:shadow-md': !isFieldSelected('unopsMissionsNotApplicable')
                       }"
-                      (click)="toggleField('unopsMissions[' + $index + ']')">
+                      (click)="toggleField('unopsMissionsNotApplicable')">
                       <div class="flex items-start gap-4">
                         <p-checkbox
                           [binary]="true"
-                          [ngModel]="isFieldSelected('unopsMissions[' + $index + ']')"
-                          (ngModelChange)="toggleField('unopsMissions[' + $index + ']')"
-                          [inputId]="'unopsMission-' + $index"
+                          [ngModel]="isFieldSelected('unopsMissionsNotApplicable')"
+                          (ngModelChange)="toggleField('unopsMissionsNotApplicable')"
+                          inputId="field-unopsMissionsNotApplicable"
                           (click)="$event.stopPropagation()"
                         />
-                        <i class="pi pi-check-circle text-2xl text-blue-600"></i>
+                        <i class="pi pi-minus-circle text-2xl text-gray-400"></i>
                         <div class="flex-1">
-                          <h4 class="font-semibold text-gray-900 mb-1">
-                            {{ mission.name || 'UNOPS Mission ' + ($index + 1) }}
-                          </h4>
-                          @if (mission.code) {
-                            <span class="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded">
-                              {{ mission.code }}
-                            </span>
-                          }
+                          <p class="text-sm text-gray-600">
+                            {{ 'label.opportunity.unopsMissionsNotApplicable' | translate }}
+                          </p>
                         </div>
                       </div>
                     </div>

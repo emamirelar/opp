@@ -52,5 +52,9 @@ public class OpportunityRequest
     public List<OpportunityCountryRequest>? Countries { get; set; }
     public List<OpportunitySDGRequest>? SDGs { get; set; }
     public List<OpportunityUNOPSMissionRequest>? UNOPSMissions { get; set; }
+    /// <summary>
+    /// When true, UNOPS Strategic Mission alignment is not applicable.
+    /// </summary>
+    public bool UNOPSMissionsNotApplicable { get; set; }
 }
 

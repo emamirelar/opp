@@ -33,8 +33,15 @@ public class ApplyOpportunityAiChangesRequest
     public int? EstimatedDirectBeneficiaries { get; set; }
     public int? EstimatedIndirectBeneficiaries { get; set; }
     public bool? BeneficiariesToBeDetermined { get; set; }
-    public List<int>? SdGs { get; set; }
+    /// <summary>
+    /// SDGs with Main/Cross-cutting classification. Opp+ terminology: isPrimary=true = Main, isPrimary=false = Cross-cutting.
+    /// </summary>
+    public List<OpportunitySDGRequest>? SdGs { get; set; }
     public List<OpportunityUNOPSMissionRequest>? UNOPSMissions { get; set; }
+    /// <summary>
+    /// When true, UNOPS Strategic Mission alignment is not applicable (matches manual "Not Applicable" option).
+    /// </summary>
+    public bool? UNOPSMissionsNotApplicable { get; set; }
 
     // WHO Section Properties
     /// <summary>

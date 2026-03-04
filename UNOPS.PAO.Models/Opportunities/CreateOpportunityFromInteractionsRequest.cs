@@ -71,13 +71,17 @@ public class CreateOpportunityFromInteractionsRequest
     public int? EstimatedIndirectBeneficiaries { get; set; }
     public bool? BeneficiariesToBeDetermined { get; set; }
     /// <summary>
-    /// SDGs - plain integer array of SDG IDs, e.g. [3, 7, 9, 13]
+    /// SDGs with Main/Cross-cutting classification. Opp+ terminology: isPrimary=true = Main, isPrimary=false = Cross-cutting.
     /// </summary>
-    public List<int>? SdGs { get; set; }
+    public List<OpportunitySDGRequest>? SdGs { get; set; }
     /// <summary>
     /// UNOPS Strategic Missions - array of { unopsMissionId }
     /// </summary>
     public List<OpportunityUNOPSMissionRequest>? UNOPSMissions { get; set; }
+    /// <summary>
+    /// When true, UNOPS Strategic Mission alignment is not applicable (matches manual "Not Applicable" option).
+    /// </summary>
+    public bool UNOPSMissionsNotApplicable { get; set; }
 
     // WHO Section Properties (AI-proposed, user-accepted)
     // These are now proper structured objects from AI analysis

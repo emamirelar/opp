@@ -3346,7 +3346,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             entity.BeneficiariesToBeDetermined = request.BeneficiariesToBeDetermined.Value;
         }
 
-        // Update SDGs
+        // Update SDGs (with Main/Cross-cutting from isPrimary)
         if (request.SdGs != null)
         {
             // Remove existing SDGs
@@ -3357,16 +3357,32 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
             // Add new SDGs
             entity.SDGs = request.SdGs
-                .Select(sdgId => new OpportunitySDG
+                .Select(s => new OpportunitySDG
                 {
                     OpportunityId = id,
-                    SDGId = sdgId
+                    SDGId = s.SDGId,
+                    IsPrimary = s.IsPrimary
                 })
                 .ToList();
         }
 
-        // Update UNOPS Missions
-        if (request.UNOPSMissions != null)
+        // Update UNOPS Missions and Not Applicable flag
+        if (request.UNOPSMissionsNotApplicable.HasValue)
+        {
+            entity.UNOPSMissionsNotApplicable = request.UNOPSMissionsNotApplicable.Value;
+            if (request.UNOPSMissionsNotApplicable.Value)
+            {
+                // Clear all missions when Not Applicable
+                var existingMissions = await context.Set<OpportunityUNOPSMission>()
+                    .Where(m => m.OpportunityId == id && !m.IsDeleted)
+                    .ToListAsync();
+                if (existingMissions.Any())
+                {
+                    context.Set<OpportunityUNOPSMission>().RemoveRange(existingMissions);
+                }
+            }
+        }
+        if (request.UNOPSMissions != null && !(request.UNOPSMissionsNotApplicable == true))
         {
             entity.UNOPSMissionsNotApplicable = false;
             var existingMissions = await context.Set<OpportunityUNOPSMission>()
@@ -3682,8 +3698,11 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new BusinessException("Name is required.");
         }
 
-        // Deduplicate SDGs by ID (plain integer array)
-        var uniqueSdGs = request.SdGs?.Distinct().ToList() ?? new List<int>();
+        // Deduplicate SDGs by ID, preserving isPrimary (Main/Cross-cutting) from first occurrence
+        var uniqueSdGs = request.SdGs?
+            .GroupBy(s => s.SDGId)
+            .Select(g => g.First())
+            .ToList() ?? new List<OpportunitySDGRequest>();
         
         // Deduplicate Countries by ID (plain integer array)
         var uniqueCountries = request.Countries?.Distinct().ToList() ?? new List<int>();
@@ -3740,8 +3759,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             BeneficiariesToBeDetermined = request.BeneficiariesToBeDetermined ?? false,
             MiscExternalStakeholders = request.MiscExternalStakeholders,
             ExternalStakeholderNotes = request.ExternalStakeholderNotes,
-            SDGs = uniqueSdGs.Select(sdgId => new OpportunitySDGRequest { SDGId = sdgId }).ToList(),
+            SDGs = uniqueSdGs,
             UNOPSMissions = request.UNOPSMissions?.DistinctBy(m => m.UNOPSMissionId).ToList(),
+            UNOPSMissionsNotApplicable = request.UNOPSMissionsNotApplicable,
             Countries = uniqueCountries.Select(countryId => new OpportunityCountryRequest { CountryId = countryId }).ToList(),
             Deliverables = request.Deliverables ?? new List<OpportunityDeliverableRequest>(),
             Stakeholders = uniqueStakeholders,
@@ -4545,7 +4565,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             {
                 SDGNumber = s.SDG?.SDGNumber ?? "",
                 SDGName = s.SDG?.Name ?? "Unknown",
-                IsPrimary = s.IsPrimary ? "Primary" : "Secondary",
+                IsPrimary = s.IsPrimary ? "Main" : "Cross-cutting",
                 SkipTargets = (s.SkipTargetsAndIndicators ?? false) ? "Yes" : "No",
                 Notes = s.Notes ?? "",
                 Targets = opportunity.SDGTargets?
@@ -4592,16 +4612,16 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }))
             : "No SDGs";
 
-        // Separate Primary and Secondary SDGs for clearer AI prompt usage
-        var primarySdgsText = sdgsDetails != null && sdgsDetails.Any(s => s.IsPrimary == "Primary")
-            ? string.Join("\n", sdgsDetails.Where(s => s.IsPrimary == "Primary").Select(s => $"- SDG {s.SDGNumber}: {s.SDGName}"))
+        // Separate Main and Cross-cutting SDGs for Opp+ terminology (used in opportunity statement)
+        var primarySdgsText = sdgsDetails != null && sdgsDetails.Any(s => s.IsPrimary == "Main")
+            ? string.Join("\n", sdgsDetails.Where(s => s.IsPrimary == "Main").Select(s => $"- SDG {s.SDGNumber}: {s.SDGName}"))
             : "No primary SDGs selected";
-        var primarySdgsCount = sdgsDetails?.Count(s => s.IsPrimary == "Primary") ?? 0;
-        
-        var secondarySdgsText = sdgsDetails != null && sdgsDetails.Any(s => s.IsPrimary == "Secondary")
-            ? string.Join("\n", sdgsDetails.Where(s => s.IsPrimary == "Secondary").Select(s => $"- SDG {s.SDGNumber}: {s.SDGName}"))
+        var primarySdgsCount = sdgsDetails?.Count(s => s.IsPrimary == "Main") ?? 0;
+
+        var secondarySdgsText = sdgsDetails != null && sdgsDetails.Any(s => s.IsPrimary == "Cross-cutting")
+            ? string.Join("\n", sdgsDetails.Where(s => s.IsPrimary == "Cross-cutting").Select(s => $"- SDG {s.SDGNumber}: {s.SDGName}"))
             : "No secondary SDGs selected";
-        var secondarySdgsCount = sdgsDetails?.Count(s => s.IsPrimary == "Secondary") ?? 0;
+        var secondarySdgsCount = sdgsDetails?.Count(s => s.IsPrimary == "Cross-cutting") ?? 0;
 
         // Simple country names list for Location section
         var countryNamesList = countriesDetails != null && countriesDetails.Any()
@@ -4711,11 +4731,15 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             })
             .ToList();
 
-        var unopsMissionsText = unopsMissionsDetails != null && unopsMissionsDetails.Any()
-            ? string.Join("\n", unopsMissionsDetails.Select(m =>
-                $"- {m.MissionCode}: {m.MissionName}" +
-                (string.IsNullOrEmpty(m.Description) ? "" : $" - {m.Description}")))
-            : "No UNOPS Mission alignments";
+        // Use mission Name (description) only - never codes like TRIPLE_PLANETARY_CRISIS in statement output
+        var unopsMissionsText = opportunity.UNOPSMissionsNotApplicable
+            ? "Not Applicable"
+            : (unopsMissionsDetails != null && unopsMissionsDetails.Any()
+                ? string.Join("\n", unopsMissionsDetails.Select(m =>
+                    string.IsNullOrEmpty(m.Description)
+                        ? $"- {m.MissionName}"
+                        : $"- {m.MissionName}: {m.Description}"))
+                : "No UNOPS Mission alignments");
 
         // Return comprehensive dictionary with all opportunity details
         return new Dictionary<string, object>
@@ -4794,6 +4818,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             ["uncfOutcomesCount"] = (uncfOutcomesDetails?.Count ?? 0).ToString(),
             ["unopsMissions"] = unopsMissionsText,
             ["unopsMissionsCount"] = (unopsMissionsDetails?.Count ?? 0).ToString(),
+            ["unopsMissionsNotApplicable"] = opportunity.UNOPSMissionsNotApplicable,
             
             // Statistics
             ["stats.totalFundingUSD"] = stats.TotalFundingUSD.ToString("N2"),
