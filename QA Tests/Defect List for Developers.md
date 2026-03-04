@@ -676,14 +676,18 @@ The following items were previously logged as developer defects but have been re
 
 ## Defect Statistics (Updated 2026-03-04)
 
-- **Total Open:** 33 (DEF-008, DEF-020, DEF-021, DEF-023, DEF-024, DEF-025–DEF-050, DEF-052–DEF-062)
-- **2026-03-04 Updates:**
+- **Total Open:** 34 (DEF-008, DEF-020, DEF-021, DEF-023, DEF-024, DEF-025–DEF-050, DEF-052–DEF-063)
+- **2026-03-04 Playwright E2E Session Updates:**
+  - **DEF-062 workaround applied:** Startup.cs modified to conditionally register PubSubPullService/DueDiligenceNotificationService based on `Enabled` config flag. Backend now starts and stays stable in Development. Permanent fix pending from developer.
+  - **DEF-063 NEW:** IAPVerificationMiddleware runs unconditionally in Testing environment, blocks `[AllowAnonymous]` endpoints
+  - **Playwright E2E results:** 1,015 passed, 92 failed, 445 skipped (51.4 min, headless Chromium, 4 workers). Real backend integration working — 9/11 partners tests pass with real database data.
+- **2026-03-04 Earlier Updates:**
   - **DEF-013 CLOSED** (Won't Fix): LiaisonOffice does not have a manager by design (per Anusha)
   - **DEF-014 CLOSED** (Won't Fix): FocalPoint does not have a manager by design (per Anusha)
   - **DEF-053 Verification Pending**: Anusha reports fix may be in place; 85+ tests un-skipped for CI verification
   - 21 PartnerLiaisonOffice/FocalPoint placeholder tests cancelled
   - Integration tests job enabled in CI (`continue-on-error: true`) for Anusha to verify UNOPS.Workflow submodule and DEF-053 fixes
-- **NEW (2026-03-04):** DEF-061 (3,036 compiler warnings across 15 production projects — nullable, async, XML docs, code quality), DEF-062 (PubSubPullService ignores Enabled:false config, crashes backend on GCP permission error)
+- **NEW (2026-03-04):** DEF-061 (3,036 compiler warnings across 15 production projects), DEF-062 (PubSubPullService ignores Enabled:false config — workaround applied), DEF-063 (IAPVerificationMiddleware blocks AllowAnonymous in Testing env)
 - **NEW (2026-03-03):** DEF-057 (Partner name whitespace-only input), DEF-058 (OpportunityManager invalid Stakeholders.Contact include path), DEF-059 (PartnerManager GetPartnerWithContactsAndInteractions 805ms, 4x over SLA), DEF-060 (EF Migration Init references AspNetUsers before Identity tables exist)
 - **NEW (2026-03-02):** DEF-054 (DoA3Fallback missing ILogger logging), DEF-055 (Reject NullReferenceException on null EntityName), DEF-056 (Reopen sets Draft instead of Active)
 - **DEF-051 reclassified (2026-03-02):** AutoMapper mock overload mismatch in test, not a production defect.
@@ -692,7 +696,7 @@ The following items were previously logged as developer defects but have been re
 - **Total Reclassified:** 6 (DEF-005, DEF-007, DEF-009, DEF-015, DEF-022 → moved to appropriate trackers; DEF-051 → QA mock issue)
 - 🔴 **Critical:** 0
 - 🟠 **High Priority:** 17 (DEF-008, DEF-020, DEF-021, DEF-023, DEF-024, DEF-033, DEF-034, DEF-038, DEF-039, DEF-040, DEF-042, DEF-043, DEF-045, DEF-053, DEF-058, DEF-059, DEF-062)
-- 🟡 **Medium Priority:** 22 (DEF-025–DEF-032, DEF-035–DEF-037, DEF-041, DEF-044, DEF-047–DEF-050, DEF-052, DEF-055, DEF-056, DEF-060, DEF-061)
+- 🟡 **Medium Priority:** 23 (DEF-025–DEF-032, DEF-035–DEF-037, DEF-041, DEF-044, DEF-047–DEF-050, DEF-052, DEF-055, DEF-056, DEF-060, DEF-061, DEF-063)
 - 🟢 **Low Priority:** 4 (DEF-046, DEF-051, DEF-054, DEF-057)
 - **2026-03-03 New Tests Added:** AiContextualServiceProcessPlaceholderTests (39 tests, 39/39 passed), DocumentControllerUNOPSTests (39 tests, 21 passed, 18 skipped pending DEF-053), 3 Playwright E2E spec files (api-error-handling, form-validation-negative, interactions-enhanced), 15+ new Playwright API mocks
 - **2026-03-03 Full Run (after QA-089 concurrent DbContext fixes):** FastTests: 78/78 passed (100%). Presentation.Tests: 154/154 passed (100%). Business.Tests: 4,627 total — 4,329 passed, 57 failed, 241 skipped (93.6%). Integration Tests: 6,132 total — 5,662 passed, 115 failed, 355 skipped (92.3%). **TOTAL: 11,069 tests — 10,223 passed (92.4%), 172 failed, 596 skipped.** 75 concurrent DbContext tests (QA-089) fixed — all 75 now pass. New tests added: 39 AiContextualService + 39 DocumentController UNOPS.

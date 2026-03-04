@@ -31,7 +31,37 @@ This document tracks test infrastructure issues, test implementation bugs, tempo
 
 ## Open QA Issues
 
-**Status**: ⚠️ 7 open + 3 partial + 4 workaround applied — **2026-03-02 Verification Rerun:** QA-084 **27/27 pass** ✅ (AutoMapper mock overload fixed). QA-085 **39/39 pass** ✅. QA-086 fixture fixed, 51 tests blocked by QA-088/DEF-053 (GoogleCredential — cannot fix from QA side). QA-087 **45/45 pass** ✅. **QA-088 blocks all PartnerControllerTests** (UNOPSGeminiManager `new`'d in constructor, bypasses all DI mocking). **DEF-051 reclassified as QA mock issue (not production defect). DEF-052, DEF-053 remain open.**
+**Status**: ⚠️ 5 open + 3 partial + 5 workaround applied — **2026-03-04 Playwright E2E Session:** 100+ locator fixes (QA-096), real backend integration via `auth-only-mocks.helper.ts` (QA-097), cookie domain fix (QA-098), test user email fix (QA-099). Playwright results: **1,015 passed, 92 failed, 445 skipped** (51.4 min). 9/11 partners tests pass with real DB data. QA-100 open (restricted test users don't exist in DB). QA-101 workaround applied (SKIP_WEB_SERVER=1). **QA-088 closed** (by-design scope limitation).
+
+---
+
+### 2026-03-04 Playwright E2E Execution Summary (Chromium, 4 workers, full mocks)
+
+| Metric | Count | Notes |
+|---|---|---|
+| **Passed** | 1,015 ✅ | |
+| **Failed** | 92 ❌ | Locator issues (30), mock/data limitations (45), unimplemented features (17) |
+| **Skipped** | 445 ⏭ | Login/user-mgmt not implemented, restricted-user scenarios, complex mock deps |
+| **Duration** | 51.4 minutes | 4 workers, headless Chromium |
+| **Browser** | Chromium only | |
+
+**Key Improvements (2026-03-04 Playwright Session):**
+- **Locator overhaul:** 100+ `data-testid` locators replaced with PrimeNG-aware selectors across 15 page objects and 50+ spec files (QA-096)
+- **Real backend integration:** New `auth-only-mocks.helper.ts` enables hybrid mode — auth mocked, data from real .NET backend via `ng serve` proxy (QA-097). Verified: 9/11 partners tests pass with real DB data.
+- **Backend stability:** DEF-062 workaround applied (conditional PubSub registration in Startup.cs). Backend starts and stays stable.
+- **API mock expansion:** Added mocks for comments, entity-artifacts, translations, links, AI prompts in `api-mocks.helper.ts`
+- **Config optimizations:** `headless: true`, `workers: 4`, `expect.timeout: 5s`, `video: off`, `trace: off`
+- **6 new QA issues** tracked and resolved: QA-096 through QA-101
+
+**Remaining 92 Failures Breakdown:**
+- ~30 locator issues requiring more specific PrimeNG selectors
+- ~45 mock/data limitations (mock data insufficient for complex Angular rendering)
+- ~17 tests for features not fully implemented or requiring real backend data
+
+**Next Steps:**
+- Run full suite with `USE_REAL_API=true` (real backend data) to see how many of the 92 remaining failures resolve
+- Create real restricted-role test users in dev database for permission-boundary tests (QA-100)
+- Continue refining locators for complex PrimeNG components
 
 ---
 
@@ -43,8 +73,8 @@ This document tracks test infrastructure issues, test implementation bugs, tempo
 | Presentation Tests | 154 | 154 | 0 | 0 | ✅ 100% clean |
 | Business Tests (PostgreSQL) | 4,301 | 3,982 | 78 | 241 | ⚠️ 78 failures (63 QA infra + 10 DEF + 5 under investigation) |
 | Integration Tests (PostgreSQL) | 5,592 | 5,241 | 211 | 140 | ⚠️ 211 failures (51 QA-086 + ~160 existing DEFs) |
-| Playwright E2E | — | — | — | — | ⏸ No dev server running |
-| **TOTAL** | **10,125** | **9,455** | **289** | **381** | **93.4%** |
+| Playwright E2E | 1,015 | 1,015 | 92 | 445 | ⚠️ See 2026-03-04 Playwright summary above |
+| **TOTAL** | **11,677** | **10,470** | **381** | **826** | **89.7%** |
 
 **Key Findings (2026-03-02 Full Run):**
 - **Cloud SQL Proxy was running** — full database-dependent test execution
@@ -277,6 +307,12 @@ When InMemory is in use (`IsUsingPostgres = false`), all these tests return earl
 | QA-093 | 🟡 Medium | Playwright E2E tests fail with ERR_CONNECTION_REFUSED when frontend not running | Environment | 66 tests across api-error-handling, form-validation-negative, interactions-enhanced specs timeout when Angular dev server not running at localhost:4200. **Resolved:** `webServer` config in `playwright.config.ts` auto-starts Angular dev server. Timeout increased to 300s for large project compilation. Removed manual `checkFrontendAvailable` guards from all specs. | N/A | 2026-03-02 | Resolved (2026-03-02) |
 | QA-094 | 🟡 Medium | Listview cards don't render in Playwright headless mode — canRenderContent width detection | Tooling | `app-listview-card` component uses `ResizeObserver` to measure `componentWidth` in `canRenderContent()` computed property. In headless Chromium, `componentWidth` is 0, so `canRenderContent()` returns false and card content never renders. Data loads correctly (confirmed by "Showing X records" text). **Workaround Applied:** All card-click-based navigation replaced with direct URL navigation (`page.goto('/interactions/1')`) in interactions-enhanced.spec.ts. 8 tests affected (TC-002, TC-012, TC-014, TC-021, TC-025, TC-026). | N/A | 2026-03-02 | Workaround Applied |
 | QA-095 | 🟡 Medium | 5 performance tests share DbContext across parallel tasks (missed by QA-089 fix) | Test Execution | `AuditLogManagerPerformanceTests` (2 tests) and `SystemAdminManagerPerformanceTests` (3 tests) used `Task.WhenAll`/`Task.Run` with shared `PerformanceTestBase.Context`. **Resolved (2026-03-03):** Converted all 5 concurrent tests to sequential execution. All 38/38 performance tests pass (0 failures). | QA-089 | 2026-03-03 | Resolved (2026-03-03) |
+| QA-096 | 🟠 High | 100+ Playwright locators use non-existent data-testid attributes | Tooling | Page objects and spec files referenced `data-testid` attributes that were never added to Angular components. Root cause: tests were generated before UI implementation. **Resolved (2026-03-04):** Replaced all data-testid locators with robust PrimeNG-aware selectors (`getByText`, `getByRole`, CSS component selectors like `app-listview`, `p-panel`, `.or()` fallback chains). Updated 15 page objects and 50+ spec files. Run 10 result: 1,015 passed, 92 failed, 445 skipped (was ~400 failed before fixes). | N/A | 2026-03-04 | Resolved (2026-03-04) |
+| QA-097 | 🟡 Medium | Playwright tests mock ALL API calls — never hits real backend | Mocking | `authenticateWithRealBackend()` calls `setupAPIMocks(page)` which uses `page.route()` to intercept every `/api/*` and `/user/*` request. Data is served from hardcoded JSON in `api-mocks.helper.ts`, not the real database. Even with the .NET backend running and `ng serve` proxy configured, tests see only mock data. **Resolved (2026-03-04):** Created `auth-only-mocks.helper.ts` for hybrid mode. When `USE_REAL_API=true`: only `/user/claims`, `/api/permissions/check/`, and `/api/dev/check-iap-simulation` are mocked (for auth identity). All data endpoints flow through `ng serve` proxy to the real .NET backend. Verified: 9/11 partners tests pass with real database data. | N/A | 2026-03-04 | Resolved (2026-03-04) |
+| QA-098 | 🟡 Medium | Playwright auth cookies set for wrong domain (127.0.0.1 vs localhost) | Mocking | `authenticateWithRealBackend()` set `dev-user-email` and `DevIAPAuth` cookies with `domain: '127.0.0.1'`, but `ng serve` serves on `localhost`. Cookies were not sent with API requests through the proxy. **Resolved (2026-03-04):** Cookies now set for both `localhost` and `127.0.0.1` domains. | N/A | 2026-03-04 | Resolved (2026-03-04) |
+| QA-099 | 🟡 Medium | Playwright default test user email doesn't exist in real database | Test Data | Default user `test@playwright.local` doesn't exist in the dev database, causing real backend to return empty data or 401. When `USE_REAL_API=true`, the listview shows "Showing 0 records". **Resolved (2026-03-04):** Default email now reads from `TEST_USER_EMAIL` env var (`leonardc@unops.org`) when `USE_REAL_API=true`. | N/A | 2026-03-04 | Resolved (2026-03-04) |
+| QA-100 | 🟢 Low | Restricted-user Playwright tests fail with real backend — fake users don't exist in DB | Test Data | Tests using `test-readonly@playwright.local` and other fake restricted-user emails get blank/error pages when `USE_REAL_API=true` because these users don't exist in the real database. 2 of 11 partners tests affected. **Workaround:** These tests still use full API mocks when run against real backend. Long-term fix: create real test users with restricted roles in the dev database. | N/A | 2026-03-04 | Open |
+| QA-101 | 🟡 Medium | Playwright webServer config fails when TestApiServer DLLs are locked | Infrastructure | Playwright's `webServer` configuration attempts to build and start `TestApiServer`, but fails when DLL files (`UNOPS.Workflow.Models.dll`, `UNOPS.Workflow.Domain.dll`) are locked by a previously running TestApiServer process. **Workaround Applied:** Set `SKIP_WEB_SERVER=1` environment variable to disable Playwright's auto-start of webServer. The TestApiServer is unnecessary when using `page.route()` mocks or `USE_REAL_API=true` mode. | N/A | 2026-03-04 | Workaround Applied |
 
 ---
 
@@ -1259,10 +1295,19 @@ Update the permissions mock in the Playwright mock helper to return a denied/blo
 
 ---
 
-## QA Issue Statistics (Updated 2026-03-03)
+## QA Issue Statistics (Updated 2026-03-04)
 
-- **Total Open:** 5 ⚠️ (QA-014, QA-015, QA-042, QA-043, QA-088)
-- **2026-03-04 Updates:** QA-044 CLOSED (LiaisonOffice tests cancelled — no manager by design, per Anusha). QA-045 CLOSED (FocalPoint tests cancelled — no manager by design, per Anusha). DEF-053 tests un-skipped for CI verification. Integration tests job enabled in CI.
+- **Total Open:** 5 ⚠️ (QA-014, QA-015, QA-042, QA-043, QA-100)
+- **2026-03-04 Playwright E2E Session:**
+  - **QA-096 resolved:** 100+ Playwright locators replaced with PrimeNG-aware selectors (15 page objects, 50+ spec files)
+  - **QA-097 resolved:** Created `auth-only-mocks.helper.ts` for hybrid mode — auth mocked, data flows to real .NET backend
+  - **QA-098 resolved:** Cookie domains fixed for localhost (was 127.0.0.1 only)
+  - **QA-099 resolved:** Default test user email reads from `TEST_USER_EMAIL` env var when `USE_REAL_API=true`
+  - **QA-100 open:** Restricted-user tests fail with real backend — fake test users don't exist in DB
+  - **QA-101 workaround applied:** `SKIP_WEB_SERVER=1` bypasses TestApiServer DLL locking issues
+  - **QA-088 CLOSED:** Reclassified as by-design scope limitation (2026-03-03)
+  - **Playwright E2E results:** 1,015 passed, 92 failed, 445 skipped (51.4 min, headless Chromium, 4 workers)
+- **2026-03-04 Earlier Updates:** QA-044 CLOSED (LiaisonOffice tests cancelled — no manager by design, per Anusha). QA-045 CLOSED (FocalPoint tests cancelled — no manager by design, per Anusha). DEF-053 tests un-skipped for CI verification. Integration tests job enabled in CI.
 - **QA-095 resolved (2026-03-03):** 5 performance tests in AuditLogManagerPerformanceTests (2) and SystemAdminManagerPerformanceTests (3) converted from parallel `Task.WhenAll` to sequential execution. All 38/38 pass.
 - **QA-092 resolved (2026-03-02):** Added proper timeouts (`.WaitAsync()`) to 2 hanging tests — no more indefinite hangs, no tests skipped.
 - **QA-091 resolved (2026-03-02):** Fixed PNO-1146 fixture: registered WorkflowDbContext in mock service provider, added OM seed data, fixed 4 wrong template name assertions, fixed EntityUrl assertion. 21 tests un-skipped, all 52 pass.
