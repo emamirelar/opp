@@ -167,7 +167,9 @@ public class GeminiManager : IGeminiManager
     public async IAsyncEnumerable<string> ChatWithGeminiStreaming(GeminiAssistantRequest req, ClaimsPrincipal user, IHeaderDictionary headers = null)
     {
         throw new NotImplementedException();
-        yield break; // This line will never be reached, but is required for compilation
+#pragma warning disable CS0162 // Unreachable code - required for IAsyncEnumerable
+        yield break;
+#pragma warning restore CS0162
     }
 
 

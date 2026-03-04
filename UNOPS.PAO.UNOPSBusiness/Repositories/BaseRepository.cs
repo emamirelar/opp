@@ -1,4 +1,4 @@
-﻿using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Utilities.Helpers;
 using Microsoft.AspNetCore.Http;
@@ -24,12 +24,10 @@ using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using System.Linq.Expressions;
 using UNOPS.PAO.UNOPSBusiness.Models;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using Microsoft.Extensions.Configuration;
-using System.Reflection;
 using Humanizer;
 using Newtonsoft.Json;
 
@@ -39,27 +37,22 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
     protected DbSet<TEntity> _dbSet;
     protected readonly IConfiguration _configuration;
     protected readonly AiContextualService _aiService;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly GlobalFilterService _globalFilterService;
+    private readonly IServiceProvider? _serviceProvider;
+    private readonly GlobalFilterService? _globalFilterService;
 
     private IQueryable<TEntity> ApplyIncludes(IQueryable<TEntity> set, string[] includes)
     {
         return includes.Aggregate(set, (current, include) => current.Include(include));
     }
 
-    public BaseRepository(UNOPSAppDbContext context, IConfiguration configuration, IServiceProvider serviceProvider = null)
+    public BaseRepository(UNOPSAppDbContext context, IConfiguration configuration, IServiceProvider? serviceProvider = null)
     {
         _dataDbContext = context;
         _dbSet = context.Set<TEntity>();
         _configuration = configuration;
         _serviceProvider = serviceProvider;
-        _aiService = new AiContextualService(configuration, context, null);
-        
-        // Initialize GlobalFilterService if service provider is available
-        if (_serviceProvider != null)
-        {
-            _globalFilterService = _serviceProvider.GetService<GlobalFilterService>();
-        }
+        _aiService = new AiContextualService(configuration, context, null!);
+        _globalFilterService = _serviceProvider?.GetService<GlobalFilterService>();
     }
 
     /// <summary>

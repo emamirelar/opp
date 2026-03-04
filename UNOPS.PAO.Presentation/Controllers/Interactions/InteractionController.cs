@@ -135,17 +135,9 @@ namespace UNOPS.PAO.Presentation.Controllers.Interactions
 
         /// <summary>
         /// Creates a new interaction record with complete details including participants, type, and associated entities.
+        /// Request includes: type (Meeting/Email/Call/Conference), subject, description, startDate, endDate, location, status, participants, partners.
         /// </summary>
-        /// <param name="req">Interaction creation request with all required details</param>
-        /// <param name="req.type">Interaction type (required) - e.g., 'Meeting', 'Email', 'Call', 'Conference'</param>
-        /// <param name="req.subject">Interaction subject/title (required)</param>
-        /// <param name="req.description">Detailed description of the interaction</param>
-        /// <param name="req.startDate">Interaction start date and time</param>
-        /// <param name="req.endDate">Interaction end date and time</param>
-        /// <param name="req.location">Meeting location or platform</param>
-        /// <param name="req.status">Interaction status</param>
-        /// <param name="req.participants">List of contact participants</param>
-        /// <param name="req.partners">List of partner organizations involved</param>
+        /// <param name="req">Interaction creation request with type, subject, description, dates, location, status, participants, and partners</param>
         /// <example_uses>
         /// Create a new meeting with UNICEF on project planning
         /// Record email interaction with partner contacts
@@ -371,6 +363,10 @@ namespace UNOPS.PAO.Presentation.Controllers.Interactions
         /// </summary>
         /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
         /// <param name="query">Text to search across interaction subject, description, and other basic fields</param>
+        /// <param name="partnerId">Optional partner ID to filter by partner</param>
+        /// <param name="contactId">Optional contact ID to filter by contact</param>
+        /// <param name="export">Whether to export all results without pagination</param>
+        /// <param name="filterActive">Whether to apply global filters, default: true</param>
         /// <example_uses>
         /// Search for interactions about project
         /// Find interactions containing 'meeting notes'
@@ -481,9 +477,15 @@ namespace UNOPS.PAO.Presentation.Controllers.Interactions
         /// Performs advanced search with structured criteria including relationships with partners, contacts, dates, and complex filters.
         /// Enhanced with intelligent field value matching for AI agents and typo correction.
         /// </summary>
-        /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
-        /// <param name="searchCriteria">JSON array of search criteria objects with field, operator, value, and logicalOperator</param>
-        /// <param name="enableSmartSearch">Enable intelligent field value matching and typo correction (default: true)</param>
+        /// <param name="filters">JSON array of search criteria objects with field, operator, value, and logicalOperator</param>
+        /// <param name="pageIndex">Page number (1-based)</param>
+        /// <param name="pageSize">Number of items per page</param>
+        /// <param name="orderBy">Field to order by</param>
+        /// <param name="ascending">Sort direction</param>
+        /// <param name="partnerId">Optional partner ID to filter by partner</param>
+        /// <param name="contactId">Optional contact ID to filter by contact</param>
+        /// <param name="export">Whether to export all results without pagination</param>
+        /// <param name="filterActive">Whether to apply global filters, default: true</param>
         /// <example_uses>
         /// Find interactions with UNICEF partners
         /// Show meetings with John Smith contact
@@ -654,16 +656,7 @@ namespace UNOPS.PAO.Presentation.Controllers.Interactions
         /// <summary>
         /// Updates an existing interaction's information including details, participants, scheduling, and metadata.
         /// </summary>
-        /// <param name="req">Interaction update request containing modified fields</param>
-        /// <param name="req.id">Interaction ID to update (required)</param>
-        /// <param name="req.subject">Updated subject/title</param>
-        /// <param name="req.description">Updated description</param>
-        /// <param name="req.type">Updated interaction type</param>
-        /// <param name="req.startDate">Updated start date and time</param>
-        /// <param name="req.endDate">Updated end date and time</param>
-        /// <param name="req.location">Updated location</param>
-        /// <param name="req.status">Updated status</param>
-        /// <param name="req.participants">Updated participant list</param>
+        /// <param name="req">Interaction update request (id, subject, description, type, startDate, endDate, location, status, participants)</param>
         /// <example_uses>
         /// Update meeting 123's time to 2 PM
         /// Change interaction 456's location to virtual
@@ -755,8 +748,7 @@ namespace UNOPS.PAO.Presentation.Controllers.Interactions
         /// <summary>
         /// Scans and processes uploaded files for interaction data extraction using AI-powered analysis.
         /// </summary>
-        /// <param name="req">File scan request containing the file to be processed</param>
-        /// <param name="req.File">File to scan for interaction data (required)</param>
+        /// <param name="req">File scan request with File property (required)</param>
         /// <example_uses>
         /// Scan meeting notes for interaction details
         /// Upload email threads for processing
@@ -808,9 +800,7 @@ namespace UNOPS.PAO.Presentation.Controllers.Interactions
         /// <summary>
         /// Analyzes uploaded files and extracts structured interaction data using AI-powered data analysis.
         /// </summary>
-        /// <param name="request">Analysis request containing file and analysis parameters</param>
-        /// <param name="request.entityType">Should be set to 'Interaction' for interaction data analysis</param>
-        /// <param name="request.analysisType">Type of analysis to perform on interaction data</param>
+        /// <param name="request">Analysis request (entityType: 'Interaction', analysisType)</param>
         /// <example_uses>
         /// Analyze meeting transcripts for structured data extraction
         /// Extract interaction information from uploaded logs
@@ -838,10 +828,7 @@ namespace UNOPS.PAO.Presentation.Controllers.Interactions
         /// <summary>
         /// Bulk uploads multiple interaction records using AI-assisted data processing and validation.
         /// </summary>
-        /// <param name="req">Bulk upload request containing interaction data</param>
-        /// <param name="req.Type">Should be set to 'Interaction' for interaction bulk upload</param>
-        /// <param name="req.Data">Array of interaction data objects to upload</param>
-        /// <param name="req.Options">Upload options and validation settings</param>
+        /// <param name="req">Bulk upload request (Type: 'Interaction', Data, Options)</param>
         /// <example_uses>
         /// Bulk upload 200 interactions from Excel
         /// Import multiple interactions from CSV file
@@ -1086,8 +1073,8 @@ namespace UNOPS.PAO.Presentation.Controllers.Interactions
                 return Ok(new {
                     success = true,
                     entityType = "Interaction",
-                    recordId = (object)null,
-                    duplicateInfo = (object)null,
+                    recordId = (object?)null,
+                    duplicateInfo = (object?)null,
                     warning = "Duplicate detection temporarily unavailable"
                 });
             }

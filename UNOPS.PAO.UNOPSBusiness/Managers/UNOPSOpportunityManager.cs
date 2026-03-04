@@ -21,6 +21,8 @@ using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Business.Mapping;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.Models.Documents;
+using UNOPS.PAO.UNOPSDomain.Entities;
+using UNOPS.PAO.Utilities.Helpers;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -1283,6 +1285,11 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
     public async Task<OpportunityModel?> UpdateOpportunityAsync(UpdateOpportunityRequest model)
     {
+        if (string.IsNullOrWhiteSpace(model?.Name))
+        {
+            throw new BusinessException("Name is required.");
+        }
+
         var entity = await context.Opportunities
             .Include(o => o.FundingPartners.Where(fp => !fp.IsDeleted))
             .Include(o => o.ClientPartners.Where(cp => !cp.IsDeleted))
@@ -3248,9 +3255,21 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             entity.ResponsibleOrgUnitId = request.ResponsibleOrgUnitId.Value;
         }
 
+        // Proposed initiative type: use ID when present, otherwise resolve from name
         if (request.ProposedInitiativeTypeId.HasValue)
         {
             entity.ProposedInitiativeTypeId = request.ProposedInitiativeTypeId.Value;
+        }
+        else if (!string.IsNullOrWhiteSpace(request.ProposedInitiativeTypeName))
+        {
+            var resolved = await context.Set<ProposedInitiativeType>()
+                .Where(p => p.Name == request.ProposedInitiativeTypeName.Trim() && !p.IsDeleted)
+                .Select(p => (int?)p.Id)
+                .FirstOrDefaultAsync();
+            if (resolved.HasValue)
+            {
+                entity.ProposedInitiativeTypeId = resolved.Value;
+            }
         }
 
         if (request.DeliveryModality.HasValue)
@@ -3327,7 +3346,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             entity.BeneficiariesToBeDetermined = request.BeneficiariesToBeDetermined.Value;
         }
 
-        // Update SDGs
+        // Update SDGs (with Main/Cross-cutting from isPrimary)
         if (request.SdGs != null)
         {
             // Remove existing SDGs
@@ -3338,16 +3357,32 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
             // Add new SDGs
             entity.SDGs = request.SdGs
-                .Select(sdgId => new OpportunitySDG
+                .Select(s => new OpportunitySDG
                 {
                     OpportunityId = id,
-                    SDGId = sdgId
+                    SDGId = s.SDGId,
+                    IsPrimary = s.IsPrimary
                 })
                 .ToList();
         }
 
-        // Update UNOPS Missions
-        if (request.UNOPSMissions != null)
+        // Update UNOPS Missions and Not Applicable flag
+        if (request.UNOPSMissionsNotApplicable.HasValue)
+        {
+            entity.UNOPSMissionsNotApplicable = request.UNOPSMissionsNotApplicable.Value;
+            if (request.UNOPSMissionsNotApplicable.Value)
+            {
+                // Clear all missions when Not Applicable
+                var existingMissions = await context.Set<OpportunityUNOPSMission>()
+                    .Where(m => m.OpportunityId == id && !m.IsDeleted)
+                    .ToListAsync();
+                if (existingMissions.Any())
+                {
+                    context.Set<OpportunityUNOPSMission>().RemoveRange(existingMissions);
+                }
+            }
+        }
+        if (request.UNOPSMissions != null && !(request.UNOPSMissionsNotApplicable == true))
         {
             entity.UNOPSMissionsNotApplicable = false;
             var existingMissions = await context.Set<OpportunityUNOPSMission>()
@@ -3658,8 +3693,16 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         CreateOpportunityFromInteractionsRequest request,
         int currentUserId)
     {
-        // Deduplicate SDGs by ID (plain integer array)
-        var uniqueSdGs = request.SdGs?.Distinct().ToList() ?? new List<int>();
+        if (string.IsNullOrWhiteSpace(request?.Name))
+        {
+            throw new BusinessException("Name is required.");
+        }
+
+        // Deduplicate SDGs by ID, preserving isPrimary (Main/Cross-cutting) from first occurrence
+        var uniqueSdGs = request.SdGs?
+            .GroupBy(s => s.SDGId)
+            .Select(g => g.First())
+            .ToList() ?? new List<OpportunitySDGRequest>();
         
         // Deduplicate Countries by ID (plain integer array)
         var uniqueCountries = request.Countries?.Distinct().ToList() ?? new List<int>();
@@ -3670,6 +3713,21 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             .Select(g => g.First())
             .ToList() ?? new List<OpportunityStakeholderRequest>();
         
+        // Resolve proposed initiative type: use ID when present, otherwise resolve from name
+        int? proposedInitiativeTypeId = request.ProposedInitiativeTypeId;
+        if (!proposedInitiativeTypeId.HasValue && !string.IsNullOrWhiteSpace(request.ProposedInitiativeTypeName))
+        {
+            var resolved = await context.Set<ProposedInitiativeType>()
+                .Where(p => p.Name == request.ProposedInitiativeTypeName.Trim() && !p.IsDeleted)
+                .Select(p => (int?)p.Id)
+                .FirstOrDefaultAsync();
+            proposedInitiativeTypeId = resolved;
+        }
+
+        // Default ImplementationStartDate to TargetSigningDate when not specified (align with ApplyAiChanges)
+        var implementationStartDate = request.ImplementationStartDate
+            ?? (request.TargetSigningDate.HasValue ? request.TargetSigningDate : null);
+
         // Build opportunity request from accepted proposal
         var opportunityRequest = new OpportunityRequest
         {
@@ -3677,11 +3735,15 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             Description = request.Description,
             PartnerReference = request.PartnerReference,
             ResponsibleOrgUnitId = request.ResponsibleOrgUnitId,
-            ProposedInitiativeTypeId = request.ProposedInitiativeTypeId,
+            ProposedInitiativeTypeId = proposedInitiativeTypeId,
             DeliveryModality = request.DeliveryModality,
             InitiativeBudgetUSD = request.InitiativeBudgetUSD,
             TargetSigningDate = request.TargetSigningDate,
+            ImplementationStartDate = implementationStartDate,
             TargetDeliveryDate = request.TargetDeliveryDate,
+            SubmissionDeadline = request.SubmissionDeadline,
+            IsTargetSigningDateFirm = request.IsTargetSigningDateFirm,
+            SigningDateNotes = request.SigningDateNotes,
             Challenges = request.Challenges,
             ResultsFocus = request.ResultsFocus,
             // Truncate to 510 characters (database column limit)
@@ -3697,8 +3759,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             BeneficiariesToBeDetermined = request.BeneficiariesToBeDetermined ?? false,
             MiscExternalStakeholders = request.MiscExternalStakeholders,
             ExternalStakeholderNotes = request.ExternalStakeholderNotes,
-            SDGs = uniqueSdGs.Select(sdgId => new OpportunitySDGRequest { SDGId = sdgId }).ToList(),
+            SDGs = uniqueSdGs,
             UNOPSMissions = request.UNOPSMissions?.DistinctBy(m => m.UNOPSMissionId).ToList(),
+            UNOPSMissionsNotApplicable = request.UNOPSMissionsNotApplicable,
             Countries = uniqueCountries.Select(countryId => new OpportunityCountryRequest { CountryId = countryId }).ToList(),
             Deliverables = request.Deliverables ?? new List<OpportunityDeliverableRequest>(),
             Stakeholders = uniqueStakeholders,
@@ -4502,7 +4565,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             {
                 SDGNumber = s.SDG?.SDGNumber ?? "",
                 SDGName = s.SDG?.Name ?? "Unknown",
-                IsPrimary = s.IsPrimary ? "Primary" : "Secondary",
+                IsPrimary = s.IsPrimary ? "Main" : "Cross-cutting",
                 SkipTargets = (s.SkipTargetsAndIndicators ?? false) ? "Yes" : "No",
                 Notes = s.Notes ?? "",
                 Targets = opportunity.SDGTargets?
@@ -4549,16 +4612,16 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }))
             : "No SDGs";
 
-        // Separate Primary and Secondary SDGs for clearer AI prompt usage
-        var primarySdgsText = sdgsDetails != null && sdgsDetails.Any(s => s.IsPrimary == "Primary")
-            ? string.Join("\n", sdgsDetails.Where(s => s.IsPrimary == "Primary").Select(s => $"- SDG {s.SDGNumber}: {s.SDGName}"))
+        // Separate Main and Cross-cutting SDGs for Opp+ terminology (used in opportunity statement)
+        var primarySdgsText = sdgsDetails != null && sdgsDetails.Any(s => s.IsPrimary == "Main")
+            ? string.Join("\n", sdgsDetails.Where(s => s.IsPrimary == "Main").Select(s => $"- SDG {s.SDGNumber}: {s.SDGName}"))
             : "No primary SDGs selected";
-        var primarySdgsCount = sdgsDetails?.Count(s => s.IsPrimary == "Primary") ?? 0;
-        
-        var secondarySdgsText = sdgsDetails != null && sdgsDetails.Any(s => s.IsPrimary == "Secondary")
-            ? string.Join("\n", sdgsDetails.Where(s => s.IsPrimary == "Secondary").Select(s => $"- SDG {s.SDGNumber}: {s.SDGName}"))
+        var primarySdgsCount = sdgsDetails?.Count(s => s.IsPrimary == "Main") ?? 0;
+
+        var secondarySdgsText = sdgsDetails != null && sdgsDetails.Any(s => s.IsPrimary == "Cross-cutting")
+            ? string.Join("\n", sdgsDetails.Where(s => s.IsPrimary == "Cross-cutting").Select(s => $"- SDG {s.SDGNumber}: {s.SDGName}"))
             : "No secondary SDGs selected";
-        var secondarySdgsCount = sdgsDetails?.Count(s => s.IsPrimary == "Secondary") ?? 0;
+        var secondarySdgsCount = sdgsDetails?.Count(s => s.IsPrimary == "Cross-cutting") ?? 0;
 
         // Simple country names list for Location section
         var countryNamesList = countriesDetails != null && countriesDetails.Any()
@@ -4668,11 +4731,15 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             })
             .ToList();
 
-        var unopsMissionsText = unopsMissionsDetails != null && unopsMissionsDetails.Any()
-            ? string.Join("\n", unopsMissionsDetails.Select(m =>
-                $"- {m.MissionCode}: {m.MissionName}" +
-                (string.IsNullOrEmpty(m.Description) ? "" : $" - {m.Description}")))
-            : "No UNOPS Mission alignments";
+        // Use mission Name (description) only - never codes like TRIPLE_PLANETARY_CRISIS in statement output
+        var unopsMissionsText = opportunity.UNOPSMissionsNotApplicable
+            ? "Not Applicable"
+            : (unopsMissionsDetails != null && unopsMissionsDetails.Any()
+                ? string.Join("\n", unopsMissionsDetails.Select(m =>
+                    string.IsNullOrEmpty(m.Description)
+                        ? $"- {m.MissionName}"
+                        : $"- {m.MissionName}: {m.Description}"))
+                : "No UNOPS Mission alignments");
 
         // Return comprehensive dictionary with all opportunity details
         return new Dictionary<string, object>
@@ -4751,6 +4818,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             ["uncfOutcomesCount"] = (uncfOutcomesDetails?.Count ?? 0).ToString(),
             ["unopsMissions"] = unopsMissionsText,
             ["unopsMissionsCount"] = (unopsMissionsDetails?.Count ?? 0).ToString(),
+            ["unopsMissionsNotApplicable"] = opportunity.UNOPSMissionsNotApplicable,
             
             // Statistics
             ["stats.totalFundingUSD"] = stats.TotalFundingUSD.ToString("N2"),
@@ -4908,9 +4976,11 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         {
             entityName = request.EntityName;
             entityId = request.EntityId.Value;
-            markdown = await GetMarkdownForPdfGenerationAsync(entityName, entityId);
-            if (string.IsNullOrEmpty(markdown) && !string.IsNullOrEmpty(request.Data))
+            // When Data is provided (e.g. approval PDF with audit trail), use it; otherwise fetch from DB
+            if (!string.IsNullOrEmpty(request.Data))
                 markdown = request.Data;
+            else
+                markdown = await GetMarkdownForPdfGenerationAsync(entityName, entityId);
         }
         else
         {
@@ -4931,7 +5001,65 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         }
 
         var filename = !string.IsNullOrEmpty(request.Filename) ? request.Filename : "Generated_Document";
-        return await ConvertMarkdownToPdfAndUploadToGcsAsync(markdown, entityName, entityId, filename);
+        var result = await ConvertMarkdownToPdfAndUploadToGcsAsync(markdown, entityName, entityId, filename);
+
+        // Create document record when PDF is for an Opportunity (so it appears in the documents list)
+        if (result.Success && !string.IsNullOrEmpty(result.GcsPath)
+            && string.Equals(entityName, "Opportunity", StringComparison.OrdinalIgnoreCase) && entityId > 0)
+        {
+            try
+            {
+                await CreateOpportunityStatementDocumentRecordAsync(entityId, result.GcsPath, filename);
+            }
+            catch (Exception ex)
+            {
+                // Log but don't fail - PDF was uploaded successfully
+                // Document record creation is best-effort for visibility in UI
+                System.Diagnostics.Debug.WriteLine($"Failed to create document record for PDF: {ex.Message}");
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Creates a document record for an Opportunity Statement PDF that was uploaded to GCS.
+    /// </summary>
+    private async Task CreateOpportunityStatementDocumentRecordAsync(int opportunityId, string gcsPath, string filename)
+    {
+        var statementDocType = await uNOPSAppDbContext.DocumentTypes
+            .AsNoTracking()
+            .Where(dt => dt.EntityType == "Opportunity" && dt.Name == "Opportunity Statement" && !dt.IsDeleted)
+            .Select(dt => dt.Id)
+            .FirstOrDefaultAsync();
+
+        if (statementDocType <= 0)
+            return;
+
+        var fileName = filename.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) ? filename : $"{filename}.pdf";
+        var document = new UNOPSDocument
+        {
+            Name = fileName,
+            Type = "application/pdf",
+            StoragePath = gcsPath,
+            DocumentTypeId = statementDocType,
+            LinkedFile = false,
+            AITranscribed = false
+        };
+
+        await uNOPSAppDbContext.Documents.AddAsync(document);
+        await uNOPSAppDbContext.SaveChangesAsync();
+
+        var relationship = new DocumentRelationship
+        {
+            Document = document,
+            EntityId = opportunityId,
+            Name = DocumentParentEntityType.Opportunity.ToString(),
+            EntityType = DocumentParentEntityType.Opportunity.GetEntityTypeName()
+        };
+
+        await uNOPSAppDbContext.DocumentRelationships.AddAsync(relationship);
+        await uNOPSAppDbContext.SaveChangesAsync();
     }
 
     /// <summary>

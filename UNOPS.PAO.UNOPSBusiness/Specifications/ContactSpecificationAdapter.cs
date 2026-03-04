@@ -30,7 +30,7 @@ public class ContactSpecificationAdapter : ISpecification<Contact>
             // Convert the UNOPSContact criteria to Contact criteria
             var originalCriteria = _unosContactSpecification.Criteria;
             if (originalCriteria == null)
-                return null;
+                return _ => true;
 
             // Since UNOPSContact inherits from Contact, we need to ensure the cast works with EF
             // Create a parameter for Contact
@@ -58,15 +58,15 @@ public class ContactSpecificationAdapter : ISpecification<Contact>
     public List<Func<IQueryable<Contact>, IIncludableQueryable<Contact, object>>> IncludeExpressions =>
         new List<Func<IQueryable<Contact>, IIncludableQueryable<Contact, object>>>();
 
-    public Expression<Func<Contact, object>> OrderBy => 
+    public Expression<Func<Contact, object>>? OrderBy => 
         _unosContactSpecification.OrderBy != null ? ConvertOrderBy(_unosContactSpecification.OrderBy) : null;
 
-    public Expression<Func<Contact, object>> OrderByDescending => 
+    public Expression<Func<Contact, object>>? OrderByDescending => 
         _unosContactSpecification.OrderByDescending != null ? ConvertOrderBy(_unosContactSpecification.OrderByDescending) : null;
 
     public List<(Expression<Func<Contact, object>> KeySelector, bool Ascending)> OrderByExpressions =>
         _unosContactSpecification.OrderByExpressions
-            .Select(expr => (ConvertOrderBy(expr.KeySelector), expr.Ascending))
+            .Select(expr => (ConvertOrderBy(expr.KeySelector)!, expr.Ascending))
             .ToList();
 
     public int Skip => _unosContactSpecification.Skip;

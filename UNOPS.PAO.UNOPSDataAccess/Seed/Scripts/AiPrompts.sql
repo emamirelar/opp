@@ -1663,8 +1663,7 @@ Create a comprehensive summary including their complete profile, interaction his
 ### Organizational & Initiative Type (camelCase)
 - **responsibleOrgUnitId** (int?): ID of the responsible organizational unit (use null if extracting text name)
 - **responsibleOrgUnitName** (string?): Name of the responsible organizational unit (e.g., "Global Infrastructure Unit", "East Africa Regional Office")
-- **proposedInitiativeTypeId** (int?): Type identifier for the proposed initiative (use null if extracting text name)
-- **proposedInitiativeTypeName** (string?): Name of the proposed initiative type. **VALID VALUES ONLY**: "Project", "Programme", or "Portfolio". Map document content to one of these three types: "Project" = single initiative with defined scope; "Programme" = collection of related projects; "Portfolio" = collection of programmes and projects. Add "proposedInitiativeTypeId" to dependents array for resolution.
+- **proposedInitiativeTypeId** (string|int?): **Put the initiative type NAME as text here** (same pattern as other dependents - the "Id" suffix maps to the table name for resolution). Use **exactly one** of: "Project", "Programme", or "Portfolio". Map document content: "Project" = single initiative with defined scope; "Programme" = collection of related projects; "Portfolio" = collection of programmes and projects. Map "Program" → "Programme"; map "Initiative", "Activity" → "Project". If unclear, use "Project". **MUST add "proposedInitiativeTypeId" to dependents array** - the backend resolves the text to the ID via ProposedInitiativeTypes table (Id→Types, pluralized).
 
 ### Financial & Timeline (camelCase)
 - **initiativeBudgetUSD** (decimal?): Total proposed budget in USD when NO PARTNER-SPECIFIC breakdown is available. Use this ONLY when the document mentions a total/overall budget without specifying which partner is contributing what amount. Convert to numeric: "$65 million" → 65000000
@@ -1687,7 +1686,7 @@ Create a comprehensive summary including their complete profile, interaction his
 - **isTargetSigningDateFirm** (boolean?): Whether the signing date is a firm deadline from the partner
 - **signingDateNotes** (string?, max 1000 characters): Notes about the signing date (e.g., partner deadline, submission closing date). MUST NOT exceed 1000 characters.
 - **submissionDeadline** (DateTime?): Partner submission or proposal deadline (ISO 8601 format)
-- **implementationStartDate** (DateTime?): When implementation is expected to start (ISO 8601 format)
+- **implementationStartDate** (DateTime?): When implementation is expected to start (ISO 8601 format). **CRITICAL DEFAULT**: If targetSigningDate is extracted but implementationStartDate is NOT mentioned in the document, set implementationStartDate = targetSigningDate (same value). The UI defaults implementation start date to target signing date when not explicitly set.
 - **targetDeliveryDate** (DateTime?): Target delivery or completion date (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ)
 
 ### Strategic Information (camelCase)
@@ -1716,28 +1715,35 @@ Create a comprehensive summary including their complete profile, interaction his
 - **teamMembers** (array): List of UNOPS internal team member names as text strings (e.g., ["Jane Smith - UNOPS Project Manager", "John Doe - UNOPS Technical Lead"])
 - **deliverables** (array): List of deliverable descriptions as text strings (e.g., ["Project Feasibility Study", "Infrastructure Design", "Implementation Plan"])
 - **countries** (array): List of country names as text strings (e.g., ["Kenya", "Tanzania", "Uganda"])
-- **sdGs** (array): List of SDG references as text strings (e.g., ["Goal 6", "SDG 9", "Goal 17"])
-- **unopsMissions** (array): List of UNOPS Strategic Mission names as text strings. Extract alignment to UNOPS Strategic Missions from document content. **VALID VALUES** (match by name or code): "Triple Planetary Crisis", "Energy Transition", "SIDS Resilience and Sustainability", "Quality Healthcare", "Just Digital Transformation", "Social Protection, Equality, Education and Jobs", "Humanitarian, Development and Peace Nexus", "Food Systems Transformation". Or use mission codes: "TRIPLE_PLANETARY_CRISIS", "ENERGY_TRANSITION", etc. Add "unopsMissions" to dependents array.
+- **sdGs** (array of objects): **Return whatever SDG references are present** - "SDG 6", "Goal 9", "SDG 6: Clean Water", or any text clearly referring to an SDG. **DO NOT invent or hallucinate** - only extract what is explicitly stated. Use **sdgNumber** (int 1-17), **sdgName** (string - use official name or document text), **isPrimary** (boolean: true=Main, false=Cross-cutting). Exactly ONE SDG must be Main (most central), others Cross-cutting. If document uses non-standard wording (e.g. "goal 6", "sustainable development goal 6"), map to correct sdgNumber. **NEVER add SDGs not mentioned in the document.**
+- **unopsMissions** (array): List of UNOPS Strategic Mission names as text strings. **CRITICAL: ALWAYS extract** when document content relates to climate, energy, health, digital, humanitarian, food systems, SIDS, social protection, or crisis response. **VALID VALUES** (use full names): "Triple Planetary Crisis", "Energy Transition", "SIDS Resilience and Sustainability", "Quality Healthcare", "Just Digital Transformation", "Social Protection, Equality, Education and Jobs", "Humanitarian, Development and Peace Nexus", "Food Systems Transformation". Map content themes: climate/environment → "Triple Planetary Crisis"; energy/renewables → "Energy Transition"; health/healthcare → "Quality Healthcare"; digital/ICT → "Just Digital Transformation"; humanitarian/crisis → "Humanitarian, Development and Peace Nexus"; food/agriculture → "Food Systems Transformation"; SIDs/small islands → "SIDS Resilience and Sustainability"; jobs/education/social → "Social Protection, Equality, Education and Jobs". **MUST add "unopsMissions" to dependents array**. Do NOT omit unless document explicitly states "Not Applicable".
+- **unopsMissionsNotApplicable** (boolean): Set to **true** when the document explicitly states that UNOPS Strategic Mission alignment is "Not Applicable", "N/A", "not applicable", "no alignment", "does not apply", or similar. When true, set **unopsMissions** to [] and omit from dependents. When false or missions are listed, set unopsMissionsNotApplicable: false.
 
 ## ID Field Mapping Rules
 
 **CRITICAL**: When extracting data, you will encounter text names (e.g., "Kenya", "World Bank") that need to be converted to IDs later.
 
-**For ALL ID fields that contain text names instead of numeric IDs:**
-1. Set the ID field (responsibleOrgUnitId, proposedInitiativeTypeId) to **null**
-2. Populate the corresponding Name field with the extracted text
-3. **Add the field name to the "dependents" array** so the system knows to resolve these text names to IDs using similarity matching
+**For ID fields that need text-to-ID resolution:**
+1. **Put the extracted text in the Id field** - the backend derives the table name from the field: replace "Id" suffix → entity name → pluralized table (e.g. proposedInitiativeTypeId → ProposedInitiativeTypes)
+2. **Add the field name to the "dependents" array** so the system resolves the text to the numeric ID
+
+**For proposedInitiativeTypeId:** Put the text ("Project", "Programme", or "Portfolio") directly in **proposedInitiativeTypeId**. Use ONLY these three values. Map "Program" → "Programme"; map "Initiative", "Activity" → "Project".
+
+**For responsibleOrgUnitId:** Put text in responsibleOrgUnitName, keep responsibleOrgUnitId as null (or put text in the Id field - both work).
 
 **For Collection Fields (fundingPartners, clientPartners, stakeholders, teamMembers, deliverables, countries, sdGs, unopsMissions):**
-- Extract as **simple arrays of text strings**
+- Extract as **simple arrays of text strings** (except **sdGs** - see below)
 - Add the collection field name to the "dependents" array
 - The backend will convert these text values to proper object structures with IDs
+
+**For sdGs specifically:** Extract as **array of objects** with sdgNumber, sdgName, isPrimary. **Only include SDGs explicitly mentioned** - do not invent. Main (isPrimary=true) for the single most central SDG, Cross-cutting (isPrimary=false) for others.
 
 **Example mapping:**
 - If you extract "Kenya" → Add "Kenya" to **countries** array, add "countries" to dependents
 - If you extract "World Bank" as funder → Add "World Bank" to **fundingPartners** array, add "fundingPartners" to dependents
-- If you extract content indicating a "single initiative with defined scope" → Set proposedInitiativeTypeId = null, proposedInitiativeTypeName = "Project", add "proposedInitiativeTypeId" to dependents
-- If you extract content indicating "multiple related projects" → Set proposedInitiativeTypeId = null, proposedInitiativeTypeName = "Programme", add "proposedInitiativeTypeId" to dependents
+- If you extract content indicating a "single initiative with defined scope" → Set **proposedInitiativeTypeId = "Project"**, add "proposedInitiativeTypeId" to dependents (backend resolves via ProposedInitiativeTypes table)
+- If you extract content indicating "multiple related projects" → Set **proposedInitiativeTypeId = "Programme"**, add "proposedInitiativeTypeId" to dependents
+- If you extract content indicating "collection of programmes/projects" → Set **proposedInitiativeTypeId = "Portfolio"**, add "proposedInitiativeTypeId" to dependents. **NEVER use any value other than Project, Programme, or Portfolio**
 - If you extract "Jane Smith - UNOPS Project Manager" → Add to **teamMembers** array, add "teamMembers" to dependents
 
 ## Analysis Instructions
@@ -1753,13 +1759,13 @@ Create a comprehensive summary including their complete profile, interaction his
    - Multi-donor or pooled funding indicators (for **isPooledFunding** field)
    - Partner organization names (funding sources → **fundingPartners**, client entities → **clientPartners**)
    - Organizational unit names (for **responsibleOrgUnitName** field)
-   - Initiative type names (for **proposedInitiativeTypeName** field)
+   - Initiative type names (put in **proposedInitiativeTypeId** as text - ONLY "Project", "Programme", or "Portfolio"; map any other wording to the closest of these three)
    - Geographic locations, country names (for **countries** array)
-   - SDG references (SDG 1, SDG 6, Goal 9, etc. → **sdGs** array)
-   - UNOPS Strategic Mission alignments (references to climate, energy, health, digital, etc. → **unopsMissions** array)
+   - SDG references (SDG 1, SDG 6, Goal 9, etc. → **sdGs** array of objects; pick the single most central SDG as Main (isPrimary=true), others as Cross-cutting (isPrimary=false))
+   - UNOPS Strategic Mission alignments (references to climate, energy, health, digital, etc. → **unopsMissions** array). If document says "Not Applicable" or "N/A" for missions → **unopsMissionsNotApplicable: true**, unopsMissions: []
    - Dates for signing, delivery, completion (for **targetSigningDate**, **targetDeliveryDate** fields)
    - Proposal submission deadlines (for **submissionDeadline** field)
-   - Implementation start dates (for **implementationStartDate** field)
+   - Implementation start dates (for **implementationStartDate** field). **When targetSigningDate is extracted but implementationStartDate is NOT mentioned, set implementationStartDate = targetSigningDate**
    - Firm deadline indicators (for **isTargetSigningDateFirm**, **signingDateNotes** fields)
    - Deliverables, outputs, or project components (for **deliverables** array)
    - Stakeholder names and roles (for **stakeholders** array - external stakeholders)
@@ -1772,20 +1778,22 @@ Create a comprehensive summary including their complete profile, interaction his
 
 2. **Use null or empty arrays** for fields where no information is available in the document
 
-3. **Format dates** as ISO 8601 timestamps (YYYY-MM-DDTHH:mm:ss.sssZ)
+3. **Implementation start date default**: When you extract **targetSigningDate** but **implementationStartDate** is NOT mentioned, set implementationStartDate = targetSigningDate (same ISO 8601 value). The UI defaults implementation start to signing date when not set.
 
-4. **Extract numeric values** from text (e.g., "$1.5 million" → 1500000, "USD 65 million" → 65000000)
+4. **Format dates** as ISO 8601 timestamps (YYYY-MM-DDTHH:mm:ss.sssZ)
 
-5. **Preserve original language** and terminology from the document
+5. **Extract numeric values** from text (e.g., "$1.5 million" → 1500000, "USD 65 million" → 65000000)
 
-6. **Always include the "dependents" array** listing all fields that need ID resolution
+6. **Preserve original language** and terminology from the document
+
+7. **Always include the "dependents" array** listing all fields that need ID resolution (including responsibleOrgUnitId, proposedInitiativeTypeId)
 
 **EXAMPLE - What to Extract:**
 - Document says "Sustainable Water Infrastructure Development Program" → Extract as **name**
 - Document describes project activities → Extract as **description**
 - Document mentions "World Bank" as funder → Add to **fundingPartners** array
 - Document mentions "Kenya" as location → Add to **countries** array
-- Document mentions "SDG 6" or "Goal 9" → Add to **sdGs** array
+- Document mentions "SDG 6" or "Goal 9" → Add to **sdGs** as objects; identify the single most central SDG as Main (isPrimary=true), others as Cross-cutting (isPrimary=false)
 - Document states "$25 million from World Bank" → Add to **partnerBudgets**: `[{"partnerName": "World Bank", "amount": 25000000, "currency": "USD"}]`
 - Document states "€10 million from European Union" → Add to **partnerBudgets**: `[{"partnerName": "European Union", "amount": 10000000, "currency": "EUR"}]`
 - Document states "Total budget $65 million" (NO partner breakdown) → Set **initiativeBudgetUSD**: 65000000
@@ -1807,8 +1815,7 @@ Return a valid JSON object with the extracted opportunity data. **ALL property n
   "description": "Comprehensive infrastructure development initiative to design, construct, and operationalize modern water treatment facilities serving 2 million beneficiaries. Key components include construction of 3 water treatment plants, rehabilitation of 200 km pipelines, installation of 50 community water points, and training programs for 500 local technicians.",
   "responsibleOrgUnitId": null,
   "responsibleOrgUnitName": "Global Infrastructure Unit",
-  "proposedInitiativeTypeId": null,
-  "proposedInitiativeTypeName": "Project",
+  "proposedInitiativeTypeId": "Project",
   "initiativeBudgetUSD": null,
   "partnerBudgets": [
     {"partnerName": "World Bank", "amount": 25000000, "currency": "USD"},
@@ -1842,8 +1849,9 @@ Return a valid JSON object with the extracted opportunity data. **ALL property n
   "teamMembers": ["Jane Smith - UNOPS Infrastructure Lead", "David Brown - UNOPS Project Manager", "Lisa Chen - UNOPS Procurement Specialist"],
   "deliverables": ["Project Feasibility Study", "Environmental Impact Assessment", "Infrastructure Design and Engineering Plans", "Construction of 3 Water Treatment Plants", "Pipeline Rehabilitation (200 km)", "Community Water Points Installation (50 units)", "Operations and Maintenance Training Program"],
   "countries": ["Kenya"],
-  "sdGs": ["Goal 6", "Goal 9", "Goal 11", "Goal 13", "Goal 17"],
+  "sdGs": [{"sdgNumber": 6, "sdgName": "Clean Water and Sanitation", "isPrimary": true}, {"sdgNumber": 9, "sdgName": "Industry, Innovation and Infrastructure", "isPrimary": false}, {"sdgNumber": 11, "sdgName": "Sustainable Cities and Communities", "isPrimary": false}, {"sdgNumber": 13, "sdgName": "Climate Action", "isPrimary": false}, {"sdgNumber": 17, "sdgName": "Partnerships for the Goals", "isPrimary": false}],
   "unopsMissions": ["Triple Planetary Crisis", "Energy Transition"],
+  "unopsMissionsNotApplicable": false,
   "dependents": ["responsibleOrgUnitId", "proposedInitiativeTypeId", "fundingPartners", "clientPartners", "stakeholders", "teamMembers", "deliverables", "countries", "sdGs", "unopsMissions"]
 }
 ```
@@ -1941,7 +1949,7 @@ Return a JSON object with a "keywords" array and a single "query" string that co
   "description": "Comprehensive infrastructure development initiative to design, construct, and operationalize modern water treatment facilities...",
   "proposedInitiativeTypeName": "Project",
   "countries": ["Kenya"],
-  "sdGs": ["Goal 6", "Goal 9"],
+  "sdGs": [{"sdgNumber": 6, "sdgName": "Clean Water and Sanitation", "isPrimary": true}, {"sdgNumber": 9, "sdgName": "Industry, Innovation and Infrastructure", "isPrimary": false}],
   "deliverables": ["Water Treatment Plants", "Pipeline Rehabilitation", "Training Programs"],
   "strategicAlignment": "Aligned with SDG 6 (Clean Water and Sanitation)..."
 }
@@ -2810,7 +2818,7 @@ Return a JSON object with a "keywords" array (list of roles) and a single "query
   "description": "Infrastructure development to design and construct water treatment facilities...",
   "proposedInitiativeTypeName": "Project",
   "countries": ["Kenya"],
-  "sdGs": ["Goal 6", "Goal 13"],
+  "sdGs": [{"sdgNumber": 6, "sdgName": "Clean Water and Sanitation", "isPrimary": true}, {"sdgNumber": 13, "sdgName": "Climate Action", "isPrimary": false}],
   "deliverables": ["Water Treatment Plants", "Training Programs"]
 }
 ```
@@ -2908,10 +2916,9 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 - **description** (string): Expand and enhance the user-provided description by incorporating relevant details from interactions (discussion points, objectives, scope mentioned in meetings/emails) AND documents (key points from document names and descriptions)
 
 ### Organizational & Initiative Type (camelCase)
-- **responsibleOrgUnitId** (int?): Always set to null (will be resolved from text name)
-- **responsibleOrgUnitName** (string?): Extract the UNOPS organizational unit mentioned in interactions (look at users'' org units from interaction participants)
-- **proposedInitiativeTypeId** (int?): Always set to null (will be resolved from text name)
-- **proposedInitiativeTypeName** (string?): Infer the initiative type from interaction content AND document types/names. **VALID VALUES ONLY**: "Project", "Programme", or "Portfolio". Map content to one of these three types: "Project" = single initiative with defined scope; "Programme" = collection of related projects; "Portfolio" = collection of programmes and projects. Add "proposedInitiativeTypeId" to dependents array for resolution.
+- **responsibleOrgUnitId** (int?): Always set to null (will be resolved from text name). **Add "responsibleOrgUnitId" to dependents array** for resolution.
+- **responsibleOrgUnitName** (string?): **Org Unit Responsible for Opportunity development** - Extract from UNOPS participants'' org units in interactions, or document content. Examples: "East Africa Regional Office", "Global Infrastructure Unit", "B5308"
+- **proposedInitiativeTypeId** (string): **Put the initiative type NAME as text here** (same as other dependents - Id field gets text, backend resolves via ProposedInitiativeTypes table). Infer from interaction content AND document types/names. Use **exactly one** of: "Project", "Programme", or "Portfolio". Map "Program" → "Programme"; map "Initiative", "Activity" → "Project". If unclear, default to "Project". **MUST add "proposedInitiativeTypeId" to dependents array**.
 
 ### Financial & Timeline (camelCase)
 - **initiativeBudgetUSD** (decimal?): Total proposed budget in USD when NO PARTNER-SPECIFIC breakdown is available. Use this ONLY when interactions/documents mention a total budget without specifying which partner is contributing. Convert to numeric: "$5 million" → 5000000
@@ -2934,7 +2941,7 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 - **isTargetSigningDateFirm** (boolean?): Whether the signing date is a firm deadline from the partner (extract if mentioned as "deadline", "firm date", etc.)
 - **signingDateNotes** (string?, max 1000 characters): Notes about the signing date (e.g., partner deadline, submission requirements). MUST NOT exceed 1000 characters.
 - **submissionDeadline** (DateTime?): Partner submission or proposal deadline (ISO 8601 format)
-- **implementationStartDate** (DateTime?): When implementation is expected to start (ISO 8601 format)
+- **implementationStartDate** (DateTime?): When implementation is expected to start (ISO 8601 format). **CRITICAL DEFAULT**: If targetSigningDate is extracted but implementationStartDate is NOT mentioned, set implementationStartDate = targetSigningDate (same value). The UI defaults implementation start date to target signing date when not explicitly set.
 - **targetDeliveryDate** (DateTime?): Extract or infer target delivery/completion dates from interactions or documents (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ)
 
 ### Strategic Information (camelCase)
@@ -2980,25 +2987,20 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
   - **MUST add "stakeholders" to dependents array**
 - **deliverables** (array): List of deliverable descriptions as text strings - extract outputs, deliverables, or project components mentioned in interactions or document names (e.g., ["Feasibility Study", "Infrastructure Design", "Training Program"]) - **MUST add "deliverables" to dependents array**
 - **countries** (array): List of country names as text strings - extract all countries mentioned in interactions or documents (e.g., ["Kenya", "Tanzania", "Uganda"]) - **MUST add "countries" to dependents array**
-- **sdGs** (array of objects): List of SDG references with primary flag - identify relevant SDGs based on interaction topics, themes, and document content. **CRITICAL: Exactly ONE SDG must be marked as isPrimary=true (the most relevant/central SDG), all others must be isPrimary=false**. Each SDG object has:
-  - **sdgNumber** (int): SDG number 1-17 (e.g., 6 for Clean Water)
-  - **sdgName** (string): Full SDG name (e.g., "Clean Water and Sanitation")
-  - **isPrimary** (boolean): true for the single most important/central SDG, false for all others
-  - Example: [{"sdgNumber": 6, "sdgName": "Clean Water and Sanitation", "isPrimary": true}, {"sdgNumber": 9, "sdgName": "Industry, Innovation and Infrastructure", "isPrimary": false}]
-  - **MUST add "sdGs" to dependents array**
-- **unopsMissions** (array): List of UNOPS Strategic Mission names as text strings. Infer alignment to UNOPS Strategic Missions from interaction topics, document themes, and sector focus. **VALID VALUES**: "Triple Planetary Crisis", "Energy Transition", "SIDS Resilience and Sustainability", "Quality Healthcare", "Just Digital Transformation", "Social Protection, Equality, Education and Jobs", "Humanitarian, Development and Peace Nexus", "Food Systems Transformation". Map content to missions (e.g., climate/energy discussions → "Triple Planetary Crisis" or "Energy Transition"; health projects → "Quality Healthcare"; digital projects → "Just Digital Transformation") - **MUST add "unopsMissions" to dependents array**
+- **sdGs** (array of objects): **Return whatever SDG references are present** in interactions/documents - "SDG 6", "Goal 9", or any text clearly referring to an SDG. **DO NOT invent or hallucinate** - only extract what is explicitly stated. Use **sdgNumber** (int 1-17), **sdgName** (string), **isPrimary** (boolean: true=Main, false=Cross-cutting). Exactly ONE Main, others Cross-cutting. **NEVER add SDGs not mentioned.** **MUST add "sdGs" to dependents array**
+- **unopsMissions** (array): List of UNOPS Strategic Mission names as text strings. **CRITICAL: ALWAYS infer** from interaction topics, document themes, and sector focus. **VALID VALUES**: "Triple Planetary Crisis", "Energy Transition", "SIDS Resilience and Sustainability", "Quality Healthcare", "Just Digital Transformation", "Social Protection, Equality, Education and Jobs", "Humanitarian, Development and Peace Nexus", "Food Systems Transformation". Map: climate/environment → "Triple Planetary Crisis"; energy → "Energy Transition"; health → "Quality Healthcare"; digital/ICT → "Just Digital Transformation"; humanitarian/crisis → "Humanitarian, Development and Peace Nexus"; food/agriculture → "Food Systems Transformation"; SIDs → "SIDS Resilience and Sustainability"; jobs/education/social → "Social Protection, Equality, Education and Jobs". **MUST add "unopsMissions" to dependents array**. Do NOT omit unless explicitly "Not Applicable".
+- **unopsMissionsNotApplicable** (boolean): Set to **true** when interactions or documents explicitly state that UNOPS Strategic Mission alignment is "Not Applicable", "N/A", "not applicable", "no alignment", "does not apply", or similar. When true, set **unopsMissions** to [] and omit "unopsMissions" from dependents. When false or missions are listed, set unopsMissionsNotApplicable: false.
 
 ## ID Field Mapping Rules
 
 **CRITICAL**: You will be extracting text names that need to be converted to IDs later.
 
-**For ALL ID fields that contain text names instead of numeric IDs:**
-1. Set the ID field (responsibleOrgUnitId, proposedInitiativeTypeId) to **null**
-2. Populate the corresponding Name field with the extracted/inferred text
-3. **Add the field name to the "dependents" array** so the system knows to resolve these text names to IDs using similarity matching
+**For proposedInitiativeTypeId:** Put the text ("Project", "Programme", or "Portfolio") directly in **proposedInitiativeTypeId**. The backend derives the table name (ProposedInitiativeTypes) from the field and resolves the text to the ID. **Add "proposedInitiativeTypeId" to dependents array**.
+
+**For responsibleOrgUnitId:** Put text in responsibleOrgUnitName, keep responsibleOrgUnitId as null. Add "responsibleOrgUnitId" to dependents.
 
 **For Collection Fields (fundingPartners, clientPartners, stakeholders, deliverables, countries, sdGs, unopsMissions):**
-- Extract as **simple arrays of text strings**
+- Extract as **simple arrays of text strings** (except **sdGs** - extract as array of objects with sdgNumber, sdgName, isPrimary; Main=isPrimary true, Cross-cutting=isPrimary false)
 - Add the collection field name to the "dependents" array
 - The backend will convert these text values to proper object structures with IDs
 
@@ -3100,7 +3102,9 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 - If no dates mentioned: Use null
 - If no specific deliverables: Infer from project type and document names
 - If SDGs not mentioned: Infer from sector and themes
-- If org unit not clear: Use most common org unit from UNOPS participants
+- **Implementation start date**: When targetSigningDate is extracted but implementationStartDate is NOT mentioned, set implementationStartDate = targetSigningDate (same value). The UI defaults implementation start to signing date when not set.
+- If org unit not clear: Use most common org unit from UNOPS participants. **MUST add "responsibleOrgUnitId" to dependents**
+- **Proposed initiative to be developed**: Infer from context but **ONLY use "Project", "Programme", or "Portfolio"** - no other values can be resolved. If unclear, default to "Project". **MUST add "proposedInitiativeTypeId" to dependents** for backend dropdown resolution
 
 ## Response Format
 
@@ -3120,8 +3124,7 @@ Return a valid JSON object with the proposed opportunity data. **ALL property na
   "description": "Comprehensive water infrastructure initiative to improve access to clean water across East Africa, based on discussions with Ministry of Water and Sanitation representatives over the past 6 months and supporting documents including feasibility studies and technical assessments. The program will focus on constructing water treatment facilities, rehabilitating distribution networks, and building local technical capacity for sustainable operations.",
   "responsibleOrgUnitId": null,
   "responsibleOrgUnitName": "East Africa Regional Office",
-  "proposedInitiativeTypeId": null,
-  "proposedInitiativeTypeName": "Programme",
+  "proposedInitiativeTypeId": "Programme",
   "initiativeBudgetUSD": null,
   "partnerBudgets": [
     {"partnerName": "World Bank", "amount": 30000000, "currency": "USD"},
@@ -3159,7 +3162,8 @@ Return a valid JSON object with the proposed opportunity data. **ALL property na
     {"sdgNumber": 17, "sdgName": "Partnerships for the Goals", "isPrimary": false}
   ],
   "unopsMissions": ["Triple Planetary Crisis", "Energy Transition"],
-  "dependents": ["responsibleOrgUnitName", "proposedInitiativeTypeName", "fundingPartners", "clientPartners", "stakeholders", "deliverables", "countries", "sdGs", "unopsMissions"]
+  "unopsMissionsNotApplicable": false,
+  "dependents": ["responsibleOrgUnitId", "proposedInitiativeTypeId", "fundingPartners", "clientPartners", "stakeholders", "deliverables", "countries", "sdGs", "unopsMissions"]
 }
 ```
 
@@ -3171,7 +3175,7 @@ Return a valid JSON object with the proposed opportunity data. **ALL property na
 - Infer intelligent values based on interaction context, themes, and document metadata
 - **ALWAYS return empty arrays [] for collections when no data found, NEVER null**
 - **CRITICAL: ALWAYS include these fields in the "dependents" array** (even if you provide text values):
-  ["responsibleOrgUnitName", "proposedInitiativeTypeName", "fundingPartners", "clientPartners", "stakeholders", "deliverables", "countries", "sdGs", "unopsMissions"]
+  ["responsibleOrgUnitId", "proposedInitiativeTypeId", "fundingPartners", "clientPartners", "stakeholders", "deliverables", "countries", "sdGs", "unopsMissions"]
 - The backend will convert text names to database IDs - you just provide the text values and list ALL fields in dependents
 - **CRITICAL FIELD LENGTH LIMITS** - Do NOT exceed these character limits:
   * name: max 255 characters
@@ -3545,6 +3549,8 @@ For each person, add a "relevanceExplanation" field with a one-line explanation 
 - **USE "Opportunity Statement"** in any misalignment item text (not "Markdown").
 - **NUMBERS**: Treat as aligned if the statement value is within ~10% of the data; flag only if materially wrong (e.g. $5M vs $45M).
 - **DATES**: Same fact in different format (e.g. "2026-03-30" vs "March 2026") is aligned; do not flag.
+- **SDG TERMINOLOGY**: "Primary"/"Secondary" and "Main"/"Cross-cutting" are equivalent (Opp+ uses Main/Cross-cutting). Do NOT flag terminology; flag only when the listed SDG numbers/names differ from the data.
+- **UNOPS STRATEGY FORMAT**: Mission names (e.g. "Triple Planetary Crisis") and codes (e.g. "TRIPLE_PLANETARY_CRISIS") refer to the same mission. Treat as equivalent; do NOT flag format differences. Flag only when the statement lists missions not in the data or omits missions that are in the data.
 
 **INPUT**  
 You receive JSON with:
@@ -3557,9 +3563,10 @@ You receive JSON with:
 | Unit/manager: [Information not available] ([Information not available]), Name (email) | stakeholders has same Name (email) as Opportunity Manager | YES — correct person present. |
 | Location: [Information not available] | countryNamesList = "No countries specified" or empty | YES. |
 | UN Cooperation Framework: [Information not available] | uncfOutcomes = "No UNCF Outcomes" or empty | YES. |
-| Primary SDG(s): [Information not available] | primarySdGs = "No primary SDGs selected" | YES. |
-| Secondary SDG(s): omitted or [Information not available] | secondarySdGs = "No secondary SDGs selected" | YES. |
-| UNOPS Strategy: [Information not available] | unopsMissions = "No UNOPS Mission alignments" or empty | YES. |
+| Main SDG(s): [Information not available] | primarySdGs = "No primary SDGs selected" | YES. |
+| Cross-cutting SDG(s): omitted or [Information not available] | secondarySdGs = "No secondary SDGs selected" | YES. |
+| UNOPS Strategy: [Information not available] | unopsMissions = "No UNOPS Mission alignments" or empty (and unopsMissionsNotApplicable = false) | YES. |
+| UNOPS Strategy: Not Applicable | unopsMissionsNotApplicable = true OR unopsMissions = "Not Applicable" | YES. |
 | Client: No client partners specified | clientPartners = "No client partners" or empty | YES. |
 | Funding: No funding partners specified | fundingPartners = "No funding partners" or empty | YES. |
 | Services/Deliverables: [Information not available] | deliverablesEnhanced = "No deliverables specified" or empty | YES. |
@@ -3570,14 +3577,16 @@ You receive JSON with:
 | Direct/Indirect Beneficiaries: [Information not available] or "To be determined during development" | estimatedDirectBeneficiaries / beneficiariesToBeDetermined equivalent | YES. |
 | Other sections: [Information not available] | corresponding field empty, "Not specified", or "No [X]" | YES. |
 
+**BUDGET VALIDATION:** The opportunity has a **calculated total budget** shown in **budgetDisplay**. This is the authoritative value for Budget validation. budgetDisplay = stats.totalFundingUSD when partner budgets exist (sum of FundingPartners amounts), else initiativeBudgetUSD when set, else "Budget not yet specified". **Compare the statement''s Budget section ONLY against budgetDisplay** — do NOT compare against initiativeBudgetUSD alone. initiativeBudgetUSD is the "estimated initiative budget" used only when there are no partner-specific budgets; when partner budgets exist, the total is the sum (stats.totalFundingUSD). If the statement shows the same amount as budgetDisplay, treat as aligned. Do NOT flag a "contradiction" when statement shows budgetDisplay value but initiativeBudgetUSD differs (e.g. statement USD 68,000,000, initiativeBudgetUSD 65,000,000, budgetDisplay USD 68,000,000 → ALIGNED, because budgetDisplay is correct).
+
 **HOW TO VALIDATE**  
 1. Take the statement (existingStatementMarkdown or opportunityData.opportunityStatementMarkdown).
 2. For each section, check the corresponding field(s) in opportunityData using the table above.
 3. If the statement and data match the equivalence table (placeholder vs "No X" / empty), treat as aligned — do not add a misalignment item.
-4. Only add to misalignmentItems when there is a **real contradiction** (e.g. statement says "Country: Kenya" but data says "Country: Uganda"; statement names a different Opportunity Manager than in data; statement shows $10M but data shows $50M).
+4. Only add to misalignmentItems when there is a **real contradiction** (e.g. statement says "Country: Kenya" but data says "Country: Uganda"; statement names a different Opportunity Manager than in data; statement shows $10M but budgetDisplay shows $50M). For Budget: use budgetDisplay as the data source, not initiativeBudgetUSD.
 
 **EXAMPLE — all aligned (return isAligned: true, misalignmentItems: [], no other output)**  
-Statement: Unit/manager [Information not available] ([Information not available]), Rosemarie Joy Beckett (rosemarieb@unops.org); UNCF [Information not available]; Primary SDG(s) [Information not available]; Client: No client partners specified; Budget [Information not available]; Key Risks [Information not available].  
+Statement: Unit/manager [Information not available] ([Information not available]), Rosemarie Joy Beckett (rosemarieb@unops.org); UNCF [Information not available]; Main SDG(s) [Information not available]; Client: No client partners specified; Budget [Information not available]; Key Risks [Information not available].  
 Data: Opportunity Manager = Rosemarie Joy Beckett (rosemarieb@unops.org); uncfOutcomes = "No UNCF Outcomes"; primarySdGs = "No primary SDGs selected"; clientPartners = "No client partners"; budgetDisplay = "Budget not yet specified"; risks = "No risks identified".  
 → All equivalent per table. No inaccuracies. Return only: isAligned: true, misalignmentItems: [], message: "The existing statement accurately reflects the current opportunity data."
 
@@ -3661,15 +3670,15 @@ Please analyze this information and return only valid JSON as specified in the s
 
 - **(a) UN Cooperation Framework:** [Extract from "uncfOutcomes" field. If it shows "No UNCF Outcomes" or is empty, use [Information not available]. DO NOT INVENT UNCF outcomes.]
 
-- **(b) SDGs:** [Use "primarySdGs" and "secondarySdGs" fields for clear separation. Format as:
-  **Primary SDG(s):** [List from primarySdGs field - these are the main focus areas]
-  **Secondary SDG(s):** [List from secondarySdGs field - these are supporting goals]
-  If primarySdGs shows "No primary SDGs selected", use [Information not available] for Primary.
-  If secondarySdGs shows "No secondary SDGs selected", omit the Secondary section.
+- **(b) SDGs:** [CRITICAL: Use Opp+ terminology ONLY - "Main" and "Cross-cutting". NEVER use "Primary" or "Secondary". Format as:
+  **Main SDG(s):** [List from primarySdGs field - the central focus area]
+  **Cross-cutting SDG(s):** [List from secondarySdGs field - supporting goals]
+  If primarySdGs shows "No primary SDGs selected", use [Information not available] for Main.
+  If secondarySdGs shows "No secondary SDGs selected", omit the Cross-cutting section.
   The "sdGs" field contains full details with targets and indicators if needed.
   DO NOT INVENT SDGs - ONLY list those actually in the data.]
 
-- **(c) UNOPS Strategy:** [Extract from "unopsMissions" field. If it shows "No UNOPS Mission alignments" or is empty, use [Information not available]. DO NOT INVENT mission alignments.]
+- **(c) UNOPS Strategy:** [Extract from "unopsMissions" and "unopsMissionsNotApplicable" fields. If unopsMissionsNotApplicable is true, state "Not Applicable". If unopsMissions shows "No UNOPS Mission alignments" or is empty (and not Not Applicable), use [Information not available]. CRITICAL: Use ONLY the full mission description names (e.g. "Triple Planetary Crisis", "Energy Transition", "Quality Healthcare") - NEVER use codes or identifiers with underscores (e.g. TRIPLE_PLANETARY_CRISIS, ENERGY_TRANSITION). DO NOT INVENT mission alignments.]
 
 - **(d) UNOPS Regional Priorities:** [Extract from description if regional priorities are mentioned. Otherwise, use [Information not available].]
 

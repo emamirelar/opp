@@ -103,12 +103,12 @@ public class DueDiligenceNotificationService : BackgroundService
                 {
                     // Get user email from userprofile table
                     var userprofile = await context.UserProfile
-                        .FirstOrDefaultAsync(ui => ui.UserId == partner.PartnerFocalPointUserId.Value);
+                        .FirstOrDefaultAsync(ui => ui.UserId == partner.PartnerFocalPointUserId!.Value);
 
                     if (userprofile?.UserEmail == null)
                     {
                         _logger.LogWarning("No email found for user ID {UserId} (Partner: {PartnerName})", 
-                            partner.PartnerFocalPointUserId.Value, partner.Name);
+                            partner.PartnerFocalPointUserId!.Value, partner.Name);
                         failureCount++;
                         continue;
                     }
@@ -117,19 +117,19 @@ public class DueDiligenceNotificationService : BackgroundService
                     if (!_testMode && await HasNotificationForSameExpiryDate(context, partner.Id, userprofile.UserId, partner.DueDiligenceExpiryDate.Value))
                     {
                         _logger.LogDebug("Skipping notification for partner {PartnerName} - notification already sent for expiry date {ExpiryDate}", 
-                            partner.Name, partner.DueDiligenceExpiryDate.Value.ToString("yyyy-MM-dd"));
+                            partner.Name, partner.DueDiligenceExpiryDate!.Value.ToString("yyyy-MM-dd"));
                         continue;
                     }
 
-                    var monthsUntilExpiry = Math.Round((partner.DueDiligenceExpiryDate.Value - DateTime.UtcNow).TotalDays / 30.44, 1);
-                    var daysRemaining = (int)(partner.DueDiligenceExpiryDate.Value - DateTime.UtcNow).TotalDays;
+                    var monthsUntilExpiry = Math.Round((partner.DueDiligenceExpiryDate!.Value - DateTime.UtcNow).TotalDays / 30.44, 1);
+                    var daysRemaining = (int)(partner.DueDiligenceExpiryDate!.Value - DateTime.UtcNow).TotalDays;
                     var partnerUrl = urlService.BuildEntityUrl("partner", partner.Id);
 
                     await paoEmailSender.SendDueDiligenceExpiryNotificationAsync(
                         userprofile.UserEmail,
                         userprofile.Name ?? "User",
                         partner.Name ?? "Unknown Partner",
-                        partner.DueDiligenceExpiryDate.Value,
+                        partner.DueDiligenceExpiryDate!.Value,
                         partnerUrl,
                         (decimal)monthsUntilExpiry,
                         daysRemaining);

@@ -49,9 +49,11 @@ namespace UNOPS.PAO.UNOPSBusiness.Extensions
         /// <summary>
         /// Ensures OrganizationUnitRelationships are loaded for a single interaction (loads if not already loaded)
         /// </summary>
-        public static async Task EnsureOrganizationUnitRelationshipsLoadedAsync(this Interaction interaction, UNOPSAppDbContext context)
+        public static async Task EnsureOrganizationUnitRelationshipsLoadedAsync(this Interaction? interaction, UNOPSAppDbContext context)
         {
-            if (interaction?.OrganizationUnitRelationships == null || !interaction.OrganizationUnitRelationships.Any())
+            if (interaction == null)
+                return;
+            if (interaction.OrganizationUnitRelationships == null || !interaction.OrganizationUnitRelationships.Any())
             {
                 await interaction.LoadOrganizationUnitRelationshipsAsync(context);
             }

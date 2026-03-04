@@ -10,9 +10,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Interfaces
         
         Task<string> GetUserOrgUnitAsync(ClaimsPrincipal user);
         
-        Task<bool> CanPerformActionAsync(string entityName, string action, ClaimsPrincipal user, object entity = null);
+        Task<bool> CanPerformActionAsync(string entityName, string action, ClaimsPrincipal user, object? entity = null);
         
-        Task<object> GetEntityPermissionsAsync(string entityName, object entity = null);
+        Task<object> GetEntityPermissionsAsync(string entityName, object? entity = null);
         
         /// <summary>
         /// Gets entity permissions for a specific instance, including team-based permissions for Opportunity

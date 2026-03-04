@@ -15,7 +15,7 @@ public class ArtifactType : ModifiableDeletableEntity
     /// Artifact type name (e.g., "Org Strategy", "UN Coop Framework", "Corruption Index")
     /// </summary>
     [MaxLength(255)]
-    public required string Name { get; set; }
+    public new required string Name { get; set; }
 
     /// <summary>
     /// Unique code for the artifact type (e.g., "ORG_STRATEGY", "UNSDCF", "CORRUPTION_IDX")

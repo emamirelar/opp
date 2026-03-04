@@ -51,7 +51,7 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
     /// <summary>
     /// Implementation of required BaseUNOPSManager method
     /// </summary>
-    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
+    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal? user = null)
     {
         // ✅ OPTIMIZED: Added AsNoTracking for read-only query
         var document = await _context.Set<UNOPSDocument>()

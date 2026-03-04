@@ -530,7 +530,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
         return await GetEntityConfigurationDetailsAsync(user, request.EntityName);
     }
 
-    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
+    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal? user = null)
     {
         return await GetEntityConfigurationAsync(user!, entityId);
     }

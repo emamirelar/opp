@@ -123,12 +123,12 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
                 if (!string.IsNullOrEmpty(paoUser.Email))
                 {
                     var userInfoForOrgUnit = appDbContext.Set<UserProfile>()
-                        .FirstOrDefault(ui => ui.UserEmail.ToLower() == paoUser.Email.ToLower());
+                        .FirstOrDefault(ui => (ui.UserEmail ?? "").ToLower() == paoUser.Email.ToLower());
                 
                 if (userInfoForOrgUnit?.OrgUnit != null)
                 {
                     var orgUnit = appDbContext.Set<OrganizationHierarchy>()
-                        .FirstOrDefault(oh => oh.Code == userInfoForOrgUnit.OrgUnit && oh.Type == UNOPS.PAO.Domain.Enums.OrganizationUnitType.OrgUnit);
+                        .FirstOrDefault(oh => oh.Code == userInfoForOrgUnit!.OrgUnit && oh.Type == UNOPS.PAO.Domain.Enums.OrganizationUnitType.OrgUnit);
                     defaultOrgUnitId = orgUnit?.Id;
                 }
                 }
@@ -199,12 +199,12 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
                 if (!string.IsNullOrEmpty(paoUser.Email))
                 {
                     var userInfoForOrgUnit = await appDbContext.Set<UserProfile>()
-                        .FirstOrDefaultAsync(ui => ui.UserEmail.ToLower() == paoUser.Email.ToLower());
+                        .FirstOrDefaultAsync(ui => (ui.UserEmail ?? "").ToLower() == paoUser.Email.ToLower());
                 
                 if (userInfoForOrgUnit?.OrgUnit != null)
                 {
                     var orgUnit = await appDbContext.Set<OrganizationHierarchy>()
-                        .FirstOrDefaultAsync(oh => oh.Code == userInfoForOrgUnit.OrgUnit && oh.Type == UNOPS.PAO.Domain.Enums.OrganizationUnitType.OrgUnit);
+                        .FirstOrDefaultAsync(oh => oh.Code == userInfoForOrgUnit!.OrgUnit && oh.Type == UNOPS.PAO.Domain.Enums.OrganizationUnitType.OrgUnit);
                     defaultOrgUnitId = orgUnit?.Id;
                 }
                 }

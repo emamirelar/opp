@@ -55,7 +55,7 @@ public class PAOAuthorizationService : IAuthorizationService
 
             foreach (var handler in handlers)
             {
-                await handler.HandleAsync(context);
+                await handler.HandleAsync(context!);
             }
         }
 

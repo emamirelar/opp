@@ -17,7 +17,14 @@ public class OpportunityRequest
     public int? DeliveryModality { get; set; }
     public decimal? InitiativeBudgetUSD { get; set; }
     public DateTime? TargetSigningDate { get; set; }
+    /// <summary>
+    /// Implementation start date - defaults to TargetSigningDate if not specified
+    /// </summary>
+    public DateTime? ImplementationStartDate { get; set; }
     public DateTime? TargetDeliveryDate { get; set; }
+    public DateTime? SubmissionDeadline { get; set; }
+    public bool? IsTargetSigningDateFirm { get; set; }
+    public string? SigningDateNotes { get; set; }
     
     public string? Challenges { get; set; }
     public string? ResultsFocus { get; set; }
@@ -45,5 +52,9 @@ public class OpportunityRequest
     public List<OpportunityCountryRequest>? Countries { get; set; }
     public List<OpportunitySDGRequest>? SDGs { get; set; }
     public List<OpportunityUNOPSMissionRequest>? UNOPSMissions { get; set; }
+    /// <summary>
+    /// When true, UNOPS Strategic Mission alignment is not applicable.
+    /// </summary>
+    public bool UNOPSMissionsNotApplicable { get; set; }
 }
 

@@ -241,6 +241,7 @@ export interface ProposedOpportunityResponse {
     countries?: ProposedCountry[] | null;
     sdGs?: ProposedSDG[] | null;
     unopsMissions?: { unopsMissionId: number; name?: string; code?: string }[] | null;
+    unopsMissionsNotApplicable?: boolean;
     dependents?: string[] | null;
   };
   interactionsAnalyzed: number;

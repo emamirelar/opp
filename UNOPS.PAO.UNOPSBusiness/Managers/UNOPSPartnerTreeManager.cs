@@ -119,7 +119,7 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
         return BuildHierarchy(lookup, string.Empty).ToList();
     }
 
-    private IEnumerable<PartnerTreeModel> BuildHierarchy(ILookup<string, PartnerTreeModel> lookup, string parentCode, HashSet<string> visitedCodes = null)
+    private IEnumerable<PartnerTreeModel> BuildHierarchy(ILookup<string, PartnerTreeModel> lookup, string parentCode, HashSet<string>? visitedCodes = null)
     {
         visitedCodes ??= new HashSet<string>();
 
@@ -303,7 +303,7 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
     /// <summary>
     /// Gets basic entity data for AI prompts and generic operations
     /// </summary>
-    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
+    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal? user = null)
     {
         if (user != null)
         {

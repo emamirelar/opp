@@ -12,15 +12,16 @@ public class ContactByOrgUnitHierarchySpecification : BaseSpecification<Contact>
 {
     private readonly List<int> _orgUnitHierarchyIds;
     
-    public ContactByOrgUnitHierarchySpecification(List<int> orgUnitHierarchyIds)
-        : base(BuildCriteria(orgUnitHierarchyIds))
+    public ContactByOrgUnitHierarchySpecification(List<int>? orgUnitHierarchyIds)
+        : base(BuildCriteria(orgUnitHierarchyIds)!)
     {
         _orgUnitHierarchyIds = orgUnitHierarchyIds ?? new List<int>();
         // Include related entities
-        AddInclude(c => c.Partner);
+        AddInclude(c => c.Partner!);
     }
 
-    private static Expression<Func<Contact, bool>> BuildCriteria(List<int> orgUnitHierarchyIds)
+    [return: System.Diagnostics.CodeAnalysis.NotNull]
+    private static Expression<Func<Contact, bool>> BuildCriteria(List<int>? orgUnitHierarchyIds)
     {
         if (orgUnitHierarchyIds == null || orgUnitHierarchyIds.Count == 0)
         {
@@ -29,7 +30,8 @@ public class ContactByOrgUnitHierarchySpecification : BaseSpecification<Contact>
         }
 
         // Filter by Partner existence - the actual org unit filtering will be done via manual join
-        return c => c.Partner != null;
+        Expression<Func<Contact, bool>> result = c => c.Partner != null;
+        return result!;
     }
     
     /// <summary>

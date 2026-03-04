@@ -14,7 +14,7 @@ public class ArtifactDataType : ModifiableDeletableEntity
     /// Data type name (e.g., "string", "number", "document", "map", "array", "json", "date")
     /// </summary>
     [MaxLength(50)]
-    public required string Name { get; set; }
+    public new required string Name { get; set; }
 
     /// <summary>
     /// Description of the data type

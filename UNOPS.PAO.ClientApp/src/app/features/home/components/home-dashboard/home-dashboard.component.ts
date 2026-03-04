@@ -95,7 +95,6 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   private feedbackDialogService = inject(FeedbackDialogService);
   private dialogService = inject(DialogService);
   private documentService = inject(DocumentService);
-  private opportunityService = inject(OpportunityService);
   public layoutService = inject(LayoutService);
   private elementRef = inject(ElementRef);
   private workflowService = inject(WorkflowService);
@@ -259,9 +258,6 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
 
   // Dynamic content test mode
   showDynamicContentTest = signal<boolean>(false);
-
-  // Test PDF generation loading state
-  testPdfLoading = signal<boolean>(false);
 
   // UNCOMMENT BELOW TO ENABLE DUMMY DATA TESTING FOR "VIEW ALL" FUNCTIONALITY
   // useDummyData = signal(false);
@@ -878,7 +874,9 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
       
       // Navigate to the new opportunity if ID is returned
       if (result.id) {
-        this.router.navigate(['/partnerships/opportunities', result.id]);
+        this.router.navigate(['/partnerships/opportunities', result.id], {
+          queryParams: { fromCreate: 'true' },
+        });
       }
     }
     this.showCreateOpportunityDialog.set(false);
@@ -1181,39 +1179,6 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
 
   toggleDynamicContentTest() {
     this.showDynamicContentTest.set(!this.showDynamicContentTest());
-  }
-
-  /**
-   * Generate Opportunity Statement PDF for opportunity ID 58 and upload to GCS.
-   */
-  generateTestPdf() {
-    const opportunityId = 5;
-    this.testPdfLoading.set(true);
-    this.opportunityService
-      .generateStatementPdf({
-        entityName: 'Opportunity',
-        entityId: opportunityId,
-        filename: `Opportunity_${opportunityId}_Test_${new Date().toISOString().slice(0, 10)}`
-      })
-      .subscribe({
-        next: (response) => {
-          this.testPdfLoading.set(false);
-          if (response.success && response.gcsPath) {
-            this.feedbackDialogService.showSuccessToast({
-              summary: 'Success',
-              detail: `PDF generated: ${response.gcsPath}`
-            });
-          } else {
-            this.feedbackDialogService.showErrorToast({
-              summary: 'Error',
-              detail: response.error || response.details || 'PDF generation failed'
-            });
-          }
-        },
-        error: () => {
-          this.testPdfLoading.set(false);
-        }
-      });
   }
 
   formatDate(dateString: string | Date | null | undefined): string {

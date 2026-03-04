@@ -40,9 +40,9 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
         IConfiguration configuration,
         IUserPreferenceService userPreferenceService,
         IOrgUnitHierarchyService hierarchyService,
-        IPermissionService permissionService = null,
-        IHttpContextAccessor httpContextAccessor = null)
-        : base(mapper, context, configuration, null, "Dashboard", permissionService, httpContextAccessor)
+        IPermissionService? permissionService = null,
+        IHttpContextAccessor? httpContextAccessor = null)
+        : base(mapper, context, configuration, null!, "Dashboard", permissionService, httpContextAccessor)
     {
         _logger = logger;
         _userPreferenceService = userPreferenceService;
@@ -1322,7 +1322,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
     /// Dashboard service handles multiple entity types, so this method is not applicable.
     /// Use the specific dashboard methods instead (GetMyPartnersAsync, GetMyContactsAsync, etc.)
     /// </summary>
-    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
+    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal? user = null)
     {
         // Dashboard service aggregates data from multiple entity types
         // Individual entity access should go through their respective managers

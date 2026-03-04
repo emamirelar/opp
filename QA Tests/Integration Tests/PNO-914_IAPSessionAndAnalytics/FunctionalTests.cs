@@ -139,7 +139,7 @@ public class FunctionalTests : PNO914TestFixtureBase
         // Arrange
         await EnsureReferenceDataAsync();
         var request = BuildRequest(name: "SDG Dedup Test");
-        request.SdGs = new List<int> { 1, 1, 1 };
+        request.SdGs = new List<OpportunitySDGRequest> { new() { SDGId = 1, IsPrimary = false }, new() { SDGId = 1, IsPrimary = false }, new() { SDGId = 1, IsPrimary = false } };
 
         // Act
         var result = await Manager.CreateOpportunityFromProposalAsync(request, CurrentUserId);

@@ -1,6 +1,8 @@
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Security.Claims;
+using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.Domain.Specifications.Interfaces;
 using UNOPS.PAO.Models;
@@ -27,10 +29,11 @@ public class InteractionRBACCompositeSpecification : GenericCompositeSpecificati
         _userOrgUnit = userOrgUnit ?? string.Empty;
         
         // Add standard includes for interactions
-        AddInclude(i => i.InteractionContacts);
+        AddInclude(i => i.InteractionContacts!);
         AddInclude("InteractionContacts.Contact");
-        AddInclude(i => i.InteractionPartners);
+        AddInclude(i => i.InteractionPartners!);
         AddInclude("InteractionPartners.Partner");
+        AddInclude(i => i.InteractionUsers!);
         
         // Apply security-based filtering
         ApplySecurityFilters();
@@ -64,21 +67,21 @@ public class InteractionRBACCompositeSpecification : GenericCompositeSpecificati
             if (!string.IsNullOrEmpty(_userOrgUnit))
             {
                 // Note: OrganizationUnitRelationships filtering moved to post-query processing
-                securityExpression = i => i.InteractionPartners.Any(ip => 
+                securityExpression = i => (i.InteractionPartners ?? Enumerable.Empty<InteractionPartner>()).Any(ip =>
                     ip.Partner != null); // Org unit filtering will be done after manual loading
             }
             else
             {
                 // If no org unit, can see interactions they created or are assigned to
-                securityExpression = i => i.CreatedBy == userId || 
-                                        i.InteractionUsers.Any(iu => iu.UserId == userId);
+                securityExpression = i => i.CreatedBy == userId ||
+                                        (i.InteractionUsers ?? Enumerable.Empty<InteractionUser>()).Any(iu => iu.UserId == userId);
             }
         }
         else if (_user.IsInRole("INTERACTION_READ"))
         {
             // Can only see interactions they created or are explicitly assigned to
-            securityExpression = i => i.CreatedBy == userId || 
-                                    i.InteractionUsers.Any(iu => iu.UserId == userId);
+            securityExpression = i => i.CreatedBy == userId ||
+                                    (i.InteractionUsers ?? Enumerable.Empty<InteractionUser>()).Any(iu => iu.UserId == userId);
         }
         else if (_user.IsInRole("PARTNER_MANAGER"))
         {
@@ -86,7 +89,7 @@ public class InteractionRBACCompositeSpecification : GenericCompositeSpecificati
             if (!string.IsNullOrEmpty(_userOrgUnit))
             {
                 // Note: OrganizationUnitRelationships filtering moved to post-query processing
-                securityExpression = i => i.InteractionPartners.Any(ip => 
+                securityExpression = i => (i.InteractionPartners ?? Enumerable.Empty<InteractionPartner>()).Any(ip =>
                     ip.Partner != null); // Org unit filtering will be done after manual loading
             }
             else

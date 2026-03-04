@@ -9,6 +9,7 @@ using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Models.Documents;
 using UNOPS.PAO.Models.Workflow;
 using UNOPS.PAO.Presentation.Controllers.Shared;
 using UNOPS.PAO.Presentation.Helpers;
@@ -602,6 +603,28 @@ public class WorkflowController : BaseController
                 entityUrl,
                 entityDisplayName);
 
+            // Generate Submission PDF for Opportunity Go Decision (statement only, no audit trail)
+            if (normalizedEntityName == "Opportunity" && request.NewStage == OpportunityWorkflow.Stages.Go)
+            {
+                try
+                {
+                    var now = DateTime.UtcNow;
+                    var dateStr = now.ToString("yyyyMMdd");
+                    var timeStr = now.ToString("HHmm");
+                    var filename = $"Opportunity_{request.EntityId}_Submission_{dateStr}_{timeStr}";
+                    await _managerWrapper.OpportunityManager.GenerateStatementPdfAsync(new GeneratePdfRequest
+                    {
+                        EntityName = "Opportunity",
+                        EntityId = request.EntityId,
+                        Filename = filename
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to generate submission PDF for Opportunity {OpportunityId}", request.EntityId);
+                }
+            }
+
             return Ok(new WorkflowSubmitResponse
             {
                 Success = true,
@@ -740,6 +763,55 @@ public class WorkflowController : BaseController
 
         // === MARK IN-SYSTEM NOTIFICATIONS AS DONE ===
         await _notificationService.MarkWorkflowNotificationsAsApprovedAsync(normalizedEntityName, request.EntityId);
+
+        // Generate Approval PDF for Opportunity Go Decision (statement + audit trail)
+        if (normalizedEntityName == "Opportunity" && newStage == OpportunityWorkflow.Stages.Go)
+        {
+            try
+            {
+                var stateMachine = GetStateMachine(normalizedEntityName);
+                var history = stateMachine != null
+                    ? _workflowManager.GetWorkflowHistory(stateMachine, normalizedEntityName, request.EntityId).ToList()
+                    : new List<WorkflowHistoryModel>();
+
+                var opportunity = await _context.Opportunities
+                    .AsNoTracking()
+                    .Include(o => o.ResponsibleOrgUnit)
+                    .Include(o => o.ProposedInitiativeType)
+                    .Where(o => o.Id == request.EntityId && !o.IsDeleted)
+                    .Select(o => new
+                    {
+                        o.OpportunityStatementMarkdown,
+                        o.ResponsibleOrgUnitId,
+                        ResponsibleOrgUnitName = o.ResponsibleOrgUnit != null ? o.ResponsibleOrgUnit.Name : null,
+                        ProposedInitiativeTypeName = o.ProposedInitiativeType != null ? o.ProposedInitiativeType.Name : null
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (opportunity?.OpportunityStatementMarkdown != null)
+                {
+                    var auditTrail = await BuildAuditTrailMarkdownForApprovalAsync(
+                        history, request.EntityId, opportunity.ResponsibleOrgUnitId,
+                        opportunity.ResponsibleOrgUnitName, opportunity.ProposedInitiativeTypeName);
+                    var combinedMarkdown = opportunity.OpportunityStatementMarkdown + "\n\n" + auditTrail;
+
+                    var dateStr = DateTime.UtcNow.ToString("yyyyMMdd");
+                    var filename = $"Opportunity_{request.EntityId}_Approved_{dateStr}";
+
+                    await _managerWrapper.OpportunityManager.GenerateStatementPdfAsync(new GeneratePdfRequest
+                    {
+                        EntityName = "Opportunity",
+                        EntityId = request.EntityId,
+                        Data = combinedMarkdown,
+                        Filename = filename
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to generate approval PDF for Opportunity {OpportunityId}", request.EntityId);
+            }
+        }
 
         return Ok(new { success = true, message = "Workflow approved", newStage });
     }
@@ -915,7 +987,7 @@ public class WorkflowController : BaseController
     }
 
     /// <summary>
-    /// Cancels an opportunity. Only available to Opportunity Manager from IDENTIFY & PROFILE stage.
+    /// Cancels an opportunity. Only available to Opportunity Manager from IDENTIFY and PROFILE stage.
     /// Sets the opportunity to CANCELLED stage and marks entity as Closed.
     /// </summary>
     /// <param name="request">The cancel request</param>
@@ -999,7 +1071,7 @@ public class WorkflowController : BaseController
 
     /// <summary>
     /// Reopens an opportunity. Only available to Opportunity Manager from NO GO or CANCELLED stage.
-    /// Sets the opportunity back to IDENTIFY & PROFILE stage.
+    /// Sets the opportunity back to IDENTIFY and PROFILE stage.
     /// </summary>
     /// <param name="request">The reopen request</param>
     /// <returns>Reopen result</returns>
@@ -1312,6 +1384,107 @@ public class WorkflowController : BaseController
             "opportunity" => "Opportunity",
             _ => entityName
         };
+    }
+
+    /// <summary>
+    /// Builds the audit trail markdown section for the approved opportunity statement PDF.
+    /// Enriches workflow history with user details (position, DOA) matching GetWorkflowHistory.
+    /// Uses CreatedDate for submission (when submitted), CompletedOn for approval (when decision made).
+    /// </summary>
+    private async Task<string> BuildAuditTrailMarkdownForApprovalAsync(
+        List<WorkflowHistoryModel> history,
+        int opportunityId,
+        int? responsibleOrgUnitId,
+        string? responsibleOrgUnitName,
+        string? proposedInitiativeTypeName)
+    {
+        var sortedHistory = history.OrderByDescending(h => h.CreatedDate).ToList();
+        var submitRecord = sortedHistory.FirstOrDefault(h => string.Equals(h.Action, "Submit", StringComparison.OrdinalIgnoreCase));
+        var approveRecord = sortedHistory.FirstOrDefault(h => string.Equals(h.Action, "Approve", StringComparison.OrdinalIgnoreCase));
+
+        static string FormatDate(DateTime? date) =>
+            date.HasValue ? date.Value.ToString("dd MMM yyyy, HH:mm", System.Globalization.CultureInfo.InvariantCulture) : "N/A";
+
+        var orgUnitCode = responsibleOrgUnitName ?? "N/A";
+        var initiativeType = proposedInitiativeTypeName ?? "initiative";
+        var acknowledgmentStatement = $"I confirm that, based on the information presented in the Opportunity Statement, I give approval for UNOPS Org Unit \"{orgUnitCode}\" to continue development of this Opportunity as a {initiativeType}.";
+
+        // Submission: use CreatedDate (when submitted); CompletedOn gets set during approval so would be wrong
+        var submitDate = submitRecord != null ? submitRecord.CreatedDate : (DateTime?)null;
+        var (submitUserName, submitPosition, _) = await GetUserDetailsForAuditTrailAsync(submitRecord?.User?.Id ?? 0);
+        var submitRemarks = submitRecord?.Comment ?? "None provided";
+
+        // Approval: use CompletedOn (when decision was made)
+        var approveDate = approveRecord?.CompletedOn ?? approveRecord?.CreatedDate;
+        var (approveUserName, approvePosition, approveDoa) = await GetUserDetailsForAuditTrailAsync(
+            approveRecord?.User?.Id ?? 0, opportunityId, responsibleOrgUnitId);
+
+        return $@"
+---
+
+## Go Decision Audit Trail
+
+### Submission Details
+| Field | Value |
+|-------|-------|
+| **Date of Submission** | {FormatDate(submitDate)} |
+| **Submitted By** | {submitUserName} |
+| **Position Title** | {submitPosition} |
+| **Remarks for Decision Maker** | {submitRemarks} |
+
+### Decision Details
+| Field | Value |
+|-------|-------|
+| **Date of Decision** | {FormatDate(approveDate)} |
+| **Decision Maker** | {approveUserName} |
+| **DOA Level** | {approveDoa} |
+| **Position Title** | {approvePosition} |
+| **Acknowledged Statement** | {acknowledgmentStatement} |
+| **Decision Rationale** | {approveRecord?.Comment ?? "None provided"} |
+
+---
+";
+    }
+
+    /// <summary>
+    /// Gets user display name and position for audit trail. For approver, also looks up DOA level.
+    /// </summary>
+    private async Task<(string userName, string position, string? doaLevel)> GetUserDetailsForAuditTrailAsync(
+        int userId, int? opportunityId = null, int? responsibleOrgUnitId = null)
+    {
+        if (userId <= 0)
+            return ("N/A", "N/A", null);
+
+        var user = await _context.PAOUsers
+            .AsNoTracking()
+            .Include(u => u.UserProfile)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null)
+            return ("N/A", "N/A", null);
+
+        var userName = user.UserProfile?.Name ?? user.Email ?? "N/A";
+        var position = user.UserProfile?.Position ?? "N/A";
+
+        string? doaLevel = null;
+        if (opportunityId.HasValue && responsibleOrgUnitId.HasValue)
+        {
+            var doaEntityUserRole = await _context.EntityUserRoles
+                .AsNoTracking()
+                .Include(eur => eur.EntityRole)
+                .Where(eur => eur.UserId == userId
+                    && eur.EntityId == responsibleOrgUnitId.Value
+                    && eur.EntityType == "OrganizationHierarchy"
+                    && eur.EntityRole != null
+                    && eur.EntityRole.Code != null
+                    && eur.EntityRole.Code.StartsWith("DoA"))
+                .FirstOrDefaultAsync();
+
+            if (doaEntityUserRole?.EntityRole != null)
+                doaLevel = doaEntityUserRole.EntityRole.Name ?? doaEntityUserRole.EntityRole.Code;
+        }
+
+        return (userName, position, doaLevel ?? "N/A");
     }
 
     /// <summary>

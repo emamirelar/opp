@@ -218,8 +218,9 @@ public class DevelopmentIAPAuthHandler : IMiddleware
         // Option 2: Check for a query parameter for testing different users
         if (context.Request.Query.TryGetValue("dev-user", out var queryEmail))
         {
-            _logger.LogInformation("Using query parameter development user email: {Email}", queryEmail);
-            return queryEmail.ToString();
+            var email = queryEmail.ToString();
+            _logger.LogInformation("Using query parameter development user email: {Email}", email ?? "");
+            return email ?? "";
         }
         
         // Option 3: Fall back to configured value

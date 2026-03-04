@@ -6,6 +6,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { retry } from 'rxjs';
 import {
   Opportunity,
   OpportunityRequest,
@@ -293,15 +294,14 @@ export class OpportunityService {
     maxResults: number = 10,
     invalidateCache: boolean = false,
   ): Observable<SimilarProjectsResponse> {
-    return this.http.get<SimilarProjectsResponse>(
-      `${this.apiUrl}/${id}/similar-projects`,
-      {
+    return this.http
+      .get<SimilarProjectsResponse>(`${this.apiUrl}/${id}/similar-projects`, {
         params: {
           maxResults: maxResults.toString(),
           invalidateCache: invalidateCache.toString(),
         },
-      },
-    );
+      })
+      .pipe(retry({ count: 2, delay: 2000 }));
   }
 
   /**
@@ -311,14 +311,16 @@ export class OpportunityService {
     id: number,
     maxResults: number = 6,
   ): Observable<SimilarOpportunitiesResponse> {
-    return this.http.get<SimilarOpportunitiesResponse>(
-      `${this.apiUrl}/${id}/similar-opportunities`,
-      {
-        params: {
-          maxResults: maxResults.toString(),
+    return this.http
+      .get<SimilarOpportunitiesResponse>(
+        `${this.apiUrl}/${id}/similar-opportunities`,
+        {
+          params: {
+            maxResults: maxResults.toString(),
+          },
         },
-      },
-    );
+      )
+      .pipe(retry({ count: 2, delay: 2000 }));
   }
 
   /**
@@ -332,15 +334,14 @@ export class OpportunityService {
     maxResults: number = 10,
     invalidateCache: boolean = false,
   ): Observable<RelevantPeopleResponse> {
-    return this.http.get<RelevantPeopleResponse>(
-      `${this.apiUrl}/${id}/relevant-people`,
-      {
+    return this.http
+      .get<RelevantPeopleResponse>(`${this.apiUrl}/${id}/relevant-people`, {
         params: {
           maxResults: maxResults.toString(),
           invalidateCache: invalidateCache.toString(),
         },
-      },
-    );
+      })
+      .pipe(retry({ count: 2, delay: 2000 }));
   }
 
   /**
@@ -371,7 +372,9 @@ export class OpportunityService {
     const url = forceRefresh
       ? `${this.apiUrl}/${id}/dst-recommendations?forceRefresh=true`
       : `${this.apiUrl}/${id}/dst-recommendations`;
-    return this.http.post<DSTRecommendationsResponse>(url, request);
+    return this.http
+      .post<DSTRecommendationsResponse>(url, request)
+      .pipe(retry({ count: 2, delay: 2000 }));
   }
 
   /**

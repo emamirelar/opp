@@ -1524,7 +1524,7 @@ public class OpportunityController : BaseController
             // Get full interaction details with partner info via InteractionPartners
             var interactions = await _context.Interactions
                 .Where(i => interactionIds.Contains(i.Id))
-                .Include(i => i.InteractionPartners)
+                .Include(i => i.InteractionPartners!)
                     .ThenInclude(ip => ip.Partner)
                 .Select(i => new
                 {
@@ -1533,9 +1533,9 @@ public class OpportunityController : BaseController
                     interactionType = i.Type.ToString(),
                     interactionDate = i.Date,
                     partnerName = i.InteractionPartners != null && i.InteractionPartners.Any()
-                        ? i.InteractionPartners.First().Partner != null 
-                            ? i.InteractionPartners.First().Partner.Name 
-                            : "Unknown Partner"
+                        ? (i.InteractionPartners.First().Partner != null
+                            ? i.InteractionPartners.First().Partner!.Name
+                            : "Unknown Partner")
                         : "Unknown Partner",
                     summary = i.Description
                 })
@@ -1737,7 +1737,7 @@ public class OpportunityController : BaseController
                             AITranscribed = true,
                             UploadToGCS = false, // Already uploaded to GCS
                             SkipDatabaseSave = false, // We want to save to database
-                            File = null // No file since already in GCS
+                            File = null! // No file since already in GCS - document manager handles
                         };
                         
                         // Use the document manager to create the document (handles UNOPSDocument creation correctly)
@@ -1826,7 +1826,7 @@ public class OpportunityController : BaseController
             // Get framework docs from funding partners (using existing DocumentId)
             foreach (var fp in opportunity.FundingPartners.Where(fp => fp.DocumentId.HasValue))
             {
-                var doc = await _context.Documents.FirstOrDefaultAsync(d => d.Id == fp.DocumentId.Value);
+                var doc = await _context.Documents.FirstOrDefaultAsync(d => d.Id == fp.DocumentId!.Value);
                 if (doc != null)
                 {
                     taggedFrameworks.Add(new TaggedFrameworkInfo
@@ -1844,7 +1844,7 @@ public class OpportunityController : BaseController
             // Get framework docs from client partners (using existing DocumentId)
             foreach (var cp in opportunity.ClientPartners.Where(cp => cp.DocumentId.HasValue))
             {
-                var doc = await _context.Documents.FirstOrDefaultAsync(d => d.Id == cp.DocumentId.Value);
+                var doc = await _context.Documents.FirstOrDefaultAsync(d => d.Id == cp.DocumentId!.Value);
                 if (doc != null)
                 {
                     taggedFrameworks.Add(new TaggedFrameworkInfo
@@ -1853,7 +1853,7 @@ public class OpportunityController : BaseController
                         PartnerName = cp.Partner?.Name ?? "Unknown Partner",
                         DocumentId = doc.Id,
                         DocumentName = doc.Name,
-                        DocumentStoragePath = doc.StoragePath,
+                        DocumentStoragePath = doc.StoragePath ?? string.Empty,
                         PartnerType = "Client"
                     });
                 }
@@ -1861,7 +1861,7 @@ public class OpportunityController : BaseController
 
             // Get total document count
             var totalDocs = await _context.DocumentRelationships
-                .CountAsync(dr => dr.EntityType == "Opportunity" && dr.EntityId == id && !dr.Document.IsDeleted);
+                .CountAsync(dr => dr.EntityType == "Opportunity" && dr.EntityId == id && dr.Document != null && !dr.Document.IsDeleted);
 
             var response = new FrameworkStatusResponse
             {
@@ -1883,7 +1883,7 @@ public class OpportunityController : BaseController
     }
 
     /// <summary>
-    /// Searches for Products & Services (Outputs) using AI semantic search
+    /// Searches for Products and Services (Outputs) using AI semantic search
     /// Combines text similarity and embedding-based search for best results
     /// </summary>
     /// <param name="request">Search request with text query</param>
@@ -1908,7 +1908,7 @@ public class OpportunityController : BaseController
             // Create AiContextualService for embedding generation and search
             var credentials = GoogleCredential.GetApplicationDefault();
             var unopsContext = HttpContext.RequestServices.GetRequiredService<UNOPS.PAO.UNOPSDataAccess.Context.UNOPSAppDbContext>();
-            var aiService = new AiContextualService(_configuration, unopsContext, credentials, null, _logger);
+            var aiService = new AiContextualService(_configuration, unopsContext, credentials, null!, _logger);
 
             // Generate embedding for search text
             var embeddingVector = await aiService.CreateEmbeddingForText(request.SearchText);
@@ -1930,7 +1930,7 @@ public class OpportunityController : BaseController
                 embeddingVector: embeddingVector,
                 embeddingThreshold: 0.4f,  // Lower threshold for broader matches
                 resultLimit: maxResults * 2,  // Get more results to filter
-                whereCondition: null
+                whereCondition: null!
             );
 
             // Take top results

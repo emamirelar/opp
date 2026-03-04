@@ -38,14 +38,14 @@ public abstract class BaseUNOPSManager
     protected readonly IMapper _mapper;
     protected readonly UNOPSAppDbContext _context;
     protected readonly IConfiguration _configuration;
-    protected readonly UserManager<PAOIdentityUser> _userManager;
-    protected readonly IPermissionService _permissionService;
-    protected readonly IHttpContextAccessor _httpContextAccessor;
+    protected readonly UserManager<PAOIdentityUser>? _userManager;
+    protected readonly IPermissionService? _permissionService;
+    protected readonly IHttpContextAccessor? _httpContextAccessor;
     protected readonly string _entityName;
-    protected readonly IAiRetrieverManager _aiRetrieverManager;
+    protected readonly IAiRetrieverManager? _aiRetrieverManager;
 
     protected BaseUNOPSManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration,
-        UserManager<PAOIdentityUser> userManager = null, string entityName = null, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null, IAiRetrieverManager aiRetrieverManager = null)
+        UserManager<PAOIdentityUser>? userManager = null, string? entityName = null, IPermissionService? permissionService = null, IHttpContextAccessor? httpContextAccessor = null, IAiRetrieverManager? aiRetrieverManager = null)
     {
         _mapper = mapper;
         _context = context;
@@ -65,7 +65,7 @@ public abstract class BaseUNOPSManager
     /// <param name="entityId">ID of the entity to retrieve</param>
     /// <param name="user">Optional user context for permission checking</param>
     /// <returns>Result of the function call</returns>
-    public virtual async Task<object> CallFunctionByNameAsync(string functionName, int entityId, ClaimsPrincipal user = null)
+    public virtual async Task<object> CallFunctionByNameAsync(string functionName, int entityId, ClaimsPrincipal? user = null)
     {
         if (string.IsNullOrEmpty(functionName))
         {
@@ -288,7 +288,7 @@ public abstract class BaseUNOPSManager
     /// <summary>
     /// Gets basic entity data - must be implemented by derived managers
     /// </summary>
-    public abstract Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null);
+    public abstract Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal? user = null);
 
     /// <summary>
     /// Gets basic entity data by ID without nested entities - can be overridden by derived managers
@@ -304,7 +304,7 @@ public abstract class BaseUNOPSManager
     /// <param name="ids">Array of entity IDs</param>
     /// <param name="user">Current user context for security</param>
     /// <returns>List of entity models</returns>
-    public virtual async Task<List<object>> GetByIdsAsync(int[] ids, ClaimsPrincipal user = null)
+    public virtual async Task<List<object>> GetByIdsAsync(int[] ids, ClaimsPrincipal? user = null)
     {
         throw new NotImplementedException($"GetByIdsAsync not implemented for {GetType().Name}");
     }
@@ -322,7 +322,7 @@ public abstract class BaseUNOPSManager
     /// <summary>
     /// Maps entity to model with permissions, handling cases where no user context is available
     /// </summary>
-    protected async Task<T> MapEntityToModelWithPermissionsAsync<T>(T result, ClaimsPrincipal user, object sourceEntity = null) where T : class
+    protected async Task<T> MapEntityToModelWithPermissionsAsync<T>(T result, ClaimsPrincipal user, object? sourceEntity = null) where T : class
     {  
         // Add permissions using the helper method from BaseUNOPSManager
         // Only add permissions if user is provided and result has a Permissions property
@@ -443,7 +443,7 @@ public abstract class BaseUNOPSManager
     /// <summary>
     /// Gets entity permissions for the current entity and user roles from database
     /// </summary>
-    protected async Task<List<EntityPermission>> GetEntityPermissionsAsync(ClaimsPrincipal user, string entityName = null)
+    protected async Task<List<EntityPermission>> GetEntityPermissionsAsync(ClaimsPrincipal user, string? entityName = null)
     {
         if (user == null || !user.Identity.IsAuthenticated)
             return new List<EntityPermission>();
@@ -507,7 +507,7 @@ public abstract class BaseUNOPSManager
     /// <param name="query">Query type: count, list, select</param>
     /// <param name="user">User context for permissions</param>
     /// <returns>Entity data based on query type</returns>
-    public virtual async Task<object> GetEntityData(string entityName, string id = null, string query = null, ClaimsPrincipal user = null)
+    public virtual async Task<object> GetEntityData(string entityName, string? id = null, string? query = null, ClaimsPrincipal? user = null)
     {
         try
         {
@@ -1678,7 +1678,7 @@ public class SmartSearchResult<T> where T : class
 /// </summary>
 public class SmartSearchItem<T> where T : class
 {
-    public T Entity { get; set; }
+    public T Entity { get; set; } = null!;
     public double RelevanceScore { get; set; }
     public string MatchType { get; set; } = "";
     public string MatchDetails { get; set; } = "";

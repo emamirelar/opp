@@ -1219,7 +1219,7 @@ public class PartnerController : BaseController
         try
         {
             var similarityResults = await _aiContextualService.RetrieveSimilarityIds(
-                "Partner", searchText, null, similarityThreshold, 0.9f, null);
+                "Partner", searchText, null!, similarityThreshold, 0.9f, null!);
                 
             if (similarityResults.Any())
             {
@@ -1394,7 +1394,7 @@ public class PartnerController : BaseController
             try
             {
                 var similarityResults = await _aiContextualService.RetrieveSimilarityIds(
-                    "Partner", partnerFilterRequest.SearchText, null, similarityThreshold, 0.9f, null);
+                    "Partner", partnerFilterRequest.SearchText, null!, similarityThreshold, 0.9f, null!);
                     
                 if (similarityResults.Any())
                 {
@@ -1779,8 +1779,8 @@ public class PartnerController : BaseController
             return Ok(new {
                 success = true,
                 entityType = "Partner",
-                recordId = (object)null,
-                duplicateInfo = (object)null,
+                recordId = (object?)null,
+                duplicateInfo = (object?)null,
                 warning = "Duplicate detection temporarily unavailable"
             });
         }

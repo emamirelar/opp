@@ -2,7 +2,7 @@ namespace UNOPS.PAO.Models.AI
 {
     public class SessionUpdateRequest
     {
-        public string SessionId { get; set; }
+        public string SessionId { get; set; } = null!;
     }
 
     public class SessionStarRequest : SessionUpdateRequest
@@ -17,6 +17,6 @@ namespace UNOPS.PAO.Models.AI
 
     public class SessionTitleRequest : SessionUpdateRequest
     {
-        public string Title { get; set; }
+        public string Title { get; set; } = null!;
     }
 } 

@@ -109,6 +109,7 @@ public class AiRetrieverManager : IAiRetrieverManager
     /// <summary>
     /// Convert markdown to Google Doc.
     /// API expects multipart/form-data with "file" (markdown content) and "data" (JSON metadata).
+    /// Handles both JSON response (with pdfBase64) and raw PDF response (when API returns application/pdf).
     /// </summary>
     public async Task<GoogleDocResponse> ConvertMarkdownToGoogleDocAsync(
         string markdown,
@@ -117,12 +118,86 @@ public class AiRetrieverManager : IAiRetrieverManager
     {
         _logger.LogInformation("📄 Converting markdown to Google Doc (length: {Length})", markdown?.Length ?? 0);
 
-        return await PostMultipartFormDataAsync<GoogleDocResponse>(
-            CONVERT_MARKDOWN_TO_GOOGLE_DOC,
-            markdown,
-            fileName ?? "document.md",
-            userEmail
-        );
+        var headers = await BuildAuthenticatedHeadersAsync(CONVERT_MARKDOWN_TO_GOOGLE_DOC, userEmail, additionalHeaders: null);
+
+        using var content = new MultipartFormDataContent();
+        var fileBytes = Encoding.UTF8.GetBytes(markdown);
+        var fileContentPart = new ByteArrayContent(fileBytes);
+        fileContentPart.Headers.ContentType = new MediaTypeHeaderValue("text/markdown");
+        content.Add(fileContentPart, "file", fileName ?? "document.md");
+
+        var dataJson = JsonSerializer.Serialize(new
+        {
+            name = Path.GetFileNameWithoutExtension(fileName ?? "document.md"),
+            downloadPDF = true
+        });
+        content.Add(new StringContent(dataJson, Encoding.UTF8, "application/json"), "data");
+
+        var request = new HttpRequestMessage(HttpMethod.Post, CONVERT_MARKDOWN_TO_GOOGLE_DOC);
+        foreach (var header in headers)
+        {
+            if (string.Equals(header.Key, "Content-Type", StringComparison.OrdinalIgnoreCase))
+                continue;
+            request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+        }
+        request.Content = content;
+
+        var response = await _httpClient.SendAsync(request);
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? string.Empty;
+
+        _logger.LogInformation("📥 Response status: {StatusCode}, Content-Type: {ContentType}", response.StatusCode, contentType);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            _logger.LogError("❌ API call failed: {StatusCode} - {Content}", response.StatusCode, errorContent);
+            throw new HttpRequestException($"API call failed: {response.StatusCode} - {errorContent}");
+        }
+
+        // Read response as bytes first - needed to handle both binary PDF and JSON
+        var responseBytes = await response.Content.ReadAsByteArrayAsync();
+
+        // Handle raw PDF: Content-Type application/pdf or body starts with %PDF (0x25 0x50 0x44 0x46)
+        var isPdf = contentType.Contains("application/pdf", StringComparison.OrdinalIgnoreCase)
+            || (responseBytes.Length >= 4 && responseBytes[0] == 0x25 && responseBytes[1] == 0x50 && responseBytes[2] == 0x44 && responseBytes[3] == 0x46);
+
+        if (isPdf)
+        {
+            _logger.LogInformation("✅ Received raw PDF response ({Length} bytes)", responseBytes.Length);
+            return new GoogleDocResponse
+            {
+                Status = "success",
+                PdfBase64 = Convert.ToBase64String(responseBytes)
+            };
+        }
+
+        var responseContent = Encoding.UTF8.GetString(responseBytes);
+
+        // Validate JSON before deserializing (avoids JsonException when API returns HTML/error page)
+        var trimmed = responseContent.TrimStart();
+        if (!trimmed.StartsWith("{") && !trimmed.StartsWith("["))
+        {
+            _logger.LogError("❌ Unexpected response format. First 200 chars: {Preview}", responseContent.Length > 200 ? responseContent[..200] : responseContent);
+            throw new InvalidOperationException($"API returned non-JSON response. Content-Type: {contentType}. Response starts with: {(responseContent.Length > 50 ? responseContent[..50] + "..." : responseContent)}");
+        }
+
+        try
+        {
+            var result = JsonSerializer.Deserialize<GoogleDocResponse>(responseContent, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (result == null)
+                throw new InvalidOperationException("Failed to deserialize response");
+
+            return result;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "❌ JSON deserialization failed. First 200 chars: {Preview}", responseContent.Length > 200 ? responseContent[..200] : responseContent);
+            throw;
+        }
     }
 
     // Add more public methods for other endpoints as needed...

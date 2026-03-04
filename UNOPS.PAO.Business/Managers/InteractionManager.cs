@@ -31,8 +31,8 @@ public class InteractionManager : IInteractionManager
 
     public InteractionManager(IMapper mapper, AppDbContext context)
     {
-        mapper = mapper;
-        context = context;
+        this.mapper = mapper;
+        this.context = context;
         interactionRepository = new DataRepository<Interaction>(context);
     }
 

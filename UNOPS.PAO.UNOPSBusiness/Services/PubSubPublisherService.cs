@@ -16,8 +16,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
 
         public PubSubPublisher(IConfiguration configuration)
         {
-            _projectId = configuration.GetValue<string>("PubSub:ProjectId");
-            _topicId = configuration.GetValue<string>("PubSub:TopicId");
+            _projectId = configuration.GetValue<string>("PubSub:ProjectId") ?? string.Empty;
+            _topicId = configuration.GetValue<string>("PubSub:TopicId") ?? string.Empty;
         }
 
         public async Task PublishMessageAsync(List<MyPubSubMessage> messages)

@@ -42,7 +42,7 @@ public interface IInteractionManager
 
     Task<InteractionModel?> FindGmailInteractionAsync(GmailInteractionRequest model);
 
-    Task<InteractionModel> CreateGmailInteractionAsync(InteractionRequest model);
+    Task<InteractionModel?> CreateGmailInteractionAsync(InteractionRequest model);
     
     /// <summary>
     /// Get supported search fields for interactions

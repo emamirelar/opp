@@ -124,7 +124,7 @@ public class IntegrationTests : PNO1156TestFixtureBase
         // Arrange
         await EnsureReferenceDataAsync();
         var request = BuildRequest(name: "SDGs Test");
-        request.SdGs = new List<int> { 1 };
+        request.SdGs = new List<OpportunitySDGRequest> { new() { SDGId = 1, IsPrimary = false } };
 
         // Act
         var result = await Manager.CreateOpportunityFromProposalAsync(request, CurrentUserId);
@@ -215,7 +215,7 @@ public class IntegrationTests : PNO1156TestFixtureBase
         request.Description = "Full description";
         request.ExpectedImpact = "Impact text";
         request.ExpectedOutcomes = "Outcomes text";
-        request.SdGs = new List<int> { 1 };
+        request.SdGs = new List<OpportunitySDGRequest> { new() { SDGId = 1, IsPrimary = false } };
         request.Countries = new List<int> { 1 };
 
         // Act

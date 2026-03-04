@@ -28,8 +28,8 @@ public class SpecificationPaginationRequest<TEntity> : PaginationRequest
     /// <param name="pageSize">Page size</param>
     /// <param name="orderBy">Property to order by</param>
     /// <param name="ascending">Direction to order by</param>
-    public SpecificationPaginationRequest(ISpecification<TEntity> specification, int pageIndex, int pageSize, 
-        string orderBy = null, bool? ascending = null) 
+    public SpecificationPaginationRequest(ISpecification<TEntity> specification, int pageIndex, int pageSize,
+        string? orderBy = null, bool? ascending = null) 
         : base(pageIndex, pageSize, orderBy, ascending)
     {
         Specification = specification;

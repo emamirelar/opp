@@ -42,7 +42,7 @@ public class SearchResult
 {
     public int EntityId { get; set; }
     public float Score { get; set; }
-    public string SearchType { get; set; }
+    public string SearchType { get; set; } = string.Empty;
 }
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers
@@ -54,23 +54,23 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         private readonly IConfiguration _configuration;
         public readonly UNOPSAppDbContext _context;
         private readonly DataRepository<AiPrompt> _promptRepository;
-        private readonly GoogleCredential _credentials;
+        private readonly GoogleCredential? _credentials;
         protected readonly PubSubPublisher _pubSubPublisher;
         private readonly string _connectionString;
-        private readonly IAiPromptCacheService _aiPromptCacheService;
-        private readonly ILogger _logger;
+        private readonly IAiPromptCacheService? _aiPromptCacheService;
+        private readonly ILogger? _logger;
         private readonly bool _disableExternalCalls;
 
         public AiContextualService(
             IConfiguration configuration,
             UNOPSAppDbContext context,
-            GoogleCredential credentials,
-            IAiPromptCacheService aiPromptCacheService = null,
-            ILogger logger = null)
+            GoogleCredential? credentials = null,
+            IAiPromptCacheService? aiPromptCacheService = null,
+            ILogger? logger = null)
         {
             _configuration = configuration;
             _context = context;
-            _connectionString = configuration.GetValue<string>("ConnectionStrings:DbSchema");
+            _connectionString = configuration.GetValue<string>("ConnectionStrings:DbSchema") ?? string.Empty;
             _credentials = credentials;
             _promptRepository = new DataRepository<AiPrompt>(context);
             _pubSubPublisher = new PubSubPublisher(configuration);
@@ -78,9 +78,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             _logger = logger; // Optional logger for keyword generation
             _disableExternalCalls = configuration.GetValue<bool>("AISettings:DisableExternalCalls") ||
                 string.Equals(configuration["ASPNETCORE_ENVIRONMENT"], "Testing", StringComparison.OrdinalIgnoreCase);
-            var projectId = _configuration.GetValue<string>("AISettings:ProjectId");
-            var location = _configuration.GetValue<string>("AISettings:Location");
-            var model = _configuration.GetValue<string>("AISettings:EmbeddingModelName");
+            var projectId = _configuration.GetValue<string>("AISettings:ProjectId") ?? string.Empty;
+            var location = _configuration.GetValue<string>("AISettings:Location") ?? string.Empty;
+            var model = _configuration.GetValue<string>("AISettings:EmbeddingModelName") ?? string.Empty;
             _endpoint = $"projects/{projectId}/locations/{location}/publishers/google/models/{model}";
             _predictionClient = _disableExternalCalls ? null : PredictionServiceClient.Create(); // gRPC Client
         }
@@ -120,7 +120,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     if (!simplePathPattern.IsMatch(propertyPath))
                         continue; // Skip JSON-like content (e.g. " \"isAligned\": true")
 
-                    var value = GetNestedPropertyValue(dataObject, propertyPath);
+                    var value = dataObject != null ? GetNestedPropertyValue(dataObject, propertyPath) : null;
 
                     if (value != null)
                     {
@@ -147,7 +147,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         /// <summary>
         /// Gets nested property value from JObject using dot notation (e.g., "partner.name")
         /// </summary>
-        private string GetNestedPropertyValue(JObject dataObject, string propertyPath)
+        private string? GetNestedPropertyValue(JObject dataObject, string propertyPath)
         {
             try
             {
@@ -324,7 +324,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return result;
         }
 
-        public async Task<List<SearchResult>> ExecuteEmbeddingSearchMultiple(string entityName, string embeddingVector, float embeddingThreshold = 0.7f, int resultLimit = 10, string whereCondition = null)
+        public async Task<List<SearchResult>> ExecuteEmbeddingSearchMultiple(string entityName, string embeddingVector, float embeddingThreshold = 0.7f, int resultLimit = 10, string? whereCondition = null)
         {
             var sql = "SELECT entityId, score, search_type FROM public.retrieve_embedding_search_multiple(@entityName, @embedding, @embeddingThreshold, @resultLimit, @where)";
             
@@ -361,7 +361,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return results;
         }
 
-        public async Task<List<SearchResult>> RetrieveSimilarityIds(string entityName, string similarityCriteria, string vectorEmbedding=null, float similarityThreshold=0.3f, float embeddingThreshold=0.7f, string whereCondition=null)
+        public async Task<List<SearchResult>> RetrieveSimilarityIds(string entityName, string similarityCriteria, string? vectorEmbedding=null, float similarityThreshold=0.3f, float embeddingThreshold=0.7f, string? whereCondition=null)
         {
             var sql = "SELECT entityId, score, search_type FROM public.retrieve_similarity_results(@entityName, @text, @embedding, @similarityThreshold, @embeddingThreshold, @where)";
 
@@ -404,13 +404,13 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return results;
         }
 
-        public async Task<string> ReadFileData(string fileId, string sheetName = null)
+        public async Task<string> ReadFileData(string fileId, string? sheetName = null)
         {
             try
             {
                 var service = new SheetsService(new BaseClientService.Initializer
                 {
-                    HttpClientInitializer = _credentials,
+                    HttpClientInitializer = _credentials ?? await GoogleCredential.GetApplicationDefaultAsync(),
                     ApplicationName = "GoogleSheetsReader",
                 });
                 var spreadsheet = service.Spreadsheets.Get(fileId).Execute();
@@ -490,7 +490,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         }).ToList();
     }
 
-    public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData, string entityId = null, bool bypassCache = false)
+    public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData, string? entityId = null, bool bypassCache = false)
     {
         try
         {
@@ -563,7 +563,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         string relatedJsonData, 
         string documentStoragePath, 
         string documentMimeType,
-        string entityId = null, 
+        string? entityId = null, 
         bool bypassCache = false)
     {
         try
@@ -643,7 +643,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         AiPrompt promptData, 
         string relatedJsonData, 
         List<(string storagePath, string mimeType)> documents,
-        string entityId = null, 
+        string? entityId = null, 
         bool bypassCache = false)
     {
         try
@@ -723,7 +723,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
     }
 
     // Common function to handle Gemini API calls
-    public async Task<string> CallGeminiApi(dynamic prompt, AiPrompt promptData, string systemInstructions = null)
+    public async Task<string> CallGeminiApi(dynamic prompt, AiPrompt promptData, string? systemInstructions = null)
     {
         if (_disableExternalCalls)
         {
@@ -794,7 +794,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             await _pubSubPublisher.PublishMessageAsync(new List<MyPubSubMessage> { message });
         }
 
-        public async Task<dynamic> GetRequestBody(dynamic prompt, AiPrompt promptData, string systemInstructions = null)
+        public async Task<dynamic> GetRequestBody(dynamic prompt, AiPrompt promptData, string? systemInstructions = null)
         {
             dynamic contentConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.ContentConfig);
             dynamic generationConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.GenerationConfig);
@@ -945,8 +945,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             int userId, 
             string entityName, 
             bool isAsync = false,
-            Func<int, int, List<dynamic>, Task<bool>> progressCallback = null,
-            string fileId = null,
+            Func<int, int, List<dynamic>, Task<bool>>? progressCallback = null,
+            string? fileId = null,
             int? notificationId = null)
         {
             var finalResponse = new List<dynamic>();
@@ -1221,6 +1221,21 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     foreach (var dependent in dependentsList)
                     {
                         var text = responseObject[dependent];
+                        // When ID field is null but corresponding Name field has text, use it for resolution (AI returns name-only for dependents like proposedInitiativeTypeId)
+                        if (text == null)
+                        {
+                            var nameField = dependent.Replace("Id", "Name").Replace("Ids", "Names");
+                            if (!string.IsNullOrEmpty(nameField))
+                            {
+                                var nameValue = responseObject[nameField];
+                                if (nameValue != null)
+                                {
+                                    var nameStr = nameValue is string s ? s : nameValue.ToString();
+                                    if (!string.IsNullOrWhiteSpace(nameStr))
+                                        text = nameStr;
+                                }
+                            }
+                        }
                         if (text != null)
                         {
                             // Special case: OrganizationUnitRelationships (many-to-many)
@@ -1315,9 +1330,10 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                 // Handle single text value (existing behavior)
                                 dynamic entityId;
                                 int id;
-                                if (text?.Value != null)
+                                // Unwrap JValue to underlying value; text may already be string (e.g. from proposedInitiativeTypeId)
+                                if (text is JValue jVal && jVal.Value != null)
                                 {
-                                    text = text.Value;
+                                    text = jVal.Value;
                                 }
                                 
                                 // Check if 'text' is already a numeric value (long/int)
@@ -1545,9 +1561,18 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 entityName = "SDGs";
                 whereCondition = "1=1";
             }
-            // Special case for deliverables (Opportunity specific) - should look at Outputs table
+            // Special case for deliverables (Opportunity specific) - use EntityEmbeddings for semantic matching (like find-deliverable API)
             else if (dependent.Equals("deliverables", StringComparison.OrdinalIgnoreCase))
             {
+                // Prefer embedding search on EntityEmbeddings table (like find-deliverable); fallback to similarity on Outputs
+                var embedding = await CreateEmbeddingForText(text);
+                if (!string.IsNullOrEmpty(embedding))
+                {
+                    var embeddingResult = await ExecuteEmbeddingSearch("Output", embedding, 0.4f, "1=1");
+                    if (embeddingResult != null && !(embeddingResult is DBNull))
+                        return embeddingResult;
+                }
+                // Fallback: similarity search on Outputs table
                 entityName = "Outputs";
                 whereCondition = "1=1";
             }
@@ -3152,7 +3177,7 @@ Keywords:";
         /// <param name="textArray">Array of text values to convert to objects</param>
         /// <param name="dependent">The dependent field name being processed</param>
         /// <param name="partnerBudgets">Optional array of partner budget allocations (used for funding partners)</param>
-        private async Task<JArray> BuildOpportunityCollectionObjects(JArray textArray, string dependent, JArray partnerBudgets = null)
+        private async Task<JArray> BuildOpportunityCollectionObjects(JArray textArray, string dependent, JArray? partnerBudgets = null)
         {
             var objectsArray = new JArray();
             
@@ -3170,7 +3195,7 @@ Keywords:";
                     }
                     else if (dependent.Equals("sdGs", StringComparison.OrdinalIgnoreCase))
                     {
-                        var sdgObj = await BuildSDGObject(textValue);
+                        var sdgObj = await BuildSDGObject(textItem);
                         if (sdgObj != null) objectsArray.Add(sdgObj);
                     }
                     else if (dependent.Equals("fundingPartners", StringComparison.OrdinalIgnoreCase))
@@ -3334,10 +3359,35 @@ Keywords:";
         }
         
         /// <summary>
-        /// Builds an SDG object from text value
+        /// Builds an SDG object from AI output. Handles both object format (sdgNumber, sdgName, isPrimary) and legacy string format.
+        /// Opp+ terminology: isPrimary=true = Main SDG, isPrimary=false = Cross-cutting SDG.
         /// </summary>
-        private async Task<JObject> BuildSDGObject(string sdgText)
+        private async Task<JObject?> BuildSDGObject(JToken sdgData)
         {
+            string? sdgText = null;
+            bool isPrimary = false;
+
+            // Handle object format: { "sdgNumber": 6, "sdgName": "Clean Water and Sanitation", "isPrimary": true }
+            if (sdgData is JObject sdgObj)
+            {
+                isPrimary = sdgObj["isPrimary"]?.Value<bool>() ?? false;
+                var sdgNumber = sdgObj["sdgNumber"]?.Value<int?>();
+                var sdgName = sdgObj["sdgName"]?.ToString();
+                sdgText = sdgNumber.HasValue ? $"Goal {sdgNumber}" : sdgName;
+            }
+            // Handle legacy string format: "Goal 6", "SDG 9"
+            else if (sdgData is JValue jVal && jVal.Type == JTokenType.String)
+            {
+                sdgText = jVal.ToString();
+            }
+            else
+            {
+                sdgText = sdgData?.ToString();
+            }
+
+            if (string.IsNullOrEmpty(sdgText))
+                return null;
+
             try
             {
                 var sdgId = await GetEntityIdFromText(sdgText, "sdGs");
@@ -3346,28 +3396,25 @@ Keywords:";
                     Console.WriteLine($"[WARNING] SDG not found: '{sdgText}'");
                     return null;
                 }
-                
-                // Cast to int for database query
+
                 int sdgIdInt = Convert.ToInt32(sdgId);
-                
-                // Get full SDG details from database
+
                 var sdg = await _context.SDGs
                     .Where(s => s.Id == sdgIdInt)
                     .Select(s => new { s.Id, s.SDGNumber, s.Name })
                     .FirstOrDefaultAsync();
-                
+
                 if (sdg == null) return null;
-                
-                // Generate SDG logo URL
+
                 string sdgLogoUrl = $"https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-{sdg.SDGNumber.ToString().PadLeft(2, '0')}.jpg";
-                
+
                 return new JObject
                 {
                     ["sdgId"] = sdg.Id,
                     ["sdgNumber"] = sdg.SDGNumber,
                     ["sdgName"] = sdg.Name,
                     ["sdgLogoUrl"] = sdgLogoUrl,
-                    ["isPrimary"] = false // Default to false, can be updated later
+                    ["isPrimary"] = isPrimary
                 };
             }
             catch (Exception ex)
@@ -3733,13 +3780,14 @@ Keywords:";
         }
         
         /// <summary>
-        /// Builds a deliverable object from text value
+        /// Builds a deliverable object from text value.
+        /// Uses EntityEmbeddings (embedding search) for resolution, like find-deliverable API.
         /// </summary>
         private async Task<JObject> BuildDeliverableObject(string deliverableText)
         {
             try
             {
-                // Try to find the deliverable/output in the database
+                // Try to find the deliverable/output via embedding search (EntityEmbeddings table)
                 var outputId = await GetEntityIdFromText(deliverableText, "deliverables");
                 
                 // Only include deliverable if outputId was found
@@ -3813,8 +3861,8 @@ Keywords:";
         public int HighConfidence { get; set; }
         public int MediumConfidence { get; set; }
         public int LowConfidence { get; set; }
-        public DuplicateMatch TopDuplicate { get; set; }
-        public dynamic AllDuplicates { get; set; }
+        public DuplicateMatch TopDuplicate { get; set; } = null!;
+        public dynamic AllDuplicates { get; set; } = null!;
     }
 
     /// <summary>
@@ -3823,11 +3871,11 @@ Keywords:";
     public class DuplicateMatch
     {
         public int EntityId { get; set; }
-        public string EntityType { get; set; }
+        public string EntityType { get; set; } = string.Empty;
         public double Score { get; set; }
-        public string MatchReason { get; set; }
-        public dynamic MatchedData { get; set; }
-        public string SearchType { get; set; }
+        public string MatchReason { get; set; } = string.Empty;
+        public dynamic MatchedData { get; set; } = null!;
+        public string SearchType { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -3849,7 +3897,7 @@ Keywords:";
     public class InternalDuplicateGroup
     {
         public int MasterIndex { get; set; }
-        public dynamic MasterRecord { get; set; }
+        public dynamic MasterRecord { get; set; } = null!;
         public List<int> DuplicateIndices { get; set; } = new List<int>();
         public List<dynamic> DuplicateRecords { get; set; } = new List<dynamic>();
         public List<string> MatchReasons { get; set; } = new List<string>();
