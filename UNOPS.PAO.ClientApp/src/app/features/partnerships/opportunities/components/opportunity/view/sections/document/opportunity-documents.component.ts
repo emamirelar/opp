@@ -451,6 +451,11 @@ export class OpportunityDocumentsComponent implements OnInit {
           ? `${value.length} mission(s)`
           : '0 missions',
     },
+    {
+      fieldPath: 'unopsMissionsNotApplicable',
+      displayName: 'Alignment to UNOPS Strategic Missions',
+      formatFn: (value) => (value === true ? 'Not Applicable' : 'No'),
+    },
   ];
 
   /**
@@ -1358,14 +1363,20 @@ export class OpportunityDocumentsComponent implements OnInit {
           )
           .filter((id: number) => id != null);
       }
-      // Handle SDGs - extract SDG IDs
+      // Handle SDGs - extract { sdgId, isPrimary } (Main/Cross-cutting)
       else if (key === 'sdGs' && Array.isArray(value)) {
         transformed.sdGs = value
-          .map((sdg: any) => sdg.sdgId)
-          .filter((id: number) => id != null);
+          .filter((sdg: any) => sdg.sdgId != null)
+          .map((sdg: any) => ({
+            sdgId: sdg.sdgId,
+            isPrimary: sdg.isPrimary ?? false,
+          }));
       }
-      // Handle UNOPS Missions - extract unopsMissionId to API format
-      else if (key === 'unopsMissions' && Array.isArray(value)) {
+      // Handle UNOPS Missions - extract unopsMissionId to API format; support Not Applicable
+      else if (key === 'unopsMissionsNotApplicable' && value === true) {
+        transformed.unopsMissionsNotApplicable = true;
+        transformed.unopsMissions = [];
+      } else if (key === 'unopsMissions' && Array.isArray(value)) {
         transformed.unopsMissions = value
           .filter((m: any) => m.unopsMissionId != null)
           .map((m: any) => ({ unopsMissionId: m.unopsMissionId }));

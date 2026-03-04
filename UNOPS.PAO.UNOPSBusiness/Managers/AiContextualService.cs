@@ -3186,7 +3186,7 @@ Keywords:";
                     }
                     else if (dependent.Equals("sdGs", StringComparison.OrdinalIgnoreCase))
                     {
-                        var sdgObj = await BuildSDGObject(textValue);
+                        var sdgObj = await BuildSDGObject(textItem);
                         if (sdgObj != null) objectsArray.Add(sdgObj);
                     }
                     else if (dependent.Equals("fundingPartners", StringComparison.OrdinalIgnoreCase))
@@ -3350,10 +3350,35 @@ Keywords:";
         }
         
         /// <summary>
-        /// Builds an SDG object from text value
+        /// Builds an SDG object from AI output. Handles both object format (sdgNumber, sdgName, isPrimary) and legacy string format.
+        /// Opp+ terminology: isPrimary=true = Main SDG, isPrimary=false = Cross-cutting SDG.
         /// </summary>
-        private async Task<JObject> BuildSDGObject(string sdgText)
+        private async Task<JObject?> BuildSDGObject(JToken sdgData)
         {
+            string? sdgText = null;
+            bool isPrimary = false;
+
+            // Handle object format: { "sdgNumber": 6, "sdgName": "Clean Water and Sanitation", "isPrimary": true }
+            if (sdgData is JObject sdgObj)
+            {
+                isPrimary = sdgObj["isPrimary"]?.Value<bool>() ?? false;
+                var sdgNumber = sdgObj["sdgNumber"]?.Value<int?>();
+                var sdgName = sdgObj["sdgName"]?.ToString();
+                sdgText = sdgNumber.HasValue ? $"Goal {sdgNumber}" : sdgName;
+            }
+            // Handle legacy string format: "Goal 6", "SDG 9"
+            else if (sdgData is JValue jVal && jVal.Type == JTokenType.String)
+            {
+                sdgText = jVal.ToString();
+            }
+            else
+            {
+                sdgText = sdgData?.ToString();
+            }
+
+            if (string.IsNullOrEmpty(sdgText))
+                return null;
+
             try
             {
                 var sdgId = await GetEntityIdFromText(sdgText, "sdGs");
@@ -3362,28 +3387,25 @@ Keywords:";
                     Console.WriteLine($"[WARNING] SDG not found: '{sdgText}'");
                     return null;
                 }
-                
-                // Cast to int for database query
+
                 int sdgIdInt = Convert.ToInt32(sdgId);
-                
-                // Get full SDG details from database
+
                 var sdg = await _context.SDGs
                     .Where(s => s.Id == sdgIdInt)
                     .Select(s => new { s.Id, s.SDGNumber, s.Name })
                     .FirstOrDefaultAsync();
-                
+
                 if (sdg == null) return null;
-                
-                // Generate SDG logo URL
+
                 string sdgLogoUrl = $"https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-{sdg.SDGNumber.ToString().PadLeft(2, '0')}.jpg";
-                
+
                 return new JObject
                 {
                     ["sdgId"] = sdg.Id,
                     ["sdgNumber"] = sdg.SDGNumber,
                     ["sdgName"] = sdg.Name,
                     ["sdgLogoUrl"] = sdgLogoUrl,
-                    ["isPrimary"] = false // Default to false, can be updated later
+                    ["isPrimary"] = isPrimary
                 };
             }
             catch (Exception ex)
