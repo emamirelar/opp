@@ -1561,9 +1561,18 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 entityName = "SDGs";
                 whereCondition = "1=1";
             }
-            // Special case for deliverables (Opportunity specific) - should look at Outputs table
+            // Special case for deliverables (Opportunity specific) - use EntityEmbeddings for semantic matching (like find-deliverable API)
             else if (dependent.Equals("deliverables", StringComparison.OrdinalIgnoreCase))
             {
+                // Prefer embedding search on EntityEmbeddings table (like find-deliverable); fallback to similarity on Outputs
+                var embedding = await CreateEmbeddingForText(text);
+                if (!string.IsNullOrEmpty(embedding))
+                {
+                    var embeddingResult = await ExecuteEmbeddingSearch("Output", embedding, 0.4f, "1=1");
+                    if (embeddingResult != null && !(embeddingResult is DBNull))
+                        return embeddingResult;
+                }
+                // Fallback: similarity search on Outputs table
                 entityName = "Outputs";
                 whereCondition = "1=1";
             }
@@ -3771,13 +3780,14 @@ Keywords:";
         }
         
         /// <summary>
-        /// Builds a deliverable object from text value
+        /// Builds a deliverable object from text value.
+        /// Uses EntityEmbeddings (embedding search) for resolution, like find-deliverable API.
         /// </summary>
         private async Task<JObject> BuildDeliverableObject(string deliverableText)
         {
             try
             {
-                // Try to find the deliverable/output in the database
+                // Try to find the deliverable/output via embedding search (EntityEmbeddings table)
                 var outputId = await GetEntityIdFromText(deliverableText, "deliverables");
                 
                 // Only include deliverable if outputId was found
