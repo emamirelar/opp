@@ -269,31 +269,43 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
 
     /// <summary>
     /// Notifies the submitter that the Go Decision has been approved.
-    /// For Opportunity: Includes both DoA2 and DoA3 holders (in addition to triggers), even when DoA2 are present.
+    /// Per matrix: TO = OM, Workflow Initiator; CC = Region Director, Region Deputy Director, Hub Director,
+    /// Hub Deputy Director, OrgUnit Director, OrgUnit Deputy Director, DoA2, DoA3 (Responsible OrgUnit).
     /// </summary>
     public async Task NotifyWorkflowCompletedAsync(WorkflowNotification notification)
     {
         try
         {
-            var recipientUserIds = notification.RecipientUserIds.ToList();
+            List<string> toEmails;
+            List<string> ccEmails;
 
-            // For Opportunity approval: include both DoA2 and DoA3 holders (even if DoA2 are present)
             if (notification.EntityName.Equals("Opportunity", StringComparison.OrdinalIgnoreCase) &&
                 int.TryParse(notification.EntityId, out var opportunityId))
             {
-                var doaHolderIds = await GetDoA2AndDoA3HolderUserIdsForOpportunityAsync(opportunityId);
-                recipientUserIds = recipientUserIds.Union(doaHolderIds).Distinct().ToList();
+                // TO: OM, Workflow Initiator
+                var toUserIds = await GetRejectionRecipientUserIdsForOpportunityAsync(notification.EntityId);
+                toEmails = await GetRecipientEmailsAsync(toUserIds);
+
+                // CC: All hierarchy directors + DoA2, DoA3 (Responsible OrgUnit)
+                ccEmails = await BuildApprovalCompleteCCRecipientsAsync(opportunityId);
+            }
+            else
+            {
+                toEmails = await GetRecipientEmailsAsync(notification.RecipientUserIds);
+                ccEmails = new List<string>();
             }
 
-            var recipientEmails = await GetRecipientEmailsAsync(recipientUserIds);
-            if (!recipientEmails.Any())
+            if (!toEmails.Any())
             {
                 _logger.LogWarning("No recipients found for workflow completed notification for entity {EntityName} {EntityId}",
                     notification.EntityName, notification.EntityId);
                 return;
             }
 
-            var recipientNames = await GetRecipientNamesAsync(recipientUserIds);
+            var toUserIdsForNames = notification.EntityName.Equals("Opportunity", StringComparison.OrdinalIgnoreCase)
+                ? await GetRejectionRecipientUserIdsForOpportunityAsync(notification.EntityId)
+                : notification.RecipientUserIds;
+            var recipientNames = await GetRecipientNamesAsync(toUserIdsForNames);
             var orgUnitName = await GetOrgUnitNameForOpportunityAsync(notification.EntityId);
 
             var commentSection = !string.IsNullOrEmpty(notification.Comment)
@@ -316,14 +328,15 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
             {
                 TemplateName = "UNOPS.PAO.Business.EmailTemplates.OpportunityWorkflowCompleted.html",
                 Title = $"Opportunity+: {notification.EntityDisplayName} - Go Decision Approved",
-                EmailReceivers = recipientEmails.ToArray()
+                EmailReceivers = toEmails.ToArray(),
+                CcReceivers = ccEmails.ToArray()
             };
 
             await _emailSender.SendEmailAsync(emailMessage, emailModel, _baseUrl);
 
             _logger.LogInformation(
-                "Sent workflow completed email for {EntityName} (ID: {EntityId}) to {RecipientCount} recipients",
-                notification.EntityDisplayName, notification.EntityId, recipientEmails.Count);
+                "Sent workflow completed email for {EntityName} (ID: {EntityId}) to {ToCount} recipients with {CcCount} CC",
+                notification.EntityDisplayName, notification.EntityId, toEmails.Count, ccEmails.Count);
         }
         catch (Exception ex)
         {
@@ -334,29 +347,42 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
 
     /// <summary>
     /// Notifies the submitter that the opportunity has been set to NO GO.
-    /// For Opportunities: only notifies the Opportunity Manager and the initiator (when different from OM).
+    /// Per matrix: TO = OM, Workflow Initiator; CC = OrgUnit Director, OrgUnit Deputy Director, DoA2, DoA3 (Responsible OrgUnit).
     /// </summary>
     public async Task NotifyWorkflowRejectedAsync(WorkflowNotification notification)
     {
         try
         {
-            var recipientUserIds = notification.RecipientUserIds;
+            List<string> toEmails;
+            List<string> ccEmails;
 
-            // For Opportunity rejections: restrict to Opportunity Manager + initiator (when different from OM)
-            if (string.Equals(notification.EntityName, "Opportunity", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(notification.EntityName, "Opportunity", StringComparison.OrdinalIgnoreCase) &&
+                int.TryParse(notification.EntityId, out var opportunityId))
             {
-                recipientUserIds = await GetRejectionRecipientUserIdsForOpportunityAsync(notification.EntityId);
+                // TO: OM, Workflow Initiator
+                var toUserIds = await GetRejectionRecipientUserIdsForOpportunityAsync(notification.EntityId);
+                toEmails = await GetRecipientEmailsAsync(toUserIds);
+
+                // CC: OrgUnit Director, OrgUnit Deputy Director, DoA2, DoA3 (Responsible OrgUnit)
+                ccEmails = await BuildRecalledOrRejectedCCRecipientsAsync(opportunityId);
+            }
+            else
+            {
+                toEmails = await GetRecipientEmailsAsync(notification.RecipientUserIds);
+                ccEmails = new List<string>();
             }
 
-            var recipientEmails = await GetRecipientEmailsAsync(recipientUserIds);
-            if (!recipientEmails.Any())
+            if (!toEmails.Any())
             {
                 _logger.LogWarning("No recipients found for workflow rejected notification for entity {EntityName} {EntityId}",
                     notification.EntityName, notification.EntityId);
                 return;
             }
 
-            var recipientNames = await GetRecipientNamesAsync(recipientUserIds);
+            var toUserIdsForNames = string.Equals(notification.EntityName, "Opportunity", StringComparison.OrdinalIgnoreCase)
+                ? await GetRejectionRecipientUserIdsForOpportunityAsync(notification.EntityId)
+                : notification.RecipientUserIds;
+            var recipientNames = await GetRecipientNamesAsync(toUserIdsForNames);
             var orgUnitName = await GetOrgUnitNameForOpportunityAsync(notification.EntityId);
 
             var commentSection = !string.IsNullOrEmpty(notification.Comment)
@@ -379,14 +405,15 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
             {
                 TemplateName = "UNOPS.PAO.Business.EmailTemplates.OpportunityWorkflowRejected.html",
                 Title = $"Opportunity+: {notification.EntityDisplayName} - Set to NO GO",
-                EmailReceivers = recipientEmails.ToArray()
+                EmailReceivers = toEmails.ToArray(),
+                CcReceivers = ccEmails.ToArray()
             };
 
             await _emailSender.SendEmailAsync(emailMessage, emailModel, _baseUrl);
 
             _logger.LogInformation(
-                "Sent workflow rejected (NO GO) email for {EntityName} (ID: {EntityId}) to {RecipientCount} recipients",
-                notification.EntityDisplayName, notification.EntityId, recipientEmails.Count);
+                "Sent workflow rejected (NO GO) email for {EntityName} (ID: {EntityId}) to {ToCount} recipients with {CcCount} CC",
+                notification.EntityDisplayName, notification.EntityId, toEmails.Count, ccEmails.Count);
         }
         catch (Exception ex)
         {
@@ -396,31 +423,43 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
     }
 
     /// <summary>
-    /// Notifies DoA Level 2 holders that the Go Decision submission has been recalled.
-    /// For Opportunities: also includes Opportunity Manager and initiator (when different from OM).
+    /// Notifies that the Go Decision submission has been recalled.
+    /// Per matrix: TO = OM, Workflow Initiator; CC = OrgUnit Director, OrgUnit Deputy Director, DoA2, DoA3 (Responsible OrgUnit).
     /// </summary>
     public async Task NotifyWorkflowRecalledAsync(WorkflowNotification notification)
     {
         try
         {
-            var recipientUserIds = notification.RecipientUserIds.ToList();
+            List<string> toEmails;
+            List<string> ccEmails;
 
-            // For Opportunity recalls: add Opportunity Manager and initiator (when different from OM)
-            if (string.Equals(notification.EntityName, "Opportunity", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(notification.EntityName, "Opportunity", StringComparison.OrdinalIgnoreCase) &&
+                int.TryParse(notification.EntityId, out var opportunityId))
             {
-                var additionalRecipients = await GetRecallAdditionalRecipientUserIdsForOpportunityAsync(notification.EntityId);
-                recipientUserIds = recipientUserIds.Union(additionalRecipients).Distinct().ToList();
+                // TO: OM, Workflow Initiator
+                var toUserIds = await GetRecallAdditionalRecipientUserIdsForOpportunityAsync(notification.EntityId);
+                toEmails = await GetRecipientEmailsAsync(toUserIds);
+
+                // CC: OrgUnit Director, OrgUnit Deputy Director, DoA2, DoA3 (Responsible OrgUnit)
+                ccEmails = await BuildRecalledOrRejectedCCRecipientsAsync(opportunityId);
+            }
+            else
+            {
+                toEmails = await GetRecipientEmailsAsync(notification.RecipientUserIds);
+                ccEmails = new List<string>();
             }
 
-            var recipientEmails = await GetRecipientEmailsAsync(recipientUserIds);
-            if (!recipientEmails.Any())
+            if (!toEmails.Any())
             {
                 _logger.LogWarning("No recipients found for workflow recalled notification for entity {EntityName} {EntityId}",
                     notification.EntityName, notification.EntityId);
                 return;
             }
 
-            var recipientNames = await GetRecipientNamesAsync(recipientUserIds);
+            var toUserIdsForNames = string.Equals(notification.EntityName, "Opportunity", StringComparison.OrdinalIgnoreCase)
+                ? await GetRecallAdditionalRecipientUserIdsForOpportunityAsync(notification.EntityId)
+                : notification.RecipientUserIds;
+            var recipientNames = await GetRecipientNamesAsync(toUserIdsForNames);
             var orgUnitName = await GetOrgUnitNameForOpportunityAsync(notification.EntityId);
 
             var commentSection = !string.IsNullOrEmpty(notification.Comment)
@@ -443,14 +482,15 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
             {
                 TemplateName = "UNOPS.PAO.Business.EmailTemplates.OpportunityWorkflowRecalled.html",
                 Title = $"Opportunity+: {notification.EntityDisplayName} - Submission Recalled",
-                EmailReceivers = recipientEmails.ToArray()
+                EmailReceivers = toEmails.ToArray(),
+                CcReceivers = ccEmails.ToArray()
             };
 
             await _emailSender.SendEmailAsync(emailMessage, emailModel, _baseUrl);
 
             _logger.LogInformation(
-                "Sent workflow recalled email for {EntityName} (ID: {EntityId}) to {RecipientCount} recipients",
-                notification.EntityDisplayName, notification.EntityId, recipientEmails.Count);
+                "Sent workflow recalled email for {EntityName} (ID: {EntityId}) to {ToCount} recipients with {CcCount} CC",
+                notification.EntityDisplayName, notification.EntityId, toEmails.Count, ccEmails.Count);
         }
         catch (Exception ex)
         {
@@ -460,8 +500,10 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
     }
 
     /// <summary>
-    /// Notifies internal stakeholders from other org units about an approved Go Decision.
-    /// Called when an opportunity moves to GO stage.
+    /// Notifies internal stakeholders from Implementation Country OrgUnits about an approved Go Decision.
+    /// Per matrix: TO = Region Director, Region Deputy Director, Hub Director, Hub Deputy Director,
+    /// OrgUnit Director, OrgUnit Deputy Director (Implementation Country OrgUnit only, excludes DoA1-DoA4);
+    /// CC = OM, Workflow Initiator.
     /// </summary>
     /// <param name="opportunityId">The opportunity ID</param>
     /// <param name="approverName">Name of the person who approved</param>
@@ -470,7 +512,7 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
         try
         {
             await using var context = await _contextFactory.CreateDbContextAsync();
-            
+
             var opportunity = await context.Opportunities
                 .AsNoTracking()
                 .Include(o => o.ResponsibleOrgUnit)
@@ -492,7 +534,7 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
                 return;
             }
 
-            // Get org units normally responsible for these countries (excluding opportunity's own org unit)
+            // Get Implementation Country OrgUnits (org units responsible for these countries, excluding opportunity's own org unit)
             var orgUnitIds = await context.OrganizationUnitRelationships
                 .AsNoTracking()
                 .Where(r => countryIds.Contains(r.EntityId) && r.EntityType == "Country" && r.OrganizationHierarchyId != opportunity.ResponsibleOrgUnitId)
@@ -506,30 +548,46 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
                 return;
             }
 
-            // Get internal stakeholders from those org units (users with any role on those org units)
-            var stakeholderUserIds = await context.EntityUserRoles
+            // TO: Directors and Deputy Directors only (excludes DoA1-DoA4) from Implementation Country OrgUnits
+            var toUserIds = await context.EntityUserRoles
                 .AsNoTracking()
                 .Include(e => e.EntityRole)
-                .Where(e => e.EntityType == "OrganizationHierarchy" 
+                .Where(e => e.EntityType == "OrganizationHierarchy"
                          && orgUnitIds.Contains(e.EntityId)
-                         && !e.IsDeleted)
+                         && !e.IsDeleted
+                         && e.EntityRole != null
+                         && ImplementationCountryDirectorRoleCodes.Contains(e.EntityRole.Code))
                 .Select(e => e.UserId)
                 .Distinct()
                 .ToListAsync();
 
-            if (!stakeholderUserIds.Any())
+            if (!toUserIds.Any())
             {
-                _logger.LogInformation("No internal stakeholders found for other org units for opportunity {OpportunityId}", opportunityId);
+                _logger.LogInformation("No director/deputy director stakeholders found for implementation country org units for opportunity {OpportunityId}", opportunityId);
                 return;
             }
 
-            var recipientEmails = await GetRecipientEmailsAsync(stakeholderUserIds);
-            if (!recipientEmails.Any())
+            // CC: OM, Workflow Initiator
+            var ccEmails = new List<string>();
+            var omEmail = await GetOpportunityManagerEmailAsync(opportunityId.ToString());
+            if (!string.IsNullOrEmpty(omEmail))
+                ccEmails.Add(omEmail);
+
+            var initiatorUserId = await GetInitiatorUserIdForRejectedOpportunityAsync(opportunityId.ToString());
+            if (initiatorUserId.HasValue)
+            {
+                var initiatorEmail = await GetUserEmailAsync(initiatorUserId.Value);
+                if (!string.IsNullOrEmpty(initiatorEmail) && !ccEmails.Contains(initiatorEmail, StringComparer.OrdinalIgnoreCase))
+                    ccEmails.Add(initiatorEmail);
+            }
+
+            var toEmails = await GetRecipientEmailsAsync(toUserIds);
+            if (!toEmails.Any())
             {
                 return;
             }
 
-            var recipientNames = await GetRecipientNamesAsync(stakeholderUserIds);
+            var recipientNames = await GetRecipientNamesAsync(toUserIds);
 
             var commentSection = "<div class=\"comment-box\"><strong>Approver's Comment:</strong><br>This opportunity has been approved for development and may affect countries in your area of responsibility.</div>";
 
@@ -549,14 +607,15 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
             {
                 TemplateName = "UNOPS.PAO.Business.EmailTemplates.OpportunityWorkflowCompleted.html",
                 Title = $"Opportunity+: {opportunity.Name} - Go Decision Approved (FYI)",
-                EmailReceivers = recipientEmails.ToArray()
+                EmailReceivers = toEmails.ToArray(),
+                CcReceivers = ccEmails.ToArray()
             };
 
             await _emailSender.SendEmailAsync(emailMessage, emailModel, _baseUrl);
 
             _logger.LogInformation(
-                "Sent internal stakeholder notification for opportunity {OpportunityId} to {RecipientCount} users from {OrgUnitCount} org units",
-                opportunityId, recipientEmails.Count, orgUnitIds.Count);
+                "Sent internal stakeholder notification for opportunity {OpportunityId} to {ToCount} TO and {CcCount} CC recipients from {OrgUnitCount} org units",
+                opportunityId, toEmails.Count, ccEmails.Count, orgUnitIds.Count);
         }
         catch (Exception ex)
         {
@@ -762,45 +821,13 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
         return hasDoA2 ? "DoA2" : "DoA3";
     }
 
-    /// <summary>
-    /// Gets both DoA2 and DoA3 holder user IDs for an opportunity's ResponsibleOrgUnit.
-    /// Used when an Opportunity is approved to notify all DoA holders (not just the approvers).
-    /// </summary>
-    private async Task<List<int>> GetDoA2AndDoA3HolderUserIdsForOpportunityAsync(int opportunityId)
-    {
-        await using var context = await _contextFactory.CreateDbContextAsync();
-
-        var opportunity = await context.Opportunities
-            .AsNoTracking()
-            .FirstOrDefaultAsync(o => o.Id == opportunityId && !o.IsDeleted);
-
-        if (opportunity?.ResponsibleOrgUnitId == null)
-            return new List<int>();
-
-        var orgUnitId = opportunity.ResponsibleOrgUnitId.Value;
-
-        var doaHolderIds = await context.Set<EntityUserRole>()
-            .AsNoTracking()
-            .Include(e => e.EntityRole)
-            .Where(e => !e.IsDeleted &&
-                e.EntityType == "OrganizationHierarchy" &&
-                e.EntityId == orgUnitId &&
-                e.EntityRole != null &&
-                (e.EntityRole.Code == "DoA2_OrganizationHierarchy" || e.EntityRole.Code == "DoA3_OrganizationHierarchy"))
-            .Select(e => e.UserId)
-            .Distinct()
-            .ToListAsync();
-
-        return doaHolderIds;
-    }
-
     #endregion
 
     #region CC Recipient Methods
 
     /// <summary>
     /// Builds the CC recipient list for workflow approval request emails.
-    /// Includes: Opportunity Manager, workflow initiator (if different), Director/Manager of org unit.
+    /// Per matrix: OM, Workflow Initiator (if different from OM), OrgUnit Director, OrgUnit Deputy Director (Responsible OrgUnit only).
     /// </summary>
     /// <param name="notification">The workflow notification containing entity and submitter info</param>
     /// <returns>List of email addresses for CC recipients (deduplicated)</returns>
@@ -814,8 +841,6 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
 
         try
         {
-            await using var context = await _contextFactory.CreateDbContextAsync();
-            
             // 1. Add Opportunity Manager email
             var omEmail = await GetOpportunityManagerEmailAsync(notification.EntityId);
             if (!string.IsNullOrEmpty(omEmail))
@@ -827,27 +852,29 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
             if (notification.PerformedByUserId > 0)
             {
                 var initiatorEmail = await GetUserEmailAsync(notification.PerformedByUserId);
-                if (!string.IsNullOrEmpty(initiatorEmail) && 
+                if (!string.IsNullOrEmpty(initiatorEmail) &&
                     !ccRecipients.Contains(initiatorEmail, StringComparer.OrdinalIgnoreCase))
                 {
                     ccRecipients.Add(initiatorEmail);
                 }
             }
 
-            // 3. Add Director/Manager of org unit
+            // 3. Add OrgUnit Director and OrgUnit Deputy Director only (not Region/Hub Directors)
             if (int.TryParse(notification.EntityId, out var opportunityId))
             {
+                await using var context = await _contextFactory.CreateDbContextAsync();
                 var opportunity = await context.Opportunities
                     .AsNoTracking()
                     .FirstOrDefaultAsync(o => o.Id == opportunityId && !o.IsDeleted);
 
                 if (opportunity?.ResponsibleOrgUnitId != null)
                 {
-                    var directorEmail = await GetDirectorManagerEmailAsync(opportunity.ResponsibleOrgUnitId.Value);
-                    if (!string.IsNullOrEmpty(directorEmail) && 
-                        !ccRecipients.Contains(directorEmail, StringComparer.OrdinalIgnoreCase))
+                    var directorEmails = await GetRoleHolderEmailsForOrgUnitAsync(
+                        opportunity.ResponsibleOrgUnitId.Value, OrgUnitDirectorRoleCodes);
+                    foreach (var email in directorEmails.Where(e =>
+                        !string.IsNullOrEmpty(e) && !ccRecipients.Contains(e, StringComparer.OrdinalIgnoreCase)))
                     {
-                        ccRecipients.Add(directorEmail);
+                        ccRecipients.Add(email);
                     }
                 }
             }
@@ -862,9 +889,54 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
     }
 
     /// <summary>
+    /// Builds CC recipients for Approval Complete (GO) notifications.
+    /// Per matrix: Region Director, Region Deputy Director, Hub Director, Hub Deputy Director,
+    /// OrgUnit Director, OrgUnit Deputy Director, DoA2, DoA3 (Responsible OrgUnit).
+    /// </summary>
+    private async Task<List<string>> BuildApprovalCompleteCCRecipientsAsync(int opportunityId)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var opportunity = await context.Opportunities
+            .AsNoTracking()
+            .FirstOrDefaultAsync(o => o.Id == opportunityId && !o.IsDeleted);
+
+        if (opportunity?.ResponsibleOrgUnitId == null)
+            return new List<string>();
+
+        var orgUnitId = opportunity.ResponsibleOrgUnitId.Value;
+        var roleCodes = AllHierarchyDirectorRoleCodes
+            .Concat(new[] { "DoA2_OrganizationHierarchy", "DoA3_OrganizationHierarchy" })
+            .ToArray();
+
+        return await GetRoleHolderEmailsForOrgUnitAsync(orgUnitId, roleCodes);
+    }
+
+    /// <summary>
+    /// Builds CC recipients for Recalled and Rejected notifications.
+    /// Per matrix: OrgUnit Director, OrgUnit Deputy Director, DoA2, DoA3 (Responsible OrgUnit).
+    /// </summary>
+    private async Task<List<string>> BuildRecalledOrRejectedCCRecipientsAsync(int opportunityId)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var opportunity = await context.Opportunities
+            .AsNoTracking()
+            .FirstOrDefaultAsync(o => o.Id == opportunityId && !o.IsDeleted);
+
+        if (opportunity?.ResponsibleOrgUnitId == null)
+            return new List<string>();
+
+        var orgUnitId = opportunity.ResponsibleOrgUnitId.Value;
+        var roleCodes = OrgUnitDirectorRoleCodes
+            .Concat(new[] { "DoA2_OrganizationHierarchy", "DoA3_OrganizationHierarchy" })
+            .ToArray();
+
+        return await GetRoleHolderEmailsForOrgUnitAsync(orgUnitId, roleCodes);
+    }
+
+    /// <summary>
     /// Gets additional recipient user IDs for Opportunity recall notifications.
     /// Returns Opportunity Manager and initiator (when different from OM).
-    /// These are added to the approvers who already receive the recall notification.
+    /// Per matrix: these are the TO recipients for Recalled.
     /// </summary>
     /// <param name="entityId">The opportunity ID as a string</param>
     /// <returns>List of user IDs: OM + initiator (if different from OM)</returns>
@@ -1031,26 +1103,16 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
     }
 
     /// <summary>
-    /// Gets the Director/Manager email for the specified org unit.
-    /// Queries EntityUserRole for Director roles in priority order.
+    /// Gets email addresses for users with the specified role codes on an org unit.
     /// </summary>
-    /// <param name="orgUnitId">The organization unit ID</param>
-    /// <returns>The Director/Manager's email, or null if not found</returns>
-    private async Task<string?> GetDirectorManagerEmailAsync(int orgUnitId)
+    private async Task<List<string>> GetRoleHolderEmailsForOrgUnitAsync(int orgUnitId, params string[] roleCodes)
     {
-        var directorRoleCodes = new[]
-        {
-            "OrgUnit_Director_OrganizationHierarchy",
-            "OrgUnit_Deputy_Director_OrganizationHierarchy",
-            "Regional_Director_OrganizationHierarchy",
-            "Regional_Deputy_Director_OrganizationHierarchy",
-            "MCO_Director_OrganizationHierarchy",
-            "MCO_Deputy_Director_OrganizationHierarchy"
-        };
+        if (roleCodes.Length == 0)
+            return new List<string>();
 
         await using var context = await _contextFactory.CreateDbContextAsync();
-        
-        var directorRole = await context.EntityUserRoles
+
+        var emails = await context.EntityUserRoles
             .AsNoTracking()
             .Include(eur => eur.User)
             .Include(eur => eur.EntityRole)
@@ -1058,11 +1120,51 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
                        && eur.EntityId == orgUnitId
                        && !eur.IsDeleted
                        && eur.EntityRole != null
-                       && directorRoleCodes.Contains(eur.EntityRole.Code))
-            .FirstOrDefaultAsync();
+                       && roleCodes.Contains(eur.EntityRole.Code)
+                       && eur.User != null
+                       && !string.IsNullOrEmpty(eur.User.Email))
+            .Select(eur => eur.User!.Email!)
+            .Distinct()
+            .ToListAsync();
 
-        return directorRole?.User?.Email;
+        return emails;
     }
+
+    /// <summary>
+    /// Role codes for OrgUnit Director and OrgUnit Deputy Director only (Approval Request, Recalled, Rejected CC).
+    /// </summary>
+    private static readonly string[] OrgUnitDirectorRoleCodes =
+    {
+        "OrgUnit_Director_OrganizationHierarchy",
+        "OrgUnit_Deputy_Director_OrganizationHierarchy"
+    };
+
+    /// <summary>
+    /// Role codes for all hierarchy directors (Approval Complete CC).
+    /// </summary>
+    private static readonly string[] AllHierarchyDirectorRoleCodes =
+    {
+        "Regional_Director_OrganizationHierarchy",
+        "Regional_Deputy_Director_OrganizationHierarchy",
+        "MCO_Director_OrganizationHierarchy",
+        "MCO_Deputy_Director_OrganizationHierarchy",
+        "OrgUnit_Director_OrganizationHierarchy",
+        "OrgUnit_Deputy_Director_OrganizationHierarchy"
+    };
+
+    /// <summary>
+    /// Role codes for Implementation Country OrgUnit directors only (Internal Stakeholder FYI TO).
+    /// Excludes DoA1-DoA4.
+    /// </summary>
+    private static readonly string[] ImplementationCountryDirectorRoleCodes =
+    {
+        "Regional_Director_OrganizationHierarchy",
+        "Regional_Deputy_Director_OrganizationHierarchy",
+        "MCO_Director_OrganizationHierarchy",
+        "MCO_Deputy_Director_OrganizationHierarchy",
+        "OrgUnit_Director_OrganizationHierarchy",
+        "OrgUnit_Deputy_Director_OrganizationHierarchy"
+    };
 
     #endregion
 }
