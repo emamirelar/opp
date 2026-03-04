@@ -332,6 +332,7 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     if (opp.countries && opp.countries.length > 0) count++;
     if (opp.sdGs && opp.sdGs.length > 0) count++;
     if (opp.unopsMissions && opp.unopsMissions.length > 0) count++;
+    if (opp.unopsMissionsNotApplicable) count++;
     
     return count;
   });
@@ -1847,6 +1848,7 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
           countries: safeJsonParse(rawResponse.opportunity.countries, 'countries'),
           sdGs: safeJsonParse(rawResponse.opportunity.sdGs, 'sdGs'),
           unopsMissions: safeJsonParse(rawResponse.opportunity.unopsMissions, 'unopsMissions'),
+          unopsMissionsNotApplicable: (rawResponse.opportunity as any).unopsMissionsNotApplicable === true,
           dependents: safeJsonParse(rawResponse.opportunity.dependents, 'dependents'),
           // Convert date strings to Date objects for p-datepicker compatibility
           targetSigningDate: parseDate(rawResponse.opportunity.targetSigningDate),
@@ -2226,19 +2228,24 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       }
 
       if (opp.sdGs && opp.sdGs.length > 0) {
-        // Filter by selected individual SDGs, then map to IDs (backend expects List<int>)
-        const selectedSdgs = opp.sdGs.filter((_: any, idx: number) => 
+        // Filter by selected individual SDGs, map to { sdgId, isPrimary } (Main/Cross-cutting)
+        const selectedSdgs = opp.sdGs.filter((_: any, idx: number) =>
           this.isFieldSelected(`sdGs[${idx}]`)
         );
         if (selectedSdgs.length > 0) {
           createRequest.sdGs = selectedSdgs
-            .map((sdg: any) => sdg.sdgId || sdg.id)
-            .filter((id: number) => id != null);
+            .filter((sdg: any) => (sdg.sdgId ?? sdg.id) != null)
+            .map((sdg: any) => ({
+              sdgId: sdg.sdgId ?? sdg.id,
+              isPrimary: sdg.isPrimary ?? false,
+            }));
         }
       }
 
-      if (opp.unopsMissions && opp.unopsMissions.length > 0) {
-        const selectedMissions = opp.unopsMissions.filter((_: any, idx: number) => 
+      if (opp.unopsMissionsNotApplicable && this.isFieldSelected('unopsMissionsNotApplicable')) {
+        createRequest.unopsMissionsNotApplicable = true;
+      } else if (opp.unopsMissions && opp.unopsMissions.length > 0) {
+        const selectedMissions = opp.unopsMissions.filter((_: any, idx: number) =>
           this.isFieldSelected(`unopsMissions[${idx}]`)
         );
         if (selectedMissions.length > 0) {
@@ -2589,6 +2596,7 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       updated.set('unopsMissions', selectAll);
       opp.unopsMissions.forEach((_: any, idx: number) => updated.set(`unopsMissions[${idx}]`, selectAll));
     }
+    if (opp.unopsMissionsNotApplicable) updated.set('unopsMissionsNotApplicable', selectAll);
 
     this.selectedFields.set(updated);
   }
@@ -2665,6 +2673,7 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       selected.set('unopsMissions', true);
       opp.unopsMissions.forEach((_: any, idx: number) => selected.set(`unopsMissions[${idx}]`, true));
     }
+    if (opp.unopsMissionsNotApplicable) selected.set('unopsMissionsNotApplicable', true);
 
     this.selectedFields.set(selected);
 

@@ -547,8 +547,9 @@
           >
             <app-opportunity-dst-section
               #risksSection
-              [opportunity]="opportunity()!" 
+              [opportunity]="opportunity()!"
               [canUpdate]="canUpdate()"
+              [deferFromCreate]="fromCreate()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
               (changesDetected)="handleSectionChangesDetected('risks')"
               (changesSavedOrDiscarded)="handleSectionChangesSaved('risks')" />

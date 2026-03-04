@@ -40,7 +40,7 @@ public class IntegrationTests : PNO914TestFixtureBase
         request.Description = "Full description";
         request.ExpectedImpact = "Impact text";
         request.ExpectedOutcomes = "Outcomes text";
-        request.SdGs = new List<int> { 1 };
+        request.SdGs = new List<OpportunitySDGRequest> { new() { SDGId = 1, IsPrimary = false } };
         request.Countries = new List<int> { 1 };
 
         // Act
@@ -108,7 +108,7 @@ public class IntegrationTests : PNO914TestFixtureBase
         // Arrange
         await EnsureReferenceDataAsync();
         var request = BuildRequest(name: "SDGs and Countries Test");
-        request.SdGs = new List<int> { 1 };
+        request.SdGs = new List<OpportunitySDGRequest> { new() { SDGId = 1, IsPrimary = false } };
         request.Countries = new List<int> { 1 };
 
         // Act

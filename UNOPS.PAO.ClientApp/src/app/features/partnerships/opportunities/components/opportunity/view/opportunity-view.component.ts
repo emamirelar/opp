@@ -223,6 +223,11 @@ export class OpportunityViewComponent
   // Section save trigger - incremented when any section saves to notify WHAT section to refresh framework status
   sectionSaveTrigger = signal<number>(0);
 
+  // True when navigating from opportunity creation - defers DST AI calls to prevent connection exhaustion
+  fromCreate = signal<boolean>(
+    this.activatedRoute.snapshot.queryParamMap.get('fromCreate') === 'true'
+  );
+
   // FormGroup for requirements validation - mirrors opportunity fields
   // Used by app-requirements-validation to validate workflow stage transition requirements
   opportunityForm = new FormGroup({

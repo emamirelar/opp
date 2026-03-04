@@ -874,7 +874,9 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
       
       // Navigate to the new opportunity if ID is returned
       if (result.id) {
-        this.router.navigate(['/partnerships/opportunities', result.id]);
+        this.router.navigate(['/partnerships/opportunities', result.id], {
+          queryParams: { fromCreate: 'true' },
+        });
       }
     }
     this.showCreateOpportunityDialog.set(false);
