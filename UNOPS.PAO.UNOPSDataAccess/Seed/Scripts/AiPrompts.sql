@@ -3667,7 +3667,7 @@ Please analyze this information and return only valid JSON as specified in the s
 
 - **(a) UN Cooperation Framework:** [Extract from "uncfOutcomes" field. If it shows "No UNCF Outcomes" or is empty, use [Information not available]. DO NOT INVENT UNCF outcomes.]
 
-- **(b) SDGs:** [Use "primarySdGs" (Main) and "secondarySdGs" (Cross-cutting) for Opp+ terminology. Format as:
+- **(b) SDGs:** [CRITICAL: Use Opp+ terminology ONLY - "Main" and "Cross-cutting". NEVER use "Primary" or "Secondary". Format as:
   **Main SDG(s):** [List from primarySdGs field - the central focus area]
   **Cross-cutting SDG(s):** [List from secondarySdGs field - supporting goals]
   If primarySdGs shows "No primary SDGs selected", use [Information not available] for Main.
@@ -3675,7 +3675,7 @@ Please analyze this information and return only valid JSON as specified in the s
   The "sdGs" field contains full details with targets and indicators if needed.
   DO NOT INVENT SDGs - ONLY list those actually in the data.]
 
-- **(c) UNOPS Strategy:** [Extract from "unopsMissions" and "unopsMissionsNotApplicable" fields. If unopsMissionsNotApplicable is true, state "Not Applicable". If unopsMissions shows "No UNOPS Mission alignments" or is empty (and not Not Applicable), use [Information not available]. DO NOT INVENT mission alignments.]
+- **(c) UNOPS Strategy:** [Extract from "unopsMissions" and "unopsMissionsNotApplicable" fields. If unopsMissionsNotApplicable is true, state "Not Applicable". If unopsMissions shows "No UNOPS Mission alignments" or is empty (and not Not Applicable), use [Information not available]. CRITICAL: Use ONLY the full mission description names (e.g. "Triple Planetary Crisis", "Energy Transition", "Quality Healthcare") - NEVER use codes or identifiers with underscores (e.g. TRIPLE_PLANETARY_CRISIS, ENERGY_TRANSITION). DO NOT INVENT mission alignments.]
 
 - **(d) UNOPS Regional Priorities:** [Extract from description if regional priorities are mentioned. Otherwise, use [Information not available].]
 

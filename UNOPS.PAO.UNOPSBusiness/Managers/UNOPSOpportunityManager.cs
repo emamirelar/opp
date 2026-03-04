@@ -4565,7 +4565,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             {
                 SDGNumber = s.SDG?.SDGNumber ?? "",
                 SDGName = s.SDG?.Name ?? "Unknown",
-                IsPrimary = s.IsPrimary ? "Primary" : "Secondary",
+                IsPrimary = s.IsPrimary ? "Main" : "Cross-cutting",
                 SkipTargets = (s.SkipTargetsAndIndicators ?? false) ? "Yes" : "No",
                 Notes = s.Notes ?? "",
                 Targets = opportunity.SDGTargets?
@@ -4612,16 +4612,16 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }))
             : "No SDGs";
 
-        // Separate Primary and Secondary SDGs for clearer AI prompt usage
-        var primarySdgsText = sdgsDetails != null && sdgsDetails.Any(s => s.IsPrimary == "Primary")
-            ? string.Join("\n", sdgsDetails.Where(s => s.IsPrimary == "Primary").Select(s => $"- SDG {s.SDGNumber}: {s.SDGName}"))
+        // Separate Main and Cross-cutting SDGs for Opp+ terminology (used in opportunity statement)
+        var primarySdgsText = sdgsDetails != null && sdgsDetails.Any(s => s.IsPrimary == "Main")
+            ? string.Join("\n", sdgsDetails.Where(s => s.IsPrimary == "Main").Select(s => $"- SDG {s.SDGNumber}: {s.SDGName}"))
             : "No primary SDGs selected";
-        var primarySdgsCount = sdgsDetails?.Count(s => s.IsPrimary == "Primary") ?? 0;
-        
-        var secondarySdgsText = sdgsDetails != null && sdgsDetails.Any(s => s.IsPrimary == "Secondary")
-            ? string.Join("\n", sdgsDetails.Where(s => s.IsPrimary == "Secondary").Select(s => $"- SDG {s.SDGNumber}: {s.SDGName}"))
+        var primarySdgsCount = sdgsDetails?.Count(s => s.IsPrimary == "Main") ?? 0;
+
+        var secondarySdgsText = sdgsDetails != null && sdgsDetails.Any(s => s.IsPrimary == "Cross-cutting")
+            ? string.Join("\n", sdgsDetails.Where(s => s.IsPrimary == "Cross-cutting").Select(s => $"- SDG {s.SDGNumber}: {s.SDGName}"))
             : "No secondary SDGs selected";
-        var secondarySdgsCount = sdgsDetails?.Count(s => s.IsPrimary == "Secondary") ?? 0;
+        var secondarySdgsCount = sdgsDetails?.Count(s => s.IsPrimary == "Cross-cutting") ?? 0;
 
         // Simple country names list for Location section
         var countryNamesList = countriesDetails != null && countriesDetails.Any()
@@ -4731,10 +4731,12 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             })
             .ToList();
 
+        // Use mission Name (description) only - never codes like TRIPLE_PLANETARY_CRISIS in statement output
         var unopsMissionsText = unopsMissionsDetails != null && unopsMissionsDetails.Any()
             ? string.Join("\n", unopsMissionsDetails.Select(m =>
-                $"- {m.MissionCode}: {m.MissionName}" +
-                (string.IsNullOrEmpty(m.Description) ? "" : $" - {m.Description}")))
+                string.IsNullOrEmpty(m.Description)
+                    ? $"- {m.MissionName}"
+                    : $"- {m.MissionName}: {m.Description}"))
             : "No UNOPS Mission alignments";
 
         // Return comprehensive dictionary with all opportunity details
