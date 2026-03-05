@@ -742,7 +742,8 @@ public class OpportunityIntegrationTests : IDisposable
 
         var updateRequest = new UpdateOpportunityRequest
         {
-            Id = oppId
+            Id = oppId,
+            Name = "Evolving Stakeholder Initiative"
         };
 
         // Act

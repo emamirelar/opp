@@ -65,7 +65,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateOverviewSection_ValidRequest_Returns200()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var resp = await PatchAsync($"{BaseUrl}/{id}/overview", new { Name = "Updated Overview", InitiativeBudgetUSD = 75000m });
@@ -75,7 +75,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateWhatSection_ValidRequest_Returns200()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var resp = await PatchAsync($"{BaseUrl}/{id}/what", new { Description = "Updated what section", ResponsibleOrgUnitId = 1 });
@@ -85,7 +85,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateWhySection_ValidRequest_Returns200()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var resp = await PatchAsync($"{BaseUrl}/{id}/why", new { ResultsFocus = "Test focus", ExpectedImpact = "Test impact" });
@@ -95,7 +95,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateWhenSection_ValidRequest_Returns200()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var date = DateTime.UtcNow.AddMonths(3);
@@ -110,7 +110,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateOverviewSection_NonExistentId_Returns404()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var resp = await PatchAsync($"{BaseUrl}/999999/overview", new { Name = "Test" });
         resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -118,7 +118,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateWhatSection_NonExistentId_Returns404()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var resp = await PatchAsync($"{BaseUrl}/999999/what", new { Description = "Test" });
         resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -126,7 +126,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateWhySection_NonExistentId_Returns404()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var resp = await PatchAsync($"{BaseUrl}/999999/why", new { ResultsFocus = "Test" });
         resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -134,7 +134,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateWhoSection_NonExistentId_Returns404()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var resp = await PatchAsync($"{BaseUrl}/999999/who", new { IsPooledFunding = true });
         resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -142,7 +142,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateTeamSection_NonExistentId_Returns404()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var resp = await PatchAsync($"{BaseUrl}/999999/team", new { ResponsibleOrgUnitId = 1 });
         resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -150,7 +150,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateWhereSection_NonExistentId_Returns404()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var resp = await PatchAsync($"{BaseUrl}/999999/where", new { Countries = Array.Empty<object>() });
         resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -158,7 +158,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateWhenSection_NonExistentId_Returns404()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var resp = await PatchAsync($"{BaseUrl}/999999/when", new { TargetSigningDate = DateTime.UtcNow });
         resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -166,7 +166,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateOverviewSection_NegativeId_Returns404()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var resp = await PatchAsync($"{BaseUrl}/-1/overview", new { Name = "Test" });
         resp.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
     }
@@ -174,7 +174,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateOverviewSection_DeletedOpportunity_Returns404()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         await Client.DeleteAsync($"{BaseUrl}/{id}");
@@ -185,7 +185,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateWhatSection_InvalidOrgUnitId_HandlesGracefully()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var resp = await PatchAsync($"{BaseUrl}/{id}/what", new { ResponsibleOrgUnitId = -999 });
@@ -195,7 +195,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateOverviewSection_EmptyBody_HandlesGracefully()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var resp = await PatchAsync($"{BaseUrl}/{id}/overview", new { });
@@ -205,7 +205,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateWhenSection_InvalidDateOrder_HandlesGracefully()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var resp = await PatchAsync($"{BaseUrl}/{id}/when", new
@@ -223,7 +223,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateOverviewSection_PartialUpdate_OnlyName_OtherFieldsUnchanged()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var newName = $"Partial {Guid.NewGuid():N}";
@@ -237,7 +237,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateOverviewSection_PartialUpdate_OnlyBudget_OtherFieldsUnchanged()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         await PatchAsync($"{BaseUrl}/{id}/overview", new { InitiativeBudgetUSD = 123456.78m });
@@ -250,7 +250,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateWhatSection_DoesNotAffectOverview()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var origName = $"Orig {Guid.NewGuid():N}";
@@ -265,7 +265,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateWhySection_DoesNotAffectWhatSection()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var whatDesc = $"What {Guid.NewGuid():N}";
@@ -280,7 +280,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateWhoSection_EmptyFundingPartners_Accepts()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var resp = await PatchAsync($"{BaseUrl}/{id}/who", new { IsPooledFunding = false, FundingPartners = Array.Empty<object>() });
@@ -290,7 +290,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateWhenSection_NullDates_HandlesGracefully()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var resp = await PatchAsync($"{BaseUrl}/{id}/when", new { IsTargetSigningDateFirm = true });
@@ -300,7 +300,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateWhereSection_EmptyCountries_Accepts()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var resp = await PatchAsync($"{BaseUrl}/{id}/where", new { Countries = Array.Empty<object>() });
@@ -310,7 +310,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateTeamSection_ResponsibleOrgUnitIdOnly_PartialUpdate()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var resp = await PatchAsync($"{BaseUrl}/{id}/team", new { ResponsibleOrgUnitId = 1 });
@@ -320,7 +320,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateOverviewSection_MaxBudgetValue_Handles()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var resp = await PatchAsync($"{BaseUrl}/{id}/overview", new { InitiativeBudgetUSD = decimal.MaxValue });
@@ -330,7 +330,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateWhatSection_ZeroDeliveryModality_Accepts()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var resp = await PatchAsync($"{BaseUrl}/{id}/what", new { DeliveryModality = 0 });
@@ -340,7 +340,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task UpdateWhySection_BeneficiariesToBeDetermined_Accepts()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var resp = await PatchAsync($"{BaseUrl}/{id}/why", new { BeneficiariesToBeDetermined = true });
@@ -350,7 +350,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task SequentialSectionUpdates_AllPersist()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
 
@@ -376,7 +376,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task OverviewSectionUpdate_ReturnsFullOpportunityModel()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var resp = await PatchAsync($"{BaseUrl}/{id}/overview", new { Name = "Full model test" });
@@ -390,7 +390,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task WhatSectionUpdate_ResponsibleOrgUnitIdPersists()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         await PatchAsync($"{BaseUrl}/{id}/what", new { ResponsibleOrgUnitId = 2 });
@@ -403,7 +403,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task WhySectionUpdate_ResultsFocusPersists()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var focus = $"Focus {Guid.NewGuid():N}";
@@ -417,7 +417,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task WhoSectionUpdate_IsPooledFundingPersists()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         await PatchAsync($"{BaseUrl}/{id}/who", new { IsPooledFunding = true });
@@ -430,7 +430,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task WhenSectionUpdate_TargetSigningDatePersists()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var date = new DateTime(2030, 6, 15, 0, 0, 0, DateTimeKind.Utc);
@@ -445,7 +445,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task SectionUpdate_UpdatesLastModifiedDate()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         await PatchAsync($"{BaseUrl}/{id}/overview", new { Name = "Modified" });
@@ -458,7 +458,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task SectionUpdate_UpdatesLastModifiedBy()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         await PatchAsync($"{BaseUrl}/{id}/overview", new { Name = "ByTest" });
@@ -472,7 +472,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task OverviewAndWhatSection_IndependentUpdates()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         await PatchAsync($"{BaseUrl}/{id}/overview", new { Name = "OverviewName" });
@@ -488,7 +488,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task TeamSection_ResponsibleOrgUnitIdFromSeededData()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var resp = await PatchAsync($"{BaseUrl}/{id}/team", new { ResponsibleOrgUnitId = 1 });
@@ -498,7 +498,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task WhySection_UNOPSMissionsNotApplicable_Accepts()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var resp = await PatchAsync($"{BaseUrl}/{id}/why", new { UNOPSMissionsNotApplicable = true });
@@ -508,7 +508,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task WhenSection_IsTargetSigningDateFirm_Accepts()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var resp = await PatchAsync($"{BaseUrl}/{id}/when", new { IsTargetSigningDateFirm = true });
@@ -518,7 +518,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task MultipleOverviewUpdates_LastWins()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         await PatchAsync($"{BaseUrl}/{id}/overview", new { Name = "First" });
@@ -537,7 +537,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task FullSectionWorkflow_AllSectionsUpdatedThenRead()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
 
@@ -560,7 +560,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task CreateUpdateOverviewGet_EndToEnd()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (createResp, id) = await CreateOpportunityAsync();
         createResp.IsSuccessStatusCode.Should().BeTrue();
         id.Should().NotBeNull();
@@ -578,7 +578,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task CreateUpdateWhatGet_EndToEnd()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (createResp, id) = await CreateOpportunityAsync();
         createResp.IsSuccessStatusCode.Should().BeTrue();
         id.Should().NotBeNull();
@@ -594,7 +594,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task CreateUpdateWhyGet_EndToEnd()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (createResp, id) = await CreateOpportunityAsync();
         createResp.IsSuccessStatusCode.Should().BeTrue();
         id.Should().NotBeNull();
@@ -610,7 +610,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task CreateUpdateWhoGet_EndToEnd()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (createResp, id) = await CreateOpportunityAsync();
         createResp.IsSuccessStatusCode.Should().BeTrue();
         id.Should().NotBeNull();
@@ -625,7 +625,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task CreateUpdateTeamGet_EndToEnd()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (createResp, id) = await CreateOpportunityAsync();
         createResp.IsSuccessStatusCode.Should().BeTrue();
         id.Should().NotBeNull();
@@ -640,7 +640,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task CreateUpdateWhereGet_EndToEnd()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (createResp, id) = await CreateOpportunityAsync();
         createResp.IsSuccessStatusCode.Should().BeTrue();
         id.Should().NotBeNull();
@@ -653,7 +653,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task CreateUpdateWhenGet_EndToEnd()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (createResp, id) = await CreateOpportunityAsync();
         createResp.IsSuccessStatusCode.Should().BeTrue();
         id.Should().NotBeNull();
@@ -669,7 +669,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task SectionUpdateAfterDelete_Returns404()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         await Client.DeleteAsync($"{BaseUrl}/{id}");
@@ -680,7 +680,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task OverviewThenWhat_OrderIndependent()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         await PatchAsync($"{BaseUrl}/{id}/what", new { Description = "What first" });
@@ -696,7 +696,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task PartialOverviewUpdate_DoesNotClearDescription()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
         var origDesc = "Original description";
@@ -711,7 +711,7 @@ public class OpportunitySectionTests : IntegrationTestBase
     [Fact]
     public async Task AllSectionsRoundTrip_DataIntegrity()
     {
-        if (!Factory.IsUsingPostgres) return;
+        if (!RequirePostgres(_output)) return;
         var (_, id) = await CreateOpportunityAsync();
         id.Should().NotBeNull();
 

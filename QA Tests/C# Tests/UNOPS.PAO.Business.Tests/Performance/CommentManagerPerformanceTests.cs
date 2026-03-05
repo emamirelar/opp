@@ -45,12 +45,12 @@ public class CommentManagerPerformanceTests : PerformanceTestBase
     private readonly string _testMarker = $"PerfComment_{Guid.NewGuid():N}";
 
     // ── SLA thresholds (TODO: confirm with PERFORMANCE_AND_LOAD_TESTING_QUESTIONNAIRE.md Section A1) ──
-    private const int MaxSingleOperationMs = 1_000;   // CI tolerance; tighten when SLA confirmed
-    private const int MaxBulkOperationMs = 10_000;    // CI tolerance for bulk; tighten when SLA confirmed
-    private const int MaxSimpleSearchMs = 1_000;
-    private const int MaxComplexSearchMs = 5_000;
-    private const int MaxPaginatedQueryMs = 1_000;
-    private const int MaxConcurrentReadMs = 500;
+    private static readonly int MaxSingleOperationMs = ScaleThreshold(1_000);   // CI tolerance; tighten when SLA confirmed
+    private static readonly int MaxBulkOperationMs = ScaleThreshold(10_000);    // CI tolerance for bulk; tighten when SLA confirmed
+    private static readonly int MaxSimpleSearchMs = ScaleThreshold(1_000);
+    private static readonly int MaxComplexSearchMs = ScaleThreshold(5_000);
+    private static readonly int MaxPaginatedQueryMs = ScaleThreshold(1_000);
+    private static readonly int MaxConcurrentReadMs = ScaleThreshold(500);
     private const int MaxMemoryGrowthMb = 50;
     private const int MaxQueryMemoryMb = 100;
 

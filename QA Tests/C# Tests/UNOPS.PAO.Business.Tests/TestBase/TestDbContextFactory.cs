@@ -214,12 +214,11 @@ public static class TestDbContextFactory
         var identity = new ClaimsIdentity(claims, "TestAuth");
         var claimsPrincipal = new ClaimsPrincipal(identity);
 
-        var mockHttpContext = new Mock<HttpContext>();
-        mockHttpContext.Setup(x => x.User).Returns(claimsPrincipal);
-        mockHttpContext.Setup(x => x.Request.Headers).Returns(new HeaderDictionary());
+        var httpContext = new DefaultHttpContext();
+        httpContext.User = claimsPrincipal;
 
         var mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
-        mockHttpContextAccessor.Setup(x => x.HttpContext).Returns(mockHttpContext.Object);
+        mockHttpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
 
         return mockHttpContextAccessor;
     }

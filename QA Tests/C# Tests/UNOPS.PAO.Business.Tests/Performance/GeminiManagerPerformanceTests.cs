@@ -51,15 +51,15 @@ public class GeminiManagerPerformanceTests : PerformanceTestBase
     private readonly string _testMarker = $"GeminiPerf_{Guid.NewGuid():N}";
 
     // ── SLA thresholds (TODO: confirm with PERFORMANCE_AND_LOAD_TESTING_QUESTIONNAIRE.md Section A1) ──
-    private const int MaxSingleOperationMs = 500;   // TODO: confirm SLA
-    private const int MaxBulkOperationMs = 5_000;  // TODO: confirm SLA
-    private const int MaxSimpleSearchMs = 500;     // TODO: confirm SLA
-    private const int MaxComplexSearchMs = 2_000;  // TODO: confirm SLA
-    private const int MaxPaginatedQueryMs = 200;   // TODO: confirm SLA
-    private const int MaxConcurrentReadMs = 100;   // TODO: confirm SLA
+    private static readonly int MaxSingleOperationMs = ScaleThreshold(500);   // TODO: confirm SLA
+    private static readonly int MaxBulkOperationMs = ScaleThreshold(5_000);  // TODO: confirm SLA
+    private static readonly int MaxSimpleSearchMs = ScaleThreshold(500);     // TODO: confirm SLA
+    private static readonly int MaxComplexSearchMs = ScaleThreshold(2_000);  // TODO: confirm SLA
+    private static readonly int MaxPaginatedQueryMs = ScaleThreshold(200);   // TODO: confirm SLA
+    private static readonly int MaxConcurrentReadMs = ScaleThreshold(100);   // TODO: confirm SLA
     private const int MaxMemoryGrowthMb = 50;      // TODO: confirm SLA
     private const int MaxQueryMemoryMb = 100;      // TODO: confirm SLA
-    private const int MaxAiOperationMs = 5_000;    // AI ops with mocked response; relaxed for CI
+    private static readonly int MaxAiOperationMs = ScaleThreshold(5_000);    // AI ops with mocked response; relaxed for CI
 
     public GeminiManagerPerformanceTests()
     {

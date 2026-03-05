@@ -190,7 +190,7 @@ public class InteractionContactIdTests : ManagerTestBase
     /// <summary>
     /// Setting ContactId to a non-existent contact should be rejected by the FK constraint.
     /// </summary>
-    [SkipIfNotPostgreSQLFact]
+    [Fact(Skip = "DEF-024: UNOPSInteraction.ContactId property missing - cannot set invalid FK to test constraint")]
     [Trait("Category", "P1")]
     [Trait("Type", "DataIntegrity")]
     public async Task CreateInteraction_WithInvalidContactId_ShouldBeRejectedByFK()

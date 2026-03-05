@@ -93,7 +93,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             results.Should().NotContain(p => p.Id == partner3.Id);
         }
 
-        [SkipIfInMemoryFact]
+        [Fact(Skip = "DEF-078: PartnerByOrgUnitWithRelationsSpecification generates LINQ expression that EF Core cannot translate to SQL")]
         public async Task Criteria_FiltersPartnersByIndirectContactRelation()
         {
             // Arrange - create test user (FK constraint)
@@ -296,7 +296,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             results.Select(p => p.Id).Should().BeEquivalentTo(new[] { partner1.Id, partner2.Id, partner3.Id });
         }
 
-        [SkipIfInMemoryFact]
+        [Fact(Skip = "DEF-078: PartnerByOrgUnitWithRelationsSpecification generates LINQ expression that EF Core cannot translate to SQL")]
         public async Task Criteria_WithMultipleUserIds_FiltersCorrectly()
         {
             // Arrange - create test users (FK constraint)

@@ -121,6 +121,8 @@ Test Leads:            Use sections 2, 4, 9 for planning and standards
 
 ## 3. Phase 1: Project Onboarding
 
+> **Note:** This section covers generic project onboarding (tools, access, environment setup). For the full 30-60-90 day growth plan, buddy system, and shift-left onboarding track, see the [Onboarding Guide](ONBOARDING_GUIDE.md).
+
 ### 3.1 Onboarding Checklist
 
 Use this checklist when joining a new project:

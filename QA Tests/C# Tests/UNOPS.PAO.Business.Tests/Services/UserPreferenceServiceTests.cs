@@ -17,6 +17,7 @@ using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using Xunit;
@@ -213,9 +214,10 @@ public class UserPreferenceServiceTests : IDisposable
     [Fact]
     public async Task UpdateDefaultOrgUnitAsync_AutoCreatesUserProfile_WhenMissing()
     {
-        // Arrange - no UserProfile for user 400
+        // Arrange - no UserProfile for user 400, but AspNetUser must exist for FK
         var userId = 400;
         var orgUnitId = 20;
+        await EnsureAspNetUserAsync(userId);
 
         // Act
         await _service.UpdateDefaultOrgUnitAsync(userId, orgUnitId);
@@ -546,6 +548,21 @@ public class UserPreferenceServiceTests : IDisposable
 
     #region Helpers
 
+    private async Task EnsureAspNetUserAsync(int userId)
+    {
+        if (!TestEnvironment.UsePostgreSQL)
+            return;
+
+        await _context.Database.ExecuteSqlRawAsync(
+            "INSERT INTO \"AspNetUsers\" (\"Id\", \"Email\", \"NormalizedEmail\", \"UserName\", \"NormalizedUserName\", " +
+            "\"EmailConfirmed\", \"PasswordHash\", \"SecurityStamp\", \"ConcurrencyStamp\", " +
+            "\"PhoneNumberConfirmed\", \"TwoFactorEnabled\", \"LockoutEnabled\", \"AccessFailedCount\", \"IsInternal\") " +
+            "SELECT {0}, {1}, {2}, {1}, {2}, " +
+            "true, 'x', 'x', 'x', false, false, true, 0, true " +
+            "WHERE NOT EXISTS (SELECT 1 FROM \"AspNetUsers\" WHERE \"Id\" = {0})",
+            userId, $"testuser_{userId}@test.local", $"TESTUSER_{userId}@TEST.LOCAL");
+    }
+
     private async Task SeedUserPreference(int userId, int orgUnitId)
     {
         await SeedUserProfile(userId);
@@ -561,39 +578,71 @@ public class UserPreferenceServiceTests : IDisposable
 
     private async Task SeedUserProfile(int userId)
     {
-        var profile = new UserProfile
+        await EnsureAspNetUserAsync(userId);
+        if (TestEnvironment.UsePostgreSQL)
         {
-            UserId = userId,
-            FirstName = "Test",
-            LastName = "User",
-            UserEmail = "test@example.com",
-            Status = EntityStatus.Active,
-            CreatedBy = userId,
-            CreatedDate = DateTime.UtcNow,
-            LastModifiedBy = userId,
-            IsDeleted = false
-        };
-        _context.UserProfile.Add(profile);
-        await _context.SaveChangesAsync();
+            var now = DateTime.UtcNow;
+            await _context.Database.ExecuteSqlRawAsync(
+                "INSERT INTO \"UserProfile\" (\"Id\", \"UserId\", \"FirstName\", \"LastName\", \"Name\", \"UserEmail\", " +
+                "\"Status\", \"CreatedBy\", \"CreatedDate\", \"LastModifiedBy\", \"LastModifiedDate\", " +
+                "\"IsDeleted\", \"DeletedBy\", \"WorkflowStatus\") " +
+                "SELECT (SELECT COALESCE(MAX(\"Id\"), 0) + 1 FROM \"UserProfile\"), " +
+                "{0}, 'Test', 'User', {1}, {2}, 1, {0}, {3}, 0, {3}, false, 0, 0 " +
+                "WHERE NOT EXISTS (SELECT 1 FROM \"UserProfile\" WHERE \"UserId\" = {0})",
+                userId, $"Test User {userId}", $"testuser_{userId}@test.local", now);
+        }
+        else
+        {
+            var profile = new UserProfile
+            {
+                UserId = userId,
+                FirstName = "Test",
+                LastName = "User",
+                UserEmail = $"testuser_{userId}@test.local",
+                Status = EntityStatus.Active,
+                CreatedBy = userId,
+                CreatedDate = DateTime.UtcNow,
+                LastModifiedBy = userId,
+                IsDeleted = false
+            };
+            _context.UserProfile.Add(profile);
+            await _context.SaveChangesAsync();
+        }
     }
 
     private async Task SeedUserProfileWithOrgUnit(int userId, string orgUnitCode)
     {
-        var profile = new UserProfile
+        await EnsureAspNetUserAsync(userId);
+        if (TestEnvironment.UsePostgreSQL)
         {
-            UserId = userId,
-            FirstName = "Test",
-            LastName = "User",
-            UserEmail = "test@example.com",
-            OrgUnit = orgUnitCode,
-            Status = EntityStatus.Active,
-            CreatedBy = userId,
-            CreatedDate = DateTime.UtcNow,
-            LastModifiedBy = userId,
-            IsDeleted = false
-        };
-        _context.UserProfile.Add(profile);
-        await _context.SaveChangesAsync();
+            var now = DateTime.UtcNow;
+            await _context.Database.ExecuteSqlRawAsync(
+                "INSERT INTO \"UserProfile\" (\"Id\", \"UserId\", \"FirstName\", \"LastName\", \"Name\", \"UserEmail\", " +
+                "\"OrgUnit\", \"Status\", \"CreatedBy\", \"CreatedDate\", \"LastModifiedBy\", \"LastModifiedDate\", " +
+                "\"IsDeleted\", \"DeletedBy\", \"WorkflowStatus\") " +
+                "SELECT (SELECT COALESCE(MAX(\"Id\"), 0) + 1 FROM \"UserProfile\"), " +
+                "{0}, 'Test', 'User', {1}, {2}, {3}, 1, {0}, {4}, 0, {4}, false, 0, 0 " +
+                "WHERE NOT EXISTS (SELECT 1 FROM \"UserProfile\" WHERE \"UserId\" = {0})",
+                userId, $"Test User {userId}", $"testuser_{userId}@test.local", orgUnitCode, now);
+        }
+        else
+        {
+            var profile = new UserProfile
+            {
+                UserId = userId,
+                FirstName = "Test",
+                LastName = "User",
+                UserEmail = $"testuser_{userId}@test.local",
+                OrgUnit = orgUnitCode,
+                Status = EntityStatus.Active,
+                CreatedBy = userId,
+                CreatedDate = DateTime.UtcNow,
+                LastModifiedBy = userId,
+                IsDeleted = false
+            };
+            _context.UserProfile.Add(profile);
+            await _context.SaveChangesAsync();
+        }
     }
 
     /// <summary>

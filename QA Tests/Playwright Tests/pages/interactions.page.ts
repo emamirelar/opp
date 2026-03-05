@@ -111,9 +111,9 @@ export class InteractionsPage extends BasePage {
     return this.page.locator(
       'span:has-text("No data available"), ' +
         '.pi-info-circle, [class*="noData"], ' +
-        '[data-testid="no-data-message"], [data-testid="empty-state"], ' +
-        'text=/no data available/i'
-    ).first();
+        '[data-testid="no-data-message"], [data-testid="empty-state"]'
+    ).first()
+      .or(this.page.getByText(/no data available/i).first());
   }
 
   /**

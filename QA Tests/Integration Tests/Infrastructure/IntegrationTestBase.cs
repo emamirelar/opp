@@ -7,6 +7,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace UNOPS.PAO.IntegrationTests.Infrastructure;
 
@@ -37,6 +38,27 @@ public abstract class IntegrationTestBase
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = true
         };
+    }
+
+    /// <summary>
+    /// Call at the start of tests that require a real PostgreSQL database.
+    /// When Postgres is unavailable (IAM auth failure, proxy not running, etc.),
+    /// this outputs a clear diagnostic message to the test runner instead of
+    /// silently returning. Returns true if Postgres is available, false if not.
+    /// </summary>
+    protected bool RequirePostgres(ITestOutputHelper? output = null)
+    {
+        if (Factory.IsUsingPostgres)
+            return true;
+
+        var message = "[SKIPPED — QA-102] PostgreSQL not available. " +
+                      "Possible causes: (1) Cloud SQL proxy not running on port 5432, " +
+                      "(2) gcloud IAM token expired — run: gcloud auth print-access-token > %TEMP%\\gcloud_token.txt, " +
+                      "(3) IAM user lacks table GRANTs, " +
+                      "(4) ADC expired — run: gcloud auth application-default login";
+        output?.WriteLine(message);
+        Console.WriteLine(message);
+        return false;
     }
 
     protected async Task<T?> GetAsync<T>(string url)

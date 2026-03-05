@@ -53,9 +53,11 @@ public class CacheServicesTests : IDisposable
         _memoryCache.Set("geo_time_default", cachedData, TimeSpan.FromMinutes(60));
 
         var mockConfig = new Mock<IConfiguration>();
-        mockConfig.Setup(c => c.GetSection(It.IsAny<string>())).Returns(new Mock<IConfigurationSection>().Object);
-        mockConfig.Setup(c => c["APITimeout"]).Returns((string?)null);
-        mockConfig.Setup(c => c.GetValue<int>("APITimeout", 10)).Returns(10);
+        var timeoutSection = new Mock<IConfigurationSection>();
+        timeoutSection.Setup(s => s.Value).Returns("10");
+        mockConfig.Setup(c => c.GetSection("APITimeout")).Returns(timeoutSection.Object);
+        mockConfig.Setup(c => c.GetSection(It.Is<string>(k => k != "APITimeout"))).Returns(new Mock<IConfigurationSection>().Object);
+        mockConfig.Setup(c => c["APITimeout"]).Returns("10");
 
         using var httpClient = new HttpClient();
         var service = new GeoTimeCacheService(
@@ -506,8 +508,10 @@ public class CacheServicesTests : IDisposable
     {
         var memCache = cache ?? new MemoryCache(new MemoryCacheOptions());
         var mockConfig = new Mock<IConfiguration>();
-        mockConfig.Setup(c => c.GetSection(It.IsAny<string>())).Returns(new Mock<IConfigurationSection>().Object);
-        mockConfig.Setup(c => c.GetValue<int>("APITimeout", 10)).Returns(10);
+        var timeoutSection = new Mock<IConfigurationSection>();
+        timeoutSection.Setup(s => s.Value).Returns("10");
+        mockConfig.Setup(c => c.GetSection("APITimeout")).Returns(timeoutSection.Object);
+        mockConfig.Setup(c => c.GetSection(It.Is<string>(k => k != "APITimeout"))).Returns(new Mock<IConfigurationSection>().Object);
 
         return new GeoTimeCacheService(
             memCache,

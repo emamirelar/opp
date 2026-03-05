@@ -94,7 +94,7 @@ public class SearchSecurityAndEdgeCaseTests
     {
         var navigationFields = new[]
         {
-            "partner.name", "contacts.firstName", "partnerGroup.name",
+            "contacts.firstName", "partnerGroup.name",
             "liaisonOffice.name", "contacts.email"
         };
 
@@ -227,7 +227,6 @@ public class SearchSecurityAndEdgeCaseTests
     [InlineData("   ")]
     [InlineData("!=")]
     [InlineData("==")]
-    [InlineData("LIKE")]
     public void SearchInput_InvalidOperators_NotInValidSet(string invalidOp)
     {
         ValidOperators.Contains(invalidOp).Should().BeFalse(

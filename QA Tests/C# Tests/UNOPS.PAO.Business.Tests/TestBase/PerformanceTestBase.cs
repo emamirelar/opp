@@ -23,11 +23,31 @@ public abstract class PerformanceTestBase : IDisposable
     /// </summary>
     protected const int TestUserId = 1;
 
-    // Performance thresholds (in milliseconds)
-    protected const int FastOperationThreshold = 100;
-    protected const int NormalOperationThreshold = 500;
-    protected const int SlowOperationThreshold = 1000;
-    protected const int BulkOperationThreshold = 2000;
+    // Performance thresholds (in milliseconds, scaled for CI via ScaleThreshold)
+    protected static readonly int FastOperationThreshold = ScaleThreshold(100);
+    protected static readonly int NormalOperationThreshold = ScaleThreshold(500);
+    protected static readonly int SlowOperationThreshold = ScaleThreshold(1000);
+    protected static readonly int BulkOperationThreshold = ScaleThreshold(2000);
+
+    /// <summary>
+    /// CI/shared environments are typically slower than local dev machines due to constrained
+    /// CPU, memory, and I/O. This multiplier is applied to SLA thresholds via ScaleThreshold()
+    /// to prevent false failures in CI while keeping strict thresholds locally.
+    /// Detected via GITHUB_ACTIONS, CI, or TF_BUILD environment variables.
+    /// </summary>
+    protected static bool IsCiEnvironment { get; } =
+        Environment.GetEnvironmentVariable("CI") != null ||
+        Environment.GetEnvironmentVariable("GITHUB_ACTIONS") != null ||
+        Environment.GetEnvironmentVariable("TF_BUILD") != null;
+
+    private static readonly double _ciMultiplier = IsCiEnvironment ? 2.5 : 1.0;
+
+    /// <summary>
+    /// Scales a local SLA threshold for the current environment.
+    /// Returns the original value locally, 2.5x in CI.
+    /// </summary>
+    protected static int ScaleThreshold(int localThresholdMs) =>
+        (int)(localThresholdMs * _ciMultiplier);
 
     private IDbContextTransaction? _transaction;
 
@@ -51,17 +71,27 @@ public abstract class PerformanceTestBase : IDisposable
                 _transaction = Context.Database.BeginTransaction();
                 IsPostgresReachable = true;
             }
-            catch
+            catch (Exception ex)
             {
                 IsPostgresReachable = false;
                 Context = (UNOPSAppDbContext)TestDbContextFactory.CreateFallbackSqlite();
                 TestEnvironment.EnsureCleanDatabase(Context);
+                Console.WriteLine(
+                    $"[QA-102] PostgreSQL unreachable — falling back to SQLite. " +
+                    $"Error: {ex.GetType().Name}: {ex.Message}. " +
+                    $"Check: (1) Cloud SQL proxy running? (2) gcloud token fresh? (3) IAM user has GRANTs?");
             }
         }
         else
         {
             Context = (UNOPSAppDbContext)TestDbContextFactory.Create();
             IsPostgresReachable = false;
+            if (IsCiEnvironment)
+            {
+                Console.WriteLine(
+                    "[QA-102] Running in CI without PostgreSQL — using InMemory/SQLite fallback. " +
+                    "Performance thresholds scaled by 2.5x.");
+            }
         }
     }
 

@@ -21,11 +21,13 @@ public class SystemAdminNegativeTests
 {
     private readonly PAOWebApplicationFactory<Program> _factory;
     private readonly HttpClient _client;
+    private readonly bool _isPostgresAvailable;
 
     public SystemAdminNegativeTests(PAOWebApplicationFactory<Program> factory)
     {
         _factory = factory;
         _client = CreateAuthenticatedClient(factory);
+        _isPostgresAvailable = factory.IsUsingPostgres;
     }
 
     private static HttpClient CreateAuthenticatedClient(PAOWebApplicationFactory<Program> factory)
@@ -129,6 +131,7 @@ public class SystemAdminNegativeTests
     [Trait("TestId", "TC-ADMIN-NEG-012")]
     public async Task GenerateOutputEmbeddings_WrongMethodPost_Returns405()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.PostAsync("/api/system-admin/output-embeddings/generate", null);
         response.StatusCode.Should().BeOneOf(HttpStatusCode.MethodNotAllowed, HttpStatusCode.NotFound, HttpStatusCode.Unauthorized);
     }

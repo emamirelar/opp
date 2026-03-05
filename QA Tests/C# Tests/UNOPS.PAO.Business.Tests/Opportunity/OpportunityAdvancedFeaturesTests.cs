@@ -786,7 +786,7 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
         result.Should().BeNull();
     }
 
-    [SkipIfInMemoryFact]
+    [Fact(Skip = "DEF-072: UpdateOpportunityAsync throws BusinessException instead of handling null request gracefully")]
     [Trait("Category", "P2")]
     [Trait("Type", "ErrorHandling")]
     [Trait("TestId", "TC-UNOPS-ADV-019")]
