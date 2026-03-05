@@ -2295,6 +2295,35 @@ cloud_sql_proxy -instances=<project>:<region>:<instance>=tcp:5432
 
 ---
 
+## QA-096: PNO-1166 Test Folder References Wrong Jira Ticket
+
+**ID:** QA-096
+**Severity:** 🟠 High
+**Category:** Maintenance
+**Date:** 2026-03-05
+**Status:** Open
+**Assigned To:** QA Team
+
+**Description:**
+The test folder `QA Tests/Integration Tests/PNO-1166_RejectDuplicateAndOMTransfer/` is named after Jira ticket PNO-1166, but PNO-1166 is actually titled "QA testing code" — a story about integrating QA tests into CI/CD and fixing pipeline bugs (Epic: Technical Foundations, PNO-14). The test folder contains 10 test files about Reject action fix and OM role transfer, which are Go Decision workflow features (likely under Epic PNO-980: The Go/No Go Decision).
+
+This breaks all Jira-to-test traceability for these tests.
+
+**Root Cause:** Test folder was created with the wrong Jira ticket number. The actual Jira ticket for Reject/OM Transfer functionality is unknown — it may be a subtask of PNO-980 or a separate ticket.
+
+**Temporary Fix (QA):** Document the discrepancy. Tests themselves are valid and cover correct functionality.
+
+**Permanent Fix:** 
+- Identify the correct Jira ticket for the Reject Duplicate / OM Transfer feature
+- Rename the folder to reference the correct ticket (e.g., `PNO-XXXX_RejectDuplicateAndOMTransfer`)
+- Update all internal file references
+
+**Impact:** 10 test files with incorrect Jira traceability. No test failures, but audit trail is broken.
+
+**Related DEF:** DEF-100 (PRD traceability gap)
+
+---
+
 ## QA-095: 5 Performance Tests Share DbContext Across Parallel Tasks (Missed by QA-089) (RESOLVED)
 **ID:** QA-095 | **Severity:** 🟡 Medium | **Status:** Resolved (2026-03-03) | **Date:** 2026-03-03 | **Assigned To:** QA Team
 
