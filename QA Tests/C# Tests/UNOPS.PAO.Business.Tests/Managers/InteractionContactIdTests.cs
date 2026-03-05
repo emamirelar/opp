@@ -23,7 +23,8 @@ public class InteractionContactIdTests : ManagerTestBase
     /// <summary>
     /// An interaction created without ContactId should persist with null ContactId.
     /// </summary>
-    [Fact(Skip = "DEF-024: UNOPSInteraction.ContactId property missing - production code fix required")]
+    [Fact]
+    [Trait("Defect", "DEF-024")]
     [Trait("Category", "P1")]
     [Trait("Type", "Functional")]
     public async Task CreateInteraction_WithoutContactId_ShouldPersistAsNull()
@@ -53,7 +54,8 @@ public class InteractionContactIdTests : ManagerTestBase
     /// <summary>
     /// An interaction created with a valid ContactId should persist the FK value.
     /// </summary>
-    [Fact(Skip = "DEF-024: UNOPSInteraction.ContactId property missing - production code fix required")]
+    [Fact]
+    [Trait("Defect", "DEF-024")]
     [Trait("Category", "P1")]
     [Trait("Type", "Functional")]
     public async Task CreateInteraction_WithValidContactId_ShouldPersistFK()
@@ -97,7 +99,8 @@ public class InteractionContactIdTests : ManagerTestBase
     /// <summary>
     /// Setting ContactId on an existing interaction and saving should update the FK value.
     /// </summary>
-    [Fact(Skip = "DEF-024: UNOPSInteraction.ContactId property missing - production code fix required")]
+    [Fact]
+    [Trait("Defect", "DEF-024")]
     [Trait("Category", "P1")]
     [Trait("Type", "Functional")]
     public async Task UpdateInteraction_SetContactId_ShouldPersistChange()
@@ -144,7 +147,8 @@ public class InteractionContactIdTests : ManagerTestBase
     /// <summary>
     /// Clearing ContactId (setting to null) should persist correctly.
     /// </summary>
-    [Fact(Skip = "DEF-024: UNOPSInteraction.ContactId property missing - production code fix required")]
+    [Fact]
+    [Trait("Defect", "DEF-024")]
     [Trait("Category", "P1")]
     [Trait("Type", "Functional")]
     public async Task UpdateInteraction_ClearContactId_ShouldPersistNull()
@@ -190,7 +194,8 @@ public class InteractionContactIdTests : ManagerTestBase
     /// <summary>
     /// Setting ContactId to a non-existent contact should be rejected by the FK constraint.
     /// </summary>
-    [Fact(Skip = "DEF-024: UNOPSInteraction.ContactId property missing - cannot set invalid FK to test constraint")]
+    [Fact]
+    [Trait("Defect", "DEF-024")]
     [Trait("Category", "P1")]
     [Trait("Type", "DataIntegrity")]
     public async Task CreateInteraction_WithInvalidContactId_ShouldBeRejectedByFK()
@@ -215,7 +220,8 @@ public class InteractionContactIdTests : ManagerTestBase
     /// <summary>
     /// Multiple interactions can reference the same contact via ContactId.
     /// </summary>
-    [Fact(Skip = "DEF-024: UNOPSInteraction.ContactId property missing - production code fix required")]
+    [Fact]
+    [Trait("Defect", "DEF-024")]
     [Trait("Category", "P1")]
     [Trait("Type", "Functional")]
     public async Task MultipleInteractions_SameContactId_ShouldAllPersist()
@@ -277,7 +283,8 @@ public class InteractionContactIdTests : ManagerTestBase
     /// <summary>
     /// Mixing interactions with and without ContactId should persist correctly.
     /// </summary>
-    [Fact(Skip = "DEF-024: UNOPSInteraction.ContactId property missing - production code fix required")]
+    [Fact]
+    [Trait("Defect", "DEF-024")]
     [Trait("Category", "P1")]
     [Trait("Type", "Functional")]
     public async Task MixedInteractions_SomeWithContactId_ShouldPersistCorrectly()

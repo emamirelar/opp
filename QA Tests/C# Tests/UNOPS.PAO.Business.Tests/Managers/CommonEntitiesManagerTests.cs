@@ -30,7 +30,9 @@ public class CommonEntitiesManagerTests : ManagerTestBase
 
     #region Negative Tests (N≥3)
 
-    [Fact(Skip = "DEF-068: CommonEntitiesManager has zero business methods — empty class body")]
+    [Fact]
+
+    [Trait("Defect", "DEF-068")]
     public async Task N1_NoPublicMethods_ShouldHaveCRUDOperations()
     {
         var methods = typeof(CommonEntitiesManager)
@@ -40,7 +42,9 @@ public class CommonEntitiesManagerTests : ManagerTestBase
             "CommonEntitiesManager should have business methods but has zero declared methods");
     }
 
-    [Fact(Skip = "DEF-068: CommonEntitiesManager has zero business methods")]
+    [Fact]
+
+    [Trait("Defect", "DEF-068")]
     public async Task N2_ShouldExposeEntityManagementCapabilities()
     {
         var type = typeof(CommonEntitiesManager);
@@ -51,7 +55,9 @@ public class CommonEntitiesManagerTests : ManagerTestBase
         hasGetMethod.Should().BeTrue("manager should expose query methods");
     }
 
-    [Fact(Skip = "DEF-068: CommonEntitiesManager has zero business methods")]
+    [Fact]
+
+    [Trait("Defect", "DEF-068")]
     public async Task N3_ShouldExposeCreateCapabilities()
     {
         var type = typeof(CommonEntitiesManager);

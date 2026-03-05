@@ -43,7 +43,9 @@ public class SmokeTests : ManagerTestBase
     // AUTOMAPPER CONFIGURATION
     // =====================================================================
 
-    [Fact(Skip = "DEF-023: AutoMapper configuration has missing/invalid mappings")]
+    [Fact]
+
+    [Trait("Defect", "DEF-023")]
     [Trait("Category", "Smoke")]
     public void AutoMapper_Configuration_IsValid()
     {
@@ -278,7 +280,9 @@ public class SmokeTests : ManagerTestBase
     // OPPORTUNITY — persist and read back
     // =====================================================================
 
-    [Fact(Skip = "DEF-023: AutoMapper configuration error prevents opportunity round-trip")]
+    [Fact]
+
+    [Trait("Defect", "DEF-023")]
     [Trait("Category", "Smoke")]
     public async Task Opportunity_CreateAndRetrieve_RoundTrips()
     {

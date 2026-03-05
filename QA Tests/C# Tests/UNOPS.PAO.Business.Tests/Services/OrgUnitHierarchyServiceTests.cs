@@ -112,7 +112,9 @@ public class OrgUnitHierarchyServiceTests : IDisposable
         result.Should().BeEmpty();
     }
 
-    [Fact(Skip = "DEF-075: OrgUnitHierarchyService.GetDescendantIdsAsync does not exclude soft-deleted org units")]
+    [Fact]
+
+    [Trait("Defect", "DEF-075")]
     public async Task GetDescendantIdsAsync_DeletedOrgUnit_ExcludedFromResults()
     {
         // Arrange

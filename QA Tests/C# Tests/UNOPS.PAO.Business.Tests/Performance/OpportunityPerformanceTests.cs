@@ -407,7 +407,9 @@ public class OpportunityPerformanceTests : PerformanceTestBase
 
     #region EF Core — N+1 & Split Query Verification
 
-    [Fact(Skip = "DEF-089: OpportunityManager query with related data exceeds performance threshold")]
+    [Fact]
+
+    [Trait("Defect", "DEF-089")]
     public async Task GetOpportunity_WithRelated_NoCartesianExplosion_CompletesWithinThreshold()
     {
         var opportunity = await SeedOpportunityWithRelatedDataAsync();

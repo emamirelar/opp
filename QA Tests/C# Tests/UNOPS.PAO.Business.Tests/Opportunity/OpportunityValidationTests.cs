@@ -240,7 +240,9 @@ public class OpportunityValidationTests : IDisposable
         await act.Should().ThrowAsync<Exception>();
     }
 
-    [Fact(Skip = "DEF-071: OpportunityManager lacks application-level name validation")]
+    [Fact]
+
+    [Trait("Defect", "DEF-071")]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-VAL-002")]

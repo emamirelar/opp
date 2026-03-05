@@ -55,7 +55,9 @@ public class ProfilePerformanceTests : PerformanceTestBase
 
     #region Single Operation Performance (min 2)
 
-    [Fact(Skip = "DEF-067: ProfileManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-067")]
     public async Task Get_ExistingUserByEmail_CompletesWithinThreshold()
     {
         var email = await SeedUserWithProfileAsync();
@@ -70,7 +72,9 @@ public class ProfilePerformanceTests : PerformanceTestBase
             $"Get took {_stopwatch.ElapsedMilliseconds}ms, expected <{MaxSingleOperationMs}ms");
     }
 
-    [Fact(Skip = "DEF-067: ProfileManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-067")]
     public async Task Update_ExistingProfile_CompletesWithinThreshold()
     {
         var email = await SeedUserWithProfileAsync();
@@ -97,7 +101,9 @@ public class ProfilePerformanceTests : PerformanceTestBase
 
     #region Bulk Operation Performance (min 3)
 
-    [Fact(Skip = "DEF-067: ProfileManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-067")]
     public async Task Get_Repeated100Calls_CompletesWithinThreshold()
     {
         var email = await SeedUserWithProfileAsync();
@@ -113,7 +119,9 @@ public class ProfilePerformanceTests : PerformanceTestBase
             $"100 repeated Get took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-067: ProfileManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-067")]
     public async Task Get_MultipleUsers_CompletesWithinThreshold()
     {
         var emails = await SeedUsersWithProfilesAsync(50);
@@ -129,7 +137,9 @@ public class ProfilePerformanceTests : PerformanceTestBase
             $"Get 50 users took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-067: ProfileManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-067")]
     public async Task Update_MultipleProfiles_CompletesWithinThreshold()
     {
         var emails = await SeedUsersWithProfilesAsync(30);
@@ -154,7 +164,9 @@ public class ProfilePerformanceTests : PerformanceTestBase
 
     #region Search Performance (min 5)
 
-    [Fact(Skip = "DEF-067: ProfileManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-067")]
     public async Task Get_ByEmail_SimpleLookup_CompletesWithinThreshold()
     {
         var email = await SeedUserWithProfileAsync();
@@ -168,7 +180,9 @@ public class ProfilePerformanceTests : PerformanceTestBase
             $"Get by email took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-067: ProfileManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-067")]
     public async Task Get_WithUserProfileNavigation_CompletesWithinThreshold()
     {
         var email = await SeedUserWithProfileAsync();
@@ -184,7 +198,9 @@ public class ProfilePerformanceTests : PerformanceTestBase
             $"Get with profile navigation took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-067: ProfileManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-067")]
     public async Task DirectQuery_PAOUsersWithProfile_CompletesWithinThreshold()
     {
         await SeedUsersWithProfilesAsync(100);
@@ -203,7 +219,9 @@ public class ProfilePerformanceTests : PerformanceTestBase
             $"Direct PAOUsers query took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-067: ProfileManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-067")]
     public async Task Get_AlternatingReads_CompletesWithinThreshold()
     {
         var emails = await SeedUsersWithProfilesAsync(20);
@@ -219,7 +237,9 @@ public class ProfilePerformanceTests : PerformanceTestBase
             $"Alternating Get across users took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-067: ProfileManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-067")]
     public async Task Get_EnsureTestUser_CompletesWithinThreshold()
     {
         await EnsureTestUserAsync();
@@ -238,7 +258,9 @@ public class ProfilePerformanceTests : PerformanceTestBase
 
     #region Concurrent Access Performance (min 3)
 
-    [Fact(Skip = "DEF-067: ProfileManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-067")]
     public async Task ConcurrentReads_50ParallelGet_MaintainsPerformance()
     {
         var email = await SeedUserWithProfileAsync();
@@ -257,7 +279,9 @@ public class ProfilePerformanceTests : PerformanceTestBase
             $"Average read under 50 parallel calls exceeded threshold: {avgMs}ms");
     }
 
-    [Fact(Skip = "DEF-067: ProfileManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-067")]
     public async Task ConcurrentReads_20ParallelGetDifferentUsers_MaintainsPerformance()
     {
         var emails = await SeedUsersWithProfilesAsync(20);
@@ -275,7 +299,9 @@ public class ProfilePerformanceTests : PerformanceTestBase
             $"20 parallel Get (different users) took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-067: ProfileManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-067")]
     public async Task ConcurrentMixedReadUpdate_PerformanceStable()
     {
         var emails = await SeedUsersWithProfilesAsync(10);
@@ -304,7 +330,9 @@ public class ProfilePerformanceTests : PerformanceTestBase
 
     #region Memory Performance (min 3)
 
-    [Fact(Skip = "DEF-067: ProfileManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-067")]
     public async Task Get_RepeatedCalls_MemoryUsage_WithinCap()
     {
         var email = await SeedUserWithProfileAsync();
@@ -322,7 +350,9 @@ public class ProfilePerformanceTests : PerformanceTestBase
             $"100 Get calls allocated {usedMb}MB, expected <{MaxQueryMemoryMb}MB");
     }
 
-    [Fact(Skip = "DEF-067: ProfileManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-067")]
     public async Task RepeatedGet_NoMemoryLeak()
     {
         var email = await SeedUserWithProfileAsync();
@@ -340,7 +370,9 @@ public class ProfilePerformanceTests : PerformanceTestBase
             $"Memory grew {growthMb}MB after 200 Get ops — possible leak");
     }
 
-    [Fact(Skip = "DEF-067: ProfileManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-067")]
     public async Task GcPressure_HighThroughput_DoesNotDegrade()
     {
         var email = await SeedUserWithProfileAsync();
@@ -365,7 +397,9 @@ public class ProfilePerformanceTests : PerformanceTestBase
 
     #region EF Core — AsNoTracking Verification
 
-    [Fact(Skip = "DEF-067: ProfileManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-067")]
     public async Task DirectQuery_AsNoTracking_ReadOnlyOptimized()
     {
         await SeedUsersWithProfilesAsync(50);
@@ -387,7 +421,9 @@ public class ProfilePerformanceTests : PerformanceTestBase
 
     #region Benchmark Report
 
-    [Fact(Skip = "DEF-067: ProfileManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-067")]
     public async Task Benchmark_AllOperations_ReportTimings()
     {
         var email = await SeedUserWithProfileAsync();

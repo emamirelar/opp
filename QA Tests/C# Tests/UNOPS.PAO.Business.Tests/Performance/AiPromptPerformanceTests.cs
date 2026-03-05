@@ -101,7 +101,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
 
     #region Single Operation Performance (min 2)
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task CreatePrompt_SingleEntity_CompletesWithinThreshold()
     {
         var model = BuildAiPromptModel($"Create_{_testMarker}");
@@ -116,7 +118,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
             $"CreatePrompt took {_stopwatch.ElapsedMilliseconds}ms, expected <{MaxSingleOperationMs}ms");
     }
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task GetPromptById_ExistingEntity_CompletesWithinThreshold()
     {
         var prompt = await SeedAiPromptAsync("GetById");
@@ -135,7 +139,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
 
     #region Bulk Operation Performance (min 3)
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task GetPromptsAsync_100Prompts_CompletesWithinThreshold()
     {
         await SeedAiPromptsAsync("BULK", 100);
@@ -152,7 +158,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
             $"GetPromptsAsync (100) took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task GetPromptTypesAsync_AllTypes_CompletesWithinThreshold()
     {
         await SeedAiPromptsAsync("TYPES", 50);
@@ -166,7 +174,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
             $"GetPromptTypesAsync took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task GetModelsAsync_AllModels_CompletesWithinThreshold()
     {
         await SeedAiPromptsByModelAsync(50);
@@ -184,7 +194,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
 
     #region Search Performance (min 5)
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task GetPromptsAsync_SimpleSearch_CompletesWithinThreshold()
     {
         await SeedAiPromptsAsync("SEARCH", 200);
@@ -201,7 +213,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
             $"Simple search took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task GetPromptsAsync_ComplexFilter_CompletesWithinThreshold()
     {
         await SeedAiPromptsAsync("COMPLEX", 150);
@@ -224,7 +238,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
             $"Complex search took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task GetPromptsByTypeAsync_ByType_CompletesWithinThreshold()
     {
         var prompt = await SeedAiPromptAsync("BYTYPE");
@@ -240,7 +256,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
             $"GetPromptsByTypeAsync took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task GetPromptsAsync_MultiSort_CompletesWithinThreshold()
     {
         await SeedAiPromptsAsync("SORT", 100);
@@ -262,7 +280,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
             $"Multi-sort pagination took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task GetPromptsAsync_Pagination_CompletesWithinThreshold()
     {
         await SeedAiPromptsAsync("PAGE", 500);
@@ -283,7 +303,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
 
     #region Concurrent Access Performance (min 3)
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task ConcurrentReads_50ParallelGetPromptById_MaintainsPerformance()
     {
         var prompt = await SeedAiPromptAsync("CONCURRENT");
@@ -302,7 +324,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
             $"Average read under 50 parallel calls exceeded threshold: {avgMs}ms");
     }
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task ConcurrentReads_20ParallelGetPromptTypes_MaintainsPerformance()
     {
         var tasks = Enumerable.Range(0, 20)
@@ -318,7 +342,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
             $"20 parallel GetPromptTypesAsync took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task ConcurrentMixedReadWrite_PerformanceStable()
     {
         var prompt = await SeedAiPromptAsync("MIXED");
@@ -343,7 +369,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
 
     #region Memory Performance (min 3)
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task LargePromptList_MemoryUsage_WithinCap()
     {
         await SeedAiPromptsAsync("MEMORY", 500);
@@ -359,7 +387,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
             $"Query allocated {usedMb}MB, expected <{MaxQueryMemoryMb}MB");
     }
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task RepeatedOperations_NoMemoryLeak()
     {
         var prompt = await SeedAiPromptAsync("LEAK");
@@ -378,7 +408,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
             $"Memory grew {growthMb}MB after 100 ops — possible leak");
     }
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task GcPressure_HighThroughput_DoesNotDegrade()
     {
         var prompt = await SeedAiPromptAsync("GC");
@@ -402,7 +434,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
 
     #region Update and Delete Performance
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task UpdatePrompt_ExistingEntity_CompletesWithinThreshold()
     {
         var prompt = await SeedAiPromptAsync("UPDATE");
@@ -418,7 +452,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
             $"UpdatePrompt took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task DeletePrompt_ExistingEntity_CompletesWithinThreshold()
     {
         var prompt = await SeedAiPromptAsync("DELETE");
@@ -436,7 +472,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
 
     #region EF Core — N+1 & AsNoTracking Verification
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task GetPromptsAsync_WithRelated_NoCartesianExplosion_CompletesWithinThreshold()
     {
         await SeedAiPromptsAsync("N1", 50);
@@ -456,7 +494,9 @@ public class AiPromptPerformanceTests : PerformanceTestBase
 
     #region Benchmark Report
 
-    [Fact(Skip = "DEF-066: AiPromptManager operations exceed SLA performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task Benchmark_AllOperations_ReportTimings()
     {
         var report = new Dictionary<string, long>();

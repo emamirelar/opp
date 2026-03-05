@@ -265,7 +265,9 @@ namespace UNOPS.PAO.Business.Tests.Security
 
         #region Negative Tests (6 tests)
 
-        [Fact(Skip = "DEF-080: SanitizeForDatabase does not remove SQL keywords — only removes specific patterns, not individual keywords")]
+        [Fact]
+
+        [Trait("Defect", "DEF-080")]
         [Trait("Category", "Negative")]
         public void SEC_Negative_SQLKeywords_RemovedFromPartnerSearch()
         {
@@ -354,7 +356,9 @@ namespace UNOPS.PAO.Business.Tests.Security
             isValid.Should().BeTrue();
         }
 
-        [Fact(Skip = "DEF-080: SanitizeForDatabase does not handle case-insensitive SQL keyword removal")]
+        [Fact]
+
+        [Trait("Defect", "DEF-080")]
         [Trait("Category", "Edge")]
         public void SEC_Edge_MixedCaseSqlKeywords_Removed()
         {
@@ -503,7 +507,9 @@ namespace UNOPS.PAO.Business.Tests.Security
             sanitizedDesc.Should().NotContain("onerror=");
         }
 
-        [Fact(Skip = "DEF-080: SanitizeForDatabase does not remove SQL injection patterns like 'OR 1=1'")]
+        [Fact]
+
+        [Trait("Defect", "DEF-080")]
         [Trait("Category", "Integration")]
         public void SEC_Integration_SearchFlow_PartnerContactInteraction_Sanitized()
         {

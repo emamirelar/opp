@@ -452,7 +452,9 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
         result.Name.Should().Contain("Développement");
     }
 
-    [Fact(Skip = "DEF: AutoMapper ForAllMembers Condition prevents clearing nullable fields via null - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-TRIAGE")]
     [Trait("Category", "P2")]
     [Trait("Type", "EdgeCase")]
     [Trait("TestId", "TC-UNOPS-ADV-007")]
@@ -482,7 +484,8 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
         savedOpportunity!.PartnerReference.Should().BeNull(); // Cleared
     }
 
-    [Fact(Skip = "DEF: DbContext is not thread-safe - parallel reads on same instance cause ConcurrencyDetector failure - requires DbContextFactory per-task pattern")]
+    [Fact]
+    [Trait("Defect", "DEF-TRIAGE")]
     [Trait("Category", "P2")]
     [Trait("Type", "EdgeCase")]
     [Trait("TestId", "TC-UNOPS-ADV-008")]
@@ -786,7 +789,9 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
         result.Should().BeNull();
     }
 
-    [Fact(Skip = "DEF-072: UpdateOpportunityAsync throws BusinessException instead of handling null request gracefully")]
+    [Fact]
+
+    [Trait("Defect", "DEF-072")]
     [Trait("Category", "P2")]
     [Trait("Type", "ErrorHandling")]
     [Trait("TestId", "TC-UNOPS-ADV-019")]
@@ -912,7 +917,9 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
         result.DeliveryModality.Should().Be(1);
     }
 
-    [Fact(Skip = "DeliveryModality not available in UpdateOpportunityRequest - needs to be added to the DTO - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-TRIAGE")]
     [Trait("Category", "P2")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-ADV-025")]
@@ -1017,7 +1024,9 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
 
     #region P2 - User Role Context Tests
 
-    [Fact(Skip = "UserRole not populated in GetOpportunityAsync - requires IPermissionService integration - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-TRIAGE")]
     [Trait("Category", "P2")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-ADV-029")]

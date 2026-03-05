@@ -133,7 +133,9 @@ public class AiPromptCacheServiceTests : IDisposable
         entry.GeminiResult.Should().Be(result);
     }
 
-    [Fact(Skip = "DEF-074: AiPromptCacheService uses TimeSpan.FromMinutes(0) which causes immediate expiration in MemoryCache; 0 minutes should use default TTL or no-expiration")]
+    [Fact]
+
+    [Trait("Defect", "DEF-074")]
     public async Task SetCachedResultAsync_ZeroMinutes_StillCaches()
     {
         // Arrange

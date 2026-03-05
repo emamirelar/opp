@@ -313,7 +313,9 @@ public class GlobalExceptionHandlerTests
         httpContext.Response.ContentType.Should().Contain("json");
     }
 
-    [Fact(Skip = "DEF-067: GlobalExceptionHandler error logging is commented out — errors are not persisted")]
+    [Fact]
+
+    [Trait("Defect", "DEF-067")]
     public async Task F7_500Errors_ShouldBeLoggedToDatabase()
     {
         var handler = CreateHandler(isDevelopment: false);

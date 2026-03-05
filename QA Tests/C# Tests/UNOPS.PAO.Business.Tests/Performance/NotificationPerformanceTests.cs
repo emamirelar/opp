@@ -220,7 +220,9 @@ public class NotificationPerformanceTests : PerformanceTestBase
 
     #region Concurrent Access Performance (min 3)
 
-    [Fact(Skip = "DEF-068: NotificationManager concurrent operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-068")]
     public async Task ConcurrentReads_50ParallelGetNotifications_MaintainsPerformance()
     {
         await SeedNotificationsAsync(TestUserId, 30);
@@ -238,7 +240,9 @@ public class NotificationPerformanceTests : PerformanceTestBase
             $"Average read under 50 parallel calls exceeded threshold: {avgMs}ms");
     }
 
-    [Fact(Skip = "DEF-068: NotificationManager concurrent operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-068")]
     public async Task ConcurrentWrites_10ParallelCreate_MaintainsPerformance()
     {
         var tasks = Enumerable.Range(0, 10)
@@ -253,7 +257,9 @@ public class NotificationPerformanceTests : PerformanceTestBase
             $"10 parallel CreateNotification took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-068: NotificationManager concurrent operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-068")]
     public async Task ConcurrentMixedReadWrite_PerformanceStable()
     {
         await SeedNotificationsAsync(TestUserId, 20);

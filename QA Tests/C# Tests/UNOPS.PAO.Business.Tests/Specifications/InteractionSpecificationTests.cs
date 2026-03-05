@@ -682,7 +682,9 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             spec.Criteria.Compile()(interaction).Should().BeTrue();
         }
 
-        [Fact(Skip = "DEF-079: PagedInteractionSpecification does not set a default OrderBy expression")]
+        [Fact]
+
+        [Trait("Defect", "DEF-079")]
         public void Constructor_SetsOrderBy()
         {
             var spec = new PagedInteractionSpecification(1, 10);

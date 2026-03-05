@@ -140,7 +140,8 @@ public class InteractionManagerLoadTests
     /// <summary>
     /// Phase 2: Sustained read load — interaction list queries maintain performance.
     /// </summary>
-    [Fact(Skip = "DEF-073: InteractionManager load test operations exceed performance thresholds")]
+    [Fact]
+    [Trait("Defect", "DEF-073")]
     public async Task SustainedLoad_ReadOperations_PerformanceDoesNotDegrade()
     {
         var user = CreateTestUser();
@@ -165,7 +166,8 @@ public class InteractionManagerLoadTests
     /// <summary>
     /// Phase 2: Sustained write load — concurrent creation maintains consistency.
     /// </summary>
-    [Fact(Skip = "DEF-073: InteractionManager load test operations exceed performance thresholds")]
+    [Fact]
+    [Trait("Defect", "DEF-073")]
     public async Task SustainedLoad_WriteOperations_ConsistencyMaintained()
     {
         var times = new List<long>();
@@ -237,7 +239,8 @@ public class InteractionManagerLoadTests
     /// <summary>
     /// Phase 5: Recovery after spike — returns to baseline performance.
     /// </summary>
-    [Fact(Skip = "DEF-073: InteractionManager load test operations exceed performance thresholds")]
+    [Fact]
+    [Trait("Defect", "DEF-073")]
     public async Task SpikeLoad_Recovery_ReturnsToBaseline()
     {
         var user = CreateTestUser();
@@ -356,7 +359,8 @@ public class InteractionManagerLoadTests
     /// <summary>
     /// Phase 3+5: After stress — performance restored.
     /// </summary>
-    [Fact(Skip = "DEF-073: InteractionManager load test operations exceed performance thresholds")]
+    [Fact]
+    [Trait("Defect", "DEF-073")]
     public async Task Recovery_AfterStress_PerformanceRestored()
     {
         var user = CreateTestUser();

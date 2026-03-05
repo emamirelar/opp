@@ -35,7 +35,9 @@ public class MiddlewareSecurityTests
 
     // ── Negative (N≥3) ──
 
-    [Fact(Skip = "DEF-066: ValidationMiddleware.InvokeAsync is a no-op — just calls _next without any validation")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task Validation_N1_InvalidModelState_ShouldReturn400()
     {
         RequestDelegate next = ctx => Task.CompletedTask;
@@ -49,7 +51,9 @@ public class MiddlewareSecurityTests
         Assert.Fail("ValidationMiddleware does not perform any validation — it is a complete no-op");
     }
 
-    [Fact(Skip = "DEF-066: ValidationMiddleware is a no-op — never returns 400")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task Validation_N2_MissingRequiredFields_ShouldReturn400()
     {
         RequestDelegate next = ctx => Task.CompletedTask;
@@ -61,7 +65,9 @@ public class MiddlewareSecurityTests
         context.Response.StatusCode.Should().Be(400, "middleware should validate and reject bad requests");
     }
 
-    [Fact(Skip = "DEF-066: ValidationMiddleware is a no-op — never inspects request")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task Validation_N3_NullRequestBody_ShouldReturn400()
     {
         RequestDelegate next = ctx => Task.CompletedTask;
@@ -136,7 +142,9 @@ public class MiddlewareSecurityTests
         details.Type.Should().Be("https://datatracker.ietf.org/doc/html/rfc7231#section-6.5.1");
     }
 
-    [Fact(Skip = "DEF-066: ValidationMiddleware never uses CustomValidationProblemDetails — dead code")]
+    [Fact]
+
+    [Trait("Defect", "DEF-066")]
     public async Task Validation_F3_CustomProblemDetails_ShouldBeUsedByMiddleware()
     {
         // CustomValidationProblemDetails exists but is NEVER instantiated by the middleware

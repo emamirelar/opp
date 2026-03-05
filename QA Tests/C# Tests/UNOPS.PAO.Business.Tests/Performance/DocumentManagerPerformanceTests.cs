@@ -229,7 +229,9 @@ public class DocumentManagerPerformanceTests : PerformanceTestBase
 
     #region Concurrent Access Performance (min 3)
 
-    [Fact(Skip = "DEF-088: DocumentManager does not support concurrent DbContext operations")]
+    [Fact]
+
+    [Trait("Defect", "DEF-088")]
     public async Task ConcurrentReads_50ParallelGetDocumentById_MaintainsPerformance()
     {
         var document = await SeedDocumentAsync();
@@ -265,7 +267,9 @@ public class DocumentManagerPerformanceTests : PerformanceTestBase
             $"20 parallel GetDocumentsByEntity took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-088: DocumentManager does not support concurrent DbContext operations")]
+    [Fact]
+
+    [Trait("Defect", "DEF-088")]
     public async Task ConcurrentMixedReadWrite_PerformanceStable()
     {
         var (entityId, _) = await SeedDocumentsForEntityAsync("Partner", 30);

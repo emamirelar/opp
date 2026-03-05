@@ -42,7 +42,9 @@ public class MappingProfileValidationTests
 
     #region Negative Tests (N≥6)
 
-    [Fact(Skip = "DEF-073: Multiple AutoMapper profiles have unmapped destination properties — Interaction, Partner, Contact models have properties not mapped from entities")]
+    [Fact]
+
+    [Trait("Defect", "DEF-073")]
     public async Task N1_MainMappingProfile_HasUnmappedProperties()
     {
         var config = new MapperConfiguration(cfg => cfg.AddProfile<ManagerMappingProfile>());
@@ -280,7 +282,9 @@ public class MappingProfileValidationTests
 
     #region Integration Tests (I≥6)
 
-    [Fact(Skip = "DEF-073: Multiple AutoMapper profiles have unmapped destination properties — combined validation fails")]
+    [Fact]
+
+    [Trait("Defect", "DEF-073")]
     public async Task I1_AllProfilesCombined_NoConflicts()
     {
         var config = new MapperConfiguration(cfg =>
@@ -332,7 +336,9 @@ public class MappingProfileValidationTests
         entity.EntityId.Should().Be(5);
     }
 
-    [Fact(Skip = "DEF-073: OrganizationHierarchyMappingProfile has unmapped destination properties")]
+    [Fact]
+
+    [Trait("Defect", "DEF-073")]
     public async Task I4_OrganizationHierarchyMappingProfile_IsValid()
     {
         var config = new MapperConfiguration(cfg => cfg.AddProfile<OrganizationHierarchyMappingProfile>());

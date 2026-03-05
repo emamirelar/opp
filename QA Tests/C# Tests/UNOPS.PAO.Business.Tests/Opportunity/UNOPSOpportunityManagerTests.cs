@@ -310,7 +310,9 @@ public class UNOPSOpportunityManagerTests : IDisposable
         savedEntity!.Stage.Should().Be("IDENTIFY & PROFILE"); // Default workflow stage set
     }
 
-    [Fact(Skip = "DEF-071: CreateOpportunity does not validate null name at application level — relies on DB constraint with generic error")]
+    [Fact]
+
+    [Trait("Defect", "DEF-071")]
     [Trait("Category", "P0")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-OPP-002")]
@@ -665,7 +667,9 @@ public class UNOPSOpportunityManagerTests : IDisposable
         result.Id.Should().Be(oppId);
     }
 
-    [Fact(Skip = "DEF-023: AutoMapper missing Country -> CountryModel mapping in OpportunityCountry chain")]
+    [Fact]
+
+    [Trait("Defect", "DEF-023")]
     [Trait("Category", "P1")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-OPP-016")]
@@ -838,7 +842,9 @@ public class UNOPSOpportunityManagerTests : IDisposable
         await act.Should().ThrowAsync<Exception>();
     }
 
-    [Fact(Skip = "DEF-071: CreateOpportunity does not validate empty/whitespace name strings")]
+    [Fact]
+
+    [Trait("Defect", "DEF-071")]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-OPP-021b")]
@@ -849,7 +855,9 @@ public class UNOPSOpportunityManagerTests : IDisposable
         await act.Should().ThrowAsync<Exception>();
     }
 
-    [Fact(Skip = "DEF-071: CreateOpportunity does not validate empty/whitespace name strings")]
+    [Fact]
+
+    [Trait("Defect", "DEF-071")]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-OPP-021c")]
@@ -860,7 +868,9 @@ public class UNOPSOpportunityManagerTests : IDisposable
         await act.Should().ThrowAsync<Exception>();
     }
 
-    [Fact(Skip = "DEF-071: CreateOpportunity does not validate name length at application level — relies on DB constraint with generic error")]
+    [Fact]
+
+    [Trait("Defect", "DEF-071")]
     [Trait("Category", "P1")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-OPP-022")]
@@ -1126,7 +1136,9 @@ public class UNOPSOpportunityManagerTests : IDisposable
 
     #region P0 - Null Guard Tests
 
-    [Fact(Skip = "DEF-072: UpdateOpportunityAsync throws BusinessException instead of ArgumentNullException for null request")]
+    [Fact]
+
+    [Trait("Defect", "DEF-072")]
     [Trait("Category", "P0")]
     [Trait("Type", "Validation")]
     [Trait("TestId", "TC-UNOPS-OPP-032")]

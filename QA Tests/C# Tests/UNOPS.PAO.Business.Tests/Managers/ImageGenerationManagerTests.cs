@@ -440,7 +440,8 @@ public class ImageGenerationManagerTests
     }
 
     /// <summary>TC-IMGGEN-FUNC-005: Logger is called with error level on exception (verifying error logging contract).</summary>
-    [Fact(Skip = "DEF-086: ImageGenerationManager logs at Information level instead of Error level on API failure")]
+    [Fact]
+    [Trait("Defect", "DEF-086")]
     [Trait("TestId", "TC-IMGGEN-FUNC-005")]
     public async Task GenerateOpportunityImages_OnException_LogsAtErrorLevel()
     {

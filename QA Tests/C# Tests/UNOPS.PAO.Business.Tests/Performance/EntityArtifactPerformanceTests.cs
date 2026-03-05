@@ -235,7 +235,9 @@ public class EntityArtifactPerformanceTests : PerformanceTestBase
 
     #region Concurrent Access Performance (min 3)
 
-    [Fact(Skip = "DEF-069: EntityArtifactManager concurrent operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-069")]
     public async Task ConcurrentReads_50ParallelGetEntityArtifact_MaintainsPerformance()
     {
         var (entityType, entityId, artifactTypeId) = await SeedEntityArtifactAsync();
@@ -254,7 +256,9 @@ public class EntityArtifactPerformanceTests : PerformanceTestBase
             $"Average read under 50 parallel calls exceeded threshold: {avgMs}ms");
     }
 
-    [Fact(Skip = "DEF-069: EntityArtifactManager concurrent operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-069")]
     public async Task ConcurrentReads_20ParallelGetEntityArtifacts_MaintainsPerformance()
     {
         var (entityType, entityId, _) = await SeedEntityArtifactsAsync(50);
@@ -272,7 +276,9 @@ public class EntityArtifactPerformanceTests : PerformanceTestBase
             $"20 parallel GetEntityArtifactsAsync took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-069: EntityArtifactManager concurrent operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-069")]
     public async Task ConcurrentMixedReadWrite_PerformanceStable()
     {
         var (entityType, entityId, artifactTypeId) = await SeedEntityArtifactAsync();

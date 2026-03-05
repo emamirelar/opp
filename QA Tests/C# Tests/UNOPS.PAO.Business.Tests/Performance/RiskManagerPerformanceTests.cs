@@ -203,7 +203,9 @@ public class RiskManagerPerformanceTests : PerformanceTestBase
             $"GetPreDefinedHighRisks took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-084: RiskManager concurrent and analysis operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-084")]
     public async Task GetHighRiskAnalysis_OpportunityCompletesWithinThreshold()
     {
         var opportunityId = await GetOrCreateOpportunityIdAsync();
@@ -241,7 +243,9 @@ public class RiskManagerPerformanceTests : PerformanceTestBase
 
     #region Concurrent Access Performance (min 3)
 
-    [Fact(Skip = "DEF-084: RiskManager concurrent and analysis operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-084")]
     public async Task ConcurrentReads_50ParallelGetRisksByEntity_MaintainsPerformance()
     {
         var (entityType, entityId) = await SeedRisksForEntityAsync("Opportunity", 30);
@@ -260,7 +264,9 @@ public class RiskManagerPerformanceTests : PerformanceTestBase
             $"Average read under 50 parallel calls exceeded threshold: {avgMs}ms");
     }
 
-    [Fact(Skip = "DEF-084: RiskManager concurrent and analysis operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-084")]
     public async Task ConcurrentReads_20ParallelGetRiskLookups_MaintainsPerformance()
     {
         var tasks = Enumerable.Range(0, 20)
@@ -276,7 +282,9 @@ public class RiskManagerPerformanceTests : PerformanceTestBase
             $"20 parallel GetRiskLookups took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-084: RiskManager concurrent and analysis operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-084")]
     public async Task ConcurrentMixedReadWrite_PerformanceStable()
     {
         var (entityType, entityId) = await SeedRisksForEntityAsync("Opportunity", 20);
@@ -435,7 +443,9 @@ public class RiskManagerPerformanceTests : PerformanceTestBase
 
     #region Risk Assessment Calculation Performance
 
-    [Fact(Skip = "DEF-084: RiskManager concurrent and analysis operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-084")]
     public async Task GetHighRiskAnalysis_CalculationPerformance_CompletesWithinThreshold()
     {
         var opportunityId = await GetOrCreateOpportunityIdAsync();

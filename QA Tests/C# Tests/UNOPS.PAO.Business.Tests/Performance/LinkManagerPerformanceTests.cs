@@ -283,7 +283,9 @@ public class LinkManagerPerformanceTests : PerformanceTestBase
 
     #region Concurrent Access Performance (min 3)
 
-    [Fact(Skip = "DEF-083: LinkManager concurrent operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-083")]
     public async Task ConcurrentReads_50ParallelGetLink_MaintainsPerformance()
     {
         var link = await SeedLinkAsync();
@@ -301,7 +303,9 @@ public class LinkManagerPerformanceTests : PerformanceTestBase
             $"Average read under 50 parallel calls exceeded threshold: {avgMs}ms");
     }
 
-    [Fact(Skip = "DEF-083: LinkManager concurrent operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-083")]
     public async Task ConcurrentReads_20ParallelGetEntityLinks_MaintainsPerformance()
     {
         var (entityType, entityId) = await SeedLinksForEntityAsync(LinkEntityType.Partner, 50);
@@ -320,7 +324,9 @@ public class LinkManagerPerformanceTests : PerformanceTestBase
             $"20 parallel GetEntityLinks took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-083: LinkManager concurrent operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-083")]
     public async Task ConcurrentMixedReadWrite_PerformanceStable()
     {
         var (entityType, entityId) = await SeedLinksForEntityAsync(LinkEntityType.Partner, 30);

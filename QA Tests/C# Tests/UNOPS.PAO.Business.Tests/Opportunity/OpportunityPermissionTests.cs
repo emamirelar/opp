@@ -250,7 +250,9 @@ public class OpportunityPermissionTests : IDisposable
 
     #region P1 - Permission Checks Tests
 
-    [Fact(Skip = "Permissions not populated in GetOpportunityAsync(ClaimsPrincipal, int) - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-TRIAGE")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-001")]
@@ -270,7 +272,9 @@ public class OpportunityPermissionTests : IDisposable
         result.Permissions.CanDelete.Should().BeFalse();
     }
 
-    [Fact(Skip = "View permission enforcement not implemented in GetOpportunityAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-TRIAGE")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-002")]
@@ -286,7 +290,9 @@ public class OpportunityPermissionTests : IDisposable
         result.Should().BeNull();
     }
 
-    [Fact(Skip = "Permission checks not implemented in UNOPSOpportunityManager.CreateOpportunityAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-TRIAGE")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-003")]
@@ -317,7 +323,9 @@ public class OpportunityPermissionTests : IDisposable
             .WithMessage("*permission*");
     }
 
-    [Fact(Skip = "Permission checks not implemented in UNOPSOpportunityManager.UpdateOpportunityAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-TRIAGE")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-004")]
@@ -352,7 +360,9 @@ public class OpportunityPermissionTests : IDisposable
             .WithMessage("*edit*");
     }
 
-    [Fact(Skip = "Permission checks not implemented in UNOPSOpportunityManager.DeleteOpportunityAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-TRIAGE")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-005")]
@@ -373,7 +383,9 @@ public class OpportunityPermissionTests : IDisposable
 
     #region P1 - Row-Level Security Tests
 
-    [Fact(Skip = "Org unit filtering not implemented in UNOPSOpportunityManager.GetAllOpportunitiesAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-TRIAGE")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-006")]
@@ -397,7 +409,9 @@ public class OpportunityPermissionTests : IDisposable
         opportunities.Should().OnlyContain(o => o.ResponsibleOrgUnitId == _orgHierarchyId);
     }
 
-    [Fact(Skip = "Partner filtering permissions not implemented in UNOPSOpportunityManager.GetOpportunitiesByPartnerIdAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-TRIAGE")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-007")]
@@ -450,7 +464,9 @@ public class OpportunityPermissionTests : IDisposable
         opportunities.Should().HaveCount(2);
     }
 
-    [Fact(Skip = "Permission checks not implemented in UNOPSOpportunityManager.UpdateOpportunityAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-TRIAGE")]
     [Trait("Category", "P2")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-009")]
@@ -482,7 +498,9 @@ public class OpportunityPermissionTests : IDisposable
         await act.Should().ThrowAsync<UnauthorizedAccessException>();
     }
 
-    [Fact(Skip = "Permissions property not populated in GetOpportunityAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-TRIAGE")]
     [Trait("Category", "P2")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-010")]
@@ -514,7 +532,9 @@ public class OpportunityPermissionTests : IDisposable
 
     #region P2 - Workflow-Based Permissions Tests
 
-    [Fact(Skip = "Delete permission enforcement not implemented in DeleteOpportunityAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-TRIAGE")]
     [Trait("Category", "P2")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-011")]
@@ -623,7 +643,9 @@ public class OpportunityPermissionTests : IDisposable
         result!.Name.Should().Be("Team Member Update");
     }
 
-    [Fact(Skip = "Permission checks not implemented in UNOPSOpportunityManager.UpdateOpportunityAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-TRIAGE")]
     [Trait("Category", "P2")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-014")]

@@ -166,7 +166,8 @@ public class RiskManagerLoadTests
     /// <summary>
     /// Phase 2: Sustained read load — bulk risk retrieval under normal load.
     /// </summary>
-    [Fact(Skip = "DEF-084: RiskManager concurrent and analysis operations exceed performance thresholds")]
+    [Fact]
+    [Trait("Defect", "DEF-084")]
     public async Task SustainedLoad_BulkRiskRetrieval_PerformanceDoesNotDegrade()
     {
         var user = CreateTestUser();

@@ -150,7 +150,9 @@ public class UserManagementPerformanceTests : PerformanceTestBase
             $"GetUsersAsync took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-091: UserManagementManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-091")]
     public async Task GetAvailableRolesAsync_CompletesWithinThreshold()
     {
         _stopwatch.Restart();
@@ -265,7 +267,9 @@ public class UserManagementPerformanceTests : PerformanceTestBase
 
     #region Concurrent Access Performance (min 3)
 
-    [Fact(Skip = "DEF-091: UserManagementManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-091")]
     public async Task ConcurrentReads_50ParallelGetAvailableOrgUnits_MaintainsPerformance()
     {
         await SeedOrgUnitsAsync(20);
@@ -283,7 +287,9 @@ public class UserManagementPerformanceTests : PerformanceTestBase
             $"Average read under 50 parallel calls exceeded threshold: {avgMs}ms");
     }
 
-    [Fact(Skip = "DEF-091: UserManagementManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-091")]
     public async Task ConcurrentReads_20ParallelGetUsersAsync_MaintainsPerformance()
     {
         var request = new UserManagementRequest { PageIndex = 0, PageSize = 10 };
@@ -300,7 +306,9 @@ public class UserManagementPerformanceTests : PerformanceTestBase
             $"20 parallel GetUsersAsync took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-091: UserManagementManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-091")]
     public async Task ConcurrentMixedRead_PerformanceStable()
     {
         await SeedOrgUnitsAsync(10);
@@ -342,7 +350,9 @@ public class UserManagementPerformanceTests : PerformanceTestBase
             $"Query allocated {usedMb}MB, expected <{MaxQueryMemoryMb}MB");
     }
 
-    [Fact(Skip = "DEF-091: UserManagementManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-091")]
     public async Task RepeatedOperations_NoMemoryLeak()
     {
         await SeedOrgUnitsAsync(10);
@@ -404,7 +414,9 @@ public class UserManagementPerformanceTests : PerformanceTestBase
 
     #region Benchmark Report
 
-    [Fact(Skip = "DEF-091: UserManagementManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-091")]
     public async Task Benchmark_AllOperations_ReportTimings()
     {
         var report = new Dictionary<string, long>();

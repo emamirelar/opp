@@ -66,7 +66,9 @@ public class ValuesManagerPerformanceTests : PerformanceTestBase
 
     #region Single Operation Performance (min 2)
 
-    [Fact(Skip = "DEF-092: ValuesManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-092")]
     public async Task GetCurrencies_SingleLookup_CompletesWithinThreshold()
     {
         await SeedCurrenciesAsync(10);
@@ -80,7 +82,9 @@ public class ValuesManagerPerformanceTests : PerformanceTestBase
             $"GetCurrencies took {_stopwatch.ElapsedMilliseconds}ms, expected <{MaxSingleOperationMs}ms");
     }
 
-    [Fact(Skip = "DEF-092: ValuesManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-092")]
     public async Task GetCountries_SingleLookup_CompletesWithinThreshold()
     {
         await SeedCountriesAsync(20);
@@ -127,7 +131,9 @@ public class ValuesManagerPerformanceTests : PerformanceTestBase
             $"GetSDGTargets took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-092: ValuesManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-092")]
     public async Task GetUsersPagedAsync_Bulk100_CompletesWithinThreshold()
     {
         await SeedPAOUsersWithProfilesAsync(150);
@@ -165,7 +171,9 @@ public class ValuesManagerPerformanceTests : PerformanceTestBase
             $"GetOrganizationUnits took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-092: ValuesManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-092")]
     public async Task GetLiaisonOffices_SimpleLookup_CompletesWithinThreshold()
     {
         await SeedLiaisonOfficesAsync(30);
@@ -179,7 +187,9 @@ public class ValuesManagerPerformanceTests : PerformanceTestBase
             $"GetLiaisonOffices took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-092: ValuesManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-092")]
     public async Task SearchUsersAsync_WithTerm_CompletesWithinThreshold()
     {
         await SeedPAOUsersWithProfilesAsync(100);
@@ -193,7 +203,9 @@ public class ValuesManagerPerformanceTests : PerformanceTestBase
             $"SearchUsersAsync took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-092: ValuesManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-092")]
     public async Task GetUsersPagedAsync_Paginated_CompletesWithinThreshold()
     {
         await SeedPAOUsersWithProfilesAsync(200);
@@ -213,7 +225,9 @@ public class ValuesManagerPerformanceTests : PerformanceTestBase
             $"GetUsersPagedAsync paginated took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-092: ValuesManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-092")]
     public async Task GetCurrencies_RepeatedCalls_NoDegradation()
     {
         await SeedCurrenciesAsync(20);
@@ -237,7 +251,9 @@ public class ValuesManagerPerformanceTests : PerformanceTestBase
 
     #region Concurrent Access Performance (min 3)
 
-    [Fact(Skip = "DEF-092: ValuesManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-092")]
     public async Task ConcurrentReads_50ParallelGetCurrencies_MaintainsPerformance()
     {
         await SeedCurrenciesAsync(30);
@@ -255,7 +271,9 @@ public class ValuesManagerPerformanceTests : PerformanceTestBase
             $"Average read under 50 parallel calls exceeded threshold: {avgMs}ms");
     }
 
-    [Fact(Skip = "DEF-092: ValuesManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-092")]
     public async Task ConcurrentReads_20ParallelGetCountries_MaintainsPerformance()
     {
         await SeedCountriesAsync(50);
@@ -272,7 +290,9 @@ public class ValuesManagerPerformanceTests : PerformanceTestBase
             $"20 parallel GetCountries took {_stopwatch.ElapsedMilliseconds}ms");
     }
 
-    [Fact(Skip = "DEF-092: ValuesManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-092")]
     public async Task ConcurrentMixed_GetCurrenciesAndGetSDGs_PerformanceStable()
     {
         await SeedCurrenciesAsync(20);
@@ -309,7 +329,9 @@ public class ValuesManagerPerformanceTests : PerformanceTestBase
             $"GetCountries allocated {usedMb}MB, expected <{MaxQueryMemoryMb}MB");
     }
 
-    [Fact(Skip = "DEF-092: ValuesManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-092")]
     public async Task RepeatedGetCurrencies_NoMemoryLeak()
     {
         await SeedCurrenciesAsync(50);
@@ -327,7 +349,9 @@ public class ValuesManagerPerformanceTests : PerformanceTestBase
             $"Memory grew {growthMb}MB after 100 ops — possible leak");
     }
 
-    [Fact(Skip = "DEF-092: ValuesManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-092")]
     public async Task GcPressure_HighThroughput_DoesNotDegrade()
     {
         await SeedCurrenciesAsync(30);
@@ -352,7 +376,9 @@ public class ValuesManagerPerformanceTests : PerformanceTestBase
 
     #region EF Core — AsNoTracking Verification
 
-    [Fact(Skip = "DEF-092: ValuesManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-092")]
     public async Task GetCountries_AsNoTracking_ReadOnlyQueryOptimized()
     {
         await SeedCountriesAsync(100);
@@ -370,7 +396,9 @@ public class ValuesManagerPerformanceTests : PerformanceTestBase
 
     #region Benchmark Report
 
-    [Fact(Skip = "DEF-092: ValuesManager operations exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-092")]
     public async Task Benchmark_AllOperations_ReportTimings()
     {
         await SeedReferenceDataAsync();

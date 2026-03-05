@@ -70,7 +70,8 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
         }
 
         // --- Negative ---
-        [Fact(Skip = "DEF-060: ReplaceCriteria uses wrong BindingFlags — RBAC filter never applied to Criteria")]
+        [Fact]
+        [Trait("Defect", "DEF-060")]
         public void Criteria_InteractionReadRole_ExcludesOtherUsersInteractions()
         {
             var user = CreateUser(1, "INTERACTION_READ");
@@ -89,7 +90,9 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             spec.Criteria.Compile()(CreateInteraction(createdBy: 1)).Should().BeTrue();
         }
 
-        [Fact(Skip = "DEF-060: ReplaceCriteria uses wrong BindingFlags — RBAC filter never applied to Criteria")]
+        [Fact]
+
+        [Trait("Defect", "DEF-060")]
         public void Criteria_InteractionReadRole_ExcludesUnassignedInteractions()
         {
             var user = CreateUser(5, "INTERACTION_READ");
@@ -195,7 +198,9 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             interactions.Where(spec.Criteria.Compile()).Should().HaveCount(3);
         }
 
-        [Fact(Skip = "DEF-060: ReplaceCriteria uses wrong BindingFlags — RBAC filter never applied to Criteria")]
+        [Fact]
+
+        [Trait("Defect", "DEF-060")]
         public void Criteria_InteractionRead_OnlyOwnOrAssigned()
         {
             var user = CreateUser(5, "INTERACTION_READ");
@@ -212,7 +217,9 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             interactions.Where(spec.Criteria.Compile()).Should().HaveCount(3);
         }
 
-        [Fact(Skip = "DEF-060: ReplaceCriteria uses wrong BindingFlags — RBAC filter never applied to Criteria")]
+        [Fact]
+
+        [Trait("Defect", "DEF-060")]
         public void Criteria_PartnerManagerNoOrgUnit_OnlyCreated()
         {
             var user = CreateUser(7, "PARTNER_MANAGER");

@@ -378,7 +378,9 @@ public class AuditLogManagerPerformanceTests : PerformanceTestBase
             $"Possible N+1 — query took {_stopwatch.ElapsedMilliseconds}ms for 50 records");
     }
 
-    [Fact(Skip = "DEF-085: AuditLogManager AsNoTracking query not measurably faster than tracked")]
+    [Fact]
+
+    [Trait("Defect", "DEF-085")]
     public async Task AsNoTracking_ReadOnlyQuery_CompletesFasterOrComparable()
     {
         var (entityType, entityId) = await SeedAuditLogsAsync("Partner", 60, 100);

@@ -268,7 +268,9 @@ public class PartnerTreePerformanceTests : PerformanceTestBase
             $"Average read under 50 parallel calls exceeded threshold: {avgMs}ms");
     }
 
-    [Fact(Skip = "DEF-093: PartnerTreeManager concurrent reads exceed performance thresholds")]
+    [Fact]
+
+    [Trait("Defect", "DEF-093")]
     public async Task ConcurrentReads_20ParallelGetPartnerTree_MaintainsPerformance()
     {
         var tree = await SeedPartnerTreeAsync();

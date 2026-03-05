@@ -362,7 +362,9 @@ public class SystemAdminManagerPerformanceTests : PerformanceTestBase
             $"Possible N+1 — query took {_stopwatch.ElapsedMilliseconds}ms for 50 records");
     }
 
-    [Fact(Skip = "DEF-070: SystemAdminManager AsNoTracking query not faster than tracked query")]
+    [Fact]
+
+    [Trait("Defect", "DEF-070")]
     public async Task AsNoTracking_SeedScriptQuery_CompletesFasterThanTracking()
     {
         await SeedScriptsAsync(100);
