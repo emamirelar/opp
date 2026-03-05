@@ -967,7 +967,12 @@ jobs:
         echo "- Angular Build + Lint + Security: ${{ needs.frontend-tests.result }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### E2E Browser Tests" >> $GITHUB_STEP_SUMMARY
-        echo "- Playwright Smoke Tests (6 specs, ~50 tests, Chromium): ${{ needs.playwright-smoke.result }}" >> $GITHUB_STEP_SUMMARY
+        PW_RESULT="${{ needs.playwright-smoke.result }}"
+        if [[ "$PW_RESULT" == "skipped" ]]; then
+          echo "- Playwright Smoke Tests: ⏭️ skipped (runs on push/PR only; nightly uses full suite)" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- Playwright Smoke Tests (6 specs, ~50 tests, Chromium): $PW_RESULT" >> $GITHUB_STEP_SUMMARY
+        fi
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## Pipeline Optimizations Applied" >> $GITHUB_STEP_SUMMARY
         echo "- NuGet package caching" >> $GITHUB_STEP_SUMMARY
@@ -985,17 +990,21 @@ jobs:
         PRES="${{ needs.presentation-tests.result }}"
         FE="${{ needs.frontend-tests.result }}"
         PW="${{ needs.playwright-smoke.result }}"
-        if [[ "$SMOKE" == "success" ]] && [[ "$FAST" == "success" ]] && [[ "$BIZ" == "success" ]] && [[ "$PRES" == "success" ]] && [[ "$FE" == "success" ]] && [[ "$PW" == "success" ]]; then
-          echo "All PR checks passing" >> $GITHUB_STEP_SUMMARY
+
+        # Helper: treat "success" and "skipped" as passing (skipped = conditional job didn't apply)
+        is_ok() { [[ "$1" == "success" || "$1" == "skipped" ]]; }
+
+        if is_ok "$SMOKE" && is_ok "$FAST" && is_ok "$BIZ" && is_ok "$PRES" && is_ok "$FE" && is_ok "$PW"; then
+          echo "All checks passing" >> $GITHUB_STEP_SUMMARY
         else
           echo "One or more test suites failed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [[ "$SMOKE" != "success" ]]; then echo "- Smoke Tests: $SMOKE" >> $GITHUB_STEP_SUMMARY; fi
-          if [[ "$FAST" != "success" ]]; then echo "- Fast Logic Tests: $FAST" >> $GITHUB_STEP_SUMMARY; fi
-          if [[ "$BIZ" != "success" ]]; then echo "- Business Logic Tests: $BIZ" >> $GITHUB_STEP_SUMMARY; fi
-          if [[ "$PRES" != "success" ]]; then echo "- Presentation Tests: $PRES" >> $GITHUB_STEP_SUMMARY; fi
-          if [[ "$FE" != "success" ]]; then echo "- Frontend Tests: $FE" >> $GITHUB_STEP_SUMMARY; fi
-          if [[ "$PW" != "success" ]]; then echo "- Playwright E2E Smoke: $PW" >> $GITHUB_STEP_SUMMARY; fi
+          if [[ "$SMOKE" == "failure" ]]; then echo "- Smoke Tests: $SMOKE" >> $GITHUB_STEP_SUMMARY; fi
+          if [[ "$FAST" == "failure" ]]; then echo "- Fast Logic Tests: $FAST" >> $GITHUB_STEP_SUMMARY; fi
+          if [[ "$BIZ" == "failure" ]]; then echo "- Business Logic Tests: $BIZ" >> $GITHUB_STEP_SUMMARY; fi
+          if [[ "$PRES" == "failure" ]]; then echo "- Presentation Tests: $PRES" >> $GITHUB_STEP_SUMMARY; fi
+          if [[ "$FE" == "failure" ]]; then echo "- Frontend Tests: $FE" >> $GITHUB_STEP_SUMMARY; fi
+          if [[ "$PW" == "failure" ]]; then echo "- Playwright E2E Smoke: $PW" >> $GITHUB_STEP_SUMMARY; fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Troubleshooting" >> $GITHUB_STEP_SUMMARY
           echo "1. Review test logs above for specific failures" >> $GITHUB_STEP_SUMMARY
@@ -1005,7 +1014,13 @@ jobs:
         fi
     
     - name: Check Critical Tests
-      if: needs.smoke-tests.result != 'success' || needs.fast-tests.result != 'success' || needs.business-tests.result != 'success' || needs.presentation-tests.result != 'success' || needs.frontend-tests.result != 'success' || needs.playwright-smoke.result != 'success'
+      if: >
+        needs.smoke-tests.result == 'failure' ||
+        needs.fast-tests.result == 'failure' ||
+        needs.business-tests.result == 'failure' ||
+        needs.presentation-tests.result == 'failure' ||
+        needs.frontend-tests.result == 'failure' ||
+        needs.playwright-smoke.result == 'failure'
       run: |
         echo "One or more test suites failed!"
         exit 1
