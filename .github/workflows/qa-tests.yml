@@ -461,7 +461,9 @@ jobs:
       id: run-frontend-tests
       continue-on-error: true
       working-directory: UNOPS.PAO.ClientApp
-      run: npm run test:ci
+      run: |
+        npm run test:ci 2>&1 | tee frontend-test-output.log
+        exit ${PIPESTATUS[0]}
       env:
         CHROME_BIN: /usr/bin/google-chrome-stable
     
@@ -472,10 +474,29 @@ jobs:
         name: frontend-coverage
         path: UNOPS.PAO.ClientApp/coverage
         if-no-files-found: warn
+
+    - name: Upload Frontend Test Log
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: frontend-test-log
+        path: UNOPS.PAO.ClientApp/frontend-test-output.log
+        if-no-files-found: warn
     
     - name: Check Frontend Tests Result
       if: steps.run-frontend-tests.outcome != 'success'
+      working-directory: UNOPS.PAO.ClientApp
       run: |
+        echo "=== Frontend Test Output (last 100 lines) ==="
+        if [ -f frontend-test-output.log ]; then
+          tail -100 frontend-test-output.log
+          echo ""
+          echo "=== Checking for FAILED tests ==="
+          grep -i "FAILED\|ERROR\|TOTAL" frontend-test-output.log | tail -20 || echo "No FAILED/ERROR/TOTAL lines found"
+        else
+          echo "No test output log found"
+        fi
+        echo ""
         echo "::error::Frontend Tests failed or encountered errors"
         exit 1
 
