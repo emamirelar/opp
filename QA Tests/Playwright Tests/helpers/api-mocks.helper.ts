@@ -932,6 +932,34 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
 
   const isCollaborator = userEmail === 'collaborator@example.com';
 
+  // Mock GET /api/workflow/pending-approvals - Pending workflow approvals for Actions Required card
+  await page.route(url => url.toString().includes('/api/workflow/pending-approvals'), async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.continue();
+      return;
+    }
+    mockLog('[API Mock] Intercepted: GET /api/workflow/pending-approvals');
+    // Return mock pending approvals for DoA2 user (used by workflow-actions-required.spec.ts)
+    const mockPendingApprovals = [
+      {
+        entityName: 'Opportunity',
+        entityId: 12,
+        entityDisplayName: 'Healthcare Capacity Building - Go Decision Pending',
+        currentStage: 'IDENTIFY & PROFILE',
+        pendingStage: 'GO',
+        submittedBy: 'Test OM',
+        submittedOn: new Date().toISOString(),
+        orgUnitName: 'HQ - Headquarters',
+        submissionComment: 'Ready for review',
+      },
+    ];
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(mockPendingApprovals),
+    });
+  });
+
   // Mock /api/workflow/{entity} - Workflow stages list (no /id)
   await page.route(url => {
     const urlString = url.toString();
