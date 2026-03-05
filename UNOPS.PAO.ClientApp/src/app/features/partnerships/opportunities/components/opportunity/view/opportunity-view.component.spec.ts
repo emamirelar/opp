@@ -168,11 +168,18 @@ describe('OpportunityViewComponent - Workflow Integration', () => {
       getAll: () => [],
       keys: ['recordId'],
     };
+    const queryParamMap = {
+      get: (_key: string) => null,
+      has: (_key: string) => false,
+      getAll: () => [],
+      keys: [],
+    };
     activatedRoute = {
       params: of({ recordId: '123' }),
       paramMap: of(paramMap),
       queryParams: of({}),
-      snapshot: { paramMap } as any,
+      queryParamMap: of(queryParamMap),
+      snapshot: { paramMap, queryParamMap } as any,
     };
 
     await TestBed.configureTestingModule({
