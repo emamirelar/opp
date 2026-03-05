@@ -38,7 +38,7 @@ test.describe('Interactions List', () => {
     const breadcrumbOrNav = page.getByText('Interactions').first();
 
     await expect(
-      header.or(title).or(listview).or(breadcrumbOrNav)
+      header.or(title).or(listview).or(breadcrumbOrNav).first()
     ).toBeVisible({ timeout: 15000 });
 
     const icon = page.locator('.material-icons, .material-symbols-outlined, .pi').first();
@@ -249,7 +249,7 @@ test.describe('Interactions List', () => {
     const appListview = page.locator('app-listview').first();
 
     await expect(
-      emptyStateMessage.or(header).or(listview).or(appListview)
+      emptyStateMessage.or(header).or(listview).or(appListview).first()
     ).toBeVisible({ timeout: 15000 });
   });
 
@@ -292,7 +292,7 @@ test.describe('Interactions List', () => {
     const appListview = page.locator('app-listview').first();
 
     await expect(
-      header.or(title).or(listview).or(appListview)
+      header.or(title).or(listview).or(appListview).first()
     ).toBeVisible({ timeout: 15000 });
   });
 });

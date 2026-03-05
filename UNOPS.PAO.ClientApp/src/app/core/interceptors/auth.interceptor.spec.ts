@@ -3,23 +3,18 @@ import { HttpErrorResponse, HttpRequest, HttpEvent, HttpEventType } from '@angul
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { authInterceptor } from './auth.interceptor';
-import { IapSessionRefreshService } from '@core/services/auth';
 
 describe('authInterceptor', () => {
   let mockRouter: jasmine.SpyObj<Router>;
   let mockNext: jasmine.Spy;
-  let mockIapSessionRefresh: jasmine.SpyObj<IapSessionRefreshService>;
 
   beforeEach(() => {
     mockRouter = jasmine.createSpyObj('Router', ['navigate'], { url: '/dashboard' });
     mockNext = jasmine.createSpy('next');
-    mockIapSessionRefresh = jasmine.createSpyObj('IapSessionRefreshService', ['refreshSession']);
-    mockIapSessionRefresh.shouldRun = jasmine.createSpy('shouldRun').and.returnValue(false);
 
     TestBed.configureTestingModule({
       providers: [
-        { provide: Router, useValue: mockRouter },
-        { provide: IapSessionRefreshService, useValue: mockIapSessionRefresh }
+        { provide: Router, useValue: mockRouter }
       ]
     });
   });

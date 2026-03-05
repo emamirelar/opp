@@ -175,7 +175,7 @@ test.describe('Opportunities List', () => {
     );
 
     await expect(
-      listview.first().or(emptyStateMessage.first()).or(pageHeader.first())
+      listview.first().or(emptyStateMessage.first()).or(pageHeader.first()).first()
     ).toBeVisible({ timeout: 15000 });
   });
 
