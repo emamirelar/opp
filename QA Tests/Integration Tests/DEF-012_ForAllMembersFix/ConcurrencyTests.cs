@@ -114,7 +114,9 @@ public class ConcurrencyTests
         dest.Name.Should().Be("Seq49");
     }
 
-    [Fact(Skip = "DEF-023: AutoMapper throws DuplicateTypeMapConfigurationException — duplicate CreateMap calls across profiles")]
+    [Fact]
+
+    [Trait("Defect", "DEF-023")]
     [Trait("DEF012", "CONC_006")]
     public void CONC_006_MapDuringConfigValidation()
     {
@@ -220,7 +222,9 @@ public class ConcurrencyTests
         results.Should().OnlyContain(d => d.Name == "P");
     }
 
-    [Fact(Skip = "DEF-023: AutoMapper maps FundingPartners — collection ignore rule not configured")]
+    [Fact]
+
+    [Trait("Defect", "DEF-023")]
     [Trait("DEF012", "CONC_014")]
     public void CONC_014_CollectionIgnore_UnderConcurrency()
     {

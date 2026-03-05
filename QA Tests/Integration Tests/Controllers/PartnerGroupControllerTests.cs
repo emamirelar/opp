@@ -132,7 +132,8 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// TC-PGC-003: Create group
     /// Verifies creation of new partner group
     /// </summary>
-    [Fact(Skip = "DEF-036: PartnerGroupController does not implement POST endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PGC-003")]
@@ -163,7 +164,8 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// TC-PGC-004: Update group
     /// Verifies successful update of existing group
     /// </summary>
-    [Fact(Skip = "DEF-036: PartnerGroupController does not implement PUT endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PGC-004")]
@@ -194,7 +196,8 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// TC-PGC-005: Delete group
     /// Verifies deletion of unused group
     /// </summary>
-    [Fact(Skip = "DEF-036: PartnerGroupController does not implement DELETE endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PGC-005")]
@@ -236,7 +239,8 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// TC-PGC-007: Create - validation
     /// Verifies validation of required fields
     /// </summary>
-    [Fact(Skip = "DEF-036: PartnerGroupController does not implement POST endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PGC-007")]
@@ -261,7 +265,8 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// TC-PGC-008: Duplicate name prevented
     /// Verifies that duplicate group names are rejected
     /// </summary>
-    [Fact(Skip = "DEF-036: PartnerGroupController does not implement POST endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PGC-008")]
@@ -290,7 +295,8 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// TC-PGC-009: Get group members
     /// Verifies retrieval of all partners in a group
     /// </summary>
-    [Fact(Skip = "DEF-036: PartnerGroupController does not implement members endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PGC-009")]
@@ -316,7 +322,8 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// TC-PGC-010: Add member
     /// Verifies adding a partner to a group
     /// </summary>
-    [Fact(Skip = "DEF-036: PartnerGroupController does not implement members endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PGC-010")]
@@ -338,7 +345,8 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// TC-PGC-011: Remove member
     /// Verifies removing a partner from a group
     /// </summary>
-    [Fact(Skip = "DEF-036: PartnerGroupController does not implement members endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PGC-011")]
@@ -360,7 +368,8 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// TC-PGC-012: Add multiple members
     /// Verifies bulk addition of members to a group
     /// </summary>
-    [Fact(Skip = "DEF-036: PartnerGroupController does not implement members endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PGC-012")]
@@ -404,7 +413,8 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// TC-PGC-014: Get member count
     /// Verifies retrieval of group member count
     /// </summary>
-    [Fact(Skip = "DEF-036: PartnerGroupController does not implement members endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PGC-014")]
@@ -466,7 +476,8 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// TC-PGC-016: Get partner's groups
     /// Verifies retrieval of all groups containing a partner
     /// </summary>
-    [Fact(Skip = "DEF-036: PartnerController does not implement /partners/{id}/groups endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PGC-016")]
@@ -496,7 +507,8 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// TC-PGC-017: Get for dropdown
     /// Verifies simplified list for UI dropdowns
     /// </summary>
-    [Fact(Skip = "DEF-036: PartnerGroupController does not implement dropdown endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PGC-017")]
@@ -599,7 +611,8 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// TC-PGC-A002: Write requires admin
     /// Verifies that only admin users can create/update groups
     /// </summary>
-    [Fact(Skip = "DEF-036: PartnerGroupController does not implement POST endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PGC-A002")]
@@ -624,7 +637,8 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// TC-PGC-A003: Member management permissions
     /// Verifies role-based permissions for member management
     /// </summary>
-    [Fact(Skip = "DEF-036: PartnerGroupController does not implement members endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PGC-A003")]

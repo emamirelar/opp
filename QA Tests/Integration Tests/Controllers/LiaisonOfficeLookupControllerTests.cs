@@ -78,7 +78,8 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// TC-LOLC-001: Get liaison office by ID
     /// Verifies retrieval of office details by ID
     /// </summary>
-    [Fact(Skip = "DEF-034: LiaisonOfficeLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-001")]
@@ -104,7 +105,8 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// TC-LOLC-002: Get liaison office by code
     /// Verifies retrieval of office by unique code
     /// </summary>
-    [Fact(Skip = "DEF-034: LiaisonOfficeLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-002")]
@@ -130,7 +132,8 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// TC-LOLC-003: Get all for dropdown
     /// Verifies retrieval of simplified list for UI dropdowns
     /// </summary>
-    [Fact(Skip = "DEF-034: LiaisonOfficeLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-003")]
@@ -155,7 +158,8 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// TC-LOLC-004: Get by ID - not found
     /// Verifies handling of non-existent office ID
     /// </summary>
-    [Fact(Skip = "DEF-034: LiaisonOfficeLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-004")]
@@ -176,7 +180,8 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// TC-LOLC-005: Get by code - not found
     /// Verifies handling of non-existent office code
     /// </summary>
-    [Fact(Skip = "DEF-034: LiaisonOfficeLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-005")]
@@ -197,7 +202,8 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// TC-LOLC-006: Get active offices only
     /// Verifies filtering by active status
     /// </summary>
-    [Fact(Skip = "DEF-034: LiaisonOfficeLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-006")]
@@ -222,7 +228,8 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// TC-LOLC-007: Get by country
     /// Verifies filtering offices by country
     /// </summary>
-    [Fact(Skip = "DEF-034: LiaisonOfficeLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-007")]
@@ -248,7 +255,8 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// TC-LOLC-008: Get by region
     /// Verifies filtering offices by geographic region
     /// </summary>
-    [Fact(Skip = "DEF-034: LiaisonOfficeLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-008")]
@@ -278,7 +286,8 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// TC-LOLC-009: Typeahead search
     /// Verifies quick search for autocomplete functionality
     /// </summary>
-    [Fact(Skip = "DEF-034: LiaisonOfficeLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-LOLC-009")]
@@ -304,7 +313,8 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// TC-LOLC-010: Typeahead - minimum chars
     /// Verifies minimum character requirement for search
     /// </summary>
-    [Fact(Skip = "DEF-034: LiaisonOfficeLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-LOLC-010")]
@@ -326,7 +336,8 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// TC-LOLC-011: Typeahead - result limit
     /// Verifies that results are limited to reasonable count
     /// </summary>
-    [Fact(Skip = "DEF-034: LiaisonOfficeLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-LOLC-011")]
@@ -353,7 +364,8 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// TC-LOLC-012: Search with filters
     /// Verifies combined search and filter operations
     /// </summary>
-    [Fact(Skip = "DEF-034: LiaisonOfficeLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-LOLC-012")]
@@ -380,7 +392,8 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// TC-LOLC-013: Sort by name
     /// Verifies alphabetical ordering of results
     /// </summary>
-    [Fact(Skip = "DEF-034: LiaisonOfficeLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-LOLC-013")]
@@ -405,7 +418,8 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// TC-LOLC-014: Include inactive
     /// Verifies inclusion of all statuses when requested
     /// </summary>
-    [Fact(Skip = "DEF-034: LiaisonOfficeLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-LOLC-014")]
@@ -434,7 +448,8 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// TC-LOLC-A001: Unauthenticated denied
     /// Verifies that unauthenticated requests are rejected
     /// </summary>
-    [Fact(Skip = "DEF-034: LiaisonOfficeLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-A001")]
@@ -456,7 +471,8 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// TC-LOLC-A002: Authenticated access
     /// Verifies that authenticated users can access lookup
     /// </summary>
-    [Fact(Skip = "DEF-034: LiaisonOfficeLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-A002")]
@@ -476,7 +492,8 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// TC-LOLC-A003: Org unit filter applied
     /// Verifies that results are filtered by user's org unit permissions
     /// </summary>
-    [Fact(Skip = "DEF-034: LiaisonOfficeLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-A003")]
@@ -503,7 +520,8 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// TC-LOLC-A004: Admin sees all
     /// Verifies that admin users bypass org unit filtering
     /// </summary>
-    [Fact(Skip = "DEF-034: LiaisonOfficeLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-A004")]

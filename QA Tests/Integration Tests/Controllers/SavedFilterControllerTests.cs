@@ -246,7 +246,8 @@ public class SavedFilterControllerTests : IntegrationTestBase
     /// TC-SFC-007: Share filter with user
     /// Verifies sharing a filter with another user
     /// </summary>
-    [Fact(Skip = "DEF-031: SavedFilterController does not implement share endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-031")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-SFC-007")]
@@ -268,7 +269,8 @@ public class SavedFilterControllerTests : IntegrationTestBase
     /// TC-SFC-008: Share filter with role
     /// Verifies sharing a filter with all users in a role
     /// </summary>
-    [Fact(Skip = "DEF-031: SavedFilterController does not implement share endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-031")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-SFC-008")]
@@ -290,7 +292,8 @@ public class SavedFilterControllerTests : IntegrationTestBase
     /// TC-SFC-009: Get shared filters
     /// Verifies retrieval of filters shared with current user
     /// </summary>
-    [Fact(Skip = "DEF-031: SavedFilterController does not implement share endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-031")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-SFC-009")]
@@ -315,7 +318,8 @@ public class SavedFilterControllerTests : IntegrationTestBase
     /// TC-SFC-010: Remove share
     /// Verifies removal of filter sharing
     /// </summary>
-    [Fact(Skip = "DEF-031: SavedFilterController does not implement share endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-031")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-SFC-010")]
@@ -337,7 +341,8 @@ public class SavedFilterControllerTests : IntegrationTestBase
     /// TC-SFC-011: Duplicate filter
     /// Verifies cloning a saved filter
     /// </summary>
-    [Fact(Skip = "DEF-031: SavedFilterController does not implement duplicate endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-031")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-SFC-011")]
@@ -367,7 +372,8 @@ public class SavedFilterControllerTests : IntegrationTestBase
     /// TC-SFC-012: Set as default
     /// Verifies setting a filter as default for entity type
     /// </summary>
-    [Fact(Skip = "DEF-031: SavedFilterController does not implement default endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-031")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-SFC-012")]
@@ -388,7 +394,8 @@ public class SavedFilterControllerTests : IntegrationTestBase
     /// TC-SFC-013: Get default filter
     /// Verifies retrieval of default filter for entity type
     /// </summary>
-    [Fact(Skip = "DEF-031: SavedFilterController does not implement default endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-031")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-SFC-013")]
@@ -414,7 +421,8 @@ public class SavedFilterControllerTests : IntegrationTestBase
     /// TC-SFC-014: Clear default
     /// Verifies clearing default filter for entity type
     /// </summary>
-    [Fact(Skip = "DEF-031: SavedFilterController does not implement default endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-031")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-SFC-014")]
@@ -435,7 +443,8 @@ public class SavedFilterControllerTests : IntegrationTestBase
     /// TC-SFC-015: Export filter
     /// Verifies exporting filter as JSON
     /// </summary>
-    [Fact(Skip = "DEF-031: SavedFilterController does not implement export endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-031")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-SFC-015")]

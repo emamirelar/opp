@@ -22,7 +22,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
 
     private const string SkipReason = "DEF-021/DEF-024: DocumentController blocked by route conflict and Google Secret Manager dependency";
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-001")]
     public async Task CreatePdf_ResponseHasApplicationPdfContentType()
     {
@@ -31,7 +33,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/pdf");
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-002")]
     public async Task CreatePdf_ResponseHasNonZeroContentLength()
     {
@@ -41,7 +45,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         bytes.Length.Should().BeGreaterThan(0);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-003")]
     public async Task CreatePdf_PdfStartsWithPdfMagicBytes()
     {
@@ -55,7 +61,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         bytes[3].Should().Be(0x46); // F
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-004")]
     public async Task CreatePdf_ContentReflectedInPdfBytes()
     {
@@ -67,7 +75,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         text.Should().Contain("UniqueMarker");
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-005")]
     public async Task CreatePdf_FilenameReflectedInContentDisposition()
     {
@@ -77,7 +87,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         response.Content.Headers.ContentDisposition?.FileName.Should().Contain("Report");
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-006")]
     public async Task CreatePdf_SameContentProducesConsistentResult()
     {
@@ -90,7 +102,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         b1.Length.Should().Be(b2.Length);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-007")]
     public async Task CreatePdf_DifferentContentProducesDifferentPdf()
     {
@@ -102,7 +116,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         b1.Should().NotBeEquivalentTo(b2);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-008")]
     public async Task CreatePdf_ResponseAllowsCachingOrNoStore()
     {
@@ -111,7 +127,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         response.Headers.CacheControl.Should().NotBeNull();
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-009")]
     public async Task CreatePdf_RequestAcceptsUtf8Encoding()
     {
@@ -121,7 +139,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-010")]
     public async Task CreatePdf_MarkdownHeadersMapToPdfStructure()
     {
@@ -134,7 +154,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         text.Should().Contain("H2");
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-011")]
     public async Task CreatePdf_BoldMarkdownReflectedInPdf()
     {
@@ -145,7 +167,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         bytes.Should().NotBeEmpty();
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-012")]
     public async Task CreatePdf_ListMarkdownReflectedInPdf()
     {
@@ -158,7 +182,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         text.Should().Contain("Two");
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-013")]
     public async Task CreatePdf_LinkMarkdownReflectedInPdf()
     {
@@ -169,7 +195,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         bytes.Should().NotBeEmpty();
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-014")]
     public async Task CreatePdf_TableMarkdownReflectedInPdf()
     {
@@ -180,7 +208,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         bytes.Should().NotBeEmpty();
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-015")]
     public async Task CreatePdf_ResponseHasValidPdfStructure()
     {
@@ -191,7 +221,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         bytes[0].Should().Be(0x25);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-016")]
     public async Task CreatePdf_EmptyFilenameUsesDefaultInResponse()
     {
@@ -200,7 +232,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         response.Content.Headers.ContentDisposition?.FileName.Should().NotBeNullOrEmpty();
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-017")]
     public async Task CreatePdf_LongerContentProducesLargerPdf()
     {
@@ -212,7 +246,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         b2.Length.Should().BeGreaterOrEqualTo(b1.Length);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-018")]
     public async Task CreatePdf_ResponseStatusCodeIs200()
     {
@@ -221,7 +257,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-019")]
     public async Task CreatePdf_ResponseHasContentLengthHeader()
     {
@@ -230,7 +268,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         response.Content.Headers.ContentLength.Should().BeGreaterThan(0);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-020")]
     public async Task CreatePdf_ContentPreservesParagraphBreaks()
     {
@@ -243,7 +283,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         text.Should().Contain("P2");
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-021")]
     public async Task CreatePdf_ConsecutiveCallsSucceed()
     {
@@ -255,7 +297,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         }
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-022")]
     public async Task CreatePdf_EndpointRequiresPost()
     {
@@ -264,7 +308,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.MethodNotAllowed);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-023")]
     public async Task CreatePdf_JsonPropertyNamesAreCaseInsensitive()
     {
@@ -273,7 +319,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-024")]
     public async Task CreatePdf_OptionalFilenameCanBeOmitted()
     {
@@ -282,7 +330,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-025")]
     public async Task CreatePdf_ResponseIsBinaryNotJson()
     {
@@ -291,7 +341,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         response.Content.Headers.ContentType?.MediaType.Should().NotBe("application/json");
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-026")]
     public async Task CreatePdf_MarkdownCodeBlockPreserved()
     {
@@ -303,7 +355,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         text.Should().Contain("code");
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-027")]
     public async Task CreatePdf_BlockquotePreserved()
     {
@@ -315,7 +369,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         text.Should().Contain("Quote");
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-028")]
     public async Task CreatePdf_InlineCodePreserved()
     {
@@ -327,7 +383,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         text.Should().Contain("code");
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-029")]
     public async Task CreatePdf_ItalicMarkdownReflectedInPdf()
     {
@@ -338,7 +396,9 @@ public class FunctionalTests : PdfGenerationTestFixtureBase
         bytes.Should().NotBeEmpty();
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-FUN-030")]
     public async Task CreatePdf_ComplexMarkdownCombination_ConvertsCorrectly()
     {

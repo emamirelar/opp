@@ -25,7 +25,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
 
     private const string SkipReason = "DEF-021/DEF-024: DocumentController blocked by route conflict and Google Secret Manager dependency";
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-001")]
     public async Task CreatePdf_FullRequestResponseCycle_Succeeds()
     {
@@ -37,7 +39,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         bytes.Should().NotBeEmpty();
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-002")]
     public async Task CreatePdf_ThroughDocumentController_ReturnsPdf()
     {
@@ -46,7 +50,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/pdf");
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-003")]
     public async Task CreatePdf_WithDbContextAvailable_DoesNotCorruptDb()
     {
@@ -58,7 +64,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         await ctx.Database.CanConnectAsync();
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-004")]
     public async Task CreatePdf_OpportunityStatementFlow_GeneratesPdf()
     {
@@ -71,7 +79,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         bytes.Should().NotBeEmpty();
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-005")]
     public async Task CreatePdf_MultipleSequentialRequests_AllSucceed()
     {
@@ -83,7 +93,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         }
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-006")]
     public async Task CreatePdf_AuthenticatedUserFlow_Completes()
     {
@@ -92,7 +104,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-007")]
     public async Task CreatePdf_JsonSerializationRoundTrip_PreservesContent()
     {
@@ -105,7 +119,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-008")]
     public async Task CreatePdf_ServiceResolution_Succeeds()
     {
@@ -116,7 +132,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-009")]
     public async Task CreatePdf_ReportGenerationFlow_ProducesPdf()
     {
@@ -128,7 +146,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         (await response.Content.ReadAsByteArrayAsync()).Should().NotBeEmpty();
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-010")]
     public async Task CreatePdf_ExportFlow_ReturnsDownloadablePdf()
     {
@@ -138,7 +158,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         response.Content.Headers.ContentDisposition.Should().NotBeNull();
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-011")]
     public async Task CreatePdf_ConcurrentRequests_AllComplete()
     {
@@ -149,7 +171,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         responses.Should().OnlyContain(r => r.StatusCode == HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-012")]
     public async Task CreatePdf_ApiContract_MatchesExpectedShape()
     {
@@ -160,7 +184,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         bytes.Should().NotBeEmpty();
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-013")]
     public async Task CreatePdf_EndToEndWithRealMarkdown_Completes()
     {
@@ -170,7 +196,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-014")]
     public async Task CreatePdf_HttpClientReuse_WorksCorrectly()
     {
@@ -181,7 +209,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         r2.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-015")]
     public async Task CreatePdf_RequestPipeline_CompletesWithoutException()
     {
@@ -191,7 +221,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-016")]
     public async Task CreatePdf_ResponsePipeline_ReturnsValidPdf()
     {
@@ -202,7 +234,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         bytes[1].Should().Be(0x50);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-017")]
     public async Task CreatePdf_IntegrationWithDocumentFeature_Works()
     {
@@ -211,7 +245,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         response.IsSuccessStatusCode.Should().BeTrue();
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-018")]
     public async Task CreatePdf_FactoryCreatesValidClient()
     {
@@ -220,7 +256,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         client.BaseAddress.Should().NotBeNull();
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-019")]
     public async Task CreatePdf_BaseUrlResolvesCorrectly()
     {
@@ -229,7 +267,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         response.RequestMessage.RequestUri.Should().NotBeNull();
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-020")]
     public async Task CreatePdf_OpportunityStatementToPdfFlow_EndToEnd()
     {
@@ -244,7 +284,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         text.Should().Contain("Opportunity");
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-021")]
     public async Task CreatePdf_MarkdownToPdfConversionFlow_Completes()
     {
@@ -255,7 +297,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/pdf");
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-022")]
     public async Task CreatePdf_ScopedServices_ResolveCorrectly()
     {
@@ -267,7 +311,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-023")]
     public async Task CreatePdf_ContentEncoding_HandlesUtf8()
     {
@@ -277,7 +323,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-024")]
     public async Task CreatePdf_ResponseStream_Readable()
     {
@@ -288,7 +336,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         stream.CanRead.Should().BeTrue();
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-025")]
     public async Task CreatePdf_RequestHeaders_Accepted()
     {
@@ -298,7 +348,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-026")]
     public async Task CreatePdf_ResponseHeaders_Present()
     {
@@ -308,7 +360,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         response.Content.Headers.ContentLength.Should().BeGreaterThan(0);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-027")]
     public async Task CreatePdf_GenerateStatementThenPdf_Flow()
     {
@@ -320,7 +374,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         (await response.Content.ReadAsByteArrayAsync()).Length.Should().BeGreaterThan(100);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-028")]
     public async Task CreatePdf_FullDocumentWorkflow_Completes()
     {
@@ -332,7 +388,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         bytes.Should().NotBeEmpty();
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-029")]
     public async Task CreatePdf_CrossComponentFlow_Works()
     {
@@ -343,7 +401,9 @@ public class IntegrationTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-INT-030")]
     public async Task CreatePdf_EndToEndUserJourney_Completes()
     {

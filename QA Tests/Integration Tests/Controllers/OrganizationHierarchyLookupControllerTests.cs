@@ -80,7 +80,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-001: Get org unit by ID
     /// Verifies retrieval of organization unit details by ID
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-001")]
@@ -106,7 +107,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-002: Get all for dropdown
     /// Verifies retrieval of simplified list for UI dropdowns
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-002")]
@@ -131,7 +133,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-003: Get hierarchy tree
     /// Verifies retrieval of full organization hierarchy tree structure
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-003")]
@@ -156,7 +159,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-004: Get user's accessible units
     /// Verifies retrieval of org units accessible to current user
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-004")]
@@ -181,7 +185,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-005: Get by ID - not found
     /// Verifies handling of non-existent org unit ID
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-005")]
@@ -202,7 +207,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-006: Get root org units
     /// Verifies retrieval of top-level org units only
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-006")]
@@ -227,7 +233,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-007: Get children of unit
     /// Verifies retrieval of direct child units
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-007")]
@@ -253,7 +260,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-008: Get ancestors of unit
     /// Verifies retrieval of ancestor chain (path to root)
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-008")]
@@ -283,7 +291,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-009: Get descendants of unit
     /// Verifies retrieval of all nested units recursively
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-OHLC-009")]
@@ -309,7 +318,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-010: Get siblings of unit
     /// Verifies retrieval of units at same level
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-OHLC-010")]
@@ -335,7 +345,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-011: Typeahead search
     /// Verifies quick search for org unit autocomplete
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-OHLC-011")]
@@ -361,7 +372,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-012: Filter by type
     /// Verifies filtering org units by unit type
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-OHLC-012")]
@@ -387,7 +399,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-013: Filter by status
     /// Verifies filtering by active status
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-OHLC-013")]
@@ -412,7 +425,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-014: Tree depth limit
     /// Verifies limiting tree depth in hierarchy retrieval
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-OHLC-014")]
@@ -438,7 +452,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-015: Get unit path
     /// Verifies retrieval of breadcrumb path for an org unit
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-OHLC-015")]
@@ -464,7 +479,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-016: Search in subtree
     /// Verifies searching within a specific branch of hierarchy
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-OHLC-016")]
@@ -495,7 +511,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-017: Get user accessible units - filtered by permissions
     /// Verifies that users see only their permitted org units
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-017")]
@@ -522,7 +539,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-018: Tree respects user permissions
     /// Verifies that hierarchy tree is filtered by user permissions
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-018")]
@@ -553,7 +571,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-A001: Unauthenticated denied
     /// Verifies that unauthenticated requests are rejected
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-A001")]
@@ -575,7 +594,8 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// TC-OHLC-A002: User sees only accessible units
     /// Verifies that results are filtered by user permissions
     /// </summary>
-    [Fact(Skip = "DEF-033: OrganizationHierarchyLookupController is empty stub")]
+    [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-A002")]

@@ -213,7 +213,9 @@ public class UnitTests
         dest.Name.Should().Be("Original");
     }
 
-    [Fact(Skip = "DEF-023: AutoMapper maps FundingPartners — collection ignore rule not configured")]
+    [Fact]
+
+    [Trait("Defect", "DEF-023")]
     [Trait("DEF012", "UNIT_018")]
     public void UNIT_018_MapperConfiguration_IgnoreRulesCount()
     {
@@ -239,7 +241,9 @@ public class UnitTests
         dest.Description.Should().Be("Keep");
     }
 
-    [Fact(Skip = "DEF-023: AutoMapper throws DuplicateTypeMapConfigurationException — duplicate CreateMap calls across profiles")]
+    [Fact]
+
+    [Trait("Defect", "DEF-023")]
     [Trait("DEF012", "UNIT_020")]
     public void UNIT_020_MapperConfiguration_NoUnmappedMembersWarning()
     {
@@ -251,7 +255,9 @@ public class UnitTests
         config.Invoking(c => c.AssertConfigurationIsValid()).Should().NotThrow();
     }
 
-    [Fact(Skip = "DEF-023: AutoMapper throws DuplicateTypeMapConfigurationException — duplicate CreateMap calls across profiles")]
+    [Fact]
+
+    [Trait("Defect", "DEF-023")]
     [Trait("DEF012", "UNIT_021")]
     public void UNIT_021_MapperConfiguration_AssertConfigurationIsValidPasses()
     {

@@ -327,7 +327,9 @@ public class NegativeTests : PNO1197TestFixtureBase, IDisposable
             .Which.Success.Should().BeFalse();
     }
 
-    [Fact(Skip = "DEF-008: Submit validation does not filter soft-deleted entity roles")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     public async Task NEG_013_DoAHolderRoleWithIsDeletedTrue_Fails()
     {
         await SeedOpportunityAsync(13, "IDENTIFY & PROFILE");
@@ -711,7 +713,9 @@ public class NegativeTests : PNO1197TestFixtureBase, IDisposable
             .Which.Success.Should().BeTrue();
     }
 
-    [Fact(Skip = "DEF-008: Submit validation does not check entity role status")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     public async Task NEG_029_DoAHolderWithDeactivatedRole_Fails()
     {
         await SeedOpportunityAsync(29, "IDENTIFY & PROFILE");
@@ -786,7 +790,9 @@ public class NegativeTests : PNO1197TestFixtureBase, IDisposable
         response.UnmetRequirements.Should().Contain(r => r.Contains("managerRequired", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact(Skip = "DEF-008: Submit validation does not enforce countries requirement")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     public async Task NEG_032_MissingCountries_Fails()
     {
         await SeedOpportunityAsync(32, "IDENTIFY & PROFILE");
@@ -804,7 +810,9 @@ public class NegativeTests : PNO1197TestFixtureBase, IDisposable
             .Which.Success.Should().BeFalse();
     }
 
-    [Fact(Skip = "DEF-008: Submit validation does not enforce deliverables requirement")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     public async Task NEG_033_MissingDeliverables_Fails()
     {
         await SeedOpportunityAsync(33, "IDENTIFY & PROFILE");
@@ -822,7 +830,9 @@ public class NegativeTests : PNO1197TestFixtureBase, IDisposable
             .Which.Success.Should().BeFalse();
     }
 
-    [Fact(Skip = "DEF-008: Submit validation does not enforce SDGs requirement")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     public async Task NEG_034_MissingSDGs_Fails()
     {
         await SeedOpportunityAsync(34, "IDENTIFY & PROFILE");
@@ -896,7 +906,9 @@ public class NegativeTests : PNO1197TestFixtureBase, IDisposable
             .Which.Success.Should().BeFalse();
     }
 
-    [Fact(Skip = "DEF-008: Submit validation does not enforce funding partners requirement")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     public async Task NEG_038_MissingFundingPartners_Fails()
     {
         await SeedOpportunityAsync(38, "IDENTIFY & PROFILE");
@@ -914,7 +926,9 @@ public class NegativeTests : PNO1197TestFixtureBase, IDisposable
             .Which.Success.Should().BeFalse();
     }
 
-    [Fact(Skip = "DEF-008: Submit validation does not enforce client partners requirement")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     public async Task NEG_039_MissingClientPartners_Fails()
     {
         await SeedOpportunityAsync(39, "IDENTIFY & PROFILE");

@@ -162,7 +162,9 @@ public class DocumentSecurityAndConcurrencyTests
         results.Should().AllSatisfy(r => r.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound, HttpStatusCode.BadRequest, HttpStatusCode.Unauthorized, HttpStatusCode.InternalServerError));
     }
 
-    [Fact(Skip = "DEF-021: DocumentController route conflict causes 500 instead of proper error codes")]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-DOC-SEC-012")]
     public async Task GetDocumentDownload_Concurrent_AllSucceed()
     {

@@ -106,7 +106,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-001: Get all roles
     /// Verifies retrieval of complete list of system roles
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-001")]
@@ -131,7 +132,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-002: Get role by ID
     /// Verifies retrieval of specific role details including permissions and user count
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-002")]
@@ -157,7 +159,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-003: Create new role
     /// Verifies creation of new role with generated ID
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-003")]
@@ -188,7 +191,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-004: Create role - duplicate name fails
     /// Verifies that duplicate role names are prevented
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-004")]
@@ -213,7 +217,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-005: Update role
     /// Verifies successful update of existing role
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-005")]
@@ -244,7 +249,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-006: Delete role
     /// Verifies deletion of unused role
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-006")]
@@ -265,7 +271,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-007: Delete role with users fails
     /// Verifies that roles with assigned users cannot be deleted
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-007")]
@@ -286,7 +293,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-008: Role audit history tracked
     /// Verifies that role changes are logged in audit history
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-ROLE-008")]
@@ -316,7 +324,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-009: Assign role to user
     /// Verifies successful role assignment to user
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-009")]
@@ -338,7 +347,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-010: Remove role from user
     /// Verifies successful removal of role assignment
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-010")]
@@ -360,7 +370,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-011: Get user roles
     /// Verifies retrieval of all roles assigned to a user
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-011")]
@@ -386,7 +397,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-012: Get role users
     /// Verifies retrieval of all users assigned to a specific role
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-012")]
@@ -412,7 +424,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-013: Assign multiple roles to user
     /// Verifies bulk assignment of multiple roles to a single user
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-013")]
@@ -434,7 +447,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-014: Assign role to non-existent user fails
     /// Verifies that role assignment to non-existent user is rejected
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-014")]
@@ -456,7 +470,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-015: Assign non-existent role fails
     /// Verifies that assignment of non-existent role is rejected
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-015")]
@@ -482,7 +497,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-016: Get role hierarchy
     /// Verifies retrieval of parent-child role relationships
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-ROLE-016")]
@@ -508,7 +524,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-017: Create child role
     /// Verifies creation of role that inherits from parent role
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-ROLE-017")]
@@ -539,7 +556,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-018: Prevent circular role hierarchy
     /// Verifies that circular parent-child relationships are prevented
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-ROLE-018")]
@@ -564,7 +582,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-019: Clone role
     /// Verifies cloning of existing role with new name
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-ROLE-019")]
@@ -594,7 +613,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-020: Get role audit history
     /// Verifies retrieval of complete role change history
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-ROLE-020")]
@@ -624,7 +644,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-A001: Non-admin cannot manage roles
     /// Verifies that regular users cannot access role management endpoints
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-A001")]
@@ -645,7 +666,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-A002: Cannot delete system roles
     /// Verifies that core system roles are protected from deletion
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-A002")]
@@ -666,7 +688,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-A003: Cannot self-assign admin role
     /// Verifies that users cannot grant themselves admin privileges
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-A003")]
@@ -688,7 +711,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-A004: Role scope limits user visibility
     /// Verifies that role scope restricts which users are visible
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-A004")]
@@ -715,7 +739,8 @@ public class RoleControllerTests : IntegrationTestBase
     /// TC-ROLE-A005: Validate role can be assigned
     /// Verifies validation of role assignment constraints
     /// </summary>
-    [Fact(Skip = "DEF-026: RoleController does not implement /api/admin/roles CRUD endpoints")]
+    [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-A005")]

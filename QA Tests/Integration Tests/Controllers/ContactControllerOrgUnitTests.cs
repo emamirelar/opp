@@ -81,7 +81,9 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             };
         }
 
-        [Fact(Skip = "Skipping due to authorization issues in test environment")]
+        [Fact]
+
+        [Trait("Defect", "DEF-TRIAGE")]
         public async Task GetAll_WithOrgUnitIdFilter_ReturnsContactsFromOrgUnitAndDescendants()
         {
             // Arrange
@@ -173,7 +175,9 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             });
         }
 
-        [Fact(Skip = "Skipping due to authorization issues in test environment")]
+        [Fact]
+
+        [Trait("Defect", "DEF-TRIAGE")]
         public async Task GetAll_WithOrgUnitIdFilter_MiddleLevel_ReturnsContactsFromSubtree()
         {
             // Arrange
@@ -226,7 +230,9 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             });
         }
 
-        [Fact(Skip = "Skipping due to authorization issues in test environment")]
+        [Fact]
+
+        [Trait("Defect", "DEF-TRIAGE")]
         public async Task GetAll_WithOrgUnitIdFilter_LeafNode_ReturnsOnlyLeafContacts()
         {
             // Arrange
@@ -270,7 +276,9 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             result!.Records.First().FirstName.Should().Be("Leaf");
         }
 
-        [Fact(Skip = "Skipping due to authorization issues in test environment")]
+        [Fact]
+
+        [Trait("Defect", "DEF-TRIAGE")]
         public async Task GetAll_WithOrgUnitIdAndStatusFilter_AppliesBothFilters()
         {
             // Arrange
@@ -318,7 +326,9 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             result!.Records.All(r => r.FirstName == "Active").Should().BeTrue();
         }
 
-        [Fact(Skip = "Skipping due to authorization issues in test environment")]
+        [Fact]
+
+        [Trait("Defect", "DEF-TRIAGE")]
         public async Task GetAll_WithOrgUnitIdAndNameFilter_AppliesBothFilters()
         {
             // Arrange
@@ -362,7 +372,9 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             result!.Records.All(r => r.FirstName == "John").Should().BeTrue();
         }
 
-        [Fact(Skip = "Skipping due to authorization issues in test environment")]
+        [Fact]
+
+        [Trait("Defect", "DEF-TRIAGE")]
         public async Task GetAll_WithOrgUnitIdAndPagination_ReturnsCorrectPage()
         {
             // Arrange
@@ -403,7 +415,9 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             });
         }
 
-        [Fact(Skip = "Skipping due to authorization issues in test environment")]
+        [Fact]
+
+        [Trait("Defect", "DEF-TRIAGE")]
         public async Task GetAll_WithOrgUnitIdAndAdvancedSearch_FiltersCorrectly()
         {
             // Arrange
@@ -444,7 +458,9 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             result!.Records.All(r => r.Title!.Contains("Manager")).Should().BeTrue();
         }
 
-        [Fact(Skip = "Skipping due to authorization issues in test environment")]
+        [Fact]
+
+        [Trait("Defect", "DEF-TRIAGE")]
         public async Task GetAll_WithNonExistentOrgUnitId_ReturnsEmptyResult()
         {
             // Arrange
@@ -476,7 +492,9 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             result!.Records.Should().BeEmpty();
         }
 
-        [Fact(Skip = "Skipping due to authorization issues in test environment")]
+        [Fact]
+
+        [Trait("Defect", "DEF-TRIAGE")]
         public async Task GetAll_WithOrgUnitIdButNoContacts_ReturnsEmptyResult()
         {
             // Arrange

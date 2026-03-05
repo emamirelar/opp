@@ -29,7 +29,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
 
     private const string SkipReason = "DEF-021/DEF-024: DocumentController blocked by route conflict and Google Secret Manager dependency";
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-001")]
     public async Task CreatePdf_EmptyMarkdown_ReturnsBadRequest()
     {
@@ -40,7 +42,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.UnprocessableEntity);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-002")]
     public async Task CreatePdf_WhitespaceOnlyMarkdown_ReturnsBadRequest()
     {
@@ -51,7 +55,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.UnprocessableEntity);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-003")]
     public async Task CreatePdf_NullContentInRequest_ReturnsBadRequest()
     {
@@ -61,7 +67,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.UnprocessableEntity);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-004")]
     public async Task CreatePdf_EmptyJsonBody_ReturnsBadRequest()
     {
@@ -71,7 +79,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.UnprocessableEntity);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-005")]
     public async Task CreatePdf_MissingContentProperty_ReturnsBadRequest()
     {
@@ -81,7 +91,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.UnprocessableEntity);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-006")]
     public async Task CreatePdf_InvalidJson_ReturnsBadRequest()
     {
@@ -91,7 +103,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-007")]
     public async Task CreatePdf_UnauthenticatedUser_ReturnsUnauthorized()
     {
@@ -102,7 +116,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-008")]
     public async Task CreatePdf_WrongContentType_ReturnsUnsupportedMediaType()
     {
@@ -112,7 +128,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.UnsupportedMediaType, HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-009")]
     public async Task CreatePdf_ContentAsArray_ReturnsBadRequest()
     {
@@ -122,7 +140,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.UnprocessableEntity);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-010")]
     public async Task CreatePdf_ContentAsNumber_ReturnsBadRequest()
     {
@@ -132,7 +152,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.UnprocessableEntity);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-011")]
     public async Task CreatePdf_ContentAsBoolean_ReturnsBadRequest()
     {
@@ -142,7 +164,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.UnprocessableEntity);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-012")]
     public async Task CreatePdf_InvalidMarkdownSyntax_StillReturnsPdfOrError()
     {
@@ -153,7 +177,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-013")]
     public async Task CreatePdf_GetMethod_ReturnsMethodNotAllowed()
     {
@@ -163,7 +189,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.MethodNotAllowed);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-014")]
     public async Task CreatePdf_PutMethod_ReturnsMethodNotAllowed()
     {
@@ -174,7 +202,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.MethodNotAllowed);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-015")]
     public async Task CreatePdf_DeleteMethod_ReturnsMethodNotAllowed()
     {
@@ -184,7 +214,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.MethodNotAllowed);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-016")]
     public async Task CreatePdf_EmptyContentType_ReturnsBadRequest()
     {
@@ -195,7 +227,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.UnsupportedMediaType);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-017")]
     public async Task CreatePdf_TextPlainContentType_ReturnsUnsupportedOrBadRequest()
     {
@@ -205,7 +239,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.UnsupportedMediaType, HttpStatusCode.BadRequest, HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-018")]
     public async Task CreatePdf_FilenameWithInvalidChars_ReturnsBadRequestOrSanitizes()
     {
@@ -216,7 +252,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-019")]
     public async Task CreatePdf_MalformedUtf8_ReturnsBadRequest()
     {
@@ -229,7 +267,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-020")]
     public async Task CreatePdf_ExpiredAuthToken_ReturnsUnauthorized()
     {
@@ -241,7 +281,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-021")]
     public async Task CreatePdf_ContentWithOnlySpecialChars_HandlesOrRejects()
     {
@@ -252,7 +294,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-022")]
     public async Task CreatePdf_ContentWithScriptInjection_RejectsOrSanitizes()
     {
@@ -265,7 +309,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
             System.Text.Encoding.UTF8.GetString(bytes).Should().NotContain("<script>");
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-023")]
     public async Task CreatePdf_ContentWithSqlInjection_HandlesSafely()
     {
@@ -276,7 +322,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-024")]
     public async Task CreatePdf_ContentWithXssPayload_HandlesSafely()
     {
@@ -287,7 +335,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-025")]
     public async Task CreatePdf_ContentWithNullBytes_RejectsOrStrips()
     {
@@ -298,7 +348,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-026")]
     public async Task CreatePdf_ContentWithControlChars_HandlesOrRejects()
     {
@@ -309,7 +361,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-027")]
     public async Task CreatePdf_ContentWithOnlyNewlines_ReturnsBadRequest()
     {
@@ -320,7 +374,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-028")]
     public async Task CreatePdf_FilenameExceedingMaxLength_ReturnsBadRequest()
     {
@@ -331,7 +387,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-029")]
     public async Task CreatePdf_ContentWithInvalidHtmlEntities_HandlesGracefully()
     {
@@ -342,7 +400,9 @@ public class NegativeTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-NEG-030")]
     public async Task CreatePdf_ContentWithDeeplyNestedMarkdown_HandlesOrRejects()
     {

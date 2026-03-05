@@ -31,7 +31,8 @@ namespace UNOPS.PAO.Tests.Integration.Controllers;
 [Trait("Gap", "Gap2-Notifications")]
 public class GoDecisionNotificationPositiveStubs
 {
-    [Fact(Skip = "DEF-008 Gap 2: Email notification to DoA2 on submission — template content unverified")]
+    [Fact]
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-NOTIF-POS-001")]
     public async Task SubmitForGoDecision_SendsEmailToDoA2Approver()
     {
@@ -42,7 +43,9 @@ public class GoDecisionNotificationPositiveStubs
         false.Should().BeTrue("stub — remove skip when notification verified");
     }
 
-    [Fact(Skip = "DEF-008 Gap 2: OIC notification on GO decision — trigger and template unverified")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-NOTIF-POS-002")]
     public async Task GoDecisionApproved_SendsOICNotification()
     {
@@ -52,7 +55,9 @@ public class GoDecisionNotificationPositiveStubs
         false.Should().BeTrue("stub — remove skip when OIC notification verified");
     }
 
-    [Fact(Skip = "DEF-008 Gap 2: Internal stakeholder notifications on GO decision — unverified")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-NOTIF-POS-003")]
     public async Task GoDecisionApproved_SendsInternalStakeholderNotifications()
     {
@@ -62,7 +67,9 @@ public class GoDecisionNotificationPositiveStubs
         false.Should().BeTrue("stub — remove skip when stakeholder notification verified");
     }
 
-    [Fact(Skip = "DEF-008 Gap 2: OM recall notification to DoA2 — unverified")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-NOTIF-POS-004")]
     public async Task OMRecallsOpportunity_SendsRecallNotificationToDoA2()
     {
@@ -81,7 +88,8 @@ public class GoDecisionNotificationPositiveStubs
 [Trait("Gap", "Gap2-Notifications")]
 public class GoDecisionNotificationNegativeStubs
 {
-    [Fact(Skip = "DEF-008 Gap 2: No duplicate email to DoA2 on re-submit — unverified")]
+    [Fact]
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-NOTIF-NEG-001")]
     public async Task ResubmitForGoDecision_DoesNotSendDuplicateEmailToDoA2()
     {
@@ -92,7 +100,9 @@ public class GoDecisionNotificationNegativeStubs
         false.Should().BeTrue("stub — remove skip when verified");
     }
 
-    [Fact(Skip = "DEF-008 Gap 2: Cancelled opportunity does not send GO notification — unverified")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-NOTIF-NEG-002")]
     public async Task CancelledOpportunity_DoesNotSendGoDecisionNotification()
     {
@@ -102,7 +112,9 @@ public class GoDecisionNotificationNegativeStubs
         false.Should().BeTrue("stub — remove skip when verified");
     }
 
-    [Fact(Skip = "DEF-008 Gap 2: NO GO decision does not send OIC notification — unverified")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-NOTIF-NEG-003")]
     public async Task NoGoDecision_DoesNotSendOICNotification()
     {
@@ -112,7 +124,9 @@ public class GoDecisionNotificationNegativeStubs
         false.Should().BeTrue("stub — remove skip when verified");
     }
 
-    [Fact(Skip = "DEF-008 Gap 2: Inactive DoA2 — notification fallback unverified")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-NOTIF-NEG-004")]
     public async Task InactiveDoA2Approver_FallsBackToDoA3WithoutSilentFailure()
     {
@@ -123,7 +137,9 @@ public class GoDecisionNotificationNegativeStubs
         false.Should().BeTrue("stub — remove skip when verified");
     }
 
-    [Fact(Skip = "DEF-008 Gap 2: Invalid email address for DoA2 — error handling unverified")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-NOTIF-NEG-005")]
     public async Task InvalidDoA2EmailAddress_LogsErrorWithoutCrash()
     {
@@ -134,7 +150,9 @@ public class GoDecisionNotificationNegativeStubs
         false.Should().BeTrue("stub — remove skip when verified");
     }
 
-    [Fact(Skip = "DEF-008 Gap 2: Email template content not reviewed — AC Section 6 unverified")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-NOTIF-NEG-006")]
     public async Task GoDecisionEmail_TemplateContentMatchesAcceptanceCriteria()
     {
@@ -145,7 +163,9 @@ public class GoDecisionNotificationNegativeStubs
         false.Should().BeTrue("stub — remove skip when email template content confirmed");
     }
 
-    [Fact(Skip = "DEF-008 Gap 2: OIC notification timing — sent immediately vs batched, unverified")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-NOTIF-NEG-007")]
     public async Task GoDecisionNotification_SentImmediatelyNotBatched()
     {
@@ -155,7 +175,9 @@ public class GoDecisionNotificationNegativeStubs
         false.Should().BeTrue("stub — remove skip when timing verified");
     }
 
-    [Fact(Skip = "DEF-008 Gap 2: Notification deduplication for multiple stakeholders — unverified")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-NOTIF-NEG-008")]
     public async Task StakeholderNotifications_NoDuplicatesWhenSameUserInMultipleRoles()
     {
@@ -173,7 +195,8 @@ public class GoDecisionNotificationNegativeStubs
 [Trait("Gap", "Gap2-Notifications")]
 public class GoDecisionNotificationEdgeStubs
 {
-    [Fact(Skip = "DEF-008 Gap 2: Notification when zero stakeholders — unverified")]
+    [Fact]
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-NOTIF-EDGE-001")]
     public async Task GoDecision_ZeroInternalStakeholders_NoStakeholderNotificationSent()
     {
@@ -183,7 +206,9 @@ public class GoDecisionNotificationEdgeStubs
         false.Should().BeTrue("stub — remove skip when verified");
     }
 
-    [Fact(Skip = "DEF-008 Gap 2: DoA2 same as OM edge case — unverified")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-NOTIF-EDGE-002")]
     public async Task GoDecision_DoA2IsSamePersonAsOM_StillSendsEmail()
     {
@@ -193,7 +218,9 @@ public class GoDecisionNotificationEdgeStubs
         false.Should().BeTrue("stub — remove skip when verified");
     }
 
-    [Fact(Skip = "DEF-008 Gap 2: DoA3 fallback notification chain — PNO-1197 integration unverified")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-NOTIF-EDGE-003")]
     public async Task GoDecision_DoA3FallbackApprover_ReceivesNotificationInsteadOfDoA2()
     {
@@ -212,7 +239,8 @@ public class GoDecisionNotificationEdgeStubs
 [Trait("Gap", "Gap2-Notifications")]
 public class GoDecisionNotificationFunctionalStubs
 {
-    [Fact(Skip = "DEF-008 Gap 2: Notification service integration with mail sender — unverified")]
+    [Fact]
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-NOTIF-FUNC-001")]
     public async Task SubmitForGoDecision_TriggersMailSenderWithCorrectPayload()
     {
@@ -222,7 +250,9 @@ public class GoDecisionNotificationFunctionalStubs
         false.Should().BeTrue("stub — remove skip when mail sender integration verified");
     }
 
-    [Fact(Skip = "DEF-008 Gap 2: OIC notification payload content — unverified")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-NOTIF-FUNC-002")]
     public async Task GoDecisionApproved_OICNotificationContainsOpportunityDetails()
     {
@@ -232,7 +262,9 @@ public class GoDecisionNotificationFunctionalStubs
         false.Should().BeTrue("stub — remove skip when OIC notification payload verified");
     }
 
-    [Fact(Skip = "DEF-008 Gap 2: Recall notification payload — unverified")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-NOTIF-FUNC-003")]
     public async Task OMRecall_NotificationIncludesRecallReason()
     {
@@ -257,7 +289,8 @@ public class GoDecisionNotificationFunctionalStubs
 [Trait("Gap", "Gap3-UIComponents")]
 public class GoDecisionUIComponentPositiveStubs
 {
-    [Fact(Skip = "DEF-008 Gap 3: Stage stepper display logic — requires Playwright E2E verification")]
+    [Fact]
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-UI-POS-001")]
     public async Task StageStepper_DisplaysCurrentStageCorrectly_DuringGoDecisionWorkflow()
     {
@@ -269,7 +302,9 @@ public class GoDecisionUIComponentPositiveStubs
         false.Should().BeTrue("stub — use Playwright go-decision.spec.ts for UI verification");
     }
 
-    [Fact(Skip = "DEF-008 Gap 3: DoA2 pathway display read-only on detail page — requires Playwright")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-UI-POS-002")]
     public async Task DoA2PathwayDisplay_ShowsResolvedApproverNameReadOnly_OnOpportunityDetailPage()
     {
@@ -280,7 +315,9 @@ public class GoDecisionUIComponentPositiveStubs
         false.Should().BeTrue("stub — use Playwright go-decision.spec.ts for UI verification");
     }
 
-    [Fact(Skip = "DEF-008 Gap 3: In-workflow indicator on opportunity card — requires Playwright")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-UI-POS-003")]
     public async Task InWorkflowIndicator_ShowsOnOpportunityCard_WhilePendingGoDecision()
     {
@@ -291,7 +328,9 @@ public class GoDecisionUIComponentPositiveStubs
         false.Should().BeTrue("stub — use Playwright go-decision.spec.ts for UI verification");
     }
 
-    [Fact(Skip = "DEF-008 Gap 3: DoA3 pathway display (PNO-1197) — requires Playwright")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-UI-POS-004")]
     public async Task DoA3PathwayDisplay_ShowsFallbackApproverReadOnly_WhenDoA3FallbackApplies()
     {
@@ -310,7 +349,8 @@ public class GoDecisionUIComponentPositiveStubs
 [Trait("Gap", "Gap3-UIComponents")]
 public class GoDecisionUIComponentNegativeStubs
 {
-    [Fact(Skip = "DEF-008 Gap 3: Stage stepper does not allow backward navigation — requires Playwright")]
+    [Fact]
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-UI-NEG-001")]
     public async Task StageStepper_DoesNotAllowBackwardNavigation_DuringGoDecisionReview()
     {
@@ -321,7 +361,9 @@ public class GoDecisionUIComponentNegativeStubs
         false.Should().BeTrue("stub — use Playwright go-decision.spec.ts for UI verification");
     }
 
-    [Fact(Skip = "DEF-008 Gap 3: Fields read-only after submission for OM — requires Playwright")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-UI-NEG-002")]
     public async Task OpportunityDetailPage_FieldsAreReadOnly_AfterOMSubmitsForGoDecision()
     {
@@ -332,7 +374,9 @@ public class GoDecisionUIComponentNegativeStubs
         false.Should().BeTrue("stub — use Playwright go-decision.spec.ts for UI verification");
     }
 
-    [Fact(Skip = "DEF-008 Gap 3: Inactive OM visibility (TC-033) — requires DB deactivation to test")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-UI-NEG-003")]
     public async Task InactiveOM_CannotViewOrActOnOpportunityInGoDecisionWorkflow()
     {
@@ -344,7 +388,9 @@ public class GoDecisionUIComponentNegativeStubs
         false.Should().BeTrue("stub — blocked: TC-033 requires database deactivation");
     }
 
-    [Fact(Skip = "DEF-008 Gap 3: In-workflow indicator removed after GO decision — requires Playwright")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-UI-NEG-004")]
     public async Task InWorkflowIndicator_RemovedFromOpportunityCard_AfterGoDecisionComplete()
     {
@@ -355,7 +401,9 @@ public class GoDecisionUIComponentNegativeStubs
         false.Should().BeTrue("stub — use Playwright go-decision.spec.ts for UI verification");
     }
 
-    [Fact(Skip = "DEF-008 Gap 3: DoA pathway hidden before submission — requires Playwright")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-UI-NEG-005")]
     public async Task DoAPathwayDisplay_NotVisible_BeforeOMSubmitsForGoDecision()
     {
@@ -366,7 +414,9 @@ public class GoDecisionUIComponentNegativeStubs
         false.Should().BeTrue("stub — use Playwright go-decision.spec.ts for UI verification");
     }
 
-    [Fact(Skip = "DEF-008 Gap 3: Stage stepper does not show GO stage for non-submitted opportunities — requires Playwright")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-UI-NEG-006")]
     public async Task StageStepper_DoesNotHighlightGoStage_ForOpportunitiesNotInGoDecisionWorkflow()
     {
@@ -385,7 +435,8 @@ public class GoDecisionUIComponentNegativeStubs
 [Trait("Gap", "Gap3-UIComponents")]
 public class GoDecisionUIComponentEdgeStubs
 {
-    [Fact(Skip = "DEF-008 Gap 3: Stage stepper on mobile viewport — requires Playwright mobile tests")]
+    [Fact]
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-UI-EDGE-001")]
     public async Task StageStepper_RendersCorrectly_OnMobileViewport()
     {
@@ -396,7 +447,9 @@ public class GoDecisionUIComponentEdgeStubs
         false.Should().BeTrue("stub — use Playwright with mobile viewport");
     }
 
-    [Fact(Skip = "DEF-008 Gap 3: In-workflow indicator visible in both list and card views — requires Playwright")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-UI-EDGE-002")]
     public async Task InWorkflowIndicator_VisibleInBothListViewAndCardView_OnOpportunityPage()
     {
@@ -407,7 +460,9 @@ public class GoDecisionUIComponentEdgeStubs
         false.Should().BeTrue("stub — use Playwright go-decision.spec.ts for UI verification");
     }
 
-    [Fact(Skip = "DEF-008 Gap 3: DoA pathway display with very long approver name — requires Playwright")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-UI-EDGE-003")]
     public async Task DoAPathwayDisplay_HandlesVeryLongApproverName_WithoutOverflow()
     {
@@ -427,7 +482,8 @@ public class GoDecisionUIComponentEdgeStubs
 [Trait("Gap", "Gap3-UIComponents")]
 public class GoDecisionUIComponentFunctionalStubs
 {
-    [Fact(Skip = "DEF-008 Gap 3: Stage stepper reflects workflow history — requires Playwright")]
+    [Fact]
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-UI-FUNC-001")]
     public async Task StageStepper_ReflectsWorkflowHistory_ShowingPastAndCurrentStages()
     {
@@ -439,7 +495,9 @@ public class GoDecisionUIComponentFunctionalStubs
         false.Should().BeTrue("stub — use Playwright go-decision.spec.ts for UI verification");
     }
 
-    [Fact(Skip = "DEF-008 Gap 3: DoA pathway logic matches server-side resolution — requires E2E")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-UI-FUNC-002")]
     public async Task DoAPathwayDisplay_ShowsCorrectApproverMatchingServerSideResolution()
     {
@@ -451,7 +509,9 @@ public class GoDecisionUIComponentFunctionalStubs
         false.Should().BeTrue("stub — use Playwright go-decision.spec.ts for UI verification");
     }
 
-    [Fact(Skip = "DEF-008 Gap 3: In-workflow indicator state changes reactively — requires Playwright")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     [Trait("TestId", "TC-UI-FUNC-003")]
     public async Task InWorkflowIndicator_UpdatesReactively_WhenOpportunityStatusChanges()
     {

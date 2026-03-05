@@ -132,7 +132,8 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// TC-LO-003: Create liaison office
     /// Verifies creation of new liaison office
     /// </summary>
-    [Fact(Skip = "DEF-029: LiaisonOfficeController does not implement POST endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-003")]
@@ -165,7 +166,8 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// TC-LO-004: Create office - duplicate code fails
     /// Verifies that duplicate office codes are prevented
     /// </summary>
-    [Fact(Skip = "DEF-029: LiaisonOfficeController does not implement POST endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-004")]
@@ -191,7 +193,8 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// TC-LO-005: Update liaison office
     /// Verifies successful update of liaison office
     /// </summary>
-    [Fact(Skip = "DEF-029: LiaisonOfficeController does not implement PUT endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-005")]
@@ -222,7 +225,8 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// TC-LO-006: Delete liaison office
     /// Verifies soft deletion of liaison office
     /// </summary>
-    [Fact(Skip = "DEF-029: LiaisonOfficeController does not implement DELETE endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-006")]
@@ -243,7 +247,8 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// TC-LO-007: Delete office with partners fails
     /// Verifies that offices with partners cannot be deleted
     /// </summary>
-    [Fact(Skip = "DEF-029: LiaisonOfficeController does not implement DELETE endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-007")]
@@ -264,7 +269,8 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// TC-LO-008: Get office by code
     /// Verifies lookup of liaison office by unique code
     /// </summary>
-    [Fact(Skip = "DEF-029: LiaisonOfficeController does not implement code lookup endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-008")]
@@ -290,7 +296,8 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// TC-LO-009: Associate partner with office
     /// Verifies linking a partner to liaison office
     /// </summary>
-    [Fact(Skip = "DEF-029: LiaisonOfficeController does not implement partners endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-009")]
@@ -312,7 +319,8 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// TC-LO-010: Remove partner from office
     /// Verifies unlinking a partner from liaison office
     /// </summary>
-    [Fact(Skip = "DEF-029: LiaisonOfficeController does not implement partners endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-010")]
@@ -572,7 +580,8 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// TC-LO-020: Export offices
     /// Verifies export of office list to CSV/Excel
     /// </summary>
-    [Fact(Skip = "DEF-029: LiaisonOfficeController does not implement export endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-LO-020")]
@@ -671,7 +680,8 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// TC-LO-A004: Read-only user cannot update
     /// Verifies that read-only users cannot modify offices
     /// </summary>
-    [Fact(Skip = "DEF-029: LiaisonOfficeController does not implement PUT endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-A004")]
@@ -724,7 +734,8 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// TC-LO-V001: Office code format validation
     /// Verifies that office code must match required format
     /// </summary>
-    [Fact(Skip = "DEF-029: LiaisonOfficeController does not implement POST endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-V001")]
@@ -750,7 +761,8 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// TC-LO-V002: Required fields validation
     /// Verifies that required fields must be provided
     /// </summary>
-    [Fact(Skip = "DEF-029: LiaisonOfficeController does not implement POST endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-V002")]
@@ -775,7 +787,8 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// TC-LO-V003: Country code validation
     /// Verifies that country code must be valid ISO code
     /// </summary>
-    [Fact(Skip = "DEF-029: LiaisonOfficeController does not implement POST endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-V003")]
@@ -801,7 +814,8 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// TC-LO-V004: Contact email validation
     /// Verifies that email format is validated
     /// </summary>
-    [Fact(Skip = "DEF-029: LiaisonOfficeController does not implement POST endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-V004")]
@@ -828,7 +842,8 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// TC-LO-V005: Phone number validation
     /// Verifies that phone format is validated
     /// </summary>
-    [Fact(Skip = "DEF-029: LiaisonOfficeController does not implement POST endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-V005")]

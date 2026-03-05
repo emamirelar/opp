@@ -132,7 +132,8 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// TC-PCC-003: Create category
     /// Verifies creation of new partner category
     /// </summary>
-    [Fact(Skip = "DEF-035: PartnerCategoryController does not implement POST endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PCC-003")]
@@ -162,7 +163,8 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// TC-PCC-004: Update category
     /// Verifies successful update of existing category
     /// </summary>
-    [Fact(Skip = "DEF-035: PartnerCategoryController does not implement PUT endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PCC-004")]
@@ -193,7 +195,8 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// TC-PCC-005: Delete category
     /// Verifies deletion of unused category
     /// </summary>
-    [Fact(Skip = "DEF-035: PartnerCategoryController does not implement DELETE endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PCC-005")]
@@ -235,7 +238,8 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// TC-PCC-007: Create - validation
     /// Verifies validation of required fields
     /// </summary>
-    [Fact(Skip = "DEF-035: PartnerCategoryController does not implement POST endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PCC-007")]
@@ -260,7 +264,8 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// TC-PCC-008: Delete - with partners
     /// Verifies that categories with partners cannot be deleted
     /// </summary>
-    [Fact(Skip = "DEF-035: PartnerCategoryController does not implement DELETE endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PCC-008")]
@@ -285,7 +290,8 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// TC-PCC-009: Get category tree
     /// Verifies retrieval of hierarchical category structure
     /// </summary>
-    [Fact(Skip = "DEF-035: PartnerCategoryController does not implement tree endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-009")]
@@ -310,7 +316,8 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// TC-PCC-010: Get root categories
     /// Verifies retrieval of top-level categories only
     /// </summary>
-    [Fact(Skip = "DEF-035: PartnerCategoryController does not implement roots endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-010")]
@@ -335,7 +342,8 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// TC-PCC-011: Get children
     /// Verifies retrieval of direct child categories
     /// </summary>
-    [Fact(Skip = "DEF-035: PartnerCategoryController does not implement children endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-011")]
@@ -361,7 +369,8 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// TC-PCC-012: Move category
     /// Verifies changing category parent in hierarchy
     /// </summary>
-    [Fact(Skip = "DEF-035: PartnerCategoryController does not implement move endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-012")]
@@ -386,7 +395,8 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// TC-PCC-013: Prevent circular reference
     /// Verifies that circular parent-child relationships are prevented
     /// </summary>
-    [Fact(Skip = "DEF-035: PartnerCategoryController does not implement move endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-013")]
@@ -411,7 +421,8 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// TC-PCC-014: Get category path
     /// Verifies retrieval of breadcrumb path for a category
     /// </summary>
-    [Fact(Skip = "DEF-035: PartnerCategoryController does not implement path endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-014")]
@@ -441,7 +452,8 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// TC-PCC-015: Get partners in category
     /// Verifies retrieval of all partners associated with category
     /// </summary>
-    [Fact(Skip = "DEF-035: PartnerCategoryController does not implement partners endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-015")]
@@ -467,7 +479,8 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// TC-PCC-016: Add partner to category
     /// Verifies creation of partner-category association
     /// </summary>
-    [Fact(Skip = "DEF-035: PartnerCategoryController does not implement partners endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-016")]
@@ -489,7 +502,8 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// TC-PCC-017: Remove partner from category
     /// Verifies removal of partner-category association
     /// </summary>
-    [Fact(Skip = "DEF-035: PartnerCategoryController does not implement partners endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-017")]
@@ -511,7 +525,8 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// TC-PCC-018: Get for dropdown
     /// Verifies simplified list for UI dropdowns
     /// </summary>
-    [Fact(Skip = "DEF-035: PartnerCategoryController does not implement dropdown endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-018")]
@@ -588,7 +603,8 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// TC-PCC-A002: Write requires admin
     /// Verifies that only admin users can create/update categories
     /// </summary>
-    [Fact(Skip = "DEF-035: PartnerCategoryController does not implement POST endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PCC-A002")]
@@ -613,7 +629,8 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// TC-PCC-A003: Delete requires admin
     /// Verifies that only admin users can delete categories
     /// </summary>
-    [Fact(Skip = "DEF-035: PartnerCategoryController does not implement DELETE endpoint")]
+    [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PCC-A003")]

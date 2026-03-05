@@ -90,7 +90,9 @@ public class SystemAdminFunctionalTests
         response.StatusCode.Should().NotBe(HttpStatusCode.MethodNotAllowed);
     }
 
-    [Fact(Skip = "DEF-064: Production returns 500 instead of 415/400 when form-encoded content sent to JSON endpoints")]
+    [Fact]
+
+    [Trait("Defect", "DEF-064")]
     [Trait("TestId", "TC-ADMIN-FUNC-005")]
     public async Task PostCleanUpUsers_FormEncoded_Returns415Or400()
     {

@@ -370,7 +370,9 @@ public class DocumentControllerUNOPSTests : IntegrationTestBase
         }
     }
 
-    [Fact(Skip = "DEF-024: Base DocumentController GetCredentials() calls Google Secret Manager unconditionally")]
+    [Fact]
+
+    [Trait("Defect", "DEF-024")]
     [Trait("Category", "Functional")]
     [Trait("TestId", "TC-DUNOPS-F07")]
     public async Task GenerateGoogleDoc_CorrectRoute_UsesGenerateDocument()
@@ -382,7 +384,9 @@ public class DocumentControllerUNOPSTests : IntegrationTestBase
             "because /api/document/generate-document is the correct production route");
     }
 
-    [Fact(Skip = "DEF-024: Base DocumentController GetCredentials() calls Google Secret Manager unconditionally")]
+    [Fact]
+
+    [Trait("Defect", "DEF-024")]
     [Trait("Category", "Functional")]
     [Trait("TestId", "TC-DUNOPS-F08")]
     public async Task GetDocumentViewUrl_Authenticated_ReturnsResponse()
@@ -392,7 +396,9 @@ public class DocumentControllerUNOPSTests : IntegrationTestBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound, HttpStatusCode.InternalServerError);
     }
 
-    [Fact(Skip = "DEF-021: AmbiguousMatchException — DocumentController route conflict")]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("Category", "Functional")]
     [Trait("TestId", "TC-DUNOPS-F09")]
     public async Task BaseDocumentGetAll_NoRouteConflict_WithUNOPSOverride()

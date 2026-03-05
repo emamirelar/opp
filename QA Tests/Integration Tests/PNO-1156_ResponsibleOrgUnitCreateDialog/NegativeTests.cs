@@ -29,7 +29,9 @@ public class NegativeTests : PNO1156TestFixtureBase
             .Should().ThrowAsync<Exception>();
     }
 
-    [Fact(Skip = "DEF-048: Manager does not validate empty Name — needs BusinessException")]
+    [Fact]
+
+    [Trait("Defect", "DEF-048")]
     [Trait("TestId", "TC-PNO1156-NEG-002")]
     public async Task CreateOpportunity_EmptyName_ThrowsValidationError()
     {
@@ -43,7 +45,9 @@ public class NegativeTests : PNO1156TestFixtureBase
             .Should().ThrowAsync<Exception>();
     }
 
-    [Fact(Skip = "DEF-049: Manager does not validate Name max length (120 chars) — needs BusinessException")]
+    [Fact]
+
+    [Trait("Defect", "DEF-049")]
     [Trait("TestId", "TC-PNO1156-NEG-003")]
     public async Task CreateOpportunity_NameExceeds120Chars_ThrowsValidationError()
     {

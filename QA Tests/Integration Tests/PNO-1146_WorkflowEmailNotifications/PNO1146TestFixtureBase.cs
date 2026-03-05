@@ -22,6 +22,7 @@ using UNOPS.PAO.MailSender;
 using UNOPS.PAO.MailSender.Interfaces;
 using UNOPS.Workflow.Business.Interfaces;
 using UNOPS.Workflow.DataAccess;
+using UNOPS.Workflow.Domain.Entities;
 using Xunit;
 
 namespace UNOPS.PAO.IntegrationTests.PNO1146;
@@ -261,6 +262,44 @@ public abstract class PNO1146TestFixtureBase : IDisposable
                 It.IsAny<object>(),
                 It.IsAny<string?>()),
             Times.Exactly(times));
+    }
+
+    /// <summary>Seeds a completed Submit workflow log (for Rejected/Completed initiator lookup).</summary>
+    protected async Task SeedCompletedSubmitWorkflowLogAsync(string entityId, int initiatorUserId)
+    {
+        WorkflowContext.WorkflowLogs.Add(new WorkflowLog
+        {
+            EntityName = "Opportunity",
+            EntityId = entityId,
+            Action = "Submit",
+            UserId = initiatorUserId,
+            UserName = "Initiator",
+            CompletedOn = DateTime.UtcNow,
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = 0,
+            IsDeleted = false,
+            Status = UNOPS.Workflow.Domain.Enums.EntityStatus.Closed
+        });
+        await WorkflowContext.SaveChangesAsync();
+    }
+
+    /// <summary>Seeds a pending Submit workflow log (for Recalled initiator lookup).</summary>
+    protected async Task SeedPendingSubmitWorkflowLogAsync(string entityId, int initiatorUserId)
+    {
+        WorkflowContext.WorkflowLogs.Add(new WorkflowLog
+        {
+            EntityName = "Opportunity",
+            EntityId = entityId,
+            Action = "Submit",
+            UserId = initiatorUserId,
+            UserName = "Initiator",
+            CompletedOn = null,
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = 0,
+            IsDeleted = false,
+            Status = UNOPS.Workflow.Domain.Enums.EntityStatus.Active
+        });
+        await WorkflowContext.SaveChangesAsync();
     }
 
     /// <summary>Last captured EmailMessage from SendEmailAsync callback. Set by SetupEmailCapture().</summary>

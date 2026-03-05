@@ -104,7 +104,9 @@ public class ConfigurationNegativeTests : ConfigurationTestFixtureBase
         response.DefaultModel.Should().BeNull();
     }
 
-    [Fact(Skip = "DEF-051: ConfigurationController uses ?? instead of IsNullOrEmpty for Environment fallback")]
+    [Fact]
+
+    [Trait("Defect", "DEF-051")]
     [Trait("TestId", "PNO914-CFG-NEG-007")]
     public void Get_EmptyEnvironmentName_UsesHostEnvironment()
     {

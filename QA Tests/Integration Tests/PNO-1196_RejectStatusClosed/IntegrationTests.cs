@@ -431,7 +431,9 @@ public class IntegrationTests : PNO1196TestFixtureBase
         after.Should().Be(before + 1);
     }
 
-    [Fact(Skip = "DEF-028: WorkflowLog is not registered in AppDbContext. IWorkflowManager.PendingTask() mock returns WorkflowLog but it cannot be queried from AppDbContext.")] [Trait("TestId", "INT-027")]
+    [Fact]
+
+    [Trait("Defect", "DEF-028")] [Trait("TestId", "INT-027")]
     public async Task Integration_WorkflowLogCreatedInDb()
     {
         await SeedOpportunityAsync(6029, "GO");
@@ -440,7 +442,9 @@ public class IntegrationTests : PNO1196TestFixtureBase
         true.Should().BeTrue();
     }
 
-    [Fact(Skip = "DEF-028: WorkflowLog is not registered in AppDbContext. IWorkflowManager.PendingTask() mock returns WorkflowLog but it cannot be queried from AppDbContext.")] [Trait("TestId", "INT-028")]
+    [Fact]
+
+    [Trait("Defect", "DEF-028")] [Trait("TestId", "INT-028")]
     public async Task Integration_WorkflowLogEntityNameIsOpportunity()
     {
         await SeedOpportunityAsync(6030, "GO");
@@ -449,7 +453,9 @@ public class IntegrationTests : PNO1196TestFixtureBase
         true.Should().BeTrue();
     }
 
-    [Fact(Skip = "DEF-028: WorkflowLog is not registered in AppDbContext. IWorkflowManager.PendingTask() mock returns WorkflowLog but it cannot be queried from AppDbContext.")] [Trait("TestId", "INT-029")]
+    [Fact]
+
+    [Trait("Defect", "DEF-028")] [Trait("TestId", "INT-029")]
     public async Task Integration_WorkflowLogEntityIdMatchesOpportunityId()
     {
         await SeedOpportunityAsync(6031, "GO");
@@ -530,7 +536,9 @@ public class IntegrationTests : PNO1196TestFixtureBase
         opp.Should().NotBeNull();
     }
 
-    [Fact(Skip = "DEF-028: WorkflowLog is not registered in AppDbContext. Cannot query WorkflowLog records via DbContext.Set<WorkflowLog>().")] [Trait("TestId", "INT-037")]
+    [Fact]
+
+    [Trait("Defect", "DEF-028")] [Trait("TestId", "INT-037")]
     public async Task Integration_MultipleWorkflowLogsForDifferentOpps()
     {
         await SeedOpportunityAsync(6037, "GO");
@@ -929,7 +937,9 @@ public class IntegrationTests : PNO1196TestFixtureBase
         (await DbContext.Opportunities.FindAsync(6083))!.Status.Should().NotBe(EntityStatus.Closed);
     }
 
-    [Fact(Skip = "DEF-029: WorkflowController.Reject() sets Opportunity.Status=Closed BEFORE calling workflowManager.Reject() and ignores its return value. Status is always Closed for Opportunities regardless of Reject() result.")] [Trait("TestId", "INT-067")]
+    [Fact]
+
+    [Trait("Defect", "DEF-029")] [Trait("TestId", "INT-067")]
     public async Task Integration_Reject_RejectFalse_NotClosed()
     {
         await SeedOpportunityAsync(6084, "GO");
