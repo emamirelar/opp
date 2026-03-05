@@ -42,7 +42,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-103")]
         public async Task CreateEngagement_ValidData_ReturnsEngagement()
         {
             // Arrange - Create engagement data
@@ -54,7 +54,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-103")]
         public async Task GetEngagementById_ExistingId_ReturnsEngagement()
         {
             await Task.CompletedTask;
@@ -63,7 +63,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-103")]
         public async Task UpdateEngagement_ValidData_UpdatesEngagement()
         {
             await Task.CompletedTask;
@@ -72,7 +72,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-103")]
         public async Task DeleteEngagement_ExistingId_SoftDeletes()
         {
             await Task.CompletedTask;
@@ -85,7 +85,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-103")]
         public async Task CreateEngagement_DefaultStatus_IsDraft()
         {
             await Task.CompletedTask;
@@ -94,7 +94,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-103")]
         public async Task SubmitEngagement_FromDraft_TransitionsToSubmitted()
         {
             await Task.CompletedTask;
@@ -103,7 +103,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-103")]
         public async Task ApproveEngagement_FromSubmitted_TransitionsToApproved()
         {
             await Task.CompletedTask;
@@ -112,7 +112,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-103")]
         public async Task RejectEngagement_FromSubmitted_TransitionsToRejected()
         {
             await Task.CompletedTask;
@@ -121,7 +121,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-103")]
         public async Task InvalidTransition_ThrowsException()
         {
             await Task.CompletedTask;
@@ -134,7 +134,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-103")]
         public async Task AddPartnerToEngagement_ValidPartner_AssociatesSuccessfully()
         {
             await Task.CompletedTask;
@@ -143,7 +143,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-103")]
         public async Task RemovePartnerFromEngagement_ExistingAssociation_RemovesSuccessfully()
         {
             await Task.CompletedTask;
@@ -152,7 +152,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-103")]
         public async Task GetEngagementsByPartner_ReturnsFilteredList()
         {
             await Task.CompletedTask;
@@ -165,7 +165,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-103")]
         public async Task CreateEngagement_MissingTitle_ThrowsValidationException()
         {
             await Task.CompletedTask;
@@ -174,7 +174,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-103")]
         public async Task CreateEngagement_EndDateBeforeStartDate_ThrowsValidationException()
         {
             await Task.CompletedTask;

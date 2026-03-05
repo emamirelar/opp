@@ -20,7 +20,7 @@ public class AuthenticationBypassTest
 
     [Fact]
 
-    [Trait("Defect", "DEF-TRIAGE")]
+    [Trait("Defect", "DEF-107")]
     public async Task TestAuthenticationBypass_ReturnsNotFound_NotUnauthorized()
     {
         // Act - Try to access a non-existent endpoint
@@ -33,7 +33,7 @@ public class AuthenticationBypassTest
     
     [Fact]
     
-    [Trait("Defect", "DEF-TRIAGE")]
+    [Trait("Defect", "DEF-107")]
     public async Task TestRootEndpoint_Works()
     {
         // Act

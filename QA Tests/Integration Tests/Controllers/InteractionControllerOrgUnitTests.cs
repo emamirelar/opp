@@ -33,7 +33,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-106")]
         public async Task GetInteractions_WithOrgUnitIdFilter_ShouldAcceptParameter()
         {
             // Act
@@ -50,7 +50,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-106")]
         public async Task GetInteractions_WithOrgUnitIdAndSearchText_ShouldAcceptBothParameters()
         {
             // Act
@@ -65,7 +65,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-106")]
         public async Task GetInteractions_WithOrgUnitIdInAdvancedSearch_ShouldWork()
         {
             // Arrange

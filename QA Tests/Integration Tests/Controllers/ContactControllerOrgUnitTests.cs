@@ -83,7 +83,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-106")]
         public async Task GetAll_WithOrgUnitIdFilter_ReturnsContactsFromOrgUnitAndDescendants()
         {
             // Arrange
@@ -177,7 +177,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-106")]
         public async Task GetAll_WithOrgUnitIdFilter_MiddleLevel_ReturnsContactsFromSubtree()
         {
             // Arrange
@@ -232,7 +232,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-106")]
         public async Task GetAll_WithOrgUnitIdFilter_LeafNode_ReturnsOnlyLeafContacts()
         {
             // Arrange
@@ -278,7 +278,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-106")]
         public async Task GetAll_WithOrgUnitIdAndStatusFilter_AppliesBothFilters()
         {
             // Arrange
@@ -328,7 +328,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-106")]
         public async Task GetAll_WithOrgUnitIdAndNameFilter_AppliesBothFilters()
         {
             // Arrange
@@ -374,7 +374,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-106")]
         public async Task GetAll_WithOrgUnitIdAndPagination_ReturnsCorrectPage()
         {
             // Arrange
@@ -417,7 +417,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-106")]
         public async Task GetAll_WithOrgUnitIdAndAdvancedSearch_FiltersCorrectly()
         {
             // Arrange
@@ -460,7 +460,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-106")]
         public async Task GetAll_WithNonExistentOrgUnitId_ReturnsEmptyResult()
         {
             // Arrange
@@ -494,7 +494,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-106")]
         public async Task GetAll_WithOrgUnitIdButNoContacts_ReturnsEmptyResult()
         {
             // Arrange

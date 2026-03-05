@@ -454,7 +454,7 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
 
     [Fact]
 
-    [Trait("Defect", "DEF-TRIAGE")]
+    [Trait("Defect", "DEF-105")]
     [Trait("Category", "P2")]
     [Trait("Type", "EdgeCase")]
     [Trait("TestId", "TC-UNOPS-ADV-007")]
@@ -485,7 +485,7 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
     }
 
     [Fact]
-    [Trait("Defect", "DEF-TRIAGE")]
+    [Trait("Defect", "DEF-089")]
     [Trait("Category", "P2")]
     [Trait("Type", "EdgeCase")]
     [Trait("TestId", "TC-UNOPS-ADV-008")]
@@ -919,7 +919,7 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
 
     [Fact]
 
-    [Trait("Defect", "DEF-TRIAGE")]
+    [Trait("Defect", "DEF-105")]
     [Trait("Category", "P2")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-ADV-025")]
@@ -1026,7 +1026,7 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
 
     [Fact]
 
-    [Trait("Defect", "DEF-TRIAGE")]
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P2")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-ADV-029")]

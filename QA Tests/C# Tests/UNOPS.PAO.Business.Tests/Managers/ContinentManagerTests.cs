@@ -42,7 +42,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-102")]
         public async Task CreateContinent_ValidData_ReturnsContinent()
         {
             await Task.CompletedTask;
@@ -51,7 +51,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-102")]
         public async Task GetContinentById_ExistingId_ReturnsContinent()
         {
             await Task.CompletedTask;
@@ -60,7 +60,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-102")]
         public async Task UpdateContinent_ValidData_UpdatesContinent()
         {
             await Task.CompletedTask;
@@ -69,7 +69,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-102")]
         public async Task DeleteContinent_ExistingId_SoftDeletes()
         {
             await Task.CompletedTask;
@@ -78,7 +78,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-102")]
         public async Task GetAllContinents_ReturnsSeven()
         {
             await Task.CompletedTask;
@@ -87,7 +87,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-102")]
         public async Task GetContinentByCode_ExistingCode_ReturnsContinent()
         {
             await Task.CompletedTask;
@@ -100,7 +100,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-102")]
         public async Task GetRegionsForContinent_ReturnsRegionList()
         {
             await Task.CompletedTask;
@@ -109,7 +109,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-102")]
         public async Task GetCountryCountForContinent_ReturnsAggregatedCount()
         {
             await Task.CompletedTask;
@@ -122,7 +122,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-102")]
         public async Task CreateContinent_MissingName_ThrowsException()
         {
             await Task.CompletedTask;
@@ -131,7 +131,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-102")]
         public async Task CreateContinent_DuplicateCode_ThrowsException()
         {
             await Task.CompletedTask;
@@ -140,7 +140,7 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         [Fact]
 
-        [Trait("Defect", "DEF-TRIAGE")]
+        [Trait("Defect", "DEF-102")]
         public async Task DeleteContinent_WithRegions_ThrowsException()
         {
             await Task.CompletedTask;

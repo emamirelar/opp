@@ -2005,3 +2005,108 @@ QA test projects (`UNOPS.PAO.Business.Tests`, `UNOPS.PAO.IntegrationTests`, `UNO
 **Environment:** Dev (Windows 10, .NET 9.0, VS Code)
 
 **Impact:** No tests are directly blocked by these warnings, but they indicate potential runtime `NullReferenceException` risks in production code, mask legitimate new warnings during development, and degrade CI build signal quality.
+
+---
+
+## DEF-101: Missing GeoRegionManager and GeoRegion Entity (CRM Enhancement)
+
+**ID:** DEF-101 | **Severity:** 🟡 Medium | **Date:** 2026-03-05 | **Status:** Open | **Reporter:** QA Team
+
+**Component:** UNOPS.PAO.Business/Managers/GeoRegionManager
+
+**Description:** GeoRegionManager and the GeoRegion entity do not exist in the codebase. Tests in `GeoRegionManagerTests.cs` are placeholder stubs (`Assert.True(true)`) awaiting implementation. The `SeedData()` method states: "Seed will be implemented when GeoRegion entity is available." This is part of the CRM Enhancement feature for geography management.
+
+**Expected:** GeoRegionManager provides CRUD, hierarchy (SetContinent, GetByContinentId, GetCountriesInRegion), and validation for geographic regions.
+**Actual:** No GeoRegionManager exists. 12 tests are stubs.
+
+**Related Tests:** `GeoRegionManagerTests.cs` (12 tests tagged `[Trait("Defect", "DEF-101")]`)
+
+---
+
+## DEF-102: Missing ContinentManager and Continent Entity (CRM Enhancement)
+
+**ID:** DEF-102 | **Severity:** 🟡 Medium | **Date:** 2026-03-05 | **Status:** Open | **Reporter:** QA Team
+
+**Component:** UNOPS.PAO.Business/Managers/ContinentManager
+
+**Description:** ContinentManager and the Continent entity do not exist in the codebase. Tests in `ContinentManagerTests.cs` are placeholder stubs awaiting implementation. Part of CRM Enhancement geography management.
+
+**Expected:** ContinentManager provides CRUD, associations (GetRegionsForContinent, GetCountryCountForContinent), and validation for continents.
+**Actual:** No ContinentManager exists. 11 tests are stubs.
+
+**Related Tests:** `ContinentManagerTests.cs` (11 tests tagged `[Trait("Defect", "DEF-102")]`)
+
+---
+
+## DEF-103: Missing EngagementManager with Workflow and Partner Associations (CRM Enhancement)
+
+**ID:** DEF-103 | **Severity:** 🟡 Medium | **Date:** 2026-03-05 | **Status:** Open | **Reporter:** QA Team
+
+**Component:** UNOPS.PAO.Business/Managers/EngagementManager
+
+**Description:** A full EngagementManager with workflow (Submit, Approve, Reject), partner associations, and validation does not exist. This is distinct from the existing `BaseEngagementManager` which provides basic engagement operations. The CRM Enhancement requires a full workflow-capable EngagementManager.
+
+**Expected:** EngagementManager provides CRUD, workflow transitions (Draft→Submitted→Approved/Rejected), partner associations, and validation.
+**Actual:** No full EngagementManager with workflow exists. 14 tests are stubs.
+
+**Related Tests:** `EngagementManagerTests.cs` (14 tests tagged `[Trait("Defect", "DEF-103")]`)
+
+---
+
+## DEF-104: OpportunityManager Base Lacks Permission Enforcement and UserRole Population
+
+**ID:** DEF-104 | **Severity:** 🟠 High | **Date:** 2026-03-05 | **Status:** Open | **Reporter:** QA Team
+
+**Component:** UNOPS.PAO.Business/Managers/OpportunityManager
+
+**Description:** The base `OpportunityManager.GetOpportunityAsync(user, id)` is a stub that delegates to `GetOpportunityAsync(id)` without populating `Permissions` or `UserRole` on the returned model. `UpdateOpportunityAsync` and `DeleteOpportunityAsync` do not call the permission service before acting. The UNOPS override may implement this, but tests targeting the base manager fail because permissions are not enforced.
+
+**Expected:** `GetOpportunityAsync(user, id)` populates permission flags and UserRole. Update/Delete operations check permissions before executing.
+**Actual:** Permissions object is null/empty. UserRole is not populated. No permission checks on mutating operations.
+
+**Related Tests:** `OpportunityPermissionTests.cs` (11 tests) + `OpportunityAdvancedFeaturesTests.cs:GetOpportunity_IncludesUserRoleContext_Success` — all tagged `[Trait("Defect", "DEF-104")]`
+
+---
+
+## DEF-105: UpdateOpportunityAsync Partial Update and Missing DeliveryModality Property
+
+**ID:** DEF-105 | **Severity:** 🟡 Medium | **Date:** 2026-03-05 | **Status:** Open | **Reporter:** QA Team
+
+**Component:** UNOPS.PAO.Business/Managers/OpportunityManager, UNOPS.PAO.Models/Opportunity/UpdateOpportunityRequest
+
+**Description:** Two related issues: (1) `UpdateOpportunityAsync` does not properly handle null values for optional fields — setting a field to null should clear it, but the behavior is undefined. (2) `UpdateOpportunityRequest` lacks a `DeliveryModality` property, so updating delivery modality via the standard update flow is not possible.
+
+**Expected:** Setting optional fields to null clears them. DeliveryModality can be updated through UpdateOpportunityRequest.
+**Actual:** Null handling is undefined. DeliveryModality property missing from request model.
+
+**Related Tests:** `OpportunityAdvancedFeaturesTests.cs` (2 tests: ClearOptionalFields, ChangeDeliveryModality) tagged `[Trait("Defect", "DEF-105")]`
+
+---
+
+## DEF-106: ContactController and InteractionController Missing orgUnitId Filter Support
+
+**ID:** DEF-106 | **Severity:** 🟠 High | **Date:** 2026-03-05 | **Status:** Open | **Reporter:** QA Team
+
+**Component:** UNOPS.PAO.Presentation/Controllers/ContactController, InteractionController
+
+**Description:** `GET /api/contact?orgUnitId=X` and `GET /api/interaction?orgUnitId=X` do not accept or use the `orgUnitId` query parameter. The filter request models (`ContactFilterRequest`, `InteractionFilterRequest`) may support `OrgUnitId`, but the controllers do not bind or pass this parameter. Contacts and interactions cannot be filtered by organizational unit hierarchy.
+
+**Expected:** `orgUnitId` parameter filters results to contacts/interactions belonging to the specified org unit and its descendants.
+**Actual:** `orgUnitId` parameter is ignored. All contacts/interactions are returned regardless of org unit.
+
+**Related Tests:** `ContactControllerOrgUnitTests.cs` (9 tests) + `InteractionControllerOrgUnitTests.cs` (3 tests) tagged `[Trait("Defect", "DEF-106")]`
+
+---
+
+## DEF-107: Authentication Bypass Test — Unclear Route Behavior for Unauthenticated Requests
+
+**ID:** DEF-107 | **Severity:** 🟢 Low | **Date:** 2026-03-05 | **Status:** Open | **Reporter:** QA Team
+
+**Component:** UNOPS.PAO.Presentation/Middleware
+
+**Description:** Tests check that unauthenticated requests to non-existent routes (`/api/nonexistent`) return 404 rather than 401, and that the root endpoint (`/`) works without authentication. The expected behavior depends on whether authentication middleware runs before or after routing. If auth runs first, unauthenticated requests should return 401 regardless of route existence.
+
+**Expected:** Non-existent routes return 404. Root endpoint returns a non-401/403 response.
+**Actual:** Behavior depends on middleware ordering and may vary between environments.
+
+**Related Tests:** `AuthenticationBypassTest.cs` (2 tests tagged `[Trait("Defect", "DEF-107")]`)

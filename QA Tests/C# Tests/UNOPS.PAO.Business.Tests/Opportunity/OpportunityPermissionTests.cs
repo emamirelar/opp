@@ -252,7 +252,7 @@ public class OpportunityPermissionTests : IDisposable
 
     [Fact]
 
-    [Trait("Defect", "DEF-TRIAGE")]
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-001")]
@@ -274,7 +274,7 @@ public class OpportunityPermissionTests : IDisposable
 
     [Fact]
 
-    [Trait("Defect", "DEF-TRIAGE")]
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-002")]
@@ -292,7 +292,7 @@ public class OpportunityPermissionTests : IDisposable
 
     [Fact]
 
-    [Trait("Defect", "DEF-TRIAGE")]
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-003")]
@@ -325,7 +325,7 @@ public class OpportunityPermissionTests : IDisposable
 
     [Fact]
 
-    [Trait("Defect", "DEF-TRIAGE")]
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-004")]
@@ -362,7 +362,7 @@ public class OpportunityPermissionTests : IDisposable
 
     [Fact]
 
-    [Trait("Defect", "DEF-TRIAGE")]
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-005")]
@@ -385,7 +385,7 @@ public class OpportunityPermissionTests : IDisposable
 
     [Fact]
 
-    [Trait("Defect", "DEF-TRIAGE")]
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-006")]
@@ -411,7 +411,7 @@ public class OpportunityPermissionTests : IDisposable
 
     [Fact]
 
-    [Trait("Defect", "DEF-TRIAGE")]
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-007")]
@@ -466,7 +466,7 @@ public class OpportunityPermissionTests : IDisposable
 
     [Fact]
 
-    [Trait("Defect", "DEF-TRIAGE")]
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P2")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-009")]
@@ -500,7 +500,7 @@ public class OpportunityPermissionTests : IDisposable
 
     [Fact]
 
-    [Trait("Defect", "DEF-TRIAGE")]
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P2")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-010")]
@@ -534,7 +534,7 @@ public class OpportunityPermissionTests : IDisposable
 
     [Fact]
 
-    [Trait("Defect", "DEF-TRIAGE")]
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P2")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-011")]
@@ -645,7 +645,7 @@ public class OpportunityPermissionTests : IDisposable
 
     [Fact]
 
-    [Trait("Defect", "DEF-TRIAGE")]
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P2")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-014")]
