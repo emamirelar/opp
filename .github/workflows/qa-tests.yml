@@ -321,7 +321,7 @@ jobs:
       continue-on-error: true
       run: dotnet list package --vulnerable --include-transitive 2>&1 | tail -60
 
-    - name: Run Business Tests
+    - name: Run Business Tests (excluding known defect tests)
       id: run-business-tests
       continue-on-error: true
       run: |
@@ -330,6 +330,7 @@ jobs:
           --no-build \
           --configuration Release \
           --verbosity normal \
+          --filter "Defect!~DEF" \
           --logger "trx;LogFileName=business-tests.trx" \
           --results-directory "${{ github.workspace }}/TestResults" \
           --collect:"XPlat Code Coverage"
@@ -896,7 +897,7 @@ jobs:
           echo "::warning::Integration test BUILD failed — this may indicate UNOPS.Workflow submodule checkout issue (needs PAT fix)"
         fi
     
-    - name: Run Integration Tests
+    - name: Run Integration Tests (excluding known defect tests)
       id: run-integration-tests
       if: steps.build-integration.outcome == 'success'
       continue-on-error: true
@@ -906,6 +907,7 @@ jobs:
           --no-build \
           --configuration Release \
           --verbosity normal \
+          --filter "Defect!~DEF" \
           --logger "trx;LogFileName=integration-tests.trx" \
           --results-directory "${{ github.workspace }}/TestResults"
       env:
@@ -930,6 +932,102 @@ jobs:
         name: integration-tests-results
         path: |
           TestResults
+        if-no-files-found: warn
+
+  # ============================================================================
+  # DEFECT VISIBILITY — runs known-defect tests for reporting, NEVER blocks PRs
+  # ============================================================================
+
+  defect-tests:
+    name: Known Defect Tests (Informational)
+    needs: [dotnet-build]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        token: ${{ secrets.GH_PAT }}
+
+    - name: Ensure Workflow submodule initialized
+      run: git submodule update --init --recursive UNOPS.Workflow
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
+    - name: Restore & Build
+      run: dotnet build --configuration Release
+
+    - name: Run Known Defect Tests (Business)
+      id: defect-business
+      continue-on-error: true
+      run: |
+        mkdir -p "${{ github.workspace }}/TestResults"
+        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" \
+          --no-build \
+          --configuration Release \
+          --verbosity normal \
+          --filter "Defect~DEF" \
+          --logger "trx;LogFileName=defect-business-tests.trx" \
+          --results-directory "${{ github.workspace }}/TestResults"
+      env:
+        USE_INMEMORY_DB: 'true'
+
+    - name: Run Known Defect Tests (Integration)
+      id: defect-integration
+      continue-on-error: true
+      run: |
+        dotnet test "QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj" \
+          --no-build \
+          --configuration Release \
+          --verbosity normal \
+          --filter "Defect~DEF" \
+          --logger "trx;LogFileName=defect-integration-tests.trx" \
+          --results-directory "${{ github.workspace }}/TestResults"
+      env:
+        USE_INMEMORY_DB: 'true'
+
+    - name: Defect Test Summary
+      if: always()
+      run: |
+        echo "## Known Defect Tests Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "These tests expose known production defects (DEF-XXX)." >> $GITHUB_STEP_SUMMARY
+        echo "They are expected to FAIL until the corresponding defect is fixed." >> $GITHUB_STEP_SUMMARY
+        echo "**These results are informational and do NOT block PRs.**" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- Business defect tests: ${{ steps.defect-business.outcome }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Integration defect tests: ${{ steps.defect-integration.outcome }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "When a defect test starts PASSING, it means the developer has fixed the bug." >> $GITHUB_STEP_SUMMARY
+        echo "At that point, remove the \`[Trait(\"Defect\", \"DEF-XXX\")]\` and move the test to the regular suite." >> $GITHUB_STEP_SUMMARY
+
+    - name: Publish Defect Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Known Defect Tests Results
+        path: '**/TestResults/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: false
+
+    - name: Upload Defect Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: defect-tests-results
+        path: TestResults
         if-no-files-found: warn
 
   # ============================================================================

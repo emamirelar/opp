@@ -14,12 +14,15 @@ Instead, follow this decision tree:
 ```
 Test is failing
 ├── Is the test expectation correct (what the code SHOULD do)?
-│   ├── YES → Log a DEF-XXX defect, Skip the test with DEF reference
+│   ├── YES → Log a DEF-XXX defect, add [Trait("Defect", "DEF-XXX")] — let it FAIL
 │   └── NO → Fix the test (only if the expectation itself is wrong)
 └── Is the failure caused by test infrastructure (DB provider, mocking, setup)?
     ├── YES → Fix the infrastructure issue
     └── NO → See above
 ```
+
+**NEVER use `[Fact(Skip = "DEF-XXX")]`.** All defect tests must RUN and FAIL.
+CI isolates them into a separate non-blocking job (see below).
 
 ## What "Weakening a Test" Looks Like
 
@@ -43,17 +46,67 @@ result.Count.Should().Be(3);
 result.Count.Should().BeGreaterThan(0); // ❌ Weaker assertion hides a bug
 ```
 
-## What to Do Instead
+## What to Do Instead — Defect-Exposing Tests
+
+### The ONLY Pattern: Tests RUN, FAIL, and Report the Bug
+
+**ALL tests that expose production defects MUST run and fail visibly.** They are filtered out
+of CI gating via `--filter "Defect!~DEF"` and run in a separate informational job.
+This means defect tests:
+- **DO run** in every CI build (in the "Known Defect Tests" job)
+- **DO fail** and report the defect visibly in test results
+- **DO NOT block PRs** (the defect job has `continue-on-error: true`)
 
 ```csharp
-// ✅ CORRECT — Skip with defect reference, keep original assertion intact
-[Fact(Skip = "DEF-051: Production uses ?? instead of IsNullOrEmpty for fallback")]
+// ✅ CORRECT — Test RUNS and FAILS, exposing the defect visibly in CI
+[Fact]
+[Trait("Category", "Negative")]
+[Trait("Defect", "DEF-051")]  // CI filters this out of gating runs
 public void Get_EmptyEnvironmentName_UsesHostEnvironment()
 {
-    // Original correct expectation preserved
+    // Correct expectation — WILL FAIL until DEF-051 is fixed
     response.Environment.Should().Be("Production");
 }
 ```
+
+**When a developer fixes DEF-051:**
+1. The test will start PASSING in the defect job
+2. Remove `[Trait("Defect", "DEF-051")]` to move it back to the regular test suite
+3. The test is now a regression test that gates future PRs
+
+### DEPRECATED: [Fact(Skip = "DEF-XXX: ...")]
+
+**NEVER use `[Fact(Skip = "DEF-XXX: ...")]`.** This pattern is deprecated across the entire codebase.
+All 668 previously-skipped DEF tests have been converted to Pattern A.
+
+```csharp
+// ❌ DEPRECATED — NEVER skip defect tests
+[Fact(Skip = "DEF-051: Production uses ?? instead of IsNullOrEmpty for fallback")]
+public void Get_EmptyEnvironmentName_UsesHostEnvironment()
+{
+    response.Environment.Should().Be("Production");
+}
+
+// ✅ CORRECT — Let it run and fail
+[Fact]
+[Trait("Defect", "DEF-051")]
+public void Get_EmptyEnvironmentName_UsesHostEnvironment()
+{
+    response.Environment.Should().Be("Production");
+}
+```
+
+### How CI Handles Defect Tests
+
+The `qa-tests.yml` pipeline separates defect tests from gating tests:
+
+1. **Gating jobs** (block PRs): Run with `--filter "Defect!~DEF"` — excludes all defect-tagged tests
+2. **Defect job** (informational): Runs with `--filter "Defect~DEF"` — only defect tests, `continue-on-error: true`
+
+This means:
+- Regular tests must pass to merge a PR
+- Defect tests fail loudly in the report but don't block anything
+- When a defect is fixed, the test starts passing → remove the Trait → it becomes a gating test
 
 ## Mandatory Self-Check Before Changing Any Test Assertion
 
@@ -84,10 +137,29 @@ Every time you change a test assertion, you MUST print:
 | Current production behavior: | [what] |
 | Is production behavior correct? | Yes/No |
 | Am I weakening the assertion? | Yes/No |
-| Action: | Fix test / Log DEF-XXX and skip |
+| Action: | Fix test / Log DEF-XXX and add [Trait("Defect", "DEF-XXX")] |
 ```
 
-If "Am I weakening the assertion?" is **Yes** and "Is production behavior correct?" is **No**, you MUST log a defect and skip — never change the assertion.
+If "Am I weakening the assertion?" is **Yes** and "Is production behavior correct?" is **No**, you MUST log a defect and add `[Trait("Defect", "DEF-XXX")]` — never change the assertion, never skip the test.
+
+## Exception: QA Infrastructure Issues (QA-XXX)
+
+The ONLY exception to the "never skip" rule is for **QA infrastructure issues** (`QA-XXX`) where the test
+literally cannot execute due to missing external dependencies (credentials, services, etc.):
+
+```csharp
+// ✅ OK — QA infrastructure issue, test genuinely cannot run
+[Fact(Skip = "QA-014: oUP credentials not available")]
+public void OUP_Sync_ReturnsPartnerData() { ... }
+```
+
+This is acceptable because:
+- The test CAN'T produce useful output without the missing infrastructure
+- QA-XXX issues are tracked separately in `Defect List for QA.md`
+- These still show as "skipped" (yellow) in CI reports, making them visible
+
+**CRITICAL**: This exception does NOT apply to production defects (DEF-XXX).
+Production defect tests MUST always use `[Fact]` + `[Trait("Defect", "DEF-XXX")]`.
 
 ## Common Traps
 
