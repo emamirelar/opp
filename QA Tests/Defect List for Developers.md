@@ -31,7 +31,7 @@ This document tracks **production code defects** discovered during testing. Thes
 
 ## Open Defects
 
-> **46 open** | Sorted by severity (Critical → High → Medium → Low), then by date reported.
+> **47 open** | Sorted by severity (Critical → High → Medium → Low), then by date reported.
 
 | Defect ID | Severity | Title | Component | Date Reported | Status | Developer Feedback |
 |-----------|----------|-------|-----------|---------------|--------|--------------------|
@@ -102,6 +102,10 @@ This document tracks **production code defects** discovered during testing. Thes
 | DEF-098 | 🟡 Medium | GetOpportunityManagerEmailAsync missing IsDeleted filter on OpportunityStakeholder | PaoWorkflowNotificationService | 2026-03-05 | Open | `GetOpportunityManagerEmailAsync` (line 1077) queries `OpportunityStakeholders` without `!s.IsDeleted` filter. Compare with `GetOpportunityManagerUserIdAsync` (line 1027) which correctly has `!s.IsDeleted`. A soft-deleted OM stakeholder could still appear in CC recipients for workflow emails.<br/><br/>**Root Cause:** Inconsistent query filters — `GetOpportunityManagerUserIdAsync` correctly filters `!s.IsDeleted`, but `GetOpportunityManagerEmailAsync` does not.<br/><br/>**Proper Fix:**<br/>• Add `&& !s.IsDeleted` to the `.Where()` clause in `GetOpportunityManagerEmailAsync` (line 1077)<br/><br/>**Wrong Fix:** ❌ Removing the IsDeleted filter from `GetOpportunityManagerUserIdAsync` to make them consistent<br/><br/>**Repro Steps:**<br/>1. Assign an OM stakeholder to an opportunity<br/>2. Soft-delete the OM stakeholder<br/>3. Trigger a workflow notification that uses CC (e.g., Internal Stakeholder FYI)<br/>4. Check CC recipients<br/><br/>**Expected:** Soft-deleted OM is excluded from CC<br/>**Actual:** Soft-deleted OM may still appear in CC<br/><br/>**Environment:** Dev<br/>**Related Tests:** `PaoWorkflowNotificationCompletedTests`, `PaoWorkflowInternalStakeholderTests` |
 | DEF-099 | 🟠 High | Go Decision PRD says DoA3 fallback is "Out of Scope" but PNO-1197 implemented it | tasks/the-go-decision/the-go-decision-prd.md, tasks/send-opportunity-for-go-decision/send-opportunity-for-go-decision-prd.md | 2026-03-05 | Open | `the-go-decision-prd.md` line 1194 states: "❌ DoA escalation to DoA3 - Only DoA2 for this release" under Non-Goals. `send-opportunity-for-go-decision-prd.md` line 1274 states: "❌ Multi-level DoA escalation - Only DoA2 for this release". However, Jira PNO-1197 (Bug, Urgent priority, Status: Done, resolved 2026-02-17) required DoA3 fallback when DoA2 is removed, and it was implemented by the dev team and QA-passed by Perminder Saluja. The feature is live in production (Version 3.1) and 12 test files exist in `PNO-1197_DoA3Fallback/`. **The PRDs are stale and must be updated to move DoA3 fallback from "Out of Scope" to "In Scope" and reference PNO-1197.**<br/><br/>**Root Cause:** PRD was not updated after scope change was approved via Jira bug PNO-1197.<br/><br/>**Proper Fix:**<br/>• Update `the-go-decision-prd.md` line 1194: remove "DoA escalation to DoA3" from Non-Goals<br/>• Add DoA3 fallback as in-scope requirement with reference to PNO-1197<br/>• Update `send-opportunity-for-go-decision-prd.md` line 1274 similarly<br/>• Add Jira ticket traceability table to both PRDs<br/><br/>**Wrong Fix:** ❌ Removing the DoA3 fallback implementation to match the stale PRD<br/><br/>**Impact:** Any test created solely from the PRD would incorrectly skip DoA3 fallback testing, missing a critical workflow feature. QA tests in `PNO-1197_DoA3Fallback/` are correct but contradict the PRD documentation. |
 | DEF-100 | 🟡 Medium | PRDs have zero Jira ticket traceability — no PNO- references in any PRD | tasks/the-go-decision/the-go-decision-prd.md, tasks/send-opportunity-for-go-decision/send-opportunity-for-go-decision-prd.md | 2026-03-05 | Open | Neither `the-go-decision-prd.md` nor `send-opportunity-for-go-decision-prd.md` reference any Jira PNO- ticket numbers. There is no mapping table showing which Jira tickets correspond to which PRD sections. This means: (1) scope changes made via Jira bugs/stories cannot be traced back to PRD updates, (2) acceptance criteria in Jira cannot be verified against PRD coverage, (3) QA cannot determine if a PRD is current or stale without manually cross-referencing Jira. PNO-1197 (DoA3 fallback) and PNO-1146 (workflow notifications) were both implemented but never reflected in PRDs.<br/><br/>**Proper Fix:**<br/>• Add a "Jira Traceability" section to each PRD with a table: `\| Jira Ticket \| Description \| PRD Section \| Status \|`<br/>• Include all PNO- tickets that affect the PRD scope<br/>• Update this table whenever a ticket changes PRD scope<br/><br/>**Impact:** QA tests created from PRDs alone may miss requirements that only exist in Jira. This was proven by the PNO-1146 analysis where 3 new defects (DEF-096, DEF-097, DEF-098) were found only by cross-referencing Jira comments against the code — the PRD did not contain this information. |
+| DEF-110 | 🟠 High | Partners silently dropped during oUP Engagement creation when partner not in oUP | UNOPS.PAO.Business/Integration (oUP Sync) | 2026-03-05 | Open | PNO-1207: When an Opportunity contains Client or Funding Partners that exist in Opp+ QA but have not been synced to oUP (e.g., newly created test partners), the system silently drops these partners during Engagement creation. No error or warning is shown.<br/><br/>**Root Cause:** oUP sync logic does not validate partner existence in oUP before Engagement creation. Missing partners are silently skipped instead of raising an error or queueing for sync.<br/><br/>**Proper Fix:**<br/>• Validate all referenced partners exist in oUP before Engagement creation<br/>• Show warning/error if partners are missing from oUP<br/>• Queue missing partners for sync before attempting Engagement creation<br/><br/>**Wrong Fix:** ❌ Silently dropping partners without notification<br/><br/>**Related Tests:** `PNO-1207_PartnerSyncMismatch/PartnerSyncMismatchTests.cs` (26 tests) |
+| DEF-111 | 🟠 High | Blank partner tree levels appearing in oUP and BigQuery after data migration | UNOPS.PAO.Business/PartnerTree | 2026-03-05 | Open | PNO-867: Since the data migration of the partner tree to Opportunity+, additional blank/empty partner levels are appearing in the oneUNOPS Projects partner list and in BigQuery partner tree reports. These phantom levels have no name or meaningful data.<br/><br/>**Root Cause:** Data migration created partner tree nodes with empty/null names. Queries do not filter out nodes with blank names.<br/><br/>**Proper Fix:**<br/>• Clean up blank partner tree nodes from database<br/>• Add validation to prevent creation of nodes with empty names<br/>• Filter out blank-named nodes from partner tree API responses<br/><br/>**Wrong Fix:** ❌ Hiding blank nodes only in the UI while leaving corrupt data in the database<br/><br/>**Related Tests:** `PNO-867_BlankPartnerTreeLevels/BlankPartnerTreeTests.cs` (26 tests) |
+| DEF-112 | 🟡 Medium | SDG classification uses 'primary'/'secondary' instead of 'main'/'cross cutting' labels | Opportunity Statement / SDG API | 2026-03-05 | Open | PNO-974: In Opportunity Statement section "2. Alignment with UN, global, and national goals and priorities", SDGs are still classified as 'primary' and 'secondary' whereas they should be 'main' and 'cross cutting'. API responses (opportunity detail, SDG values, workflow requirements) may expose deprecated terminology.<br/><br/>**Root Cause:** API/UI still uses legacy terminology.<br/><br/>**Proper Fix:** Update all SDG classification labels to use 'main' and 'cross cutting' throughout API responses and UI.<br/><br/>**Wrong Fix:** ❌ Changing test assertions to accept 'primary'/'secondary'<br/><br/>**Related Tests:** `SdgClassificationTests.NEG_001_SdgClassification_UsesMainCrossCutting_NotPrimarySecondary` |
+| DEF-113 | 🟡 Medium | Special/accented characters in user names display as '??' in dropdowns | UNOPS.PAO.Presentation/API (Character Encoding) | 2026-03-05 | Open | PNO-1194: Accented characters (e.g., 'Ã', 'ö', 'ü') in user names are replaced by question marks ('??') in dropdown menus. This indicates a UTF-8 vs ASCII/Latin-1 encoding mismatch between the database/API response and the frontend component.<br/><br/>**Root Cause:** Character encoding mismatch — likely the database stores UTF-8 but the API response or frontend rendering interprets it as ASCII/Latin-1.<br/><br/>**Proper Fix:**<br/>• Ensure database connection string specifies UTF-8 encoding<br/>• Verify API response Content-Type includes `charset=utf-8`<br/>• Ensure frontend components handle UTF-8 characters properly<br/><br/>**Wrong Fix:** ❌ Replacing special characters with ASCII equivalents<br/><br/>**Related Tests:** `PNO-1194_CharacterEncoding/CharacterEncodingTests.cs` (26 tests) |
 | DEF-046 | 🟢 Low | Remove orphaned `UNOPS.PAO.ExternalDataService` submodule — registered in `.gitmodules` but zero projects reference it | .gitmodules | 2026-02-25 | Open | Run: `git submodule deinit UNOPS.PAO.ExternalDataService && git rm UNOPS.PAO.ExternalDataService` and remove block from `.gitmodules`. No code changes needed. |
 | DEF-051 | 🟢 Low | ConfigurationController Environment fallback uses `??` instead of `IsNullOrEmpty` | ConfigurationController | 2026-03-02 | Open | When `AppConfig:Environment` is set to empty string `""`, the controller returns `""` instead of falling back to the host environment name. Uses `?? hostEnvironmentName` which only handles null, not empty string. Should use `string.IsNullOrEmpty()` to fall back for both null and empty. Affected tests: PNO-914 CFG-BND-007, CFG-NEG-007. |
 | DEF-054 | 🟢 Low | DoA3Fallback controller does not implement ILogger logging | WorkflowController | 2026-03-02 | Open | Controller submit operations lack logging. 5 tests skipped in PNO-1197 FunctionalTests. |
@@ -2110,3 +2114,172 @@ QA test projects (`UNOPS.PAO.Business.Tests`, `UNOPS.PAO.IntegrationTests`, `UNO
 **Actual:** Behavior depends on middleware ordering and may vary between environments.
 
 **Related Tests:** `AuthenticationBypassTest.cs` (2 tests tagged `[Trait("Defect", "DEF-107")]`)
+
+---
+
+## DEF-108: DOA3 Field Not Mapped from Opportunity+ to oUP Engagement
+
+**ID:** DEF-108 | **Severity:** 🟠 High | **Date:** 2026-03-05 | **Status:** Open | **Reporter:** QA Team
+
+**Component:** UNOPS.PAO.Business/Integration (oUP Sync)
+
+**Description:** When an Opportunity is fully approved in Opportunity+ and the system generates the corresponding Engagement record in oneUNOPS Projects (oUP), the DOA3 (Delegation of Authority Level 3) field value is not being transferred. Although the DOA3 user is designated during the Opportunity phase, the resulting Engagement in oUP arrives with this field blank, forcing users to manually re-enter critical authority data.
+
+**Root Cause:** Data mapping failure during the Opp+ → oUP handover process. The DOA3 field is either not included in the API response contract or not mapped in the sync logic.
+
+**Proper Fix:**
+- Verify DOA3 is included in the Opportunity API response used by oUP sync
+- Add DOA3 field mapping in the oUP Engagement creation logic
+- Ensure DOA3 user ID is transferred alongside DOA2
+
+**Wrong Fix:** ❌ Manually entering DOA3 in oUP after creation (data should flow automatically)
+
+**Workaround:** Manual entry of DOA3 in oUP Engagement after creation
+
+**Repro Steps:**
+1. In Opportunity+, create an Opportunity and ensure a DOA3 user is assigned via Org Unit mapping
+2. Process the Opportunity through the workflow until it receives an approved "Go" decision
+3. Log into oneUNOPS Projects (oUP) and locate the newly generated Engagement record
+4. Navigate to the Team section where Engagement Authorities are listed
+5. Observe the Engagement Authority DOA3 field
+
+**Expected:** The DOA3 field in the oUP Engagement is automatically populated with the user assigned in Opp+.
+**Actual:** The DOA3 field is blank/unmapped in oUP.
+
+**Environment:** QA | **Jira:** PNO-1209 (Ready for Go Live)
+
+**Related Tests:** `QA Tests/Integration Tests/PNO-1209_DoA3OupMapping/DoA3MappingTests.cs` — TC-PNO1209-NEG-001 tagged `[Trait("Defect", "DEF-108")]`
+
+---
+
+## DEF-109: Jira "To Do" Tests Lack Corresponding Automated Coverage (PNO-980 Epic)
+
+**ID:** DEF-109 | **Severity:** 🟡 Medium | **Date:** 2026-03-05 | **Status:** Open | **Reporter:** QA Team
+
+**Component:** QA Tests / Go Decision Coverage
+
+**Description:** Analysis of the PNO-980 (Go/No Go Decision) Jira epic revealed 8 test tickets still in "To Do" status. While 4 of these have functional coverage through related tests, 4 had explicit gaps that have now been addressed with new automated tests. This defect tracks the ongoing need to ensure all Jira test tickets have corresponding automated test coverage.
+
+**Jira Tickets Analyzed:**
+
+| Ticket | Status Before | Coverage After |
+|--------|--------------|----------------|
+| PNO-1072 (DoA3 routing) | Functionally covered | ✅ Already covered in PNO-1197 tests |
+| PNO-1058 (Key data points) | Functionally covered | ✅ Already covered in workflow-decision-panel.spec.ts |
+| PNO-1055 (In-system notification) | Functionally covered | ✅ Already covered in workflow-actions-required.spec.ts |
+| PNO-833 (Any section blocks) | Functionally covered | ✅ Already covered in Task-8.4 tests |
+| PNO-1056 (Static statement) | **GAP** | ✅ New: workflow-static-statement.spec.ts (26 tests) |
+| PNO-1005 (Email content) | **Partial** | ✅ New: EmailContentTests.cs (26 tests) |
+| PNO-837 (Missing Context) | **Partial** | ✅ New: FieldValidationTests.cs (12 Context tests) |
+| PNO-834 (Missing SDG) | **Partial** | ✅ New: FieldValidationTests.cs (12 SDG tests) |
+
+**Action Required:** No developer action needed. This is a tracking defect for QA coverage completeness. New tests have been created to close the gaps.
+
+**Related Tests:** See individual test files listed above
+
+---
+
+## DEF-110: Partners Silently Dropped During oUP Engagement Creation
+
+**ID:** DEF-110 | **Severity:** 🟠 High | **Date:** 2026-03-05 | **Status:** Open | **Reporter:** QA Team
+
+**Component:** UNOPS.PAO.Business/Integration (oUP Sync)
+
+**Description:** When an Opportunity contains Client or Funding Partners that exist in Opportunity+ QA but have not been synced to or do not exist in the oUP database (e.g., newly created test partners like "FG Partner"), the system silently drops these partners during the Engagement creation process. No error or warning is displayed to the user.
+
+**Root Cause:** The oUP sync logic does not validate partner existence in oUP before attempting Engagement creation. Partners that fail the lookup are silently skipped rather than raising an error or being queued for prior synchronization.
+
+**Proper Fix:**
+- Validate all referenced partners exist in oUP before Engagement creation
+- Display a warning/error listing any partners missing from oUP
+- Queue missing partners for sync before attempting Engagement creation
+- Log a warning when partners are skipped during sync
+
+**Wrong Fix:** ❌ Silently dropping partners without any notification to the user
+
+**Workaround:** Manually verify all partners exist in oUP before triggering the Go Decision
+
+**Repro Steps:**
+1. In Opportunity+, create or use an Opportunity with Client/Funding Partners
+2. Ensure at least one partner exists in Opp+ but not in oUP (e.g., a recently created test partner)
+3. Process the Opportunity through the workflow until it receives an approved "Go" decision
+4. Check the resulting Engagement in oUP
+5. Observe that partners missing from oUP are silently dropped
+
+**Expected:** All partners from the Opportunity are transferred to the Engagement, or an error is raised for missing partners.
+**Actual:** Partners not found in oUP are silently dropped. No error or warning is shown.
+
+**Environment:** QA | **Jira:** PNO-1207 (Ready for QA Review)
+
+**Related Tests:** `QA Tests/Integration Tests/PNO-1207_PartnerSyncMismatch/PartnerSyncMismatchTests.cs` (26 tests)
+
+---
+
+## DEF-111: Blank Partner Tree Levels in oUP and BigQuery
+
+**ID:** DEF-111 | **Severity:** 🟠 High | **Date:** 2026-03-05 | **Status:** Open | **Reporter:** QA Team
+
+**Component:** UNOPS.PAO.Business/PartnerTree
+
+**Description:** Since the data migration of the partner tree to Opportunity+, additional blank/empty partner levels have been appearing in the oneUNOPS Projects (oUP) partner list and in the BigQuery partner tree report. These phantom levels have no name or meaningful data, causing confusion in the partner hierarchy.
+
+**Root Cause:** The data migration created partner tree nodes with empty or null names. The partner tree API queries do not filter out nodes with blank names, allowing them to propagate to oUP and BigQuery.
+
+**Proper Fix:**
+- Clean up blank partner tree nodes from the database
+- Add validation to prevent creation of partner tree nodes with empty names
+- Filter out blank-named nodes from partner tree API responses
+- Add a database constraint requiring non-empty names for partner tree nodes
+
+**Wrong Fix:** ❌ Hiding blank nodes only in the UI while leaving corrupt data in the database
+
+**Workaround:** None — blank levels are visible in oUP and BigQuery
+
+**Repro Steps:**
+1. Navigate to the partner tree in Opportunity+
+2. Look for nodes with empty/blank names at various levels
+3. Check the corresponding partner tree in oUP
+4. Check the BigQuery partner tree report
+5. Observe blank levels appearing
+
+**Expected:** All partner tree nodes have meaningful, non-empty names.
+**Actual:** Some partner tree levels have blank/empty names appearing in oUP and BigQuery.
+
+**Environment:** QA / Production | **Jira:** PNO-867 (In Development)
+
+**Related Tests:** `QA Tests/Integration Tests/PNO-867_BlankPartnerTreeLevels/BlankPartnerTreeTests.cs` (26 tests)
+
+---
+
+## DEF-113: Special Characters in User Names Display as Question Marks
+
+**ID:** DEF-113 | **Severity:** 🟡 Medium | **Date:** 2026-03-05 | **Status:** Open | **Reporter:** QA Team
+
+**Component:** UNOPS.PAO.Presentation/API (Character Encoding)
+
+**Description:** The application fails to correctly render special or accented characters (e.g., 'Ã', 'ö', 'ü') within user selection dropdown menus. These characters are being replaced by question marks ('??'), indicating a character encoding mismatch (likely UTF-8 vs. ASCII/Latin-1) between the database/API response and the frontend component.
+
+**Root Cause:** Character encoding mismatch — the database likely stores data in UTF-8 but either the API response encoding or the frontend rendering interprets certain characters using ASCII/Latin-1, causing the replacement with '??' sequences.
+
+**Proper Fix:**
+- Ensure the database connection string specifies UTF-8 encoding
+- Verify API response Content-Type header includes `charset=utf-8`
+- Ensure frontend dropdown components handle UTF-8 characters properly
+- Test with representative accented characters (French, German, Spanish names)
+
+**Wrong Fix:** ❌ Replacing special characters with ASCII equivalents or stripping diacritics
+
+**Workaround:** None — user names with accented characters display incorrectly
+
+**Repro Steps:**
+1. Ensure the database contains user records with accented/special characters in names (e.g., "José", "Müller", "Søren")
+2. Navigate to any form with a user selection dropdown (e.g., Go/No-Go Decision approval)
+3. Open the dropdown
+4. Observe that accented characters are replaced with '??'
+
+**Expected:** User names display with correct accented characters (e.g., "José", "Müller").
+**Actual:** Accented characters replaced with '??' (e.g., "Jos??", "M??ller").
+
+**Environment:** QA | **Jira:** PNO-1194 (Peer Review)
+
+**Related Tests:** `QA Tests/Integration Tests/PNO-1194_CharacterEncoding/CharacterEncodingTests.cs` (26 tests)

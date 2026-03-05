@@ -167,3 +167,59 @@ This allows CI to:
 1. Run all tests including defect-exposing ones (full visibility)
 2. Optionally gate on non-defect tests only (so known defects don't block deployment)
 3. Track defect resolution over time (when defect tests start passing)
+
+---
+
+## oUP Integration Testing Patterns
+
+When testing data mapping between Opportunity+ and oneUNOPS Projects (oUP):
+
+### Field Mapping Validation
+For each mapped field in the integration contract, verify:
+1. The field is **present** in the API response (not omitted or null when data exists)
+2. The field **value matches** what was set in Opportunity+
+3. **Soft-deleted entities** are excluded from sync data
+4. **Empty/null fields** are handled gracefully (sent as empty, not omitted)
+
+### Credential-Gated Tests
+Tests requiring live oUP connection use:
+```csharp
+[Fact(Skip = "QA-014: oUP credentials not available")]
+```
+Tests validating the Opportunity+ side of the API contract do NOT require oUP credentials.
+
+### Common oUP Mapping Defects
+- Missing field in API response (e.g., DOA3 not mapped — PNO-1209)
+- Collection not transferred (e.g., Collaborators not mapped — PNO-1143)
+- Notification not triggered on sync (e.g., email missing — PNO-1142)
+- Related entity data incomplete (e.g., Client Partner missing — PNO-1141)
+
+---
+
+## Notification Testing Patterns
+
+### Email Notification Tests
+For each workflow email event, validate:
+1. **Template name**: Correct `.html` template used
+2. **Subject line**: Matches Jira specification format
+3. **TO recipients**: Correct users receive the email
+4. **CC recipients**: Correct users in CC list
+5. **Model data**: Entity URL, display name, approver name populated
+6. **Body content**: Key phrases present in rendered output (if template rendering is testable)
+
+### In-System Notification Tests
+For each in-system notification event, validate:
+1. **Notification created**: Record exists in database after action
+2. **Response type**: ActionRequired vs Informational correctly set
+3. **Status**: Pending for new, Read after clicked
+4. **Entity reference**: Correct entity type and ID linked
+5. **UI behavior**: Appears in bell panel, badge count updates, navigation works
+
+### Notification Recipient Rules (Go Decision)
+| Event | TO | CC | Reference |
+|-------|----|----|-----------|
+| Approval Request | DoA2 (or DoA3 fallback) | OM, Collaborators | PNO-969, PNO-1005 |
+| Completed (Go) | OM, Initiator | Collaborators | PNO-1070 |
+| Rejected (No Go) | OM, Initiator | Collaborators | PNO-1071 |
+| Recalled | DoA holders, OM, Initiator | None | DEF-096 |
+| FYI | Internal stakeholders | None | PNO-968 |

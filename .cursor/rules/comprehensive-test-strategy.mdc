@@ -4285,3 +4285,105 @@ And these **additional mandatory categories**:
 **No exceptions**. No "we'll add it later". No "it's just a small feature".
 
 **Comprehensive from day 1. Every time. No compromise.**
+
+---
+
+## Go Decision Feature Testing Patterns
+
+When creating tests for Go/No-Go Decision features (PNO-980 epic), the following scenarios MUST be covered.
+
+### Go Decision Testing Checklist
+
+| Area | Required Tests | Reference Tickets |
+|------|---------------|-------------------|
+| **DoA Fallback Routing** | DoA2 missing → system routes to DoA3; DoA3 missing → error; both missing → error | PNO-1197, PNO-1072 |
+| **Status Transitions** | Go → Active; No Go → Closed; Reopen → Draft; Cancel → Cancelled | PNO-1196, PNO-1161, PNO-1162 |
+| **Workflow Validation** | Mandatory fields block submission; each field validated independently | PNO-837, PNO-834, PNO-833, PNO-990 |
+| **Email Notifications** | Template content, recipients (TO/CC), subject lines per event type | PNO-1005, PNO-1146 |
+| **In-System Notifications** | Task appears in Actions Required card; notification bell updates | PNO-1055 |
+| **Static Statement** | Notification link opens snapshot view; statement is read-only | PNO-1056 |
+| **Decision Info Panel** | Key data points highlighted (Initiative Type, Time to Signing, DD status, High Risks, Sender Remarks) | PNO-1058 |
+| **oUP Integration Mapping** | DOA2/DOA3/Collaborators/Client Partner mapped to Engagement; email sent on creation | PNO-1209, PNO-1143, PNO-1141, PNO-1142 |
+
+### Workflow State Transition Matrix
+
+Tests MUST cover these state transitions:
+
+```
+I&P/Draft → GO/Active          (Go Decision approved)
+I&P/Draft → NO GO/Closed       (No Go Decision)
+I&P/Draft → CANCELLED/Closed   (OM Cancel)
+GO/Active → (no transitions)   (terminal state for workflow)
+NO GO/Closed → I&P/Draft       (Reopen)
+CANCELLED/Closed → I&P/Draft   (Reopen)
+```
+
+**Illegal transitions that must be blocked:**
+- Active → Draft (no downgrade)
+- In Workflow → Cancel (blocked during active workflow)
+- Already Approved → Re-submit (no double submit)
+
+### Field-Specific Validation Tests
+
+For each mandatory Go Decision field, create isolated tests that:
+1. Seed an opportunity with ONLY that field missing
+2. Verify the requirements endpoint returns `isMet=false` for that field
+3. Verify the submit endpoint rejects the submission
+4. Verify the error description is non-empty and user-facing
+
+**Mandatory fields per Jira:**
+- Context/Challenges (PNO-837)
+- Primary SDG alignment (PNO-834)
+- Funding Partner
+- Opportunity Statement PDF
+- Beneficiaries (either counts or "To be determined")
+- Client Partner
+- Products & Services
+
+### oUP Integration Testing Patterns
+
+When testing data mapping between Opportunity+ and oUP:
+
+1. **Field Mapping Validation**: For each mapped field, verify the API response includes the field and its value matches what was set
+2. **Missing Field Detection**: Test that required fields (DOA2, DOA3, Collaborators) are present in the API response contract
+3. **Soft-Deleted Data**: Verify soft-deleted users/entities are excluded from sync data
+4. **Error Handling**: Test behavior when oUP sync fails (timeout, auth failure, validation error)
+5. **Credential Gating**: Use `[Fact(Skip = "QA-014: oUP credentials not available")]` for tests requiring live oUP connection
+
+**Key field mappings to test:**
+
+| Opp+ Field | oUP Field | Test Pattern |
+|-----------|-----------|-------------|
+| Opportunity Manager | Business Developer | Assert field present in API response |
+| Collaborators | Engagement Team (contributors) | Assert collection mapped |
+| DOA2 | Engagement Authority DoA2 | Assert field present and populated |
+| DOA3 | Engagement Authority DoA3 | Assert field present and populated (PNO-1209 bug) |
+| Client Partner | Client Partner | Assert partner data mapped |
+| Org Unit Responsible | Organisational Unit | Assert org unit data mapped |
+
+### Notification Testing Patterns
+
+**Email notifications** — test per event type:
+
+| Event | Template | TO Recipients | CC Recipients |
+|-------|---------|---------------|---------------|
+| Approval Request | OpportunityWorkflowApprovalRequest.html | DoA holders | OM, Collaborators |
+| Completed (Go) | OpportunityWorkflowCompleted.html | OM, Initiator | Collaborators |
+| Rejected (No Go) | OpportunityWorkflowRejected.html | OM, Initiator | Collaborators |
+| Recalled | OpportunityWorkflowRecalled.html | DoA holders, OM, Initiator | None |
+| FYI (Go approved) | FYI template | Internal stakeholders | None |
+
+**In-system notifications** — test:
+- Notification created with correct `responseType` (ActionRequired vs Informational)
+- Notification appears in bell/panel
+- Clicking navigates to correct opportunity
+- Badge count updates
+
+### Defect-Exposing Test Pattern for Go Decision
+
+When a Go Decision bug is found, create tests that:
+1. Run and FAIL (exposing the bug)
+2. Use `[Trait("Defect", "DEF-XXX")]` for CI filtering
+3. Reference the Jira ticket: `[Trait("JiraRef", "PNO-XXXX")]`
+4. Document the expected vs actual behavior in XML doc comments
+5. Log the defect in `QA Tests/Defect List for Developers.md`
