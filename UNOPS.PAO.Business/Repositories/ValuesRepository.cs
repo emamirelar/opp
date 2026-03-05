@@ -222,20 +222,27 @@ public class ValuesRepository
         // Then get search results if search term is provided
         if (!string.IsNullOrEmpty(searchTerm) && searchTerm.Length >= 2)
         {
-            var searchLower = searchTerm.ToLower();
-            
-            // Exclude already selected users from search results to avoid duplicates
             var excludeIds = selectedUserIds ?? Array.Empty<int>();
-            
-            var searchUsers = await context.PAOUsers
+            var searchTerms = searchTerm.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            var query = context.PAOUsers
                 .Include(u => u.UserProfile)
                 .Where(u => u.ActiveUser &&
                            u.UserProfile != null && !u.UserProfile.IsDeleted &&
-                    !excludeIds.Contains(u.Id) &&
-                    (u.Email.ToLower().Contains(searchLower) ||
-                    (u.UserProfile.FirstName != null && u.UserProfile.FirstName.ToLower().Contains(searchLower)) ||
-                    (u.UserProfile.LastName != null && u.UserProfile.LastName.ToLower().Contains(searchLower)) ||
-                    (u.UserProfile.Position != null && u.UserProfile.Position.ToLower().Contains(searchLower))))
+                    !excludeIds.Contains(u.Id));
+
+            // Each word must match at least one field (AND across words, OR across fields)
+            // e.g. "John Smith" → "john" matches any field AND "smith" matches any field
+            foreach (var term in searchTerms)
+            {
+                query = query.Where(u =>
+                    u.Email.ToLower().Contains(term) ||
+                    (u.UserProfile.FirstName != null && u.UserProfile.FirstName.ToLower().Contains(term)) ||
+                    (u.UserProfile.LastName != null && u.UserProfile.LastName.ToLower().Contains(term)) ||
+                    (u.UserProfile.Position != null && u.UserProfile.Position.ToLower().Contains(term)));
+            }
+
+            var searchUsers = await query
                 .OrderBy(u => u.UserProfile.FirstName ?? "")
                 .ThenBy(u => u.UserProfile.LastName ?? "")
                 .Take(maxResults)
