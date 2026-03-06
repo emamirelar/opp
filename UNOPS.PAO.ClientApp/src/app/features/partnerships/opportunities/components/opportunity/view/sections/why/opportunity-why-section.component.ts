@@ -3420,7 +3420,7 @@ export class OpportunityWhySectionComponent implements OnInit {
               opportunityUNCFOutcomeId: 0, // Will be set by backend
               uncfIndicatorId: indicatorInfo.id,
               uncfIndicatorExternalId: indicatorInfo.uncfIndicatorExternalId,
-              uncfIndicatorName: indicatorInfo.name,
+              uncfIndicatorName: indicatorInfo.indicators || indicatorInfo.name,
               notes: null,
             });
           }
@@ -3501,7 +3501,7 @@ export class OpportunityWhySectionComponent implements OnInit {
               opportunityUNCFOutcomeId: 0,
               uncfIndicatorId: indicatorInfo.id,
               uncfIndicatorExternalId: indicatorInfo.uncfIndicatorExternalId,
-              uncfIndicatorName: indicatorInfo.name,
+              uncfIndicatorName: indicatorInfo.indicators || indicatorInfo.name,
               notes: null,
             });
           }
