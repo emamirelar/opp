@@ -104,6 +104,7 @@
               [formControl]="targetSigningDateControl"
               dateFormat="yy-mm-dd"
               [showIcon]="true"
+              [appendTo]="'body'"
               class="w-full"
               (onSelect)="onSigningDateManualChange()"
             />
@@ -122,6 +123,7 @@
               [formControl]="implementationStartDateControl"
               dateFormat="yy-mm-dd"
               [showIcon]="true"
+              [appendTo]="'body'"
               [minDate]="getMinImplementationStartDate()"
               class="w-full"
               (onSelect)="onImplementationStartDateManualChange()"
@@ -156,6 +158,7 @@
               [formControl]="targetDeliveryDateControl"
               dateFormat="yy-mm-dd"
               [showIcon]="true"
+              [appendTo]="'body'"
               [minDate]="getMinDeliveryDate()"
               class="w-full"
               (onSelect)="onDeliveryDateManualChange()"
@@ -270,6 +273,7 @@
                   [formControl]="submissionDeadlineControl"
                   dateFormat="yy-mm-dd"
                   [showIcon]="true"
+                  [appendTo]="'body'"
                   [maxDate]="targetSigningDateControl.value"
                   class="w-full"
                 />
