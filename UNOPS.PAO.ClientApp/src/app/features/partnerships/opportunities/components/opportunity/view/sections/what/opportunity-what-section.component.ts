@@ -1976,6 +1976,15 @@ export class OpportunityWhatSectionComponent implements OnInit {
     // Clear multi-selection
     this.selectedOutputsForDialog.set([]);
     
+    // Clear all search state so previously searched items don't persist (PNO-964)
+    this.searchQuery.set('');
+    this.searchResults.set([]);
+    this.treeSearchQuery.set('');
+    this.aiSearchQuery.set('');
+    this.aiSearchResults.set([]);
+    this.aiSearchError.set(null);
+    this.isAiSearching.set(false);
+    
     // Reset form controls
     this.level0Control.setValue(null);
     this.level1Control.setValue(null);
