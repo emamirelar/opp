@@ -11,5 +11,8 @@ public class UNCFIndicatorModel
     public string? UNCFOutcomeExternalId { get; set; }
     public int? VersionNo { get; set; }
     public string? Country { get; set; }
+    public string? Indicators { get; set; }
+    public string? Description { get; set; }
+    public string? Unit { get; set; }
 }
 

@@ -219,10 +219,13 @@ export interface UNCFOutcome {
 export interface UNCFIndicator {
   id: number;
   name: string;
-  uncfIndicatorExternalId: string | null;  // External ID from source system
-  uncfOutcomeExternalId: string | null;  // Parent Outcome External ID
-  versionNo: number | null;  // Version number
-  country: string | null;  // ISO2 country code
+  uncfIndicatorExternalId: string | null;
+  uncfOutcomeExternalId: string | null;
+  versionNo: number | null;
+  country: string | null;
+  indicators: string | null;
+  description: string | null;
+  unit: string | null;
 }
 
 /**
