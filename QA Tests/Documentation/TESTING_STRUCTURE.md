@@ -1,369 +1,341 @@
 # UNOPS Opportunity+ Testing Structure
 
-**Date**: January 23, 2026  
-**Status**: All test suites operational and organized
+**Last Updated:** March 6, 2026  
+**Status:** All test suites operational  
+**Companion to:** [Shift-Left Testing Manifesto](SHIFT_LEFT_TESTING_MANIFESTO.md)
 
 ---
 
-## 📁 Test Organization
+## Test Organization
 
-This repository has **3 types of tests** organized at the root level:
+The repository has **4 types of tests** organized as follows:
 
 ```
 opportunityplus/
-├── Playwright Tests/          # ← E2E tests (Frontend + Backend integration)
-├── QA Tests/                  # ← C# unit & integration tests
-└── UNOPS.PAO.ClientApp/src/   # ← Angular unit tests (Jasmine/Karma)
+├── QA Tests/
+│   ├── C# Tests/                    # ← Backend unit & business logic tests
+│   │   ├── UNOPS.PAO.FastTests/     #    ~43 fast logic tests
+│   │   ├── UNOPS.PAO.Business.Tests/#    ~3,800 business tests
+│   │   └── UNOPS.PAO.Presentation.Tests/ # ~164 controller tests
+│   ├── Integration Tests/           # ← API/controller integration tests
+│   │   └── UNOPS.PAO.IntegrationTests/   # ~5,500+ integration tests
+│   ├── Playwright Tests/            # ← E2E browser tests
+│   │   ├── *.spec.ts                #    102 spec files
+│   │   └── pages/*.page.ts          #    21 page objects
+│   ├── Documentation/               # ← All QA documentation (this file)
+│   ├── Defect List for Developers.md# ← DEF-XXX production defects
+│   └── Defect List for QA.md        # ← QA-XXX test infrastructure issues
+└── UNOPS.PAO.ClientApp/src/
+    ├── app/**/*.spec.ts             # ← Angular component unit tests
+    └── qa-frontend-tests/           # ← QA-owned frontend tests
 ```
 
 ---
 
-## 🎯 **1. Playwright E2E Tests** (New!)
+## 1. C# Backend Tests
 
-**Location**: `Playwright Tests/`  
-**Framework**: Playwright  
-**Purpose**: End-to-end testing of complete user workflows  
-**Language**: TypeScript
+**Framework:** xUnit + FluentAssertions + Moq  
+**Language:** C#  
+**Run by:** Developers (locally + CI) and QA (CI + regression)
 
-### What These Tests Do
-- ✅ Test **complete user workflows** (login → navigate → create → save)
-- ✅ Test **frontend + backend integration** (real API calls)
-- ✅ Test **cross-browser compatibility** (Chrome, Firefox, Safari)
-- ✅ Test **responsive design** (desktop + mobile viewports)
-- ✅ **Visual regression testing** (screenshot comparison)
+### Test Projects
 
-### Quick Start
+| Project | Location | Tests | Purpose |
+|---|---|---|---|
+| **FastTests** | `QA Tests/C# Tests/UNOPS.PAO.FastTests/` | ~43 | Quick validation — smoke tests, critical logic |
+| **Business.Tests** | `QA Tests/C# Tests/UNOPS.PAO.Business.Tests/` | ~3,800 | Manager-level business logic, CRUD, validation, performance, load tests |
+| **Presentation.Tests** | `QA Tests/C# Tests/UNOPS.PAO.Presentation.Tests/` | ~164 | Controller/API endpoint tests |
+| **IntegrationTests** | `QA Tests/Integration Tests/` | ~5,500+ | Full-stack integration: controllers, business rules, cross-entity flows |
+
+### Integration Test Folders
+
+The `QA Tests/Integration Tests/` project is organized by feature area:
+
+```
+Integration Tests/
+├── Controllers/              # Controller endpoint tests
+├── Dashboard/                # Dashboard tests
+├── Documents/                # Document management tests
+├── EntityConfiguration/      # Entity config tests
+├── OrgHierarchy/             # Org unit hierarchy tests
+├── PartnerTree/              # Partner tree tests
+├── PartnerAnalytics/         # Partner analytics tests
+├── ContactAnalytics/         # Contact analytics tests
+├── UserManagement/           # User management tests
+├── UserProfile/              # User profile tests
+├── SystemAdmin/              # System admin tests
+├── Permissions/              # Permission tests
+├── LiaisonOffice/            # Liaison office tests
+├── Workflow/                 # Workflow tests
+├── PNO-*/                    # JIRA story-specific tests (PNO-914, PNO-1146, etc.)
+├── DEF-*/                    # Defect regression tests
+├── BugFix_Regressions/       # Bug fix regression tests
+├── UnitTests/                # Unit-level tests within integration project
+└── Infrastructure/           # Test infrastructure (factories, stubs, fixtures)
+```
+
+### Quick Start — Running C# Tests
+
 ```bash
-# From repository root
-npm install           # First time only
-npm run test          # Run all E2E tests
-npm run test:ui       # Interactive UI mode
-npm run test:headed   # See browser execute tests
-```
+# Smoke tests (fastest gate, ~30 seconds)
+dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests" --filter "Category=Smoke"
 
-### Test Files
-```
-Playwright Tests/
-├── home.spec.ts              # Example: Home page test
-├── example.spec.ts           # DELETE THIS - just a demo
-├── README.md                 # Quick reference
-└── GETTING_STARTED.md        # Comprehensive guide
-```
-
-### Configuration
-- **Config**: `playwright.config.ts` (at root)
-- **Scripts**: `package.json` (at root)
-- **CI/CD**: `.github/workflows/playwright.yml`
-
-### Documentation
-- 📖 **Quick Start**: `Playwright Tests/README.md`
-- 📚 **Detailed Guide**: `Playwright Tests/GETTING_STARTED.md`
-- 🎯 **Conversion Guide**: `QA Tests/PLAYWRIGHT_CONVERSION_CANDIDATES.md`
-
----
-
-## 🧪 **2. C# Unit & Integration Tests**
-
-**Location**: `QA Tests/`  
-**Framework**: xUnit + FluentAssertions  
-**Purpose**: Backend business logic and API testing  
-**Language**: C#
-
-### Test Suites
-
-#### **A. Integration Tests** (1,392 tests - 91.9% passing)
-```
-QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests/
-```
-- ✅ Full-stack API endpoint testing
-- ✅ Database integration
-- ✅ Authentication flows
-- ⚠️ 57 failures (environment-specific, not code defects)
-
-#### **B. Fast Tests** (78 tests - 100% passing ✅)
-```
-QA Tests/C# Tests/UNOPS.PAO.FastTests/
-```
-- ✅ Critical business logic
-- ✅ Validation rules
-- ✅ Workflow transitions
-- ✅ Permission logic
-- ✅ **Perfect score** - all passing!
-
-#### **C. Business Tests** (2,327 tests - 91.8% passing)
-```
-QA Tests/C# Tests/UNOPS.PAO.Business.Tests/
-```
-- ✅ Manager layer logic
-- ✅ CRUD operations
-- ✅ Business rules
-- ⚠️ 130 failures (test maintenance needed, not code defects)
-
-### Quick Start
-```bash
-# From repository root
+# Fast tests (~43 tests, <10 seconds)
 dotnet test "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj"
-dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj"
-dotnet test "QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj"
-```
 
-### Documentation
-- 📊 **Latest Results**: `QA Tests/Test Execution Results/UNIT_TEST_EXECUTION_RESULTS.md`
-- 🐛 **Known Issues**: `QA Tests/Test Execution Results/DEFECTS_FOR_DEVELOPERS_2026-01-23.md`
-- 💡 **Recommendations**: `QA Tests/Test Execution Results/DEVELOPER_RECOMMENDATIONS_2026-01-23.md`
-- 📝 **Summary**: `QA Tests/Test Execution Results/TEST_EXECUTION_SUMMARY_2026-01-23.md`
+# Business tests (~3,800 tests, excludes known defects)
+dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests" --filter "Defect!~DEF"
+
+# Presentation tests (~164 tests)
+dotnet test "QA Tests/C# Tests/UNOPS.PAO.Presentation.Tests"
+
+# Integration tests (~5,500 tests, excludes known defects)
+dotnet test "QA Tests/Integration Tests" --filter "Defect!~DEF"
+
+# Feature-specific tests (example: Partner)
+dotnet test "QA Tests/Integration Tests" --filter "FullyQualifiedName~Partner"
+
+# Known defect tests only (informational, expected to fail)
+dotnet test --filter "Defect~DEF"
+```
 
 ---
 
-## 🅰️ **3. Angular Unit Tests**
+## 2. Playwright E2E Tests
 
-**Location**: `UNOPS.PAO.ClientApp/src/app/**/*.spec.ts`  
-**Framework**: Jasmine + Karma  
-**Purpose**: Angular component unit testing  
-**Language**: TypeScript
+**Framework:** Playwright  
+**Language:** TypeScript  
+**Run by:** QA (100% QA-owned)  
+**Location:** `QA Tests/Playwright Tests/`
 
 ### Test Structure
+
+| Category | Spec Files | Examples |
+|---|---|---|
+| **Core** | 6 | `login.spec.ts`, `home.spec.ts`, `dashboard.spec.ts`, `partners.spec.ts`, `opportunities.spec.ts`, `interactions.spec.ts` |
+| **Entity Detail** | 8 | `partner-item.spec.ts`, `opportunity-item.spec.ts`, `contact-item.spec.ts`, `interaction-item.spec.ts` (+ basic variants) |
+| **Opportunity** | 9 | `opportunity-creation.spec.ts`, `opportunity-documents.spec.ts`, `opportunity-workflow-transitions.spec.ts`, etc. |
+| **Workflow** | 6 | `workflow.spec.ts`, `go-decision.spec.ts`, `workflow-notifications.spec.ts`, etc. |
+| **Search** | 4 | `deep-search.spec.ts`, `search-listviews.spec.ts`, `search-results-enhanced.spec.ts`, `search-icons.spec.ts` |
+| **Admin** | 4 | `admin-features.spec.ts`, `admin-entity-config.spec.ts`, `admin-translation-workbench.spec.ts`, `user-management.spec.ts` |
+| **Partner/Contact** | 7 | `contacts.spec.ts`, `partner-tree.spec.ts`, `partner-features.spec.ts`, `partner-detail-tabs.spec.ts`, etc. |
+| **AI** | 3 | `ai-assistant.spec.ts`, `ai-assistant-negative.spec.ts`, `ai-comparison.spec.ts` |
+| **Infrastructure** | 8 | `form-validation.spec.ts`, `role-access-control.spec.ts`, `accessibility.spec.ts`, `api-error-handling.spec.ts`, etc. |
+| **Real/Advanced** | 14+ | `*.real.spec.ts` — tests against live environments |
+| **Other** | 30+ | `notifications.spec.ts`, `comments.spec.ts`, `import-export.spec.ts`, `cross-entity-navigation.spec.ts`, etc. |
+| **Total** | **102** | |
+
+### Page Objects
+
+21 page object models in `QA Tests/Playwright Tests/pages/`:
+
 ```
-UNOPS.PAO.ClientApp/src/app/
-├── features/
-│   ├── auth/components/login/login.component.spec.ts
-│   ├── home/components/home/home.component.spec.ts
-│   ├── partnerships/partners/.../*.spec.ts
-│   └── ...
-└── shared/
-    └── components/**/*.spec.ts
+pages/
+├── login.page.ts
+├── home.page.ts
+├── dashboard.page.ts
+├── partners.page.ts
+├── partner-item.page.ts
+├── opportunities.page.ts
+├── opportunity-item.page.ts
+├── contacts.page.ts
+├── contact-item.page.ts
+├── interactions.page.ts
+├── interaction-item.page.ts
+└── ... (21 total)
 ```
 
-### Statistics
-- **Total Tests**: 1,100 tests
-- **Passing**: 741 tests (67.4%)
-- **Status**: Operational (test maintenance in progress)
+### Quick Start — Running Playwright Tests
+
+```bash
+# From QA Tests/Playwright Tests/ folder
+
+# Run all tests
+npx playwright test
+
+# Run with browser visible
+npx playwright test --headed
+
+# Run interactive UI mode
+npx playwright test --ui
+
+# Run specific spec
+npx playwright test login.spec.ts
+
+# Run smoke specs only (6 core specs)
+npx playwright test login.spec.ts home.spec.ts dashboard.spec.ts partners.spec.ts opportunities.spec.ts interactions.spec.ts
+
+# Generate HTML report
+npx playwright show-report
+```
+
+### Documentation
+
+- [Playwright Quickstart for Testers](../Playwright%20Tests/QUICKSTART_FOR_TESTERS.md)
+
+---
+
+## 3. Angular Unit Tests
+
+**Framework:** Jasmine + Karma  
+**Language:** TypeScript  
+**Location:** `UNOPS.PAO.ClientApp/src/app/**/*.spec.ts`
 
 ### Quick Start
+
 ```bash
-# From UNOPS.PAO.ClientApp folder
 cd UNOPS.PAO.ClientApp
 
-# Run tests in headless mode
-npx ng test --no-watch --browsers=ChromeHeadlessCI
+# Run in CI mode (headless)
+npm run test:ci
 
-# Run with UI (watch mode)
+# Run with watch mode (interactive)
 ng test
 ```
 
-### Configuration
-- **Config**: `UNOPS.PAO.ClientApp/karma.conf.js`
-- **Test Setup**: `UNOPS.PAO.ClientApp/src/test.ts`
-- **Execution Rules**: `QA Tests/.cursorrules`
-
 ---
 
-## 📊 **Overall Test Status**
+## 4. CI/CD Pipeline
 
-### Test Coverage Summary
+**File:** `.github/workflows/qa-tests.yml`
 
-| Test Type | Total | Passing | Pass Rate | Purpose |
-|-----------|-------|---------|-----------|---------|
-| **C# Fast Tests** | 78 | 78 | **100%** ✅ | Critical business logic |
-| **C# Integration** | 1,392 | 1,279 | 91.9% | API endpoints |
-| **C# Business** | 2,327 | 2,135 | 91.8% | Manager logic |
-| **Angular Unit** | 1,100 | 741 | 67.4% | Component logic |
-| **Playwright E2E** | 2 | 2 | **100%** ✅ | User workflows |
-| **TOTAL** | **4,899** | **4,235** | **86.5%** | Complete coverage |
+### Triggers
 
-### Health Status
+- **Push:** `main`, `dev-deploy`, `QA-Tests` branches
+- **Pull Request:** `main`, `dev-deploy` branches
+- **Schedule:** Nightly at 2:00 UTC
+- **Manual:** `workflow_dispatch` with Playwright tier selection
+
+### Pipeline Structure
 
 ```
-🟢 EXCELLENT: C# Fast Tests (100%)
-🟢 EXCELLENT: Playwright E2E (100%)
-🟡 GOOD:      C# Integration (91.9%)
-🟡 GOOD:      C# Business (91.8%)
-🟠 FAIR:      Angular Unit (67.4% - maintenance in progress)
+Developer pushes code / creates PR
+         │
+         ▼
+┌─────────────────────────────────────────────────┐
+│           GitHub Actions Triggered               │
+├─────────────────────────────────────────────────┤
+│                                                  │
+│  BUILD STAGE                                     │
+│  ┌──────────────────┐  ┌──────────────────────┐ │
+│  │ dotnet-build     │  │ angular-build        │ │
+│  │ .NET 9, NuGet    │  │ npm, ESLint, audit   │ │
+│  └──────────────────┘  └──────────────────────┘ │
+│           │                       │              │
+│           ▼                       ▼              │
+│  TEST STAGE                                      │
+│  ┌──────────────┐  ┌──────────────────────────┐ │
+│  │ Smoke Tests  │  │ Fast Tests (~43)         │ │
+│  │ (Category=   │  │ Code coverage            │ │
+│  │  Smoke)      │  │ BLOCKING                 │ │
+│  │ BLOCKING     │  └──────────────────────────┘ │
+│  └──────────────┘                                │
+│  ┌──────────────┐  ┌──────────────────────────┐ │
+│  │ Business     │  │ Presentation Tests       │ │
+│  │ Tests        │  │ (~164 tests)             │ │
+│  │ (~3,800)     │  │ BLOCKING                 │ │
+│  │ PostgreSQL   │  └──────────────────────────┘ │
+│  │ BLOCKING     │                                │
+│  └──────────────┘  ┌──────────────────────────┐ │
+│  ┌──────────────┐  │ Frontend Tests           │ │
+│  │ Integration  │  │ (Angular unit tests)     │ │
+│  │ Tests        │  │ BLOCKING                 │ │
+│  │ (~5,500)     │  └──────────────────────────┘ │
+│  │ PostgreSQL   │                                │
+│  │ CONTINUE     │  ┌──────────────────────────┐ │
+│  └──────────────┘  │ Playwright Smoke (6 specs)│ │
+│                    │ PR/push only              │ │
+│  ┌──────────────┐  │ CONTINUE                 │ │
+│  │ Defect Tests │  └──────────────────────────┘ │
+│  │ (Defect~DEF) │                                │
+│  │ Informational│  ┌──────────────────────────┐ │
+│  │ CONTINUE     │  │ Playwright Extended      │ │
+│  └──────────────┘  │ (25 specs) PR→main only  │ │
+│                    └──────────────────────────┘ │
+│                    ┌──────────────────────────┐ │
+│                    │ Playwright Full (~96 specs)│ │
+│                    │ Nightly or manual         │ │
+│                    │ Sharded 4×                │ │
+│                    └──────────────────────────┘ │
+│                                                  │
+│  SUMMARY                                         │
+│  ┌──────────────────────────────────────────────┐│
+│  │ test-summary: Aggregated report              ││
+│  └──────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────┘
+         │
+         ▼
+   PR merge allowed (if blocking gates pass)
 ```
 
----
+### Playwright Tiers
 
-## 🎯 **Test Strategy**
-
-### When to Use Each Test Type
-
-#### **Use Playwright E2E Tests When:**
-- ✅ Testing complete user workflows (login → action → result)
-- ✅ Validating frontend + backend integration
-- ✅ Testing cross-browser compatibility
-- ✅ Testing responsive design
-- ✅ Catching integration bugs
-
-**Example**: Test creating a partner from UI → API → Database → UI refresh
-
-#### **Use C# Unit/Integration Tests When:**
-- ✅ Testing business logic in isolation
-- ✅ Testing API endpoints
-- ✅ Testing validation rules
-- ✅ Testing database operations
-- ✅ Fast feedback during development
-
-**Example**: Test that `CalculateDiscount()` returns correct value for various inputs
-
-#### **Use Angular Unit Tests When:**
-- ✅ Testing component logic
-- ✅ Testing form validation
-- ✅ Testing service methods
-- ✅ Testing pipes/directives
-- ✅ Fast isolated tests
-
-**Example**: Test that login button is disabled when form is invalid
+| Tier | Specs | When | Purpose |
+|---|---|---|---|
+| **Smoke** | 6 core specs | Every PR/push | Fast E2E validation |
+| **Extended** | 25 specs | PR to main, manual | Core CRM + validation + permissions |
+| **Full** | ~96 specs (sharded 4×) | Nightly, manual | Complete E2E regression |
+| **Cross-browser** | All specs × 3 browsers | Manual only | Chrome, Firefox, Safari |
 
 ---
 
-## 🚀 **Running All Tests**
+## Defect Tracking
 
-### Recommended Order
+| File | Prefix | Current Count | Purpose |
+|---|---|---|---|
+| `Defect List for Developers.md` | DEF-XXX | ~48 open, ~40 resolved | Production code defects |
+| `Defect List for QA.md` | QA-XXX | ~13 active, ~60 resolved | Test infrastructure issues |
 
-```bash
-# 1. C# Fast Tests (quick validation - 4 seconds)
-dotnet test "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj"
-
-# 2. C# Business Tests (core logic - 48 seconds)
-dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj"
-
-# 3. C# Integration Tests (full stack - 46 seconds)
-dotnet test "QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj"
-
-# 4. Angular Unit Tests (frontend - 21 seconds)
-cd UNOPS.PAO.ClientApp
-npx ng test --no-watch --browsers=ChromeHeadlessCI
-
-# 5. Playwright E2E Tests (workflows - varies)
-cd ..
-npm run test
-```
-
-**Total Execution Time**: ~3-5 minutes for complete suite
+Defect tests use `[Trait("Defect", "DEF-XXX")]` and run in a separate non-blocking CI job.
 
 ---
 
-## 📝 **Test Maintenance Status**
+## Test Ownership Summary
 
-### ✅ Completed (January 23, 2026)
-- ✅ Fixed all 451 compilation errors in C# tests
-- ✅ Fixed Angular test compilation errors
-- ✅ All test suites now compile and execute
-- ✅ Configured Playwright E2E tests
-- ✅ Organized test folders at root level
-- ✅ Updated test execution standards (`.cursorrules`)
-
-### ⏳ In Progress
-- ⏳ Update Angular test service mocks (200+ tests)
-- ⏳ Update C# Business test mocks (80+ tests)
-- ⏳ Refactor permission tests (20+ tests)
-- ⏳ Add Playwright tests for critical workflows
-
-### 🎯 Goals
-- 🎯 Achieve 95%+ pass rate across all suites
-- 🎯 Convert 10-15 key workflows to Playwright
-- 🎯 Complete Angular mock updates
-- 🎯 Integrate all tests into CI/CD
+| Test Type | Count | Owner | Dev Runs? | CI Gate? |
+|---|---|---|---|---|
+| Smoke Tests | ~14 | QA + Dev | Yes | Blocking |
+| Fast Tests | ~43 | QA | Yes | Blocking |
+| Business Tests | ~3,800 | QA (with AI) | Yes (pre-PR) | Blocking |
+| Presentation Tests | ~164 | QA (with AI) | Yes (pre-PR) | Blocking |
+| Integration Tests | ~5,500+ | QA (with AI) | Yes (pre-PR) | Continue-on-error |
+| Playwright E2E | 102 specs | QA (100%) | No | Smoke: continue; Full: nightly |
+| Angular Unit Tests | Varies | Dev + QA | Yes | Blocking |
+| Defect Tests | Varies | QA | No | Informational |
 
 ---
 
-## 🛠️ **CI/CD Integration**
+## Documentation Index
 
-### GitHub Actions Workflows
+All QA documentation is centralized in `QA Tests/Documentation/`:
 
-```
-.github/workflows/
-├── playwright.yml        # ← Playwright E2E tests
-└── qa-tests.yml          # ← C# tests
-```
+| Document | Purpose |
+|---|---|
+| [Shift-Left Testing Manifesto](SHIFT_LEFT_TESTING_MANIFESTO.md) | Team strategy, roles, handshake points, quality gates |
+| [Shift-Left Scorecard](SHIFT_LEFT_SCORECARD.md) | Measurement criteria, sprint dashboard, maturity model |
+| [Action Items](ACTION_ITEMS.md) | Living to-do list for developers and QA |
+| [QA Tester Playbook](QA_TESTER_PLAYBOOK.md) | Day-to-day QA practices, test categories, templates |
+| [Onboarding Guide](ONBOARDING_GUIDE.md) | 30-60-90 day plan for new hires |
+| [Testing Structure](TESTING_STRUCTURE.md) | This file — repo test organization |
+| [Production Readiness Checklist](PRODUCTION_READINESS_CHECKLIST.md) | Pre-release checklist |
+| [Developer Implementation Checklist](DEVELOPER_IMPLEMENTATION_CHECKLIST.md) | Opportunity feature implementation checklist |
+| [oUP Integration Checklist](OpportunityPlus_oUP_Integration_Checklist.md) | oUP sync field mapping validation |
 
-### Automated Testing
-- ✅ Playwright tests run on every PR
-- ✅ C# tests run on every push
-- ✅ Test reports saved as artifacts
-- ✅ Failed test traces captured
+### Developer Quick Reference
 
----
-
-## 📚 **Documentation Index**
-
-### Quick Reference
-- 🎯 **This File**: Complete testing overview
-- 📁 **Playwright Tests/README.md**: E2E test quick start
-- 📚 **Playwright Tests/GETTING_STARTED.md**: Detailed E2E guide
-- 🔄 **QA Tests/PLAYWRIGHT_CONVERSION_CANDIDATES.md**: Angular → Playwright conversion guide
-
-### Test Results
-- 📊 **Latest Results**: `QA Tests/Test Execution Results/UNIT_TEST_EXECUTION_RESULTS.md`
-- 🐛 **Known Issues**: `QA Tests/Test Execution Results/DEFECTS_FOR_DEVELOPERS_2026-01-23.md`
-- 💡 **Developer Guide**: `QA Tests/Test Execution Results/DEVELOPER_RECOMMENDATIONS_2026-01-23.md`
-
-### Configuration
-- ⚙️ **Playwright Config**: `playwright.config.ts`
-- ⚙️ **Karma Config**: `UNOPS.PAO.ClientApp/karma.conf.js`
-- ⚙️ **Test Standards**: `QA Tests/.cursorrules`
+| I want to... | Command |
+|---|---|
+| Run smoke tests | `dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests" --filter "Category=Smoke"` |
+| Run tests for my feature | `dotnet test "QA Tests/Integration Tests" --filter "FullyQualifiedName~FeatureName"` |
+| Run all blocking tests | `dotnet test --filter "Defect!~DEF"` |
+| See known defects | `dotnet test --filter "Defect~DEF"` |
+| Run Playwright (QA only) | `npx playwright test --ui` |
 
 ---
 
-## 🎓 **Getting Started Guide**
+## Version History
 
-### For New Developers
-
-**1. Run Existing Tests First**
-```bash
-# Quick smoke test
-dotnet test "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj"
-```
-
-**2. Set Up Playwright** (5 minutes)
-```bash
-npm install
-npx playwright install
-npm run test:ui
-```
-
-**3. Review Documentation**
-- Read this file (TESTING_STRUCTURE.md)
-- Read Playwright Tests/GETTING_STARTED.md
-- Review latest test results in QA Tests/Test Execution Results/
-
-**4. Write Your First Test**
-- Start with a simple Playwright test
-- Use the examples in PLAYWRIGHT_CONVERSION_CANDIDATES.md
-- Follow the patterns in existing tests
-
----
-
-## 🤝 **Contributing**
-
-### Test Standards
-1. ✅ **C# Tests**: Follow xUnit patterns, use FluentAssertions
-2. ✅ **Angular Tests**: Use Jasmine/Karma, mock services properly
-3. ✅ **Playwright Tests**: Use `data-testid`, create page objects
-4. ✅ **All Tests**: Write clear descriptions, add comments for complex logic
-
-### Before Committing
-```bash
-# Run relevant tests
-dotnet test "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj"
-npm run test:e2e
-```
-
----
-
-## 📞 **Support**
-
-### Questions?
-- 📖 Check the documentation in this file and related guides
-- 🔍 Search existing test files for examples
-- 💬 Ask the team for guidance
-
-### Resources
-- **Playwright Docs**: https://playwright.dev/
-- **xUnit Docs**: https://xunit.net/
-- **Angular Testing**: https://angular.dev/guide/testing
-
----
-
-**Last Updated**: January 23, 2026  
-**Status**: ✅ All test suites operational and documented
+| Version | Date | Author | Changes |
+|---|---|---|---|
+| 1.0 | 2026-01-23 | QA Team | Initial version |
+| 2.0 | 2026-03-06 | QA Lead | Complete rewrite: Updated all test counts (568 C# files, 102 Playwright specs, 21 POMs). Updated CI pipeline to match qa-tests.yml (build stage, test stage with 11 jobs, Playwright tiers). Added integration test folder structure. Updated defect tracking counts. Added test ownership summary. Centralized documentation index. Removed stale references. |

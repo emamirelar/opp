@@ -1149,6 +1149,8 @@ A: Manual testing becomes more focused and valuable. Instead of manually clickin
 
 | Document                          | Location                                          | Purpose                              |
 |-----------------------------------|---------------------------------------------------|--------------------------------------|
+| Shift-Left Scorecard              | `QA Tests/Documentation/SHIFT_LEFT_SCORECARD.md` | Measurement criteria, sprint dashboard, maturity model |
+| Action Items (Dev + QA)           | `QA Tests/Documentation/ACTION_ITEMS.md`         | Living to-do list for developers and QA |
 | Onboarding Guide                  | `QA Tests/Documentation/ONBOARDING_GUIDE.md`     | 30-60-90 day plan for new QA and Dev hires |
 | QA Tester Playbook                | `QA Tests/Documentation/QA_TESTER_PLAYBOOK.md`   | Day-to-day QA practices and standards |
 | Playwright Quickstart for Testers | `QA Tests/Playwright Tests/QUICKSTART_FOR_TESTERS.md` | Playwright setup and writing guide  |

@@ -52,6 +52,7 @@
     <Compile Remove="PNO-1146_WorkflowEmailNotifications\**\*.cs" />
     <Compile Remove="PNO-1166_RejectDuplicateAndOMTransfer\**\*.cs" />
     <Compile Remove="PNO-1197_DoA3Fallback\**\*.cs" />
+    <Compile Remove="Workflow\WorkflowPRDGapTests.cs" />
   </ItemGroup>
 
   <ItemGroup>

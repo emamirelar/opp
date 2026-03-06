@@ -31,7 +31,7 @@ This document tracks **production code defects** discovered during testing. Thes
 
 ## Open Defects
 
-> **47 open** | Sorted by severity (Critical → High → Medium → Low), then by date reported.
+> **48 open** | Sorted by severity (Critical → High → Medium → Low), then by date reported.
 
 | Defect ID | Severity | Title | Component | Date Reported | Status | Developer Feedback |
 |-----------|----------|-------|-----------|---------------|--------|--------------------|
@@ -44,6 +44,7 @@ This document tracks **production code defects** discovered during testing. Thes
 | DEF-033 | 🟠 High | OrganizationHierarchyLookupController — empty stub file, 18 integration tests fully blocked | OrganizationHierarchyLookupController | 2026-02-21 | Open | |
 | DEF-034 | 🟠 High | LiaisonOfficeLookupController — empty stub file, 15+ integration tests fully blocked | LiaisonOfficeLookupController | 2026-02-21 | Open | |
 | DEF-045 | 🟠 High | AuditLogController returns 500 Internal Server Error for all authenticated requests in InMemory mode | AuditLogController | 2026-02-25 | Open | |
+| DEF-053 | 🟠 High | UNOPSGeminiManager.GetCredentials crashes on missing Google credentials — blocks ALL API endpoints | UNOPSGeminiManager | 2026-03-02 | Open — NOT Resolved (confirmed 2026-03-05) | Constructor crash: `GetCredentials()` reads credential JSON from `IConfiguration` (null in test env), calls `GoogleCredential.FromJson(null)` → `ArgumentNullException`. Bypasses DI and `DisableExternalCalls` config. Blocks `UNOPSManagerWrapper` init → ALL endpoints return 500. ADC/Secret Manager work but are not used here. 85+ tests failing. **Fix:** Guard null config, use ADC, or accept `GoogleCredential` via DI. |
 | DEF-058 | 🟠 High | OpportunityManager.GetOpportunityAsync includes invalid `Stakeholders.Contact` navigation path | OpportunityManager | 2026-03-03 | Open | `GetOpportunityAsync()` includes string-based include path `Stakeholders.Contact` but `OpportunityStakeholder` has no `Contact` navigation property. Causes `InvalidIncludePathError` at runtime. **Proper Fix:** Remove `Stakeholders.Contact` from the include chain or add the missing navigation property to the entity model. **Wrong Fix:** ❌ Suppressing the `InvalidIncludePathError` warning. Affected tests: 9 tests in OpportunityPerformanceTests + 4 tests in OpportunitySections/PerformanceTests (workaround: direct Context queries). |
 | DEF-059 | 🟠 High | PartnerManager.GetPartnerWithContactsAndInteractionsAsync exceeds 200ms SLA (805ms) | PartnerManager | 2026-03-03 | Open | `GetPartnerWithContactsAndInteractionsAsync()` takes ~805ms for a single partner with contacts and interactions, exceeding the 200ms SLA threshold by 4x. Likely caused by Cartesian product explosion from multiple `.Include()` chains loading contacts, interactions, and their related entities in a single query. **Root Cause:** Too many `Include`/`ThenInclude` statements in one query create Cartesian product (see entity-framework-performance-optimization rule). **Proper Fix:**<br/>• Split into separate queries: main partner + contacts query + interactions query<br/>• Add `.AsNoTracking()` if read-only<br/>• Consider parallel execution with `IDbContextFactory` if 3+ collection queries<br/>**Wrong Fix:** ❌ Raising the SLA threshold to match current behavior.<br/>**Repro:** Run `PartnerPerformanceTests.GetPartnerWithContactsAndInteractions_NoCartesianExplosion_CompletesWithinThreshold` in isolation — fails at 805ms vs 200ms threshold. |
 | DEF-062 | 🟠 High | PubSubPullService ignores `Enabled: false` config — crashes backend on GCP permission error | Startup.cs / PubSubPullService | 2026-03-04 | Open |
@@ -102,7 +103,7 @@ This document tracks **production code defects** discovered during testing. Thes
 | DEF-098 | 🟡 Medium | GetOpportunityManagerEmailAsync missing IsDeleted filter on OpportunityStakeholder | PaoWorkflowNotificationService | 2026-03-05 | Open | `GetOpportunityManagerEmailAsync` (line 1077) queries `OpportunityStakeholders` without `!s.IsDeleted` filter. Compare with `GetOpportunityManagerUserIdAsync` (line 1027) which correctly has `!s.IsDeleted`. A soft-deleted OM stakeholder could still appear in CC recipients for workflow emails.<br/><br/>**Root Cause:** Inconsistent query filters — `GetOpportunityManagerUserIdAsync` correctly filters `!s.IsDeleted`, but `GetOpportunityManagerEmailAsync` does not.<br/><br/>**Proper Fix:**<br/>• Add `&& !s.IsDeleted` to the `.Where()` clause in `GetOpportunityManagerEmailAsync` (line 1077)<br/><br/>**Wrong Fix:** ❌ Removing the IsDeleted filter from `GetOpportunityManagerUserIdAsync` to make them consistent<br/><br/>**Repro Steps:**<br/>1. Assign an OM stakeholder to an opportunity<br/>2. Soft-delete the OM stakeholder<br/>3. Trigger a workflow notification that uses CC (e.g., Internal Stakeholder FYI)<br/>4. Check CC recipients<br/><br/>**Expected:** Soft-deleted OM is excluded from CC<br/>**Actual:** Soft-deleted OM may still appear in CC<br/><br/>**Environment:** Dev<br/>**Related Tests:** `PaoWorkflowNotificationCompletedTests`, `PaoWorkflowInternalStakeholderTests` |
 | DEF-099 | 🟠 High | Go Decision PRD says DoA3 fallback is "Out of Scope" but PNO-1197 implemented it | tasks/the-go-decision/the-go-decision-prd.md, tasks/send-opportunity-for-go-decision/send-opportunity-for-go-decision-prd.md | 2026-03-05 | Open | `the-go-decision-prd.md` line 1194 states: "❌ DoA escalation to DoA3 - Only DoA2 for this release" under Non-Goals. `send-opportunity-for-go-decision-prd.md` line 1274 states: "❌ Multi-level DoA escalation - Only DoA2 for this release". However, Jira PNO-1197 (Bug, Urgent priority, Status: Done, resolved 2026-02-17) required DoA3 fallback when DoA2 is removed, and it was implemented by the dev team and QA-passed by Perminder Saluja. The feature is live in production (Version 3.1) and 12 test files exist in `PNO-1197_DoA3Fallback/`. **The PRDs are stale and must be updated to move DoA3 fallback from "Out of Scope" to "In Scope" and reference PNO-1197.**<br/><br/>**Root Cause:** PRD was not updated after scope change was approved via Jira bug PNO-1197.<br/><br/>**Proper Fix:**<br/>• Update `the-go-decision-prd.md` line 1194: remove "DoA escalation to DoA3" from Non-Goals<br/>• Add DoA3 fallback as in-scope requirement with reference to PNO-1197<br/>• Update `send-opportunity-for-go-decision-prd.md` line 1274 similarly<br/>• Add Jira ticket traceability table to both PRDs<br/><br/>**Wrong Fix:** ❌ Removing the DoA3 fallback implementation to match the stale PRD<br/><br/>**Impact:** Any test created solely from the PRD would incorrectly skip DoA3 fallback testing, missing a critical workflow feature. QA tests in `PNO-1197_DoA3Fallback/` are correct but contradict the PRD documentation. |
 | DEF-100 | 🟡 Medium | PRDs have zero Jira ticket traceability — no PNO- references in any PRD | tasks/the-go-decision/the-go-decision-prd.md, tasks/send-opportunity-for-go-decision/send-opportunity-for-go-decision-prd.md | 2026-03-05 | Open | Neither `the-go-decision-prd.md` nor `send-opportunity-for-go-decision-prd.md` reference any Jira PNO- ticket numbers. There is no mapping table showing which Jira tickets correspond to which PRD sections. This means: (1) scope changes made via Jira bugs/stories cannot be traced back to PRD updates, (2) acceptance criteria in Jira cannot be verified against PRD coverage, (3) QA cannot determine if a PRD is current or stale without manually cross-referencing Jira. PNO-1197 (DoA3 fallback) and PNO-1146 (workflow notifications) were both implemented but never reflected in PRDs.<br/><br/>**Proper Fix:**<br/>• Add a "Jira Traceability" section to each PRD with a table: `\| Jira Ticket \| Description \| PRD Section \| Status \|`<br/>• Include all PNO- tickets that affect the PRD scope<br/>• Update this table whenever a ticket changes PRD scope<br/><br/>**Impact:** QA tests created from PRDs alone may miss requirements that only exist in Jira. This was proven by the PNO-1146 analysis where 3 new defects (DEF-096, DEF-097, DEF-098) were found only by cross-referencing Jira comments against the code — the PRD did not contain this information. |
-| DEF-110 | 🟠 High | Partners silently dropped during oUP Engagement creation when partner not in oUP | UNOPS.PAO.Business/Integration (oUP Sync) | 2026-03-05 | Open | PNO-1207: When an Opportunity contains Client or Funding Partners that exist in Opp+ QA but have not been synced to oUP (e.g., newly created test partners), the system silently drops these partners during Engagement creation. No error or warning is shown.<br/><br/>**Root Cause:** oUP sync logic does not validate partner existence in oUP before Engagement creation. Missing partners are silently skipped instead of raising an error or queueing for sync.<br/><br/>**Proper Fix:**<br/>• Validate all referenced partners exist in oUP before Engagement creation<br/>• Show warning/error if partners are missing from oUP<br/>• Queue missing partners for sync before attempting Engagement creation<br/><br/>**Wrong Fix:** ❌ Silently dropping partners without notification<br/><br/>**Related Tests:** `PNO-1207_PartnerSyncMismatch/PartnerSyncMismatchTests.cs` (26 tests) |
+| DEF-110 | 🟠 High | Partners silently dropped during oUP Engagement creation when partner not in oUP | UNOPS.PAO.Business/Integration (oUP Sync) | 2026-03-05 | Open | [PNO-1207](https://unops.atlassian.net/browse/PNO-1207) Ready for Development (Assignee: Anusha SWAMINATHAN): Partners in Opp+ QA but not in oUP are silently dropped during Engagement creation. No error/warning shown. Edit/save re-sync workaround confirmed NOT working (2026-03-06). oUP test envs lose synced data after releases.<br/><br/>**Root Cause:** oUP sync logic does not validate partner existence before Engagement creation. Re-sync via edit/save also broken.<br/><br/>**Proper Fix:**<br/>• Validate partner existence in oUP before Engagement creation<br/>• Show warning/error for missing partners<br/>• Fix edit/save re-sync mechanism<br/>• Queue missing partners for sync<br/><br/>**Wrong Fix:** ❌ Silently dropping partners without notification<br/><br/>**Test Data:** Opp+ ID 173, Engagement 25550-00, "FG Partner" missing from oUP<br/><br/>**Related Tests:** `PNO-1207_PartnerSyncMismatch/PartnerSyncMismatchTests.cs` (26 tests) |
 | DEF-111 | 🟠 High | Blank partner tree levels appearing in oUP and BigQuery after data migration | UNOPS.PAO.Business/PartnerTree | 2026-03-05 | Open | PNO-867: Since the data migration of the partner tree to Opportunity+, additional blank/empty partner levels are appearing in the oneUNOPS Projects partner list and in BigQuery partner tree reports. These phantom levels have no name or meaningful data.<br/><br/>**Root Cause:** Data migration created partner tree nodes with empty/null names. Queries do not filter out nodes with blank names.<br/><br/>**Proper Fix:**<br/>• Clean up blank partner tree nodes from database<br/>• Add validation to prevent creation of nodes with empty names<br/>• Filter out blank-named nodes from partner tree API responses<br/><br/>**Wrong Fix:** ❌ Hiding blank nodes only in the UI while leaving corrupt data in the database<br/><br/>**Related Tests:** `PNO-867_BlankPartnerTreeLevels/BlankPartnerTreeTests.cs` (26 tests) |
 | DEF-112 | 🟡 Medium | SDG classification uses 'primary'/'secondary' instead of 'main'/'cross cutting' labels | Opportunity Statement / SDG API | 2026-03-05 | Open | PNO-974: In Opportunity Statement section "2. Alignment with UN, global, and national goals and priorities", SDGs are still classified as 'primary' and 'secondary' whereas they should be 'main' and 'cross cutting'. API responses (opportunity detail, SDG values, workflow requirements) may expose deprecated terminology.<br/><br/>**Root Cause:** API/UI still uses legacy terminology.<br/><br/>**Proper Fix:** Update all SDG classification labels to use 'main' and 'cross cutting' throughout API responses and UI.<br/><br/>**Wrong Fix:** ❌ Changing test assertions to accept 'primary'/'secondary'<br/><br/>**Related Tests:** `SdgClassificationTests.NEG_001_SdgClassification_UsesMainCrossCutting_NotPrimarySecondary` |
 | DEF-113 | 🟡 Medium | Special/accented characters in user names display as '??' in dropdowns | UNOPS.PAO.Presentation/API (Character Encoding) | 2026-03-05 | Open | PNO-1194: Accented characters (e.g., 'Ã', 'ö', 'ü') in user names are replaced by question marks ('??') in dropdown menus. This indicates a UTF-8 vs ASCII/Latin-1 encoding mismatch between the database/API response and the frontend component.<br/><br/>**Root Cause:** Character encoding mismatch — likely the database stores UTF-8 but the API response or frontend rendering interprets it as ASCII/Latin-1.<br/><br/>**Proper Fix:**<br/>• Ensure database connection string specifies UTF-8 encoding<br/>• Verify API response Content-Type includes `charset=utf-8`<br/>• Ensure frontend components handle UTF-8 characters properly<br/><br/>**Wrong Fix:** ❌ Replacing special characters with ASCII equivalents<br/><br/>**Related Tests:** `PNO-1194_CharacterEncoding/CharacterEncodingTests.cs` (26 tests) |
@@ -736,9 +737,12 @@ The following items were previously logged as developer defects but have been re
 
 ---
 
-## Defect Statistics (Updated 2026-03-04)
+## Defect Statistics (Updated 2026-03-05)
 
-- **Total Open:** 34 (DEF-008, DEF-020, DEF-021, DEF-023, DEF-024, DEF-025–DEF-050, DEF-052–DEF-063)
+- **Total Open:** 48 (DEF-008, DEF-020, DEF-021, DEF-023–DEF-050, DEF-052–DEF-095)
+- **2026-03-05 Updates:**
+  - **DEF-053 confirmed NOT resolved:** QA re-assessment on 2026-03-05 confirms the production defect is still present. ADC and Secret Manager access work, but `UNOPSGeminiManager.GetCredentials()` does not use either — it reads credential JSON directly from `IConfiguration` (null in test env). The `DisableExternalCalls` config flag is not checked before the crash. 85+ un-skipped tests continue to fail. Three fix options documented in detailed section.
+  - **Database configuration note:** `appsettings.Testing.json` points to `unops-opportunityplus-dev-db-leonardc` via Cloud SQL Proxy on `127.0.0.1:5432`. Production `appsettings.json` points to `unops-opportunityplus-dev-db-anushas` on port 6364. Both use IAM authentication. `PAOWebApplicationFactory` falls back to InMemory provider when PostgreSQL is unavailable. Developer team should confirm the correct shared dev database for CI/test execution.
 - **2026-03-04 Playwright E2E Session Updates:**
   - **DEF-062 workaround applied:** Startup.cs modified to conditionally register PubSubPullService/DueDiligenceNotificationService based on `Enabled` config flag. Backend now starts and stays stable in Development. Permanent fix pending from developer.
   - **DEF-063 NEW:** IAPVerificationMiddleware runs unconditionally in Testing environment, blocks `[AllowAnonymous]` endpoints
@@ -746,7 +750,7 @@ The following items were previously logged as developer defects but have been re
 - **2026-03-04 Earlier Updates:**
   - **DEF-013 CLOSED** (Won't Fix): LiaisonOffice does not have a manager by design (per Anusha)
   - **DEF-014 CLOSED** (Won't Fix): FocalPoint does not have a manager by design (per Anusha)
-  - **DEF-053 Verification Pending**: Anusha reports fix may be in place; 85+ tests un-skipped for CI verification
+  - **DEF-053 ~~Verification Pending~~ NOT Resolved (confirmed 2026-03-05)**: Anusha reported fix may be in place (2026-03-04); 85+ tests un-skipped for CI verification. **2026-03-05 re-assessment:** ADC and Secret Manager access work, but `UNOPSGeminiManager.GetCredentials()` bypasses both — reads credential JSON directly from `IConfiguration` which is `null` in test env. Constructor crash blocks entire `UNOPSManagerWrapper`. 85+ tests still failing. See detailed section for three proposed fix options.
   - 21 PartnerLiaisonOffice/FocalPoint placeholder tests cancelled
   - Integration tests job enabled in CI (`continue-on-error: true`) for Anusha to verify UNOPS.Workflow submodule and DEF-053 fixes
 - **NEW (2026-03-04):** DEF-061 (3,036 compiler warnings across 15 production projects), DEF-062 (PubSubPullService ignores Enabled:false config — workaround applied), DEF-063 (IAPVerificationMiddleware blocks AllowAnonymous in Testing env)
@@ -1829,7 +1833,7 @@ Since this property is getter-only, EF Core excludes it from INSERT statements. 
 **Severity:** 🟠 High  
 **Component:** `UNOPSGeminiManager` (`UNOPS.PAO.UNOPSBusiness/Managers/UNOPSGeminiManager.cs`)  
 **Date Reported:** 2026-03-02  
-**Status:** Verification Pending (2026-03-04)  
+**Status:** Open — NOT Resolved (confirmed 2026-03-05)  
 **Priority:** P2 — Constructor crash blocks entire ManagerWrapper initialization  
 **Reporter:** QA Team (2026-03-02 verification rerun)
 
@@ -1838,6 +1842,15 @@ Since this property is getter-only, EF Core excludes it from INSERT statements. 
 > **QA Action (2026-03-04):** Removed `[Fact(Skip = "DEF-053...")]` from 85+ integration tests across 5 files so they run (pass or fail) in CI. Integration tests job enabled in `qa-tests.yml` with `continue-on-error: true`. If fix works, tests will pass; if not, failures will be visible in test reporter.
 > 
 > **Files un-skipped:** DocumentControllerUNOPSTests.cs (16), OpportunityControllerCoreTests.cs (24), EntityArtifactControllerTests.cs (34), PartnerControllerOrgUnitTests.cs (11), PartnerControllerOrgUnitFilterTests.cs (6)
+> 
+> **QA Verification (2026-03-05): DEF-053 is NOT resolved.** Confirmed that the defect still exists. Key findings:
+> 
+> - **What works:** Application Default Credentials (ADC) are initialized successfully. `IAPAuthHelper` connects with the service account `pno-ai-service@unops-opportunityplus-dev.iam.gserviceaccount.com`. Authentication middleware works. This means **Secret Manager access** (GCP Secret Manager API) is partially working.
+> - **What still fails:** `UNOPSGeminiManager.GetCredentials()` (line 198) crashes with `ArgumentNullException` because it reads a credential JSON string directly from `IConfiguration` and calls `GoogleCredential.FromJson(json)`. This is **NOT the same as Secret Manager access** — it's a configuration key that contains the raw JSON of a service account credential, and that configuration value is `null` in the test environment.
+> - **Cascade effect:** Since the crash happens in the `UNOPSGeminiManager` constructor, the entire `UNOPSManagerWrapper` fails to instantiate, and ALL authenticated API requests return HTTP 500.
+> - The `AISettings:DisableExternalCalls = true` config (set by the test factory) is **not checked** by `GetCredentials()` — the crash occurs before any AI method is invoked.
+> - The test factory registers a mock `GoogleCredential` via DI, but `UNOPSGeminiManager` bypasses DI entirely by reading directly from `IConfiguration`.
+> - **85+ un-skipped tests continue to fail** in CI due to this defect.
 
 **Description:**
 
@@ -1847,14 +1860,14 @@ This exception is thrown **during the constructor** of `UNOPSGeminiManager`, whi
 
 **Root Cause:** `GetCredentials()` does not check for null/missing credential configuration before calling `GoogleCredential.FromJson()`. Additionally, the credential is loaded directly from `IConfiguration` rather than through DI, so DI-based mocking (as attempted in `PAOWebApplicationFactory`) has no effect.
 
-**Proper Fix:**
-- Guard `GetCredentials()` against null configuration: if credentials are missing, log a warning and set `_credential` to null
-- Make AI-dependent methods check for null credentials and throw a meaningful error (or return empty results) instead of crashing during construction
-- Consider accepting `GoogleCredential` via DI injection to enable test mocking
+**Proper Fix (any ONE of these would resolve it):**
+1. **Use ADC instead:** Replace `GoogleCredential.FromJson(configJson)` with `GoogleCredential.GetApplicationDefault()` — ADC is already working in the environment
+2. **Guard against null config:** If the credential JSON is missing, check `DisableExternalCalls` first; if true, set `_credential = null` and skip credential loading. AI methods should fail gracefully when `_credential` is null rather than crashing the constructor.
+3. **Accept GoogleCredential via DI injection:** This would allow the test factory's mock `GoogleCredential` to take effect instead of bypassing DI entirely
 
 **Wrong Fix:** ❌ Requiring GCP credentials in test environments
 
-**Affected Tests:** ALL 51 `PartnerControllerTests` (and potentially all other integration tests using the full test server)
+**Affected Tests:** 85+ integration tests across 5 files (DocumentControllerUNOPSTests, OpportunityControllerCoreTests, EntityArtifactControllerTests, PartnerControllerOrgUnitTests, PartnerControllerOrgUnitFilterTests), plus all 51 `PartnerControllerTests` and potentially all other integration tests using the full test server
 
 **Environment:** Dev/CI (test environment without GCP credentials)  
 **Error:** `System.ArgumentNullException: Value cannot be null. (Parameter 'credentialParameters')` at `UNOPSGeminiManager.GetCredentials()` line 198
@@ -2185,31 +2198,47 @@ QA test projects (`UNOPS.PAO.Business.Tests`, `UNOPS.PAO.IntegrationTests`, `UNO
 
 **Component:** UNOPS.PAO.Business/Integration (oUP Sync)
 
-**Description:** When an Opportunity contains Client or Funding Partners that exist in Opportunity+ QA but have not been synced to or do not exist in the oUP database (e.g., newly created test partners like "FG Partner"), the system silently drops these partners during the Engagement creation process. No error or warning is displayed to the user.
+**Jira:** [PNO-1207](https://unops.atlassian.net/browse/PNO-1207) — Ready for Development | **Assignee:** Anusha SWAMINATHAN | **Reporter:** Perminder SALUJA
+**Epic:** oneUNOPS Projects Integration | **Related:** PNO-729 (Opportunity Statement)
+**Labels:** Integration, Opportunity+, Partners, oUP
 
-**Root Cause:** The oUP sync logic does not validate partner existence in oUP before attempting Engagement creation. Partners that fail the lookup are silently skipped rather than raising an error or being queued for prior synchronization.
+**Description:** When an Opportunity contains Client or Funding Partners that exist in Opportunity+ QA but have not been synced to or do not exist in the oUP database (e.g., newly created test partners like "FG Partner"), the system silently drops these partners during the Engagement creation process. No error or warning is displayed to the user. This issue only occurs in the QA environment, not the TEST environment.
+
+**Root Cause:** The oUP sync logic does not validate partner existence in oUP before attempting Engagement creation. Partners that fail the lookup are silently skipped rather than raising an error or being queued for prior synchronization. Additionally, the edit/save re-sync workaround does NOT work — Perminder tested edit/save on Partner 997 in Opp+ QA but it still did not appear in oUP TEST (comment 2026-03-06).
+
+**Developer Comment (Anusha, 2026-02-24):** oUP test environments get data refreshed after every release, wiping synced test data. Suggests picking partners that exist in the corresponding environment or doing a dummy edit/save to trigger re-sync. However, this workaround was confirmed NOT working by Perminder on 2026-03-06.
 
 **Proper Fix:**
 - Validate all referenced partners exist in oUP before Engagement creation
 - Display a warning/error listing any partners missing from oUP
 - Queue missing partners for sync before attempting Engagement creation
 - Log a warning when partners are skipped during sync
+- Fix the edit/save re-sync mechanism (currently not triggering partner sync to oUP)
 
 **Wrong Fix:** ❌ Silently dropping partners without any notification to the user
 
-**Workaround:** Manually verify all partners exist in oUP before triggering the Go Decision
+**Workaround:** ~~Manually verify all partners exist in oUP before triggering the Go Decision~~ No reliable workaround — edit/save re-sync does not work.
 
 **Repro Steps:**
 1. In Opportunity+, create or use an Opportunity with Client/Funding Partners
-2. Ensure at least one partner exists in Opp+ but not in oUP (e.g., a recently created test partner)
-3. Process the Opportunity through the workflow until it receives an approved "Go" decision
-4. Check the resulting Engagement in oUP
-5. Observe that partners missing from oUP are silently dropped
+2. Add a partner that exists only in Opp+ (e.g., "FG Partner")
+3. Add other standard partners (e.g., "UNDP - MSA Recipient Governments", "Samoa")
+4. Complete the workflow to approve the Opportunity, triggering Engagement creation in oUP
+5. Open the newly generated Engagement (e.g., 25550-00) in oUP
+6. Navigate to Context > Partners and review the list
+7. Observe that partners missing from oUP are silently dropped
+
+**Test Data:**
+- Opp+ Record: ID 173 (Regional Consultations on the South Asia...)
+- Opp+ Partners: UNDP, **FG Partner**, Samoa
+- oUP Engagement: 25550-00
+- oUP Partners: UNDP, Samoa (**FG Partner is missing**)
+- Partner 997 edit/save re-sync attempted — still not in oUP TEST
 
 **Expected:** All partners from the Opportunity are transferred to the Engagement, or an error is raised for missing partners.
-**Actual:** Partners not found in oUP are silently dropped. No error or warning is shown.
+**Actual:** Partners not found in oUP are silently dropped. No error or warning is shown. Edit/save re-sync does not work.
 
-**Environment:** QA | **Jira:** PNO-1207 (Ready for QA Review)
+**Environment:** QA (not reproducible in TEST) | **Frequency:** Always (for partners not in oUP)
 
 **Related Tests:** `QA Tests/Integration Tests/PNO-1207_PartnerSyncMismatch/PartnerSyncMismatchTests.cs` (26 tests)
 

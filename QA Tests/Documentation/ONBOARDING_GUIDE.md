@@ -423,11 +423,13 @@ The QA Lead or manager uses this template for the Day 30 check-in:
 | Document                          | Location                                                   | Purpose                              |
 |-----------------------------------|------------------------------------------------------------|--------------------------------------|
 | Shift-Left Testing Manifesto      | `QA Tests/Documentation/SHIFT_LEFT_TESTING_MANIFESTO.md`   | Team strategy, role definitions, handshake points |
+| Shift-Left Scorecard              | `QA Tests/Documentation/SHIFT_LEFT_SCORECARD.md`           | Measurement criteria, sprint dashboard, maturity model |
+| Action Items (Dev + QA)           | `QA Tests/Documentation/ACTION_ITEMS.md`                   | Living to-do list for developers and QA |
 | QA Tester Playbook                | `QA Tests/Documentation/QA_TESTER_PLAYBOOK.md`             | Day-to-day QA practices, test categories, templates |
 | Playwright Quickstart for Testers | `QA Tests/Playwright Tests/QUICKSTART_FOR_TESTERS.md`      | Playwright setup, running tests, writing tests |
-| Testing Structure                 | `QA Tests/Documentation/TESTING_STRUCTURE.md`              | Where tests live in the repository    |
-| Defect List for Developers        | `QA Tests/Defect List for Developers.md`                   | Production code defects (DEF-XXX)    |
-| Defect List for QA                | `QA Tests/Defect List for QA.md`                           | Test infrastructure issues (QA-XXX)  |
+| Testing Structure                 | `QA Tests/Documentation/TESTING_STRUCTURE.md`              | Where tests live in the repository (test counts, CI pipeline) |
+| Defect List for Developers        | `QA Tests/Defect List for Developers.md`                   | Production code defects (DEF-XXX) — ~48 open |
+| Defect List for QA                | `QA Tests/Defect List for QA.md`                           | Test infrastructure issues (QA-XXX) — ~13 active |
 
 ---
 
@@ -436,3 +438,4 @@ The QA Lead or manager uses this template for the Day 30 check-in:
 | Version | Date       | Author     | Changes                    |
 |---------|------------|------------|----------------------------|
 | 1.0     | 2026-03-05 | QA Lead    | Initial version — extracted and expanded from Shift-Left Manifesto Appendix E |
+| 1.1     | 2026-03-06 | QA Lead    | Updated Related Documents with Scorecard, Action Items, and current defect counts |

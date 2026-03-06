@@ -31,7 +31,7 @@ This document tracks test infrastructure issues, test implementation bugs, tempo
 
 ## Open QA Issues
 
-**Status**: ⚠️ 5 open + 3 partial + 5 workaround applied — **2026-03-04 Playwright E2E Session:** 100+ locator fixes (QA-096), real backend integration via `auth-only-mocks.helper.ts` (QA-097), cookie domain fix (QA-098), test user email fix (QA-099). Playwright results: **1,015 passed, 92 failed, 445 skipped** (51.4 min). 9/11 partners tests pass with real DB data. QA-100 open (restricted test users don't exist in DB). QA-101 workaround applied (SKIP_WEB_SERVER=1). **QA-088 closed** (by-design scope limitation).
+**Status**: ⚠️ 5 open + 3 partial + 5 workaround applied — **2026-03-05:** DEF-053 confirmed NOT resolved (ADC works but `UNOPSGeminiManager` bypasses it — 85+ tests still failing). Database config documented (test DB: `leonardc`, prod DB: `anushas`, both IAM auth). oUP/BigQuery test mocking completed (114 tests now use mocks). **2026-03-04 Playwright E2E Session:** 1,015 passed, 92 failed, 445 skipped. QA-088 closed (by-design scope limitation). QA-100 open (restricted test users). QA-101 workaround (SKIP_WEB_SERVER=1).
 
 ---
 
@@ -1326,6 +1326,11 @@ Update the permissions mock in the Playwright mock helper to return a denied/blo
   - **QA-104 RESOLVED:** Audit confirmed failures were SLA threshold violations, not missing manager references. Tests already cancelled for DEF-013/DEF-014.
   - **QA-105 RESOLVED:** Added `ScaleThreshold()` to `PerformanceTestBase` (2.5x in CI). 18 performance test files updated (103 timing thresholds).
   - **DEF-065 logged:** AI authorization returns 500 instead of 403 — 12 tests, skip refs updated from DEF-022 to DEF-065.
+- **2026-03-05 Updates:**
+  - **DEF-053 confirmed NOT resolved:** QA re-assessment confirms the production defect is still present. ADC and Secret Manager access work, but `UNOPSGeminiManager.GetCredentials()` bypasses both — reads credential JSON directly from `IConfiguration` (null in test env). The `DisableExternalCalls` config flag is not checked before the crash. 85+ un-skipped tests continue to fail in CI. Three fix options documented in DEF-053 detailed section.
+  - **Database config documented:** `appsettings.Testing.json` → `unops-opportunityplus-dev-db-leonardc` (Cloud SQL Proxy, port 5432). Production `appsettings.json` → `unops-opportunityplus-dev-db-anushas` (port 6364). Both use IAM auth. `PAOWebApplicationFactory` falls back to InMemory when PostgreSQL unavailable. Shared dev database for CI/tests TBD — requires developer team confirmation.
+  - **QA-088 updated:** Added 2026-03-05 note confirming DEF-053 is not resolved and detailing impact (85+ tests across 5 files).
+  - **oUP/BigQuery test mocking completed:** All Playwright E2E oUP tests and C# oUP/BigQuery unit tests now use mock data instead of real external connections. `oup-integration.spec.ts` (34 tests), `oup-integration-sync.real.spec.ts` (5 tests), `OUPIntegrationTests.cs` (40 tests), `ExternalDataIntegrationServiceTests.cs` (35 tests) all use route interception / Moq mocks. No external credentials required.
 - **2026-03-04 Playwright E2E Session:**
   - **QA-096 resolved:** 100+ Playwright locators replaced with PrimeNG-aware selectors (15 page objects, 50+ spec files)
   - **QA-097 resolved:** Created `auth-only-mocks.helper.ts` for hybrid mode — auth mocked, data flows to real .NET backend
@@ -2264,9 +2269,11 @@ cloud_sql_proxy -instances=<project>:<region>:<instance>=tcp:5432
 ---
 
 ## QA-088: GoogleCredential Mock Ineffective in PAOWebApplicationFactory — 51 PartnerController Tests Blocked
-**ID:** QA-088 | **Severity:** 🟠 High | **Status:** Open | **Date:** 2026-03-02 | **Assigned To:** QA Team
+**ID:** QA-088 | **Severity:** 🟢 Low | **Status:** Closed — By Design / Scope Limitation (2026-03-03) | **Date:** 2026-03-02 | **Assigned To:** QA Team
 
 **Category:** Mocking
+
+> **Update (2026-03-05):** DEF-053 confirmed NOT resolved. ADC and Secret Manager access work, but `UNOPSGeminiManager.GetCredentials()` bypasses both — reads credential JSON directly from `IConfiguration` (null in test env). The `DisableExternalCalls` config flag is not checked before the crash. 85+ un-skipped tests continue to fail. This QA issue was closed as by-design scope limitation because the fix requires production code changes (DEF-053).
 
 **Description:** All 51 executable tests in `PartnerControllerTests` fail with `System.ArgumentNullException: Value cannot be null. (Parameter 'credentialParameters')` thrown from `UNOPSGeminiManager.GetCredentials()` during `UNOPSManagerWrapper` construction. The `PAOWebApplicationFactory` registers a mock `GoogleCredential` via `services.RemoveAll<GoogleCredential>()` / `services.AddSingleton<GoogleCredential>(...)`, but `UNOPSGeminiManager.GetCredentials()` at line 198 reads credentials directly from `IConfiguration` and calls `GoogleCredential.FromJson(json)` — it does NOT resolve `GoogleCredential` from DI. The mock registration is therefore ineffective.
 
@@ -2280,11 +2287,11 @@ cloud_sql_proxy -instances=<project>:<region>:<instance>=tcp:5432
 
 **Temporary Fix (QA):** None feasible. Tests must be skipped until DEF-053 is resolved.
 
-**Permanent Fix:** DEF-053 — `UNOPSGeminiManager` should either: (a) accept `GoogleCredential` via DI injection instead of calling Secret Manager directly, (b) handle missing credentials gracefully (log warning, set `_credentials = null`, disable AI features) instead of throwing in the constructor, or (c) use lazy initialization so credential loading only happens when AI features are actually invoked.
+**Permanent Fix:** DEF-053 — `UNOPSGeminiManager` should either: (a) use `GoogleCredential.GetApplicationDefault()` (ADC is already working), (b) guard against null config and check `DisableExternalCalls` before loading credentials, or (c) accept `GoogleCredential` via DI injection.
 
-**Impact:** 51 tests blocked in `PartnerControllerTests`. Potentially affects ALL integration tests that use `PAOWebApplicationFactory` and make HTTP requests to controllers requiring `IManagerWrapper`.
+**Impact:** 85+ tests across 5 files (DocumentControllerUNOPSTests, OpportunityControllerCoreTests, EntityArtifactControllerTests, PartnerControllerOrgUnitTests, PartnerControllerOrgUnitFilterTests), plus all 51 `PartnerControllerTests` and potentially all other integration tests using the full test server.
 
-**Related DEF:** DEF-053 (UNOPSGeminiManager.GetCredentials crashes on missing credentials)
+**Related DEF:** DEF-053 (UNOPSGeminiManager.GetCredentials crashes on missing credentials — confirmed NOT resolved 2026-03-05)
 
 **Repro Steps:**
 1. Run `dotnet test` with filter `PartnerControllerTests`

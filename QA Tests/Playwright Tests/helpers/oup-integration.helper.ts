@@ -1,10 +1,11 @@
 /**
- * @fileoverview oUP Integration Helper
- * Provides utilities for Opportunity+ to oUP integration testing
- * 
- * @requires OUP_BASE_URL, OUP_USERNAME, OUP_PASSWORD environment variables
- * @see QA-014 in Defect List for QA.md for credential requirements
- * 
+ * @fileoverview oUP Integration Helper — Type Definitions and Mock Utilities
+ *
+ * Provides type definitions and helper functions for oUP integration testing.
+ * All spec files now use Playwright route interception with mock data instead of
+ * connecting to the real oUP environment. The real-connection functions below are
+ * retained for reference but are NOT called by any active spec file.
+ *
  * @author QA Team
  * @since 2026-02-02
  */

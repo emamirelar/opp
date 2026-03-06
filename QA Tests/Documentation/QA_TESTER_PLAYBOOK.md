@@ -1,7 +1,7 @@
 # QA Tester Playbook
 
-**Version:** 1.8  
-**Last Updated:** February 23, 2026  
+**Version:** 1.9  
+**Last Updated:** March 6, 2026  
 **Audience:** QA Testers (New and Experienced)  
 **Scope:** Universal guide applicable to any software project
 
@@ -214,15 +214,20 @@ opportunityplus/                                    (Repository Root)
 │   │
 │   ├── Documentation/                              📖 QA guides and playbooks
 │   │   ├── QA_TESTER_PLAYBOOK.md                      This document
-│   │   └── TESTING_STRUCTURE.md                       Test architecture overview
+│   │   ├── TESTING_STRUCTURE.md                       Test architecture overview
+│   │   ├── SHIFT_LEFT_TESTING_MANIFESTO.md            Team strategy and roles
+│   │   ├── SHIFT_LEFT_SCORECARD.md                    Measurement criteria and maturity model
+│   │   ├── ACTION_ITEMS.md                            Living to-do for Dev and QA
+│   │   ├── ONBOARDING_GUIDE.md                        30-60-90 day plan for new hires
+│   │   └── PRODUCTION_READINESS_CHECKLIST.md          Pre-release checklist
 │   │
 │   ├── Defect List for Developers.md               🐛 Product defects (DEF-XXX)
 │   ├── Defect List for QA.md                       🐛 Test infra issues (QA-XXX)
 │   │
 │   ├── Playwright Tests/                           🎭 E2E BROWSER TESTS (Playwright/TypeScript)
-│   │   ├── *.spec.ts                                  25 spec files (login, partners, etc.)
+│   │   ├── *.spec.ts                                  102 spec files (login, partners, workflows, etc.)
 │   │   ├── helpers/                                   Test utilities & data builders
-│   │   └── pages/                                     Page Object Model classes
+│   │   └── pages/                                     21 Page Object Model classes
 │   │
 │   ├── Frontend Tests/                             🖥️ ANGULAR COMPONENT TESTS (Karma/Jasmine)
 │   │   ├── components/                                Component-level spec files
@@ -294,7 +299,7 @@ opportunityplus/                                    (Repository Root)
 │   └── Scripts/                                    🛠️ PowerShell & SQL setup scripts
 │
 ├── UNOPS.PAO.ClientApp/src/app/                    🖥️ ANGULAR IN-SOURCE COMPONENT TESTS
-│   └── **/*.spec.ts                                   91+ component & service spec files
+│   └── **/*.spec.ts                                   Component & service spec files
 │
 ├── UNOPS.PAO.IntegrationTests/                     🔗 WORKFLOW INTEGRATION TESTS
 │   └── UnitTests/Workflow/                            Workflow state machine tests
@@ -303,7 +308,7 @@ opportunityplus/                                    (Repository Root)
 │
 └── .github/
     └── workflows/
-        └── playwright-tests.yml                    🚀 CI/CD pipeline for Playwright tests
+        └── qa-tests.yml                            🚀 CI/CD pipeline (11-job build+test pipeline)
 ```
 
 #### Test Types at a Glance
@@ -2711,11 +2716,17 @@ Fix: Add wait, verify selector, check for dynamic content
 
 | Document | Location | Purpose |
 |----------|----------|---------|
+| Shift-Left Testing Manifesto | `QA Tests/Documentation/SHIFT_LEFT_TESTING_MANIFESTO.md` | Team strategy, role definitions, quality gates |
+| Shift-Left Scorecard | `QA Tests/Documentation/SHIFT_LEFT_SCORECARD.md` | Sprint dashboard, maturity model, retrospective questions |
+| Action Items (Dev + QA) | `QA Tests/Documentation/ACTION_ITEMS.md` | Living to-do list for developers and QA |
+| Onboarding Guide | `QA Tests/Documentation/ONBOARDING_GUIDE.md` | 30-60-90 day plan for new QA and Dev hires |
+| Testing Structure | `QA Tests/Documentation/TESTING_STRUCTURE.md` | Repo test organization, CI pipeline, test counts |
+| Production Readiness Checklist | `QA Tests/Documentation/PRODUCTION_READINESS_CHECKLIST.md` | Pre-release deployment checklist |
 | Comprehensive Test Strategy | `.cursor/rules/comprehensive-test-strategy.mdc` | AI instruction rule with 3:1 ratio and code examples |
 | Defect Management Standard | `.cursor/rules/defect-management.mdc` | How to log and manage defects |
-| Defect List for Developers | `QA Tests/Defect List for Developers.md` | Product defects |
-| Defect List for QA | `QA Tests/Defect List for QA.md` | Test infrastructure issues |
-| Playwright E2E Guide | `QA Tests/PLAYWRIGHT_E2E_GUIDE.md` | E2E testing specifics |
+| Defect List for Developers | `QA Tests/Defect List for Developers.md` | Product defects (~48 open, ~40 resolved) |
+| Defect List for QA | `QA Tests/Defect List for QA.md` | Test infrastructure issues (~13 active, ~60 resolved) |
+| Playwright Quickstart for Testers | `QA Tests/Playwright Tests/QUICKSTART_FOR_TESTERS.md` | Playwright setup, running tests, writing tests |
 
 ---
 
@@ -2732,6 +2743,7 @@ Fix: Add wait, verify selector, check for dynamic content
 | 1.6 | 2026-02-17 | QA Team | Added Section 4.3: Stakeholder Alignment on Test Cases — mandatory step to share test cases with PM/BA for agreement on testing scope and coverage level before execution. Includes review process, what to share, and sign-off template. |
 | 1.7 | 2026-02-17 | QA Team | Aligned with PDJ playbook: Expanded Section 11.3 Integration Test Checklist Template to comprehensive version with 10 test categories (workflow, validation, status, delete, filtering, editing, referential integrity, audit, error handling, E2E), detailed sub-cases, and structured results summary. |
 | 1.8 | 2026-02-23 | QA Team | Added Section 3.5: Starting the Development Proxy for Real Backend Testing — mandatory pre-test checklist explaining when and how to start the proxy, which test types require it, readiness verification steps, and common failure symptoms. Added proxy reminder callout to Section 6.2 (Running Automated Tests), proxy troubleshooting rows to Section 15.1, and proxy setup step to Day 1 onboarding checklist. |
+| 1.9 | 2026-03-06 | QA Lead | Updated Project Map: Playwright now 102 specs (was 25), 21 POMs. Updated Documentation folder listing to include Manifesto, Scorecard, Action Items, Onboarding Guide. Updated CI pipeline reference to qa-tests.yml (11-job pipeline). Updated Related Documents with full documentation index and current defect counts. |
 
 ---
 
