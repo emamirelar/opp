@@ -1057,9 +1057,9 @@ jobs:
         echo "- Smoke Tests (~14 tests, SQLite): ${{ needs.smoke-tests.result }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Backend Tests" >> $GITHUB_STEP_SUMMARY
-        echo "- Fast Logic Tests (~43 tests): ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Fast Logic Tests (~233 tests): ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- Business Logic Tests (~3,800 tests, PostgreSQL): ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Presentation/Controller Tests (~164 tests): ${{ needs.presentation-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Presentation/Controller Tests (~310 tests): ${{ needs.presentation-tests.result }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Frontend Checks" >> $GITHUB_STEP_SUMMARY
         echo "- Angular Build + Lint + Security: ${{ needs.frontend-tests.result }}" >> $GITHUB_STEP_SUMMARY
