@@ -48,7 +48,9 @@ public class PositiveTests : PNO914TestFixtureBase
         opp!.Name.Should().Be("Opportunity from Interactions");
     }
 
-    [Fact(Skip = "DEF-053: AI proposal generation requires GeminiManager - covered by API/E2E tests")]
+    [Fact]
+
+    [Trait("Defect", "DEF-053")]
     [Trait("TestId", "TC-PNO914-POS-002")]
     public async Task AIProposal_GenerateFromInteractions_ReturnsProposal()
     {

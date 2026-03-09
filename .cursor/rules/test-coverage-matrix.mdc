@@ -1,0 +1,141 @@
+---
+description: Enforces mandatory test type coverage across all features — prevents test category gaps
+globs: 
+alwaysApply: true
+---
+
+# Test Coverage Matrix — MANDATORY
+
+## Purpose
+
+This rule ensures that **every feature** has coverage across **all mandatory test types**. It prevents the gap where specific test categories (API contract, i18n, accessibility, data entry permutations, etc.) are documented in strategy but never implemented.
+
+## The Mandatory Test Type Registry
+
+Every feature in the system MUST have tests across these categories. When creating or reviewing tests for any feature, verify ALL rows are covered.
+
+### Tier 1 — Core Test Types (BLOCKING — must exist before PR merge)
+
+| # | Test Type | Trait Value | Min Tests | File Pattern | Description |
+|---|---|---|---|---|---|
+| T1 | Positive | `[Trait("Category", "Positive")]` | 3+ per feature | `PositiveTests.cs` | Happy-path scenarios |
+| T2 | Negative | `[Trait("Category", "Negative")]` | 3×P per feature | `NegativeTests.cs` | Invalid input, unauthorized, expected failures |
+| T3 | Boundary | `[Trait("Category", "Boundary")]` | 3×P per feature | `BoundaryTests.cs` | Edge values, soft-delete interactions, type mismatches |
+| T4 | Functional | `[Trait("Category", "Functional")]` | 3×P per feature | `FunctionalTests.cs` | Business rules, audit, permissions, workflow transitions |
+| T5 | Integration | `[Trait("Category", "Integration")]` | 3×P per feature | `IntegrationTests.cs` | Full CRUD, service-to-DB, multi-component flows |
+
+### Tier 2 — Extended Test Types (REQUIRED — must exist per feature)
+
+| # | Test Type | Trait Value | Min Tests | File Pattern | Description |
+|---|---|---|---|---|---|
+| T6 | Unit | `[Trait("Category", "Unit")]` | 5+ per feature | `UnitTests.cs` | Validation, formatting, calculations, status logic |
+| T7 | Concurrency | `[Trait("Category", "Concurrency")]` | 3+ per feature | `ConcurrencyTests.cs` | Race conditions, double-submit, transaction isolation |
+| T8 | Performance | `[Trait("Category", "Performance")]` | 3+ per feature | `PerformanceTests.cs` | Response time, throughput, memory, N+1 detection |
+| T9 | Load | `[Trait("Category", "Load")]` | 3+ per feature | `LoadTests.cs` | Sustained load, spike, stress, recovery |
+| T10 | Data Entry Permutations | `[Trait("Category", "DataEntryPermutation")]` | 10+ per feature | `*PermutationTests.cs` | Field order, pairwise combos, mixed valid/invalid |
+
+### Tier 3 — Cross-Cutting Test Types (REQUIRED — system-wide, not per-feature)
+
+| # | Test Type | Trait Value | Min Tests | File Pattern | Description |
+|---|---|---|---|---|---|
+| T11 | Security | `[Trait("Category", "Security")]` | 20+ system-wide | `SecurityTests.cs` | Auth bypass, injection, CSRF, data exposure |
+| T12 | API Contract | `[Trait("Category", "ApiContract")]` | 5+ per endpoint group | `ApiContractTests.cs` | Request/response schema validation, status codes, headers |
+| T13 | Accessibility | `[Trait("Category", "Accessibility")]` | 10+ system-wide | `AccessibilityTests.cs` | WCAG compliance, keyboard nav, screen reader, axe-core |
+| T14 | Internationalization | `[Trait("Category", "i18n")]` | 10+ system-wide | `I18nTests.cs` | Translation completeness, locale formatting, RTL |
+| T15 | Error Recovery | `[Trait("Category", "ErrorRecovery")]` | 5+ per service | `ErrorRecoveryTests.cs` | Network failure, retry logic, timeout handling, graceful degradation |
+| T16 | Rate Limiting | `[Trait("Category", "RateLimiting")]` | 5+ system-wide | `RateLimitingTests.cs` | Throttle enforcement, bypass prevention, header validation |
+
+### Tier 4 — E2E Test Types (Playwright — separate from C#)
+
+| # | Test Type | Location | Min Specs | File Pattern | Description |
+|---|---|---|---|---|---|
+| T17 | E2E Smoke | `QA Tests/Playwright Tests/` | 6 specs | `*.spec.ts` | Login, home, dashboard, partners, opportunities, interactions |
+| T18 | E2E Feature | `QA Tests/Playwright Tests/` | 1+ per feature | `*.spec.ts` | Feature-specific browser workflows |
+| T19 | E2E Cross-Browser | `QA Tests/Playwright Tests/` | Full suite × 3 | `*.spec.ts` | Chrome, Firefox, Safari/WebKit |
+| T20 | E2E Accessibility | `QA Tests/Playwright Tests/` | 5+ specs | `accessibility*.spec.ts` | axe-core integration, keyboard nav, ARIA |
+
+---
+
+## Mandatory Coverage Check — MUST Print Before Completing Any Test Task
+
+Every time you create or modify tests for a feature, you MUST output this matrix:
+
+```
+### Test Coverage Matrix — [Feature Name]
+| # | Test Type | Status | File(s) | Test Count | Min Required | Pass? |
+|---|---|---|---|---|---|---|
+| T1 | Positive | ✅ Exists / ❌ Missing | [file path] | X | 3+ | ✅/❌ |
+| T2 | Negative | ✅/❌ | [file path] | X | 3×P | ✅/❌ |
+| T3 | Boundary | ✅/❌ | [file path] | X | 3×P | ✅/❌ |
+| T4 | Functional | ✅/❌ | [file path] | X | 3×P | ✅/❌ |
+| T5 | Integration | ✅/❌ | [file path] | X | 3×P | ✅/❌ |
+| T6 | Unit | ✅/❌ | [file path] | X | 5+ | ✅/❌ |
+| T7 | Concurrency | ✅/❌ | [file path] | X | 3+ | ✅/❌ |
+| T8 | Performance | ✅/❌ | [file path] | X | 3+ | ✅/❌ |
+| T9 | Load | ✅/❌ | [file path] | X | 3+ | ✅/❌ |
+| T10 | Data Entry Perm. | ✅/❌ | [file path] | X | 10+ | ✅/❌ |
+| T11 | Security | ✅/❌ | [file path] | X | (cross-cutting) | ✅/❌ |
+| T12 | API Contract | ✅/❌ | [file path] | X | 5+ | ✅/❌ |
+| T13 | Accessibility | ✅/❌ | [file path] | X | (cross-cutting) | ✅/❌ |
+| T14 | i18n | ✅/❌ | [file path] | X | (cross-cutting) | ✅/❌ |
+| T15 | Error Recovery | ✅/❌ | [file path] | X | 5+ | ✅/❌ |
+| T16 | Rate Limiting | ✅/❌ | [file path] | X | (cross-cutting) | ✅/❌ |
+```
+
+If **any** Tier 1 or Tier 2 check is ❌, you MUST create the missing tests before proceeding.
+If **any** Tier 3 check is ❌, you MUST flag it in your response and add it to the Coverage Dashboard.
+
+---
+
+## When This Rule Applies
+
+### During Test Creation (create-tests agent or manual)
+1. **Before generating tests**: Check what test types already exist for the feature
+2. **After generating tests**: Print the full coverage matrix
+3. **If gaps exist**: Create missing test types or document why they're deferred
+
+### During Code Review
+1. **Verify Tier 1 coverage**: All 5 core types must exist
+2. **Check Tier 2 coverage**: All 5 extended types should exist
+3. **Flag Tier 3 gaps**: Note any missing cross-cutting types
+
+### During Sprint Planning
+1. **Review Coverage Dashboard**: `QA Tests/COVERAGE_DASHBOARD.md`
+2. **Prioritize gap closure**: Address ❌ items by priority tier
+3. **Track progress**: Update dashboard after each sprint
+
+---
+
+## How to Add a New Test Type
+
+If a new test category is identified (e.g., "Chaos Engineering", "Contract Testing"):
+
+1. Add it to the appropriate tier in this rule
+2. Define the Trait value, minimum count, and file pattern
+3. Update the Coverage Dashboard template
+4. Update the `create-tests` agent to include it
+5. Create a tracking issue for retroactive coverage
+
+---
+
+## Integration with Other Rules
+
+This rule works alongside:
+- **test-ratio-enforcement.mdc**: Enforces 3:1 ratios within Tier 1 types
+- **requirement-driven-testing.mdc**: Ensures tests validate specifications
+- **never-weaken-tests.mdc**: Prevents weakening assertions
+- **comprehensive-test-strategy.mdc**: Provides detailed patterns for each type
+- **defect-management.mdc**: Tracks issues found during coverage analysis
+
+---
+
+## Common Mistakes to Avoid
+
+- ❌ Creating only Tier 1 tests and skipping Tier 2/3 entirely
+- ❌ Assuming "integration tests" covers API contract testing (they're different)
+- ❌ Treating accessibility as "Playwright only" — backend accessibility validation exists too
+- ❌ Skipping data entry permutation tests because "negative tests cover it" — they don't test field ordering and combinations
+- ❌ Deferring cross-cutting tests to "later sprints" without tracking them
+- ❌ Not checking the Coverage Dashboard before starting a new test suite
+- ❌ Creating test files without the proper `[Trait("Category", "...")]` attribute
+- ❌ Forgetting to update the Coverage Dashboard after creating new tests

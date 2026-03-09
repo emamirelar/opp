@@ -7,11 +7,12 @@
  *
  * @author UNOPS Opportunity+ QA Team
  * @see https://unops.atlassian.net/browse/PNO-OPP-GO-REQ
+ * @tests 7
  */
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
-import { waitForPermissions } from './helpers/wait.helper';
+import { waitForPermissions, waitForLoadingToComplete } from './helpers/wait.helper';
 
 const featureReady = process.env.GO_REQUIREMENTS_IMPLEMENTED === 'true';
 
@@ -38,8 +39,8 @@ test.describe('GO Requirements — Panel Display', () => {
     await waitForPermissions(page);
 
     const reqPanel = page.locator('app-requirements-validation, [data-testid="requirements-panel"]');
-    const isVisible = await reqPanel.isVisible({ timeout: 10000 }).catch(() => false);
-    expect(isVisible || await page.locator('app-stage-workflow').isVisible()).toBeTruthy();
+    const workflow = page.locator('app-stage-workflow').first();
+    await expect(reqPanel.or(workflow)).toBeVisible({ timeout: 10000 });
   });
 
   test('REQ-002: Requirements panel shows checklist of mandatory fields', async ({ page }) => {
@@ -118,10 +119,8 @@ test.describe('GO Requirements — Submission Blocking', () => {
     const isVisible = await submitBtn.isVisible({ timeout: 5000 }).catch(() => false);
     if (isVisible) {
       await submitBtn.click({ force: true });
-      await page.waitForTimeout(1000);
       const errorMsg = page.getByText(/requirement|mandatory|complete/i).first();
-      const hasMsg = await errorMsg.isVisible({ timeout: 5000 }).catch(() => false);
-      expect(hasMsg).toBeTruthy();
+      await expect(errorMsg).toBeVisible({ timeout: 5000 });
     }
   });
 });
@@ -164,8 +163,7 @@ test.describe('GO Requirements — Individual Field Checks', () => {
       const reqPanel = page.locator('app-requirements-validation, [data-testid="requirements-panel"]');
       if (await reqPanel.isVisible({ timeout: 5000 }).catch(() => false)) {
         const fieldItem = reqPanel.getByText(new RegExp(field, 'i')).first();
-        const isListed = await fieldItem.isVisible({ timeout: 3000 }).catch(() => false);
-        expect(isListed || true).toBeTruthy();
+        await expect(fieldItem).toBeVisible({ timeout: 3000 });
       }
     });
   }

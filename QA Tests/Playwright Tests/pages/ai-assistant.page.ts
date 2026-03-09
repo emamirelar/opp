@@ -22,17 +22,29 @@ export class AIAssistantPage extends BasePage {
 
   /** AI assistant panel container */
   get assistantPanel(): Locator {
-    return this.page.locator('app-ai-assistant, [data-testid="ai-assistant-panel"]').first();
+    return this.page
+      .locator('app-ai-assistant-panel, app-ai-panel, app-ai-assistant, .ai-assistant-panel')
+      .first();
   }
 
   /** AI prompt input field */
   get promptInput(): Locator {
-    return this.page.locator('app-ai-assistant textarea, app-ai-assistant input[type="text"], [data-testid="ai-prompt-input"]').first();
+    return this.page
+      .locator(
+        '#messageInput, app-ai-assistant-panel textarea, app-ai-panel textarea, app-ai-assistant textarea, app-ai-assistant-panel input[type="text"], app-ai-panel input[type="text"], app-ai-assistant input[type="text"]'
+      )
+      .or(this.page.getByRole('textbox', { name: /message|prompt|ask/i }))
+      .first();
   }
 
   /** Send prompt button */
   get sendButton(): Locator {
-    return this.page.locator('app-ai-assistant button[type="submit"], [data-testid="ai-send-button"], app-ai-assistant button:has(i.pi-send)').first();
+    return this.page
+      .locator(
+        'app-ai-assistant-panel button[type="submit"], app-ai-panel button[type="submit"], app-ai-assistant button[type="submit"], app-ai-assistant-panel button:has(i.pi-send), app-ai-panel button:has(i.pi-send), app-ai-assistant button:has(i.pi-send), app-ai-assistant-panel button:has(.pi-send), app-ai-panel button:has(.pi-send)'
+      )
+      .or(this.page.getByRole('button', { name: /send|submit/i }))
+      .first();
   }
 
   /** AI response area */
@@ -109,7 +121,7 @@ export class AIAssistantPage extends BasePage {
 
   /** AI scan/context button */
   get scanButton(): Locator {
-    return this.page.locator('[data-testid="ai-scan-button"], app-ai-assistant-scan button').first();
+    return this.page.locator('[data-testid="ai-scan-button"], app-ai-assistant-scan, app-ai-assistant-scan button').first();
   }
 
   // ==========================================
@@ -132,7 +144,10 @@ export class AIAssistantPage extends BasePage {
 
   /** Close the AI assistant panel */
   async closeAssistant(): Promise<void> {
-    const closeButton = this.page.locator('[data-testid="ai-close-button"], app-ai-assistant button:has(i.pi-times)').first();
+    const closeButton = this.page
+      .locator('app-ai-assistant-panel button:has(i.pi-times), app-ai-panel button:has(i.pi-times), app-ai-assistant button:has(i.pi-times), app-ai-assistant-panel button:has(.pi-times), app-ai-panel button:has(.pi-times)')
+      .or(this.page.getByRole('button', { name: /close/i }))
+      .first();
     if (await closeButton.isVisible().catch(() => false)) {
       await closeButton.click();
     }
@@ -188,7 +203,8 @@ export class AIAssistantPage extends BasePage {
   async startNewSession(): Promise<void> {
     if (await this.newSessionButton.isVisible().catch(() => false)) {
       await this.newSessionButton.click();
-      await this.page.waitForTimeout(1000);
+      // Wait for prompt input to be ready (new session state) instead of arbitrary timeout
+      await this.promptInput.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     }
   }
 }

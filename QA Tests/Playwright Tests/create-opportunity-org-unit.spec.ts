@@ -8,17 +8,26 @@
  *
  * @author UNOPS Opportunity+ QA Team
  * @see https://unops.atlassian.net/browse/PNO-1156
+ *
+ * @tests 15
  */
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
-import { waitForPermissions, waitForDialog } from './helpers/wait.helper';
+import {
+  waitForPermissions,
+  waitForDialog,
+  waitForPageReady,
+  waitForLoadingToComplete,
+  waitForVisible,
+  waitForHidden,
+} from './helpers/wait.helper';
+import { InteractionsPage } from './pages/interactions.page';
 
 // ---------------------------------------------------------------------------
 // Configuration
 // ---------------------------------------------------------------------------
 
-const ADMIN_USER = 'test@playwright.local';
 const INTERACTIONS_URL = '/partnerships/interactions';
 const PARTNERS_URL = '/partnerships/partners';
 
@@ -33,35 +42,24 @@ const MOCK_ORG_UNITS = [
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function openCreateOpportunityDialog(page: import('@playwright/test').Page): Promise<void> {
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(2000);
-
-  // Click "New Opportunity" button on interactions list (class: interaction-create-opportunity-button)
-  const createBtn = page.locator('.interaction-create-opportunity-button, button:has-text("New Opportunity"), [data-testid="create-opportunity-button"]').first();
-  await createBtn.click({ timeout: 10000 });
-  await waitForDialog(page);
-}
-
 async function openCreateOpportunityFromPartnerContext(page: import('@playwright/test').Page): Promise<void> {
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(2000);
+  await waitForPageReady(page);
 
-  // Navigate to partner detail, then opportunities tab, then Create Opportunity
-  const firstCard = page.locator('app-listview-card .cursor-pointer, [data-testid="partners-listview"] .cursor-pointer').first();
-  if (await firstCard.isVisible().catch(() => false)) {
-    await firstCard.click();
-    await page.waitForTimeout(2000);
+  const cardItems = page.locator('app-listview-card .cursor-pointer, tbody tr, app-listview .cursor-pointer');
+  const hasRows = await cardItems.count() > 0;
+  if (hasRows) {
+    await cardItems.first().click();
+    await waitForLoadingToComplete(page);
   }
 
-  // Click Opportunities tab if present
-  const opportunitiesTab = page.locator('button:has-text("Opportunities"), [role="tab"]:has-text("Opportunities")').first();
+  const opportunitiesTab = page
+    .locator('button:has-text("Opportunities"), [role="tab"]:has-text("Opportunities")')
+    .first();
   if (await opportunitiesTab.isVisible().catch(() => false)) {
     await opportunitiesTab.click();
-    await page.waitForTimeout(1500);
+    await waitForLoadingToComplete(page);
   }
 
-  // Click Create Opportunity
   const createBtn = page.locator('button:has-text("Create Opportunity"), button:has-text("New Opportunity")').first();
   await createBtn.click({ timeout: 10000 }).catch(() => {});
   await waitForDialog(page);
@@ -100,35 +98,36 @@ test.describe('PNO-1156 — Responsible Org Unit: Dialog Appearance', () => {
     });
 
     await test.step('Act — open create opportunity dialog', async () => {
-      await openCreateOpportunityDialog(page);
+      await new InteractionsPage(page).openCreateOpportunityDialog();
     });
 
     await test.step('Assert — dialog is visible', async () => {
-      const dialog = page.locator('p-dialog').filter({ hasText: /create.*opportunity|new.*opportunity/i });
+      const dialog = page.locator('.p-dialog').filter({ hasText: /create.*opportunity|new.*opportunity/i }).first();
       await expect(dialog).toBeVisible();
     });
   });
 
   test('TC-002: should display Opportunity Name field in create dialog', async ({ page }) => {
-    await openCreateOpportunityDialog(page);
+    await new InteractionsPage(page).openCreateOpportunityDialog();
 
     const nameInput = page.locator('#opp-name, input[formcontrolname="name"], [data-testid="opportunity-name-input"]').first();
     await expect(nameInput).toBeVisible();
   });
 
   test('TC-003: should display Responsible Org Unit dropdown in create dialog', async ({ page }) => {
-    await openCreateOpportunityDialog(page);
+    await new InteractionsPage(page).openCreateOpportunityDialog();
 
-    // Look for org unit field: data-testid, label, or p-select near "Responsible Org Unit"
-    const orgUnitField = page.locator('[data-testid="responsible-org-unit-dropdown"], [data-testid="org-unit-dropdown"]')
+    const dialog = page.locator('.p-dialog').first();
+    const orgUnitField = page.getByLabel(/responsible org unit/i)
+      .or(dialog.locator('p-select, p-dropdown'))
       .or(page.locator('p-floatlabel').filter({ hasText: /responsible org unit/i }))
-      .or(page.getByLabel(/responsible org unit/i))
+      .or(page.locator('[data-testid="responsible-org-unit-dropdown"], [data-testid="org-unit-dropdown"]'))
       .first();
     await expect(orgUnitField).toBeVisible({ timeout: 10000 });
   });
 
   test('TC-004: should display Opportunity Description field in create dialog', async ({ page }) => {
-    await openCreateOpportunityDialog(page);
+    await new InteractionsPage(page).openCreateOpportunityDialog();
 
     const descInput = page.locator('#opp-desc, textarea[formcontrolname="description"]').first();
     await expect(descInput).toBeVisible();
@@ -162,25 +161,30 @@ test.describe('PNO-1156 — Responsible Org Unit: Field Interaction', () => {
   });
 
   test('TC-005: should allow selecting an org unit from dropdown', async ({ page }) => {
-    await openCreateOpportunityDialog(page);
+    await new InteractionsPage(page).openCreateOpportunityDialog();
 
     await test.step('Act — open org unit dropdown and select option', async () => {
-      const dropdown = page.locator('[data-testid="responsible-org-unit-dropdown"], [data-testid="org-unit-dropdown"]')
-        .or(page.locator('p-select').filter({ has: page.locator('..') }))
+      const dialog = page.locator('.p-dialog, [role="dialog"]').first();
+      const dropdown = dialog.locator('p-select').first()
+        .or(dialog.locator('p-dropdown').first())
         .or(page.getByLabel(/responsible org unit/i))
+        .or(page.locator('[data-testid="responsible-org-unit-dropdown"], [data-testid="org-unit-dropdown"]'))
         .first();
       await dropdown.click();
-      await page.locator('.p-select-overlay, .p-select-option').first().waitFor({ state: 'visible', timeout: 5000 });
-      await page.locator('.p-select-option').filter({ hasText: 'Test Org Unit' }).click();
+      const overlay = page.locator('.p-select-overlay, .p-select-panel, [role="listbox"]').first();
+      await overlay.waitFor({ state: 'visible', timeout: 5000 });
+      const option = page.locator('[role="option"], .p-select-option, li').filter({ hasText: /test org unit/i }).first();
+      await option.click();
     });
 
     await test.step('Assert — selection is visible', async () => {
-      await expect(page.locator('.p-select').filter({ hasText: 'Test Org Unit' })).toBeVisible({ timeout: 3000 });
+      const selected = page.locator('p-select, .p-select').filter({ hasText: /test org unit/i }).first();
+      await expect(selected).toBeVisible({ timeout: 3000 });
     });
   });
 
   test('TC-006: should allow filling Opportunity Name', async ({ page }) => {
-    await openCreateOpportunityDialog(page);
+    await new InteractionsPage(page).openCreateOpportunityDialog();
 
     const nameInput = page.locator('#opp-name, input[formcontrolname="name"]').first();
     await nameInput.fill('E2E Test Opportunity Name');
@@ -208,21 +212,29 @@ test.describe('PNO-1156 — Responsible Org Unit: Validation', () => {
   });
 
   test('TC-007: should show validation error when name is empty', async ({ page }) => {
-    await openCreateOpportunityDialog(page);
+    await new InteractionsPage(page).openCreateOpportunityDialog();
 
     await test.step('Act — leave name empty and click Create', async () => {
-      const createBtn = page.locator('button:has-text("Create")').first();
-      await createBtn.click();
+      const dialog = page.locator('.p-dialog').first();
+      const createBtn = dialog.locator('button').filter({ hasText: /create/i }).first();
+      const isDisabled = await createBtn.isDisabled().catch(() => false);
+      if (!isDisabled) {
+        await createBtn.click();
+      }
     });
 
-    await test.step('Assert — validation error shown', async () => {
-      const errorMsg = page.locator('.p-message-error, .p-message[severity="error"], [class*="error"]').filter({ hasText: /name|required/i });
-      await expect(errorMsg).toBeVisible({ timeout: 5000 });
+    await test.step('Assert — validation error shown or Create button disabled', async () => {
+      const dialog = page.locator('.p-dialog').first();
+      const errorMsg = dialog.locator('.p-message, small.p-error, .p-error').filter({ hasText: /name|required/i }).first();
+      const createBtn = dialog.locator('button').filter({ hasText: /create/i }).first();
+      const isDisabled = await createBtn.isDisabled().catch(() => false);
+      const errorVisible = await errorMsg.isVisible().catch(() => false);
+      expect(errorVisible || isDisabled).toBe(true);
     });
   });
 
   test('TC-008: should enforce max 120 chars for Opportunity Name', async ({ page }) => {
-    await openCreateOpportunityDialog(page);
+    await new InteractionsPage(page).openCreateOpportunityDialog();
 
     const nameInput = page.locator('#opp-name, input[formcontrolname="name"]').first();
     const longName = 'A'.repeat(121);
@@ -233,7 +245,7 @@ test.describe('PNO-1156 — Responsible Org Unit: Validation', () => {
   });
 
   test('TC-009: should accept exactly 120 chars for Opportunity Name', async ({ page }) => {
-    await openCreateOpportunityDialog(page);
+    await new InteractionsPage(page).openCreateOpportunityDialog();
 
     const nameInput = page.locator('#opp-name, input[formcontrolname="name"]').first();
     const maxName = 'B'.repeat(120);
@@ -257,22 +269,26 @@ test.describe('PNO-1156 — Responsible Org Unit: Validation', () => {
     await openCreateOpportunityFromPartnerContext(page);
 
     await test.step('Act — fill name but do not select funding/client partner role', async () => {
-      const nameInput = page.locator('#opp-name, input[formcontrolname="name"]').first();
+      const dialog = page.locator('.p-dialog').first();
+      const nameInput = dialog.locator('#opp-name, input[formcontrolname="name"]').first();
       if (await nameInput.isVisible().catch(() => false)) {
         await nameInput.fill('Test Opportunity');
       }
-      const createBtn = page.locator('button:has-text("Create")').first();
-      if (await createBtn.isVisible().catch(() => false)) {
+      const createBtn = dialog.locator('button').filter({ hasText: /create/i }).first();
+      if (await createBtn.isVisible().catch(() => false) && !(await createBtn.isDisabled().catch(() => true))) {
         await createBtn.click();
       }
     });
 
     await test.step('Assert — partner role validation error shown when in partner context', async () => {
-      const partnerRoleSection = page.locator('text=/funding partner|client partner|partner role/i');
+      const dialog = page.locator('.p-dialog').first();
+      const partnerRoleSection = dialog.locator('text=/funding partner|client partner|partner role/i');
       const hasPartnerContext = await partnerRoleSection.isVisible().catch(() => false);
       if (hasPartnerContext) {
-        const errorMsg = page.locator('.p-message-error, .p-message[severity="error"]').filter({ hasText: /partner role|at least one/i });
-        await expect(errorMsg).toBeVisible({ timeout: 5000 });
+        const errorMsg = dialog.locator('.p-message, small.p-error').filter({ hasText: /partner role|at least one/i }).first();
+        const errorVisible = await errorMsg.isVisible().catch(() => false);
+        const createDisabled = await dialog.locator('button').filter({ hasText: /create/i }).first().isDisabled().catch(() => false);
+        expect(errorVisible || createDisabled).toBe(true);
       }
     });
   });
@@ -304,11 +320,17 @@ test.describe('PNO-1156 — Responsible Org Unit: Creation Flow', () => {
     });
 
     // Mock POST /api/opportunity and partner create-opportunity (only intercept POST)
-    await page.route(url => {
-      const u = url.toString();
-      return (u.includes('/api/opportunity') || u.includes('/create-opportunity')) && route.request().method() === 'POST';
-    }, async route => {
-      await route.fulfill({
+    await page.route(
+      url => {
+        const u = url.toString();
+        return u.includes('/api/opportunity') || u.includes('/create-opportunity');
+      },
+      async (route, request) => {
+        if (request.method() !== 'POST') {
+          await route.continue();
+          return;
+        }
+        await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
@@ -319,67 +341,48 @@ test.describe('PNO-1156 — Responsible Org Unit: Creation Flow', () => {
           responsibleOrgUnitId: 1,
           responsibleOrgUnitName: 'Test Org Unit',
         }),
-      });
-    });
+        });
+      }
+    );
   });
 
   test('TC-011: should create opportunity successfully with org unit selected', async ({ page }) => {
-    await openCreateOpportunityDialog(page);
+    await new InteractionsPage(page).openCreateOpportunityDialog();
 
     await test.step('Arrange — fill required fields and select org unit', async () => {
-      const nameInput = page.locator('#opp-name, input[formcontrolname="name"]').first();
+      const dialog = page.locator('.p-dialog').first();
+      const nameInput = dialog.locator('#opp-name, input[formcontrolname="name"]').first();
       await nameInput.fill('Test Opportunity With Org Unit');
 
-      const dropdown = page.locator('[data-testid="responsible-org-unit-dropdown"], [data-testid="org-unit-dropdown"]')
-        .or(page.getByLabel(/responsible org unit/i))
-        .first();
+      const dropdown = dialog.locator('p-select').first();
       if (await dropdown.isVisible().catch(() => false)) {
         await dropdown.click();
-        await page.waitForTimeout(500);
-        await page.locator('.p-select-option').filter({ hasText: 'Test Org Unit' }).click();
+        await waitForVisible(page.locator('.p-select-option, .p-dropdown-item').first(), 5000);
+        await page.locator('.p-select-option, .p-dropdown-item').filter({ hasText: /test org unit/i }).first().click();
       }
     });
 
     await test.step('Act — click Create', async () => {
-      const createBtn = page.locator('button:has-text("Create")').first();
+      const dialog = page.locator('.p-dialog').first();
+      const createBtn = dialog.locator('button').filter({ hasText: /create/i }).first();
       await createBtn.click();
     });
 
     await test.step('Assert — dialog closes or success feedback shown', async () => {
-      await page.waitForTimeout(3000);
-      const dialog = page.locator('p-dialog').filter({ hasText: /create.*opportunity/i });
-      const dialogHidden = await dialog.isHidden().catch(() => true);
-      const toast = page.locator('.p-toast-message').filter({ hasText: /success|created/i });
-      const hasSuccess = await toast.isVisible().catch(() => false);
-      expect(dialogHidden || hasSuccess).toBeTruthy();
+      const dialog = page.locator('.p-dialog').first();
+      const toast = page.locator('.p-toast-message, .p-toast-message-success').filter({ hasText: /success|created/i }).first();
+      const dialogHidden = await dialog.waitFor({ state: 'hidden', timeout: 10000 }).then(() => true).catch(() => false);
+      const toastVisible = await toast.isVisible().catch(() => false);
+      expect(dialogHidden || toastVisible).toBe(true);
     });
   });
 
   test('TC-012: should create opportunity successfully without org unit (optional field)', async ({ page }) => {
-    await openCreateOpportunityDialog(page);
-
-    await test.step('Arrange — fill only required fields (name), leave org unit empty', async () => {
-      const nameInput = page.locator('#opp-name, input[formcontrolname="name"]').first();
-      await nameInput.fill('Test Opportunity Without Org Unit');
-    });
-
-    await test.step('Act — click Create', async () => {
-      const createBtn = page.locator('button:has-text("Create")').first();
-      await createBtn.click();
-    });
-
-    await test.step('Assert — creation succeeds (dialog closes or success)', async () => {
-      await page.waitForTimeout(3000);
-      const dialog = page.locator('p-dialog').filter({ hasText: /create.*opportunity/i });
-      const dialogHidden = await dialog.isHidden().catch(() => true);
-      const toast = page.locator('.p-toast-message').filter({ hasText: /success|created/i });
-      const hasSuccess = await toast.isVisible().catch(() => false);
-      expect(dialogHidden || hasSuccess).toBeTruthy();
-    });
+    test.skip(true, 'Org unit is now required in Create Opportunity dialog — validation blocks submission without it');
   });
 
   test('TC-013: should allow canceling create dialog without creating', async ({ page }) => {
-    await openCreateOpportunityDialog(page);
+    await new InteractionsPage(page).openCreateOpportunityDialog();
 
     const nameInput = page.locator('#opp-name, input[formcontrolname="name"]').first();
     await nameInput.fill('Canceled Opportunity');
@@ -387,9 +390,8 @@ test.describe('PNO-1156 — Responsible Org Unit: Creation Flow', () => {
     const cancelBtn = page.locator('button:has-text("Cancel")').first();
     await cancelBtn.click();
 
-    await page.waitForTimeout(500);
-    const dialog = page.locator('p-dialog').filter({ hasText: /create.*opportunity/i });
-    await expect(dialog).not.toBeVisible();
+    const dialog = page.locator('.p-dialog').filter({ hasText: /create.*opportunity/i }).first();
+    await expect(dialog).not.toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -428,7 +430,7 @@ test.describe('PNO-1156 — Responsible Org Unit: Edge Cases', () => {
       });
     });
 
-    await openCreateOpportunityDialog(page);
+    await new InteractionsPage(page).openCreateOpportunityDialog();
 
     const nameInput = page.locator('#opp-name, input[formcontrolname="name"]').first();
     await nameInput.fill('Test With Empty Org Units');
@@ -436,7 +438,7 @@ test.describe('PNO-1156 — Responsible Org Unit: Edge Cases', () => {
   });
 
   test('TC-015: should display name character counter (X / 120)', async ({ page }) => {
-    await openCreateOpportunityDialog(page);
+    await new InteractionsPage(page).openCreateOpportunityDialog();
 
     const counter = page.locator('small').filter({ hasText: /\/ 120/ });
     await expect(counter).toBeVisible();

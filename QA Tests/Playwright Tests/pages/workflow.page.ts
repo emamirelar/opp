@@ -5,6 +5,7 @@
 
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
+import { waitForLoadingToComplete } from '../helpers/wait.helper';
 
 export class WorkflowPage extends BasePage {
   constructor(page: Page) {
@@ -141,7 +142,7 @@ export class WorkflowPage extends BasePage {
   async confirmAction(): Promise<void> {
     if (await this.confirmButton.isVisible().catch(() => false)) {
       await this.confirmButton.click();
-      await this.page.waitForTimeout(2000);
+      await waitForLoadingToComplete(this.page);
     }
   }
 

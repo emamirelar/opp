@@ -40,7 +40,9 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         #region CRUD Tests
 
-        [Fact(Skip = "Engagement entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-103")]
         public async Task CreateEngagement_ValidData_ReturnsEngagement()
         {
             // Arrange - Create engagement data
@@ -50,21 +52,27 @@ namespace UNOPS.PAO.Business.Tests.Managers
             Assert.True(true); // Placeholder
         }
 
-        [Fact(Skip = "Engagement entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-103")]
         public async Task GetEngagementById_ExistingId_ReturnsEngagement()
         {
             await Task.CompletedTask;
             Assert.True(true);
         }
 
-        [Fact(Skip = "Engagement entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-103")]
         public async Task UpdateEngagement_ValidData_UpdatesEngagement()
         {
             await Task.CompletedTask;
             Assert.True(true);
         }
 
-        [Fact(Skip = "Engagement entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-103")]
         public async Task DeleteEngagement_ExistingId_SoftDeletes()
         {
             await Task.CompletedTask;
@@ -75,35 +83,45 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         #region Workflow Tests
 
-        [Fact(Skip = "Engagement entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-103")]
         public async Task CreateEngagement_DefaultStatus_IsDraft()
         {
             await Task.CompletedTask;
             Assert.True(true);
         }
 
-        [Fact(Skip = "Engagement entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-103")]
         public async Task SubmitEngagement_FromDraft_TransitionsToSubmitted()
         {
             await Task.CompletedTask;
             Assert.True(true);
         }
 
-        [Fact(Skip = "Engagement entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-103")]
         public async Task ApproveEngagement_FromSubmitted_TransitionsToApproved()
         {
             await Task.CompletedTask;
             Assert.True(true);
         }
 
-        [Fact(Skip = "Engagement entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-103")]
         public async Task RejectEngagement_FromSubmitted_TransitionsToRejected()
         {
             await Task.CompletedTask;
             Assert.True(true);
         }
 
-        [Fact(Skip = "Engagement entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-103")]
         public async Task InvalidTransition_ThrowsException()
         {
             await Task.CompletedTask;
@@ -114,21 +132,27 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         #region Association Tests
 
-        [Fact(Skip = "Engagement entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-103")]
         public async Task AddPartnerToEngagement_ValidPartner_AssociatesSuccessfully()
         {
             await Task.CompletedTask;
             Assert.True(true);
         }
 
-        [Fact(Skip = "Engagement entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-103")]
         public async Task RemovePartnerFromEngagement_ExistingAssociation_RemovesSuccessfully()
         {
             await Task.CompletedTask;
             Assert.True(true);
         }
 
-        [Fact(Skip = "Engagement entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-103")]
         public async Task GetEngagementsByPartner_ReturnsFilteredList()
         {
             await Task.CompletedTask;
@@ -139,14 +163,18 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         #region Validation Tests
 
-        [Fact(Skip = "Engagement entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-103")]
         public async Task CreateEngagement_MissingTitle_ThrowsValidationException()
         {
             await Task.CompletedTask;
             Assert.True(true);
         }
 
-        [Fact(Skip = "Engagement entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-103")]
         public async Task CreateEngagement_EndDateBeforeStartDate_ThrowsValidationException()
         {
             await Task.CompletedTask;

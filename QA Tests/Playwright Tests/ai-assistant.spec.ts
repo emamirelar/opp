@@ -11,10 +11,13 @@
  * .ai-input-area, #messageInput, #chatContainer
  * 
  * All tests are EXECUTABLE - no skips.
+ *
+ * @tests 9
  */
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
+import { waitForPageReady, waitForElementReady } from './helpers/wait.helper';
 
 test.describe('AI Assistant - Panel Visibility', () => {
   test.slow();
@@ -53,15 +56,12 @@ test.describe('AI Assistant - Chat Interface', () => {
   test('AI-003: AI chat container exists when panel is open', async ({ page }) => {
     await authenticateWithRealBackend(page, '/');
 
-    // Look for the chat container or welcome screen
-    const chatContainer = page.locator('.ai-chat-container, #chatContainer, app-ai-assistant-panel').first();
+    // Look for the chat container, welcome screen, or AI panel/assistant component
+    const chatContainer = page.locator('.ai-chat-container, #chatContainer, app-ai-assistant-panel, app-ai-panel').first();
     const welcomeScreen = page.locator('.ai-welcome-screen, .ai-new-chat-screen').first();
 
-    const chatVisible = await chatContainer.isVisible({ timeout: 10000 }).catch(() => false);
-    const welcomeVisible = await welcomeScreen.isVisible({ timeout: 5000 }).catch(() => false);
-
-    // Either the chat or welcome screen should be accessible
-    expect(chatVisible || welcomeVisible || true).toBeTruthy(); // AI may be collapsed by default
+    const chatContainerOrWelcome = chatContainer.or(welcomeScreen);
+    await expect(chatContainerOrWelcome).toBeVisible({ timeout: 10000 });
   });
 
   test('AI-004: AI has message input area', async ({ page }) => {
@@ -77,16 +77,15 @@ test.describe('AI Assistant - Chat Interface', () => {
       const toggleVisible = await aiToggle.isVisible({ timeout: 5000 }).catch(() => false);
       if (toggleVisible) {
         await aiToggle.click();
-        await page.waitForTimeout(1000);
+        const inputAfterExpand = page.locator('#messageInput, .ai-input-area textarea').first();
+        await waitForElementReady(inputAfterExpand, 5000);
       }
     }
 
-    // Check again after potential expansion
+    // AI input area or panel should be accessible
     const inputAfter = page.locator('#messageInput, .ai-input-area textarea').first();
-    const visibleAfter = await inputAfter.isVisible({ timeout: 5000 }).catch(() => false);
-
-    // AI input area should exist in some state
-    expect(typeof visibleAfter).toBe('boolean');
+    const aiPanel = page.locator('app-ai-panel, app-ai-assistant-panel').first();
+    await expect(inputAfter.or(aiPanel)).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -96,12 +95,12 @@ test.describe('AI Assistant - Transcribe', () => {
   test('AI-005: AI transcribe component exists on interaction pages', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/interactions/1');
 
-    // Interaction detail may have AI transcribe
+    // Interaction page loads; transcribe may or may not be visible depending on interaction type
+    const pageContent = page.locator('app-interaction-item, .interaction-detail, body').first();
+    await expect(pageContent).toBeVisible({ timeout: 10000 });
     const transcribe = page.locator('app-ai-transcribe, .ai-transcribe-container, .interaction-ai-transcribe').first();
-    const transcribeVisible = await transcribe.isVisible({ timeout: 10000 }).catch(() => false);
-
-    // Transcribe may or may not be visible depending on interaction type
-    expect(typeof transcribeVisible).toBe('boolean');
+    const transcribeOrPage = transcribe.or(pageContent);
+    await expect(transcribeOrPage).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -111,28 +110,20 @@ test.describe('AI Assistant - Opportunity Integration', () => {
   test('AI-006: Opportunity sections have AI suggestion capability', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/opportunities/1');
 
-    // Look for any AI-related buttons in the opportunity sections
-    const aiButtons = page.locator('button').filter({ hasText: /ai|suggest|generate/i });
-    const aiCount = await aiButtons.count();
-
     // At minimum, the opportunity page should load
-    const header = page.locator('[data-testid="opportunity-detail-header"]').first();
+    const header = page.locator('app-opportunity-view').first();
     await expect(header).toBeVisible({ timeout: 10000 });
 
-    // AI integration count may vary
-    expect(aiCount).toBeGreaterThanOrEqual(0);
+    // AI integration: page loads successfully; AI buttons may or may not be present
   });
 
   test('AI-007: AI panel accessible from opportunity page', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/opportunities/1');
 
-    const header = page.locator('[data-testid="opportunity-detail-header"]').first();
+    const header = page.locator('app-opportunity-view').first();
     await expect(header).toBeVisible({ timeout: 10000 });
 
-    // AI panel or elements should be present
-    const aiElements = page.locator('app-ai-panel, app-ai-assistant-panel, .ai-panel');
-    const aiCount = await aiElements.count();
-    expect(aiCount).toBeGreaterThanOrEqual(0);
+    // Header visibility confirms opportunity page loads successfully
   });
 });
 
@@ -141,7 +132,7 @@ test.describe('AI Admin - Prompt Management', () => {
 
   test('AI-008: AI prompt management page loads for admin', async ({ page }) => {
     await authenticateWithRealBackend(page, '/admin/ai-prompt-management');
-    await page.waitForTimeout(3000);
+    await waitForPageReady(page);
 
     expect(page.url()).toContain('ai-prompt-management');
     expect(page.url()).not.toContain('access-denied');
@@ -153,28 +144,16 @@ test.describe('AI Admin - Prompt Management', () => {
 
   test('AI-009: AI prompt management inaccessible to restricted user', async ({ page }) => {
     await authenticateWithRealBackend(page, '/admin/ai-prompt-management', 'test-readonly@playwright.local');
-    await page.waitForTimeout(3000);
+    await waitForPageReady(page);
 
     const url = page.url();
     const body = await page.textContent('body');
 
-    // Check whether the restricted user is blocked from the page.
+    // Restricted user should be blocked (access-denied) or not reach the page
     const isBlocked = url.includes('access-denied') ||
                       !url.includes('ai-prompt-management') ||
                       (body !== null && /access denied|forbidden/i.test(body));
 
-    if (!isBlocked) {
-      // The route guard may not redirect in the mocked environment because
-      // the permission API mock returns full access for all users.
-      // Log this as an expected limitation and pass — a separate defect
-      // (DEF-XXX: AI prompt page not guarded for UNOPS_GEN_USER in mock mode)
-      // tracks the server-side enforcement gap.
-      console.log('[AI-009] WARN: Restricted user reached ai-prompt-management — ' +
-        'route guard may not fire without a real permission response. ' +
-        'Verify manually against a live backend.');
-    }
-
-    // Test passes — the assertion is informational in the mocked environment.
-    expect(isBlocked || true).toBeTruthy();
+    expect(isBlocked).toBeTruthy();
   });
 });

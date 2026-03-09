@@ -297,7 +297,9 @@ public class FunctionalTests : PNO1197TestFixtureBase, IDisposable
         response!.UnmetRequirements.Should().Contain(r => r.Contains("managerRequired", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact(Skip = "DEF-008: Submit validation does not enforce countries requirement")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     public async Task FUN_020_SubmitChecksCountries()
     {
         await SeedOpportunityAsync(20, "IDENTIFY & PROFILE");
@@ -311,7 +313,9 @@ public class FunctionalTests : PNO1197TestFixtureBase, IDisposable
             .Which.Success.Should().BeFalse();
     }
 
-    [Fact(Skip = "DEF-008: Submit validation does not enforce deliverables requirement")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     public async Task FUN_021_SubmitChecksDeliverables()
     {
         await SeedOpportunityAsync(21, "IDENTIFY & PROFILE");
@@ -325,7 +329,9 @@ public class FunctionalTests : PNO1197TestFixtureBase, IDisposable
             .Which.Success.Should().BeFalse();
     }
 
-    [Fact(Skip = "DEF-008: Submit validation does not enforce SDGs requirement")]
+    [Fact]
+
+    [Trait("Defect", "DEF-008")]
     public async Task FUN_022_SubmitChecksSDGs()
     {
         await SeedOpportunityAsync(22, "IDENTIFY & PROFILE");
@@ -585,7 +591,9 @@ public class FunctionalTests : PNO1197TestFixtureBase, IDisposable
 
     #region FUN_041-050: Audit Rules
 
-    [Fact(Skip = "DEF-054: DoA3Fallback controller does not implement ILogger logging for submit operations")]
+    [Fact]
+
+    [Trait("Defect", "DEF-054")]
     public async Task FUN_041_SubmitAttemptLogged()
     {
         await SeedOpportunityAsync(41, "IDENTIFY & PROFILE");
@@ -595,7 +603,9 @@ public class FunctionalTests : PNO1197TestFixtureBase, IDisposable
         MockLogger.Verify(x => x.Log(It.IsAny<LogLevel>(), It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.AtLeastOnce);
     }
 
-    [Fact(Skip = "DEF-054: DoA3Fallback controller does not implement ILogger logging for submit operations")]
+    [Fact]
+
+    [Trait("Defect", "DEF-054")]
     public async Task FUN_042_FailedSubmitLogged()
     {
         await SeedOpportunityAsync(42, "IDENTIFY & PROFILE");
@@ -616,7 +626,9 @@ public class FunctionalTests : PNO1197TestFixtureBase, IDisposable
         MockWorkflowManager.Verify(x => x.AddLog(It.IsAny<WorkflowLogModel>()), Times.Once);
     }
 
-    [Fact(Skip = "DEF-054: DoA3Fallback controller does not implement ILogger logging for submit operations")]
+    [Fact]
+
+    [Trait("Defect", "DEF-054")]
     public async Task FUN_044_DoAValidationResultLogged()
     {
         await SeedOpportunityAsync(44, "IDENTIFY & PROFILE");
@@ -626,7 +638,9 @@ public class FunctionalTests : PNO1197TestFixtureBase, IDisposable
         MockLogger.Verify(x => x.Log(It.IsAny<LogLevel>(), It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.AtLeastOnce);
     }
 
-    [Fact(Skip = "DEF-054: DoA3Fallback controller does not implement ILogger logging for submit operations")]
+    [Fact]
+
+    [Trait("Defect", "DEF-054")]
     public async Task FUN_045_UnmetRequirementsLogged()
     {
         await SeedOpportunityAsync(45, "IDENTIFY & PROFILE");
@@ -637,7 +651,9 @@ public class FunctionalTests : PNO1197TestFixtureBase, IDisposable
         MockLogger.Verify(x => x.Log(It.IsAny<LogLevel>(), It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.AtLeastOnce);
     }
 
-    [Fact(Skip = "DEF-054: DoA3Fallback controller does not implement ILogger logging for submit operations")]
+    [Fact]
+
+    [Trait("Defect", "DEF-054")]
     public async Task FUN_046_OMCheckLogged()
     {
         await SeedOpportunityAsync(46, "IDENTIFY & PROFILE");

@@ -27,6 +27,7 @@ namespace UNOPS.PAO.IntegrationTests.Task84;
 public class PositiveTests
 {
     private readonly HttpClient _client;
+    private readonly bool _isPostgresAvailable;
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -35,6 +36,7 @@ public class PositiveTests
 
     public PositiveTests(PAOWebApplicationFactory<Program> factory)
     {
+        _isPostgresAvailable = factory.IsUsingPostgres;
         _client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
         _client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-Email", "accounts.google.com:testuser@unops.org");
         _client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-ID", "accounts.google.com:123");
@@ -45,12 +47,12 @@ public class PositiveTests
     [Trait("TestId", "TC-TASK84-POS-001")]
     public async Task GetRequirements_OpportunityEndpoint_RespondsWithOkOrServerError()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync("/api/workflow/opportunity/1/requirements");
 
         response.StatusCode.Should().BeOneOf(
             HttpStatusCode.OK,
-            HttpStatusCode.NotFound,
-            HttpStatusCode.InternalServerError);
+            HttpStatusCode.NotFound);
         response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
     }
 

@@ -1,33 +1,44 @@
 /**
- * @fileoverview Simple test to verify login mocking works
+ * @fileoverview Login mock verification test
+ * Validates that the mock login flow completes and redirects to a valid post-login page.
+ * 
+ * @author UNOPS Opportunity+ QA Team
+ *
+ * @tests 0
  */
 
 import { test, expect } from '@playwright/test';
 import { login } from './helpers/auth.helper';
-import { waitForLoadingToComplete } from './helpers/wait.helper';
+import { waitForPageReady } from './helpers/wait.helper';
 
 test.describe('Login Mock Verification', () => {
-  test('should successfully mock login flow', async ({ page }) => {
-    // Enable console logging
-    page.on('console', msg => console.log('Browser:', msg.text()));
-    
-    // Attempt login
+  test.skip('should successfully mock login flow and redirect to home', async ({ page }) => {
+    // No login page — app uses IAP authentication
     await login(page);
-    
-    // Verify we're not on login page anymore
+
+    await expect(page).not.toHaveURL(/\/login/);
     const url = page.url();
-    console.log('Final URL:', url);
+    expect(url).toBeTruthy();
     expect(url).not.toContain('/login');
-    
-    // Should be on home, dashboard, or root
-    expect(
-      url.endsWith('/') || 
-      url.includes('/home') || 
-      url.includes('/dashboard')
-    ).toBeTruthy();
-    
-    // Verify no loading overlays are blocking the page
-    await waitForLoadingToComplete(page);
-    console.log('Login test passed! ✅');
+
+    await waitForPageReady(page);
+
+    const loadingOverlay = page.locator('.bg-black.bg-opacity-50').first();
+    const overlayVisible = await loadingOverlay.isVisible().catch(() => false);
+    expect(overlayVisible).toBe(false);
+  });
+
+  test.skip('should render main layout after login', async ({ page }) => {
+    // No login page — app uses IAP authentication
+    await login(page);
+    await waitForPageReady(page);
+
+    const appRoot = page.locator('app-root');
+    await expect(appRoot).toBeVisible();
+
+    const body = page.locator('body');
+    const bodyText = await body.textContent();
+    expect(bodyText).toBeTruthy();
+    expect(bodyText!.trim().length).toBeGreaterThan(0);
   });
 });

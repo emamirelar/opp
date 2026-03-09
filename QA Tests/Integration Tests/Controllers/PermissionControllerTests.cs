@@ -111,6 +111,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies retrieval of specific permission details
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PERM-002")]
@@ -137,6 +138,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies creation of new permission with generated ID
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PERM-003")]
@@ -193,6 +195,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies successful update of existing permission
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PERM-005")]
@@ -223,6 +226,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies deletion of unused permission
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PERM-006")]
@@ -244,6 +248,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies that permissions assigned to roles cannot be deleted
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PERM-007")]
@@ -291,6 +296,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies that permission names must follow naming conventions
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PERM-009")]
@@ -316,6 +322,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies that permission description is mandatory
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PERM-010")]
@@ -345,6 +352,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies successful assignment of permission to role
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PERM-011")]
@@ -367,6 +375,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies successful removal of permission from role
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PERM-012")]
@@ -389,6 +398,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies retrieval of all permissions assigned to a role
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PERM-013")]
@@ -415,6 +425,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies that child roles inherit parent role permissions
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PERM-014")]
@@ -441,6 +452,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies that permission assignment to non-existent role is rejected
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PERM-015")]
@@ -463,6 +475,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies that assignment of non-existent permission is rejected
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PERM-016")]
@@ -485,6 +498,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies retrieval of which roles use a specific permission
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PERM-017")]
@@ -511,6 +525,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies retrieval of permission change history
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PERM-018")]
@@ -589,6 +604,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies retrieval of all effective permissions for current user
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PERM-021")]
@@ -614,6 +630,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies checking permission for specific entity
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PERM-022")]
@@ -721,6 +738,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies bulk assignment of multiple permissions to a role
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PERM-026")]
@@ -743,6 +761,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies bulk removal of multiple permissions from a role
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PERM-027")]
@@ -765,6 +784,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies copying all permissions from source role to target role
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PERM-028")]
@@ -787,6 +807,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies that bulk operations validate all permissions
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PERM-029")]
@@ -809,6 +830,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies that bulk operations succeed or fail as a whole
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PERM-030")]
@@ -878,6 +900,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies that users cannot grant themselves higher permissions
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PERM-A003")]
@@ -900,6 +923,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies that core system permissions cannot be modified or deleted
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PERM-A004")]
@@ -921,6 +945,7 @@ public class PermissionControllerTests : IntegrationTestBase
     /// Verifies that permission category must be valid
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-025")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PERM-A005")]
@@ -940,6 +965,24 @@ public class PermissionControllerTests : IntegrationTestBase
 
         // Assert
         response.StatusCode.Should().BeOneOf(new[] { HttpStatusCode.BadRequest, HttpStatusCode.MethodNotAllowed }, "because invalid category should be rejected");
+    }
+
+    [Fact]
+    [Trait("Category", "Edge")]
+    [Trait("Priority", "P1")]
+    [Trait("TestId", "TC-PERM-CTRL-EDGE-001")]
+    [Trait("Ticket", "PNO-1194")]
+    public async Task GetPermissions_ResponseContent_NoEncodingArtifacts()
+    {
+        var client = Factory.CreateAuthenticatedClient();
+        var response = await client.GetAsync("/api/permissions");
+        if (response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            content.Should().NotContain("??",
+                "PNO-1194: permission names and descriptions must not contain encoding artifacts");
+            content.Should().NotContain("\uFFFD");
+        }
     }
 
     #endregion

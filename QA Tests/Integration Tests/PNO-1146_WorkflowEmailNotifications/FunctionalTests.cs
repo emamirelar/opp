@@ -35,7 +35,7 @@ public class FunctionalTests : PNO1146TestFixtureBase
 
         // Assert
         LastCapturedEmail.Should().NotBeNull();
-        LastCapturedEmail!.TemplateName.Should().Be("WorkflowApprovalRequest.html");
+        LastCapturedEmail!.TemplateName.Should().Be(TemplateApprovalRequest);
     }
 
     [Fact]
@@ -54,16 +54,17 @@ public class FunctionalTests : PNO1146TestFixtureBase
 
         // Assert
         LastCapturedEmail.Should().NotBeNull();
-        LastCapturedEmail!.TemplateName.Should().Be("WorkflowCompleted.html");
+        LastCapturedEmail!.TemplateName.Should().Be(TemplateCompleted);
     }
 
     [Fact]
     [Trait("Category", "Functional")]
     public async Task RejectedNotification_UsesCorrectTemplate_WorkflowRejectedHtml()
     {
-        // Arrange
+        // Arrange — seed OM so rejection recipient lookup finds a valid user
         await SeedOpportunityAsync(1);
         await SeedUserAsync(1, "user@unops.org");
+        await SeedOpportunityManagerAsync(1, 1);
         SetupEmailCapture();
 
         var notification = BuildWorkflowNotification(recipientUserIds: new List<int> { 1 });
@@ -73,7 +74,7 @@ public class FunctionalTests : PNO1146TestFixtureBase
 
         // Assert
         LastCapturedEmail.Should().NotBeNull();
-        LastCapturedEmail!.TemplateName.Should().Be("WorkflowRejected.html");
+        LastCapturedEmail!.TemplateName.Should().Be(TemplateRejected);
     }
 
     [Fact]
@@ -92,7 +93,7 @@ public class FunctionalTests : PNO1146TestFixtureBase
 
         // Assert
         LastCapturedEmail.Should().NotBeNull();
-        LastCapturedEmail!.TemplateName.Should().Be("WorkflowRecalled.html");
+        LastCapturedEmail!.TemplateName.Should().Be(TemplateRecalled);
     }
 
     [Fact]
@@ -113,9 +114,9 @@ public class FunctionalTests : PNO1146TestFixtureBase
         // Act
         await NotificationService.NotifyNewApprovalRequestAsync(notification);
 
-        // Assert
+        // Assert — URL is {baseUrl}/partnerships/opportunities/{entityId}
         capturedModel.Should().NotBeNull();
-        capturedModel!.EntityUrl.Should().Contain("/opportunity/1");
+        capturedModel!.EntityUrl.Should().Contain("/partnerships/opportunities/1");
     }
 
     [Fact]
@@ -170,9 +171,10 @@ public class FunctionalTests : PNO1146TestFixtureBase
     [Trait("Category", "Functional")]
     public async Task RejectedNotification_IncludesRejectionComment_InEmailBody()
     {
-        // Arrange
+        // Arrange — seed OM so rejection recipient lookup finds a valid user
         await SeedOpportunityAsync(1);
         await SeedUserAsync(1, "user@unops.org");
+        await SeedOpportunityManagerAsync(1, 1);
         WorkflowRejectedEmailModel? capturedModel = null;
         MockEmailSender
             .Setup(e => e.SendEmailAsync(It.IsAny<EmailMessage>(), It.IsAny<WorkflowRejectedEmailModel>(), It.IsAny<string?>()))

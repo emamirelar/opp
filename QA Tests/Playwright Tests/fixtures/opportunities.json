@@ -1,0 +1,16 @@
+{
+  "list": {
+    "records": [
+      { "id": 1, "name": "Infrastructure Development Program", "title": "Infrastructure Development", "status": "Active", "stage": "Identification", "value": 1500000, "currency": "USD", "partner": { "id": 1, "name": "UNICEF Regional Office" }, "organizationUnit": { "id": 1, "name": "HQ" }, "createdDate": "2024-01-15T00:00:00Z" },
+      { "id": 2, "name": "Education Support Initiative", "title": "Education Support", "status": "Active", "stage": "Active", "value": 800000, "currency": "USD", "partner": { "id": 2, "name": "Red Cross International" }, "organizationUnit": { "id": 2, "name": "RO" }, "createdDate": "2024-03-01T00:00:00Z" },
+      { "id": 3, "name": "Healthcare Capacity Building", "title": "Healthcare Capacity", "status": "Draft", "stage": "Draft", "value": 2000000, "currency": "USD", "partner": { "id": 3, "name": "World Bank Group" }, "organizationUnit": { "id": 1, "name": "HQ" }, "createdDate": "2024-05-10T00:00:00Z" }
+    ],
+    "totalCount": 3
+  },
+  "search": {
+    "records": [
+      { "id": 1, "name": "Infrastructure Development Program", "title": "Infrastructure Development", "status": "Active", "stage": "Identification", "value": 1500000, "currency": "USD", "partner": { "id": 1, "name": "UNICEF Regional Office" }, "createdDate": "2024-01-15T00:00:00Z" }
+    ],
+    "totalCount": 1
+  }
+}

@@ -107,6 +107,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies retrieval of complete list of system roles
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-001")]
@@ -132,6 +133,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies retrieval of specific role details including permissions and user count
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-002")]
@@ -158,6 +160,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies creation of new role with generated ID
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-003")]
@@ -189,6 +192,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies that duplicate role names are prevented
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-004")]
@@ -214,6 +218,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies successful update of existing role
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-005")]
@@ -245,6 +250,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies deletion of unused role
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-006")]
@@ -266,6 +272,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies that roles with assigned users cannot be deleted
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-007")]
@@ -287,6 +294,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies that role changes are logged in audit history
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-ROLE-008")]
@@ -317,6 +325,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies successful role assignment to user
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-009")]
@@ -339,6 +348,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies successful removal of role assignment
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-010")]
@@ -361,6 +371,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies retrieval of all roles assigned to a user
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-011")]
@@ -387,6 +398,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies retrieval of all users assigned to a specific role
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-012")]
@@ -413,6 +425,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies bulk assignment of multiple roles to a single user
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-013")]
@@ -435,6 +448,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies that role assignment to non-existent user is rejected
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-014")]
@@ -457,6 +471,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies that assignment of non-existent role is rejected
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-015")]
@@ -483,6 +498,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies retrieval of parent-child role relationships
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-ROLE-016")]
@@ -509,6 +525,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies creation of role that inherits from parent role
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-ROLE-017")]
@@ -540,6 +557,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies that circular parent-child relationships are prevented
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-ROLE-018")]
@@ -565,6 +583,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies cloning of existing role with new name
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-ROLE-019")]
@@ -595,6 +614,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies retrieval of complete role change history
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-ROLE-020")]
@@ -625,6 +645,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies that regular users cannot access role management endpoints
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-A001")]
@@ -646,6 +667,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies that core system roles are protected from deletion
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-A002")]
@@ -667,6 +689,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies that users cannot grant themselves admin privileges
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-A003")]
@@ -689,6 +712,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies that role scope restricts which users are visible
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-A004")]
@@ -716,6 +740,7 @@ public class RoleControllerTests : IntegrationTestBase
     /// Verifies validation of role assignment constraints
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-026")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-ROLE-A005")]
@@ -735,6 +760,24 @@ public class RoleControllerTests : IntegrationTestBase
         if (!string.IsNullOrEmpty(validationResult)) // Content may be empty for 404/500 responses in test env
         {
         validationResult.Should().NotBeNullOrEmpty("because validation result should be returned");
+        }
+    }
+
+    [Fact]
+    [Trait("Category", "Edge")]
+    [Trait("Priority", "P1")]
+    [Trait("TestId", "TC-RC-EDGE-001")]
+    [Trait("Ticket", "PNO-1194")]
+    public async Task GetRoles_ResponseContent_NoEncodingArtifacts()
+    {
+        var client = Factory.CreateAuthenticatedClient();
+        var response = await client.GetAsync("/api/admin/roles");
+        if (response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            content.Should().NotContain("??",
+                "PNO-1194: role names and descriptions must not contain encoding artifacts");
+            content.Should().NotContain("\uFFFD");
         }
     }
 

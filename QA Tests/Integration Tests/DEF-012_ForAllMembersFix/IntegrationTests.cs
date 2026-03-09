@@ -271,7 +271,7 @@ public class IntegrationTests
 
     [Fact]
     [Trait("DEF012", "INT_021")]
-    public void INT_021_ConcurrentMapOperations()
+    public async Task INT_021_ConcurrentMapOperations()
     {
         var tasks = Enumerable.Range(0, 20).Select(i => Task.Run(() =>
         {
@@ -279,8 +279,8 @@ public class IntegrationTests
             _mapper.Map(new UpdateOpportunityRequest { Id = 10, Name = $"Concurrent{i}" }, dest);
             return dest.Name;
         })).ToArray();
-        Task.WaitAll(tasks);
-        tasks.Select(t => t.Result).Should().OnlyHaveUniqueItems();
+        var results = await Task.WhenAll(tasks);
+        results.Should().OnlyHaveUniqueItems();
     }
 
     [Fact]
@@ -511,7 +511,7 @@ public class IntegrationTests
 
     [Fact]
     [Trait("DEF012", "INT_042")]
-    public void INT_042_MapThreadSafetyUnderParallelLoad()
+    public async Task INT_042_MapThreadSafetyUnderParallelLoad()
     {
         var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(() =>
         {
@@ -519,8 +519,8 @@ public class IntegrationTests
             _mapper.Map(new UpdateOpportunityRequest { Id = 10, Name = "Parallel" }, dest);
             return dest.Name;
         })).ToArray();
-        Task.WaitAll(tasks);
-        tasks.All(t => t.Result == "Parallel").Should().BeTrue();
+        var results = await Task.WhenAll(tasks);
+        results.All(r => r == "Parallel").Should().BeTrue();
     }
 
     [Fact]

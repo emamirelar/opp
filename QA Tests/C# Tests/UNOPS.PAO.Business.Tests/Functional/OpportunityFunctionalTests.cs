@@ -290,6 +290,7 @@ namespace UNOPS.PAO.Business.Tests.Functional
         /// <summary>
         /// BR-O006a: Go Decision requires justification
         /// </summary>
+#pragma warning disable xUnit1026 // Theory method has unused parameter(s)
         [Theory]
         [InlineData("Yes", "Strong partnership alignment", true)]
         [InlineData("No", "Budget constraints", true)]
@@ -303,6 +304,7 @@ namespace UNOPS.PAO.Business.Tests.Functional
             // Assert
             isValid.Should().Be(expectedValid);
         }
+#pragma warning restore xUnit1026
 
         /// <summary>
         /// BR-O006b: Go Decision "No" prevents further pipeline progression
@@ -514,6 +516,7 @@ namespace UNOPS.PAO.Business.Tests.Functional
         /// <summary>
         /// BR-O010: Certain stages require specific documents
         /// </summary>
+#pragma warning disable xUnit1026 // Theory method has unused parameter(s)
         [Theory]
         [InlineData("Proposal", new[] { "Proposal Document", "Budget" }, true)]
         [InlineData("Contracting", new[] { "Contract Draft", "Legal Review" }, true)]
@@ -534,6 +537,7 @@ namespace UNOPS.PAO.Business.Tests.Functional
             // Assert
             requirements.Should().BeEquivalentTo(requiredDocs);
         }
+#pragma warning restore xUnit1026
 
         /// <summary>
         /// BR-O010a: Cannot progress stage without required documents

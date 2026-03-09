@@ -6,11 +6,12 @@
  *
  * @author UNOPS Opportunity+ QA Team
  * @see https://unops.atlassian.net/browse/PNO-OPP-STATEMENT
+ * @tests 10
  */
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
-import { waitForPermissions } from './helpers/wait.helper';
+import { waitForPermissions, waitForElementReady } from './helpers/wait.helper';
 
 const featureReady = process.env.OPPORTUNITY_STATEMENT_IMPLEMENTED === 'true';
 
@@ -29,9 +30,10 @@ function oppUrl(id: string): string {
 
 async function navigateToStatement(page: import('@playwright/test').Page): Promise<void> {
   const chip = page.locator('button:has-text("Statement")').first();
+  const section = page.locator('#section-statement, app-opportunity-statement-section').first();
   if (await chip.isVisible({ timeout: 3000 }).catch(() => false)) {
     await chip.click();
-    await page.waitForTimeout(1000);
+    await waitForElementReady(section, 5000);
   }
 }
 
@@ -57,11 +59,9 @@ test.describe('Statement — Display', () => {
     await navigateToStatement(page);
 
     const section = page.locator('#section-statement, app-opportunity-statement-section').first();
-    if (await section.isVisible({ timeout: 5000 }).catch(() => false)) {
-      const markdownContent = section.locator('p, h1, h2, h3, ul, ol').first();
-      const hasContent = await markdownContent.isVisible({ timeout: 5000 }).catch(() => false);
-      expect(hasContent).toBeTruthy();
-    }
+    await expect(section).toBeVisible({ timeout: 10000 });
+    const markdownContent = section.locator('p, h1, h2, h3, ul, ol').first();
+    await expect(markdownContent).toBeVisible({ timeout: 5000 });
   });
 
   test('STMT-003: Statement section shows empty state for opportunity without statement', async ({ page }) => {
@@ -70,8 +70,8 @@ test.describe('Statement — Display', () => {
     await navigateToStatement(page);
 
     const section = page.locator('#section-statement, app-opportunity-statement-section').first();
-    const isVisible = await section.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(isVisible || await page.locator('[data-testid="opportunity-title"]').isVisible()).toBeTruthy();
+    const title = page.locator('[data-testid="opportunity-title"]');
+    await expect(section.or(title)).toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -88,8 +88,8 @@ test.describe('Statement — Generate', () => {
     await navigateToStatement(page);
 
     const generateBtn = page.locator('button:has-text("Generate"), [data-testid="generate-statement"]').first();
-    const isVisible = await generateBtn.isVisible({ timeout: 10000 }).catch(() => false);
-    expect(isVisible || await page.locator('#section-statement').isVisible()).toBeTruthy();
+    const section = page.locator('#section-statement').first();
+    await expect(generateBtn.or(section)).toBeVisible({ timeout: 10000 });
   });
 
   test('STMT-005: Generate statement button hidden for read-only user', async ({ page }) => {
@@ -120,11 +120,9 @@ test.describe('Statement — Generate', () => {
     test.skip(!isVisible, 'Generate button not visible');
 
     await generateBtn.click();
-    await page.waitForTimeout(2000);
 
     const loadingOrResult = page.locator('p-progressSpinner, .loading, [data-testid="statement-content"]').first();
-    const hasResponse = await loadingOrResult.isVisible({ timeout: 30000 }).catch(() => false);
-    expect(hasResponse || true).toBeTruthy();
+    await expect(loadingOrResult).toBeVisible({ timeout: 30000 });
   });
 });
 
@@ -141,8 +139,8 @@ test.describe('Statement — Validate', () => {
     await navigateToStatement(page);
 
     const validateBtn = page.locator('button:has-text("Validate"), [data-testid="validate-statement"]').first();
-    const isVisible = await validateBtn.isVisible({ timeout: 10000 }).catch(() => false);
-    expect(isVisible || await page.locator('#section-statement').isVisible()).toBeTruthy();
+    const section = page.locator('#section-statement').first();
+    await expect(validateBtn.or(section)).toBeVisible({ timeout: 10000 });
   });
 
   test('STMT-009: Validate button hidden when no statement exists', async ({ page }) => {
@@ -164,10 +162,8 @@ test.describe('Statement — Validate', () => {
     test.skip(!isVisible, 'Validate button not visible');
 
     await validateBtn.click();
-    await page.waitForTimeout(2000);
 
     const validationResult = page.locator('[data-testid="validation-result"], .validation-result, .p-message').first();
-    const hasResult = await validationResult.isVisible({ timeout: 30000 }).catch(() => false);
-    expect(hasResult || true).toBeTruthy();
+    await expect(validationResult).toBeVisible({ timeout: 30000 });
   });
 });

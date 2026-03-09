@@ -5,6 +5,7 @@
 
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
+import { waitForLoadingToComplete } from '../helpers/wait.helper';
 
 export class PartnerTreePage extends BasePage {
   constructor(page: Page) {
@@ -20,11 +21,15 @@ export class PartnerTreePage extends BasePage {
   }
 
   get treeContainer(): Locator {
-    return this.page.locator('app-partner-tree, [data-testid="partner-tree"], .partner-tree').first();
+    return this.page.locator(
+      'app-partner-tree, p-treetable, [data-testid="partner-tree"], .partner-tree, .p-treetable'
+    ).first();
   }
 
   get treeNodes(): Locator {
-    return this.page.locator('.p-treenode, [data-testid="tree-node"], app-partner-tree-item');
+    return this.page.locator(
+      '.p-treetable-tbody tr, .p-treenode, [data-testid="tree-node"], app-partner-tree-item, .p-treetable-row'
+    );
   }
 
   get expandableNodes(): Locator {
@@ -87,19 +92,23 @@ export class PartnerTreePage extends BasePage {
     const toggle = this.expandableNodes.nth(index);
     if (await toggle.isVisible().catch(() => false)) {
       await toggle.click();
-      await this.page.waitForTimeout(500);
+      await waitForLoadingToComplete(this.page);
     }
   }
 
   async clickNode(index: number): Promise<void> {
     await this.treeNodes.nth(index).click();
-    await this.page.waitForTimeout(500);
+    try {
+      await this.nodeDetailPanel.waitFor({ state: 'visible', timeout: 5000 });
+    } catch {
+      await waitForLoadingToComplete(this.page);
+    }
   }
 
   async searchTree(query: string): Promise<void> {
     if (await this.searchInput.isVisible().catch(() => false)) {
       await this.searchInput.fill(query);
-      await this.page.waitForTimeout(1000);
+      await waitForLoadingToComplete(this.page);
     }
   }
 

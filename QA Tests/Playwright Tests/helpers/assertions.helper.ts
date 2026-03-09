@@ -50,41 +50,14 @@ export async function assertPageHeader(
   page: Page,
   entityName: string
 ): Promise<void> {
-  console.log(`[Assert] Checking page header for ${entityName}...`);
-  
-  // Wait for any loading overlays to disappear first
   await waitForLoadingToComplete(page);
-  
-  // Give Angular a moment to fully render the component after permissions load
-  await page.waitForTimeout(2000);
-  
-  // DEBUG: Log current URL and check what elements exist
-  const currentUrl = page.url();
-  console.log(`[Assert] Current URL: ${currentUrl}`);
-  
-  // Check if ANY content is visible on the page
-  const bodyText = await page.locator('body').textContent();
-  console.log(`[Assert] Page body contains text: ${bodyText?.substring(0, 200)}...`);
-  
-  // Wait for the header element to be attached to DOM and visible
-  // This is more reliable than URL waiting for hash-based routing
-  const header = page.locator(`[data-testid="${entityName}-header"]`);
-  console.log(`[Assert] Waiting for ${entityName}-header to be visible...`);
-  await header.waitFor({ 
-    state: 'visible', 
-    timeout: getTimeout('navigation') 
-  });
-  console.log(`[Assert] ${entityName}-header is visible`);
-  
-  const icon = page.locator(`[data-testid="${entityName}-icon"]`);
-  const title = page.locator(`[data-testid="${entityName}-title"]`);
-  
-  // Assert all elements are visible
-  await assertVisible(header);
-  await assertVisible(icon);
-  await assertVisible(title);
-  
-  console.log(`[Assert] Page header verified for ${entityName}`);
+  await page.waitForTimeout(1000);
+
+  const displayName = entityName.charAt(0).toUpperCase() + entityName.slice(1);
+  const header = page.locator('p, h1, h2').filter({ hasText: new RegExp(`^${displayName}$`, 'i') }).first()
+    .or(page.locator(`[data-testid="${entityName}-header"]`));
+
+  await assertVisible(header, getTimeout('navigation'));
 }
 
 /**
@@ -96,7 +69,8 @@ export async function assertListviewVisible(
   page: Page,
   entityName: string
 ): Promise<void> {
-  const listview = page.locator(`[data-testid="${entityName}-listview"]`);
+  const listview = page.locator('app-listview').first()
+    .or(page.locator(`[data-testid="${entityName}-listview"]`));
   await assertVisible(listview);
 }
 

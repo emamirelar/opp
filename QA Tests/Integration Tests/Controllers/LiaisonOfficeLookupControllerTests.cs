@@ -79,6 +79,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// Verifies retrieval of office details by ID
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-001")]
@@ -105,6 +106,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// Verifies retrieval of office by unique code
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-002")]
@@ -131,6 +133,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// Verifies retrieval of simplified list for UI dropdowns
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-003")]
@@ -156,6 +159,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// Verifies handling of non-existent office ID
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-004")]
@@ -177,6 +181,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// Verifies handling of non-existent office code
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-005")]
@@ -198,6 +203,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// Verifies filtering by active status
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-006")]
@@ -223,6 +229,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// Verifies filtering offices by country
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-007")]
@@ -249,6 +256,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// Verifies filtering offices by geographic region
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-008")]
@@ -279,6 +287,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// Verifies quick search for autocomplete functionality
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-LOLC-009")]
@@ -305,6 +314,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// Verifies minimum character requirement for search
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-LOLC-010")]
@@ -327,6 +337,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// Verifies that results are limited to reasonable count
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-LOLC-011")]
@@ -354,6 +365,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// Verifies combined search and filter operations
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-LOLC-012")]
@@ -381,6 +393,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// Verifies alphabetical ordering of results
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-LOLC-013")]
@@ -406,6 +419,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// Verifies inclusion of all statuses when requested
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-LOLC-014")]
@@ -435,6 +449,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// Verifies that unauthenticated requests are rejected
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-A001")]
@@ -457,6 +472,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// Verifies that authenticated users can access lookup
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-A002")]
@@ -477,6 +493,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// Verifies that results are filtered by user's org unit permissions
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-A003")]
@@ -504,6 +521,7 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
     /// Verifies that admin users bypass org unit filtering
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-034")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LOLC-A004")]
@@ -522,6 +540,24 @@ public class LiaisonOfficeLookupControllerTests : IntegrationTestBase
         if (!string.IsNullOrEmpty(offices)) // Content may be empty for 404/500 responses in test env
         {
         offices.Should().NotBeNullOrEmpty("because all offices should be accessible to admin");
+        }
+    }
+
+    [Fact]
+    [Trait("Category", "Edge")]
+    [Trait("Priority", "P1")]
+    [Trait("TestId", "TC-LOL-EDGE-001")]
+    [Trait("Ticket", "PNO-1194")]
+    public async Task GetLiaisonOfficeLookup_ResponseContent_NoEncodingArtifacts()
+    {
+        var client = Factory.CreateAuthenticatedClient();
+        var response = await client.GetAsync("/api/liaison-offices/lookup");
+        if (response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            content.Should().NotContain("??",
+                "PNO-1194: liaison office lookup names must not contain encoding artifacts");
+            content.Should().NotContain("\uFFFD");
         }
     }
 

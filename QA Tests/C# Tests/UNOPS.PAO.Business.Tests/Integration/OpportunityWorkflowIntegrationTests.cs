@@ -71,7 +71,6 @@ namespace UNOPS.PAO.Business.Tests.Integration
         {
             // Arrange
             var opportunity = new { Stage = currentStage };
-            var newStage = "Lost";
 
             // Act - Lost is always a valid transition
             var canTransitionToLost = true;
@@ -858,7 +857,6 @@ namespace UNOPS.PAO.Business.Tests.Integration
         public void EmptyDescription_AllowedOnCreate()
         {
             // Some fields are optional
-            string? description = null;
             var isValid = true; // Description optional
             isValid.Should().BeTrue();
         }

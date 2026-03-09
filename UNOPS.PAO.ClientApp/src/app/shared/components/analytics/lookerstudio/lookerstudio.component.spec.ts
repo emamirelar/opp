@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DomSanitizer } from '@angular/platform-browser';
+import { TranslateModule, TranslateLoader, TranslateFakeLoader } from '@ngx-translate/core';
 import { LookerstudioComponent } from './lookerstudio.component';
 import { SimpleChange } from '@angular/core';
 
@@ -9,15 +10,18 @@ describe('LookerstudioComponent', () => {
   let mockSanitizer: jasmine.SpyObj<DomSanitizer>;
 
   beforeEach(async () => {
-    mockSanitizer = jasmine.createSpyObj('DomSanitizer', ['bypassSecurityTrustResourceUrl']);
-    mockSanitizer.bypassSecurityTrustResourceUrl.and.returnValue('safe-url' as any);
-
     await TestBed.configureTestingModule({
-      imports: [LookerstudioComponent],
-      providers: [
-        { provide: DomSanitizer, useValue: mockSanitizer }
+      imports: [
+        LookerstudioComponent,
+        TranslateModule.forRoot({
+          loader: { provide: TranslateLoader, useClass: TranslateFakeLoader }
+        })
       ]
     }).compileComponents();
+
+    const sanitizer = TestBed.inject(DomSanitizer);
+    spyOn(sanitizer, 'bypassSecurityTrustResourceUrl').and.callThrough();
+    mockSanitizer = sanitizer as jasmine.SpyObj<DomSanitizer>;
 
     fixture = TestBed.createComponent(LookerstudioComponent);
     component = fixture.componentInstance;
@@ -117,10 +121,11 @@ describe('LookerstudioComponent', () => {
       component.dashboardId = 'test-dashboard-123';
       component.partnerCode = 'PARTNER1';
 
-      const result = component.partnerTreeUrl();
+      component.partnerTreeUrl();
 
-      expect(mockSanitizer.bypassSecurityTrustResourceUrl).toHaveBeenCalled();
-      const calledUrl = mockSanitizer.bypassSecurityTrustResourceUrl.calls.mostRecent().args[0];
+      const calls = mockSanitizer.bypassSecurityTrustResourceUrl.calls;
+      expect(calls.count()).toBeGreaterThan(0);
+      const calledUrl = calls.mostRecent().args[0] ?? '';
       expect(calledUrl).toContain('test-dashboard-123');
       expect(calledUrl).toContain(encodeURIComponent('PARTNER1'));
     });
@@ -139,10 +144,11 @@ describe('LookerstudioComponent', () => {
     it('should generate correct partner URL', () => {
       component.partnerCode = 'PARTNER1';
 
-      const result = component.partnerUrl();
+      component.partnerUrl();
 
-      expect(mockSanitizer.bypassSecurityTrustResourceUrl).toHaveBeenCalled();
-      const calledUrl = mockSanitizer.bypassSecurityTrustResourceUrl.calls.mostRecent().args[0];
+      const calls = mockSanitizer.bypassSecurityTrustResourceUrl.calls;
+      expect(calls.count()).toBeGreaterThan(0);
+      const calledUrl = calls.mostRecent().args[0] ?? '';
       expect(calledUrl).toContain(encodeURIComponent('PARTNER1'));
       expect(calledUrl).toContain('dcf96b62-ae61-4d6c-8614-34b9faf91cd8');
     });
@@ -172,8 +178,8 @@ describe('LookerstudioComponent', () => {
 
   describe('template rendering', () => {
     it('should render iframe with correct src', () => {
-      component.partnerCode = 'PARTNER1';
-      component.dashboardId = 'test-dashboard';
+      fixture.componentRef.setInput('partnerCode', 'PARTNER1');
+      fixture.componentRef.setInput('dashboardId', 'test-dashboard');
       component.updateUrl();
       fixture.detectChanges();
 
@@ -182,12 +188,11 @@ describe('LookerstudioComponent', () => {
     });
 
     it('should show loading state when isLoading is true', () => {
-      component.isLoading = true;
+      fixture.componentRef.setInput('isLoading', true);
       fixture.detectChanges();
 
-      const compiled = fixture.nativeElement;
-      // Check for loading indicator if it exists in template
-      expect(compiled).toBeTruthy();
+      const loadingSpinner = fixture.nativeElement.querySelector('.animate-spin');
+      expect(loadingSpinner).toBeTruthy();
     });
   });
 });

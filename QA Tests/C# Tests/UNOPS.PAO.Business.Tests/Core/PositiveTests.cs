@@ -256,7 +256,6 @@ namespace UNOPS.PAO.Business.Tests.Core
         public void Contact_Delete_RemovesFromPartner()
         {
             // Arrange
-            var contactId = 1;
             var isDeleted = true;
 
             // Act & Assert
@@ -511,7 +510,6 @@ namespace UNOPS.PAO.Business.Tests.Core
         public void Interaction_Delete_RemovesFromHistory()
         {
             // Arrange
-            var interactionId = 1;
             var isDeleted = true;
 
             // Act & Assert
@@ -652,7 +650,6 @@ namespace UNOPS.PAO.Business.Tests.Core
         public void Document_Delete_RemovesFile()
         {
             // Arrange
-            var docId = 1;
             var isDeleted = true;
 
             // Act & Assert

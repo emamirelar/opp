@@ -1,0 +1,42 @@
+{
+  "list": {
+    "records": [
+      { "id": 1, "name": "UNICEF Regional Office", "type": "Government", "status": "Active", "stage": "Active", "country": "United States", "createdDate": "2024-01-15T00:00:00Z" },
+      { "id": 2, "name": "Red Cross International", "type": "NGO", "status": "Active", "stage": "Active", "country": "Switzerland", "createdDate": "2024-02-20T00:00:00Z" },
+      { "id": 3, "name": "World Bank Group", "type": "Multilateral", "status": "Active", "stage": "Active", "country": "United States", "createdDate": "2024-03-10T00:00:00Z" }
+    ],
+    "totalCount": 3
+  },
+  "search": {
+    "records": [
+      { "id": 1, "name": "UNICEF Regional Office", "type": "Government", "status": "Active", "stage": "Active", "country": "United States", "createdDate": "2024-01-15T00:00:00Z" }
+    ],
+    "totalCount": 1
+  },
+  "detail": {
+    "id": 1,
+    "name": "Test Partner Organization",
+    "type": "Organization",
+    "status": "Active",
+    "description": "This is a test partner for automated E2E testing",
+    "website": "https://test-partner.org",
+    "email": "contact@test-partner.org",
+    "phone": "+1-555-0123",
+    "address": "123 Test Street, Test City, TC 12345",
+    "country": "United States",
+    "partnerType": { "id": 1, "name": "Government" },
+    "stage": "Active",
+    "workflowStatus": "Active",
+    "createdDate": "2024-01-01T00:00:00Z",
+    "lastModifiedDate": "2024-06-15T12:00:00Z",
+    "createdBy": "system",
+    "lastModifiedBy": "system",
+    "contacts": [
+      { "id": 1, "firstName": "John", "lastName": "Smith", "email": "john@test.com" },
+      { "id": 2, "firstName": "Jane", "lastName": "Doe", "email": "jane@test.com" }
+    ],
+    "interactions": [],
+    "opportunities": [],
+    "documents": []
+  }
+}

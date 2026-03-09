@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Services;
 using UNOPS.PAO.Domain.Entities;
+using OpportunityEntity = UNOPS.PAO.Domain.Entities.Opportunity;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Opportunities;
@@ -228,7 +229,7 @@ public class OpportunityPermissionTests : IDisposable
         int? responsibleOrgUnitId = null,
         int? createdBy = null)
     {
-        var opportunity = new Domain.Entities.Opportunity
+        var opportunity = new OpportunityEntity
         {
             Name = name ?? $"Test Opportunity {_testMarker}",
             Description = description ?? "Test Description",
@@ -249,7 +250,9 @@ public class OpportunityPermissionTests : IDisposable
 
     #region P1 - Permission Checks Tests
 
-    [Fact(Skip = "Permissions not populated in GetOpportunityAsync(ClaimsPrincipal, int) - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-001")]
@@ -269,7 +272,9 @@ public class OpportunityPermissionTests : IDisposable
         result.Permissions.CanDelete.Should().BeFalse();
     }
 
-    [Fact(Skip = "View permission enforcement not implemented in GetOpportunityAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-002")]
@@ -285,7 +290,9 @@ public class OpportunityPermissionTests : IDisposable
         result.Should().BeNull();
     }
 
-    [Fact(Skip = "Permission checks not implemented in UNOPSOpportunityManager.CreateOpportunityAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-003")]
@@ -316,7 +323,9 @@ public class OpportunityPermissionTests : IDisposable
             .WithMessage("*permission*");
     }
 
-    [Fact(Skip = "Permission checks not implemented in UNOPSOpportunityManager.UpdateOpportunityAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-004")]
@@ -351,7 +360,9 @@ public class OpportunityPermissionTests : IDisposable
             .WithMessage("*edit*");
     }
 
-    [Fact(Skip = "Permission checks not implemented in UNOPSOpportunityManager.DeleteOpportunityAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-005")]
@@ -372,7 +383,9 @@ public class OpportunityPermissionTests : IDisposable
 
     #region P1 - Row-Level Security Tests
 
-    [Fact(Skip = "Org unit filtering not implemented in UNOPSOpportunityManager.GetAllOpportunitiesAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-006")]
@@ -384,9 +397,9 @@ public class OpportunityPermissionTests : IDisposable
         _mockPermissionService.Setup(p => p.GetUserOrgUnitAsync(It.IsAny<ClaimsPrincipal>()))
             .ReturnsAsync(_orgHierarchyId.ToString());
 
-        _mockPermissionService.Setup(p => p.ApplyAccessControlFiltersAsync(It.IsAny<IQueryable<Domain.Entities.Opportunity>>(),
+        _mockPermissionService.Setup(p => p.ApplyAccessControlFiltersAsync(It.IsAny<IQueryable<OpportunityEntity>>(),
             It.IsAny<ClaimsPrincipal>(), "View", "Opportunity"))
-            .ReturnsAsync((IQueryable<Domain.Entities.Opportunity> query, ClaimsPrincipal user, string action, string entityName) =>
+            .ReturnsAsync((IQueryable<OpportunityEntity> query, ClaimsPrincipal user, string action, string entityName) =>
                 (object)query.Where(o => o.ResponsibleOrgUnitId == _orgHierarchyId));
 
         var result = await _manager.GetAllOpportunitiesAsync();
@@ -396,7 +409,9 @@ public class OpportunityPermissionTests : IDisposable
         opportunities.Should().OnlyContain(o => o.ResponsibleOrgUnitId == _orgHierarchyId);
     }
 
-    [Fact(Skip = "Partner filtering permissions not implemented in UNOPSOpportunityManager.GetOpportunitiesByPartnerIdAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P1")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-007")]
@@ -438,9 +453,9 @@ public class OpportunityPermissionTests : IDisposable
         _mockPermissionService.Setup(p => p.GetEntityPermissionsAsync("Opportunity", null))
             .ReturnsAsync(permissions);
 
-        _mockPermissionService.Setup(p => p.ApplyAccessControlFiltersAsync(It.IsAny<IQueryable<Domain.Entities.Opportunity>>(),
+        _mockPermissionService.Setup(p => p.ApplyAccessControlFiltersAsync(It.IsAny<IQueryable<OpportunityEntity>>(),
             It.IsAny<ClaimsPrincipal>(), "View", "Opportunity"))
-            .ReturnsAsync((IQueryable<Domain.Entities.Opportunity> query, ClaimsPrincipal user, string action, string entityName) =>
+            .ReturnsAsync((IQueryable<OpportunityEntity> query, ClaimsPrincipal user, string action, string entityName) =>
                 (object)query);
 
         var result = await _manager.GetAllOpportunitiesAsync();
@@ -449,7 +464,9 @@ public class OpportunityPermissionTests : IDisposable
         opportunities.Should().HaveCount(2);
     }
 
-    [Fact(Skip = "Permission checks not implemented in UNOPSOpportunityManager.UpdateOpportunityAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P2")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-009")]
@@ -481,7 +498,9 @@ public class OpportunityPermissionTests : IDisposable
         await act.Should().ThrowAsync<UnauthorizedAccessException>();
     }
 
-    [Fact(Skip = "Permissions property not populated in GetOpportunityAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P2")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-010")]
@@ -513,7 +532,9 @@ public class OpportunityPermissionTests : IDisposable
 
     #region P2 - Workflow-Based Permissions Tests
 
-    [Fact(Skip = "Delete permission enforcement not implemented in DeleteOpportunityAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P2")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-011")]
@@ -622,7 +643,9 @@ public class OpportunityPermissionTests : IDisposable
         result!.Name.Should().Be("Team Member Update");
     }
 
-    [Fact(Skip = "Permission checks not implemented in UNOPSOpportunityManager.UpdateOpportunityAsync - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P2")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-PERM-014")]
@@ -705,7 +728,7 @@ public class OpportunityPermissionTests : IDisposable
             if (TestEnvironment.UsePostgreSQL && _createdOpportunityIds.Any())
             {
                 var ids = string.Join(",", _createdOpportunityIds);
-                _context.Database.ExecuteSqlRaw($"DELETE FROM public.\"Opportunities\" WHERE \"Id\" IN ({ids})");
+                _context.Database.ExecuteSql($"DELETE FROM public.\"Opportunities\" WHERE \"Id\" IN ({ids})");
             }
         }
         catch { /* Best-effort cleanup */ }

@@ -1,6 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { PartnerService } from './partner.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { DialogService } from 'primeng/dynamicdialog';
+import { ConfirmationService } from 'primeng/api';
+import { ImportDialogService } from '@features/import-export/components/import/dialog/import-dialog.service';
 
 describe('PartnerService', () => {
   let service: PartnerService;
@@ -8,7 +11,12 @@ describe('PartnerService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [PartnerService]
+      providers: [
+        PartnerService,
+        { provide: DialogService, useValue: {} },
+        { provide: ConfirmationService, useValue: { confirm: () => {} } },
+        { provide: ImportDialogService, useValue: {} }
+      ]
     });
     service = TestBed.inject(PartnerService);
   });

@@ -7,6 +7,7 @@
  * Run: cd "QA Tests" && npx playwright test --project=real-api partner-contact-crud.real.spec.ts
  *
  * @author UNOPS Opportunity+ QA Team
+ * @tests 60
  */
 
 import { test, expect } from '@playwright/test';
@@ -16,6 +17,7 @@ import {
   deleteViaApi,
   isBackendAvailable,
 } from './helpers/real-api-auth.helper';
+import { waitForMinimumElapsed } from './helpers/wait.helper';
 
 const BACKEND_READY = process.env.REAL_API_TESTS === 'true';
 
@@ -216,7 +218,7 @@ test.describe('Partner CRUD — Real API', () => {
     const pid = (await createRes.json()).id;
 
     const before = await (await page.request.get(`${API}/api/partner/${pid}`, { headers: apiHeaders() })).json();
-    await page.waitForTimeout(1100);
+    await waitForMinimumElapsed(page, 1100);
     await page.request.put(`${API}/api/partner/${pid}`, {
       data: { id: pid, name: `ModDate Updated ${Date.now()}`, partnerShortDescription: 'MU', partnerCategoryId: 1, liaisonOfficeId: 1 },
       headers: apiHeaders(),

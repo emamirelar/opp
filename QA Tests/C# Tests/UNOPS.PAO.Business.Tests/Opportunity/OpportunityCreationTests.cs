@@ -305,7 +305,6 @@ namespace UNOPS.PAO.Business.Tests.Opportunity
         {
             // Arrange
             var userRoles = new[] { "PartnerUser" };
-            var permission = "CreateOpportunity";
 
             // Act
             var hasPermission = userRoles.Contains("PartnerUser") || 

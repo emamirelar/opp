@@ -6,6 +6,9 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { DialogService } from 'primeng/dynamicdialog';
+import { ConfirmationService } from 'primeng/api';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
 import { StageWorkflowComponent } from './stage-workflow.component';
 import { WorkflowService } from '../../services/workflow.service';
@@ -52,6 +55,9 @@ describe('StageWorkflowComponent', () => {
     mockWorkflowService.getWorkFlowForEntity.and.returnValue(of(mockStages));
     mockWorkflowService.getNextWorkFlowActionsForARecordById.and.returnValue(of(mockWorkflowState));
     mockWorkflowService.getStageChangeHistory.and.returnValue(of([]));
+    mockWorkflowService.cancelOpportunity.and.returnValue(of({} as any));
+    mockWorkflowService.reopenOpportunity.and.returnValue(of({} as any));
+    mockWorkflowService.getWorkflowDetails.and.returnValue(of({ approvers: [], canRecall: false, canApprove: false, pendingStage: null }));
     mockTranslateService.instant.and.callFake((key: string) => key);
 
     await TestBed.configureTestingModule({
@@ -59,6 +65,9 @@ describe('StageWorkflowComponent', () => {
       providers: [
         { provide: WorkflowService, useValue: mockWorkflowService },
         { provide: TranslateService, useValue: mockTranslateService },
+        { provide: DialogService, useValue: { open: () => ({ onClose: of(null) }) } },
+        { provide: ConfirmationService, useValue: { confirm: (opts?: { accept?: () => void }) => opts?.accept?.() } },
+        provideNoopAnimations(),
       ],
     }).compileComponents();
   });
@@ -185,6 +194,7 @@ describe('StageWorkflowComponent', () => {
 
     it('should hide Cancel button when not OM', () => {
       fixture.componentRef.setInput('isOpportunityManager', false);
+      fixture.componentRef.setInput('canChangeStage', false);
       component.setCurrentStageName('IDENTIFY & PROFILE');
       component.workflowData.set({ isInWorkflow: false });
 
@@ -235,6 +245,7 @@ describe('StageWorkflowComponent', () => {
 
     it('should hide Reopen button when not OM', () => {
       fixture.componentRef.setInput('isOpportunityManager', false);
+      fixture.componentRef.setInput('canChangeStage', false);
       component.setCurrentStageName('NO GO');
 
       expect(component.canReopen()).toBe(false);

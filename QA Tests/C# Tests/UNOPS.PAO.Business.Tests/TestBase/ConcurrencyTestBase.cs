@@ -66,7 +66,7 @@ public abstract class ConcurrencyTestBase : IDisposable
             try
             {
                 using var ctx = TestDbContextFactory.Create();
-                await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"{tableName}\" WHERE {whereClause}");
+                await ctx.Database.ExecuteSqlAsync($"DELETE FROM public.\"{tableName}\" WHERE {whereClause}");
             }
             catch { /* Best-effort cleanup */ }
         });

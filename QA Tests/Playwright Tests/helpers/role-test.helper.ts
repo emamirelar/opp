@@ -622,12 +622,18 @@ export async function isActionButtonVisible(
     if (visible) return true;
   }
 
-  // Try text-based search
+  // Try text-based search (multiple strategies for robustness)
   if (options.text) {
     const textPattern = options.text instanceof RegExp ? options.text : new RegExp(options.text, 'i');
-    const btn = page.locator('button, p-button, a.p-button').filter({ hasText: textPattern }).first();
-    const visible = await btn.isVisible().catch(() => false);
-    if (visible) return true;
+    // Strategy A: getByRole (most resilient for translated text)
+    const roleBtn = page.getByRole('button', { name: textPattern }).first();
+    if (await roleBtn.isVisible().catch(() => false)) return true;
+    // Strategy B: locator with filter
+    const btn = page.locator('button, p-button, a.p-button, [role="button"]').filter({ hasText: textPattern }).first();
+    if (await btn.isVisible().catch(() => false)) return true;
+    // Strategy C: link styled as button
+    const linkBtn = page.getByRole('link', { name: textPattern }).first();
+    if (await linkBtn.isVisible().catch(() => false)) return true;
   }
 
   return false;
@@ -663,7 +669,7 @@ export async function wasAccessDenied(page: Page, expectedPath: string): Promise
   }
 
   // Check if Access Denied text is visible
-  const accessDenied = page.locator('text=Access Denied, text=Unauthorized, text=Forbidden, text=Not Authorized');
+  const accessDenied = page.getByText(/Access Denied|Unauthorized|Forbidden|Not Authorized/i).first();
   const denied = await accessDenied.isVisible().catch(() => false);
   if (denied) return true;
 

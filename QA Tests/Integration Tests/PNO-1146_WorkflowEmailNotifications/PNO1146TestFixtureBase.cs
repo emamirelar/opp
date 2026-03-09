@@ -8,6 +8,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using UNOPS.PAO.Business.Managers;
@@ -20,6 +21,8 @@ using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.MailSender;
 using UNOPS.PAO.MailSender.Interfaces;
 using UNOPS.Workflow.Business.Interfaces;
+using UNOPS.Workflow.DataAccess;
+using UNOPS.Workflow.Domain.Entities;
 using Xunit;
 
 namespace UNOPS.PAO.IntegrationTests.PNO1146;
@@ -38,12 +41,21 @@ public abstract class PNO1146TestFixtureBase : IDisposable
     protected readonly PaoWorkflowNotificationService NotificationService;
     protected readonly DbContextOptions<AppDbContext> DbOptions;
     protected readonly UserResolverService<int> UserResolverService;
+    protected readonly WorkflowDbContext WorkflowContext;
     private readonly Mock<IDbContextSchema> _mockDbContextSchema;
+
+    /// <summary>Actual production template names used by PaoWorkflowNotificationService.</summary>
+    protected const string TemplateApprovalRequest = "UNOPS.PAO.Business.EmailTemplates.OpportunityWorkflowApprovalRequest.html";
+    protected const string TemplateCompleted = "UNOPS.PAO.Business.EmailTemplates.OpportunityWorkflowCompleted.html";
+    protected const string TemplateRejected = "UNOPS.PAO.Business.EmailTemplates.OpportunityWorkflowRejected.html";
+    protected const string TemplateRecalled = "UNOPS.PAO.Business.EmailTemplates.OpportunityWorkflowRecalled.html";
 
     protected PNO1146TestFixtureBase()
     {
+        var dbName = Guid.NewGuid().ToString();
+
         DbOptions = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseInMemoryDatabase(databaseName: dbName)
             .Options;
 
         var mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
@@ -68,6 +80,7 @@ public abstract class PNO1146TestFixtureBase : IDisposable
         MockLogger = new Mock<ILogger<PaoWorkflowNotificationService>>();
         MockConfiguration = new Mock<IConfiguration>();
         MockConfiguration.Setup(c => c["AppBaseUrl"]).Returns("https://test.pao.unops.org");
+        MockConfiguration.Setup(c => c["AppConfig:BaseUrl"]).Returns("https://test.pao.unops.org");
 
         MockContextFactory = new Mock<IDbContextFactory<AppDbContext>>();
         MockContextFactory
@@ -79,9 +92,25 @@ public abstract class PNO1146TestFixtureBase : IDisposable
 
         var notificationManager = new NotificationManager(DbContext, UserResolverService);
 
+        // WorkflowDbContext for initiator lookups in Rejected/Recalled flows
+        var workflowDbOptions = new DbContextOptionsBuilder<WorkflowDbContext>()
+            .UseInMemoryDatabase(databaseName: $"{dbName}_workflow")
+            .Options;
+        WorkflowContext = new WorkflowDbContext(workflowDbOptions);
+
+        var mockServiceScope = new Mock<IServiceScope>();
+        var mockServiceProvider = new Mock<IServiceProvider>();
+        mockServiceProvider
+            .Setup(sp => sp.GetService(typeof(WorkflowDbContext)))
+            .Returns(WorkflowContext);
+        mockServiceScope.Setup(s => s.ServiceProvider).Returns(mockServiceProvider.Object);
+        var mockServiceScopeFactory = new Mock<IServiceScopeFactory>();
+        mockServiceScopeFactory.Setup(f => f.CreateScope()).Returns(mockServiceScope.Object);
+
         NotificationService = new PaoWorkflowNotificationService(
             MockEmailSender.Object,
             MockContextFactory.Object,
+            mockServiceScopeFactory.Object,
             MockLogger.Object,
             MockConfiguration.Object,
             notificationManager);
@@ -202,6 +231,28 @@ public abstract class PNO1146TestFixtureBase : IDisposable
         }
     }
 
+    /// <summary>Seeds the Opportunity Manager EntityRole and assigns a user as OM for an opportunity.</summary>
+    protected async Task SeedOpportunityManagerAsync(int opportunityId, int userId)
+    {
+        var omRole = await DbContext.Set<EntityRole>()
+            .FirstOrDefaultAsync(r => r.Code == "Opportunity_Manager_Opportunity");
+        if (omRole == null)
+        {
+            omRole = new EntityRole
+            {
+                Id = 100,
+                EntityType = "Opportunity",
+                Name = "Opportunity Manager",
+                Code = "Opportunity_Manager_Opportunity",
+                IsInternal = true
+            };
+            DbContext.Set<EntityRole>().Add(omRole);
+            await DbContext.SaveChangesAsync();
+        }
+
+        await SeedStakeholderAsync(opportunityId, userId, omRole.Id);
+    }
+
     /// <summary>Verifies that SendEmailAsync was called with the expected template name.</summary>
     protected void VerifyEmailSent(string templateName, int times = 1)
     {
@@ -211,6 +262,44 @@ public abstract class PNO1146TestFixtureBase : IDisposable
                 It.IsAny<object>(),
                 It.IsAny<string?>()),
             Times.Exactly(times));
+    }
+
+    /// <summary>Seeds a completed Submit workflow log (for Rejected/Completed initiator lookup).</summary>
+    protected async Task SeedCompletedSubmitWorkflowLogAsync(string entityId, int initiatorUserId)
+    {
+        WorkflowContext.WorkflowLogs.Add(new WorkflowLog
+        {
+            EntityName = "Opportunity",
+            EntityId = entityId,
+            Action = "Submit",
+            UserId = initiatorUserId,
+            UserName = "Initiator",
+            CompletedOn = DateTime.UtcNow,
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = 0,
+            IsDeleted = false,
+            Status = UNOPS.Workflow.Domain.Enums.EntityStatus.Closed
+        });
+        await WorkflowContext.SaveChangesAsync();
+    }
+
+    /// <summary>Seeds a pending Submit workflow log (for Recalled initiator lookup).</summary>
+    protected async Task SeedPendingSubmitWorkflowLogAsync(string entityId, int initiatorUserId)
+    {
+        WorkflowContext.WorkflowLogs.Add(new WorkflowLog
+        {
+            EntityName = "Opportunity",
+            EntityId = entityId,
+            Action = "Submit",
+            UserId = initiatorUserId,
+            UserName = "Initiator",
+            CompletedOn = null,
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = 0,
+            IsDeleted = false,
+            Status = UNOPS.Workflow.Domain.Enums.EntityStatus.Active
+        });
+        await WorkflowContext.SaveChangesAsync();
     }
 
     /// <summary>Last captured EmailMessage from SendEmailAsync callback. Set by SetupEmailCapture().</summary>
@@ -229,5 +318,6 @@ public abstract class PNO1146TestFixtureBase : IDisposable
     public virtual void Dispose()
     {
         DbContext.Dispose();
+        WorkflowContext.Dispose();
     }
 }

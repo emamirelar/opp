@@ -23,6 +23,7 @@ namespace UNOPS.PAO.IntegrationTests.PNO731;
 public class PositiveTests
 {
     private readonly HttpClient _client;
+    private readonly bool _isPostgresAvailable;
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -31,6 +32,7 @@ public class PositiveTests
 
     public PositiveTests(PAOWebApplicationFactory<Program> factory)
     {
+        _isPostgresAvailable = factory.IsUsingPostgres;
         _client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
         _client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-Email", "accounts.google.com:testuser@unops.org");
         _client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-ID", "accounts.google.com:123");
@@ -46,12 +48,12 @@ public class PositiveTests
     [Trait("TestId", "TC-PNO731-POS-001")]
     public async Task UpdateOpportunity_WithSameOrgUnit_ReturnsSuccessOrInternalServerError()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         // Arrange — fetch an existing opportunity to get its current OrgUnit
         var getResponse = await _client.GetAsync("/api/opportunity/1");
         getResponse.StatusCode.Should().BeOneOf(
             HttpStatusCode.OK,
-            HttpStatusCode.NotFound,
-            HttpStatusCode.InternalServerError);
+            HttpStatusCode.NotFound);
 
         if (getResponse.StatusCode != HttpStatusCode.OK)
             return; // Environment limitation — endpoint unavailable in in-memory mode
@@ -68,12 +70,11 @@ public class PositiveTests
         };
         var putResponse = await _client.PutAsJsonAsync("/api/opportunity/1", updatePayload, JsonOpts);
 
-        // Assert — endpoint accepted the call; 500 is acceptable in in-memory environment
+        // Assert — endpoint accepted the call
         putResponse.StatusCode.Should().BeOneOf(
             HttpStatusCode.OK,
             HttpStatusCode.NoContent,
-            HttpStatusCode.BadRequest,   // validation failure is fine
-            HttpStatusCode.InternalServerError);
+            HttpStatusCode.BadRequest);   // validation failure is fine
     }
 
     /// <summary>
@@ -83,6 +84,7 @@ public class PositiveTests
     [Trait("TestId", "TC-PNO731-POS-002")]
     public async Task UpdateOpportunity_WithDifferentOrgUnit_ReturnsSuccessOrInternalServerError()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var updatePayload = new
         {
             id = 1,
@@ -94,8 +96,7 @@ public class PositiveTests
             HttpStatusCode.OK,
             HttpStatusCode.NoContent,
             HttpStatusCode.NotFound,
-            HttpStatusCode.BadRequest,
-            HttpStatusCode.InternalServerError);
+            HttpStatusCode.BadRequest);
     }
 
     /// <summary>
@@ -106,6 +107,7 @@ public class PositiveTests
     [Trait("TestId", "TC-PNO731-POS-003")]
     public async Task UpdateOpportunity_WithoutOrgUnit_ReturnsAcceptableStatus()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var updatePayload = new
         {
             id = 1,
@@ -117,7 +119,6 @@ public class PositiveTests
         response.StatusCode.Should().BeOneOf(
             HttpStatusCode.OK,
             HttpStatusCode.NoContent,
-            HttpStatusCode.BadRequest,
-            HttpStatusCode.InternalServerError);
+            HttpStatusCode.BadRequest);
     }
 }

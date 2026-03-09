@@ -1,5 +1,10 @@
+/**
+ * @tests 8
+ */
+
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
+import { waitForLoadingToComplete } from './helpers/wait.helper';
 
 /**
  * Home Page & Dashboard E2E Tests
@@ -107,11 +112,10 @@ test.describe('Home Page & Dashboard', () => {
       // Verify retry button exists in error state
       const retryButton = page.locator('button').filter({ hasText: /retry/i });
       await expect(retryButton).toBeVisible();
+    } else {
+      // When no error: verify dashboard content is visible (normal state)
+      await expect(page.locator('.max-w-7xl, .bg-unops-surface-primary').first()).toBeVisible({ timeout: 10000 });
     }
-    
-    // Test passes whether error state is shown or not
-    // This just verifies error UI is properly implemented if it appears
-    expect(true).toBeTruthy();
   });
   
   test('should display last updated timestamp', async ({ page }) => {
@@ -121,10 +125,10 @@ test.describe('Home Page & Dashboard', () => {
     // Look for "Last Updated" text or timestamp
     const lastUpdatedText = page.getByText(/last updated|updated/i);
     const hasTimestamp = await lastUpdatedText.first().isVisible().catch(() => false);
-    
-    // Last updated should be visible (in quick actions or minimal section)
-    // Note: This depends on user permissions
-    expect(hasTimestamp).toBeDefined();
+    const mainContentVisible = await page.locator('.max-w-7xl').first().isVisible().catch(() => false);
+
+    // Last updated visible when user has permissions, or main content visible (page loaded)
+    expect(hasTimestamp || mainContentVisible).toBe(true);
   });
   
   test('should have responsive layout', async ({ page }) => {
@@ -140,8 +144,8 @@ test.describe('Home Page & Dashboard', () => {
     
     // Test mobile view
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.waitForTimeout(1000); // Allow layout to adjust
-    
+    await waitForLoadingToComplete(page);
+
     // Mobile: Content should still be visible (may stack vertically)
     const mobileContent = page.locator('.max-w-7xl');
     await expect(mobileContent).toBeVisible();

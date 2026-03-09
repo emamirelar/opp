@@ -83,6 +83,7 @@ class MockEnhancedEntityLayoutComponent {
   tabs = signal<any[]>([]);
   activeTab = signal<string>('');
   actions = signal<any[]>([]);
+  recordPermissions = signal<any>({ permissions: { canUpdate: true, canDelete: true, canRead: true } });
 
   @Output() tabChange = new EventEmitter<string>();
   @Output() actionClick = new EventEmitter<any>();

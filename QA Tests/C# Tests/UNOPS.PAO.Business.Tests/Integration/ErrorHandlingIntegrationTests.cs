@@ -105,7 +105,6 @@ namespace UNOPS.PAO.Business.Tests.Integration
         {
             // Arrange
             string? name = null;
-            var description = "Has description but no name";
 
             // Act
             var isValid = !string.IsNullOrWhiteSpace(name);

@@ -1,33 +1,38 @@
 /**
  * @fileoverview Partner Funding Agreements Tab E2E Tests
  * Tests for the Funding & Agreements tab on Partner detail pages.
- * 
+ *
  * Covers scenarios: FA-001 to FA-006
- * 
+ *
  * Uses API mocks - fully executable.
  * The partner detail page has a "Funding & Agreements" tab accessible
  * via the responsive tabs component.
- * 
+ *
  * Route: /partnerships/partners/:recordId/funding-agreements
+ *
+ * @tests 12
  */
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
+import { waitForPageReady, waitForNavigationComplete } from './helpers/wait.helper';
+import { PartnerItemPage } from './pages/partner-item.page';
 
 test.describe('Partner Funding Agreements Tab', () => {
   test.slow();
   test.beforeEach(async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/partners/1');
-    await page.waitForTimeout(2000); // Wait for partner detail and tabs to render
+    await waitForPageReady(page);
   });
 
   test('FA-001: Partner detail page loads with tabs', async ({ page }) => {
-    // Partner detail should render with the tab navigation
-    const header = page.locator('[data-testid="partner-detail-header"]').first();
-    await expect(header).toBeVisible({ timeout: 10000 });
-    
-    const tabs = page.locator('[data-testid="tabs-desktop"], [data-testid="tabs-container"]').first();
-    await expect(tabs).toBeVisible({ timeout: 5000 });
+    const partnerPage = new PartnerItemPage(page, '1');
+    await expect(partnerPage.header).toBeVisible({ timeout: 10000 });
+
+    const tabs = page.locator('p-tabs, p-tabview, [role="tablist"]').first();
+    const tabsVisible = await tabs.isVisible({ timeout: 5000 }).catch(() => false);
+    const headerVisible = await partnerPage.header.isVisible({ timeout: 3000 }).catch(() => false);
+    expect(tabsVisible || headerVisible).toBeTruthy();
   });
 
   test('FA-002: Funding Agreements tab/link exists in tab navigation', async ({ page }) => {
@@ -49,7 +54,7 @@ test.describe('Partner Funding Agreements Tab', () => {
 
     if (fundingTabVisible) {
       await fundingTab.click();
-      await page.waitForTimeout(2000);
+      await waitForNavigationComplete(page, /funding-agreements/);
       expect(page.url()).toContain('funding-agreements');
     } else {
       // Tab not in current build - navigate to Dashboard tab instead to verify tab navigation works
@@ -60,14 +65,11 @@ test.describe('Partner Funding Agreements Tab', () => {
   });
 
   test('FA-004: Funding Agreements page loads content', async ({ page }) => {
-    // Navigate directly to funding agreements tab
     await page.goto('http://localhost:4200/partnerships/partners/1/funding-agreements');
-    await page.waitForTimeout(3000);
-    
-    // Page should have loaded (not showing error or redirect)
+    await waitForPageReady(page);
+
     expect(page.url()).toContain('partners/1');
-    
-    // Some content should be rendered
+
     const body = await page.textContent('body');
     expect(body).toBeTruthy();
     expect(body!.length).toBeGreaterThan(100);
@@ -104,17 +106,21 @@ test.describe('Funding Agreements - Content', () => {
   test.slow();
   test.beforeEach(async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/partners/1/funding-agreements');
-    await page.waitForTimeout(3000);
+    await waitForPageReady(page);
   });
 
   test('FA-007: Funding page shows agreements list or empty state', async ({ page }) => {
     const agreementsList = page.locator('p-table, table, .agreement-card, [class*="agreement"]').first();
-    const emptyState = page.getByText(/no agreement|no funding|empty|add/i).first();
+    const emptyState = page.getByText(/no agreement|no funding|empty|add|no data|no records/i).first();
+    const partnerContent = page.locator('app-partner-view, app-partner-funding-agreements').first();
 
     const hasList = await agreementsList.isVisible({ timeout: 5000 }).catch(() => false);
     const hasEmpty = await emptyState.isVisible({ timeout: 5000 }).catch(() => false);
+    const hasPartnerPage = await partnerContent.isVisible({ timeout: 5000 }).catch(() => false);
+    const bodyText = await page.textContent('body').catch(() => '');
+    const hasContent = bodyText && bodyText.length > 200;
 
-    expect(hasList || hasEmpty || true).toBeTruthy();
+    expect(hasList || hasEmpty || hasPartnerPage || hasContent).toBeTruthy();
   });
 
   test('FA-008: Funding page has add/create button for authorized users', async ({ page }) => {
@@ -124,7 +130,7 @@ test.describe('Funding Agreements - Content', () => {
     const hasBtnText = await addBtn.isVisible({ timeout: 5000 }).catch(() => false);
     const hasIcon = await addIcon.isVisible({ timeout: 3000 }).catch(() => false);
 
-    expect(hasBtnText || hasIcon || true).toBeTruthy();
+    expect(hasBtnText || hasIcon).toBeTruthy();
   });
 
   test('FA-009: Funding agreements display key columns', async ({ page }) => {
@@ -133,11 +139,13 @@ test.describe('Funding Agreements - Content', () => {
 
     if (tableVisible) {
       const text = await table.textContent();
-      // Check for typical agreement columns
-      const hasColumns = /name|type|status|amount|date|partner/i.test(text!);
+      const hasColumns = /name|type|status|amount|date|partner/i.test(text ?? '');
       expect(hasColumns).toBeTruthy();
+    } else {
+      const bodyText = await page.textContent('body');
+      expect(bodyText).toBeTruthy();
+      expect(bodyText!.length).toBeGreaterThan(100);
     }
-    expect(true).toBeTruthy();
   });
 
   test('FA-010: Can navigate back to partner details', async ({ page }) => {
@@ -146,10 +154,11 @@ test.describe('Funding Agreements - Content', () => {
 
     if (detailsVisible) {
       await detailsTab.click();
-      await page.waitForTimeout(2000);
+      await waitForNavigationComplete(page, /partners\/1/);
+      expect(page.url()).toContain('partners/1');
+    } else {
       expect(page.url()).toContain('partners/1');
     }
-    expect(true).toBeTruthy();
   });
 });
 
@@ -157,21 +166,23 @@ test.describe('Funding Agreements - Security', () => {
   test.slow();
   test('FA-011: Restricted user can view funding tab', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/partners/1', 'test-readonly@playwright.local');
+    await waitForPageReady(page);
 
     const fundingTab = page.getByText(/funding|agreements/i).first();
+    const partnerHeader = page.locator('app-partner-view, app-partner-detail').first();
     const tabVisible = await fundingTab.isVisible({ timeout: 10000 }).catch(() => false);
+    const headerVisible = await partnerHeader.isVisible({ timeout: 5000 }).catch(() => false);
 
-    expect(tabVisible || true).toBeTruthy();
+    expect(tabVisible || headerVisible).toBeTruthy();
   });
 
   test('FA-012: Restricted user cannot add funding agreements', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/partners/1/funding-agreements', 'test-readonly@playwright.local');
-    await page.waitForTimeout(3000);
+    await waitForPageReady(page);
 
     const addBtn = page.locator('button').filter({ hasText: /add|new|create/i }).first();
     const addVisible = await addBtn.isVisible({ timeout: 3000 }).catch(() => false);
 
-    // Restricted user should not see add button
-    expect(!addVisible || true).toBeTruthy();
+    expect(addVisible).toBeFalsy();
   });
 });

@@ -35,7 +35,9 @@ public class BoundaryTests : PNO914TestFixtureBase
         result.Name.Should().HaveLength(120);
     }
 
-    [Fact(Skip = "DEF-049: Manager does not validate Name max length (120 chars) — needs BusinessException")]
+    [Fact]
+
+    [Trait("Defect", "DEF-049")]
     [Trait("TestId", "TC-PNO914-BND-002")]
     public async Task CreateFromInteractions_NameExceeds120_Rejected()
     {
@@ -108,7 +110,9 @@ public class BoundaryTests : PNO914TestFixtureBase
         links.Should().HaveCount(100);
     }
 
-    [Fact(Skip = "DEF-050: Manager fails on null Description instead of defaulting to empty string")]
+    [Fact]
+
+    [Trait("Defect", "DEF-050")]
     [Trait("TestId", "TC-PNO914-BND-005")]
     public async Task CreateFromInteractions_NullOptionalFields_DefaultsApplied()
     {

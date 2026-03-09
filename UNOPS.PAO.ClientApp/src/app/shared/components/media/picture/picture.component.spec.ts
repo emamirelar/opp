@@ -1,39 +1,48 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule, TranslateService, TranslateLoader, TranslateFakeLoader } from '@ngx-translate/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { of } from 'rxjs';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { PictureComponent } from './picture.component';
 
 describe('PictureComponent', () => {
   let component: PictureComponent;
   let fixture: ComponentFixture<PictureComponent>;
   let mockDialogService: jasmine.SpyObj<DialogService>;
-  let mockTranslateService: jasmine.SpyObj<TranslateService>;
-  let mockDialogRef: jasmine.SpyObj<DynamicDialogRef>;
+  let translateService: TranslateService;
+  let mockDialogRef: { onClose: ReturnType<typeof of>; close: jasmine.Spy; destroy: jasmine.Spy };
 
   beforeEach(async () => {
-    mockDialogRef = jasmine.createSpyObj('DynamicDialogRef', ['close', 'destroy']);
-    mockDialogRef.onClose = of('new-image-url.jpg');
-    
+    const ref = jasmine.createSpyObj('DynamicDialogRef', ['close', 'destroy']);
+    (ref as any).onClose = of('new-image-url.jpg');
+    mockDialogRef = ref as any;
+
     mockDialogService = jasmine.createSpyObj('DialogService', ['open']);
-    mockDialogService.open.and.returnValue(mockDialogRef);
-    
-    mockTranslateService = jasmine.createSpyObj('TranslateService', ['instant']);
-    mockTranslateService.instant.and.returnValue('Edit Picture');
+    mockDialogService.open.and.returnValue(mockDialogRef as any);
 
     await TestBed.configureTestingModule({
       imports: [
         PictureComponent,
-        TranslateModule.forRoot()
+        TranslateModule.forRoot({
+          loader: { provide: TranslateLoader, useClass: TranslateFakeLoader }
+        })
       ],
       providers: [
         { provide: DialogService, useValue: mockDialogService },
-        { provide: TranslateService, useValue: mockTranslateService }
+        provideNoopAnimations()
       ]
-    }).compileComponents();
+    })
+      .overrideComponent(PictureComponent, {
+        set: {
+          providers: [{ provide: DialogService, useValue: mockDialogService }]
+        }
+      })
+      .compileComponents();
 
     fixture = TestBed.createComponent(PictureComponent);
     component = fixture.componentInstance;
+    translateService = TestBed.inject(TranslateService);
+    spyOn(translateService, 'instant').and.returnValue('Edit Picture');
     fixture.detectChanges();
   });
 
@@ -113,62 +122,50 @@ describe('PictureComponent', () => {
       expect(dialogConfig.data.uploadUrl).toBe('/api/upload');
     });
 
-    it('should update imageUrl when dialog closes with result', (done) => {
+    it('should update imageUrl when dialog closes with result', () => {
       const newImageUrl = 'new-image.jpg';
-      mockDialogRef.onClose = of(newImageUrl);
-      
+      (mockDialogRef as any).onClose = of(newImageUrl);
+
       component.openPictureEditor();
 
-      setTimeout(() => {
-        expect(component.imageUrl).toBe(newImageUrl);
-        done();
-      }, 100);
+      expect(component.imageUrl).toBe(newImageUrl);
     });
 
-    it('should emit imageChanged event when dialog closes with result', (done) => {
+    it('should emit imageChanged event when dialog closes with result', () => {
       const newImageUrl = 'new-image.jpg';
-      mockDialogRef.onClose = of(newImageUrl);
-      
+      (mockDialogRef as any).onClose = of(newImageUrl);
+
       spyOn(component.imageChanged, 'emit');
-      
+
       component.openPictureEditor();
 
-      setTimeout(() => {
-        expect(component.imageChanged.emit).toHaveBeenCalledWith(newImageUrl);
-        done();
-      }, 100);
+      expect(component.imageChanged.emit).toHaveBeenCalledWith(newImageUrl);
     });
 
-    it('should emit imageChanged event even when dialog closes without result', (done) => {
-      mockDialogRef.onClose = of(undefined);
-      
+    it('should emit imageChanged event even when dialog closes without result', () => {
+      (mockDialogRef as any).onClose = of(undefined);
+
       spyOn(component.imageChanged, 'emit');
-      
+
       component.openPictureEditor();
 
-      setTimeout(() => {
-        expect(component.imageChanged.emit).toHaveBeenCalledWith(undefined);
-        done();
-      }, 100);
+      expect(component.imageChanged.emit).toHaveBeenCalledWith(undefined);
     });
 
-    it('should not update imageUrl when dialog closes without result', (done) => {
+    it('should not update imageUrl when dialog closes without result', () => {
       const originalUrl = 'original.jpg';
       component.imageUrl = originalUrl;
-      mockDialogRef.onClose = of(undefined);
-      
+      (mockDialogRef as any).onClose = of(undefined);
+
       component.openPictureEditor();
 
-      setTimeout(() => {
-        expect(component.imageUrl).toBe(originalUrl);
-        done();
-      }, 100);
+      expect(component.imageUrl).toBe(originalUrl);
     });
 
     it('should translate dialog header', () => {
       component.openPictureEditor();
 
-      expect(mockTranslateService.instant).toHaveBeenCalledWith('title.editPicture');
+      expect(translateService.instant).toHaveBeenCalledWith('title.editPicture');
     });
   });
 
@@ -182,23 +179,23 @@ describe('PictureComponent', () => {
     });
 
     it('should apply correct size class', () => {
-      component.size = 'large';
-      component.imageUrl = 'test.jpg';
+      fixture.componentRef.setInput('size', 'large');
+      fixture.componentRef.setInput('imageUrl', 'test.jpg');
       fixture.detectChanges();
 
-      const img = fixture.nativeElement.querySelector('img');
-      expect(img.className).toContain('w-32');
-      expect(img.className).toContain('h-32');
+      const container = fixture.nativeElement.querySelector('.rounded-full.overflow-hidden');
+      expect(container).toBeTruthy();
+      expect(container.className).toContain('w-32');
+      expect(container.className).toContain('h-32');
     });
 
     it('should disable edit button when disabled is true', () => {
-      component.disabled = true;
+      fixture.componentRef.setInput('disabled', true);
       fixture.detectChanges();
 
+      // When disabled, the edit button overlay is not rendered (@if (!disabled))
       const button = fixture.nativeElement.querySelector('button');
-      if (button) {
-        expect(button.disabled || button.className.includes('disabled')).toBeTruthy();
-      }
+      expect(button).toBeFalsy();
     });
   });
 });

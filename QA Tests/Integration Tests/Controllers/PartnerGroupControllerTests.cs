@@ -133,6 +133,7 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// Verifies creation of new partner group
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PGC-003")]
@@ -164,6 +165,7 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// Verifies successful update of existing group
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PGC-004")]
@@ -195,6 +197,7 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// Verifies deletion of unused group
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PGC-005")]
@@ -237,6 +240,7 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// Verifies validation of required fields
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PGC-007")]
@@ -262,6 +266,7 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// Verifies that duplicate group names are rejected
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PGC-008")]
@@ -291,6 +296,7 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// Verifies retrieval of all partners in a group
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PGC-009")]
@@ -317,6 +323,7 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// Verifies adding a partner to a group
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PGC-010")]
@@ -339,6 +346,7 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// Verifies removing a partner from a group
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PGC-011")]
@@ -361,6 +369,7 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// Verifies bulk addition of members to a group
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PGC-012")]
@@ -405,6 +414,7 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// Verifies retrieval of group member count
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PGC-014")]
@@ -467,6 +477,7 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// Verifies retrieval of all groups containing a partner
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PGC-016")]
@@ -497,6 +508,7 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// Verifies simplified list for UI dropdowns
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PGC-017")]
@@ -600,6 +612,7 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// Verifies that only admin users can create/update groups
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PGC-A002")]
@@ -625,6 +638,7 @@ public class PartnerGroupControllerTests : IntegrationTestBase
     /// Verifies role-based permissions for member management
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-036")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PGC-A003")]
@@ -641,6 +655,43 @@ public class PartnerGroupControllerTests : IntegrationTestBase
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Forbidden, HttpStatusCode.MethodNotAllowed, HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    [Trait("Category", "Edge")]
+    [Trait("Priority", "P1")]
+    [Trait("TestId", "TC-PGC-EDGE-001")]
+    [Trait("Ticket", "PNO-1194")]
+    public async Task GetGroups_ResponseContent_NoEncodingArtifacts()
+    {
+        var client = Factory.CreateAuthenticatedClient();
+        var response = await client.GetAsync("/api/PartnerGroup");
+        if (response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            content.Should().NotContain("??",
+                "PNO-1194: partner group names must not contain encoding artifacts");
+            content.Should().NotContain("\uFFFD");
+        }
+    }
+
+    [Fact]
+    [Trait("Category", "Edge")]
+    [Trait("Priority", "P1")]
+    [Trait("TestId", "TC-PGC-EDGE-002")]
+    public async Task CreateGroup_UnicodeGroupName_Accepted()
+    {
+        if (!Factory.IsUsingPostgres) return; // QA-054a: InMemory DB incompatible
+        var client = Factory.CreateAuthenticatedClient();
+        var groupData = new
+        {
+            Name = "Groupe partenaire — Soci\u00e9t\u00e9 G\u00e9n\u00e9rale",
+            Description = "\u00c9quipe internationale"
+        };
+        var response = await client.PostAsJsonAsync("/api/PartnerGroup", groupData);
+        response.StatusCode.Should().BeOneOf(
+            HttpStatusCode.OK, HttpStatusCode.Created,
+            HttpStatusCode.BadRequest, HttpStatusCode.Forbidden);
     }
 
     #endregion

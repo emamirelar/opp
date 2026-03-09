@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { TranslateModule, TranslateService, TranslateLoader, TranslateFakeLoader } from '@ngx-translate/core';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { PictureEditorComponent } from './picture-editor.component';
 import { PictureEditorDataLoaderService } from './picture-editor-data-loader.service';
@@ -14,7 +15,7 @@ describe('PictureEditorComponent', () => {
   let mockDialogRef: jasmine.SpyObj<DynamicDialogRef>;
   let mockDialogConfig: jasmine.SpyObj<DynamicDialogConfig>;
   let mockDataLoader: jasmine.SpyObj<PictureEditorDataLoaderService>;
-  let mockTranslateService: jasmine.SpyObj<TranslateService>;
+  let translateService: TranslateService;
   let mockFeedbackService: jasmine.SpyObj<FeedbackDialogService>;
   let mockSanitizer: jasmine.SpyObj<DomSanitizer>;
 
@@ -30,27 +31,39 @@ describe('PictureEditorComponent', () => {
         uploadProgress: jasmine.createSpy('uploadProgress').and.returnValue(0)
       }
     );
-    mockTranslateService = jasmine.createSpyObj('TranslateService', ['instant']);
     mockFeedbackService = jasmine.createSpyObj('FeedbackDialogService', ['showErrorToast', 'showSuccessToast']);
     mockSanitizer = jasmine.createSpyObj('DomSanitizer', ['bypassSecurityTrustUrl']);
-
-    mockTranslateService.instant.and.returnValue('Translated message');
     mockSanitizer.bypassSecurityTrustUrl.and.returnValue('safe-url' as any);
 
     await TestBed.configureTestingModule({
-      imports: [PictureEditorComponent, TranslateModule.forRoot()],
+      imports: [
+        PictureEditorComponent,
+        HttpClientTestingModule,
+        TranslateModule.forRoot({
+          loader: { provide: TranslateLoader, useClass: TranslateFakeLoader }
+        })
+      ],
       providers: [
         { provide: DynamicDialogRef, useValue: mockDialogRef },
         { provide: DynamicDialogConfig, useValue: mockDialogConfig },
         { provide: PictureEditorDataLoaderService, useValue: mockDataLoader },
-        { provide: TranslateService, useValue: mockTranslateService },
         { provide: FeedbackDialogService, useValue: mockFeedbackService },
         { provide: DomSanitizer, useValue: mockSanitizer }
       ]
-    }).compileComponents();
+    })
+      .overrideComponent(PictureEditorComponent, {
+        set: {
+          providers: [
+            { provide: PictureEditorDataLoaderService, useValue: mockDataLoader }
+          ]
+        }
+      })
+      .compileComponents();
 
     fixture = TestBed.createComponent(PictureEditorComponent);
     component = fixture.componentInstance;
+    translateService = TestBed.inject(TranslateService);
+    spyOn(translateService, 'instant').and.returnValue('Translated message');
     fixture.detectChanges();
   });
 
@@ -415,11 +428,11 @@ describe('PictureEditorComponent', () => {
 
   describe('error handling', () => {
     it('should translate error messages', () => {
-      mockTranslateService.instant.and.returnValue('Erreur traduite');
+      (translateService.instant as jasmine.Spy).and.returnValue('Erreur traduite');
 
       component.loadImageFailed();
 
-      expect(mockTranslateService.instant).toHaveBeenCalledWith('message.failedToLoadImage');
+      expect(translateService.instant).toHaveBeenCalledWith('message.failedToLoadImage');
       expect(mockFeedbackService.showErrorToast).toHaveBeenCalledWith(
         jasmine.objectContaining({ detail: 'Erreur traduite' })
       );

@@ -1,117 +1,31 @@
 using Xunit;
-using Moq;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
-using AutoMapper;
-using Microsoft.EntityFrameworkCore;
-using UNOPS.PAO.Business.Tests.TestBase;
-using UNOPS.PAO.DataAccess.Context;
-using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.Domain.Enums;
 
 namespace UNOPS.PAO.Business.Tests.Managers
 {
     /// <summary>
-    /// Unit tests for PartnerLiaisonOfficeManager
-    /// Tests partner-liaison office association management
+    /// Tests for PartnerLiaisonOffice management — CANCELLED.
+    /// 
+    /// Per developer clarification (Anusha, 2026-03-04):
+    /// LiaisonOffice does NOT have a dedicated manager. LiaisonOffice is not a managed entity
+    /// in Opp+; it can only be selected as part of a Partner (via LiaisonOfficeId FK).
+    /// 
+    /// DEF-013 closed as Won't Fix — no PartnerLiaisonOfficeManager is needed.
+    /// QA-044 closed — 9 tests cancelled (not blocked).
+    /// 
+    /// LiaisonOffice data is served through:
+    /// - ValuesManager.GetLiaisonOffices() (lookup/dropdown)
+    /// - LiaisonOfficeController GET/search endpoints
+    /// - Partner.LiaisonOfficeId FK selection
     /// </summary>
-    public class PartnerLiaisonOfficeManagerTests : ManagerTestBase
+    public class PartnerLiaisonOfficeManagerTests
     {
-        private readonly AppDbContext _context;
-        private readonly Mock<IMapper> _mockMapper;
-
-        public PartnerLiaisonOfficeManagerTests()
+        [Fact(Skip = "CANCELLED: LiaisonOffice does not have a dedicated manager by design — selected as part of Partner only (DEF-013 closed Won't Fix)")]
+        public void TestSuite_Cancelled_LiaisonOfficeNotManagedEntity()
         {
-            _mockMapper = new Mock<IMapper>();
-
-            var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(databaseName: $"TestDb_PLO_{System.Guid.NewGuid()}")
-                .Options;
-
-            _context = TestDbContextFactory.Create(options);
-            SeedData();
+            // All 9 original tests cancelled per developer clarification.
+            // LiaisonOffice is a lookup entity, not a managed entity.
+            // See ValuesManagerPerformanceTests and LiaisonOfficeControllerTests for actual coverage.
         }
-
-        private void SeedData()
-        {
-            // Seed will be implemented when PartnerLiaisonOffice entity is available
-        }
-
-        #region CRUD Tests
-
-        [Fact(Skip = "PartnerLiaisonOffice entity not yet implemented per PRD")]
-        public async Task CreateAssociation_ValidData_ReturnsAssociation()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        [Fact(Skip = "PartnerLiaisonOffice entity not yet implemented per PRD")]
-        public async Task GetByPartnerId_ExistingPartner_ReturnsOffices()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        [Fact(Skip = "PartnerLiaisonOffice entity not yet implemented per PRD")]
-        public async Task GetByLiaisonOfficeId_ExistingOffice_ReturnsPartners()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        [Fact(Skip = "PartnerLiaisonOffice entity not yet implemented per PRD")]
-        public async Task DeleteAssociation_ExistingId_RemovesAssociation()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        #endregion
-
-        #region Primary Office Tests
-
-        [Fact(Skip = "PartnerLiaisonOffice entity not yet implemented per PRD")]
-        public async Task SetPrimaryOffice_ValidOffice_MarksAsPrimary()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        [Fact(Skip = "PartnerLiaisonOffice entity not yet implemented per PRD")]
-        public async Task SetPrimaryOffice_ClearsExistingPrimary()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        [Fact(Skip = "PartnerLiaisonOffice entity not yet implemented per PRD")]
-        public async Task GetPrimaryOffice_ExistingPrimary_ReturnsPrimary()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        #endregion
-
-        #region Validation Tests
-
-        [Fact(Skip = "PartnerLiaisonOffice entity not yet implemented per PRD")]
-        public async Task CreateAssociation_MissingPartner_ThrowsException()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        [Fact(Skip = "PartnerLiaisonOffice entity not yet implemented per PRD")]
-        public async Task CreateAssociation_DuplicatePair_ThrowsException()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        #endregion
     }
 }
 

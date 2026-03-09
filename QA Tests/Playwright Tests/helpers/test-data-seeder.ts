@@ -253,10 +253,10 @@ export class TestDataSeeder {
   static async setupTestDataMocks(page: Page): Promise<void> {
     console.log('[TestDataSeeder] Setting up test data API mocks...');
     
-    // Mock GET requests for detail pages
-    await page.route('**/api/partners/*', async (route) => {
+    // Mock GET requests for detail pages (singular endpoints match the real API)
+    await page.route('**/api/partner/*', async (route) => {
       const url = route.request().url();
-      const idMatch = url.match(/\/partners\/(\d+)/);
+      const idMatch = url.match(/\/partner\/(\d+)/);
       
       if (idMatch && route.request().method() === 'GET') {
         const partnerId = parseInt(idMatch[1]);
@@ -275,9 +275,9 @@ export class TestDataSeeder {
       }
     });
     
-    await page.route('**/api/contacts/*', async (route) => {
+    await page.route('**/api/contact/*', async (route) => {
       const url = route.request().url();
-      const idMatch = url.match(/\/contacts\/(\d+)/);
+      const idMatch = url.match(/\/contact\/(\d+)/);
       
       if (idMatch && route.request().method() === 'GET') {
         const contactId = parseInt(idMatch[1]);

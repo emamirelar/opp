@@ -1,5 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { DialogService } from 'primeng/dynamicdialog';
+import { ConfirmationService } from 'primeng/api';
+import { ImportDialogService } from '@features/import-export/components/import/dialog/import-dialog.service';
 import { ContactService, ContactsParams } from './contact.service';
 import { Contact } from '../models/contact.model';
 
@@ -30,7 +33,12 @@ describe('ContactService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [ContactService]
+      providers: [
+        ContactService,
+        { provide: DialogService, useValue: {} },
+        { provide: ConfirmationService, useValue: { confirm: () => {} } },
+        { provide: ImportDialogService, useValue: {} }
+      ]
     });
     
     service = TestBed.inject(ContactService);

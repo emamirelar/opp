@@ -1,491 +1,712 @@
 /**
- * @fileoverview Performance Tests for Opportunity Sections
- * Tests derived from comprehensive test strategy - Minimum 16 tests required
- * Covers: Team Section, Workflow Status, WHY Section, WHAT Section
- * @author UNOPS Opportunity+ QA Team
+ * PERFORMANCE TESTS — Opportunity Sections
+ *
+ * Minimum: ≥16 tests (FIXED per comprehensive-test-strategy.mdc)
+ *   Single Ops (2) | Bulk Ops (3) | Search (5) | Concurrent (3) | Memory (3)
+ *
+ * Tests REAL opportunity section operations against a real database:
+ * stakeholders, deliverables, SDGs, risks, documents.
+ *
+ * SLA Source: QA Tests/Test Plans/PERFORMANCE_AND_LOAD_TESTING_QUESTIONNAIRE.md
+ * Related: .cursor/rules/entity-framework-performance-optimization.mdc
+ *
+ * @see comprehensive-test-strategy.mdc §9 Performance Tests
  */
 
+using AutoMapper;
 using FluentAssertions;
-using Xunit;
-using System;
-using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+using UNOPS.PAO.Business.Interfaces;
+using UNOPS.PAO.Business.Managers;
+using UNOPS.PAO.Business.Managers.Mapping;
+using UNOPS.PAO.Business.Tests.TestBase;
+using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Opportunities;
+using Xunit;
+using OpportunityEntity = UNOPS.PAO.Domain.Entities.Opportunity;
 
-namespace UNOPS.PAO.Business.Tests.OpportunitySections
+namespace UNOPS.PAO.Business.Tests.OpportunitySections;
+
+/// <summary>
+/// Performance Tests for Opportunity Sections (stakeholders, deliverables, SDGs).
+/// Verifies response times, throughput, and behaviour under concurrent access
+/// for real database operations on opportunity section entities.
+///
+/// Required: ≥16 tests (FIXED)
+/// SLA thresholds — TODO: replace with values from questionnaire Section A1 when available.
+/// </summary>
+[Collection("Performance")]
+[Trait("Category", "Performance")]
+[Trait("Type", "Performance")]
+public class PerformanceTests : PerformanceTestBase
 {
-    /// <summary>
-    /// Performance tests for all Opportunity Sections
-    /// Minimum Required: 16 tests
-    /// Coverage Areas: single ops(2), bulk ops(3), search(5), concurrent access(3), memory(3)
-    /// </summary>
-    [Collection("Performance")]
-    [Trait("Category", "Performance")]
-    [Trait("Type", "Performance")]
-    public class PerformanceTests
+    private readonly IOpportunityManager _opportunityManager;
+    private readonly Stopwatch _stopwatch;
+    private readonly string _testMarker = $"OppSec_{Guid.NewGuid():N}";
+
+    // ── SLA thresholds (TODO: confirm with PERFORMANCE_AND_LOAD_TESTING_QUESTIONNAIRE.md Section A1) ──
+    private const int MaxSingleOperationMs = 500;
+    private const int MaxBulkOperationMs = 5_000;
+    private const int MaxSimpleSearchMs = 500;
+    private const int MaxComplexSearchMs = 2_000;
+    private const int MaxPaginatedQueryMs = 200;
+    private const int MaxConcurrentReadMs = 100;
+    private const int MaxMemoryGrowthMb = 50;
+    private const int MaxQueryMemoryMb = 100;
+
+    public PerformanceTests()
     {
-        private const int SINGLE_OP_MAX_MS = 500;
-        private const int BULK_OP_MAX_MS = 5000;
-        private const int SEARCH_MAX_MS = 1000;
-        private const int CONCURRENT_MAX_MS = 2000;
-
-        #region Single Operation Performance (2 tests)
-
-        [Fact]
-        [Trait("SubCategory", "SingleOps")]
-        public async Task PERF_001_TeamSection_SingleLoad_CompletesWithin500ms()
+        var mapperConfig = new MapperConfiguration(cfg =>
         {
-            // Arrange
-            var opportunityId = 1;
-            var stopwatch = Stopwatch.StartNew();
-
-            // Act
-            var teamSection = await LoadTeamSection(opportunityId);
-            stopwatch.Stop();
-
-            // Assert
-            stopwatch.ElapsedMilliseconds.Should().BeLessThan(SINGLE_OP_MAX_MS,
-                $"Team section load should complete within {SINGLE_OP_MAX_MS}ms");
-            teamSection.Should().NotBeNull();
-        }
-
-        [Fact]
-        [Trait("SubCategory", "SingleOps")]
-        public async Task PERF_002_OpportunityStatus_SingleTransition_CompletesWithin500ms()
-        {
-            // Arrange
-            var opportunityId = 1;
-            var stopwatch = Stopwatch.StartNew();
-
-            // Act
-            var result = await TransitionOpportunityStatus(opportunityId, "Draft", "Active");
-            stopwatch.Stop();
-
-            // Assert
-            stopwatch.ElapsedMilliseconds.Should().BeLessThan(SINGLE_OP_MAX_MS,
-                $"Status transition should complete within {SINGLE_OP_MAX_MS}ms");
-            result.Success.Should().BeTrue();
-        }
-
-        #endregion
-
-        #region Bulk Operations Performance (3 tests)
-
-        [Fact]
-        [Trait("SubCategory", "BulkOps")]
-        public async Task PERF_003_BulkCollaboratorAdd_50Collaborators_CompletesWithin5s()
-        {
-            // Arrange
-            var opportunityId = 1;
-            var collaborators = GenerateCollaborators(50);
-            var stopwatch = Stopwatch.StartNew();
-
-            // Act
-            var result = await BulkAddCollaborators(opportunityId, collaborators);
-            stopwatch.Stop();
-
-            // Assert
-            stopwatch.ElapsedMilliseconds.Should().BeLessThan(BULK_OP_MAX_MS,
-                $"Bulk add 50 collaborators should complete within {BULK_OP_MAX_MS}ms");
-            result.SuccessCount.Should().Be(50);
-        }
-
-        [Fact]
-        [Trait("SubCategory", "BulkOps")]
-        public async Task PERF_004_BulkSDGAssignment_100Opportunities_CompletesWithin5s()
-        {
-            // Arrange
-            var opportunityIds = Enumerable.Range(1, 100).ToList();
-            var sdgIds = new[] { 1, 4, 13 };
-            var stopwatch = Stopwatch.StartNew();
-
-            // Act
-            var result = await BulkAssignSDGs(opportunityIds, sdgIds);
-            stopwatch.Stop();
-
-            // Assert
-            stopwatch.ElapsedMilliseconds.Should().BeLessThan(BULK_OP_MAX_MS,
-                $"Bulk SDG assignment to 100 opportunities should complete within {BULK_OP_MAX_MS}ms");
-            result.ProcessedCount.Should().Be(100);
-        }
-
-        [Fact]
-        [Trait("SubCategory", "BulkOps")]
-        public async Task PERF_005_BulkDeliverableCreate_200Deliverables_CompletesWithin5s()
-        {
-            // Arrange
-            var opportunityId = 1;
-            var deliverables = GenerateDeliverables(200);
-            var stopwatch = Stopwatch.StartNew();
-
-            // Act
-            var result = await BulkCreateDeliverables(opportunityId, deliverables);
-            stopwatch.Stop();
-
-            // Assert
-            stopwatch.ElapsedMilliseconds.Should().BeLessThan(BULK_OP_MAX_MS,
-                $"Bulk create 200 deliverables should complete within {BULK_OP_MAX_MS}ms");
-            result.CreatedCount.Should().Be(200);
-        }
-
-        #endregion
-
-        #region Search Performance (5 tests)
-
-        [Fact]
-        [Trait("SubCategory", "Search")]
-        public async Task PERF_006_SearchCollaborators_1000Records_CompletesWithin1s()
-        {
-            // Arrange
-            var searchTerm = "John";
-            var stopwatch = Stopwatch.StartNew();
-
-            // Act
-            var results = await SearchCollaborators(searchTerm, limit: 1000);
-            stopwatch.Stop();
-
-            // Assert
-            stopwatch.ElapsedMilliseconds.Should().BeLessThan(SEARCH_MAX_MS,
-                $"Search 1000 collaborators should complete within {SEARCH_MAX_MS}ms");
-            results.Should().NotBeNull();
-        }
-
-        [Fact]
-        [Trait("SubCategory", "Search")]
-        public async Task PERF_007_SearchOrgUnits_WithHierarchy_CompletesWithin1s()
-        {
-            // Arrange
-            var searchTerm = "D&P";
-            var stopwatch = Stopwatch.StartNew();
-
-            // Act
-            var results = await SearchOrgUnitsWithHierarchy(searchTerm);
-            stopwatch.Stop();
-
-            // Assert
-            stopwatch.ElapsedMilliseconds.Should().BeLessThan(SEARCH_MAX_MS,
-                $"Org unit hierarchy search should complete within {SEARCH_MAX_MS}ms");
-        }
-
-        [Fact]
-        [Trait("SubCategory", "Search")]
-        public async Task PERF_008_SearchOpportunitiesByStatus_LargeDataset_CompletesWithin1s()
-        {
-            // Arrange
-            var status = "Active";
-            var stopwatch = Stopwatch.StartNew();
-
-            // Act
-            var results = await SearchOpportunitiesByStatus(status, limit: 5000);
-            stopwatch.Stop();
-
-            // Assert
-            stopwatch.ElapsedMilliseconds.Should().BeLessThan(SEARCH_MAX_MS,
-                $"Search opportunities by status should complete within {SEARCH_MAX_MS}ms");
-        }
-
-        [Fact]
-        [Trait("SubCategory", "Search")]
-        public async Task PERF_009_SearchSDGs_AllGoals_CompletesWithin100ms()
-        {
-            // Arrange
-            var stopwatch = Stopwatch.StartNew();
-
-            // Act
-            var sdgs = await GetAllSDGs();
-            stopwatch.Stop();
-
-            // Assert
-            stopwatch.ElapsedMilliseconds.Should().BeLessThan(100,
-                "SDG lookup should complete within 100ms");
-            sdgs.Count.Should().Be(17);
-        }
-
-        [Fact]
-        [Trait("SubCategory", "Search")]
-        public async Task PERF_010_FilterOpportunities_ComplexQuery_CompletesWithin1s()
-        {
-            // Arrange
-            var filter = new PerfOpportunityFilter
-            {
-                Status = "Active",
-                SDGIds = new[] { 1, 4, 13 },
-                HasHighRisk = true,
-                DateRange = (DateTime.Now.AddMonths(-6), DateTime.Now)
-            };
-            var stopwatch = Stopwatch.StartNew();
-
-            // Act
-            var results = await FilterOpportunities(filter);
-            stopwatch.Stop();
-
-            // Assert
-            stopwatch.ElapsedMilliseconds.Should().BeLessThan(SEARCH_MAX_MS,
-                $"Complex filter should complete within {SEARCH_MAX_MS}ms");
-        }
-
-        #endregion
-
-        #region Concurrent Access Performance (3 tests)
-
-        [Fact]
-        [Trait("SubCategory", "ConcurrentAccess")]
-        public async Task PERF_011_ConcurrentTeamSectionLoads_50Users_CompletesWithin2s()
-        {
-            // Arrange
-            var opportunityId = 1;
-            var concurrentUsers = 50;
-            var stopwatch = Stopwatch.StartNew();
-
-            // Act
-            var tasks = Enumerable.Range(1, concurrentUsers)
-                .Select(_ => LoadTeamSection(opportunityId))
-                .ToArray();
-            await Task.WhenAll(tasks);
-            stopwatch.Stop();
-
-            // Assert
-            stopwatch.ElapsedMilliseconds.Should().BeLessThan(CONCURRENT_MAX_MS,
-                $"50 concurrent team section loads should complete within {CONCURRENT_MAX_MS}ms");
-            tasks.All(t => t.Result != null).Should().BeTrue();
-        }
-
-        [Fact]
-        [Trait("SubCategory", "ConcurrentAccess")]
-        public async Task PERF_012_ConcurrentStatusReads_100Users_CompletesWithin2s()
-        {
-            // Arrange
-            var opportunityIds = Enumerable.Range(1, 100).ToList();
-            var stopwatch = Stopwatch.StartNew();
-
-            // Act
-            var tasks = opportunityIds.Select(id => GetOpportunityStatus(id)).ToArray();
-            await Task.WhenAll(tasks);
-            stopwatch.Stop();
-
-            // Assert
-            stopwatch.ElapsedMilliseconds.Should().BeLessThan(CONCURRENT_MAX_MS,
-                $"100 concurrent status reads should complete within {CONCURRENT_MAX_MS}ms");
-        }
-
-        [Fact]
-        [Trait("SubCategory", "ConcurrentAccess")]
-        public async Task PERF_013_ConcurrentWHYSectionUpdates_25Users_NoConflicts()
-        {
-            // Arrange
-            var opportunityId = 1;
-            var concurrentUpdates = 25;
-            var stopwatch = Stopwatch.StartNew();
-
-            // Act
-            var tasks = Enumerable.Range(1, concurrentUpdates)
-                .Select(i => UpdateWHYSection(opportunityId, i))
-                .ToArray();
-            var results = await Task.WhenAll(tasks);
-            stopwatch.Stop();
-
-            // Assert
-            stopwatch.ElapsedMilliseconds.Should().BeLessThan(CONCURRENT_MAX_MS);
-            // At least one should succeed, others may get conflict
-            results.Count(r => r.Success || r.Error?.Contains("conflict") == true)
-                .Should().Be(concurrentUpdates);
-        }
-
-        #endregion
-
-        #region Memory Performance (3 tests)
-
-        [Fact]
-        [Trait("SubCategory", "Memory")]
-        public async Task PERF_014_LoadLargeOpportunity_MemoryUsageUnder100MB()
-        {
-            // Arrange
-            var opportunityId = 1; // Opportunity with many related entities
-            GC.Collect();
-            var initialMemory = GC.GetTotalMemory(true);
-
-            // Act
-            var opportunity = await LoadFullOpportunity(opportunityId);
-            var finalMemory = GC.GetTotalMemory(false);
-            var memoryUsed = (finalMemory - initialMemory) / (1024 * 1024); // MB
-
-            // Assert
-            memoryUsed.Should().BeLessThan(100,
-                "Loading full opportunity should use less than 100MB");
-        }
-
-        [Fact]
-        [Trait("SubCategory", "Memory")]
-        public async Task PERF_015_BatchProcessing_NoMemoryLeak()
-        {
-            // Arrange
-            GC.Collect();
-            var initialMemory = GC.GetTotalMemory(true);
-
-            // Act - Process 1000 items in batches
-            for (int batch = 0; batch < 10; batch++)
-            {
-                var items = GenerateDeliverables(100);
-                await ProcessDeliverables(items);
-                
-                // Force cleanup between batches
-                items = null;
-                if (batch % 3 == 0) GC.Collect();
-            }
-
-            GC.Collect();
-            var finalMemory = GC.GetTotalMemory(true);
-            var memoryGrowth = (finalMemory - initialMemory) / (1024 * 1024); // MB
-
-            // Assert
-            memoryGrowth.Should().BeLessThan(50,
-                "Batch processing should not leak significant memory");
-        }
-
-        [Fact]
-        [Trait("SubCategory", "Memory")]
-        public async Task PERF_016_AIServiceSuggestions_MemoryEfficient()
-        {
-            // Arrange
-            var opportunityId = 1;
-            GC.Collect();
-            var initialMemory = GC.GetTotalMemory(true);
-
-            // Act - Generate multiple AI suggestions
-            for (int i = 0; i < 10; i++)
-            {
-                var suggestions = await GetAIServiceSuggestions(opportunityId);
-            }
-
-            GC.Collect();
-            var finalMemory = GC.GetTotalMemory(true);
-            var memoryUsed = (finalMemory - initialMemory) / (1024 * 1024); // MB
-
-            // Assert
-            memoryUsed.Should().BeLessThan(25,
-                "AI suggestions should be memory efficient");
-        }
-
-        #endregion
-
-        #region Additional Performance Tests (4 more for completeness)
-
-        [Fact]
-        [Trait("SubCategory", "SingleOps")]
-        public async Task PERF_017_WHATSection_InitiativeTypeHierarchyLoad_Under300ms()
-        {
-            // Arrange
-            var stopwatch = Stopwatch.StartNew();
-
-            // Act
-            var hierarchy = await LoadInitiativeTypeHierarchy();
-            stopwatch.Stop();
-
-            // Assert
-            stopwatch.ElapsedMilliseconds.Should().BeLessThan(300);
-            hierarchy.Should().NotBeEmpty();
-        }
-
-        [Fact]
-        [Trait("SubCategory", "SingleOps")]
-        public async Task PERF_018_GoDecision_ApprovalProcessing_Under1s()
-        {
-            // Arrange
-            var opportunityId = 1;
-            var doaUserId = 200;
-            var stopwatch = Stopwatch.StartNew();
-
-            // Act
-            var result = await ProcessGoDecisionApproval(opportunityId, doaUserId);
-            stopwatch.Stop();
-
-            // Assert
-            stopwatch.ElapsedMilliseconds.Should().BeLessThan(1000);
-            result.Should().NotBeNull();
-        }
-
-        [Fact]
-        [Trait("SubCategory", "BulkOps")]
-        public async Task PERF_019_ExportOpportunityData_1000Records_Under10s()
-        {
-            // Arrange
-            var opportunityIds = Enumerable.Range(1, 1000).ToList();
-            var stopwatch = Stopwatch.StartNew();
-
-            // Act
-            var exportData = await ExportOpportunitiesData(opportunityIds);
-            stopwatch.Stop();
-
-            // Assert
-            stopwatch.ElapsedMilliseconds.Should().BeLessThan(10000);
-            exportData.RecordCount.Should().Be(1000);
-        }
-
-        [Fact]
-        [Trait("SubCategory", "Search")]
-        public async Task PERF_020_AuditLogQuery_30DaysHistory_Under2s()
-        {
-            // Arrange
-            var opportunityId = 1;
-            var dateRange = (DateTime.Now.AddDays(-30), DateTime.Now);
-            var stopwatch = Stopwatch.StartNew();
-
-            // Act
-            var auditLog = await GetAuditLog(opportunityId, dateRange);
-            stopwatch.Stop();
-
-            // Assert
-            stopwatch.ElapsedMilliseconds.Should().BeLessThan(2000);
-        }
-
-        #endregion
-
-        #region Helper Methods (Stubs)
-
-        private Task<PerfTeamSectionData> LoadTeamSection(int id) => Task.FromResult(new PerfTeamSectionData());
-        private Task<PerfStatusResult> TransitionOpportunityStatus(int id, string from, string to) => Task.FromResult(new PerfStatusResult { Success = true });
-        private List<PerfCollaboratorData> GenerateCollaborators(int count) => Enumerable.Range(1, count).Select(i => new PerfCollaboratorData { Id = i }).ToList();
-        private Task<PerfBulkResult> BulkAddCollaborators(int id, List<PerfCollaboratorData> data) => Task.FromResult(new PerfBulkResult { SuccessCount = data.Count });
-        private Task<PerfBulkResult> BulkAssignSDGs(List<int> ids, int[] sdgIds) => Task.FromResult(new PerfBulkResult { ProcessedCount = ids.Count });
-        private List<PerfDeliverableData> GenerateDeliverables(int count) => Enumerable.Range(1, count).Select(i => new PerfDeliverableData { Id = i }).ToList();
-        private Task<PerfBulkResult> BulkCreateDeliverables(int id, List<PerfDeliverableData> data) => Task.FromResult(new PerfBulkResult { CreatedCount = data.Count });
-        private Task<List<PerfCollaboratorData>> SearchCollaborators(string term, int limit) => Task.FromResult(new List<PerfCollaboratorData>());
-        private Task<List<PerfOrgUnitData>> SearchOrgUnitsWithHierarchy(string term) => Task.FromResult(new List<PerfOrgUnitData>());
-        private Task<List<PerfOpportunityData>> SearchOpportunitiesByStatus(string status, int limit) => Task.FromResult(new List<PerfOpportunityData>());
-        private Task<List<PerfSDGData>> GetAllSDGs() => Task.FromResult(Enumerable.Range(1, 17).Select(i => new PerfSDGData { Id = i }).ToList());
-        private Task<List<PerfOpportunityData>> FilterOpportunities(PerfOpportunityFilter filter) => Task.FromResult(new List<PerfOpportunityData>());
-        private Task<string> GetOpportunityStatus(int id) => Task.FromResult("Active");
-        private Task<PerfStatusResult> UpdateWHYSection(int id, int userId) => Task.FromResult(new PerfStatusResult { Success = true });
-        private Task<PerfFullOpportunityData> LoadFullOpportunity(int id) => Task.FromResult(new PerfFullOpportunityData());
-        private Task ProcessDeliverables(List<PerfDeliverableData> items) => Task.CompletedTask;
-        private Task<List<PerfServiceSuggestion>> GetAIServiceSuggestions(int id) => Task.FromResult(new List<PerfServiceSuggestion>());
-        private Task<List<PerfInitiativeTypeData>> LoadInitiativeTypeHierarchy() => Task.FromResult(new List<PerfInitiativeTypeData> { new PerfInitiativeTypeData() });
-        private Task<PerfApprovalResult> ProcessGoDecisionApproval(int id, int userId) => Task.FromResult(new PerfApprovalResult());
-        private Task<PerfExportResult> ExportOpportunitiesData(List<int> ids) => Task.FromResult(new PerfExportResult { RecordCount = ids.Count });
-        private Task<List<PerfAuditEntry>> GetAuditLog(int id, (DateTime, DateTime) range) => Task.FromResult(new List<PerfAuditEntry>());
-
-        #endregion
+            cfg.AddProfile<MappingProfile>();
+            cfg.AddProfile<UNOPS.PAO.UNOPSBusiness.Managers.Mapping.MappingProfile>();
+        });
+        var mapper = mapperConfig.CreateMapper();
+        _opportunityManager = new OpportunityManager(mapper, Context);
+        _stopwatch = new Stopwatch();
     }
 
-    #region Supporting Types
+    #region Single Operation Performance (min 2)
 
-    public class PerfTeamSectionData { }
-    public class PerfStatusResult { public bool Success { get; set; } public string Error { get; set; } }
-    public class PerfCollaboratorData { public int Id { get; set; } }
-    public class PerfBulkResult { public int SuccessCount { get; set; } public int ProcessedCount { get; set; } public int CreatedCount { get; set; } }
-    public class PerfDeliverableData { public int Id { get; set; } }
-    public class PerfOrgUnitData { }
-    public class PerfOpportunityData { }
-    public class PerfSDGData { public int Id { get; set; } }
-    public class PerfOpportunityFilter { public string Status { get; set; } public int[] SDGIds { get; set; } public bool HasHighRisk { get; set; } public (DateTime, DateTime) DateRange { get; set; } }
-    public class PerfFullOpportunityData { }
-    public class PerfServiceSuggestion { }
-    public class PerfInitiativeTypeData { }
-    public class PerfApprovalResult { }
-    public class PerfExportResult { public int RecordCount { get; set; } }
-    public class PerfAuditEntry { }
+    [Fact]
+    [Trait("SubCategory", "SingleOps")]
+    public async Task GetOpportunity_WithSections_CompletesWithinThreshold()
+    {
+        var opportunity = await SeedOpportunityWithSectionsAsync(stakeholderCount: 5, deliverableCount: 5, sdgCount: 3);
+
+        _stopwatch.Restart();
+        var result = await Context.Opportunities
+            .AsNoTracking()
+            .Include(o => o.Stakeholders.Where(s => !s.IsDeleted))
+            .Include(o => o.Deliverables.Where(d => !d.IsDeleted))
+            .Include(o => o.SDGs.Where(s => !s.IsDeleted))
+            .FirstOrDefaultAsync(o => o.Id == opportunity.Id && !o.IsDeleted);
+        _stopwatch.Stop();
+
+        result.Should().NotBeNull();
+        result!.Stakeholders.Should().HaveCount(5);
+        result.Deliverables.Should().HaveCount(5);
+        result.SDGs.Should().HaveCount(3);
+        _stopwatch.ElapsedMilliseconds.Should().BeLessThan(MaxSingleOperationMs,
+            $"GetOpportunity with sections took {_stopwatch.ElapsedMilliseconds}ms, expected <{MaxSingleOperationMs}ms");
+    }
+
+    [Fact]
+    [Trait("SubCategory", "SingleOps")]
+    public async Task LoadStakeholdersByOpportunity_SingleQuery_CompletesWithinThreshold()
+    {
+        var opportunity = await SeedOpportunityWithSectionsAsync(stakeholderCount: 20);
+
+        _stopwatch.Restart();
+        var stakeholders = await Context.OpportunityStakeholders
+            .AsNoTracking()
+            .Where(s => s.OpportunityId == opportunity.Id && !s.IsDeleted)
+            .Include(s => s.EntityRole)
+            .ToListAsync();
+        _stopwatch.Stop();
+
+        stakeholders.Should().HaveCount(20);
+        _stopwatch.ElapsedMilliseconds.Should().BeLessThan(MaxSingleOperationMs,
+            $"LoadStakeholders took {_stopwatch.ElapsedMilliseconds}ms, expected <{MaxSingleOperationMs}ms");
+    }
+
+    #endregion
+
+    #region Bulk Operation Performance (min 3)
+
+    [Fact]
+    [Trait("SubCategory", "BulkOps")]
+    public async Task BulkLoadStakeholders_100Records_CompletesWithinThreshold()
+    {
+        var opportunity = await SeedOpportunityWithSectionsAsync(stakeholderCount: 100);
+
+        _stopwatch.Restart();
+        var stakeholders = await Context.OpportunityStakeholders
+            .AsNoTracking()
+            .Where(s => s.OpportunityId == opportunity.Id && !s.IsDeleted)
+            .ToListAsync();
+        _stopwatch.Stop();
+
+        stakeholders.Should().HaveCount(100);
+        _stopwatch.ElapsedMilliseconds.Should().BeLessThan(MaxBulkOperationMs,
+            $"Bulk load 100 stakeholders took {_stopwatch.ElapsedMilliseconds}ms");
+    }
+
+    [Fact]
+    [Trait("SubCategory", "BulkOps")]
+    public async Task BulkCreateStakeholders_50Records_CompletesWithinThreshold()
+    {
+        var opportunity = await SeedOpportunityAsync();
+        var entityRoleId = await GetOrCreateEntityRoleAsync();
+
+        var stakeholders = Enumerable.Range(1, 50)
+            .Select(i => new OpportunityStakeholder
+            {
+                Name = $"Stakeholder {i} {_testMarker}",
+                OpportunityId = opportunity.Id,
+                EntityRoleId = entityRoleId,
+                IsInternal = true,
+                UserId = TestUserId,
+                Status = EntityStatus.Active
+            })
+            .ToList();
+
+        _stopwatch.Restart();
+        await Context.OpportunityStakeholders.AddRangeAsync(stakeholders);
+        await SaveChangesAsync();
+        _stopwatch.Stop();
+
+        _stopwatch.ElapsedMilliseconds.Should().BeLessThan(MaxBulkOperationMs,
+            $"Bulk create 50 stakeholders took {_stopwatch.ElapsedMilliseconds}ms");
+    }
+
+    [Fact]
+    [Trait("SubCategory", "BulkOps")]
+    public async Task BulkLoadDeliverables_100Records_CompletesWithinThreshold()
+    {
+        var opportunity = await SeedOpportunityWithDeliverablesAsync(100);
+
+        _stopwatch.Restart();
+        var deliverables = await Context.OpportunityDeliverables
+            .AsNoTracking()
+            .Where(d => d.OpportunityId == opportunity.Id && !d.IsDeleted)
+            .ToListAsync();
+        _stopwatch.Stop();
+
+        deliverables.Should().HaveCount(100);
+        _stopwatch.ElapsedMilliseconds.Should().BeLessThan(MaxBulkOperationMs,
+            $"Bulk load 100 deliverables took {_stopwatch.ElapsedMilliseconds}ms");
+    }
+
+    #endregion
+
+    #region Search Performance (min 5)
+
+    [Fact]
+    [Trait("SubCategory", "Search")]
+    public async Task SearchStakeholders_ByOpportunity_CompletesWithinThreshold()
+    {
+        var opportunity = await SeedOpportunityWithSectionsAsync(stakeholderCount: 200);
+
+        _stopwatch.Restart();
+        var result = await Context.OpportunityStakeholders
+            .AsNoTracking()
+            .Where(s => s.OpportunityId == opportunity.Id && !s.IsDeleted && s.Name!.Contains(_testMarker))
+            .ToListAsync();
+        _stopwatch.Stop();
+
+        result.Should().HaveCount(200);
+        _stopwatch.ElapsedMilliseconds.Should().BeLessThan(MaxSimpleSearchMs,
+            $"Search stakeholders took {_stopwatch.ElapsedMilliseconds}ms");
+    }
+
+    [Fact]
+    [Trait("SubCategory", "Search")]
+    public async Task SearchOpportunities_ByStage_CompletesWithinThreshold()
+    {
+        await SeedOpportunitiesAsync(50, stage: "IDENTIFY & PROFILE");
+
+        _stopwatch.Restart();
+        var result = await Context.Opportunities
+            .AsNoTracking()
+            .Where(o => !o.IsDeleted && o.Stage == "IDENTIFY & PROFILE" && o.Name!.Contains(_testMarker))
+            .Take(100)
+            .ToListAsync();
+        _stopwatch.Stop();
+
+        result.Should().HaveCountGreaterThanOrEqualTo(1);
+        _stopwatch.ElapsedMilliseconds.Should().BeLessThan(MaxSimpleSearchMs,
+            $"Search opportunities by stage took {_stopwatch.ElapsedMilliseconds}ms");
+    }
+
+    [Fact]
+    [Trait("SubCategory", "Search")]
+    public async Task SearchSDGs_ByOpportunity_CompletesWithinThreshold()
+    {
+        var opportunity = await SeedOpportunityWithSDGsAsync(5);
+
+        _stopwatch.Restart();
+        var result = await Context.OpportunitySDGs
+            .AsNoTracking()
+            .Where(s => s.OpportunityId == opportunity.Id && !s.IsDeleted)
+            .Include(s => s.SDG)
+            .ToListAsync();
+        _stopwatch.Stop();
+
+        result.Should().HaveCount(5);
+        _stopwatch.ElapsedMilliseconds.Should().BeLessThan(MaxSimpleSearchMs,
+            $"Search SDGs by opportunity took {_stopwatch.ElapsedMilliseconds}ms");
+    }
+
+    [Fact]
+    [Trait("SubCategory", "Search")]
+    public async Task PaginatedOpportunityList_CompletesWithinThreshold()
+    {
+        await SeedOpportunitiesAsync(100);
+
+        _stopwatch.Restart();
+        var result = await Context.Opportunities
+            .AsNoTracking()
+            .Where(o => !o.IsDeleted && o.Name!.Contains(_testMarker))
+            .OrderBy(o => o.Id)
+            .Skip(0)
+            .Take(20)
+            .ToListAsync();
+        _stopwatch.Stop();
+
+        result.Should().HaveCountLessThanOrEqualTo(20);
+        _stopwatch.ElapsedMilliseconds.Should().BeLessThan(MaxPaginatedQueryMs,
+            $"Paginated opportunity list took {_stopwatch.ElapsedMilliseconds}ms");
+    }
+
+    [Fact]
+    [Trait("SubCategory", "Search")]
+    public async Task ComplexFilter_OpportunitiesWithSections_CompletesWithinThreshold()
+    {
+        var opportunity = await SeedOpportunityWithSectionsAsync(stakeholderCount: 10, deliverableCount: 10);
+
+        _stopwatch.Restart();
+        var result = await Context.Opportunities
+            .AsNoTracking()
+            .Where(o => !o.IsDeleted && o.Id == opportunity.Id)
+            .Include(o => o.Stakeholders.Where(s => !s.IsDeleted))
+            .Include(o => o.Deliverables.Where(d => !d.IsDeleted))
+            .Include(o => o.SDGs.Where(s => !s.IsDeleted))
+            .FirstOrDefaultAsync();
+        _stopwatch.Stop();
+
+        result.Should().NotBeNull();
+        result!.Stakeholders.Should().HaveCount(10);
+        result.Deliverables.Should().HaveCount(10);
+        _stopwatch.ElapsedMilliseconds.Should().BeLessThan(MaxComplexSearchMs,
+            $"Complex filter with sections took {_stopwatch.ElapsedMilliseconds}ms");
+    }
+
+    #endregion
+
+    #region Concurrent Access Performance (min 3)
+
+    [Fact]
+    [Trait("SubCategory", "ConcurrentAccess")]
+    public async Task ConcurrentReads_50SequentialStakeholderLoads_MaintainsPerformance()
+    {
+        var opportunity = await SeedOpportunityWithSectionsAsync(stakeholderCount: 30);
+        var results = new List<List<OpportunityStakeholder>>();
+
+        _stopwatch.Restart();
+        for (int i = 0; i < 50; i++)
+        {
+            var stakeholders = await Context.OpportunityStakeholders
+                .AsNoTracking()
+                .Where(s => s.OpportunityId == opportunity.Id && !s.IsDeleted)
+                .ToListAsync();
+            results.Add(stakeholders);
+        }
+        _stopwatch.Stop();
+
+        results.Should().HaveCount(50);
+        results.Should().OnlyContain(r => r.Count == 30);
+        var avgMs = _stopwatch.ElapsedMilliseconds / 50.0;
+        avgMs.Should().BeLessThan(MaxConcurrentReadMs,
+            $"Average read under 50 sequential calls exceeded threshold: {avgMs}ms");
+    }
+
+    [Fact]
+    [Trait("SubCategory", "ConcurrentAccess")]
+    public async Task ConcurrentReads_20SequentialGetOpportunity_MaintainsPerformance()
+    {
+        var opportunity = await SeedOpportunityWithSectionsAsync(stakeholderCount: 10);
+        var results = new List<OpportunityEntity?>();
+
+        _stopwatch.Restart();
+        for (int i = 0; i < 20; i++)
+        {
+            var opp = await Context.Opportunities
+                .AsNoTracking()
+                .Include(o => o.Stakeholders.Where(s => !s.IsDeleted))
+                .Include(o => o.Deliverables.Where(d => !d.IsDeleted))
+                .FirstOrDefaultAsync(o => o.Id == opportunity.Id && !o.IsDeleted);
+            results.Add(opp);
+        }
+        _stopwatch.Stop();
+
+        results.Should().HaveCount(20);
+        results.Should().OnlyContain(r => r != null);
+        _stopwatch.ElapsedMilliseconds.Should().BeLessThan(MaxBulkOperationMs,
+            $"20 sequential GetOpportunity took {_stopwatch.ElapsedMilliseconds}ms");
+    }
+
+    [Fact]
+    [Trait("SubCategory", "ConcurrentAccess")]
+    public async Task ConcurrentMixedReads_PerformanceStable()
+    {
+        var opportunity = await SeedOpportunityWithSectionsAsync(stakeholderCount: 20, deliverableCount: 20);
+
+        _stopwatch.Restart();
+        for (int i = 0; i < 10; i++)
+        {
+            await Context.OpportunityStakeholders
+                .AsNoTracking()
+                .Where(s => s.OpportunityId == opportunity.Id && !s.IsDeleted)
+                .ToListAsync();
+            await Context.OpportunityDeliverables
+                .AsNoTracking()
+                .Where(d => d.OpportunityId == opportunity.Id && !d.IsDeleted)
+                .ToListAsync();
+        }
+        _stopwatch.Stop();
+
+        _stopwatch.ElapsedMilliseconds.Should().BeLessThan(MaxBulkOperationMs,
+            $"Mixed sequential reads took {_stopwatch.ElapsedMilliseconds}ms");
+    }
+
+    #endregion
+
+    #region Memory Performance (min 3)
+
+    [Fact]
+    [Trait("SubCategory", "Memory")]
+    public async Task LargeStakeholderQuery_MemoryUsage_WithinCap()
+    {
+        var opportunity = await SeedOpportunityWithSectionsAsync(stakeholderCount: 500);
+        GC.Collect();
+        var before = GC.GetTotalMemory(true);
+
+        await Context.OpportunityStakeholders
+            .AsNoTracking()
+            .Where(s => s.OpportunityId == opportunity.Id && !s.IsDeleted)
+            .Include(s => s.EntityRole)
+            .ToListAsync();
+
+        GC.Collect();
+        var usedMb = (GC.GetTotalMemory(true) - before) / (1024 * 1024);
+        usedMb.Should().BeLessThan(MaxQueryMemoryMb,
+            $"Query allocated {usedMb}MB, expected <{MaxQueryMemoryMb}MB");
+    }
+
+    [Fact]
+    [Trait("SubCategory", "Memory")]
+    public async Task RepeatedOperations_NoMemoryLeak()
+    {
+        var opportunity = await SeedOpportunityWithSectionsAsync(stakeholderCount: 20);
+        GC.Collect();
+        var before = GC.GetTotalMemory(true);
+
+        for (int i = 0; i < 100; i++)
+        {
+            await Context.OpportunityStakeholders
+                .AsNoTracking()
+                .Where(s => s.OpportunityId == opportunity.Id && !s.IsDeleted)
+                .ToListAsync();
+            await Context.OpportunityDeliverables
+                .AsNoTracking()
+                .Where(d => d.OpportunityId == opportunity.Id && !d.IsDeleted)
+                .ToListAsync();
+        }
+
+        GC.Collect();
+        var growthMb = (GC.GetTotalMemory(true) - before) / (1024 * 1024);
+        growthMb.Should().BeLessThan(MaxMemoryGrowthMb,
+            $"Memory grew {growthMb}MB after 100 ops — possible leak");
+    }
+
+    [Fact]
+    [Trait("SubCategory", "Memory")]
+    public async Task GcPressure_HighThroughput_DoesNotDegrade()
+    {
+        var opportunity = await SeedOpportunityWithSectionsAsync(stakeholderCount: 50);
+        var times = new List<long>();
+
+        for (int i = 0; i < 100; i++)
+        {
+            _stopwatch.Restart();
+            await Context.OpportunityStakeholders
+                .AsNoTracking()
+                .Where(s => s.OpportunityId == opportunity.Id && !s.IsDeleted)
+                .ToListAsync();
+            _stopwatch.Stop();
+            times.Add(_stopwatch.ElapsedMilliseconds);
+        }
+
+        var first25Avg = times.Take(25).Average();
+        var last25Avg = times.Skip(75).Average();
+        last25Avg.Should().BeLessThan(first25Avg * 3,
+            $"GC pressure degraded perf from {first25Avg}ms to {last25Avg}ms avg");
+    }
+
+    #endregion
+
+    #region EF Core — N+1 & Split Query Verification
+
+    [Fact]
+    [Trait("SubCategory", "N+1")]
+    public async Task GetOpportunityWithAllSections_NoCartesianExplosion_CompletesWithinThreshold()
+    {
+        var opportunity = await SeedOpportunityWithSectionsAsync(stakeholderCount: 50, deliverableCount: 30, sdgCount: 5);
+
+        _stopwatch.Restart();
+        var result = await Context.Opportunities
+            .AsNoTracking()
+            .Include(o => o.Stakeholders.Where(s => !s.IsDeleted))
+            .Include(o => o.Deliverables.Where(d => !d.IsDeleted))
+            .Include(o => o.SDGs.Where(s => !s.IsDeleted))
+            .FirstOrDefaultAsync(o => o.Id == opportunity.Id && !o.IsDeleted);
+        _stopwatch.Stop();
+
+        result.Should().NotBeNull();
+        result!.Stakeholders.Should().HaveCount(50);
+        result.Deliverables.Should().HaveCount(30);
+        result.SDGs.Should().HaveCount(5);
+        _stopwatch.ElapsedMilliseconds.Should().BeLessThan(MaxComplexSearchMs,
+            $"Possible N+1 or Cartesian product — GetOpportunity with sections took {_stopwatch.ElapsedMilliseconds}ms");
+    }
+
+    [Fact]
+    [Trait("SubCategory", "N+1")]
+    public async Task LoadDeliverablesWithRelated_NoN1Pattern_CompletesWithinThreshold()
+    {
+        var opportunity = await SeedOpportunityWithDeliverablesAsync(50);
+
+        _stopwatch.Restart();
+        var deliverables = await Context.OpportunityDeliverables
+            .AsNoTracking()
+            .Where(d => d.OpportunityId == opportunity.Id && !d.IsDeleted)
+            .Include(d => d.Output)
+            .ToListAsync();
+        _stopwatch.Stop();
+
+        deliverables.Should().HaveCount(50);
+        _stopwatch.ElapsedMilliseconds.Should().BeLessThan(MaxPaginatedQueryMs,
+            $"Possible N+1 — deliverables query took {_stopwatch.ElapsedMilliseconds}ms for 50 records");
+    }
+
+    #endregion
+
+    #region Benchmark Report
+
+    [Fact]
+    [Trait("SubCategory", "Benchmark")]
+    public async Task Benchmark_AllOperations_ReportTimings()
+    {
+        var report = new Dictionary<string, long>();
+        var opportunity = await SeedOpportunityWithSectionsAsync(stakeholderCount: 20, deliverableCount: 20);
+
+        report["GetOpportunity"] = await TimeMs(() => Context.Opportunities
+            .AsNoTracking()
+            .Include(o => o.Stakeholders.Where(s => !s.IsDeleted))
+            .Include(o => o.Deliverables.Where(d => !d.IsDeleted))
+            .Include(o => o.SDGs.Where(s => !s.IsDeleted))
+            .FirstOrDefaultAsync(o => o.Id == opportunity.Id && !o.IsDeleted));
+        report["LoadStakeholders"] = await TimeMs(() => Context.OpportunityStakeholders
+            .AsNoTracking()
+            .Where(s => s.OpportunityId == opportunity.Id && !s.IsDeleted)
+            .ToListAsync());
+        report["LoadDeliverables"] = await TimeMs(() => Context.OpportunityDeliverables
+            .AsNoTracking()
+            .Where(d => d.OpportunityId == opportunity.Id && !d.IsDeleted)
+            .ToListAsync());
+        report["LoadSDGs"] = await TimeMs(() => Context.OpportunitySDGs
+            .AsNoTracking()
+            .Where(s => s.OpportunityId == opportunity.Id && !s.IsDeleted)
+            .Include(s => s.SDG)
+            .ToListAsync());
+        report["SearchByStage"] = await TimeMs(() => Context.Opportunities
+            .AsNoTracking()
+            .Where(o => !o.IsDeleted && o.Stage == "IDENTIFY & PROFILE")
+            .Take(20)
+            .ToListAsync());
+
+        foreach (var (op, ms) in report)
+            Console.WriteLine($"[PERF BENCHMARK] {op,-25}: {ms}ms");
+
+        report.Values.Should().OnlyContain(t => t < MaxBulkOperationMs,
+            "All operations should complete within bulk operation threshold");
+    }
+
+    #endregion
+
+    #region Helpers
+
+    private async Task<OpportunityEntity> SeedOpportunityAsync()
+    {
+        await EnsureTestUserAsync();
+        var pitId = await GetOrCreateProposedInitiativeTypeAsync();
+        var opp = new OpportunityEntity
+        {
+            Name = $"Opp {_testMarker}",
+            Description = "Perf test opportunity",
+            Stage = "IDENTIFY & PROFILE",
+            Status = EntityStatus.Active,
+            ProposedInitiativeTypeId = pitId,
+            IsDeleted = false
+        };
+        await Context.Opportunities.AddAsync(opp);
+        await SaveChangesAsync();
+        return opp;
+    }
+
+    private async Task<OpportunityEntity> SeedOpportunityWithSectionsAsync(
+        int stakeholderCount = 0,
+        int deliverableCount = 0,
+        int sdgCount = 0)
+    {
+        var opp = await SeedOpportunityAsync();
+        var entityRoleId = await GetOrCreateEntityRoleAsync();
+
+        if (stakeholderCount > 0)
+        {
+            var stakeholders = Enumerable.Range(1, stakeholderCount)
+                .Select(i => new OpportunityStakeholder
+                {
+                    Name = $"Stakeholder {i} {_testMarker}",
+                    OpportunityId = opp.Id,
+                    EntityRoleId = entityRoleId,
+                    IsInternal = true,
+                    UserId = TestUserId,
+                    Status = EntityStatus.Active
+                })
+                .ToList();
+            await Context.OpportunityStakeholders.AddRangeAsync(stakeholders);
+        }
+
+        if (deliverableCount > 0)
+        {
+            var deliverables = Enumerable.Range(1, deliverableCount)
+                .Select(i => new OpportunityDeliverable
+                {
+                    Name = $"Deliverable {i} {_testMarker}",
+                    OpportunityId = opp.Id,
+                    Status = EntityStatus.Active
+                })
+                .ToList();
+            await Context.OpportunityDeliverables.AddRangeAsync(deliverables);
+        }
+
+        if (sdgCount > 0)
+        {
+            var sdgIds = await GetOrCreateSDGIdsAsync(sdgCount);
+            var sdgs = sdgIds.Select((id, i) => new OpportunitySDG
+            {
+                Name = $"SDG {i + 1} {_testMarker}",
+                OpportunityId = opp.Id,
+                SDGId = id,
+                IsPrimary = i == 0,
+                Status = EntityStatus.Active
+            }).ToList();
+            await Context.OpportunitySDGs.AddRangeAsync(sdgs);
+        }
+
+        await SaveChangesAsync();
+        return opp;
+    }
+
+    private async Task<OpportunityEntity> SeedOpportunityWithDeliverablesAsync(int count)
+    {
+        return await SeedOpportunityWithSectionsAsync(deliverableCount: count);
+    }
+
+    private async Task<OpportunityEntity> SeedOpportunityWithSDGsAsync(int count)
+    {
+        return await SeedOpportunityWithSectionsAsync(sdgCount: count);
+    }
+
+    private async Task SeedOpportunitiesAsync(int count, string stage = "IDENTIFY & PROFILE")
+    {
+        await EnsureTestUserAsync();
+        var pitId = await GetOrCreateProposedInitiativeTypeAsync();
+        var opps = Enumerable.Range(1, count)
+            .Select(i => new OpportunityEntity
+            {
+                Name = $"Opp {i} {_testMarker}",
+                Description = $"Perf test {i}",
+                Stage = stage,
+                Status = EntityStatus.Active,
+                ProposedInitiativeTypeId = pitId,
+                IsDeleted = false
+            })
+            .ToList();
+        await Context.Opportunities.AddRangeAsync(opps);
+        await SaveChangesAsync();
+    }
+
+    private async Task<int> GetOrCreateEntityRoleAsync()
+    {
+        var existing = await Context.EntityRoles
+            .FirstOrDefaultAsync(r => r.EntityType == "Opportunity" && !r.IsDeleted);
+        if (existing != null) return existing.Id;
+
+        var role = new EntityRole
+        {
+            EntityType = "Opportunity",
+            Name = $"Stakeholder Role {_testMarker}",
+            IsInternal = true,
+            AllowsMultiple = true,
+            Status = EntityStatus.Active
+        };
+        await Context.EntityRoles.AddAsync(role);
+        await SaveChangesAsync();
+        return role.Id;
+    }
+
+    private async Task<int> GetOrCreateProposedInitiativeTypeAsync()
+    {
+        var existing = await Context.ProposedInitiativeTypes
+            .FirstOrDefaultAsync(p => !p.IsDeleted);
+        if (existing != null) return existing.Id;
+
+        var pit = new ProposedInitiativeType
+        {
+            Name = $"Project {_testMarker}",
+            Order = 1,
+            Status = EntityStatus.Active
+        };
+        await Context.ProposedInitiativeTypes.AddAsync(pit);
+        await SaveChangesAsync();
+        return pit.Id;
+    }
+
+    private async Task<List<int>> GetOrCreateSDGIdsAsync(int count)
+    {
+        var existing = await Context.SDGs
+            .Where(s => !s.IsDeleted)
+            .Take(count)
+            .Select(s => s.Id)
+            .ToListAsync();
+
+        if (existing.Count >= count)
+            return existing.Take(count).ToList();
+
+        var toCreate = count - existing.Count;
+        for (int i = 0; i < toCreate; i++)
+        {
+            var sdg = new SDG
+            {
+                Name = $"SDG Perf {i} {_testMarker}",
+                SDGNumber = $"{existing.Count + i + 1}",
+                Status = EntityStatus.Active,
+                IsDeleted = false
+            };
+            await Context.SDGs.AddAsync(sdg);
+        }
+        await SaveChangesAsync();
+
+        var newIds = await Context.SDGs
+            .Where(s => !s.IsDeleted && s.Name!.Contains(_testMarker))
+            .Select(s => s.Id)
+            .ToListAsync();
+        return existing.Concat(newIds).Take(count).ToList();
+    }
+
+    private async Task<long> TimeMs(Func<Task> fn)
+    {
+        _stopwatch.Restart();
+        await fn();
+        _stopwatch.Stop();
+        return _stopwatch.ElapsedMilliseconds;
+    }
 
     #endregion
 }

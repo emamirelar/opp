@@ -135,6 +135,7 @@ public class CountryControllerTests : IntegrationTestBase
     /// Verifies lookup by ISO country code
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-032")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-CC-003")]
@@ -161,6 +162,7 @@ public class CountryControllerTests : IntegrationTestBase
     /// Verifies simplified list for UI dropdowns
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-032")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-CC-004")]
@@ -264,6 +266,7 @@ public class CountryControllerTests : IntegrationTestBase
     /// Verifies retrieval of countries with UNOPS operational presence
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-032")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-CC-008")]
@@ -370,6 +373,7 @@ public class CountryControllerTests : IntegrationTestBase
     /// Verifies retrieval of all geographic regions
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-032")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-CC-012")]
@@ -395,6 +399,7 @@ public class CountryControllerTests : IntegrationTestBase
     /// Verifies retrieval of all continents
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-032")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-CC-013")]
@@ -420,6 +425,7 @@ public class CountryControllerTests : IntegrationTestBase
     /// Verifies quick search for UI autocomplete
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-032")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-CC-014")]
@@ -450,6 +456,7 @@ public class CountryControllerTests : IntegrationTestBase
     /// Verifies creation of new country by admin
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-032")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-CC-015")]
@@ -482,6 +489,7 @@ public class CountryControllerTests : IntegrationTestBase
     /// Verifies updating country data by admin
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-032")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-CC-016")]
@@ -534,6 +542,7 @@ public class CountryControllerTests : IntegrationTestBase
     /// Verifies ISO country code validation
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-032")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-CC-018")]
@@ -587,6 +596,7 @@ public class CountryControllerTests : IntegrationTestBase
     /// Verifies that only admin users can create/update/delete countries
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-032")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-CC-A002")]
@@ -606,6 +616,25 @@ public class CountryControllerTests : IntegrationTestBase
 
         // Assert
         response.StatusCode.Should().BeOneOf(new[] { HttpStatusCode.Forbidden, HttpStatusCode.MethodNotAllowed }, "because non-admin users cannot create countries");
+    }
+
+    [Fact]
+    [Trait("Category", "Edge")]
+    [Trait("Priority", "P0")]
+    [Trait("TestId", "TC-CC-EDGE-001")]
+    [Trait("Ticket", "PNO-1194")]
+    public async Task GetCountries_ResponseContent_NoEncodingArtifacts()
+    {
+        var client = Factory.CreateAuthenticatedClient();
+        var response = await client.GetAsync("/api/Country");
+        if (response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            content.Should().NotContain("??",
+                "PNO-1194: country names with diacritics (e.g. C\u00f4te d'Ivoire, Cura\u00e7ao) must not contain encoding artifacts");
+            content.Should().NotContain("\uFFFD",
+                "Country data must not contain U+FFFD replacement characters");
+        }
     }
 
     #endregion

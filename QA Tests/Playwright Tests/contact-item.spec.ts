@@ -16,6 +16,8 @@
  *   - contact-documents-section, upload-document-button
  * 
  * @created 2026-02-12
+ *
+ * @tests 23
  */
 
 import { test, expect } from '@playwright/test';
@@ -163,7 +165,7 @@ test.describe('Contact Detail Page', () => {
     expect(typeof isVisible).toBe('boolean');
     
     if (isVisible) {
-      await contactItemPage.assertElementVisible('edit-contact-button');
+      await expect(contactItemPage.editButton).toBeVisible();
     }
   });
   
@@ -178,7 +180,7 @@ test.describe('Contact Detail Page', () => {
     expect(typeof isVisible).toBe('boolean');
     
     if (isVisible) {
-      await contactItemPage.assertElementVisible('delete-contact-button');
+      await expect(contactItemPage.deleteButton).toBeVisible();
     }
   });
   
@@ -320,7 +322,6 @@ test.describe('Contact Detail Page - Documents & Links', () => {
       expect(hasPartnerLink).toBe(true);
     } else {
       // Contact may not have an associated partner
-      console.log('Partner section not visible — contact may not have an associated partner');
     }
   });
   

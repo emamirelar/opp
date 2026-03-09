@@ -11,7 +11,7 @@
 
 using System.Net;
 using System.Net.Http;
-using System.Runtime.Serialization;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
@@ -54,14 +54,14 @@ public abstract class AiRetrieverTestFixtureBase
 
     /// <summary>
     /// Creates AiRetrieverManager with an uninitialized IAPAuthHelper.
-    /// The IAPAuthHelper is created via FormatterServices to bypass its constructor
+    /// The IAPAuthHelper is created via RuntimeHelpers to bypass its constructor
     /// (which requires Google Cloud credentials). Method calls on the manager will
     /// throw when they attempt IAP authentication, which is the expected behavior
     /// in a test environment without cloud credentials.
     /// </summary>
     protected AiRetrieverManager CreateManager()
     {
-        var iapHelper = (IAPAuthHelper)FormatterServices.GetUninitializedObject(typeof(IAPAuthHelper));
+        var iapHelper = (IAPAuthHelper)RuntimeHelpers.GetUninitializedObject(typeof(IAPAuthHelper));
         var options = Options.Create(Settings);
         return new AiRetrieverManager(
             iapHelper,

@@ -16,7 +16,14 @@ export class ProfilePage extends BasePage {
   // ==========================================
 
   get profileMenuButton(): Locator {
-    return this.page.locator('app-profile-menubar, [data-testid="profile-menu"], .profile-avatar').first();
+    return this.page
+      .locator('.profile-menu-button, .profile-menu button')
+      .or(this.page.locator('app-topbar .p-avatar, app-topbar button:has(.pi-user), app-topbar button:has(.p-avatar)'))
+      .or(this.page.locator('app-topbar').getByRole('button'))
+      .or(this.page.locator('.profile-avatar'))
+      .or(this.page.locator('button:has(.pi-user), button:has(.p-avatar)'))
+      .or(this.page.locator('app-profile-menubar'))
+      .first();
   }
 
   get profileMenu(): Locator {
@@ -24,7 +31,7 @@ export class ProfilePage extends BasePage {
   }
 
   get profileDialogTrigger(): Locator {
-    return this.page.locator('[data-testid="profile-dialog-trigger"], .p-menuitem:has-text("Profile"), a:has-text("My Profile")').first();
+    return this.page.getByText(/view profile|profile|my profile/i).first();
   }
 
   get logoutButton(): Locator {
@@ -85,13 +92,14 @@ export class ProfilePage extends BasePage {
 
   async openProfileMenu(): Promise<void> {
     await this.profileMenuButton.click();
-    await this.profileMenu.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+    const menu = this.page.locator('.p-menu-overlay, [role="menu"], .p-menu').first();
+    await menu.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
   }
 
   async openProfileDialog(): Promise<void> {
     await this.openProfileMenu();
     await this.profileDialogTrigger.click();
-    await this.profileDialog.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+    await this.profileDialog.waitFor({ state: 'visible', timeout: 5000 });
   }
 
   async isProfileDialogOpen(): Promise<boolean> {
@@ -109,6 +117,6 @@ export class ProfilePage extends BasePage {
   async selectLanguage(lang: string): Promise<void> {
     await this.languageSelector.click();
     await this.page.locator(`.p-select-option:has-text("${lang}"), .p-dropdown-item:has-text("${lang}")`).first().click();
-    await this.page.waitForTimeout(1000);
+    await this.page.locator('.p-select-overlay, .p-dropdown-panel').first().waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
   }
 }

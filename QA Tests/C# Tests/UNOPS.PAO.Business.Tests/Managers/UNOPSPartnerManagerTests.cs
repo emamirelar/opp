@@ -25,7 +25,7 @@ using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.UNOPSBusiness;
 using UNOPS.PAO.IntegrationTests.Infrastructure;
-using UNOPS.PAO.IntegrationTests.UnitTests.Specifications;
+using UNOPS.PAO.Business.Tests.Specifications;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.Domain.Specifications.PartnerSpecifications;
 using UNOPS.PAO.UNOPSBusiness.Specifications;
@@ -245,7 +245,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             };
 
             // Create specification that matches all partners
-            var specification = new TestPartnerSpecification(matchAll: true);
+            var specification = new BusinessTestPartnerSpecification(matchAll: true);
             var user = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, "1") }));
 
             // Act
@@ -391,7 +391,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             };
 
             // Create specification that matches all partners
-            var specification = new TestPartnerSpecification(matchAll: true);
+            var specification = new BusinessTestPartnerSpecification(matchAll: true);
             var user = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, "1") }));
 
             // Act
@@ -430,7 +430,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             };
 
             // Create specification that matches all partners (no org unit filtering)
-            var specification = new TestPartnerSpecification(matchAll: true);
+            var specification = new BusinessTestPartnerSpecification(matchAll: true);
             var user = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, "1") }));
 
             // Act
@@ -470,7 +470,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                 PageSize = 10
             };
             
-            var specification = new TestPartnerSpecification(matchAll: true);
+            var specification = new BusinessTestPartnerSpecification(matchAll: true);
             var user = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, "1") }));
             
             // Act

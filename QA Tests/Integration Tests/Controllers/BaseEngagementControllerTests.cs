@@ -33,6 +33,7 @@ public class BaseEngagementControllerTests
 {
     private readonly PAOWebApplicationFactory<Program> _factory;
     private readonly HttpClient _client;
+    private readonly bool _isPostgresAvailable;
     private const string BaseUrl = "/api/base-engagements";
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -44,6 +45,7 @@ public class BaseEngagementControllerTests
     {
         _factory = factory;
         _client = factory.CreateAuthenticatedClient();
+        _isPostgresAvailable = factory.IsUsingPostgres;
         _client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-Email", "accounts.google.com:testuser@unops.org");
         _client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-ID", "accounts.google.com:123");
         _client.DefaultRequestHeaders.Add("Cookie", "DevIAPAuth=testuser@unops.org; dev-user-email=testuser@unops.org");
@@ -62,16 +64,18 @@ public class BaseEngagementControllerTests
     [Trait("TestId", "TC-BE-POS-001")]
     public async Task GetAll_Authenticated_Returns200()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync(BaseUrl);
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
     }
 
     [Fact]
     [Trait("TestId", "TC-BE-POS-002")]
     public async Task GetAll_ReturnsJsonContentType()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync(BaseUrl);
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (response.IsSuccessStatusCode)
         {
             response.Content.Headers.ContentType?.MediaType.Should().Contain("json");
@@ -106,8 +110,9 @@ public class BaseEngagementControllerTests
     [Trait("TestId", "TC-BE-POS-006")]
     public async Task GetAll_ResponseIsJsonArrayOrObject()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync(BaseUrl);
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (response.IsSuccessStatusCode)
         {
             var result = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions);
@@ -120,7 +125,7 @@ public class BaseEngagementControllerTests
     public async Task GetAll_WithEmptyDatabase_Returns200()
     {
         var response = await _client.GetAsync(BaseUrl);
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (response.IsSuccessStatusCode)
         {
             var content = await response.Content.ReadAsStringAsync();
@@ -168,10 +173,11 @@ public class BaseEngagementControllerTests
     [Trait("TestId", "TC-BE-POS-011")]
     public async Task AllEndpoints_ReturnWithin5Seconds()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var stopwatch = Stopwatch.StartNew();
         var response = await _client.GetAsync(BaseUrl);
         stopwatch.Stop();
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         stopwatch.ElapsedMilliseconds.Should().BeLessThan(5000, "endpoint should respond within 5 seconds");
     }
 
@@ -334,8 +340,9 @@ public class BaseEngagementControllerTests
     [Trait("TestId", "TC-BE-VAL-001")]
     public async Task GetAll_ResponseHasValidJsonStructure()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync(BaseUrl);
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (response.IsSuccessStatusCode)
         {
             var content = await response.Content.ReadAsStringAsync();
@@ -397,6 +404,7 @@ public class BaseEngagementControllerTests
 
         foreach (var url in endpoints)
         {
+            if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
             var response = await _client.GetAsync(url);
             if (response.IsSuccessStatusCode && response.Content.Headers.ContentLength > 0)
             {
@@ -417,6 +425,23 @@ public class BaseEngagementControllerTests
             var result = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions);
             result.ValueKind.Should().Be(JsonValueKind.Object);
             result.TryGetProperty("error", out _).Should().BeTrue();
+        }
+    }
+
+    [Fact]
+    [Trait("TestId", "TC-BE-EDGE-001")]
+    [Trait("Ticket", "PNO-1194")]
+    public async Task GetEngagementList_ResponseContent_NoEncodingArtifacts()
+    {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
+        var response = await _client.GetAsync($"{BaseUrl}?pageIndex=1&pageSize=50");
+        if (response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            content.Should().NotContain("??",
+                "PNO-1194: engagement entity names must not contain encoding artifacts");
+            content.Should().NotContain("\uFFFD",
+                "Engagement data must not contain U+FFFD replacement characters");
         }
     }
 

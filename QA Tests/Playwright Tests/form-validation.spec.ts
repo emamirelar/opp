@@ -1,10 +1,25 @@
+/**
+ * @tests 7
+ */
+
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
 import { setupAPIMocks } from './helpers/api-mocks.helper';
+import {
+  waitForPageReady,
+  waitForLoadingToComplete,
+  waitForPermissions,
+  waitForDialog,
+} from './helpers/wait.helper';
+import { LoginPage } from './pages/login.page';
+import { PartnersPage } from './pages/partners.page';
+import { ContactsPage } from './pages/contacts.page';
+import { OpportunitiesPage } from './pages/opportunities.page';
+import { InteractionsPage } from './pages/interactions.page';
 
 /**
  * Form Validation E2E Tests
- * 
+ *
  * Tests form validation functionality across the application including:
  * - Required field validation
  * - Email format validation
@@ -13,348 +28,278 @@ import { setupAPIMocks } from './helpers/api-mocks.helper';
  * - Custom validation rules
  * - Error message display
  * - Form submission prevention
- * 
- * @note Uses hash-based routing (/#/) for Angular app navigation
+ *
+ * @note Uses path-based routing for Angular app navigation
  */
 test.describe('Form Validation', () => {
   test.slow();
   const BASE_URL = 'http://localhost:4200';
-  
-  // Helper to navigate with path-based routing and API mocks
-  async function gotoHashWithMocks(page: any, path: string): Promise<void> {
-    // Set up API mocks before navigation for permission checks
+
+  // Helper to navigate with path-based routing and API mocks (for unauthenticated pages)
+  async function gotoWithMocks(page: any, path: string): Promise<void> {
     await setupAPIMocks(page);
-    const targetUrl = path.startsWith('/#/') ? path.substring(2) : (path.startsWith('/') ? path : '/' + path);
+    const targetUrl = path.startsWith('/') ? path : `/${path}`;
     await page.goto(`${BASE_URL}${targetUrl}`);
     await page.waitForLoadState('load');
-    await page.waitForTimeout(1000);
+    await waitForPageReady(page);
   }
-  
-  test('should validate required fields on login form', async ({ page }) => {
-    // Navigate to login page using hash-based routing with API mocks
-    await gotoHashWithMocks(page, '/login');
-    
-    // Clear any existing values
-    await page.locator('[data-testid="username-input"]').clear();
-    
-    // Try to submit empty form
-    await page.locator('[data-testid="login-button"]').click();
-    
-    // Verify validation occurs
-    const usernameField = page.locator('[data-testid="username-input"]');
-    const isInvalid = await usernameField.evaluate(el => 
-      el.classList.contains('ng-invalid') || el.classList.contains('p-invalid')
-    ).catch(() => false);
-    
-    // Required field validation should trigger
-    expect(isInvalid || true).toBeTruthy();
+
+  test.skip('should validate required fields on login form', async ({ page }) => {
+    // Auth is cookie-based via IAP; no /login route exists in Angular app
+    await gotoWithMocks(page, '/login');
+
+    const loginPage = new LoginPage(page);
+    await page.getByPlaceholder(/username|email/i).first().clear();
+    await loginPage.clickLogin();
+
+    await waitForLoadingToComplete(page);
+
+    const usernameField = page.getByPlaceholder(/username|email/i).first();
+    const isInvalid = await usernameField.evaluate(
+      (el) =>
+        el.classList.contains('ng-invalid') || el.classList.contains('p-invalid')
+    );
+
+    expect(isInvalid).toBe(true);
   });
-  
-  test('should validate email format in partner form', async ({ page }) => {
-    // Authenticate and navigate to partners page
-    await authenticateWithRealBackend(page, '/partnerships/partners');
-    await page.waitForTimeout(2000);
-    
-    // Look for New Partner button
-    const newPartnerButton = page.locator('[data-testid="new-partner-button"]');
-    const isVisible = await newPartnerButton.isVisible().catch(() => false);
-    
-    if (isVisible) {
-      // Open partner form
-      await newPartnerButton.click();
-      await page.waitForTimeout(1000);
-      
-      // Look for email input field
-      const emailInput = page.locator('input[type="email"]').or(
-        page.locator('input[name*="email"]')
-      ).first();
-      
-      const hasEmailField = await emailInput.isVisible().catch(() => false);
-      
-      if (hasEmailField) {
-        // Enter invalid email
-        await emailInput.fill('invalid-email');
-        await emailInput.blur();
-        
-        // Wait for validation
-        await page.waitForTimeout(500);
-        
-        // Check for validation error
-        const isInvalid = await emailInput.evaluate(el => 
-          el.classList.contains('ng-invalid') || el.classList.contains('p-invalid')
-        ).catch(() => false);
-        
-        // Email validation should trigger
-        expect(isInvalid || true).toBeTruthy();
-      }
-    }
-    
-    // Test passes - validates email format checking
-    expect(true).toBeTruthy();
-  });
-  
-  test('should validate required fields on contact form', async ({ page }) => {
-    // Authenticate and navigate to contacts page
+
+  test('should validate email format in contact form', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/contacts');
-    await page.waitForTimeout(2000);
-    
-    // Look for New Contact button
-    const newContactButton = page.locator('[data-testid="new-contact-button"]');
-    const isVisible = await newContactButton.isVisible().catch(() => false);
-    
-    if (isVisible) {
-      // Open contact form
-      await newContactButton.click();
-      await page.waitForTimeout(1000);
-      
-      // Look for submit button
-      const submitButton = page.locator('button[type="submit"]').or(
-        page.locator('button').filter({ hasText: /save|submit/i })
-      ).first();
-      
-      const hasSubmitButton = await submitButton.isVisible().catch(() => false);
-      
-      if (hasSubmitButton) {
-        // Try to submit without filling required fields
-        await submitButton.click();
-        await page.waitForTimeout(500);
-        
-        // Look for validation errors
-        const validationErrors = page.locator('.p-invalid, .ng-invalid, [aria-invalid="true"]');
-        const errorCount = await validationErrors.count();
-        
-        // Should have validation errors
-        expect(errorCount).toBeGreaterThanOrEqual(0);
-      }
-    }
-    
-    // Test passes - validates required field checking
-    expect(true).toBeTruthy();
+    await waitForPageReady(page);
+    await waitForPermissions(page);
+
+    const contactsPage = new ContactsPage(page);
+    await expect(contactsPage.newButton).toBeVisible();
+    await contactsPage.clickNewButton();
+
+    const dialog = page.locator('.p-dialog').first();
+    const emailInput = dialog
+      .locator('input[type="email"], input[formcontrolname="email"], input[name*="email"]')
+      .first();
+    await expect(emailInput).toBeVisible();
+
+    await emailInput.fill('invalid-email');
+    await emailInput.blur();
+
+    await waitForLoadingToComplete(page);
+
+    const isInvalid = await emailInput.evaluate(
+      (el) =>
+        el.classList.contains('ng-invalid') || el.classList.contains('p-invalid')
+    );
+
+    expect(isInvalid).toBe(true);
   });
-  
+
+  test('should validate required fields on contact form', async ({ page }) => {
+    await authenticateWithRealBackend(page, '/partnerships/contacts');
+    await waitForPageReady(page);
+    await waitForPermissions(page);
+
+    const contactsPage = new ContactsPage(page);
+    await expect(contactsPage.newButton).toBeVisible();
+    await contactsPage.clickNewButton();
+
+    const dialog = page.locator('.p-dialog').first();
+    const submitButton = dialog
+      .locator('button[type="submit"], button')
+      .filter({ hasText: /save|submit/i })
+      .first();
+    await expect(submitButton).toBeVisible();
+
+    await submitButton.click();
+    await waitForLoadingToComplete(page);
+
+    const validationErrors = dialog.locator(
+      '.p-invalid, .ng-invalid, [aria-invalid="true"], .p-message, .p-error, small.p-error'
+    );
+    const errorCount = await validationErrors.count();
+    expect(errorCount).toBeGreaterThan(0);
+  });
+
   test('should prevent form submission with invalid data', async ({ page }) => {
-    // Authenticate and navigate to opportunities page
-    await authenticateWithRealBackend(page, '/opportunities');
-    await page.waitForTimeout(2000);
-    
-    // Look for New Opportunity button
-    const newOpportunityButton = page.locator('[data-testid="new-opportunity-button"]');
-    const isVisible = await newOpportunityButton.isVisible().catch(() => false);
-    
-    if (isVisible) {
-      // Open opportunity form
-      await newOpportunityButton.click();
-      await page.waitForTimeout(1000);
-      
-      // Look for form
-      const form = page.locator('form').first();
-      const hasForm = await form.isVisible().catch(() => false);
-      
-      if (hasForm) {
-        // Try to submit empty form
-        const submitButton = page.locator('button[type="submit"]').or(
-          page.locator('button').filter({ hasText: /save|submit|create/i })
-        ).first();
-        
-        const hasSubmitButton = await submitButton.isVisible().catch(() => false);
-        
-        if (hasSubmitButton) {
-          await submitButton.click();
-          await page.waitForTimeout(500);
-          
-          // Form should still be visible (not submitted)
-          await expect(form).toBeVisible();
-        }
-      }
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPageReady(page);
+    await waitForPermissions(page);
+
+    const opportunitiesPage = new OpportunitiesPage(page);
+    const newBtnVisible = await opportunitiesPage.newButton.isVisible({ timeout: 15000 }).catch(() => false);
+    if (!newBtnVisible) {
+      test.skip(true, 'Requires enhanced mock data or real backend - New Opportunity button not visible');
     }
-    
-    // Test passes - validates submission prevention
-    expect(true).toBeTruthy();
-  });
-  
-  test('should display validation error messages', async ({ page }) => {
-    // Navigate to login page using hash-based routing with API mocks
-    await gotoHashWithMocks(page, '/login');
-    
-    // Enter invalid credentials
-    await page.locator('[data-testid="username-input"]').fill('invalid@example.com');
-    await page.locator('[data-testid="password-input"] input').fill('wrong');
-    await page.locator('[data-testid="login-button"]').click();
-    
-    // Wait for error message
-    await page.waitForTimeout(2000);
-    
-    // Look for error message
-    const errorMessages = page.locator('.p-message-error, [role="alert"], .error-message');
-    const hasError = await errorMessages.first().isVisible().catch(() => false);
-    
-    // Error message should be displayed
-    expect(hasError || true).toBeTruthy();
-  });
-  
-  test('should validate number fields accept only numbers', async ({ page }) => {
-    // Authenticate and navigate to opportunities page
-    await authenticateWithRealBackend(page, '/opportunities');
-    await page.waitForTimeout(2000);
-    
-    // Look for New Opportunity button
-    const newOpportunityButton = page.locator('[data-testid="new-opportunity-button"]');
-    const isVisible = await newOpportunityButton.isVisible().catch(() => false);
-    
-    if (isVisible) {
-      await newOpportunityButton.click();
-      await page.waitForTimeout(1000);
-      
-      // Look for number input fields
-      const numberInputs = page.locator('input[type="number"], p-inputnumber');
-      const numberCount = await numberInputs.count();
-      
-      if (numberCount > 0) {
-        const firstNumberInput = numberInputs.first();
-        const actualInput = firstNumberInput.locator('input').or(firstNumberInput);
-        
-        // Try to enter text
-        await actualInput.fill('abc');
-        
-        // Get the actual value
-        const value = await actualInput.inputValue();
-        
-        // Value should be empty or numbers only
-        expect(value === '' || /^\d+$/.test(value)).toBeTruthy();
-      }
+    await opportunitiesPage.clickNewButton();
+
+    const dialog = page.locator('[role="dialog"], .p-dialog').first();
+    await expect(dialog).toBeVisible({ timeout: 15000 });
+
+    const submitButton = dialog
+      .locator('button')
+      .filter({ hasText: /save|submit|create/i })
+      .first();
+    const submitVisible = await submitButton.isVisible({ timeout: 5000 }).catch(() => false);
+    if (!submitVisible) {
+      test.skip(true, 'Requires enhanced mock data - submit button not found in create dialog');
     }
-    
-    // Test passes - validates number input behavior
-    expect(true).toBeTruthy();
+    await submitButton.click();
+    await waitForLoadingToComplete(page);
+
+    // Dialog should remain visible (validation prevented submission) or validation errors shown
+    const dialogStillVisible = await dialog.isVisible().catch(() => false);
+    const validationErrors = dialog.locator('.p-invalid, .ng-invalid, [aria-invalid="true"], .p-message, .p-error');
+    const hasErrors = (await validationErrors.count()) > 0;
+    expect(dialogStillVisible || hasErrors).toBe(true);
   });
-  
+
+  test.skip('should display validation error messages', async ({ page }) => {
+    // Auth is cookie-based via IAP; no /login route exists in Angular app
+    await gotoWithMocks(page, '/login');
+
+    const loginPage = new LoginPage(page);
+    await loginPage.fillUsername('invalid@example.com');
+    await loginPage.fillPassword('wrong');
+    await loginPage.clickLogin();
+
+    await waitForLoadingToComplete(page);
+
+    const errorMessages = page.locator(
+      '.p-message-error, .p-message, [role="alert"], .error-message'
+    ).first();
+    await expect(errorMessages).toBeVisible({ timeout: 10000 });
+  });
+
+  test('should validate number fields accept only numbers', async ({
+    page,
+  }) => {
+    await authenticateWithRealBackend(page, '/partnerships/opportunities');
+    await waitForPageReady(page);
+    await waitForPermissions(page);
+
+    const opportunitiesPage = new OpportunitiesPage(page);
+    await expect(opportunitiesPage.newButton).toBeVisible();
+    await opportunitiesPage.clickNewButton();
+
+    const dialog = page.locator('.p-dialog').first();
+    await expect(dialog).toBeVisible({ timeout: 10000 });
+
+    const numberInputs = dialog.locator(
+      'input[type="number"], p-inputnumber input'
+    );
+    const numberCount = await numberInputs.count();
+    if (numberCount === 0) {
+      test.skip(true, 'Create opportunity dialog has no number fields');
+      return;
+    }
+
+    const firstNumberInput = numberInputs.first();
+    await firstNumberInput.fill('abc');
+
+    const value = await firstNumberInput.inputValue();
+
+    expect(value === '' || /^\d*\.?\d*$/.test(value)).toBe(true);
+  });
+
   test('should validate date fields with proper format', async ({ page }) => {
-    // Authenticate and navigate to interactions page (has date fields)
     await authenticateWithRealBackend(page, '/partnerships/interactions');
-    await page.waitForTimeout(2000);
-    
-    // Look for New Interaction button
-    const newInteractionButton = page.locator('[data-testid="new-interaction-button"]');
-    const isVisible = await newInteractionButton.isVisible().catch(() => false);
-    
-    if (isVisible) {
-      await newInteractionButton.click();
-      await page.waitForTimeout(1000);
-      
-      // Look for date input fields
-      const dateInputs = page.locator('input[type="date"], p-datepicker, p-calendar');
-      const dateCount = await dateInputs.count();
-      
-      if (dateCount > 0) {
-        // Date picker exists
-        await expect(dateInputs.first()).toBeVisible();
-        
-        // Date validation handled by PrimeNG component
-        expect(true).toBeTruthy();
-      }
-    }
-    
-    // Test passes - validates date field presence
-    expect(true).toBeTruthy();
+    await waitForPageReady(page);
+    await waitForPermissions(page);
+
+    const interactionsPage = new InteractionsPage(page);
+    const isNewVisible = await interactionsPage.isNewButtonVisible();
+    expect(isNewVisible).toBe(true);
+
+    await interactionsPage.getNewButton().click();
+    await waitForDialog(page);
+
+    const dialog = page.locator('.p-dialog').first();
+    const dateInputs = dialog.locator(
+      'input[type="date"], p-datepicker input, p-calendar input'
+    );
+    const dateCount = await dateInputs.count();
+    expect(dateCount).toBeGreaterThan(0);
+
+    await expect(dateInputs.first()).toBeVisible();
   });
-  
-  test('should clear validation errors when field is corrected', async ({ page }) => {
-    // Go to login page using hash-based routing with API mocks
-    await gotoHashWithMocks(page, '/login');
-    
-    const usernameInput = page.locator('[data-testid="username-input"]');
-    const passwordInput = page.locator('[data-testid="password-input"] input');
-    
-    // Clear fields and try to submit
+
+  test.skip('should clear validation errors when field is corrected', async ({
+    page,
+  }) => {
+    // Auth is cookie-based via IAP; no /login route exists in Angular app
+    await gotoWithMocks(page, '/login');
+
+    const usernameInput = page.getByPlaceholder(/username|email/i).first();
+    const passwordInput = page.getByPlaceholder(/password/i).first();
+
     await usernameInput.clear();
-    await page.locator('[data-testid="login-button"]').click();
-    await page.waitForTimeout(500);
-    
-    // Check if invalid
-    const isInvalid = await usernameInput.evaluate(el => 
+    await page.getByRole('button', { name: /sign in|log in|login/i }).first().click();
+    await waitForLoadingToComplete(page);
+
+    const wasInvalid = await usernameInput.evaluate((el) =>
       el.classList.contains('ng-invalid')
-    ).catch(() => false);
-    
-    // Now fill in valid data
+    );
+    expect(wasInvalid).toBe(true);
+
     await usernameInput.fill('valid@example.com');
     await passwordInput.fill('ValidPassword123!');
-    await page.waitForTimeout(500);
-    
-    // Check if valid now
-    const isValid = await usernameInput.evaluate(el => 
-      !el.classList.contains('ng-invalid') || el.classList.contains('ng-valid')
-    ).catch(() => true);
-    
-    // Validation should clear when corrected
-    expect(isValid || true).toBeTruthy();
+    await waitForLoadingToComplete(page);
+
+    const isValid = await usernameInput.evaluate(
+      (el) =>
+        !el.classList.contains('ng-invalid') ||
+        el.classList.contains('ng-valid')
+    );
+
+    expect(isValid).toBe(true);
   });
-  
+
   test('should validate form fields on blur', async ({ page }) => {
-    // Authenticate and navigate to partners page
     await authenticateWithRealBackend(page, '/partnerships/partners');
-    await page.waitForTimeout(2000);
-    
-    const newPartnerButton = page.locator('[data-testid="new-partner-button"]');
-    const isVisible = await newPartnerButton.isVisible().catch(() => false);
-    
-    if (isVisible) {
-      await newPartnerButton.click();
-      await page.waitForTimeout(1000);
-      
-      // Find first input field
-      const firstInput = page.locator('input[type="text"]').first();
-      const hasInput = await firstInput.isVisible().catch(() => false);
-      
-      if (hasInput) {
-        // Focus and blur without entering data
-        await firstInput.focus();
-        await firstInput.blur();
-        await page.waitForTimeout(300);
-        
-        // Validation may trigger on blur
-        const isInvalid = await firstInput.evaluate(el => 
-          el.classList.contains('ng-invalid') || el.classList.contains('ng-touched')
-        ).catch(() => false);
-        
-        // On blur validation should occur
-        expect(true).toBeTruthy();
-      }
-    }
-    
-    // Test passes - validates blur behavior
-    expect(true).toBeTruthy();
+    await waitForPageReady(page);
+    await waitForPermissions(page);
+
+    const partnersPage = new PartnersPage(page);
+    await expect(partnersPage.newButton).toBeVisible();
+    await partnersPage.clickNewButton();
+
+    const dialog = page.locator('.p-dialog').first();
+    const firstInput = dialog.locator('input[formcontrolname="name"], input[type="text"]').first();
+    await expect(firstInput).toBeVisible();
+
+    await firstInput.focus();
+    await firstInput.blur();
+    await waitForLoadingToComplete(page);
+
+    const isInvalidOrTouched = await firstInput.evaluate(
+      (el) =>
+        el.classList.contains('ng-invalid') || el.classList.contains('ng-touched')
+    );
+
+    expect(isInvalidOrTouched).toBe(true);
   });
-  
-  test('should disable submit button when form is invalid', async ({ page }) => {
-    // Authenticate and navigate to contacts page
+
+  test('should disable submit button when form is invalid', async ({
+    page,
+  }) => {
     await authenticateWithRealBackend(page, '/partnerships/contacts');
-    await page.waitForTimeout(2000);
-    
-    const newContactButton = page.locator('[data-testid="new-contact-button"]');
-    const isVisible = await newContactButton.isVisible().catch(() => false);
-    
-    if (isVisible) {
-      await newContactButton.click();
-      await page.waitForTimeout(1000);
-      
-      // Look for submit button
-      const submitButton = page.locator('button[type="submit"]').or(
-        page.locator('button').filter({ hasText: /save|submit/i })
-      ).first();
-      
-      const hasSubmitButton = await submitButton.isVisible().catch(() => false);
-      
-      if (hasSubmitButton) {
-        // Check if button is disabled (some forms disable submit when invalid)
-        const isDisabled = await submitButton.isDisabled().catch(() => false);
-        
-        // Button may or may not be disabled - that's ok
-        // Some forms allow submit and show validation errors instead
-        expect(true).toBeTruthy();
-      }
-    }
-    
-    // Test passes - validates button state handling
-    expect(true).toBeTruthy();
+    await waitForPageReady(page);
+    await waitForPermissions(page);
+
+    const contactsPage = new ContactsPage(page);
+    await expect(contactsPage.newButton).toBeVisible();
+    await contactsPage.clickNewButton();
+
+    const dialog = page.locator('.p-dialog').first();
+    const submitButton = dialog
+      .locator('button[type="submit"], button')
+      .filter({ hasText: /save|submit/i })
+      .first();
+    await expect(submitButton).toBeVisible();
+
+    const isDisabled = await submitButton.isDisabled().catch(() => false);
+    const validationErrors = dialog.locator(
+      '.p-invalid, .ng-invalid, [aria-invalid="true"], .p-message, .p-error, small.p-error'
+    );
+    const errorCount = await validationErrors.count();
+
+    expect(isDisabled || errorCount > 0).toBe(true);
   });
 });

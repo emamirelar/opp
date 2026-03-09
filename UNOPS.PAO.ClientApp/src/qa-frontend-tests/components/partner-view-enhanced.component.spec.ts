@@ -137,6 +137,7 @@ class MockPartnerViewEnhancedComponent {
   documents = signal<any[]>([]);
   engagements = signal<any[]>([]);
   activeTab = signal<string>('overview');
+  recordPermissions = signal<any>({ permissions: { canUpdate: true, canDelete: true, canRead: true } });
 
   setActiveTab(tab: string) {
     this.activeTab.set(tab);
@@ -157,7 +158,7 @@ describe('PartnerViewEnhancedComponent', () => {
     await TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, MockPartnerViewEnhancedComponent],
       providers: [
-        { provide: ActivatedRoute, useValue: { params: of({ id: 1 }) } }
+        { provide: ActivatedRoute, useValue: { params: of({ id: 1 }), queryParams: of({}), snapshot: { paramMap: { get: () => null } } } }
       ]
     }).compileComponents();
 

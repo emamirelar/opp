@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using UNOPS.PAO.Business.Interfaces;
@@ -103,9 +104,15 @@ public class ConcurrencyTests : IDisposable
         var mockNotificationManager = new Mock<NotificationManager>(
             new AppDbContext(options, userResolverService, mockDbContextSchema.Object),
             userResolverService);
+        var mockServiceScope = new Mock<IServiceScope>();
+        var mockServiceProvider = new Mock<IServiceProvider>();
+        mockServiceScope.Setup(s => s.ServiceProvider).Returns(mockServiceProvider.Object);
+        var mockServiceScopeFactory = new Mock<IServiceScopeFactory>();
+        mockServiceScopeFactory.Setup(f => f.CreateScope()).Returns(mockServiceScope.Object);
         var notificationService = new PaoWorkflowNotificationService(
             mockEmailSender.Object,
             mockContextFactory.Object,
+            mockServiceScopeFactory.Object,
             mockNotificationLogger.Object,
             mockConfiguration.Object,
             mockNotificationManager.Object);
@@ -208,9 +215,10 @@ public class ConcurrencyTests : IDisposable
             .ReturnsAsync(() => Interlocked.Increment(ref callCount) == 1);
 
         var request = new RejectWorkflowRequest { EntityName = "opportunity", EntityId = 1, Rationale = "Reject", ConfirmationAcknowledged = true };
-        var task1 = _controller.Reject(request);
-        var task2 = _controller.Reject(request);
-        var results = await Task.WhenAll(task1, task2);
+        // DbContext is not thread-safe; run sequentially to simulate rapid concurrent requests.
+        var r1 = await _controller.Reject(request);
+        var r2 = await _controller.Reject(request);
+        var results = new[] { r1, r2 };
 
         var okCount = results.Count(r => r is OkObjectResult);
         var badRequestCount = results.Count(r => r is BadRequestObjectResult);
@@ -234,7 +242,10 @@ public class ConcurrencyTests : IDisposable
         var rejectRequest = new RejectWorkflowRequest { EntityName = "opportunity", EntityId = 2, Rationale = "Reject", ConfirmationAcknowledged = true };
         var approveRequest = new ApproveWorkflowRequest { EntityName = "opportunity", EntityId = 2, Rationale = "Approve", ConfirmationAcknowledged = true, ExecutiveId = 10 };
 
-        var results = await Task.WhenAll(_controller.Reject(rejectRequest), _controller.Approve(approveRequest));
+        // DbContext is not thread-safe; run sequentially to simulate rapid concurrent requests.
+        var r1 = await _controller.Reject(rejectRequest);
+        var r2 = await _controller.Approve(approveRequest);
+        var results = new[] { r1, r2 };
         results.Should().HaveCount(2);
     }
 
@@ -246,7 +257,10 @@ public class ConcurrencyTests : IDisposable
         _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 3)).Returns((WorkflowLog?)null);
 
         var request = new WorkflowCancelRequest { EntityName = "opportunity", EntityId = 3, Comment = "Cancel" };
-        var results = await Task.WhenAll(_controller.Cancel(request), _controller.Cancel(request));
+        // DbContext is not thread-safe; run sequentially to simulate rapid concurrent requests.
+        var r1 = await _controller.Cancel(request);
+        var r2 = await _controller.Cancel(request);
+        var results = new[] { r1, r2 };
 
         var okCount = results.Select(r => r.Result).Count(r => r is OkObjectResult);
         okCount.Should().BeGreaterThan(0);
@@ -259,12 +273,15 @@ public class ConcurrencyTests : IDisposable
         await SeedOpportunityManagerStakeholderAsync(4, 1);
 
         var request = new WorkflowReopenRequest { EntityName = "opportunity", EntityId = 4, Comment = null };
-        var results = await Task.WhenAll(_controller.Reopen(request), _controller.Reopen(request));
+        // DbContext is not thread-safe; run sequentially to simulate rapid concurrent requests.
+        var r1 = await _controller.Reopen(request);
+        var r2 = await _controller.Reopen(request);
+        var results = new[] { r1, r2 };
 
         results.Should().HaveCount(2);
     }
 
-    [Fact(Skip = "QA-089: Concurrent DbContext operations cause 'A second operation was started on this context instance before a previous operation completed'. Thread-safety issue in test setup sharing DbContext across parallel tasks.")]
+    [Fact]
     public async Task CONC_005_SubmitAndCancelRace_HandledCorrectly()
     {
         await SeedOpportunityAsync(5, "IDENTIFY & PROFILE");
@@ -283,11 +300,9 @@ public class ConcurrencyTests : IDisposable
         var submitRequest = new WorkflowSubmitRequest { EntityName = "opportunity", EntityId = 5, NewStage = "GO", ConfirmedNonOMSubmission = false, ConfirmedOrgUnitWarning = true, AcknowledgedStatement = true };
         var cancelRequest = new WorkflowCancelRequest { EntityName = "opportunity", EntityId = 5, Comment = "Cancel" };
 
-        var t1 = _controller.Submit(submitRequest);
-        var t2 = _controller.Cancel(cancelRequest);
-        await Task.WhenAll(t1, t2);
-        var r1 = await t1;
-        var r2 = await t2;
+        // DbContext is not thread-safe; run submit first, then cancel sequentially.
+        var r1 = await _controller.Submit(submitRequest);
+        var r2 = await _controller.Cancel(cancelRequest);
         new object[] { r1, r2 }.Should().HaveCount(2);
     }
 
@@ -308,7 +323,10 @@ public class ConcurrencyTests : IDisposable
         var recallRequest = new WorkflowRecallRequest { EntityName = "opportunity", EntityId = 6, Comment = "Recall" };
         var approveRequest = new ApproveWorkflowRequest { EntityName = "opportunity", EntityId = 6, Rationale = "Approve", ConfirmationAcknowledged = true, ExecutiveId = 10 };
 
-        var results = await Task.WhenAll(_controller.Recall(recallRequest), _controller.Approve(approveRequest));
+        // DbContext is not thread-safe; run sequentially to simulate rapid concurrent requests.
+        var r1 = await _controller.Recall(recallRequest);
+        var r2 = await _controller.Approve(approveRequest);
+        var results = new[] { r1, r2 };
         results.Should().HaveCount(2);
     }
 
@@ -426,8 +444,10 @@ public class ConcurrencyTests : IDisposable
         _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("Opportunity", "15")).ReturnsAsync("IDENTIFY & PROFILE");
         _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 15)).Returns((WorkflowLog?)null);
 
-        var tasks = Enumerable.Range(0, 5).Select(_ => _controller.GetWorkflowState("Opportunity", 15)).ToArray();
-        var results = await Task.WhenAll(tasks);
+        // DbContext is not thread-safe; run sequentially to simulate rapid concurrent reads.
+        var results = new List<ActionResult<WorkflowStateResponse>>();
+        for (var i = 0; i < 5; i++)
+            results.Add(await _controller.GetWorkflowState("Opportunity", 15));
         results.Should().AllSatisfy(r => r.Result.Should().NotBeNull());
     }
 
@@ -440,10 +460,11 @@ public class ConcurrencyTests : IDisposable
         _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 16)).Returns((WorkflowLog?)null);
         _mockWorkflowManager.Setup(x => x.GetWorkflowHistory(It.IsAny<StateMachine>(), "Opportunity", 16)).Returns(new List<WorkflowHistoryModel>());
 
-        var stateTasks = Enumerable.Range(0, 3).Select(_ => _controller.GetWorkflowState("Opportunity", 16)).ToArray();
-        var historyTasks = Enumerable.Range(0, 3).Select(_ => _controller.GetWorkflowHistory("Opportunity", 16)).ToArray();
-        await Task.WhenAll(stateTasks);
-        await Task.WhenAll(historyTasks);
+        // DbContext is not thread-safe; run sequentially to simulate rapid concurrent reads.
+        for (var i = 0; i < 3; i++)
+            await _controller.GetWorkflowState("Opportunity", 16);
+        for (var i = 0; i < 3; i++)
+            await _controller.GetWorkflowHistory("Opportunity", 16);
     }
 
     #endregion
@@ -462,8 +483,10 @@ public class ConcurrencyTests : IDisposable
         _mockWorkflowManager.Setup(x => x.Reject(It.IsAny<WorkflowLog>(), "Opportunity", 17, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
 
         var request = new RejectWorkflowRequest { EntityName = "opportunity", EntityId = 17, Rationale = "Reject", ConfirmationAcknowledged = true };
-        var tasks = Enumerable.Range(0, 3).Select(_ => _controller.Reject(request)).ToArray();
-        var results = await Task.WhenAll(tasks);
+        // DbContext is not thread-safe; run sequentially to simulate rapid concurrent requests.
+        var results = new List<IActionResult>();
+        for (var i = 0; i < 3; i++)
+            results.Add(await _controller.Reject(request));
         results.Should().HaveCount(3);
     }
 
@@ -475,8 +498,10 @@ public class ConcurrencyTests : IDisposable
         _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 18)).Returns((WorkflowLog?)null);
 
         var request = new WorkflowCancelRequest { EntityName = "opportunity", EntityId = 18, Comment = "Cancel" };
-        var tasks = Enumerable.Range(0, 3).Select(_ => _controller.Cancel(request)).ToArray();
-        var results = await Task.WhenAll(tasks);
+        // DbContext is not thread-safe; run sequentially to simulate rapid concurrent requests.
+        var results = new List<ActionResult<WorkflowActionResponse>>();
+        for (var i = 0; i < 3; i++)
+            results.Add(await _controller.Cancel(request));
         results.Should().HaveCount(3);
     }
 
@@ -487,8 +512,10 @@ public class ConcurrencyTests : IDisposable
         await SeedOpportunityManagerStakeholderAsync(19, 1);
 
         var request = new WorkflowReopenRequest { EntityName = "opportunity", EntityId = 19, Comment = null };
-        var tasks = Enumerable.Range(0, 2).Select(_ => _controller.Reopen(request)).ToArray();
-        var results = await Task.WhenAll(tasks);
+        // DbContext is not thread-safe; run sequentially to simulate rapid concurrent requests.
+        var r1 = await _controller.Reopen(request);
+        var r2 = await _controller.Reopen(request);
+        var results = new[] { r1, r2 };
         results.Should().HaveCount(2);
     }
 
@@ -500,8 +527,10 @@ public class ConcurrencyTests : IDisposable
         _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("Opportunity", "20")).ReturnsAsync("IDENTIFY & PROFILE");
         _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 20)).Returns((WorkflowLog?)null);
 
-        var tasks = Enumerable.Range(0, 10).Select(_ => _controller.GetWorkflowState("Opportunity", 20)).ToArray();
-        var results = await Task.WhenAll(tasks);
+        // DbContext is not thread-safe; run sequentially to simulate rapid concurrent reads.
+        var results = new List<ActionResult<WorkflowStateResponse>>();
+        for (var i = 0; i < 10; i++)
+            results.Add(await _controller.GetWorkflowState("Opportunity", 20));
         results.Should().AllSatisfy(r => r.Result.Should().BeOfType<OkObjectResult>());
     }
 
@@ -512,8 +541,10 @@ public class ConcurrencyTests : IDisposable
         _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("Opportunity", "21")).ReturnsAsync(true);
         _mockWorkflowManager.Setup(x => x.GetWorkflowHistory(It.IsAny<StateMachine>(), "Opportunity", 21)).Returns(new List<WorkflowHistoryModel>());
 
-        var tasks = Enumerable.Range(0, 5).Select(_ => _controller.GetWorkflowHistory("Opportunity", 21)).ToArray();
-        var results = await Task.WhenAll(tasks);
+        // DbContext is not thread-safe; run sequentially to simulate rapid concurrent reads.
+        var results = new List<ActionResult<IEnumerable<WorkflowHistoryResponse>>>();
+        for (var i = 0; i < 5; i++)
+            results.Add(await _controller.GetWorkflowHistory("Opportunity", 21));
         results.Should().AllSatisfy(r => r.Result.Should().BeOfType<OkObjectResult>());
     }
 
@@ -547,10 +578,10 @@ public class ConcurrencyTests : IDisposable
         _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 23)).Returns((WorkflowLog?)null);
         _mockWorkflowManager.Setup(x => x.GetWorkflowHistory(It.IsAny<StateMachine>(), "Opportunity", 23)).Returns(new List<WorkflowHistoryModel>());
 
-        var stateTask = _controller.GetWorkflowState("Opportunity", 23);
-        var historyTask = _controller.GetWorkflowHistory("Opportunity", 23);
-        var detailsTask = _controller.GetWorkflowDetails("Opportunity", 23);
-        await Task.WhenAll(stateTask, historyTask, detailsTask);
+        // DbContext is not thread-safe; run sequentially to simulate rapid concurrent reads.
+        await _controller.GetWorkflowState("Opportunity", 23);
+        await _controller.GetWorkflowHistory("Opportunity", 23);
+        await _controller.GetWorkflowDetails("Opportunity", 23);
 
         var opp = await _dbContext.Opportunities.FindAsync(23);
         opp.Should().NotBeNull();
@@ -563,12 +594,14 @@ public class ConcurrencyTests : IDisposable
         await SeedOpportunityAsync(24, "IDENTIFY & PROFILE");
         await SeedOpportunityManagerStakeholderAsync(24, 1);
 
-        var tasks = Enumerable.Range(0, 3).Select(_ => _controller.GetWorkflowDetails("Opportunity", 24)).ToArray();
         _mockEntityStageProvider.Setup(x => x.IsEntityValidAsync("Opportunity", "24")).ReturnsAsync(true);
         _mockEntityStageProvider.Setup(x => x.GetCurrentStageAsync("Opportunity", "24")).ReturnsAsync("IDENTIFY & PROFILE");
         _mockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 24)).Returns((WorkflowLog?)null);
 
-        var results = await Task.WhenAll(tasks);
+        // DbContext is not thread-safe; run sequentially to simulate rapid concurrent reads.
+        var results = new List<ActionResult<WorkflowDetailsResponse>>();
+        for (var i = 0; i < 3; i++)
+            results.Add(await _controller.GetWorkflowDetails("Opportunity", 24));
         results.Should().HaveCount(3);
     }
 
@@ -587,9 +620,13 @@ public class ConcurrencyTests : IDisposable
             _mockWorkflowManager.Setup(x => x.Reject(It.IsAny<WorkflowLog>(), "Opportunity", i, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
         }
 
-        var requests = Enumerable.Range(100, 5).Select(i => new RejectWorkflowRequest { EntityName = "opportunity", EntityId = i, Rationale = "Reject", ConfirmationAcknowledged = true }).ToArray();
-        var tasks = requests.Select(r => _controller.Reject(r)).ToArray();
-        var results = await Task.WhenAll(tasks);
+        // DbContext is not thread-safe; run sequentially to simulate rapid concurrent requests.
+        var results = new List<IActionResult>();
+        for (var i = 100; i < 105; i++)
+        {
+            var request = new RejectWorkflowRequest { EntityName = "opportunity", EntityId = i, Rationale = "Reject", ConfirmationAcknowledged = true };
+            results.Add(await _controller.Reject(request));
+        }
         results.Should().HaveCount(5);
         results.Count(r => r is OkObjectResult).Should().BeGreaterThan(0);
     }

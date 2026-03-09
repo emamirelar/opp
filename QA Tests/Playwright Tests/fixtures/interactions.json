@@ -1,0 +1,39 @@
+{
+  "list": {
+    "records": [
+      { "id": 1, "subject": "Quarterly Partnership Review", "type": "Meeting", "status": "Completed", "date": "2024-06-15T10:00:00Z", "partner": { "id": 1, "name": "UNICEF Regional Office" }, "createdDate": "2024-06-10T00:00:00Z" },
+      { "id": 2, "subject": "Follow-up Call on Project Scope", "type": "Call", "status": "Completed", "date": "2024-07-01T14:00:00Z", "partner": { "id": 2, "name": "Red Cross International" }, "createdDate": "2024-06-28T00:00:00Z" },
+      { "id": 3, "subject": "Technical Assessment Visit", "type": "Visit", "status": "Scheduled", "date": "2024-08-15T09:00:00Z", "partner": { "id": 3, "name": "World Bank Group" }, "createdDate": "2024-07-20T00:00:00Z" }
+    ],
+    "totalCount": 3
+  },
+  "search": {
+    "records": [
+      { "id": 1, "subject": "Quarterly Partnership Review", "type": "Meeting", "status": "Completed", "date": "2024-06-15T10:00:00Z", "partner": { "id": 1, "name": "UNICEF Regional Office" }, "createdDate": "2024-06-10T00:00:00Z" }
+    ],
+    "totalCount": 1
+  },
+  "detail": {
+    "id": 1,
+    "subject": "Test Interaction",
+    "description": "This is a test interaction for E2E testing",
+    "type": "Meeting",
+    "date": "2024-06-15T10:00:00Z",
+    "duration": 60,
+    "status": "Completed",
+    "partner": { "id": 1, "name": "Test Partner Organization" },
+    "contacts": [
+      { "id": 1, "firstName": "John", "lastName": "Smith", "email": "john@test.com" }
+    ],
+    "createdDate": "2024-01-01T00:00:00Z",
+    "lastModifiedDate": "2024-06-15T12:00:00Z"
+  },
+  "partnerInteractions": [
+    { "id": 1, "subject": "Initial Engagement Meeting", "type": "Meeting", "date": "2024-06-15T10:00:00Z" },
+    { "id": 2, "subject": "Follow-up Call", "type": "Call", "date": "2024-07-01T14:00:00Z" }
+  ],
+  "interactionsBrief": [
+    { "id": 1, "subject": "Initial Engagement Meeting", "partnerId": 1, "partnerName": "UNICEF Regional Office" },
+    { "id": 2, "subject": "Follow-up Call", "partnerId": 2, "partnerName": "Red Cross International" }
+  ]
+}

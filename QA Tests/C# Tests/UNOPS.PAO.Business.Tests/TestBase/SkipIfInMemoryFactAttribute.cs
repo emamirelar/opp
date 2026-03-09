@@ -76,3 +76,20 @@ public sealed class SkipIfNotPostgreSQLTheoryAttribute : TheoryAttribute
         }
     }
 }
+
+/// <summary>
+/// Custom xUnit [Fact] attribute that skips when using PostgreSQL (shared database).
+/// Use for tests that require an isolated database and make assertions about exact counts
+/// or absence of data — with PostgreSQL, tests share the same DB and see each other's data.
+/// Run with USE_INMEMORY_DB=true for full suite execution.
+/// </summary>
+public sealed class SkipIfPostgreSQLFactAttribute : FactAttribute
+{
+    public SkipIfPostgreSQLFactAttribute()
+    {
+        if (TestEnvironment.UsePostgreSQL)
+        {
+            Skip = "Requires isolated database (USE_INMEMORY_DB=true). PostgreSQL uses shared DB; test data from other tests affects assertions.";
+        }
+    }
+}

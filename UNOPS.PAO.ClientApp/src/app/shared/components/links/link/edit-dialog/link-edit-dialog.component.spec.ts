@@ -2,6 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LinkEditDialogComponent } from './link-edit-dialog.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { EntityType } from '../../../../models/link.model';
+import LinkDataService from '../link-data.service';
+
+const mockLinkDataService = jasmine.createSpyObj('LinkDataService', ['saveLink', 'deleteLink']);
 
 describe('LinkEditDialogComponent', () => {
   let component: LinkEditDialogComponent;
@@ -12,6 +15,9 @@ describe('LinkEditDialogComponent', () => {
       imports: [
         LinkEditDialogComponent,
         TranslateModule.forRoot()
+      ],
+      providers: [
+        { provide: LinkDataService, useValue: mockLinkDataService }
       ]
     })
     .compileComponents();

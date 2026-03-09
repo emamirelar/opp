@@ -18,6 +18,8 @@
  *   - interaction-contacts-section, interaction-partners-section
  * 
  * @created 2026-02-12
+ *
+ * @tests 24
  */
 
 import { test, expect } from '@playwright/test';
@@ -187,7 +189,7 @@ test.describe('Interaction Detail Page', () => {
     expect(typeof isVisible).toBe('boolean');
     
     if (isVisible) {
-      await interactionItemPage.assertElementVisible('edit-interaction-button');
+      await expect(interactionItemPage.editButton).toBeVisible();
     }
   });
   
@@ -202,7 +204,7 @@ test.describe('Interaction Detail Page', () => {
     expect(typeof isVisible).toBe('boolean');
     
     if (isVisible) {
-      await interactionItemPage.assertElementVisible('delete-interaction-button');
+      await expect(interactionItemPage.deleteButton).toBeVisible();
     }
   });
   
@@ -243,7 +245,7 @@ test.describe('Interaction Detail Page', () => {
     expect(typeof isVisible).toBe('boolean');
     
     if (isVisible) {
-      await interactionItemPage.assertElementVisible('create-opportunity-button');
+      await expect(interactionItemPage.createOpportunityButton).toBeVisible();
     }
   });
   

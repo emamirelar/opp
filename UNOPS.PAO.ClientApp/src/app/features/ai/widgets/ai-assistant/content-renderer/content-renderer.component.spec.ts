@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ContentRendererComponent } from './content-renderer.component';
+import { MarkdownService } from 'ngx-markdown';
+import { of } from 'rxjs';
 
 describe('ContentRendererComponent', () => {
   let component: ContentRendererComponent;
@@ -7,7 +9,17 @@ describe('ContentRendererComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ContentRendererComponent]
+      imports: [ContentRendererComponent],
+      providers: [
+        {
+          provide: MarkdownService,
+          useValue: {
+            parse: () => '',
+            compile: () => '',
+            reload$: of(null) // MarkdownModule/MarkdownComponent uses reload$.pipe()
+          }
+        }
+      ]
     })
     .compileComponents();
 

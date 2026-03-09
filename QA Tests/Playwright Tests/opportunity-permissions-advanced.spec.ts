@@ -7,11 +7,12 @@
  *
  * @author UNOPS Opportunity+ QA Team
  * @see https://unops.atlassian.net/browse/PNO-OPP-PERMS
+ * @tests 18
  */
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
-import { waitForPermissions } from './helpers/wait.helper';
+import { waitForPermissions, waitForLoadingToComplete } from './helpers/wait.helper';
 
 const featureReady = process.env.OPPORTUNITY_PERMISSIONS_IMPLEMENTED === 'true';
 
@@ -225,7 +226,7 @@ test.describe('Permissions — Other User Roles', () => {
   test('PERM-018: Viewer cannot see create button on list page', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/opportunities', VIEWER_USER);
     await waitForPermissions(page);
-    await page.waitForTimeout(3000);
+    await waitForLoadingToComplete(page);
 
     const newBtn = page.locator('[data-testid="new-opportunity-button"]');
     await expect(newBtn).not.toBeVisible({ timeout: 5000 });

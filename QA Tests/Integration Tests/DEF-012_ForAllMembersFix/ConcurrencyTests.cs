@@ -60,7 +60,7 @@ public class ConcurrencyTests
 
     [Fact]
     [Trait("DEF012", "CONC_002")]
-    public void CONC_002_TwoThreadsMapToSameDestType()
+    public async Task CONC_002_TwoThreadsMapToSameDestType()
     {
         var tasks = Enumerable.Range(0, 2).Select(_ => Task.Run(() =>
         {
@@ -68,8 +68,8 @@ public class ConcurrencyTests
             _mapper.Map(new UpdateOpportunityRequest { Id = 10, Name = "T" }, d);
             return d.Name;
         })).ToArray();
-        Task.WaitAll(tasks);
-        tasks.Select(t => t.Result).Should().OnlyContain(n => n == "T");
+        var results = await Task.WhenAll(tasks);
+        results.Should().OnlyContain(n => n == "T");
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public class ConcurrencyTests
 
     [Fact]
     [Trait("DEF012", "CONC_004")]
-    public void CONC_004_ParallelMapWithSharedMapper()
+    public async Task CONC_004_ParallelMapWithSharedMapper()
     {
         var count = 20;
         var tasks = Enumerable.Range(0, count).Select(i => Task.Run(() =>
@@ -99,8 +99,7 @@ public class ConcurrencyTests
             _mapper.Map(new UpdateOpportunityRequest { Id = 10, Name = $"N{i}" }, d);
             return d.Name;
         })).ToArray();
-        Task.WaitAll(tasks);
-        var names = tasks.Select(t => t.Result).ToList();
+        var names = (await Task.WhenAll(tasks)).ToList();
         names.Should().HaveCount(count);
         names.Should().OnlyHaveUniqueItems();
     }
@@ -115,7 +114,9 @@ public class ConcurrencyTests
         dest.Name.Should().Be("Seq49");
     }
 
-    [Fact(Skip = "DEF-023: AutoMapper throws DuplicateTypeMapConfigurationException — duplicate CreateMap calls across profiles")]
+    [Fact]
+
+    [Trait("Defect", "DEF-023")]
     [Trait("DEF012", "CONC_006")]
     public void CONC_006_MapDuringConfigValidation()
     {
@@ -158,7 +159,7 @@ public class ConcurrencyTests
 
     [Fact]
     [Trait("DEF012", "CONC_009")]
-    public void CONC_009_Mapper_IsThreadSafe()
+    public async Task CONC_009_Mapper_IsThreadSafe()
     {
         var tasks = Enumerable.Range(0, 20).Select(i => Task.Run(() =>
         {
@@ -166,8 +167,8 @@ public class ConcurrencyTests
             _mapper.Map(new UpdateOpportunityRequest { Id = 10, Name = $"T{i}" }, d);
             return d.Name;
         })).ToArray();
-        Task.WaitAll(tasks);
-        tasks.Select(t => t.Result).Should().HaveCount(20);
+        var results = await Task.WhenAll(tasks);
+        results.Should().HaveCount(20);
     }
 
     [Fact]
@@ -208,7 +209,7 @@ public class ConcurrencyTests
 
     [Fact]
     [Trait("DEF012", "CONC_013")]
-    public void CONC_013_Destination_NotCorruptedByParallelMap()
+    public async Task CONC_013_Destination_NotCorruptedByParallelMap()
     {
         var dest = CreateOpportunity();
         var tasks = Enumerable.Range(0, 5).Select(_ => Task.Run(() =>
@@ -217,11 +218,13 @@ public class ConcurrencyTests
             _mapper.Map(new UpdateOpportunityRequest { Id = 10, Name = "P" }, d);
             return d;
         })).ToArray();
-        Task.WaitAll(tasks);
-        tasks.Select(t => t.Result).Should().OnlyContain(d => d.Name == "P");
+        var results = await Task.WhenAll(tasks);
+        results.Should().OnlyContain(d => d.Name == "P");
     }
 
-    [Fact(Skip = "DEF-023: AutoMapper maps FundingPartners — collection ignore rule not configured")]
+    [Fact]
+
+    [Trait("Defect", "DEF-023")]
     [Trait("DEF012", "CONC_014")]
     public void CONC_014_CollectionIgnore_UnderConcurrency()
     {

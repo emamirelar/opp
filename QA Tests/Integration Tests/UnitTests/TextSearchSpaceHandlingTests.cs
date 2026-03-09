@@ -95,7 +95,7 @@ public class TextSearchSpaceHandlingTests
     [InlineData("   ")] // Seulement des espaces
     [InlineData("\t\n\r")] // Seulement des caractères blancs
     [InlineData(null)] // Null
-    public void PartnerSearch_WithEmptyOrWhitespace_ShouldReturnAll(string searchText)
+    public void PartnerSearch_WithEmptyOrWhitespace_ShouldReturnAll(string? searchText)
     {
         // Arrange
         var partners = GetTestPartners();
