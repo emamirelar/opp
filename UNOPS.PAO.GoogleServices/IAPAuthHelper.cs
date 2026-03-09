@@ -272,7 +272,10 @@ public class IAPAuthHelper
         {
             // Use Google Secret Manager to retrieve the API key
             var client = SecretManagerServiceClient.Create();
-            var secretName = new SecretVersionName(_credential.QuotaProject ?? "unops-partneropportunity", 
+            // Extract project from service account email (e.g. pno-ai-service@unops-opportunityplus-dev.iam.gserviceaccount.com -> unops-opportunityplus-dev)
+            var projectId = _credential.QuotaProject ?? ExtractProjectFromServiceAccount(_settings.ServiceAccount)
+                ?? throw new InvalidOperationException("Cannot determine GCP project for Secret Manager. Set QuotaProject on credentials or use a service account email in format name@project.iam.gserviceaccount.com");
+            var secretName = new SecretVersionName(projectId, 
                 _settings.IdentityToolkitApiKeySecret, "latest");
             
             var response = await client.AccessSecretVersionAsync(secretName);
@@ -290,6 +293,21 @@ public class IAPAuthHelper
             _logger.LogError(ex, "❌ Error retrieving Identity Toolkit API key from Secret Manager");
             throw;
         }
+    }
+
+    /// <summary>
+    /// Extract GCP project ID from service account email (e.g. name@project.iam.gserviceaccount.com -> project)
+    /// </summary>
+    private static string? ExtractProjectFromServiceAccount(string? serviceAccount)
+    {
+        if (string.IsNullOrEmpty(serviceAccount) || !serviceAccount.Contains('@'))
+            return null;
+        var atIndex = serviceAccount.IndexOf('@');
+        var suffix = ".iam.gserviceaccount.com";
+        var endIndex = serviceAccount.IndexOf(suffix, StringComparison.OrdinalIgnoreCase);
+        if (endIndex < 0)
+            return null;
+        return serviceAccount.Substring(atIndex + 1, endIndex - atIndex - 1);
     }
 
     /// <summary>

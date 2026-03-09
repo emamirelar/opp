@@ -25,6 +25,11 @@ export function authInterceptor(
   // Without it, IAP may return 302 redirect instead of 401, causing CORS errors.
   headers['X-Requested-With'] = 'XMLHttpRequest';
 
+  // Ensure UTF-8 encoding for API responses (fixes accented characters like Ángel María displaying as ??)
+  if (request.url.startsWith('/api') || request.url.includes('/api/')) {
+    headers['Accept-Charset'] = 'utf-8';
+  }
+
   if (devCookie && request.url.startsWith('/api')) {
     headers['X-Using-Dev-Cookie'] = 'true';
   }
