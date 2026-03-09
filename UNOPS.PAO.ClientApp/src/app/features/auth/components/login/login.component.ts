@@ -12,6 +12,7 @@ import { AuthService } from '@core/services/auth';
 import { SignUpComponent } from '../sign-up/sign-up.component';
 import { NgIf } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { IapStatusComponent } from '@app/shared/components/feedback/iap-status/iap-status.component';
 
 @Component({
@@ -104,6 +105,16 @@ export class LoginComponent implements OnInit {
     // Direct check for IAP simulation headers with simple timeout
     this.authService.getAuthInfo().subscribe({
       next: (authInfo) => {
+        if (authInfo instanceof HttpErrorResponse) {
+          this.isIapAuthenticated = false;
+          this.canShowPrimitiveLoginOption = true;
+          this.canShowOAuthLoginComponent = true;
+          this.canDoSignUp = true;
+          this.checkingAuthentication = false;
+          sessionStorage.setItem('login_iap_check_active', 'false');
+          return;
+        }
+
         // Check if we have IAP headers
         const hasIapHeaders = authInfo && authInfo.hasIapEmailHeader;
         
