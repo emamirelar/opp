@@ -179,7 +179,7 @@ public abstract class BaseUNOPSManager
                           user.Identity?.Name;
 
         // Extract email from identity provider format if needed
-        // Format: "securetoken.google.com/unops-partneropportunity:email@domain.com"
+        // Format: "securetoken.google.com/unops-opportunityplus-dev:email@domain.com"
         if (!string.IsNullOrEmpty(userEmail) && userEmail.Contains(':'))
         {
             var emailParts = userEmail.Split(':');
