@@ -21,8 +21,6 @@ export function authInterceptor(
     // Google IAP: X-Requested-With tells IAP the request is from JavaScript (AJAX).
     // Without it, IAP may return 302 redirect instead of 401, causing CORS errors.
     'X-Requested-With': 'XMLHttpRequest',
-    // Ensure API responses use UTF-8 for accented characters (e.g. Ángel María)
-    'Accept-Charset': 'utf-8',
   };
 
   if (devCookie && request.url.startsWith('/api')) {
