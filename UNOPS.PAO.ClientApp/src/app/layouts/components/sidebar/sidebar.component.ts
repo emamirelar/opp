@@ -20,6 +20,7 @@ import { RouterModule} from '@angular/router';
 
 import {ButtonModule} from 'primeng/button';
 import {GlobalFilterService} from '@core/services/filters';
+import {LayoutService} from '@layouts/services/layout.service';
 
 
 @Component({
@@ -32,6 +33,7 @@ import {GlobalFilterService} from '@core/services/filters';
 })
 export class SidebarComponent implements OnInit, OnDestroy {
   private globalFilterService = inject(GlobalFilterService);
+  private layoutService = inject(LayoutService);
 
 
   constructor(
@@ -188,6 +190,15 @@ export class SidebarComponent implements OnInit, OnDestroy {
         items: adminItems
       }
     ] : [];
+  }
+
+  closeSidebar(): void {
+    this.layoutService.layoutState.update((prev) => ({
+      ...prev,
+      overlayMenuActive: false,
+      staticMenuMobileActive: false,
+      menuHoverActive: false
+    }));
   }
 
   ngOnInit() {

@@ -442,6 +442,25 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return result;
         }
 
+        /// <summary>
+        /// Extracts the raw JSON text from a Gemini API response (the AI's output before parsing).
+        /// </summary>
+        public string GetExtractedJsonTextFromGeminiResponse(string modelResponse)
+        {
+            if (string.IsNullOrEmpty(modelResponse)) return string.Empty;
+            try
+            {
+                var json = JObject.Parse(modelResponse);
+                var text = json["candidates"]?[0]?["content"]?["parts"]?[0]?["text"]?.ToString();
+                if (string.IsNullOrEmpty(text)) return string.Empty;
+                return text.Replace("```json", "").Replace("```", "").Trim();
+            }
+            catch
+            {
+                return modelResponse;
+            }
+        }
+
         public JObject GetDetailsFromGeminiResponse(string modelResponse)
         {
             JObject json = JObject.Parse(modelResponse);
@@ -3252,6 +3271,44 @@ Keywords:";
                 }
             }
             
+            // SDG-specific post-processing
+            if (dependent.Equals("sdGs", StringComparison.OrdinalIgnoreCase) && objectsArray.Count >= 1)
+            {
+                // Fallback: if AI didn't mark any as primary (e.g. returned strings or omitted isPrimary),
+                // treat the first SDG as primary (AI typically lists the main SDG first)
+                var anyPrimary = objectsArray.OfType<JObject>().Any(o => o["isPrimary"]?.Value<bool>() ?? false);
+                if (!anyPrimary)
+                {
+                    var first = objectsArray[0] as JObject;
+                    if (first != null)
+                        first["isPrimary"] = true;
+                }
+            }
+
+            // Deduplicate SDGs by sdgId (AI may return "Goal 4" and "Quality Education" - both resolve to same SDG)
+            // When duplicate, prefer the one with isPrimary: true; preserve first-occurrence order
+            if (dependent.Equals("sdGs", StringComparison.OrdinalIgnoreCase) && objectsArray.Count > 1)
+            {
+                var byId = new Dictionary<int, JObject>();
+                var order = new List<int>();
+                foreach (var item in objectsArray.OfType<JObject>())
+                {
+                    var sdgId = item["sdgId"]?.Value<int>();
+                    if (!sdgId.HasValue) continue;
+                    var isPrimary = item["isPrimary"]?.Value<bool>() ?? false;
+                    if (!byId.TryGetValue(sdgId.Value, out var existing))
+                    {
+                        byId[sdgId.Value] = item;
+                        order.Add(sdgId.Value);
+                    }
+                    else if (isPrimary && !(existing["isPrimary"]?.Value<bool>() ?? false))
+                    {
+                        byId[sdgId.Value] = item;
+                    }
+                }
+                return new JArray(order.Select(id => byId[id]));
+            }
+            
             return objectsArray;
         }
         
@@ -3408,10 +3465,13 @@ Keywords:";
                 }
 
                 // When we have sdgNumber (1-17), use direct lookup by SDGNumber
+                // DB stores SDGNumber as "Goal 1", "Goal 4", etc. (see SDGSeeder) - try both formats
                 if (aiSdgNumber.HasValue && aiSdgNumber.Value >= 1 && aiSdgNumber.Value <= 17)
                 {
+                    var numStr = aiSdgNumber.Value.ToString();
+                    var goalStr = $"Goal {aiSdgNumber.Value}";
                     var sdgByNumber = await _context.SDGs
-                        .Where(s => s.SDGNumber == aiSdgNumber.Value.ToString())
+                        .Where(s => s.SDGNumber == numStr || s.SDGNumber == goalStr)
                         .Select(s => new { s.Id, s.SDGNumber, s.Name })
                         .FirstOrDefaultAsync();
 
