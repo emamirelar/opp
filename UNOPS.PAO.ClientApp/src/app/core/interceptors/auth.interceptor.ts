@@ -4,7 +4,7 @@ import {
   HttpHandlerFn,
   HttpRequest,
 } from '@angular/common/http';
-import { Observable, of, catchError } from 'rxjs';
+import { Observable, throwError, catchError } from 'rxjs';
 import { Router } from '@angular/router';
 import { inject } from '@angular/core';
 
@@ -49,22 +49,16 @@ export function authInterceptor(
             }
             
             // Return the error for dev cookie case
-            return of(error);
+            return throwError(() => error);
           } else if (!router.url.includes('/login')) {
-            // Not using dev authentication, navigate to login
             router.navigate(['login']);
-            return of(error);
+            return throwError(() => error);
           }
-          return of(error);
-        } else if (error.status === 403) {
-          console.error('[AUTH-INTERCEPTOR] Access forbidden. You do not have permission to access this resource.');
-          // Optional: Navigate to a custom forbidden page
-          // router.navigate(['forbidden']);
+          return throwError(() => error);
         }
       }
       
-      // Re-throw the error for other interceptors
-      return of(error);
+      return throwError(() => error);
     })
   );
 }
