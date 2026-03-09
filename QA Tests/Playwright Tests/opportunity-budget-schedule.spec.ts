@@ -10,6 +10,8 @@
  * Schedule includes start/end dates, milestones, duration.
  *
  * All tests are EXECUTABLE - no skips.
+ *
+ * @tests 13
  */
 
 import { test, expect } from '@playwright/test';

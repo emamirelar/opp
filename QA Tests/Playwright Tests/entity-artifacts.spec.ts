@@ -8,6 +8,8 @@
  * Admin pages are accessible at:
  * - /admin/entity-artifacts
  * - /admin/bulk-entity-artifacts
+ *
+ * @tests 13
  */
 
 import { test, expect } from '@playwright/test';

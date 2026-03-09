@@ -284,8 +284,8 @@ public class LinkManagerPerformanceTests : PerformanceTestBase
     #region Concurrent Access Performance (min 3)
 
     [Fact]
-
     [Trait("Defect", "DEF-083")]
+    [Trait("Defect", "QA-020")]
     public async Task ConcurrentReads_50ParallelGetLink_MaintainsPerformance()
     {
         var link = await SeedLinkAsync();
@@ -304,8 +304,8 @@ public class LinkManagerPerformanceTests : PerformanceTestBase
     }
 
     [Fact]
-
     [Trait("Defect", "DEF-083")]
+    [Trait("Defect", "QA-020")]
     public async Task ConcurrentReads_20ParallelGetEntityLinks_MaintainsPerformance()
     {
         var (entityType, entityId) = await SeedLinksForEntityAsync(LinkEntityType.Partner, 50);
@@ -325,8 +325,8 @@ public class LinkManagerPerformanceTests : PerformanceTestBase
     }
 
     [Fact]
-
     [Trait("Defect", "DEF-083")]
+    [Trait("Defect", "QA-020")]
     public async Task ConcurrentMixedReadWrite_PerformanceStable()
     {
         var (entityType, entityId) = await SeedLinksForEntityAsync(LinkEntityType.Partner, 30);

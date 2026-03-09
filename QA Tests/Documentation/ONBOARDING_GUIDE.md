@@ -1,7 +1,7 @@
 # Onboarding Guide — Joining a Shift-Left Team
 
-**Version:** 1.0  
-**Date:** March 5, 2026  
+**Version:** 1.2  
+**Date:** March 9, 2026  
 **Status:** Active  
 **Audience:** New QA testers joining the team; new developers who need to understand how to work with QA in the shift-left model  
 **Prerequisites:** Read the [Shift-Left Testing Manifesto](SHIFT_LEFT_TESTING_MANIFESTO.md) first. It explains what shift-left means, who does what, and why.
@@ -62,8 +62,8 @@ Your questions are valuable. Every question that cannot be answered by existing 
 | 1   | Read the Shift-Left Manifesto (Sections 1-3)                    | Understand the testing pyramid and who does what |
 | 2   | Read the QA Tester Playbook (Sections 1-3)                      | Understand the QA lifecycle            |
 | 2   | Read the Playwright Quickstart (Sections 1-4)                   | Understand what Playwright is and how tests work |
-| 3   | **Early win:** Run the Playwright test suite locally and screenshot the results | Confidence that the environment works |
-| 3   | **Early win:** Run `dotnet test --filter "Category=Smoke"` and screenshot results | Familiarity with the C# test runner   |
+| 3   | **Early win:** Run the Playwright test suite locally and screenshot the results (~1,629 tests across 108 specs) | Confidence that the environment works |
+| 3   | **Early win:** Run `dotnet test --filter "Category=Smoke"` and screenshot results (~10,040 total C# test methods) | Familiarity with the C# test runner   |
 | 4   | Walk through the application with buddy — all main features     | Mental map of the product              |
 | 5   | Review one recent Jira story end-to-end: ticket, PR, tests, deployment | Understand the full workflow         |
 
@@ -428,8 +428,8 @@ The QA Lead or manager uses this template for the Day 30 check-in:
 | QA Tester Playbook                | `QA Tests/Documentation/QA_TESTER_PLAYBOOK.md`             | Day-to-day QA practices, test categories, templates |
 | Playwright Quickstart for Testers | `QA Tests/Playwright Tests/QUICKSTART_FOR_TESTERS.md`      | Playwright setup, running tests, writing tests |
 | Testing Structure                 | `QA Tests/Documentation/TESTING_STRUCTURE.md`              | Where tests live in the repository (test counts, CI pipeline) |
-| Defect List for Developers        | `QA Tests/Defect List for Developers.md`                   | Production code defects (DEF-XXX) — ~48 open |
-| Defect List for QA                | `QA Tests/Defect List for QA.md`                           | Test infrastructure issues (QA-XXX) — ~13 active |
+| Defect List for Developers        | `QA Tests/Defect List for Developers.md`                   | Production code defects (DEF-XXX) — ~135 open |
+| Defect List for QA                | `QA Tests/Defect List for QA.md`                           | Test infrastructure issues (QA-XXX) — ~11 active |
 
 ---
 
@@ -439,3 +439,4 @@ The QA Lead or manager uses this template for the Day 30 check-in:
 |---------|------------|------------|----------------------------|
 | 1.0     | 2026-03-05 | QA Lead    | Initial version — extracted and expanded from Shift-Left Manifesto Appendix E |
 | 1.1     | 2026-03-06 | QA Lead    | Updated Related Documents with Scorecard, Action Items, and current defect counts |
+| 1.2     | 2026-03-09 | QA Lead    | Updated test counts (10,040 C# methods, 1,629 Playwright tests). Updated defect counts (135 open DEF, 11 active QA). Added test data infrastructure context (TestEntityBuilder, Bogus, JSON fixtures, workflow-mocks.helper). |

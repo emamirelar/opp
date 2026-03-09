@@ -1,7 +1,7 @@
 # Shift-Left Testing Scorecard — Measuring Success
 
-**Version:** 1.0  
-**Date:** March 6, 2026  
+**Version:** 1.1  
+**Date:** March 9, 2026  
 **Status:** Living document — update each sprint  
 **Audience:** QA Lead, Engineering Lead, Scrum Masters, Engineering Leadership  
 **Companion to:** [Shift-Left Testing Manifesto](SHIFT_LEFT_TESTING_MANIFESTO.md)
@@ -143,11 +143,12 @@ Process indicators tell you if the *behaviors* are changing — are devs and QAs
 | Metric | How to Measure | Target |
 |---|---|---|
 | E2E test coverage by feature | Features with Playwright specs / total features | Increasing toward 100% |
-| Playwright test count | Total `*.spec.ts` test count in `QA Tests/Playwright Tests/` | Increasing trend |
+| Playwright test count | Total `*.spec.ts` test count in `QA Tests/Playwright Tests/` (baseline: 108 specs / 1,629 tests) | Increasing trend |
 | E2E suite execution time | CI pipeline duration for Playwright job | <30 minutes |
 | Flaky test rate | Tests that fail intermittently / total E2E tests | <5% |
-| Page Object Model coverage | Pages with POMs / total application pages | Increasing toward 100% |
+| Page Object Model coverage | Pages with POMs / total application pages (baseline: 22 POMs) | Increasing toward 100% |
 | Katalon tests remaining | Tests in Katalon not yet migrated to Playwright | Trending to 0 |
+| Playwright helper/fixture maturity | Helpers (13) + JSON fixtures (6) + workflow-mocks centralized | Stable or expanding |
 
 ### 5.3 JIRA
 
@@ -172,9 +173,30 @@ Process indicators tell you if the *behaviors* are changing — are devs and QAs
 
 ## 6. Sprint-over-Sprint Dashboard
 
-Copy this table and fill it in at the end of every sprint. Track trends with arrows.
+### Baseline Snapshot — March 9, 2026
+
+This baseline was captured before the first sprint dashboard entry. Use these values as the "Sprint 0" reference point.
+
+| Metric | Baseline Value | Notes |
+|---|---|---|
+| **C# test methods** | 10,040 | 9,840 [Fact] + 200 [Theory] across ~290 files |
+| **C# test projects** | 4 | FastTests (~175), Business.Tests (~9,600), Presentation.Tests (~245), IntegrationTests (~5,500+) |
+| **Playwright spec files** | 108 | 1,629 test() calls, 302 describe() blocks |
+| **Playwright POMs** | 22 | Full Page Object Model coverage for core pages |
+| **Playwright helpers** | 13 | Including workflow-mocks.helper, api-mocks.helper, test-data-builder |
+| **Playwright fixtures** | 6 | JSON mock data files (reference-data, partners, contacts, opportunities, interactions, dashboard) |
+| **Open DEF-XXX** | ~135 | Production code defects |
+| **Resolved DEF-XXX** | ~8 | |
+| **Active QA-XXX** | ~11 | 2 open + 9 workaround |
+| **Resolved QA-XXX** | ~49 | |
+| **Defect-tagged tests** | ~240 | `[Trait("Defect", "DEF-XXX")]` — run in non-blocking CI job |
+| **Skipped tests** | ~44 | `[Fact(Skip = ...)]` — QA infrastructure issues |
+| **Test data infrastructure** | Operational | TestEntityBuilder (C#), Bogus fake data, JSON fixtures (Playwright), workflow-mocks.helper |
+| **CI/CD pipeline** | 11 jobs | Build, smoke, fast, business, presentation, frontend, integration, defect, playwright (3 tiers), summary |
 
 ### Top 10 Metrics Dashboard
+
+Copy this table and fill it in at the end of every sprint. Track trends with arrows.
 
 | # | Metric | Sprint __ | Sprint __ | Sprint __ | Sprint __ | Sprint __ | Trend |
 |---|---|---|---|---|---|---|---|
@@ -397,3 +419,4 @@ Use these questions at the end of each sprint to assess shift-left progress.
 | Version | Date | Author | Changes |
 |---|---|---|---|
 | 1.0 | 2026-03-06 | QA Lead | Initial scorecard with 4 measurement dimensions, sprint dashboard, maturity model, and retrospective questions |
+| 1.1 | 2026-03-09 | QA Lead | Added baseline snapshot (10,040 C# methods, 1,629 Playwright tests, 22 POMs, 13 helpers, 6 fixtures). Updated Playwright toolchain metrics with current counts. Added helper/fixture maturity metric. |

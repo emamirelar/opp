@@ -6,6 +6,7 @@
  * Uses the ResponsiveTabsComponent and entity-specific tab configurations.
  *
  * @author UNOPS Opportunity+ QA Team
+ * @tests 39
  */
 
 import { test, expect } from '@playwright/test';

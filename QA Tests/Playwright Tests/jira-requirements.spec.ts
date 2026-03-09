@@ -7,6 +7,8 @@
  * @updated 2026-02-07 - Strengthened all assertions to provide meaningful pass/fail signals.
  *   Replaced `expect(true).toBeTruthy()` patterns with actual element/state assertions.
  * @updated 2026-03-03 - Replaced waitForTimeout with wait helpers; removed console.log; use POMs.
+ *
+ * @tests 37
  */
 
 import { test, expect } from '@playwright/test';

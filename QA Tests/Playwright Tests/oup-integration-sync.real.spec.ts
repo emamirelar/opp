@@ -7,6 +7,7 @@
  * Covers regression scenarios: PNO-1209, PNO-1207, PNO-1174, PNO-1200.
  *
  * @author UNOPS Opportunity+ QA Team
+ * @tests 5
  */
 
 import { test, expect } from '@playwright/test';

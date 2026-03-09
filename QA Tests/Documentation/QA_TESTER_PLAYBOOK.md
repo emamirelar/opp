@@ -1,7 +1,7 @@
 # QA Tester Playbook
 
-**Version:** 1.9  
-**Last Updated:** March 6, 2026  
+**Version:** 2.0  
+**Last Updated:** March 9, 2026  
 **Audience:** QA Testers (New and Experienced)  
 **Scope:** Universal guide applicable to any software project
 
@@ -20,6 +20,9 @@
 5. [Phase 3: Test Development](#5-phase-3-test-development)
 6. [Phase 4: Test Execution](#6-phase-4-test-execution)
 7. [Phase 5: Defect Management](#7-phase-5-defect-management)
+   - [7.5 Developer Defect Resolution Workflow](#75-developer-defect-resolution-workflow)
+   - [7.6 AI Tools & Cursor Subagents for QA](#76-ai-tools--cursor-subagents-for-qa)
+   - [7.7 Playwright Setup & Running E2E Tests](#77-playwright-setup--running-e2e-tests)
 8. [Manual vs Automated Testing Decision Guide](#8-manual-vs-automated-testing-decision-guide)
 9. [The 3:1 Test Ratio Standard](#9-the-31-test-ratio-standard)
 10. [Test Categories Deep Dive](#10-test-categories-deep-dive)
@@ -137,11 +140,11 @@ Use this checklist when joining a new project:
   - [ ] Documentation repositories
 
 - [ ] **Install development tools**:
-  - [ ] IDE (Visual Studio, VS Code, Cursor etc.)
+  - [ ] IDE (Cursor)
   - [ ] Test runners (dotnet CLI, npm, pytest, etc.)
-  - [ ] Browser testing tools (Playwright, Cypress, Selenium)
-  - [ ] Database client (DBeaver, pgAdmin, SSMS)
-  - [ ] API testing tool (Postman, Insomnia)
+  - [ ] Browser testing tools (Playwright)
+  - [ ] Database client (pgAdmin) — connects to PostgreSQL on Google Cloud SQL using IAM Authentication
+  - [ ] API testing (HttpClient via xUnit integration tests) — REST only
 
 - [ ] **Clone repository** and verify build:
   ```bash
@@ -793,6 +796,128 @@ Tests/
 └── playwright.config.js              # E2E test configuration
 ```
 
+### 5.4 Test Data Conventions & Infrastructure
+
+This section documents the standard patterns for creating and managing test data across C# and Playwright tests. Following these conventions ensures consistency, reduces duplication, and improves data isolation.
+
+#### C# Test Data: Fluent Builders (`TestEntityBuilder`)
+
+Use the fluent builder API in `TestBase/TestEntityBuilder.cs` instead of raw SQL or per-fixture seed methods. Builders follow a **get-or-create** pattern for reference data (Currency, Country, SDG, OrgHierarchy, EntityRole, InitiativeType) and an **always-create** pattern for transactional entities (Partner, Opportunity, Contact, Interaction).
+
+```csharp
+// Create reference data (idempotent — returns existing ID if already seeded)
+var currencyId = await TestEntityBuilder.Currency().WithCode("USD").BuildAsync(context);
+var countryId  = await TestEntityBuilder.Country().WithIso2("US").WithName("United States").BuildAsync(context);
+var orgId      = await TestEntityBuilder.OrgHierarchy().WithCode("HQ").WithName("Headquarters").BuildAsync(context);
+var roleId     = await TestEntityBuilder.EntityRole().WithCode("Opportunity_Manager_Opportunity").BuildAsync(context);
+
+// Create transactional entities (always creates a new record)
+var partnerId = await TestEntityBuilder.Partner()
+    .WithName("UNICEF")
+    .WithStatus(EntityStatus.Active)
+    .WithCreatedBy(userId)
+    .BuildAsync(context);
+
+var oppId = await TestEntityBuilder.Opportunity()
+    .WithName("Infrastructure Project")
+    .WithStage("IDENTIFY & PROFILE")
+    .WithCreatedBy(userId)
+    .WithResponsibleOrgUnit(orgId)
+    .BuildAsync(context);
+```
+
+Available builders: `User`, `Partner`, `Opportunity`, `Currency`, `Country`, `SDG`, `OrgHierarchy`, `Contact`, `Interaction`, `EntityRole`, `InitiativeType`, `Output`.
+
+#### C# Test Data: User Creation
+
+Always use `TestDataHelper.GetOrCreateTestUserAsync()` (or the synchronous `GetOrCreateTestUser()`) for creating test users. Never use raw SQL `INSERT INTO "AspNetUsers"`.
+
+```csharp
+// In fixture constructors — two-phase pattern for PostgreSQL
+using var tempCtx = TestDbContextFactory.CreateUNOPS(DbContextOptions);
+TestUserId = TestDataHelper.GetOrCreateTestUser(tempCtx, "test@unops.org");
+Context = TestDbContextFactory.CreateUNOPSWithUserId(DbContextOptions, TestUserId);
+```
+
+#### C# Database Modes
+
+Tests can run against two database providers controlled by the `USE_POSTGRESQL` environment variable:
+
+| Mode | Provider | Use Case | FK Enforcement |
+|------|----------|----------|---------------|
+| Default | **SQLite in-memory** | Fast local development, CI | Off by default; opt-in via `SQLITE_ENABLE_FK=true` |
+| PostgreSQL | **Npgsql** | Full-fidelity integration testing | Always on (database enforced) |
+
+Set `SQLITE_ENABLE_FK=true` to enable SQLite foreign key constraints when testing referential integrity.
+
+#### C# Fake Data with Bogus
+
+The `Bogus` NuGet package is available for generating realistic test data. Use it for strings, emails, names, and other values where realistic variety improves test quality.
+
+```csharp
+using Bogus;
+
+var faker = new Faker();
+var partnerId = await TestEntityBuilder.Partner()
+    .WithName(faker.Company.CompanyName())
+    .WithShortDescription(faker.Company.CatchPhrase())
+    .BuildAsync(context);
+```
+
+#### Playwright Mock Data: JSON Fixtures
+
+Static mock data for E2E tests lives in `QA Tests/Playwright Tests/fixtures/`:
+
+| File | Contents |
+|------|----------|
+| `reference-data.json` | Dropdowns: partners, org units, countries, SDGs, currencies, salutations, pronouns, statuses, gemini models, document types |
+| `partners.json` | Partner list, search results, detail template |
+| `contacts.json` | Contact list, search results, detail template |
+| `opportunities.json` | Opportunity list, search results |
+| `interactions.json` | Interaction list, search results, detail, partner interactions, brief list |
+| `dashboard.json` | Dashboard content, org unit recent updates |
+
+Import fixtures in mock helpers:
+
+```typescript
+import referenceData from '../fixtures/reference-data.json';
+import partnersFixture from '../fixtures/partners.json';
+```
+
+#### Playwright Mock Data: Workflow Helpers
+
+Use the shared helpers in `helpers/workflow-mocks.helper.ts` instead of duplicating route mocks in each spec file:
+
+```typescript
+import {
+  setupNotificationsMock,
+  createWorkflowNotification,
+  setupOpportunityMock,
+  setupOpportunityPermissionsMock,
+  getOpportunityPayload,
+  getWorkflowOpportunityPayload,
+  setupPendingApprovalsMock,
+  createPendingApproval,
+  FULL_PERMISSIONS,
+  READONLY_PERMISSIONS,
+  APPROVER_PERMISSIONS,
+} from './helpers/workflow-mocks.helper';
+```
+
+#### Playwright Data Isolation
+
+Call `resetWorkflowMockState()` in `beforeEach` to reset the in-memory workflow state between tests. The `setupAPIMocks()` function already resets this automatically, but call it explicitly when tests manipulate workflow state.
+
+#### ID Conventions for Mock Data
+
+| ID Range | Entity | Purpose |
+|----------|--------|---------|
+| 1–9 | Any | Standard happy-path entities |
+| 10 | Opportunity | Cancelled opportunity |
+| 11 | Opportunity | No-Go opportunity |
+| 12 | Opportunity | In-workflow opportunity (pending approval) |
+| 100+ | Any | Bulk/stress test entities |
+
 ---
 
 ## 6. Phase 4: Test Execution
@@ -950,6 +1075,379 @@ Open → In Progress → Fixed → Ready for Verification → Verified → Close
                         │                                    │
                         └── Failed Verification ─────────────┘
 ```
+
+### 7.5 Developer Defect Resolution Workflow
+
+This section describes the end-to-end process a developer follows to pick up a defect from the defect list, fix it using Claude (Cursor AI), verify the fix with the tests that exposed it, and close the defect.
+
+#### Step 1: Review the Defect List
+
+Open `QA Tests/Defect List for Developers.md` and review the **Open** defects table. Each row contains:
+
+| Column | What it Tells You |
+|---|---|
+| **ID** | The defect identifier (e.g., `DEF-051`) — use this everywhere |
+| **Severity** | Priority for fix order: 🔴 Critical → 🟠 High → 🟡 Medium → 🟢 Low |
+| **Component** | Which manager, controller, or service is affected |
+| **Description** | Root cause analysis, proper fix guidance, and anti-patterns to avoid |
+| **Related Tests** | The test file and line number that exposed the defect |
+
+**Pick the highest-severity open defect** in the component you're working on.
+
+#### Step 2: Find the Failing Tests
+
+Every defect has tests tagged with `[Trait("Defect", "DEF-XXX")]` that currently **run and fail** in CI. These tests are your verification targets.
+
+```bash
+# Find all tests tagged for a specific defect
+dotnet test --filter "Defect=DEF-051" --no-build --verbosity normal
+```
+
+You can also search the test codebase directly:
+
+```bash
+# Find test files referencing the defect
+rg "DEF-051" "QA Tests/" --files-with-matches
+```
+
+**Read the failing test carefully** — the test name and assertion describe what the code SHOULD do, and the `[Trait("Defect", "DEF-XXX")]` comment usually explains why it currently fails.
+
+#### Step 3: Use Claude to Implement the Fix
+
+In Cursor, ask Claude to fix the production code. Provide the defect context:
+
+**Effective prompt template:**
+```
+Fix DEF-051 in [ComponentName].
+
+Defect: [paste the Description column from the defect list]
+
+The test that exposes this is in:
+  [paste Related Tests path, e.g., QA Tests/Business Logic Tests/Feature/NegativeTests.cs:45]
+
+The test expects: [paste the Expected column]
+The code currently does: [paste the Actual column]
+
+The proper fix described in the defect list is:
+  [paste the Proper Fix bullets]
+
+Do NOT: [paste the Wrong Fix anti-pattern]
+```
+
+**Important constraints for Claude:**
+- The fix goes in **production code** (e.g., `UNOPS.PAO.Business/Managers/`, `UNOPS.PAO.API/Controllers/`)
+- QA tests in `QA Tests/` must NOT be modified to make them pass — only production code changes
+- Follow the `.cursor/rules/dotnet-implementation.mdc` patterns (IsDeleted filters, async/await, etc.)
+
+#### Step 4: Run the Defect Tests to Verify
+
+After Claude applies the fix, run the specific defect tests:
+
+```bash
+# Run only the tests for this defect
+dotnet test --filter "Defect=DEF-051" --verbosity detailed
+
+# If multiple test files are involved, run the full suite for the feature
+dotnet test --filter "FullyQualifiedName~FeatureName" --verbosity normal
+```
+
+| Test Result | What to Do |
+|---|---|
+| **All tests pass** ✅ | Proceed to Step 5 |
+| **Some tests still fail** ❌ | Review the failure, refine the fix, re-run |
+| **New tests break** ⚠️ | The fix introduced a regression — investigate and adjust |
+
+#### Step 5: Remove the Defect Trait
+
+Once all defect-tagged tests pass, **remove the `[Trait("Defect", "DEF-XXX")]` attribute** from each test. This promotes the test back into the gating CI suite so it blocks future regressions.
+
+```csharp
+// BEFORE (defect test — runs in defect job, doesn't block PRs)
+[Fact]
+[Trait("Category", "Negative")]
+[Trait("Defect", "DEF-051")]
+public async Task Get_EmptyEnvironmentName_UsesHostEnvironment()
+{
+    response.Environment.Should().Be("Production");
+}
+
+// AFTER (regression test — runs in gating job, blocks PRs if it fails)
+[Fact]
+[Trait("Category", "Negative")]
+public async Task Get_EmptyEnvironmentName_UsesHostEnvironment()
+{
+    response.Environment.Should().Be("Production");
+}
+```
+
+#### Step 6: Update the Defect List
+
+Update the defect row in `QA Tests/Defect List for Developers.md`:
+
+1. Change **Status** from `Open` to `Resolved`
+2. Add resolution details:
+   - **Resolution Notes**: Brief description of what was changed
+   - **Fixed By**: Your name
+   - **Fix Commit/PR**: The commit hash or PR number
+3. Move the row to the **Resolved Defects** section of the file
+
+#### Step 7: Run the Full Test Suite
+
+Before committing, run the broader test suite to catch any regressions:
+
+```bash
+# Run all non-defect tests (the gating suite)
+dotnet test --filter "Defect!~DEF" --verbosity normal
+
+# Optionally run the full suite including remaining defects
+dotnet test --verbosity normal
+```
+
+#### Complete Developer Workflow — Quick Reference
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                  DEVELOPER DEFECT FIX WORKFLOW                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. READ    QA Tests/Defect List for Developers.md              │
+│             Pick highest-severity Open defect                   │
+│                          │                                      │
+│  2. FIND    dotnet test --filter "Defect=DEF-XXX"               │
+│             Read the failing test — it IS the specification     │
+│                          │                                      │
+│  3. FIX     Ask Claude in Cursor with full defect context       │
+│             Fix goes in PRODUCTION code, never in test code     │
+│                          │                                      │
+│  4. VERIFY  dotnet test --filter "Defect=DEF-XXX"               │
+│             All tagged tests must pass                          │
+│                          │                                      │
+│  5. PROMOTE Remove [Trait("Defect", "DEF-XXX")] from tests     │
+│             Tests move to gating suite                          │
+│                          │                                      │
+│  6. UPDATE  Mark defect as Resolved in the defect list          │
+│             Add resolution notes, commit/PR reference           │
+│                          │                                      │
+│  7. REGRESS dotnet test --filter "Defect!~DEF"                  │
+│             Full gating suite must still pass                   │
+│                          │                                      │
+│  8. COMMIT  git add -A && git commit -m "fix: DEF-XXX ..."     │
+│             Reference defect ID in commit message               │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Commit Message Format for Defect Fixes
+
+```
+fix(component): Brief description of the fix
+
+Fixes DEF-XXX
+
+- Root cause: [explanation from defect list]
+- Solution: [what was changed]
+- Testing: [X defect tests now pass, promoted to gating suite]
+```
+
+### 7.6 AI Tools & Cursor Subagents for QA
+
+Cursor IDE provides specialized AI subagents that automate test creation, defect diagnosis, and E2E test management. QA testers and developers can invoke these via the Cursor chat interface using natural language prompts.
+
+#### Available QA Subagents
+
+| Subagent | What It Does | When to Use |
+|---|---|---|
+| **create-tests** | Generates full xUnit C# test suites (all 9 files) from PRDs, Jira stories, or feature descriptions | "Create tests for the Go/No-Go Decision feature" |
+| **load-tests** | Generates `LoadTests.cs` with sustained load, spike, stress, and recovery tests | "Create load tests for the Partner Manager" |
+| **performance-tests** | Generates `PerformanceTests.cs` with SLA, throughput, N+1, and memory tests | "Create performance tests for Opportunity search" |
+| **playwright-test-generator** | Generates Playwright `.spec.ts` files and Page Object Models | "Create Playwright tests for the partner list page" |
+| **playwright-test-healer** | Diagnoses and fixes broken Playwright tests (selectors, mocks, timing) | "Fix the failing partner-item Playwright tests" |
+| **playwright-test-planner** | Plans E2E test coverage, identifies gaps, creates test strategies | "Plan Playwright test coverage for the Opportunities module" |
+
+#### Available QA Skills (Agent Skills)
+
+Skills are specialized instruction sets that guide Claude through complex test generation workflows. They are automatically activated when relevant.
+
+| Skill | Location | Trigger |
+|---|---|---|
+| **generate-playwright** | `.cursor/skills/generate-playwright/SKILL.md` | "Write Playwright tests for ..." |
+| **generate-load** | `.cursor/skills/generate-load/SKILL.md` | "Write load tests for ..." |
+| **generate-performance** | `.cursor/skills/generate-performance/SKILL.md` | "Write performance tests for ..." |
+
+#### How to Invoke a Subagent
+
+In Cursor chat, simply describe what you need. Cursor automatically selects the right subagent:
+
+```
+User: "Create tests for the Recall Opportunity feature based on the PRD in tasks/recall-opportunity/"
+
+→ Cursor invokes the create-tests subagent
+→ Reads the PRD, extracts acceptance criteria
+→ Generates all 9 C# test files with 3:1 ratio compliance
+→ Logs any blockers as QA-XXX issues
+```
+
+```
+User: "Create Playwright E2E tests for the partner detail page"
+
+→ Cursor invokes the playwright-test-generator subagent
+→ Reads existing POMs and spec files
+→ Generates partner-item.spec.ts with mock setup
+→ Creates/updates partner-item.page.ts POM
+```
+
+```
+User: "The partner list Playwright tests are failing after the UI redesign, fix them"
+
+→ Cursor invokes the playwright-test-healer subagent
+→ Analyzes failure traces and screenshots
+→ Updates selectors, fixes mocks, resolves timing issues
+→ Logs any production bugs as DEF-XXX
+```
+
+#### Key Rules All Subagents Follow
+
+1. **3:1 Ratio Enforcement** — Every test suite must have ≥3× negative, boundary, functional, and integration tests per positive test
+2. **Never Weaken Tests** — If a test fails because the code is wrong, the subagent logs a `DEF-XXX` defect and tags the test with `[Trait("Defect", "DEF-XXX")]` — it never changes the assertion
+3. **QA Write Boundaries** — Subagents only write to `QA Tests/` and `UNOPS.PAO.ClientApp/src/qa-frontend-tests/` — never to production code
+4. **Requirement-Driven** — Tests validate the specification (what code SHOULD do), not just the current implementation
+5. **Defect Management** — Blockers are logged in the appropriate defect list (`DEF-XXX` for product bugs, `QA-XXX` for test infrastructure)
+
+#### Cursor Rules That Govern Testing
+
+These `.cursor/rules/` files are automatically applied and control how Claude generates tests:
+
+| Rule File | Purpose |
+|---|---|
+| `test-ratio-enforcement.mdc` | Enforces the 3:1 ratio — mandatory compliance check before completing |
+| `comprehensive-test-strategy.mdc` | Full 10-category test standard with code examples |
+| `never-weaken-tests.mdc` | Prevents changing test assertions to match broken code |
+| `qa-write-boundaries.mdc` | Restricts AI writes to QA-owned folders only |
+| `requirement-driven-testing.mdc` | Requires cross-referencing requirements before creating tests |
+| `defect-management.mdc` | Templates and triage rules for defect logging |
+| `dotnet-implementation.mdc` | .NET patterns (IsDeleted, async, repositories) that tests must validate |
+
+### 7.7 Playwright Setup & Running E2E Tests
+
+#### Prerequisites
+
+| Software | Version | Download |
+|---|---|---|
+| Node.js | 20 or newer | https://nodejs.org/ |
+| Git | Any recent | https://git-scm.com/ |
+| Cursor (or VS Code) | Any recent | Your IDE |
+
+#### First-Time Installation
+
+```bash
+# 1. Navigate to the project root
+cd c:\Users\YourName\git\opportunityplus
+
+# 2. Go to the QA Tests folder
+cd "QA Tests"
+
+# 3. Install Playwright and all dependencies
+npm install
+
+# 4. Install browser engines (Chromium, Firefox, WebKit)
+npx playwright install
+
+# 5. Copy the environment file
+cd "Playwright Tests"
+copy .env.example .env
+```
+
+#### Verify Installation
+
+```bash
+cd "QA Tests"
+npx playwright test home.spec.ts --project=chromium
+```
+
+Expected output:
+```
+Running 8 tests using 2 workers
+  ✓ Home Page & Dashboard > should load home page (5.2s)
+  ✓ Home Page & Dashboard > should display announcement banner (3.1s)
+  ...
+  8 passed (25.3s)
+```
+
+#### Running Playwright Tests
+
+All commands run from the `QA Tests` folder:
+
+| What You Want | Command |
+|---|---|
+| Run ALL tests (all browsers) | `npx playwright test` |
+| Run ALL tests (Chrome only) | `npx playwright test --project=chromium` |
+| Run ONE spec file | `npx playwright test partners.spec.ts --project=chromium` |
+| Run with VISIBLE browser | `npx playwright test partners.spec.ts --project=chromium --headed` |
+| Run ONE test by name | `npx playwright test -g "should display partner list" --project=chromium` |
+| Open INTERACTIVE mode | `npx playwright test --ui` |
+| See the HTML report | `npx playwright show-report TestResults/playwright-html-report` |
+| Debug a test | `npx playwright test partners.spec.ts --debug` |
+| Record a test | `npx playwright codegen http://localhost:4200` |
+
+#### Project Structure
+
+```
+QA Tests/Playwright Tests/
+├── *.spec.ts                    # Test spec files (one per feature)
+├── pages/
+│   ├── base.page.ts             # BasePage — all POMs extend this
+│   └── *.page.ts                # Page Object Models (one per page)
+├── helpers/
+│   ├── auth.helper.ts           # Login helpers
+│   ├── api-mocks.helper.ts      # API mock setup (route interception)
+│   ├── wait.helper.ts           # Wait utilities
+│   ├── assertions.helper.ts     # Custom assertion helpers
+│   ├── test-data-builder.ts     # Test data factories
+│   ├── test-config.ts           # Config and credentials
+│   └── role-test.helper.ts      # Role-based test helpers
+└── TestResults/                 # Generated reports and artifacts
+    └── playwright-html-report/  # HTML report output
+```
+
+#### Key Configuration Facts
+
+| Setting | Value |
+|---|---|
+| Base URL | `http://localhost:4200` |
+| Test timeout | 60 seconds (WebKit: 180 seconds) |
+| Workers (local) | 2 |
+| Workers (CI) | 4 |
+| Retries (local) | 0 |
+| Retries (CI) | 1 |
+| API mocking | Enabled by default — real backend is optional |
+
+#### When Do You Need the Real Backend?
+
+| Test Type | Backend Required? |
+|---|---|
+| Most Playwright E2E tests | **No** — API mocks handle all backend calls |
+| Integration tests hitting real APIs | **Yes** — see [Section 3.5](#35-starting-the-development-proxy-for-real-backend-testing) |
+| Performance/load tests | **Yes** — must hit real endpoints |
+
+#### Using AI to Write Playwright Tests
+
+Instead of writing specs from scratch, ask Claude in Cursor:
+
+```
+"Create a Playwright spec for the partner detail page that tests
+viewing, editing, and deleting a partner. Use the existing
+partner-item.page.ts POM."
+```
+
+Claude will:
+1. Read existing POMs and helpers
+2. Generate a complete `.spec.ts` file with proper mock setup
+3. Follow project conventions (auth, waits, assertions)
+4. Add `data-testid` selectors where needed
+
+For a full guide on reading, writing, and debugging Playwright tests, see the dedicated quickstart:
+
+> 📖 **`QA Tests/Playwright Tests/QUICKSTART_FOR_TESTERS.md`** — A comprehensive guide for testers transitioning from Katalon or manual testing to Playwright.
 
 ---
 
@@ -2744,6 +3242,8 @@ Fix: Add wait, verify selector, check for dynamic content
 | 1.7 | 2026-02-17 | QA Team | Aligned with PDJ playbook: Expanded Section 11.3 Integration Test Checklist Template to comprehensive version with 10 test categories (workflow, validation, status, delete, filtering, editing, referential integrity, audit, error handling, E2E), detailed sub-cases, and structured results summary. |
 | 1.8 | 2026-02-23 | QA Team | Added Section 3.5: Starting the Development Proxy for Real Backend Testing — mandatory pre-test checklist explaining when and how to start the proxy, which test types require it, readiness verification steps, and common failure symptoms. Added proxy reminder callout to Section 6.2 (Running Automated Tests), proxy troubleshooting rows to Section 15.1, and proxy setup step to Day 1 onboarding checklist. |
 | 1.9 | 2026-03-06 | QA Lead | Updated Project Map: Playwright now 102 specs (was 25), 21 POMs. Updated Documentation folder listing to include Manifesto, Scorecard, Action Items, Onboarding Guide. Updated CI pipeline reference to qa-tests.yml (11-job pipeline). Updated Related Documents with full documentation index and current defect counts. |
+| 2.0 | 2026-03-09 | QA Lead | Added Section 7.5: Developer Defect Resolution Workflow — step-by-step guide for developers to pick up defects, use Claude to implement fixes, run defect-tagged tests to verify, remove Trait tags to promote tests to gating suite, and update the defect list. Added Section 7.6: AI Tools & Cursor Subagents for QA — documents all available subagents (create-tests, load-tests, performance-tests, playwright-test-generator, playwright-test-healer, playwright-test-planner), skills, invocation patterns, and governing Cursor rules. Added Section 7.7: Playwright Setup & Running E2E Tests — first-time installation, verification, common commands, project structure, configuration, and AI-assisted test writing. Updated Table of Contents with new subsections. |
+| 2.1 | 2026-03-09 | QA Lead | Added Section 5.4: Test Data Conventions & Infrastructure — documents TestEntityBuilder fluent builders, user creation patterns, database modes (SQLite/PostgreSQL), Bogus fake data, Playwright JSON fixtures, workflow mock helpers, data isolation, and mock ID conventions. |
 
 ---
 

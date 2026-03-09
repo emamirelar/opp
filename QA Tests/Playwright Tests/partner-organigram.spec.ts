@@ -7,6 +7,8 @@
  *
  * @author UNOPS Opportunity+ QA Team
  * @see PNO-1213: Functionality for Offices - read-only view with organigram
+ *
+ * @tests 39
  */
 
 import { test, expect } from '@playwright/test';

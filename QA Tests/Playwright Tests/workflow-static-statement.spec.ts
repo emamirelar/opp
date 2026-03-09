@@ -6,11 +6,19 @@
  *
  * @author UNOPS Opportunity+ QA Team
  * @see https://unops.atlassian.net/browse/PNO-1056
+ *
+ * @tests 26
  */
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
 import { waitForPermissions, waitForPageReady, waitForVisible } from './helpers/wait.helper';
+import {
+  getOpportunityPayload,
+  setupNotificationsMock,
+  setupOpportunityMock,
+  setupOpportunityPermissionsMock,
+} from './helpers/workflow-mocks.helper';
 
 const featureReady = process.env.WORKFLOW_STATIC_STATEMENT_IMPLEMENTED !== 'false';
 
@@ -18,115 +26,6 @@ const ADMIN_USER = 'test@playwright.local';
 const READONLY_USER = 'test-readonly@playwright.local';
 
 const OPP_ID = 12;
-
-/** Opportunity payload for statement section (static snapshot at submission) */
-function getOpportunityPayload(id: number, name: string = 'Healthcare Capacity Building') {
-  return {
-    id,
-    name,
-    title: name,
-    description: 'Test opportunity',
-    status: 'Active',
-    stage: 'SEND FOR GO DECISION',
-    workflowStatus: 'SEND FOR GO DECISION',
-    isInWorkflow: true,
-    value: 2000000,
-    currency: 'USD',
-    estimatedValue: 2000000,
-    probability: 80,
-    expectedCloseDate: '2026-12-31T00:00:00Z',
-    targetSigningDate: '2026-06-30T00:00:00Z',
-    startDate: '2026-01-01T00:00:00Z',
-    endDate: '2026-12-31T00:00:00Z',
-    createdDate: '2025-01-01T00:00:00Z',
-    lastModifiedDate: '2025-06-15T12:00:00Z',
-    createdBy: 'system',
-    lastModifiedBy: 'system',
-    partner: { id: 1, name: 'UNICEF' },
-    organizationUnit: { id: 1, name: 'HQ', code: 'HQ' },
-    responsibleOrgUnitName: 'HQ - Headquarters',
-    proposedInitiativeTypeName: 'Technical Assistance',
-    initiativeBudgetUSD: 2000000,
-    opportunityType: { id: 1, name: 'New Business' },
-    sector: { id: 1, name: 'Health' },
-    country: 'United States',
-    region: 'North America',
-    opportunityManager: { id: 1, name: 'Test OM', email: 'om@test.org' },
-    collaborators: [],
-    stakeholders: [],
-    sdgs: [],
-    beneficiaryCount: 10000,
-    beneficiaryBreakdown: {},
-    unCooperationFramework: null,
-    highRiskChecklist: [],
-    scope: 'Test scope',
-    deliverables: [],
-    initiativeType: { id: 1, name: 'Technical Assistance' },
-    contacts: [],
-    interactions: [],
-    documents: [],
-    fundingPartners: [],
-    clientPartners: [],
-    risks: [],
-    opportunityStatementMarkdown: '# Static Statement Snapshot\n\nThis is the snapshot at submission.',
-  };
-}
-
-/** Setup notifications mock with workflow approval */
-function setupNotificationsMock(
-  page: import('@playwright/test').Page,
-  notifications: Array<Record<string, unknown>>
-) {
-  return page.route('**/api/notifications**', async (route) => {
-    const url = route.request().url();
-    if (route.request().method() === 'GET' && !url.match(/\/api\/notifications\/\d+\//)) {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(notifications),
-      });
-    } else if (url.match(/\/api\/notifications\/\d+\/read/)) {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) });
-    } else {
-      await route.continue();
-    }
-  });
-}
-
-/** Setup opportunity API mock */
-function setupOpportunityMock(
-  page: import('@playwright/test').Page,
-  oppId: number,
-  payload: Record<string, unknown> | null,
-  status: number = 200
-) {
-  return page.route(`**/api/opportunity/${oppId}$`, async (route) => {
-    if (payload === null) {
-      await route.fulfill({ status });
-      return;
-    }
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(payload),
-    });
-  });
-}
-
-/** Setup opportunity permissions mock */
-function setupOpportunityPermissionsMock(
-  page: import('@playwright/test').Page,
-  oppId: number,
-  permissions: Record<string, boolean>
-) {
-  return page.route(`**/api/opportunity/${oppId}/permissions**`, async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(permissions),
-    });
-  });
-}
 
 test.describe('PNO-1056 — Notification Link Opens Static Statement', () => {
   test.slow();

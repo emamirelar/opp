@@ -8,6 +8,8 @@
  * Stage indicators use p-steps component.
  * 
  * All tests are EXECUTABLE - no skips.
+ *
+ * @tests 16
  */
 
 import { test, expect } from '@playwright/test';

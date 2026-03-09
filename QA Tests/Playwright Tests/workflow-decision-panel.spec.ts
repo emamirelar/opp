@@ -8,11 +8,20 @@
  * @author UNOPS Opportunity+ QA Team
  * @see WorkflowPRD_TraceabilityTestPlan.md
  * @see https://unops.atlassian.net/browse/PNO-969
+ *
+ * @tests 39
  */
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
 import { waitForPermissions, waitForPageReady } from './helpers/wait.helper';
+import {
+  getWorkflowOpportunityPayload,
+  setupOpportunityMock,
+  setupOpportunityPermissionsMock,
+  APPROVER_PERMISSIONS,
+  READONLY_PERMISSIONS,
+} from './helpers/workflow-mocks.helper';
 
 const featureReady = process.env.WORKFLOW_DECISION_PANEL_IMPLEMENTED !== 'false';
 
@@ -21,65 +30,6 @@ const DOA2_USER = 'doa2@example.com';
 const COLLABORATOR_USER = 'collaborator@example.com';
 
 const OPP_IN_WORKFLOW_ID = '12';
-
-/** Opportunity payload that triggers Decision Info Panel (stage + isInWorkflow + canApprove) */
-function getWorkflowOpportunityPayload(id: number) {
-  return {
-    id,
-    name: 'Healthcare Capacity Building - Go Decision',
-    title: 'Healthcare Capacity Building',
-    description: 'Test',
-    status: 'Active',
-    stage: 'SEND FOR GO DECISION',
-    workflowStatus: 'SEND FOR GO DECISION',
-    isInWorkflow: true,
-    value: 2000000,
-    currency: 'USD',
-    estimatedValue: 2000000,
-    probability: 80,
-    expectedCloseDate: '2026-12-31T00:00:00Z',
-    targetSigningDate: '2026-06-30T00:00:00Z',
-    startDate: '2026-01-01T00:00:00Z',
-    endDate: '2026-12-31T00:00:00Z',
-    createdDate: '2025-01-01T00:00:00Z',
-    lastModifiedDate: '2025-06-15T12:00:00Z',
-    createdBy: 'system',
-    lastModifiedBy: 'system',
-    partner: { id: 1, name: 'UNICEF' },
-    organizationUnit: { id: 1, name: 'HQ', code: 'HQ' },
-    responsibleOrgUnitName: 'HQ - Headquarters',
-    proposedInitiativeTypeName: 'Technical Assistance',
-    initiativeBudgetUSD: 2000000,
-    opportunityType: { id: 1, name: 'New Business' },
-    sector: { id: 1, name: 'Health' },
-    country: 'United States',
-    region: 'North America',
-    opportunityManager: { id: 1, name: 'Test OM', email: 'om@test.org' },
-    collaborators: [],
-    stakeholders: [],
-    sdgs: [],
-    beneficiaryCount: 10000,
-    beneficiaryBreakdown: {},
-    unCooperationFramework: null,
-    highRiskChecklist: [],
-    scope: 'Test scope',
-    deliverables: [],
-    initiativeType: { id: 1, name: 'Technical Assistance' },
-    contacts: [],
-    interactions: [],
-    documents: [],
-    fundingPartners: [
-      { partnerName: 'Partner A', ddStatus: 'Approved', ddExpiryDate: '2027-01-01T00:00:00Z' },
-    ],
-    clientPartners: [
-      { partnerName: 'Partner B', ddStatus: 'Pending', ddExpiryDate: null },
-    ],
-    risks: [
-      { id: 1, title: 'Budget Risk', riskCategoryName: 'Financial', riskImpactLevelName: 'High', preDefinedHighRiskId: null },
-    ],
-    permissions: { canView: true, canEdit: false, canApprove: true, isApprovalPending: true },
-  };
-}
 
 test.describe('PNO-969 FR-3 — Decision Info Panel', () => {
   test.slow();

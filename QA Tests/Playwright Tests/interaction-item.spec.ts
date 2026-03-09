@@ -18,6 +18,8 @@
  *   - interaction-contacts-section, interaction-partners-section
  * 
  * @created 2026-02-12
+ *
+ * @tests 24
  */
 
 import { test, expect } from '@playwright/test';

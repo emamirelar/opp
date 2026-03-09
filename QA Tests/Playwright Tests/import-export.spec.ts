@@ -8,6 +8,8 @@
  * - Headers: getByText('Partners'|'Contacts'|'Interactions', { exact: true })
  *
  * All tests are EXECUTABLE - no skips.
+ *
+ * @tests 12
  */
 
 import { test, expect } from '@playwright/test';

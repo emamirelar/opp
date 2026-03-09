@@ -1,3 +1,6 @@
+/**
+ * @tests 16
+ */
 import { test, expect } from '@playwright/test';
 import { ContactsPage } from './pages/contacts.page';
 import { ContactItemPage } from './pages/contact-item.page';

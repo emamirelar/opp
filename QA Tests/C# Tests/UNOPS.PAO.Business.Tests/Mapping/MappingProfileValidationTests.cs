@@ -21,7 +21,15 @@ public class MappingProfileValidationTests
     [Fact]
     public async Task P1_MainMappingProfile_CanCreateMapper()
     {
-        var config = new MapperConfiguration(cfg => cfg.AddProfile<ManagerMappingProfile>());
+        var config = new MapperConfiguration(cfg =>
+        {
+            cfg.AddProfile<ManagerMappingProfile>();
+            cfg.ConstructServicesUsing(serviceType =>
+            {
+                try { return Activator.CreateInstance(serviceType)!; }
+                catch { return null!; }
+            });
+        });
 
         var act = () => config.CreateMapper();
 
@@ -114,6 +122,11 @@ public class MappingProfileValidationTests
             cfg.AddProfile<AuditLogMappingProfile>();
             cfg.AddProfile<CommentMappingProfile>();
             cfg.AddProfile<SavedFilterMappingProfile>();
+            cfg.ConstructServicesUsing(serviceType =>
+            {
+                try { return Activator.CreateInstance(serviceType)!; }
+                catch { return null!; }
+            });
         });
 
         var act = () => config.CreateMapper();
@@ -246,7 +259,15 @@ public class MappingProfileValidationTests
     [Fact]
     public async Task F5_MainProfile_PartnerMapsWork()
     {
-        var config = new MapperConfiguration(cfg => cfg.AddProfile<ManagerMappingProfile>());
+        var config = new MapperConfiguration(cfg =>
+        {
+            cfg.AddProfile<ManagerMappingProfile>();
+            cfg.ConstructServicesUsing(serviceType =>
+            {
+                try { return Activator.CreateInstance(serviceType)!; }
+                catch { return null!; }
+            });
+        });
         var mapper = config.CreateMapper();
 
         var partner = new UNOPS.PAO.Domain.Entities.Partner
@@ -263,7 +284,15 @@ public class MappingProfileValidationTests
     [Fact]
     public async Task F6_MainProfile_InteractionMappingWorks()
     {
-        var config = new MapperConfiguration(cfg => cfg.AddProfile<ManagerMappingProfile>());
+        var config = new MapperConfiguration(cfg =>
+        {
+            cfg.AddProfile<ManagerMappingProfile>();
+            cfg.ConstructServicesUsing(serviceType =>
+            {
+                try { return Activator.CreateInstance(serviceType)!; }
+                catch { return null!; }
+            });
+        });
         var mapper = config.CreateMapper();
 
         var interaction = new UNOPS.PAO.Domain.Entities.Interaction
@@ -297,6 +326,11 @@ public class MappingProfileValidationTests
             cfg.AddProfile<LiaisonOfficeMappingProfile>();
             cfg.AddProfile<PartnerCategoryMappingProfile>();
             cfg.AddProfile<BaseEngagementMappingProfile>();
+            cfg.ConstructServicesUsing(serviceType =>
+            {
+                try { return Activator.CreateInstance(serviceType)!; }
+                catch { return null!; }
+            });
         });
 
         var act = () => config.AssertConfigurationIsValid();
@@ -311,6 +345,11 @@ public class MappingProfileValidationTests
             cfg.AddProfile<ManagerMappingProfile>();
             cfg.AddProfile<AuditLogMappingProfile>();
             cfg.AddProfile<CommentMappingProfile>();
+            cfg.ConstructServicesUsing(serviceType =>
+            {
+                try { return Activator.CreateInstance(serviceType)!; }
+                catch { return null!; }
+            });
         });
 
         var act = () => config.CreateMapper();
@@ -349,7 +388,15 @@ public class MappingProfileValidationTests
     [Fact]
     public async Task I5_MainProfile_AiPromptMappingRoundTrip()
     {
-        var config = new MapperConfiguration(cfg => cfg.AddProfile<ManagerMappingProfile>());
+        var config = new MapperConfiguration(cfg =>
+        {
+            cfg.AddProfile<ManagerMappingProfile>();
+            cfg.ConstructServicesUsing(serviceType =>
+            {
+                try { return Activator.CreateInstance(serviceType)!; }
+                catch { return null!; }
+            });
+        });
         var mapper = config.CreateMapper();
         var entity = new UNOPS.PAO.Domain.Entities.AiPrompt
         {
@@ -370,7 +417,15 @@ public class MappingProfileValidationTests
     [Fact]
     public async Task I6_MainProfile_DocumentMappingRoundTrip()
     {
-        var config = new MapperConfiguration(cfg => cfg.AddProfile<ManagerMappingProfile>());
+        var config = new MapperConfiguration(cfg =>
+        {
+            cfg.AddProfile<ManagerMappingProfile>();
+            cfg.ConstructServicesUsing(serviceType =>
+            {
+                try { return Activator.CreateInstance(serviceType)!; }
+                catch { return null!; }
+            });
+        });
         var mapper = config.CreateMapper();
         var entity = new UNOPS.PAO.Domain.Entities.Document { Id = 1, Name = "Test Doc" };
 

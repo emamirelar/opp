@@ -11,6 +11,7 @@
 
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Moq;
 using UNOPS.PAO.Business.Tests.TestBase;
 using UNOPS.PAO.DataAccess.Interfaces;
@@ -34,6 +35,7 @@ public class UserPreferenceServiceTests : IDisposable
     private readonly UserPreferenceService _service;
     private readonly UserResolverService<int> _userResolver;
     private readonly string _dbName;
+    private readonly IDbContextTransaction? _transaction;
 
     public UserPreferenceServiceTests()
     {
@@ -44,10 +46,26 @@ public class UserPreferenceServiceTests : IDisposable
         mockSchema.Setup(x => x.Schema).Returns("public");
         _context = TestDbContextFactory.CreateUNOPS(options, _userResolver, mockSchema.Object);
         TestEnvironment.EnsureCleanDatabase(_context);
+
+        if (TestEnvironment.UsePostgreSQL)
+        {
+            _transaction = _context.Database.BeginTransaction();
+            _context.Set<UNOPS.PAO.Domain.Entities.UserPreference>().RemoveRange(
+                _context.Set<UNOPS.PAO.Domain.Entities.UserPreference>());
+            _context.SaveChanges();
+        }
+
         _service = new UserPreferenceService(_context, _userResolver);
     }
 
-    public void Dispose() => _context.Dispose();
+    private static int UniqueId() => Random.Shared.Next(100_000, 999_999);
+
+    public void Dispose()
+    {
+        _transaction?.Rollback();
+        _transaction?.Dispose();
+        _context.Dispose();
+    }
 
     #region Positive (2)
 
@@ -55,7 +73,7 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task GetDefaultOrgUnitIdAsync_WithPreference_ReturnsOrgUnitIdFromPreferences()
     {
         // Arrange
-        var userId = 100;
+        var userId = UniqueId();
         var orgUnitId = 42;
         await SeedUserPreference(userId, orgUnitId);
 
@@ -70,7 +88,7 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task GetGlobalFiltersAsync_WithPreference_ReturnsFiltersWithOrgUnitName()
     {
         // Arrange
-        var userId = 101;
+        var userId = UniqueId();
         var orgUnitId = await SeedOrganizationHierarchyAndGetId("Test Org Unit");
         await SeedUserPreference(userId, orgUnitId);
 
@@ -91,7 +109,7 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task GetDefaultOrgUnitIdAsync_UserWithNoPreferences_ReturnsNull()
     {
         // Arrange - no UserPreference, no UserProfile with matching email
-        var userId = 999;
+        var userId = UniqueId();
 
         // Act
         var result = await _service.GetDefaultOrgUnitIdAsync(userId);
@@ -115,13 +133,14 @@ public class UserPreferenceServiceTests : IDisposable
     {
         // Arrange
         var prefs = new UserPreference { UserId = 0, GlobalFilters = new GlobalFilters { OrgUnitId = 5 } };
+        var countBefore = await _context.UserPreferences.CountAsync();
 
         // Act
         await _service.UpdateUserPreferencesAsync("invalid", prefs);
 
-        // Assert
-        var count = await _context.UserPreferences.CountAsync();
-        count.Should().Be(0);
+        // Assert - invalid userId should not create any new preference
+        var countAfter = await _context.UserPreferences.CountAsync();
+        countAfter.Should().Be(countBefore);
     }
 
     [Fact]
@@ -141,20 +160,21 @@ public class UserPreferenceServiceTests : IDisposable
     {
         // Arrange
         var filters = new GlobalFilters { OrgUnitId = 7 };
+        var countBefore = await _context.UserPreferences.CountAsync();
 
         // Act
         await _service.UpdateGlobalFiltersAsync("xyz", filters);
 
-        // Assert
-        var count = await _context.UserPreferences.CountAsync();
-        count.Should().Be(0);
+        // Assert - invalid userId should not create any new preference
+        var countAfter = await _context.UserPreferences.CountAsync();
+        countAfter.Should().Be(countBefore);
     }
 
     [Fact]
     public async Task ResetGlobalFiltersAsync_UserWithNoPreferences_DoesNothing()
     {
-        // Arrange - no preference for user 888
-        var userId = 888;
+        // Arrange - no preference for user
+        var userId = UniqueId();
 
         // Act
         await _service.ResetGlobalFiltersAsync(userId.ToString());
@@ -179,10 +199,11 @@ public class UserPreferenceServiceTests : IDisposable
     #region Edge/Boundary (6+)
 
     [Fact]
+    [Trait("Defect", "DEF-224")]
     public async Task GetDefaultOrgUnitIdAsync_FallsBackToUserProfile_WhenNoPreference()
     {
         // Arrange - UserProfile with OrgUnit, no UserPreference
-        var userId = 200;
+        var userId = UniqueId();
         var orgUnitCode = "FALLBACK_ORG";
         var orgUnitId = await SeedOrganizationHierarchyAndGetId(orgUnitCode);
         await SeedUserProfileWithOrgUnit(userId, orgUnitCode);
@@ -198,7 +219,7 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task UpdateDefaultOrgUnitAsync_CreatesNewPreference_WhenNoneExists()
     {
         // Arrange
-        var userId = 300;
+        var userId = UniqueId();
         var orgUnitId = 15;
         await SeedUserProfile(userId);
 
@@ -212,10 +233,11 @@ public class UserPreferenceServiceTests : IDisposable
     }
 
     [Fact]
+    [Trait("Defect", "DEF-223")]
     public async Task UpdateDefaultOrgUnitAsync_AutoCreatesUserProfile_WhenMissing()
     {
-        // Arrange - no UserProfile for user 400, but AspNetUser must exist for FK
-        var userId = 400;
+        // Arrange - no UserProfile for user, but AspNetUser must exist for FK
+        var userId = UniqueId();
         var orgUnitId = 20;
         await EnsureAspNetUserAsync(userId);
 
@@ -233,7 +255,7 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task UpdateUserPreferencesAsync_CreatesNew_WhenNoneExists()
     {
         // Arrange
-        var userId = 500;
+        var userId = UniqueId();
         await SeedUserProfile(userId);
         var prefs = new UserPreference { GlobalFilters = new GlobalFilters { OrgUnitId = 25 } };
 
@@ -250,7 +272,7 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task ResetGlobalFiltersAsync_SetsOrgUnitIdToNull()
     {
         // Arrange
-        var userId = 600;
+        var userId = UniqueId();
         await SeedUserPreference(userId, 30);
 
         // Act
@@ -266,7 +288,7 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task GetGlobalFiltersAsync_PopulatesOrgUnitName_FromOrganizationHierarchy()
     {
         // Arrange
-        var userId = 601;
+        var userId = UniqueId();
         var orgUnitId = await SeedOrganizationHierarchyAndGetId("Hierarchy Populated Name");
         await SeedUserPreference(userId, orgUnitId);
 
@@ -281,7 +303,8 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task GetGlobalFiltersAsync_OrgUnitNotFound_ReturnsNullOrgUnitName()
     {
         // Arrange - preference references non-existent org unit
-        var userId = 602;
+        var userId = UniqueId();
+        await SeedUserProfile(userId);
         var pref = new UserPreference
         {
             UserId = userId,
@@ -307,7 +330,7 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task UpdateDefaultOrgUnitAsync_UpdatesExistingPreference()
     {
         // Arrange
-        var userId = 700;
+        var userId = UniqueId();
         await SeedUserPreference(userId, 40);
 
         // Act
@@ -322,7 +345,7 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task UpdateGlobalFiltersAsync_UpdatesExistingFilters()
     {
         // Arrange
-        var userId = 701;
+        var userId = UniqueId();
         await SeedUserPreference(userId, 42);
         var newFilters = new GlobalFilters { OrgUnitId = 43, RelatedToMe = true };
 
@@ -339,7 +362,7 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task UpdateUserPreferencesAsync_MarksGlobalFilterJsonAsModified()
     {
         // Arrange
-        var userId = 702;
+        var userId = UniqueId();
         await SeedUserPreference(userId, 44);
         var updatedPrefs = new UserPreference
         {
@@ -360,15 +383,15 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task GetUserPreferencesAsync_ParsesStringUserIdCorrectly()
     {
         // Arrange
-        var userId = 703;
+        var userId = UniqueId();
         await SeedUserPreference(userId, 46);
 
         // Act
-        var result = await _service.GetUserPreferencesAsync("703");
+        var result = await _service.GetUserPreferencesAsync(userId.ToString());
 
         // Assert
         result.Should().NotBeNull();
-        result!.UserId.Should().Be(703);
+        result!.UserId.Should().Be(userId);
         result.GlobalFilters!.OrgUnitId.Should().Be(46);
     }
 
@@ -376,7 +399,8 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task ResetGlobalFiltersAsync_PreservesOtherPreferenceData()
     {
         // Arrange - preference with AdditionalSettingsJson
-        var userId = 704;
+        var userId = UniqueId();
+        await SeedUserProfile(userId);
         var pref = new UserPreference
         {
             UserId = userId,
@@ -403,7 +427,8 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task GetGlobalFiltersAsync_HandlesNullGlobalFilters()
     {
         // Arrange - UserPreference with null/empty GlobalFilterJson
-        var userId = 705;
+        var userId = UniqueId();
+        await SeedUserProfile(userId);
         var pref = new UserPreference
         {
             UserId = userId,
@@ -426,7 +451,7 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task UpdateUserPreferencesAsync_WithNullOrgUnitId_ShowsEverything()
     {
         // Arrange
-        var userId = 706;
+        var userId = UniqueId();
         await SeedUserPreference(userId, 48);
         var prefs = new UserPreference { GlobalFilters = new GlobalFilters { OrgUnitId = null } };
 
@@ -446,7 +471,7 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task FullCreateGetUpdateGet_Flow()
     {
         // Arrange
-        var userId = 800;
+        var userId = UniqueId();
         await SeedUserProfile(userId);
 
         // Act 1: Create
@@ -468,7 +493,7 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task CreatePreference_UpdateOrgUnit_Verify()
     {
         // Arrange
-        var userId = 801;
+        var userId = UniqueId();
         await SeedUserProfile(userId);
 
         // Act
@@ -483,7 +508,8 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task SetGlobalFilters_GetGlobalFilters_VerifyOrgUnitName()
     {
         // Arrange
-        var userId = 802;
+        var userId = UniqueId();
+        await SeedUserProfile(userId);
         var orgUnitId = await SeedOrganizationHierarchyAndGetId("Integration Org Name");
         await _service.UpdateGlobalFiltersAsync(userId.ToString(), new GlobalFilters { OrgUnitId = orgUnitId });
 
@@ -499,7 +525,7 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task ResetGlobalFilters_VerifyNullOrgUnitId()
     {
         // Arrange
-        var userId = 803;
+        var userId = UniqueId();
         await SeedUserPreference(userId, 84);
 
         // Act
@@ -514,14 +540,17 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task MultipleUsers_SeparatePreferences()
     {
         // Arrange
-        await SeedUserPreference(901, 91);
-        await SeedUserPreference(902, 92);
-        await SeedUserPreference(903, 93);
+        var userId1 = UniqueId();
+        var userId2 = UniqueId();
+        var userId3 = UniqueId();
+        await SeedUserPreference(userId1, 91);
+        await SeedUserPreference(userId2, 92);
+        await SeedUserPreference(userId3, 93);
 
         // Act
-        var r1 = await _service.GetDefaultOrgUnitIdAsync(901);
-        var r2 = await _service.GetDefaultOrgUnitIdAsync(902);
-        var r3 = await _service.GetDefaultOrgUnitIdAsync(903);
+        var r1 = await _service.GetDefaultOrgUnitIdAsync(userId1);
+        var r2 = await _service.GetDefaultOrgUnitIdAsync(userId2);
+        var r3 = await _service.GetDefaultOrgUnitIdAsync(userId3);
 
         // Assert
         r1.Should().Be(91);
@@ -533,7 +562,7 @@ public class UserPreferenceServiceTests : IDisposable
     public async Task UpdatePreferences_WithNullOrgUnitId_ShowEverything()
     {
         // Arrange
-        var userId = 804;
+        var userId = UniqueId();
         await SeedUserPreference(userId, 85);
 
         // Act - user chooses to see everything (null org unit)

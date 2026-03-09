@@ -8,6 +8,7 @@
  * Actual selectors are based on analysis of Angular templates.
  *
  * @author UNOPS Opportunity+ QA Team
+ * @tests 54
  */
 
 import { test, expect, Page } from '@playwright/test';

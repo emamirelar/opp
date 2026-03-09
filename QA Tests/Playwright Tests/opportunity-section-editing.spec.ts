@@ -7,6 +7,7 @@
  *
  * @author UNOPS Opportunity+ QA Team
  * @see https://unops.atlassian.net/browse/PNO-OPP-SECTIONS
+ * @tests 34
  */
 
 import { test, expect, Page } from '@playwright/test';

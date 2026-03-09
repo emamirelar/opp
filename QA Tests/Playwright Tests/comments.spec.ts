@@ -8,6 +8,8 @@
  *
  * Requires real backend with opportunity ID 1. Scrolls to #section-collaboration
  * since it may be below the fold.
+ *
+ * @tests 20
  */
 
 import { test, expect } from '@playwright/test';

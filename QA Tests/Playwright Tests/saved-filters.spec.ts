@@ -20,6 +20,8 @@
  *   GET    /api/SavedFilter/{id}/apply - Apply filter
  *
  * All tests are EXECUTABLE - no skips.
+ *
+ * @tests 19
  */
 
 import { test, expect } from '@playwright/test';

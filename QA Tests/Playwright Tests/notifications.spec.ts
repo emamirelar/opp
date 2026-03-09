@@ -13,6 +13,8 @@
  *   PUT  /api/notifications/{id}/update - Update notification
  *
  * All tests are EXECUTABLE - no skips.
+ *
+ * @tests 25
  */
 
 import { test, expect } from '@playwright/test';

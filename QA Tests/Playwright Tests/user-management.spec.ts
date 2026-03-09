@@ -8,6 +8,8 @@
  *   p-dialog for role editing, p-paginator
  * 
  * All tests are EXECUTABLE - no skips.
+ *
+ * @tests 12
  */
 
 import { test, expect } from '@playwright/test';

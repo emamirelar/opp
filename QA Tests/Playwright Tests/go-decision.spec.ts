@@ -18,6 +18,8 @@
  * @author UNOPS Opportunity+ QA Team
  * @see PNO-969_GoDecision_TestCases.md
  * @see https://unops.atlassian.net/browse/PNO-969
+ *
+ * @tests 63
  */
 
 import { test, expect } from '@playwright/test';

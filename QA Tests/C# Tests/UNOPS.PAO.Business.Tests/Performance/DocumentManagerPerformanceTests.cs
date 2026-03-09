@@ -230,8 +230,8 @@ public class DocumentManagerPerformanceTests : PerformanceTestBase
     #region Concurrent Access Performance (min 3)
 
     [Fact]
-
     [Trait("Defect", "DEF-088")]
+    [Trait("Defect", "QA-020")]
     public async Task ConcurrentReads_50ParallelGetDocumentById_MaintainsPerformance()
     {
         var document = await SeedDocumentAsync();
@@ -250,6 +250,7 @@ public class DocumentManagerPerformanceTests : PerformanceTestBase
     }
 
     [Fact]
+    [Trait("Defect", "QA-020")]
     public async Task ConcurrentReads_20ParallelGetDocumentsByEntity_MaintainsPerformance()
     {
         var (entityId, _) = await SeedDocumentsForEntityAsync("Partner", 50);
@@ -268,8 +269,8 @@ public class DocumentManagerPerformanceTests : PerformanceTestBase
     }
 
     [Fact]
-
     [Trait("Defect", "DEF-088")]
+    [Trait("Defect", "QA-020")]
     public async Task ConcurrentMixedReadWrite_PerformanceStable()
     {
         var (entityId, _) = await SeedDocumentsForEntityAsync("Partner", 30);

@@ -266,8 +266,7 @@ namespace UNOPS.PAO.Business.Tests.Security
         #region Negative Tests (6 tests)
 
         [Fact]
-
-        [Trait("Defect", "DEF-080")]
+        [Trait("Defect", "DEF-121")]
         [Trait("Category", "Negative")]
         public void SEC_Negative_SQLKeywords_RemovedFromPartnerSearch()
         {
@@ -357,8 +356,7 @@ namespace UNOPS.PAO.Business.Tests.Security
         }
 
         [Fact]
-
-        [Trait("Defect", "DEF-080")]
+        [Trait("Defect", "DEF-121")]
         [Trait("Category", "Edge")]
         public void SEC_Edge_MixedCaseSqlKeywords_Removed()
         {
@@ -508,8 +506,7 @@ namespace UNOPS.PAO.Business.Tests.Security
         }
 
         [Fact]
-
-        [Trait("Defect", "DEF-080")]
+        [Trait("Defect", "DEF-121")]
         [Trait("Category", "Integration")]
         public void SEC_Integration_SearchFlow_PartnerContactInteraction_Sanitized()
         {

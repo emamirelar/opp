@@ -9,6 +9,8 @@
  * Component: app-listview-advanced-search
  *
  * All tests are EXECUTABLE - no skips.
+ *
+ * @tests 17
  */
 
 import { test, expect } from '@playwright/test';

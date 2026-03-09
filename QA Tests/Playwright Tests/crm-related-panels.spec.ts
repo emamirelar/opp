@@ -10,6 +10,8 @@
  * Actual selectors from Angular templates (no data-testid in production):
  * - Partner: app-partner-view, app-partner-tabs, app-link-list, app-document
  * - Contact: app-contact-view, app-contact-tabs, .contact-info-content, .contact-partner-link
+ *
+ * @tests 15
  */
 
 import { test, expect } from '@playwright/test';

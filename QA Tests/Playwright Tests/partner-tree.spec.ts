@@ -7,6 +7,8 @@
  * Uses p-treetable with p-treeTableToggler, editable cells via ttEditableColumn
  * 
  * All tests are EXECUTABLE - no skips.
+ *
+ * @tests 10
  */
 
 import { test, expect } from '@playwright/test';

@@ -8,6 +8,12 @@
  */
 
 import { Page } from '@playwright/test';
+import referenceData from '../fixtures/reference-data.json';
+import partnersFixture from '../fixtures/partners.json';
+import contactsFixture from '../fixtures/contacts.json';
+import opportunitiesFixture from '../fixtures/opportunities.json';
+import dashboardFixture from '../fixtures/dashboard.json';
+import interactionsFixture from '../fixtures/interactions.json';
 
 /**
  * Set to true to enable verbose mock logging (useful for debugging individual tests).
@@ -47,7 +53,14 @@ const OPPORTUNITY_STAGES = {
 };
 
 /** In-memory state for workflow mocks (enables Cancel/Reopen/Submit transitions in tests) */
-const workflowMockState: Record<number, { stage: string; status: string; isInWorkflow: boolean }> = {};
+let workflowMockState: Record<number, { stage: string; status: string; isInWorkflow: boolean }> = {};
+
+/**
+ * Reset the workflow mock state. Call in beforeEach to ensure test isolation.
+ */
+export function resetWorkflowMockState(): void {
+  workflowMockState = {};
+}
 
 /**
  * Setup API mocks for authentication and configuration.
@@ -57,6 +70,9 @@ const workflowMockState: Record<number, { stage: string; status: string; isInWor
  *   Default/admin users receive full permissions.
  */
 export async function setupAPIMocks(page: Page, userEmail?: string): Promise<void> {
+  // Reset workflow state for each test to ensure isolation
+  workflowMockState = {};
+
   const isRestrictedUser = userEmail ? RESTRICTED_MOCK_USERS.includes(userEmail) : false;
   mockLog('[API Mock] Setting up route interceptions...');
   
@@ -142,11 +158,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, name: 'Test Partner 1', type: 'Government' },
-        { id: 2, name: 'Test Partner 2', type: 'NGO' },
-        { id: 3, name: 'Test Partner 3', type: 'Private Sector' },
-      ]),
+      body: JSON.stringify(referenceData.partners),
     });
   });
 
@@ -156,11 +168,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, name: 'HQ - Headquarters', code: 'HQ' },
-        { id: 2, name: 'RO - Regional Office', code: 'RO' },
-        { id: 3, name: 'CO - Country Office', code: 'CO' },
-      ]),
+      body: JSON.stringify(referenceData.organizationUnits),
     });
   });
 
@@ -170,21 +178,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        {
-          id: 1,
-          name: 'Test Partner 1',
-          children: [
-            { id: 11, name: 'Test Partner 1 - Division A', children: [] },
-            { id: 12, name: 'Test Partner 1 - Division B', children: [] },
-          ],
-        },
-        {
-          id: 2,
-          name: 'Test Partner 2',
-          children: [],
-        },
-      ]),
+      body: JSON.stringify(referenceData.partnerTreeStructure),
     });
   });
 
@@ -194,11 +188,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, name: 'New York Office', location: 'USA' },
-        { id: 2, name: 'Geneva Office', location: 'Switzerland' },
-        { id: 3, name: 'Copenhagen Office', location: 'Denmark' },
-      ]),
+      body: JSON.stringify(referenceData.liaisonOffices),
     });
   });
 
@@ -208,11 +198,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, name: 'John Smith', email: 'john.smith@test.com' },
-        { id: 2, name: 'Jane Doe', email: 'jane.doe@test.com' },
-        { id: 3, name: 'Bob Johnson', email: 'bob.johnson@test.com' },
-      ]),
+      body: JSON.stringify(referenceData.contacts),
     });
   });
 
@@ -223,12 +209,8 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        items: [
-          { id: 1, name: 'Test User 1', email: 'user1@unops.org' },
-          { id: 2, name: 'Test User 2', email: 'user2@unops.org' },
-          { id: 3, name: 'Test User 3', email: 'user3@unops.org' },
-        ],
-        totalCount: 3,
+        items: referenceData.users,
+        totalCount: referenceData.users.length,
         pageIndex: 1,
         pageSize: 20,
       }),
@@ -246,13 +228,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, name: 'Mr.' },
-        { id: 2, name: 'Ms.' },
-        { id: 3, name: 'Mrs.' },
-        { id: 4, name: 'Dr.' },
-        { id: 5, name: 'Prof.' },
-      ]),
+      body: JSON.stringify(referenceData.salutations),
     });
   });
 
@@ -262,10 +238,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, name: 'Active' },
-        { id: 2, name: 'Inactive' },
-      ]),
+      body: JSON.stringify(referenceData.statuses),
     });
   });
 
@@ -275,12 +248,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, name: 'He/Him' },
-        { id: 2, name: 'She/Her' },
-        { id: 3, name: 'They/Them' },
-        { id: 4, name: 'Other' },
-      ]),
+      body: JSON.stringify(referenceData.pronouns),
     });
   });
 
@@ -290,14 +258,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 'US', name: 'United States', code: 'US' },
-        { id: 'GB', name: 'United Kingdom', code: 'GB' },
-        { id: 'FR', name: 'France', code: 'FR' },
-        { id: 'DE', name: 'Germany', code: 'DE' },
-        { id: 'CH', name: 'Switzerland', code: 'CH' },
-        { id: 'DK', name: 'Denmark', code: 'DK' },
-      ]),
+      body: JSON.stringify(referenceData.countries),
     });
   });
 
@@ -307,11 +268,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 'NY', name: 'New York', countryCode: 'US' },
-        { id: 'CA', name: 'California', countryCode: 'US' },
-        { id: 'TX', name: 'Texas', countryCode: 'US' },
-      ]),
+      body: JSON.stringify(referenceData.states),
     });
   });
 
@@ -331,14 +288,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        records: [
-          { id: 1, name: 'UNICEF Regional Office', type: 'Government', status: 'Active', stage: 'Active', country: 'United States', createdDate: '2024-01-15T00:00:00Z' },
-          { id: 2, name: 'Red Cross International', type: 'NGO', status: 'Active', stage: 'Active', country: 'Switzerland', createdDate: '2024-02-20T00:00:00Z' },
-          { id: 3, name: 'World Bank Group', type: 'Multilateral', status: 'Active', stage: 'Active', country: 'United States', createdDate: '2024-03-10T00:00:00Z' },
-        ],
-        totalCount: 3,
-      }),
+      body: JSON.stringify(partnersFixture.list),
     });
   });
 
@@ -348,12 +298,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        records: [
-          { id: 1, name: 'UNICEF Regional Office', type: 'Government', status: 'Active', stage: 'Active', country: 'United States', createdDate: '2024-01-15T00:00:00Z' },
-        ],
-        totalCount: 1,
-      }),
+      body: JSON.stringify(partnersFixture.search),
     });
   });
 
@@ -366,14 +311,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        records: [
-          { id: 1, firstName: 'John', lastName: 'Smith', name: 'John Smith', email: 'john.smith@test.com', status: 'Active', partner: { id: 1, name: 'UNICEF Regional Office' }, createdDate: '2024-01-20T00:00:00Z' },
-          { id: 2, firstName: 'Jane', lastName: 'Doe', name: 'Jane Doe', email: 'jane.doe@test.com', status: 'Active', partner: { id: 2, name: 'Red Cross International' }, createdDate: '2024-02-15T00:00:00Z' },
-          { id: 3, firstName: 'Bob', lastName: 'Johnson', name: 'Bob Johnson', email: 'bob.johnson@test.com', status: 'Active', partner: { id: 3, name: 'World Bank Group' }, createdDate: '2024-03-05T00:00:00Z' },
-        ],
-        totalCount: 3,
-      }),
+      body: JSON.stringify(contactsFixture.list),
     });
   });
 
@@ -383,12 +321,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        records: [
-          { id: 1, firstName: 'John', lastName: 'Smith', name: 'John Smith', email: 'john.smith@test.com', status: 'Active', partner: { id: 1, name: 'UNICEF Regional Office' }, createdDate: '2024-01-20T00:00:00Z' },
-        ],
-        totalCount: 1,
-      }),
+      body: JSON.stringify(contactsFixture.search),
     });
   });
 
@@ -402,14 +335,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        records: [
-          { id: 1, subject: 'Quarterly Partnership Review', type: 'Meeting', status: 'Completed', date: '2024-06-15T10:00:00Z', partner: { id: 1, name: 'UNICEF Regional Office' }, createdDate: '2024-06-10T00:00:00Z' },
-          { id: 2, subject: 'Follow-up Call on Project Scope', type: 'Call', status: 'Completed', date: '2024-07-01T14:00:00Z', partner: { id: 2, name: 'Red Cross International' }, createdDate: '2024-06-28T00:00:00Z' },
-          { id: 3, subject: 'Technical Assessment Visit', type: 'Visit', status: 'Scheduled', date: '2024-08-15T09:00:00Z', partner: { id: 3, name: 'World Bank Group' }, createdDate: '2024-07-20T00:00:00Z' },
-        ],
-        totalCount: 3,
-      }),
+      body: JSON.stringify(interactionsFixture.list),
     });
   });
 
@@ -419,12 +345,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        records: [
-          { id: 1, subject: 'Quarterly Partnership Review', type: 'Meeting', status: 'Completed', date: '2024-06-15T10:00:00Z', partner: { id: 1, name: 'UNICEF Regional Office' }, createdDate: '2024-06-10T00:00:00Z' },
-        ],
-        totalCount: 1,
-      }),
+      body: JSON.stringify(interactionsFixture.search),
     });
   });
 
@@ -437,14 +358,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        records: [
-          { id: 1, name: 'Infrastructure Development Program', title: 'Infrastructure Development', status: 'Active', stage: 'Identification', value: 1500000, currency: 'USD', partner: { id: 1, name: 'UNICEF Regional Office' }, organizationUnit: { id: 1, name: 'HQ' }, createdDate: '2024-01-15T00:00:00Z' },
-          { id: 2, name: 'Education Support Initiative', title: 'Education Support', status: 'Active', stage: 'Active', value: 800000, currency: 'USD', partner: { id: 2, name: 'Red Cross International' }, organizationUnit: { id: 2, name: 'RO' }, createdDate: '2024-03-01T00:00:00Z' },
-          { id: 3, name: 'Healthcare Capacity Building', title: 'Healthcare Capacity', status: 'Draft', stage: 'Draft', value: 2000000, currency: 'USD', partner: { id: 3, name: 'World Bank Group' }, organizationUnit: { id: 1, name: 'HQ' }, createdDate: '2024-05-10T00:00:00Z' },
-        ],
-        totalCount: 3,
-      }),
+      body: JSON.stringify(opportunitiesFixture.list),
     });
   });
 
@@ -454,12 +368,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        records: [
-          { id: 1, name: 'Infrastructure Development Program', title: 'Infrastructure Development', status: 'Active', stage: 'Identification', value: 1500000, currency: 'USD', partner: { id: 1, name: 'UNICEF Regional Office' }, createdDate: '2024-01-15T00:00:00Z' },
-        ],
-        totalCount: 1,
-      }),
+      body: JSON.stringify(opportunitiesFixture.search),
     });
   });
 
@@ -790,37 +699,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        myPartners: [
-          { id: 1, name: 'UNICEF Regional Office', status: 'Active', createdDate: '2024-01-15T00:00:00Z', lastModifiedDate: '2024-06-15T00:00:00Z' },
-          { id: 2, name: 'Red Cross International', status: 'Active', createdDate: '2024-02-20T00:00:00Z', lastModifiedDate: '2024-06-10T00:00:00Z' },
-        ],
-        myContacts: [
-          { id: 1, firstName: 'John', lastName: 'Smith', title: 'Director', status: 'Active', createdDate: '2024-01-20T00:00:00Z', lastModifiedDate: '2024-06-01T00:00:00Z' },
-        ],
-        myInteractions: [
-          { id: 1, type: 'Meeting', subject: 'Quarterly Review', description: null, date: '2024-06-15T10:00:00Z', status: 'Completed', createdDate: '2024-06-10T00:00:00Z', lastModifiedDate: '2024-06-15T00:00:00Z' },
-          { id: 2, type: 'Call', subject: 'Follow-up', description: null, date: '2024-07-01T14:00:00Z', status: 'Completed', createdDate: '2024-06-28T00:00:00Z', lastModifiedDate: '2024-07-01T00:00:00Z' },
-          { id: 3, type: 'Visit', subject: 'Site Assessment', description: null, date: '2024-08-15T09:00:00Z', status: 'Scheduled', createdDate: '2024-07-20T00:00:00Z', lastModifiedDate: '2024-07-20T00:00:00Z' },
-        ],
-        myOpportunities: [
-          { id: 1, name: 'Infrastructure Development Program', status: 'Active', stage: 'Identification', userRole: 'Opportunity Manager', createdDate: '2024-01-15T00:00:00Z', lastModifiedDate: '2024-06-15T00:00:00Z' },
-          { id: 2, name: 'Education Support Initiative', status: 'Active', stage: 'Active', userRole: 'Collaborator', createdDate: '2024-03-01T00:00:00Z', lastModifiedDate: '2024-06-01T00:00:00Z' },
-        ],
-        draftPartners: [],
-        draftContacts: [],
-        draftInteractions: [],
-        draftOpportunities: [
-          { id: 3, name: 'Healthcare Capacity Building', status: 'Draft', stage: 'Draft', userRole: 'Opportunity Manager', createdDate: '2024-05-10T00:00:00Z', lastModifiedDate: '2024-06-10T00:00:00Z' },
-        ],
-        orgUnitRecentUpdates: [
-          { id: 1, name: 'UNICEF Regional Office', type: 'Partner', lastModifiedDate: '2024-06-15T12:00:00Z', lastModifiedBy: 1, lastModifiedByName: 'Test User', status: 'Active' },
-          { id: 2, name: 'John Smith', type: 'Contact', lastModifiedDate: '2024-06-14T10:00:00Z', lastModifiedBy: 1, lastModifiedByName: 'Test User', status: 'Active' },
-          { id: 3, name: 'Quarterly Partnership Review', type: 'Interaction', lastModifiedDate: '2024-06-13T09:00:00Z', lastModifiedBy: 1, lastModifiedByName: 'Test User', status: 'Completed' },
-        ],
-        orgUnitName: 'HQ - Headquarters',
-        orgUnitId: 1,
-      }),
+      body: JSON.stringify(dashboardFixture.content),
     });
   });
 
@@ -830,13 +709,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        updates: [
-          { id: 1, name: 'UNICEF Regional Office', type: 'Partner', lastModifiedDate: '2024-06-15T12:00:00Z', lastModifiedBy: 1, lastModifiedByName: 'Test User', status: 'Active' },
-          { id: 2, name: 'John Smith', type: 'Contact', lastModifiedDate: '2024-06-14T10:00:00Z', lastModifiedBy: 1, lastModifiedByName: 'Test User', status: 'Active' },
-        ],
-        orgUnitName: 'HQ - Headquarters',
-      }),
+      body: JSON.stringify(dashboardFixture.orgUnitRecentUpdates),
     });
   });
 
@@ -1240,13 +1113,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, name: 'UN Agencies' },
-        { id: 2, name: 'Bilateral Partners' },
-        { id: 3, name: 'IFIs' },
-        { id: 4, name: 'Private Sector' },
-        { id: 5, name: 'Civil Society' },
-      ]),
+      body: JSON.stringify(referenceData.partnerGroups),
     });
   });
 
@@ -1256,11 +1123,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, name: 'Test User 1', email: 'user1@unops.org', position: 'Programme Manager' },
-        { id: 2, name: 'Test User 2', email: 'user2@unops.org', position: 'Project Officer' },
-        { id: 3, name: 'Test User 3', email: 'user3@unops.org', position: 'Director' },
-      ]),
+      body: JSON.stringify(referenceData.usersSearch),
     });
   });
 
@@ -1273,14 +1136,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, name: 'No Poverty', number: 1 },
-        { id: 2, name: 'Zero Hunger', number: 2 },
-        { id: 3, name: 'Good Health and Well-being', number: 3 },
-        { id: 4, name: 'Quality Education', number: 4 },
-        { id: 5, name: 'Gender Equality', number: 5 },
-        { id: 13, name: 'Climate Action', number: 13 },
-      ]),
+      body: JSON.stringify(referenceData.sdgs),
     });
   });
 
@@ -1290,11 +1146,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, sdgId: 1, name: '1.1 Eradicate extreme poverty' },
-        { id: 2, sdgId: 1, name: '1.2 Reduce poverty by half' },
-        { id: 3, sdgId: 4, name: '4.1 Quality primary and secondary education' },
-      ]),
+      body: JSON.stringify(referenceData.sdgIndicators),
     });
   });
 
@@ -1304,13 +1156,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 'USD', name: 'US Dollar', code: 'USD', symbol: '$' },
-        { id: 'EUR', name: 'Euro', code: 'EUR', symbol: '€' },
-        { id: 'GBP', name: 'British Pound', code: 'GBP', symbol: '£' },
-        { id: 'CHF', name: 'Swiss Franc', code: 'CHF', symbol: 'CHF' },
-        { id: 'DKK', name: 'Danish Krone', code: 'DKK', symbol: 'kr' },
-      ]),
+      body: JSON.stringify(referenceData.currencies),
     });
   });
 
@@ -1320,10 +1166,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, subject: 'Initial Engagement Meeting', type: 'Meeting', date: '2024-06-15T10:00:00Z' },
-        { id: 2, subject: 'Follow-up Call', type: 'Call', date: '2024-07-01T14:00:00Z' },
-      ]),
+      body: JSON.stringify(interactionsFixture.partnerInteractions),
     });
   });
 
@@ -1333,10 +1176,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, subject: 'Initial Engagement Meeting', partnerId: 1, partnerName: 'UNICEF Regional Office' },
-        { id: 2, subject: 'Follow-up Call', partnerId: 2, partnerName: 'Red Cross International' },
-      ]),
+      body: JSON.stringify(interactionsFixture.interactionsBrief),
     });
   });
 
@@ -1346,10 +1186,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 'gemini-pro', name: 'Gemini Pro' },
-        { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' },
-      ]),
+      body: JSON.stringify(referenceData.geminiModels),
     });
   });
 
@@ -1627,11 +1464,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify([
-            { id: 1, name: 'Contract', description: 'Contract document' },
-            { id: 2, name: 'Report', description: 'Report document' },
-            { id: 3, name: 'Proposal', description: 'Proposal document' },
-          ]),
+          body: JSON.stringify(referenceData.documentTypes),
         });
       }
       // Comments endpoint - required for collaboration section

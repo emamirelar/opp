@@ -2381,3 +2381,254 @@ This breaks all Jira-to-test traceability for these tests.
 Converted all 6 concurrent test methods (5 failing + 1 at-risk) to sequential execution. Same approach as QA-089. All 38/38 tests in both performance test classes now pass (0 failures, 0 skipped).
 
 **Verification:** `dotnet test --filter "AuditLogManagerPerformanceTests|SystemAdminManagerPerformanceTests"` — 38 passed, 0 failed.
+
+---
+
+## QA-097: Inconsistent Fallback DB Providers — SQLite vs EF Core InMemory
+
+**ID:** QA-097
+**Severity:** 🟠 High
+**Category:** Infrastructure
+**Date:** 2026-03-09
+**Status:** Open
+**Assigned To:** QA Team
+
+**Description:**
+The test infrastructure uses two different fallback database providers when PostgreSQL is unavailable, leading to inconsistent test behavior:
+
+- **Business Tests** (`TestEnvironment.cs`) fall back to **SQLite in-memory** (lines 115–124, 339–376)
+- **Integration Tests** (`PAOWebApplicationFactory.cs`) fall back to **EF Core InMemory** (lines 306–336)
+
+EF Core InMemory does not support relational features (`GetDbConnection()`, `ExecuteSqlRawAsync()`, `NpgsqlParameter`, transactions, etc.), while SQLite in-memory does support most relational operations. This means the same test logic can pass in one project and fail in the other depending on which fallback is active.
+
+**Root Cause:** The two test infrastructure codebases were developed independently and chose different fallback strategies without alignment.
+
+**Temporary Fix (QA):** Document which provider each test project uses. Be aware that test behavior may differ between Business Tests and Integration Tests when PostgreSQL is unavailable.
+
+**Permanent Fix:**
+- Align both projects to use the same fallback provider (SQLite in-memory recommended, as it supports relational features)
+- Update `PAOWebApplicationFactory` to use SQLite instead of EF Core InMemory
+- Create shared DB configuration utilities used by both projects
+
+**Impact:** All tests in both projects when running without PostgreSQL. Inconsistent pass/fail results between the two test suites.
+
+**Related QA:** QA-077 (GlobalSearch tests fail in InMemory due to pg_trgm)
+
+**Repro Steps:**
+1. Disconnect from PostgreSQL (stop Cloud SQL Proxy)
+2. Run Business Tests — they fall back to SQLite in-memory
+3. Run Integration Tests — they fall back to EF Core InMemory
+4. Compare behavior of similar test patterns across both projects
+
+**Expected:** Both test suites use the same fallback provider with consistent behavior
+**Actual:** Different fallback providers cause different test behaviors and failure modes
+
+---
+
+## QA-098: 30+ Test Files Bypass TestEnvironment with Direct UseInMemoryDatabase()
+
+**ID:** QA-098
+**Severity:** 🟡 Medium
+**Category:** Test Maintenance
+**Date:** 2026-03-09
+**Status:** Open
+**Assigned To:** QA Team
+
+**Description:**
+Over 30 test files in `UNOPS.PAO.Business.Tests` create their own `DbContextOptions` using `UseInMemoryDatabase()` directly instead of going through `TestEnvironment` or `TestDbContextFactory`. This bypasses the centralized database configuration, making it impossible to switch all tests to a different provider (e.g., PostgreSQL or SQLite) via a single configuration change.
+
+**Affected Files (partial list):**
+
+| File | Lines |
+|------|-------|
+| `OrganizationHierarchyServiceUnitTests.cs` | 41–44 |
+| `PartnerTreeServiceUnitTests.cs` | 39 |
+| `LowPriorityServiceTests.cs` | 457, 610, 629, 866, 879, 881 |
+| `PubSubPullServiceTests.cs` | 136–137 |
+| `RateLimitingTests.cs` | 42–44 |
+| `PartnerTreeManagerFullTests.cs` | 32–34 |
+| `PartnerManagerTests.cs` | 31–33 |
+| `ValuesManagerTests.cs` | 35–37 |
+| `DocumentTypeManagerTests.cs` | 30–32 |
+| `ContactManagerFullTests.cs` | 31–33 |
+| `DocumentManagerFullTests.cs` | 31–33 |
+| `InteractionManagerFullTests.cs` | 32–34 |
+| `GmailAddonManagerTests.cs` | 35–37 |
+| `LinkManagerFullTests.cs` | 31–33 |
+| `WorkflowManagerFullTests.cs` | 30–32 |
+| `SystemAdminGeminiManagerFullTests.cs` | 31–33 |
+| `UserDataManagerFullTests.cs` | 30–32 |
+| `ProfileManagerFullTests.cs` | 30–32 |
+| `OrganizationHierarchyManagerFullTests.cs` | 31–33 |
+| `NotificationManagerFullTests.cs` | 31–33 |
+| `SavedFilterServiceTests.cs` | 30–32 |
+| `OrganizationHierarchyLookupServiceTests.cs` | 31–33 |
+| `CountryServiceTests.cs` | 41–43 |
+| `RolePermissionComprehensiveTests.cs` | 43–45 |
+| `AIContextAwarenessTests.cs` | 42–44 |
+| `EngagementManagerTests.cs` | 30–32 |
+| `ContinentManagerTests.cs` | 30–32 |
+| `GeoRegionManagerTests.cs` | 30–32 |
+
+**Root Cause:** Tests were written ad-hoc without following the centralized `TestEnvironment` pattern.
+
+**Temporary Fix (QA):** No immediate action needed — tests function correctly with InMemory but cannot be centrally switched.
+
+**Permanent Fix:**
+- Migrate all 30+ test files to use `TestEnvironment.CreateAppDbContextOptions()` or `TestDbContextFactory`
+- Remove direct `UseInMemoryDatabase()` calls
+- Ensure all tests respect the `USE_INMEMORY_DB` environment variable
+
+**Impact:** 30+ test files cannot be centrally configured. Provider switching requires editing each file individually.
+
+**Related QA:** QA-097 (inconsistent provider strategy)
+
+---
+
+## QA-099: Integration Tests Write to Real PostgreSQL Without Transaction Rollback
+
+**ID:** QA-099
+**Severity:** 🟠 High
+**Category:** Test Data
+**Date:** 2026-03-09
+**Status:** Open
+**Assigned To:** QA Team
+
+**Description:**
+When connected to a real PostgreSQL database, Integration Tests (`QA Tests/Integration Tests/`) write test data without using transaction rollback for cleanup. The `PAOWebApplicationFactory` seeds data via `SeedTestData` and `SeedIdentityUser` (lines 458–478), and `ResetDatabaseAsync()` in `IntegrationTestBase` is a no-op (lines 134–141).
+
+Test isolation depends entirely on:
+- Idempotent seeding (inserting only if not exists)
+- Unique identifiers (e.g., `TestMarker` strings)
+- No shared mutable state assumptions
+
+This can leave orphaned test data in the shared database and cause cross-test interference when tests modify seeded data.
+
+In contrast, Business Tests (`IntegrationTestBase.cs`, `ManagerTestBase.cs`) properly use `BeginTransaction()` and rollback on dispose.
+
+**Root Cause:** `PAOWebApplicationFactory` was designed for EF Core InMemory (where data is discarded automatically) and the PostgreSQL path was added later without equivalent cleanup.
+
+**Temporary Fix (QA):** Use unique identifiers for all test data. Avoid tests that modify shared seeded records. Run tests in isolation when using real PostgreSQL.
+
+**Permanent Fix:**
+- Implement transaction-per-test pattern in `PAOWebApplicationFactory` for PostgreSQL mode
+- Or implement a `ResetDatabaseAsync()` that actually truncates test data
+- Or use a dedicated test database that is wiped between runs
+
+**Impact:** All Integration Tests when running against real PostgreSQL. Risk of cross-test interference, flaky failures, and accumulated test data.
+
+**Related QA:** N/A
+
+**Repro Steps:**
+1. Start Cloud SQL Proxy
+2. Run Integration Tests suite
+3. Inspect database — test data persists after test run
+4. Run tests again — may encounter unique constraint violations or unexpected data from previous runs
+
+**Expected:** Test data is cleaned up after each test or test run
+**Actual:** Test data persists in the shared PostgreSQL database
+
+---
+
+## QA-100: SQLite Fallback Disables Foreign Key Enforcement
+
+**ID:** QA-100
+**Severity:** 🟡 Medium
+**Category:** Test Data
+**Date:** 2026-03-09
+**Status:** Open
+**Assigned To:** QA Team
+
+**Description:**
+When Business Tests fall back to SQLite in-memory mode, foreign key enforcement is explicitly disabled via `PRAGMA foreign_keys = OFF` in `TestEnvironment.cs` (lines 332–335):
+
+```csharp
+cmd.CommandText = "PRAGMA foreign_keys = OFF;";
+cmd.ExecuteNonQuery();
+```
+
+This means tests running on SQLite will not detect referential integrity violations such as:
+- Inserting a child record with a non-existent parent ID
+- Deleting a parent record that still has child references
+- Setting a foreign key to an invalid value
+
+These are real bugs that would surface in production PostgreSQL but are silently accepted in the test environment.
+
+**Root Cause:** Foreign keys were disabled to match EF Core InMemory behavior (which also ignores FK constraints), providing consistency between fallback modes. However, this trades consistency for correctness.
+
+**Temporary Fix (QA):** Be aware that FK-related bugs will not be caught when running on SQLite. Prioritize running tests against real PostgreSQL for validation.
+
+**Permanent Fix:**
+- Enable `PRAGMA foreign_keys = ON` for SQLite in-memory mode
+- Fix any tests that fail due to FK violations (these represent real data integrity issues)
+- Document which tests are affected
+
+**Impact:** All Business Tests running on SQLite. FK constraint violations go undetected.
+
+**Related QA:** QA-097 (inconsistent provider strategy)
+
+---
+
+## QA-101: Shared DbContext Per Test Class Causes Cross-Test Interference
+
+**ID:** QA-101
+**Severity:** 🟡 Medium
+**Category:** Test Execution
+**Date:** 2026-03-09
+**Status:** Open
+**Assigned To:** QA Team
+
+**Description:**
+In both `IntegrationTestBase.cs` and `ManagerTestBase.cs`, the DbContext and transaction are created in the constructor and shared by all test methods within the same test class. This means:
+
+- Tests within the same class share the same DbContext instance
+- Entity tracking state accumulates across tests
+- A test that adds/modifies entities affects the DbContext state for subsequent tests
+- Test execution order can influence pass/fail results
+
+While the transaction rollback pattern (in PostgreSQL mode) provides some isolation at the database level, the in-memory entity tracking state of the DbContext is not reset between tests.
+
+**Root Cause:** xUnit creates a new class instance per test method, so each test gets a fresh constructor call. However, when using `IClassFixture<T>`, the fixture (and its DbContext) is shared across all tests in the class. Tests using fixtures share state.
+
+**Temporary Fix (QA):** Write tests that are self-contained and don't assume clean DbContext state. Use explicit `AsNoTracking()` queries in assertions to avoid tracking interference.
+
+**Permanent Fix:**
+- Create a fresh DbContext per test method where feasible
+- Use `ChangeTracker.Clear()` between tests in shared fixtures
+- Document which test classes use shared fixtures vs per-test instances
+
+**Impact:** Test classes using shared fixtures. Risk of flaky tests due to ordering dependencies and accumulated entity tracking state.
+
+**Related QA:** QA-095 (shared DbContext in parallel tasks)
+
+---
+
+## QA-102: PubSubPullServiceTests Mixes Database Providers Within Same Test
+
+**ID:** QA-102
+**Severity:** 🟡 Medium
+**Category:** Test Execution
+**Date:** 2026-03-09
+**Status:** Open
+**Assigned To:** QA Team
+
+**Description:**
+`PubSubPullServiceTests.cs` uses two different database providers within the same test:
+
+- **Main `_context`**: Created from `TestEnvironment.CreateUNOPSDbContextOptions()` → PostgreSQL or SQLite depending on configuration
+- **`CreateManagerWrapper()` method** (lines 136–137): Uses `AddDbContextFactory` with `UseInMemoryDatabase(dbName)` → always EF Core InMemory
+
+This means the test's direct database operations go through one provider while the `ManagerWrapper` (and all managers it creates) use a completely different provider. Data written via `_context` is invisible to managers, and vice versa.
+
+**Root Cause:** The `CreateManagerWrapper()` helper was written to use InMemory for simplicity, without considering that the test's main context uses a different provider.
+
+**Temporary Fix (QA):** Be aware that assertions comparing data between `_context` and manager operations may produce false results due to provider mismatch.
+
+**Permanent Fix:**
+- Align `CreateManagerWrapper()` to use the same provider as `_context` (via `TestEnvironment`)
+- Pass the existing `DbContextOptions` to the factory instead of creating new InMemory options
+- Verify all test assertions still hold after alignment
+
+**Impact:** All tests in `PubSubPullServiceTests.cs`. Data isolation between providers can cause false positives or false negatives.
+
+**Related QA:** QA-097 (inconsistent provider strategy), QA-098 (bypassing TestEnvironment)

@@ -3,6 +3,8 @@
  * Uses ContactItemPage POM and proper wait patterns.
  *
  * @updated 2026-03-03 - Refactored to use POM, meaningful assertions, proper waits
+ *
+ * @tests 23
  */
 
 import { test, expect } from '@playwright/test';

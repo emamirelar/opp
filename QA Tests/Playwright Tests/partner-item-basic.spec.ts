@@ -4,6 +4,8 @@
  * Uses PartnerItemPage POM and proper wait helpers.
  *
  * @updated 2026-03-03 - Refactored to use POM, meaningful assertions, proper waits
+ *
+ * @tests 26
  */
 
 import { test, expect } from '@playwright/test';

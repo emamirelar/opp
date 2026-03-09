@@ -15,6 +15,8 @@
  * @author UNOPS Opportunity+ QA Team
  * @see ai-assistant.spec.ts (basic visibility tests)
  * @see https://unops.atlassian.net/browse/PNO-OPP-AI
+ *
+ * @tests 27
  */
 
 import { test, expect } from '@playwright/test';

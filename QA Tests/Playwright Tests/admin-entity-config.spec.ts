@@ -7,6 +7,8 @@
  * Uses p-tabs, p-dropdown for entity selection, cdkDropList for field ordering
  * 
  * All tests are EXECUTABLE - no skips.
+ *
+ * @tests 10
  */
 
 import { test, expect } from '@playwright/test';

@@ -3,6 +3,8 @@
  * Uses InteractionItemPage POM and proper wait patterns.
  *
  * @updated 2026-03-03 - Fixed always-passing assertions, replaced fixed timeouts with proper waits
+ *
+ * @tests 24
  */
 
 import { test, expect } from '@playwright/test';

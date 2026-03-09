@@ -1,7 +1,7 @@
 # Action Items — Developers & QA
 
-**Version:** 1.1  
-**Last Updated:** March 6, 2026  
+**Version:** 1.2  
+**Last Updated:** March 9, 2026  
 **Status:** Living document — update as items are completed or added  
 **Audience:** Development Team, QA Team, Engineering Leadership
 
@@ -12,20 +12,27 @@
 > - Move completed items to the "Completed Items" section at the bottom periodically  
 > - Review this document in sprint planning and retrospectives
 
-### Current State (as of March 6, 2026)
+### Current State (as of March 9, 2026)
 
 | Metric | Value |
 |---|---|
-| Total C# test files | 568 (241 C# Tests + 327 Integration Tests) |
-| Total Playwright specs | 102 |
-| Page Object Models | 21 |
-| C# test projects | 4 (FastTests, Business.Tests, Presentation.Tests, IntegrationTests) |
-| Open DEF-XXX defects | ~48 |
-| Resolved DEF-XXX defects | ~40 |
-| Active QA-XXX issues | ~13 (5 open + 3 partial + 5 workaround) |
-| Resolved QA-XXX issues | ~60 |
+| Total C# test methods | ~10,040 (9,840 [Fact] + 200 [Theory]) |
+| Total C# test files | ~290 test files across 3 projects |
+| Total Playwright specs | 108 |
+| Total Playwright test() calls | 1,629 |
+| Page Object Models | 22 |
+| Playwright helpers | 13 |
+| Playwright JSON fixtures | 6 |
+| C# test projects | 4 (FastTests ~175, Business.Tests ~9,600, Presentation.Tests ~245, IntegrationTests ~5,500+) |
+| Open DEF-XXX defects | ~135 |
+| Resolved DEF-XXX defects | ~8 |
+| Active QA-XXX issues | ~11 (2 open + 9 workaround) |
+| Resolved QA-XXX issues | ~49 |
+| Defect-tagged tests [Trait("Defect")] | ~240 |
+| Skipped tests [Fact(Skip=)] | ~44 |
 | CI/CD pipeline | Deployed — 11 jobs in `qa-tests.yml` |
-| Documentation files | 15 (all in `QA Tests/Documentation/`) |
+| Documentation files | 17 (10 in `QA Tests/Documentation/` + 7 in `QA Tests/`) |
+| Test data infrastructure | TestEntityBuilder (C#), Bogus fake data, JSON fixtures (Playwright), workflow-mocks.helper |
 
 ---
 
@@ -94,9 +101,9 @@
 
 | # | Priority | Item | Owner | Target Sprint | Status | Notes |
 |---|---|---|---|---|---|---|
-| Q-005 | 🔴 High | Continue Katalon to Playwright migration | QA Team | Ongoing | ☐ In Progress | 102 specs + 21 POMs created. Continue expanding coverage |
-| Q-006 | 🟠 High | Add Playwright specs for all critical user journeys | QA Team | TBD | ☐ In Progress | Core journeys covered (login, partners, contacts, opportunities, interactions, workflows). Expand edge cases |
-| Q-007 | 🟡 Medium | Expand Page Object Model coverage for all pages | QA Team | TBD | ☐ In Progress | 21 POMs created. Add POMs for admin, AI, search pages |
+| Q-005 | 🔴 High | Continue Katalon to Playwright migration | QA Team | Ongoing | ☐ In Progress | 108 specs + 22 POMs + 1,629 tests + 6 JSON fixtures created. Continue expanding coverage |
+| Q-006 | 🟠 High | Add Playwright specs for all critical user journeys | QA Team | TBD | ☐ In Progress | Core journeys covered (login, partners, contacts, opportunities, interactions, workflows, AI, admin, search, oUP). Expand edge cases |
+| Q-007 | 🟡 Medium | Expand Page Object Model coverage for all pages | QA Team | TBD | ☐ In Progress | 22 POMs created (including admin, AI, workflow, base-engagements, entity-detail/list). Add POMs for remaining pages |
 
 ### 2.3 Defect Management — Ongoing
 
@@ -162,6 +169,16 @@ Move items here when completed. Include the completion date and who completed it
 | ~~Q-102~~ | Created Onboarding Guide | QA Lead | 2026-03-05 | `ONBOARDING_GUIDE.md` |
 | ~~Q-103~~ | Created Shift-Left Scorecard | QA Lead | 2026-03-06 | `SHIFT_LEFT_SCORECARD.md` |
 | ~~Q-104~~ | Updated all Documentation files to current state | QA Lead | 2026-03-06 | All 9 docs updated with current test counts, CI pipeline, defect stats |
+| ~~Q-105~~ | Implemented C# TestEntityBuilder fluent builders | QA Team | 2026-03-09 | Fluent builders for User, Partner, Opportunity, Currency, Country, SDG, OrgHierarchy, Contact, Interaction, EntityRole, InitiativeType, Output in `TestBase/TestEntityBuilder.cs` |
+| ~~Q-106~~ | Unified C# test user creation pattern | QA Team | 2026-03-09 | Replaced raw SQL user creation with `TestDataHelper.GetOrCreateTestUserAsync()` across fixtures |
+| ~~Q-107~~ | Added opt-in SQLite FK enforcement | QA Team | 2026-03-09 | `TestEnvironment.EnableForeignKeys` — set `SQLITE_ENABLE_FK=true` to detect FK constraint violations |
+| ~~Q-108~~ | Extracted Playwright inline mock data to JSON fixtures | QA Team | 2026-03-09 | 6 JSON fixture files in `fixtures/`: reference-data, partners, contacts, opportunities, interactions, dashboard |
+| ~~Q-109~~ | Fixed TestDataSeeder URL patterns | QA Team | 2026-03-09 | Corrected plural (`/api/partners/*`) to singular (`/api/partner/*`) to match actual API |
+| ~~Q-110~~ | Isolated Playwright workflowMockState | QA Team | 2026-03-09 | `workflowMockState` now resets per-test via `resetWorkflowMockState()` — no more shared mutable state |
+| ~~Q-111~~ | Created shared workflow-mocks.helper.ts | QA Team | 2026-03-09 | Centralized notification, opportunity detail, permission, and pending-approval mock helpers. Used by 4 spec files |
+| ~~Q-112~~ | Added Bogus NuGet package for realistic fake data | QA Team | 2026-03-09 | `Bogus 35.6.5` integrated into `UNOPS.PAO.Business.Tests.csproj` |
+| ~~Q-113~~ | Documented test data conventions in QA Playbook | QA Team | 2026-03-09 | Section 5.4 in `QA_TESTER_PLAYBOOK.md` covers all C# and Playwright test data patterns |
+| ~~Q-114~~ | Updated all Documentation files with March 9 test results | QA Lead | 2026-03-09 | Updated TESTING_STRUCTURE, ACTION_ITEMS, ONBOARDING_GUIDE, SHIFT_LEFT_SCORECARD, DEV_CHECKLIST with latest counts |
 | ~~I-100~~ | Deployed CI/CD pipeline (qa-tests.yml) | QA Team | 2026-02 | 11-job pipeline: build, smoke, fast, business, presentation, frontend, integration, defect, playwright (3 tiers) |
 | ~~J-100~~ | Consolidated all action items into living document | QA Lead | 2026-03-06 | This document |
 
@@ -205,3 +222,4 @@ The following point-in-time documents were created during the January 2026 test 
 |---|---|---|---|
 | 1.0 | 2026-03-06 | QA Lead | Initial consolidated document. Merged items from 6 historical developer action item files + 3 checklists. Added ongoing shift-left responsibilities. |
 | 1.1 | 2026-03-06 | QA Lead | Added Current State summary table. Updated Playwright items (Q-005/Q-006/Q-007) to reflect 102 specs and 21 POMs. Added completed items (Q-104, I-100). |
+| 1.2 | 2026-03-09 | QA Lead | Major metrics refresh: C# tests now 10,040 methods (up from ~3,800 Business.Tests). Playwright at 108 specs / 1,629 tests / 22 POMs / 13 helpers / 6 fixtures. DEF count updated to 135 open. Added 10 completed items (Q-105 through Q-114) for test data infrastructure improvements: fluent builders, Bogus, JSON fixtures, workflow-mocks.helper, SQLite FK enforcement, data isolation. |

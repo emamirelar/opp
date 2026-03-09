@@ -1,6 +1,6 @@
 # UNOPS Opportunity+ Testing Structure
 
-**Last Updated:** March 6, 2026  
+**Last Updated:** March 9, 2026  
 **Status:** All test suites operational  
 **Companion to:** [Shift-Left Testing Manifesto](SHIFT_LEFT_TESTING_MANIFESTO.md)
 
@@ -14,14 +14,16 @@ The repository has **4 types of tests** organized as follows:
 opportunityplus/
 ├── QA Tests/
 │   ├── C# Tests/                    # ← Backend unit & business logic tests
-│   │   ├── UNOPS.PAO.FastTests/     #    ~43 fast logic tests
-│   │   ├── UNOPS.PAO.Business.Tests/#    ~3,800 business tests
-│   │   └── UNOPS.PAO.Presentation.Tests/ # ~164 controller tests
+│   │   ├── UNOPS.PAO.FastTests/     #    ~175 fast logic tests
+│   │   ├── UNOPS.PAO.Business.Tests/#    ~9,600 business tests
+│   │   └── UNOPS.PAO.Presentation.Tests/ # ~245 controller tests
 │   ├── Integration Tests/           # ← API/controller integration tests
 │   │   └── UNOPS.PAO.IntegrationTests/   # ~5,500+ integration tests
 │   ├── Playwright Tests/            # ← E2E browser tests
-│   │   ├── *.spec.ts                #    102 spec files
-│   │   └── pages/*.page.ts          #    21 page objects
+│   │   ├── *.spec.ts                #    108 spec files, 1,629 tests
+│   │   ├── pages/*.page.ts          #    22 page objects
+│   │   ├── helpers/                 #    13 helper modules
+│   │   └── fixtures/                #    6 JSON mock data fixtures
 │   ├── Documentation/               # ← All QA documentation (this file)
 │   ├── Defect List for Developers.md# ← DEF-XXX production defects
 │   └── Defect List for QA.md        # ← QA-XXX test infrastructure issues
@@ -42,9 +44,9 @@ opportunityplus/
 
 | Project | Location | Tests | Purpose |
 |---|---|---|---|
-| **FastTests** | `QA Tests/C# Tests/UNOPS.PAO.FastTests/` | ~43 | Quick validation — smoke tests, critical logic |
-| **Business.Tests** | `QA Tests/C# Tests/UNOPS.PAO.Business.Tests/` | ~3,800 | Manager-level business logic, CRUD, validation, performance, load tests |
-| **Presentation.Tests** | `QA Tests/C# Tests/UNOPS.PAO.Presentation.Tests/` | ~164 | Controller/API endpoint tests |
+| **FastTests** | `QA Tests/C# Tests/UNOPS.PAO.FastTests/` | ~175 | Quick validation — smoke tests, critical logic |
+| **Business.Tests** | `QA Tests/C# Tests/UNOPS.PAO.Business.Tests/` | ~9,600 | Manager-level business logic, CRUD, validation, performance, load tests |
+| **Presentation.Tests** | `QA Tests/C# Tests/UNOPS.PAO.Presentation.Tests/` | ~245 | Controller/API endpoint tests |
 | **IntegrationTests** | `QA Tests/Integration Tests/` | ~5,500+ | Full-stack integration: controllers, business rules, cross-entity flows |
 
 ### Integration Test Folders
@@ -80,13 +82,13 @@ Integration Tests/
 # Smoke tests (fastest gate, ~30 seconds)
 dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests" --filter "Category=Smoke"
 
-# Fast tests (~43 tests, <10 seconds)
+# Fast tests (~175 tests, <30 seconds)
 dotnet test "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj"
 
-# Business tests (~3,800 tests, excludes known defects)
+# Business tests (~9,600 tests, excludes known defects)
 dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests" --filter "Defect!~DEF"
 
-# Presentation tests (~164 tests)
+# Presentation tests (~245 tests)
 dotnet test "QA Tests/C# Tests/UNOPS.PAO.Presentation.Tests"
 
 # Integration tests (~5,500 tests, excludes known defects)
@@ -110,39 +112,68 @@ dotnet test --filter "Defect~DEF"
 
 ### Test Structure
 
-| Category | Spec Files | Examples |
-|---|---|---|
-| **Core** | 6 | `login.spec.ts`, `home.spec.ts`, `dashboard.spec.ts`, `partners.spec.ts`, `opportunities.spec.ts`, `interactions.spec.ts` |
-| **Entity Detail** | 8 | `partner-item.spec.ts`, `opportunity-item.spec.ts`, `contact-item.spec.ts`, `interaction-item.spec.ts` (+ basic variants) |
-| **Opportunity** | 9 | `opportunity-creation.spec.ts`, `opportunity-documents.spec.ts`, `opportunity-workflow-transitions.spec.ts`, etc. |
-| **Workflow** | 6 | `workflow.spec.ts`, `go-decision.spec.ts`, `workflow-notifications.spec.ts`, etc. |
-| **Search** | 4 | `deep-search.spec.ts`, `search-listviews.spec.ts`, `search-results-enhanced.spec.ts`, `search-icons.spec.ts` |
-| **Admin** | 4 | `admin-features.spec.ts`, `admin-entity-config.spec.ts`, `admin-translation-workbench.spec.ts`, `user-management.spec.ts` |
-| **Partner/Contact** | 7 | `contacts.spec.ts`, `partner-tree.spec.ts`, `partner-features.spec.ts`, `partner-detail-tabs.spec.ts`, etc. |
-| **AI** | 3 | `ai-assistant.spec.ts`, `ai-assistant-negative.spec.ts`, `ai-comparison.spec.ts` |
-| **Infrastructure** | 8 | `form-validation.spec.ts`, `role-access-control.spec.ts`, `accessibility.spec.ts`, `api-error-handling.spec.ts`, etc. |
-| **Real/Advanced** | 14+ | `*.real.spec.ts` — tests against live environments |
-| **Other** | 30+ | `notifications.spec.ts`, `comments.spec.ts`, `import-export.spec.ts`, `cross-entity-navigation.spec.ts`, etc. |
-| **Total** | **102** | |
+| Category | Spec Files | Tests | Examples |
+|---|---|---|---|
+| **Core** | 6 | 62 | `login.spec.ts`, `home.spec.ts`, `dashboard.spec.ts`, `partners.spec.ts`, `opportunities.spec.ts`, `interactions.spec.ts` |
+| **Entity Detail** | 8 | 209 | `partner-item.spec.ts`, `opportunity-item.spec.ts`, `contact-item.spec.ts`, `interaction-item.spec.ts` (+ basic variants) |
+| **Opportunity** | 25 | 450+ | `opportunity-creation.spec.ts`, `opportunity-documents.spec.ts`, `opportunity-sections.spec.ts`, `opportunity-header.spec.ts`, etc. |
+| **Workflow** | 7 | 253 | `workflow.spec.ts`, `go-decision.spec.ts`, `workflow-notifications.spec.ts`, `workflow-actions-required.spec.ts`, `workflow-static-statement.spec.ts`, etc. |
+| **Search** | 5 | 78 | `deep-search.spec.ts`, `search-listviews.spec.ts`, `search-results-enhanced.spec.ts`, `search-icons.spec.ts`, `saved-filters.spec.ts` |
+| **Admin** | 4 | 55 | `admin-features.spec.ts`, `admin-entity-config.spec.ts`, `admin-translation-workbench.spec.ts`, `user-management.spec.ts` |
+| **Partner/Contact** | 9 | 220+ | `contacts.spec.ts`, `partner-tree.spec.ts`, `partner-features.spec.ts`, `partner-detail-tabs.spec.ts`, `partner-organigram.spec.ts`, etc. |
+| **AI** | 3 | 51 | `ai-assistant.spec.ts`, `ai-assistant-negative.spec.ts`, `ai-comparison.spec.ts` |
+| **Infrastructure** | 12 | 225+ | `form-validation.spec.ts`, `role-access-control.spec.ts`, `accessibility.spec.ts`, `api-error-handling.spec.ts`, `cross-entity-navigation.spec.ts`, `cross-entity-workflows.spec.ts`, etc. |
+| **Real/Advanced** | 14 | 170+ | `*.real.spec.ts` — tests against live environments |
+| **Other** | 15 | 56+ | `notifications.spec.ts`, `comments.spec.ts`, `import-export.spec.ts`, `profile-settings.spec.ts`, `unsaved-changes.spec.ts`, etc. |
+| **Total** | **108** | **~1,629** | |
 
 ### Page Objects
 
-21 page object models in `QA Tests/Playwright Tests/pages/`:
+22 page object models in `QA Tests/Playwright Tests/pages/`:
 
 ```
 pages/
-├── login.page.ts
-├── home.page.ts
-├── dashboard.page.ts
-├── partners.page.ts
-├── partner-item.page.ts
-├── opportunities.page.ts
-├── opportunity-item.page.ts
-├── contacts.page.ts
-├── contact-item.page.ts
-├── interactions.page.ts
-├── interaction-item.page.ts
-└── ... (21 total)
+├── admin.page.ts           ├── entity-detail.page.ts    ├── partner-item.page.ts
+├── ai-assistant.page.ts    ├── entity-list.page.ts      ├── partner-tree.page.ts
+├── base.page.ts            ├── interaction-item.page.ts  ├── partners.page.ts
+├── base-engagements.page.ts├── interactions.page.ts      ├── profile.page.ts
+├── contact-item.page.ts    ├── login.page.ts            ├── responsive-tabs.page.ts
+├── contacts.page.ts        ├── opportunities.page.ts    ├── search-result.page.ts
+├── dashboard.page.ts       ├── opportunity-item.page.ts ├── sidebar.page.ts
+                            │                            └── workflow.page.ts
+```
+
+### Helpers & Fixtures
+
+13 helper modules in `QA Tests/Playwright Tests/helpers/`:
+
+```
+helpers/
+├── api-mocks.helper.ts     # Central API mock setup (imports from fixtures/)
+├── assertions.helper.ts    # Custom assertion utilities
+├── auth.helper.ts          # Auth token helpers
+├── auth-only-mocks.helper.ts # Auth-only mock setup
+├── navigation.helper.ts    # Navigation utilities
+├── oup-integration.helper.ts # oUP integration helpers
+├── real-api-auth.helper.ts # Real API authentication
+├── role-test.helper.ts     # Role-based test setup
+├── test-config.ts          # Test configuration
+├── test-data-builder.ts    # Fluent test data builder
+├── test-data-seeder.ts     # API route seeding
+├── wait.helper.ts          # Wait/polling utilities
+└── workflow-mocks.helper.ts # Shared workflow mock helpers
+```
+
+6 JSON fixture files in `QA Tests/Playwright Tests/fixtures/`:
+
+```
+fixtures/
+├── contacts.json           # Contact list, search, detail mock data
+├── dashboard.json          # Dashboard content and recent updates
+├── interactions.json       # Interaction list, search, detail mock data
+├── opportunities.json      # Opportunity list and search mock data
+├── partners.json           # Partner list, search, detail mock data
+└── reference-data.json     # Dropdowns: countries, SDGs, currencies, statuses, etc.
 ```
 
 ### Quick Start — Running Playwright Tests
@@ -225,15 +256,15 @@ Developer pushes code / creates PR
 │           ▼                       ▼              │
 │  TEST STAGE                                      │
 │  ┌──────────────┐  ┌──────────────────────────┐ │
-│  │ Smoke Tests  │  │ Fast Tests (~43)         │ │
+│  │ Smoke Tests  │  │ Fast Tests (~175)        │ │
 │  │ (Category=   │  │ Code coverage            │ │
 │  │  Smoke)      │  │ BLOCKING                 │ │
 │  │ BLOCKING     │  └──────────────────────────┘ │
 │  └──────────────┘                                │
 │  ┌──────────────┐  ┌──────────────────────────┐ │
 │  │ Business     │  │ Presentation Tests       │ │
-│  │ Tests        │  │ (~164 tests)             │ │
-│  │ (~3,800)     │  │ BLOCKING                 │ │
+│  │ Tests        │  │ (~245 tests)             │ │
+│  │ (~9,600)     │  │ BLOCKING                 │ │
 │  │ PostgreSQL   │  └──────────────────────────┘ │
 │  │ BLOCKING     │                                │
 │  └──────────────┘  ┌──────────────────────────┐ │
@@ -253,7 +284,7 @@ Developer pushes code / creates PR
 │  └──────────────┘  │ (25 specs) PR→main only  │ │
 │                    └──────────────────────────┘ │
 │                    ┌──────────────────────────┐ │
-│                    │ Playwright Full (~96 specs)│ │
+│                    │ Playwright Full (~108 specs│ │
 │                    │ Nightly or manual         │ │
 │                    │ Sharded 4×                │ │
 │                    └──────────────────────────┘ │
@@ -274,7 +305,7 @@ Developer pushes code / creates PR
 |---|---|---|---|
 | **Smoke** | 6 core specs | Every PR/push | Fast E2E validation |
 | **Extended** | 25 specs | PR to main, manual | Core CRM + validation + permissions |
-| **Full** | ~96 specs (sharded 4×) | Nightly, manual | Complete E2E regression |
+| **Full** | ~108 specs (sharded 4×) | Nightly, manual | Complete E2E regression |
 | **Cross-browser** | All specs × 3 browsers | Manual only | Chrome, Firefox, Safari |
 
 ---
@@ -283,10 +314,10 @@ Developer pushes code / creates PR
 
 | File | Prefix | Current Count | Purpose |
 |---|---|---|---|
-| `Defect List for Developers.md` | DEF-XXX | ~48 open, ~40 resolved | Production code defects |
-| `Defect List for QA.md` | QA-XXX | ~13 active, ~60 resolved | Test infrastructure issues |
+| `Defect List for Developers.md` | DEF-XXX | ~135 open, ~8 resolved | Production code defects |
+| `Defect List for QA.md` | QA-XXX | ~11 active (2 open + 9 workaround), ~49 resolved | Test infrastructure issues |
 
-Defect tests use `[Trait("Defect", "DEF-XXX")]` and run in a separate non-blocking CI job.
+~240 defect-exposing tests use `[Trait("Defect", "DEF-XXX")]` and run in a separate non-blocking CI job. 44 tests use `[Fact(Skip = ...)]` for QA infrastructure issues.
 
 ---
 
@@ -294,14 +325,14 @@ Defect tests use `[Trait("Defect", "DEF-XXX")]` and run in a separate non-blocki
 
 | Test Type | Count | Owner | Dev Runs? | CI Gate? |
 |---|---|---|---|---|
-| Smoke Tests | ~14 | QA + Dev | Yes | Blocking |
-| Fast Tests | ~43 | QA | Yes | Blocking |
-| Business Tests | ~3,800 | QA (with AI) | Yes (pre-PR) | Blocking |
-| Presentation Tests | ~164 | QA (with AI) | Yes (pre-PR) | Blocking |
+| Smoke Tests | ~16 | QA + Dev | Yes | Blocking |
+| Fast Tests | ~175 | QA | Yes | Blocking |
+| Business Tests | ~9,600 | QA (with AI) | Yes (pre-PR) | Blocking |
+| Presentation Tests | ~245 | QA (with AI) | Yes (pre-PR) | Blocking |
 | Integration Tests | ~5,500+ | QA (with AI) | Yes (pre-PR) | Continue-on-error |
-| Playwright E2E | 102 specs | QA (100%) | No | Smoke: continue; Full: nightly |
+| Playwright E2E | 108 specs / 1,629 tests | QA (100%) | No | Smoke: continue; Full: nightly |
 | Angular Unit Tests | Varies | Dev + QA | Yes | Blocking |
-| Defect Tests | Varies | QA | No | Informational |
+| Defect Tests | ~240 | QA | No | Informational |
 
 ---
 
@@ -339,3 +370,4 @@ All QA documentation is centralized in `QA Tests/Documentation/`:
 |---|---|---|---|
 | 1.0 | 2026-01-23 | QA Team | Initial version |
 | 2.0 | 2026-03-06 | QA Lead | Complete rewrite: Updated all test counts (568 C# files, 102 Playwright specs, 21 POMs). Updated CI pipeline to match qa-tests.yml (build stage, test stage with 11 jobs, Playwright tiers). Added integration test folder structure. Updated defect tracking counts. Added test ownership summary. Centralized documentation index. Removed stale references. |
+| 3.0 | 2026-03-09 | QA Lead | Major update: C# tests grew from ~3,800 to ~9,600 Business.Tests (10,040 total methods across all projects). FastTests now ~175, Presentation.Tests ~245. Playwright grew to 108 specs with 1,629 test() calls, 22 POMs, 13 helpers, 6 JSON fixture files. Added per-spec test counts table. Updated defect tracking (135 open DEF, 11 active QA). Added helpers/fixtures inventory. Added test data infrastructure notes (TestEntityBuilder, Bogus, workflow-mocks.helper). |

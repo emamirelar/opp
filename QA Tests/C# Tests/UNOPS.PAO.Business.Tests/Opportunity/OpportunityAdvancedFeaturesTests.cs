@@ -84,12 +84,6 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
             _transaction = _context.Database.BeginTransaction();
         }
 
-        var mapperConfig = new MapperConfiguration(cfg =>
-        {
-            cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
-        });
-        _mapper = mapperConfig.CreateMapper();
-        
         _configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -105,7 +99,18 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
                 ["ExchangeRate:BaseUrl"] = "https://test-api.example.com"
             })
             .Build();
-        
+
+        var mapperConfig = new MapperConfiguration(cfg =>
+        {
+            cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
+            cfg.ConstructServicesUsing(serviceType =>
+            {
+                try { return Activator.CreateInstance(serviceType)!; }
+                catch { return null!; }
+            });
+        });
+        _mapper = mapperConfig.CreateMapper();
+
         _mockPermissionService = new Mock<IPermissionService>();
         _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
         _mockDbContextFactory = new Mock<IDbContextFactory<UNOPSAppDbContext>>();

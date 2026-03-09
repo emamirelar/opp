@@ -9,6 +9,8 @@
  * 
  * All tests are EXECUTABLE with API mocks - no env gate needed.
  * The mock permission system returns different permissions per user role.
+ *
+ * @tests 13
  */
 
 import { test, expect } from '@playwright/test';

@@ -11,6 +11,8 @@
  * Run: cd "QA Tests" && npx playwright test --project=real-api workflow-actions.real.spec.ts
  *
  * @author UNOPS Opportunity+ QA Team
+ *
+ * @tests 8
  */
 
 import { test, expect } from '@playwright/test';

@@ -10,6 +10,8 @@
  *
  * @author UNOPS Opportunity+ QA Team
  * @see https://unops.atlassian.net/browse/PAO
+ *
+ * @tests 26
  */
 
 import { test, expect } from '@playwright/test';

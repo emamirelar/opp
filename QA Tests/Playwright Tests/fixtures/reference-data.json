@@ -1,0 +1,109 @@
+{
+  "partners": [
+    { "id": 1, "name": "Test Partner 1", "type": "Government" },
+    { "id": 2, "name": "Test Partner 2", "type": "NGO" },
+    { "id": 3, "name": "Test Partner 3", "type": "Private Sector" }
+  ],
+  "organizationUnits": [
+    { "id": 1, "name": "HQ - Headquarters", "code": "HQ" },
+    { "id": 2, "name": "RO - Regional Office", "code": "RO" },
+    { "id": 3, "name": "CO - Country Office", "code": "CO" }
+  ],
+  "partnerTreeStructure": [
+    {
+      "id": 1,
+      "name": "Test Partner 1",
+      "children": [
+        { "id": 11, "name": "Test Partner 1 - Division A", "children": [] },
+        { "id": 12, "name": "Test Partner 1 - Division B", "children": [] }
+      ]
+    },
+    { "id": 2, "name": "Test Partner 2", "children": [] }
+  ],
+  "liaisonOffices": [
+    { "id": 1, "name": "New York Office", "location": "USA" },
+    { "id": 2, "name": "Geneva Office", "location": "Switzerland" },
+    { "id": 3, "name": "Copenhagen Office", "location": "Denmark" }
+  ],
+  "contacts": [
+    { "id": 1, "name": "John Smith", "email": "john.smith@test.com" },
+    { "id": 2, "name": "Jane Doe", "email": "jane.doe@test.com" },
+    { "id": 3, "name": "Bob Johnson", "email": "bob.johnson@test.com" }
+  ],
+  "salutations": [
+    { "id": 1, "name": "Mr." },
+    { "id": 2, "name": "Ms." },
+    { "id": 3, "name": "Mrs." },
+    { "id": 4, "name": "Dr." },
+    { "id": 5, "name": "Prof." }
+  ],
+  "statuses": [
+    { "id": 1, "name": "Active" },
+    { "id": 2, "name": "Inactive" }
+  ],
+  "pronouns": [
+    { "id": 1, "name": "He/Him" },
+    { "id": 2, "name": "She/Her" },
+    { "id": 3, "name": "They/Them" },
+    { "id": 4, "name": "Other" }
+  ],
+  "countries": [
+    { "id": "US", "name": "United States", "code": "US" },
+    { "id": "GB", "name": "United Kingdom", "code": "GB" },
+    { "id": "FR", "name": "France", "code": "FR" },
+    { "id": "DE", "name": "Germany", "code": "DE" },
+    { "id": "CH", "name": "Switzerland", "code": "CH" },
+    { "id": "DK", "name": "Denmark", "code": "DK" }
+  ],
+  "states": [
+    { "id": "NY", "name": "New York", "countryCode": "US" },
+    { "id": "CA", "name": "California", "countryCode": "US" },
+    { "id": "TX", "name": "Texas", "countryCode": "US" }
+  ],
+  "partnerGroups": [
+    { "id": 1, "name": "UN Agencies" },
+    { "id": 2, "name": "Bilateral Partners" },
+    { "id": 3, "name": "IFIs" },
+    { "id": 4, "name": "Private Sector" },
+    { "id": 5, "name": "Civil Society" }
+  ],
+  "sdgs": [
+    { "id": 1, "name": "No Poverty", "number": 1 },
+    { "id": 2, "name": "Zero Hunger", "number": 2 },
+    { "id": 3, "name": "Good Health and Well-being", "number": 3 },
+    { "id": 4, "name": "Quality Education", "number": 4 },
+    { "id": 5, "name": "Gender Equality", "number": 5 },
+    { "id": 13, "name": "Climate Action", "number": 13 }
+  ],
+  "sdgIndicators": [
+    { "id": 1, "sdgId": 1, "name": "1.1 Eradicate extreme poverty" },
+    { "id": 2, "sdgId": 1, "name": "1.2 Reduce poverty by half" },
+    { "id": 3, "sdgId": 4, "name": "4.1 Quality primary and secondary education" }
+  ],
+  "currencies": [
+    { "id": "USD", "name": "US Dollar", "code": "USD", "symbol": "$" },
+    { "id": "EUR", "name": "Euro", "code": "EUR", "symbol": "€" },
+    { "id": "GBP", "name": "British Pound", "code": "GBP", "symbol": "£" },
+    { "id": "CHF", "name": "Swiss Franc", "code": "CHF", "symbol": "CHF" },
+    { "id": "DKK", "name": "Danish Krone", "code": "DKK", "symbol": "kr" }
+  ],
+  "geminiModels": [
+    { "id": "gemini-pro", "name": "Gemini Pro" },
+    { "id": "gemini-1.5-pro", "name": "Gemini 1.5 Pro" }
+  ],
+  "users": [
+    { "id": 1, "name": "Test User 1", "email": "user1@unops.org" },
+    { "id": 2, "name": "Test User 2", "email": "user2@unops.org" },
+    { "id": 3, "name": "Test User 3", "email": "user3@unops.org" }
+  ],
+  "usersSearch": [
+    { "id": 1, "name": "Test User 1", "email": "user1@unops.org", "position": "Programme Manager" },
+    { "id": 2, "name": "Test User 2", "email": "user2@unops.org", "position": "Project Officer" },
+    { "id": 3, "name": "Test User 3", "email": "user3@unops.org", "position": "Director" }
+  ],
+  "documentTypes": [
+    { "id": 1, "name": "Contract", "description": "Contract document" },
+    { "id": 2, "name": "Report", "description": "Report document" },
+    { "id": 3, "name": "Proposal", "description": "Proposal document" }
+  ]
+}

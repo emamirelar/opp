@@ -14,6 +14,7 @@
  *
  * @author QA Team
  * @since 2026-02-02
+ * @tests 32
  */
 
 import { test, expect } from '@playwright/test';

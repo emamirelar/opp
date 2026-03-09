@@ -1,5 +1,7 @@
+using System.Net.Sockets;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 using UNOPS.PAO.DataAccess.Context;
@@ -54,6 +56,12 @@ public static class TestEnvironment
     /// Must be shared because it manages the periodic password refresh.
     /// </summary>
     private static readonly NpgsqlDataSource? _dataSource;
+
+    /// <summary>
+    /// Stores the proxy connectivity error message when PostgreSQL is configured
+    /// but the Cloud SQL Proxy is unreachable.
+    /// </summary>
+    private static readonly string? _proxyError;
 
     /// <summary>
     /// Whether we are using a real PostgreSQL database (DEFAULT)
@@ -124,6 +132,7 @@ public static class TestEnvironment
             _useIamAuth = false; // Explicit connection strings should include their own auth
             UsePostgreSQL = true;
             _dataSource = BuildDataSource(_connectionString, _useIamAuth);
+            _proxyError = VerifyProxyConnectivity(_connectionString);
             return;
         }
 
@@ -135,6 +144,7 @@ public static class TestEnvironment
             _useIamAuth = iamAuth;
             UsePostgreSQL = true;
             _dataSource = BuildDataSource(_connectionString, _useIamAuth);
+            _proxyError = VerifyProxyConnectivity(_connectionString);
             return;
         }
 
@@ -143,6 +153,91 @@ public static class TestEnvironment
         _useIamAuth = false;
         _dataSource = null;
         UsePostgreSQL = false;
+    }
+
+    /// <summary>
+    /// Attempts a TCP connection to the database host:port to verify the Cloud SQL Proxy
+    /// (or database server) is reachable. Returns null on success, or an error message on failure.
+    /// Called once during static initialization so every test gets a fast, clear failure
+    /// instead of waiting for Npgsql timeouts.
+    /// </summary>
+    private static string? VerifyProxyConnectivity(string connectionString)
+    {
+        try
+        {
+            var builder = new NpgsqlConnectionStringBuilder(connectionString);
+            var host = builder.Host ?? "127.0.0.1";
+            var port = builder.Port > 0 ? builder.Port : 5432;
+
+            using var client = new TcpClient();
+            var connectTask = client.ConnectAsync(host, port);
+            if (connectTask.Wait(TimeSpan.FromSeconds(5)))
+            {
+                return null; // connected successfully
+            }
+
+            return BuildProxyErrorMessage(host, port, "Connection timed out after 5 seconds");
+        }
+        catch (AggregateException ex) when (ex.InnerException is SocketException sockEx)
+        {
+            var builder = new NpgsqlConnectionStringBuilder(connectionString);
+            return BuildProxyErrorMessage(
+                builder.Host ?? "127.0.0.1",
+                builder.Port > 0 ? builder.Port : 5432,
+                sockEx.Message);
+        }
+        catch (SocketException ex)
+        {
+            var builder = new NpgsqlConnectionStringBuilder(connectionString);
+            return BuildProxyErrorMessage(
+                builder.Host ?? "127.0.0.1",
+                builder.Port > 0 ? builder.Port : 5432,
+                ex.Message);
+        }
+        catch
+        {
+            // If we can't even parse the connection string, let the test run normally
+            // and Npgsql will report the real error
+            return null;
+        }
+    }
+
+    private static string BuildProxyErrorMessage(string host, int port, string detail)
+    {
+        return $"""
+
+            ╔══════════════════════════════════════════════════════════════════════╗
+            ║                    DATABASE PROXY NOT RUNNING                       ║
+            ╠══════════════════════════════════════════════════════════════════════╣
+            ║                                                                    ║
+            ║  Cannot connect to {host}:{port,-5}                                ║
+            ║  Detail: {detail,-53} ║
+            ║                                                                    ║
+            ║  PostgreSQL tests require the Cloud SQL Proxy.                      ║
+            ║                                                                    ║
+            ║  To fix:                                                           ║
+            ║    1. Start the Cloud SQL Proxy:                                   ║
+            ║       cloud-sql-proxy --port {port} <instance-connection-name>     ║
+            ║                                                                    ║
+            ║    2. OR run tests with in-memory DB (no proxy needed):            ║
+            ║       $env:USE_INMEMORY_DB = "true"                                ║
+            ║       dotnet test ...                                              ║
+            ║                                                                    ║
+            ╚══════════════════════════════════════════════════════════════════════╝
+            """;
+    }
+
+    /// <summary>
+    /// Throws immediately with a clear error if PostgreSQL was configured but
+    /// the Cloud SQL Proxy is not reachable. Call sites: CreateAppDbContextOptions
+    /// and CreateUNOPSDbContextOptions.
+    /// </summary>
+    private static void ThrowIfProxyUnavailable()
+    {
+        if (_proxyError is not null)
+        {
+            throw new InvalidOperationException(_proxyError);
+        }
     }
 
     /// <summary>
@@ -247,6 +342,8 @@ public static class TestEnvironment
     /// </summary>
     public static DbContextOptions<AppDbContext> CreateAppDbContextOptions(string? databaseName = null)
     {
+        ThrowIfProxyUnavailable();
+
         var builder = new DbContextOptionsBuilder<AppDbContext>();
 
         if (UsePostgreSQL)
@@ -277,6 +374,9 @@ public static class TestEnvironment
             // SQLite supports relational model features needed by Z.EntityFramework.Extensions.
             var connection = CreateSqliteConnection();
             builder.UseSqlite(connection);
+            // SQLite model may lack navigation properties that exist only in UNOPSAppDbContext.
+            // Suppress InvalidIncludePathError so string-based includes degrade gracefully.
+            builder.ConfigureWarnings(w => w.Ignore(CoreEventId.InvalidIncludePathError));
         }
 
         return builder.Options;
@@ -288,6 +388,8 @@ public static class TestEnvironment
     /// </summary>
     public static DbContextOptions<UNOPSAppDbContext> CreateUNOPSDbContextOptions(string? databaseName = null)
     {
+        ThrowIfProxyUnavailable();
+
         var builder = new DbContextOptionsBuilder<UNOPSAppDbContext>();
 
         if (UsePostgreSQL)
@@ -318,26 +420,45 @@ public static class TestEnvironment
             // SQLite supports relational model features needed by Z.EntityFramework.Extensions.
             var connection = CreateSqliteConnection();
             builder.UseSqlite(connection);
+            builder.ConfigureWarnings(w => w.Ignore(CoreEventId.InvalidIncludePathError));
         }
 
         return builder.Options;
     }
 
     /// <summary>
+    /// Environment variable: set to "true" to enable SQLite foreign key enforcement.
+    /// When enabled, tests that insert data with non-existent FK references will fail,
+    /// catching data integrity issues that would fail on PostgreSQL.
+    /// </summary>
+    public const string EnableForeignKeysEnvVar = "SQLITE_ENABLE_FK";
+
+    /// <summary>
+    /// Whether SQLite foreign key constraints are enforced.
+    /// Default: false (matches legacy InMemory provider behavior).
+    /// Set SQLITE_ENABLE_FK=true to enable strict FK validation.
+    /// </summary>
+    public static bool EnableForeignKeys { get; } =
+        string.Equals(
+            Environment.GetEnvironmentVariable(EnableForeignKeysEnvVar),
+            "true",
+            StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
     /// Creates a new SQLite in-memory connection, opens it, and tracks it to prevent GC.
     /// Each call returns a fresh connection with its own isolated in-memory database.
-    /// Foreign key enforcement is disabled to match InMemory provider behavior —
-    /// tests insert data with non-existent FK references (e.g., CreatedBy = 1).
+    /// Foreign key enforcement is controlled by the SQLITE_ENABLE_FK environment variable.
+    /// Default: OFF (matching legacy InMemory provider behavior).
     /// </summary>
     private static SqliteConnection CreateSqliteConnection()
     {
         var connection = new SqliteConnection("DataSource=:memory:");
         connection.Open();
 
-        // Disable FK enforcement so tests can insert data with non-existent FK references,
-        // matching the behavior of the EF Core InMemory provider.
         using var cmd = connection.CreateCommand();
-        cmd.CommandText = "PRAGMA foreign_keys = OFF;";
+        cmd.CommandText = EnableForeignKeys
+            ? "PRAGMA foreign_keys = ON;"
+            : "PRAGMA foreign_keys = OFF;";
         cmd.ExecuteNonQuery();
 
         lock (_sqliteConnections)
@@ -394,9 +515,56 @@ public static class TestEnvironment
     {
         if (UseInMemory)
         {
-            // SQLite in-memory databases need EnsureCreated to build the schema
             context.Database.EnsureCreated();
+
+            // Tables marked ExcludeFromMigrations() (e.g. AspNetUsers, AspNetUserRoles)
+            // are NOT created by EnsureCreated(). Create minimal stubs so that
+            // string-based includes referencing these tables don't fail with "no such table".
+            CreateExcludedTables(context);
         }
-        // PostgreSQL: schema already exists from migrations — do NOT call EnsureCreated/EnsureDeleted
+    }
+
+    /// <summary>
+    /// Creates minimal table stubs for entities marked with ExcludeFromMigrations().
+    /// These tables exist in the production PostgreSQL database (managed by Identity)
+    /// but are skipped by EnsureCreated() / EF migrations.
+    /// </summary>
+    private static void CreateExcludedTables(DbContext context)
+    {
+        try
+        {
+            context.Database.ExecuteSqlRaw(@"
+                CREATE TABLE IF NOT EXISTS ""AspNetUsers"" (
+                    ""Id"" INTEGER PRIMARY KEY,
+                    ""Email"" TEXT,
+                    ""IsInternal"" INTEGER NOT NULL DEFAULT 0,
+                    ""ActiveUser"" INTEGER NOT NULL DEFAULT 1,
+                    ""UserName"" TEXT,
+                    ""NormalizedUserName"" TEXT,
+                    ""NormalizedEmail"" TEXT,
+                    ""EmailConfirmed"" INTEGER NOT NULL DEFAULT 0,
+                    ""PasswordHash"" TEXT,
+                    ""SecurityStamp"" TEXT,
+                    ""ConcurrencyStamp"" TEXT,
+                    ""PhoneNumber"" TEXT,
+                    ""PhoneNumberConfirmed"" INTEGER NOT NULL DEFAULT 0,
+                    ""TwoFactorEnabled"" INTEGER NOT NULL DEFAULT 0,
+                    ""LockoutEnd"" TEXT,
+                    ""LockoutEnabled"" INTEGER NOT NULL DEFAULT 0,
+                    ""AccessFailedCount"" INTEGER NOT NULL DEFAULT 0
+                );
+            ");
+            context.Database.ExecuteSqlRaw(@"
+                CREATE TABLE IF NOT EXISTS ""AspNetUserRoles"" (
+                    ""UserId"" INTEGER NOT NULL,
+                    ""RoleId"" INTEGER NOT NULL,
+                    PRIMARY KEY (""UserId"", ""RoleId"")
+                );
+            ");
+        }
+        catch
+        {
+            // Tables may already exist from a previous EnsureCreated call
+        }
     }
 }

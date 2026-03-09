@@ -16,6 +16,8 @@
  *   - contact-documents-section, upload-document-button
  * 
  * @created 2026-02-12
+ *
+ * @tests 23
  */
 
 import { test, expect } from '@playwright/test';

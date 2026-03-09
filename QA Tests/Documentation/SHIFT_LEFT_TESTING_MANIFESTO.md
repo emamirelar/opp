@@ -1,9 +1,9 @@
 # Shift-Left Testing Manifesto — New Way of Working
 
-**Version:** 1.3  
-**Date:** March 5, 2026  
+**Version:** 1.4  
+**Date:** March 9, 2026  
 **Status:** Draft — for team review and adoption  
-**Audience:** QA Testers, Developers, Scrum Masters, Product Owners, Engineering Leadership  
+**Audience:** Solution Designers, PM/BAs, QA Testers, Developers, Scrum Masters, Product Owners, Engineering Leadership  
 **Scope:** UNOPS Opportunity+ and all projects under the QA team
 
 ---
@@ -13,15 +13,16 @@
 1. [Vision and Principles](#1-vision-and-principles)
 2. [The Testing Pyramid and Ownership Model](#2-the-testing-pyramid-and-ownership-model)
 3. [Test Type Definitions and Responsibilities](#3-test-type-definitions-and-responsibilities)
-4. [The Developer Testing Contract](#4-the-developer-testing-contract)
-5. [The QA Testing Contract](#5-the-qa-testing-contract)
-6. [Handshake Points — QA/Dev Collaboration Ceremonies](#6-handshake-points--qadev-collaboration-ceremonies)
-7. [Quality Gates — The Three Checkpoints](#7-quality-gates--the-three-checkpoints)
-8. [Defect Management Workflow](#8-defect-management-workflow)
-9. [Katalon to Playwright Transition Plan](#9-katalon-to-playwright-transition-plan)
-10. [Training Roadmap](#10-training-roadmap)
-11. [Metrics and Success Criteria](#11-metrics-and-success-criteria)
-12. [Tooling Reference](#12-tooling-reference)
+4. [The Pre-Development Validation Contracts](#4-the-pre-development-validation-contracts)
+5. [The Developer Testing Contract](#5-the-developer-testing-contract)
+6. [The QA Testing Contract](#6-the-qa-testing-contract)
+7. [Handshake Points — Team Collaboration Ceremonies](#7-handshake-points--team-collaboration-ceremonies)
+8. [Quality Gates — The Four Checkpoints](#8-quality-gates--the-four-checkpoints)
+9. [Defect Management Workflow](#9-defect-management-workflow)
+10. [Katalon to Playwright Transition Plan](#10-katalon-to-playwright-transition-plan)
+11. [Training Roadmap](#11-training-roadmap)
+12. [Metrics and Success Criteria](#12-metrics-and-success-criteria)
+13. [Tooling Reference](#13-tooling-reference)
 
 **Appendices:**
 - [Appendix A: Quick Reference — "Who Does What?"](#appendix-a-quick-reference--who-does-what)
@@ -58,12 +59,14 @@ This is not about making developers into testers, or making testers into develop
 
 | Before (Old Way)                                | After (New Way)                                            |
 |-------------------------------------------------|------------------------------------------------------------|
+| Requirements assumed complete, ambiguities found during QA | PM/BA validates requirements with PO before sprint commitment |
+| Design reviewed only in code review (too late)   | Solution Designer validates design against requirements before dev starts |
 | Developers write code, throw it over the wall   | Developers run tests before creating a Pull Request        |
 | QA does all testing after development is done    | QA authors test specs early; devs run them pre-handoff     |
 | Defects found late in QA/Staging                 | Defects caught on developer machines and in CI             |
 | Katalon for UI and API automation                | Playwright for E2E; xUnit for backend; Cursor + Claude AI  |
 | Manual testing is the primary approach           | Manual exploratory testing complements automated suites    |
-| QA and Dev operate in silos                      | QA and Dev collaborate through defined handshake points    |
+| QA and Dev operate in silos                      | All roles collaborate through defined handshake points     |
 
 ### What Stays the Same
 
@@ -75,11 +78,12 @@ This is not about making developers into testers, or making testers into develop
 
 ### Core Principles
 
-1. **Quality is everyone's responsibility.** Developers own the quality of their code. QA owns the quality of the product experience. Neither can succeed alone.
-2. **Test early, fail fast.** A bug found on a developer's machine costs minutes to fix. The same bug found in Staging costs days.
-3. **Automate the repeatable, explore the unknown.** Regression and smoke tests should be automated. Exploratory testing should be manual, creative, and session-based.
-4. **AI is a force multiplier, not a replacement.** Cursor and Claude help both teams write tests faster. The human decides what to test and whether the result is correct.
-5. **Measure and improve.** Track metrics, discuss them in retrospectives, and adjust the process.
+1. **Quality is everyone's responsibility.** Solution Designers own the quality of the design. PM/BAs own the quality of the requirements. Developers own the quality of their code. QA owns the quality of the product experience. None can succeed alone.
+2. **Start before code.** The cheapest defect is one prevented by a clear requirement and a validated design. PM/BAs and Solution Designers are the first line of quality defence.
+3. **Test early, fail fast.** A bug found on a developer's machine costs minutes to fix. The same bug found in Staging costs days. A requirements gap found during refinement costs even less.
+4. **Automate the repeatable, explore the unknown.** Regression and smoke tests should be automated. Exploratory testing should be manual, creative, and session-based.
+5. **AI is a force multiplier, not a replacement.** Cursor and Claude help both teams write tests faster. The human decides what to test and whether the result is correct.
+6. **Measure and improve.** Track metrics, discuss them in retrospectives, and adjust the process.
 
 ---
 
@@ -117,12 +121,29 @@ This is not about making developers into testers, or making testers into develop
   (automated xUnit suites + Playwright E2E suite
    + manual regression for high-risk areas)
   ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+
+  ══════════════════════════════════════════════════════
+  L0 — PRE-DEVELOPMENT VALIDATION (below the pyramid)
+  ══════════════════════════════════════════════════════
+  ┌───────────────────────────────────────────────────┐
+  │  Requirements Validation (PM/BA + PO)             │
+  │  ── Completeness checks, testability gate,        │
+  │     business rule documentation, PO sign-off      │
+  │                                                   │
+  │  Design Validation (Solution Designer + QA)       │
+  │  ── Design-to-requirements traceability,          │
+  │     testability review, NFR validation,            │
+  │     integration point specification               │
+  └───────────────────────────────────────────────────┘
+  These activities prevent defects from entering the
+  pyramid at all — the cheapest quality investment.
 ```
 
-**All 16 Test Types by Pyramid Level:**
+**All Test Types by Pyramid Level:**
 
 | Level | Test Types | Primary Owner | Devs Involved? |
 |-------|-----------|---------------|----------------|
+| **L0 — Pre-Development** | Requirements Validation, Design Validation | PM/BA + Solution Designer | No (provides inputs for Dev and QA) |
 | **L1 — Foundation** | Unit Tests, Component Tests, Smoke Tests | Dev (Smoke co-owned with QA) | Yes — authors and executes |
 | **L2 — Non-Functional** | Performance Tests, Load Tests | QA (with AI), reviewed by Dev | On demand only |
 | **L3 — Integration** | API/Controller Integration Tests, Business Logic Tests, Functional Tests, Validation Tests, Security Tests, Concurrency Tests | QA (with AI), Dev runs pre-PR | Yes — must run before PR |
@@ -161,6 +182,8 @@ See `.cursor/rules/test-ratio-enforcement.mdc` for the full ratio standard.
 
 | Level | Test Type                          | Creates        | Updates        | Executes (Local)  | Executes (CI)     | Reviews         |
 |-------|------------------------------------|----------------|----------------|-------------------|-------------------|-----------------|
+| L0    | Requirements Validation            | PM/BA          | PM/BA          | PM/BA + PO        | N/A (human)       | PO              |
+| L0    | Design Validation                  | Solution Designer | Solution Designer | SD + QA + Dev  | N/A (human)       | Dev Lead + QA   |
 | L1    | Unit Tests                         | Dev            | Dev            | Dev               | Automatic on PR   | Dev (PR review) |
 | L1    | Component Tests                    | Dev            | Dev            | Dev               | Automatic on PR   | Dev (PR review) |
 | L1    | Smoke Tests                        | Dev + QA       | Dev + QA       | Dev               | Automatic on PR   | QA Lead         |
@@ -383,9 +406,144 @@ Exploratory testing is a uniquely human activity. It cannot be automated and sho
 
 ---
 
-## 4. The Developer Testing Contract
+## 4. The Pre-Development Validation Contracts
 
-This section defines what developers commit to under the shift-left model. This is not optional — it is part of the Definition of Done.
+This section defines what Solution Designers and PM/BAs commit to under the shift-left model. These are the earliest quality activities — they happen before a single line of code is written. Defects prevented here cost a fraction of defects found later.
+
+### 4.1 The Solution Designer Validation Contract
+
+The Solution Designer is responsible for verifying that the proposed technical solution actually addresses the stated requirements. A design that looks elegant on a whiteboard but cannot be tested, does not meet NFRs, or leaves integration points undefined is a defect waiting to happen.
+
+#### Before Development Begins, the Solution Designer MUST
+
+1. **Validate design-to-requirements traceability.**
+   - For every acceptance criterion in the Jira story, confirm the design explicitly addresses it.
+   - If a requirement says "users must be notified when an opportunity is approved," the design must specify where that notification originates, who receives it, and through what channel.
+   - Produce a traceability table: Requirement → Design Component → How It Will Be Tested.
+
+2. **Conduct a testability review with QA.**
+   - Walk through the design with QA before development starts.
+   - QA asks: "How do we test this? What are the boundaries? What happens when this external service is down?"
+   - If any part of the design cannot be tested (black-box integration, no observable outputs, no error surface), it must be redesigned or a monitoring/observability plan must be agreed.
+
+3. **Validate non-functional requirements.**
+   - If the requirement says "page loads in under 3 seconds," confirm the design can achieve this. If the design calls for 15 sequential API calls, that is a design defect.
+   - Review performance, security, scalability, and availability requirements against the proposed architecture.
+   - Document any NFR risks and proposed mitigations.
+
+4. **Specify integration points with enough detail for test authoring.**
+   - Define all API contracts (request/response schemas, status codes, error formats).
+   - Document data flows between components.
+   - Specify external system dependencies and their failure modes.
+   - QA uses these specifications to begin writing integration test specs before development starts.
+
+5. **Document architecture decisions.**
+   - Record key design decisions (why this database, why this service boundary, why this caching strategy) so that testers understand the rationale and can test against it.
+   - Use Architecture Decision Records (ADRs) or inline documentation in the design document.
+
+6. **Present a design walkthrough.**
+   - Conduct a design walkthrough with Dev + QA before development begins.
+   - The walkthrough is not a rubber-stamp — it is a validation session where the design is challenged.
+   - Attendees should ask: "What could go wrong at the boundaries? How does this handle concurrent access? What happens when data is soft-deleted?"
+
+#### Design Validation Outputs
+
+| Output | When | Delivered To | Purpose |
+|--------|------|-------------|---------|
+| Design-to-requirements traceability table | Before sprint commitment | PO, Dev, QA | Confirms every requirement is addressed by the design |
+| Testability assessment | During design walkthrough | QA | Confirms QA can test every component of the design |
+| NFR risk register | Before sprint commitment | Dev Lead, QA | Documents known performance/security/scalability risks |
+| Integration point specifications | By Day 2 of sprint | QA, Dev | Enables QA to start writing integration tests early |
+| Architecture Decision Records | Before sprint commitment | Dev, QA, future maintainers | Documents the "why" behind design choices |
+
+#### The Solution Designer SHOULD NOT
+
+- Hand off a design without confirming it addresses every acceptance criterion. An untraceable design is an incomplete design.
+- Assume testability. If QA cannot explain how they would test a component, the design needs more thought.
+- Defer NFR validation to "later." Performance, security, and scalability must be designed in, not bolted on.
+- Design in isolation. The design walkthrough with Dev and QA is mandatory, not optional.
+
+### 4.2 The PM/BA Requirements Validation Contract
+
+The PM/BA is the bridge between the Product Owner's business intent and the team's ability to build and test. Incomplete, ambiguous, or untestable requirements are the root cause of the most expensive defects — the ones where the code works exactly as built but not as intended.
+
+#### Before a Story Enters the Sprint, the PM/BA MUST
+
+1. **Validate requirements completeness with the PO.**
+   - Every story entering the sprint must have defined acceptance criteria. A story with "As a user I want to manage partners" and no acceptance criteria is not ready for sprint commitment.
+   - Walk through each acceptance criterion with the PO and confirm it represents the business need.
+   - Document the PO's confirmation in Jira (a comment such as "PO confirmed ACs on [date]" or a "PO Approved" label).
+
+2. **Apply the testability gate.**
+   - Each acceptance criterion must be specific enough that QA can write a test for it.
+   - "The system should be fast" is not testable. "The partner list loads in under 2 seconds for 1,000 records" is testable.
+   - "The UI should be user-friendly" is not testable. "All form fields have labels, error messages display below the field, and the tab order follows the visual layout" is testable.
+   - If an acceptance criterion cannot be tested, it must be rewritten before sprint commitment.
+
+3. **Document all business rules explicitly.**
+   - Business rules (who can approve, what triggers a notification, when is a field required, what formula calculates the budget) must be written down, not left as tribal knowledge.
+   - These documented rules become the specification that QA tests against and that developers build against.
+   - Undocumented business rules are the #1 source of "it works as coded but not as expected" defects.
+
+4. **Perform cross-feature impact analysis.**
+   - When a new requirement is introduced, assess which existing features might be affected.
+   - Example: "Adding a new partner category field — does this affect the search filters? The export report? The oUP sync? The partner list columns?"
+   - This analysis feeds directly into QA's regression scope and helps QA prioritize which existing test suites to re-run.
+
+5. **Identify and surface missing scenarios during refinement.**
+   - Actively look for gaps: "What happens if the user does X and then Y? What if this field is empty? What if the approver has been deactivated? What if the partner is soft-deleted?"
+   - These questions surface requirements gaps before they become code defects.
+   - Document the answers as additional acceptance criteria or notes on the story.
+
+6. **Manage requirement changes.**
+   - When requirements change mid-sprint (and they will), ensure the change is documented in Jira, communicated to Dev and QA, and acceptance criteria are updated.
+   - An undocumented requirement change is the #1 cause of "Dev built the old spec, QA tested the new spec" conflicts.
+   - All requirement changes after sprint commitment must be explicitly acknowledged by Dev and QA.
+
+#### Requirements Validation Outputs
+
+| Output | When | Delivered To | Purpose |
+|--------|------|-------------|---------|
+| PO-confirmed acceptance criteria | Before sprint commitment | Dev, QA, Solution Designer | Single source of truth for what to build and test |
+| Testability-reviewed criteria | Before sprint commitment | QA | Confirms every AC can be verified with a test |
+| Documented business rules | Before sprint commitment | Dev, QA | Explicit specification for implementation and testing |
+| Cross-feature impact assessment | During refinement | QA, Dev | Identifies regression scope and affected areas |
+| Requirements change log | Ongoing during sprint | Dev, QA | Tracks what changed, when, and who acknowledged it |
+
+#### The PM/BA SHOULD NOT
+
+- Allow stories into the sprint without PO-confirmed acceptance criteria. An unconfirmed story is a best guess, not a requirement.
+- Assume developers and testers understand the business context. If a business rule is "obvious" to the PM/BA, it still needs to be written down.
+- Treat QA as the last line of defence for requirements quality. If QA is discovering requirements gaps during testing, the PM/BA validation failed.
+- Allow scope changes without updating acceptance criteria and notifying the team. Silent scope creep is the enemy of quality.
+
+### How L0 Feeds the Rest of the Pyramid
+
+```
+PM/BA validates requirements ──┐
+                                ├──> Three Amigos: shared understanding
+Solution Designer validates ───┘          │
+design against requirements               │
+                                           ▼
+                                 QA authors edge case checklists
+                                 QA begins writing test specs (L3)
+                                 Dev begins coding with clear spec
+                                           │
+                                           ▼
+                              L1–L5 test execution (existing flow)
+```
+
+When L0 is done well, the downstream effects are significant:
+- **QA writes better tests** because the specification is clear, not guessed.
+- **Developers build the right thing** because requirements are unambiguous.
+- **Fewer defects escape** because the most common root cause (unclear requirements) is addressed.
+- **Three Amigos sessions are more productive** because participants arrive with validated requirements and a reviewed design, not raw ideas.
+
+---
+
+## 5. The Developer Testing Contract
+
+This section defines what developers commit to under the shift-left model. This is not optional — it is part of the Definition of Done. (For the pre-development contracts that feed into developer work, see [Section 4](#4-the-pre-development-validation-contracts).)
 
 ### Before Creating a Pull Request, Developers MUST
 
@@ -436,7 +594,7 @@ dotnet test "QA Tests/Integration Tests"
 
 ---
 
-## 5. The QA Testing Contract
+## 6. The QA Testing Contract
 
 This section defines what QA testers commit to under the shift-left model.
 
@@ -471,7 +629,7 @@ This section defines what QA testers commit to under the shift-left model.
 6. **Maintain defect lists.**
    - Production defects: `QA Tests/Defect List for Developers.md` (DEF-XXX prefix).
    - Test infrastructure issues: `QA Tests/Defect List for QA.md` (QA-XXX prefix).
-   - See [Defect Management Workflow](#8-defect-management-workflow) for details.
+   - See [Defect Management Workflow](#9-defect-management-workflow) for details.
 
 ### QA Testers SHOULD NOT
 
@@ -485,8 +643,15 @@ This section defines what QA testers commit to under the shift-left model.
 ```
 BEFORE SHIFT-LEFT                           AFTER SHIFT-LEFT
 
+                                             Pre-Sprint (Refinement):
+                                               PM/BA: Validates ACs with PO — Gate 0
+Requirements assumed complete,                 SD: Traces design to requirements
+ambiguities surface during QA                  SD + QA: Testability review
+                                               PM/BA: Documents business rules
+
 Sprint Day 1-8:                              Sprint Day 1-2:
-  QA: "Waiting for dev to finish"              QA: Three Amigos, edge case checklists
+  QA: "Waiting for dev to finish"              SD: Design walkthrough with Dev + QA
+                                               QA: Three Amigos, edge case checklists
                                                QA: Start writing test specs with AI
 
 Sprint Day 9-10:                             Sprint Day 3-5:
@@ -506,26 +671,81 @@ Sprint Day 9-10:                             Sprint Day 3-5:
 
 ---
 
-## 6. Handshake Points — QA/Dev Collaboration Ceremonies
+## 7. Handshake Points — Team Collaboration Ceremonies
 
-The following touchpoints define when and how QA and Dev interact within a 2-week sprint. These are not new meetings — they are defined moments within existing ceremonies where QA and Dev explicitly collaborate.
+The following touchpoints define when and how the team interacts within a 2-week sprint. These are not new meetings — they are defined moments within existing ceremonies where all roles explicitly collaborate.
+
+### Requirements Validation (Pre-Sprint / Refinement)
+
+**Who:** PM/BA + PO (Solution Designer joins for complex stories)  
+**PM/BA's role:**
+- Walk through each acceptance criterion with the PO and confirm it represents the business need.
+- Apply the testability gate: can QA write a test for each AC? If not, rewrite it.
+- Document all business rules explicitly — nothing left as tribal knowledge.
+- Perform cross-feature impact analysis for new requirements.
+- Record PO confirmation in Jira ("PO confirmed ACs on [date]").
+
+**Solution Designer's role (for complex/new features):**
+- Confirm the proposed design addresses every acceptance criterion.
+- Produce a design-to-requirements traceability table.
+- Identify NFR risks (performance, security, scalability).
+
+**Output:** Stories with PO-confirmed, testable acceptance criteria and documented business rules. This is **Gate 0** — stories that don't pass this gate are not ready for sprint commitment.
 
 ### Sprint Planning (Day 1)
 
-**Who:** Full team (Dev + QA + PO + SM)  
+**Who:** Full team (PM/BA + Solution Designer + Dev + QA + PO + SM)  
+**PM/BA's role:**
+- Confirm that all stories entering the sprint have passed Gate 0 (PO-confirmed, testable ACs).
+- Present the cross-feature impact assessment for new stories.
+- Highlight any requirement changes since refinement.
+
+**Solution Designer's role:**
+- Present the design approach for complex stories.
+- Confirm integration points are specified well enough for QA to begin test authoring.
+
 **QA's role:**
 - Review each story and identify which test types will be needed.
 - Flag stories that are high-risk or require complex test setup.
 - Estimate QA effort for test authoring and execution.
-- Agree with Dev on acceptance criteria that are specific, measurable, and testable.
+- Confirm acceptance criteria are specific, measurable, and testable (testability gate).
 
 **Output:** Each story has a "Test Approach" note: which test types apply, rough scenario count, any data setup needed.
 
+### Design Walkthrough (Day 1-2, for complex stories)
+
+**Who:** Solution Designer + Dev + QA  
+**Purpose:** Validate the technical design before development begins.  
+**Format:** Solution Designer presents; Dev and QA challenge.
+
+**Solution Designer presents:**
+- Design-to-requirements traceability (every AC mapped to a design component)
+- Integration point specifications (API contracts, data flows)
+- NFR validation (how performance/security/scalability targets will be met)
+
+**QA asks:**
+- "How do we test this component?"
+- "What happens at the boundaries?"
+- "What happens when this external service is unavailable?"
+- "How do we verify this data flow end-to-end?"
+
+**Dev asks:**
+- "Is this feasible within the sprint?"
+- "Are there dependencies that could block us?"
+- "Does this require a migration?"
+
+**Output:** Validated design with confirmed testability. Integration point specifications that QA can use to start writing test specs immediately.
+
 ### Three Amigos Session (Day 1-2)
 
-**Who:** PO + Dev + QA (per story or group of stories)  
+**Who:** PO + Dev + QA + PM/BA (per story or group of stories; Solution Designer joins for complex stories)  
 **Purpose:** Ensure shared understanding before work begins.  
 **Format:** QA leads with the question: *"What could go wrong?"*
+
+**PM/BA's role:**
+- Confirm the acceptance criteria are still accurate and PO-approved.
+- Surface any business rules that may not be written down yet.
+- Identify cross-feature impacts the team should be aware of.
 
 **QA prepares:**
 - Edge case scenarios (boundary values, nulls, invalid inputs)
@@ -634,7 +854,7 @@ Bugs will occasionally slip through all three quality gates and reach Staging or
 **Post-mortem template:**
 1. **What happened?** Describe the defect and its impact.
 2. **When was it introduced?** Which sprint, which PR, which change.
-3. **Which gate should have caught it?** Gate 1 (unit test), Gate 2 (CI), or Gate 3 (QA handoff)?
+3. **Which gate should have caught it?** Gate 0 (requirements/design), Gate 1 (unit test), Gate 2 (CI), or Gate 3 (QA handoff)?
 4. **Why did it slip through?** Missing test coverage, untested edge case, environment difference, timing issue?
 5. **What action do we take?** Add a test, update a checklist, improve a gate, or accept the risk?
 
@@ -642,9 +862,27 @@ Bugs will occasionally slip through all three quality gates and reach Staging or
 
 ---
 
-## 7. Quality Gates — The Three Checkpoints
+## 8. Quality Gates — The Four Checkpoints
 
-Quality gates are hard enforcement points where code must prove itself before it can move forward. Unlike ceremonies (which are collaborative), gates are non-negotiable. If code fails a gate, it stops.
+Quality gates are hard enforcement points where work must prove itself before it can move forward. Unlike ceremonies (which are collaborative), gates are non-negotiable. If work fails a gate, it stops.
+
+### Gate 0: Pre-Development (Requirements & Design)
+
+**When:** Before a story is committed to the sprint and before development begins.  
+**Who enforces:** PM/BA (requirements), Solution Designer (design), PO (sign-off).  
+**What must pass:**
+- Acceptance criteria are defined, specific, and testable (PM/BA validates)
+- PO has confirmed the acceptance criteria represent the business need (documented in Jira)
+- All business rules are explicitly documented, not assumed as tribal knowledge
+- Solution design addresses every acceptance criterion (design-to-requirements traceability)
+- Solution Designer has conducted a testability review with QA
+- Non-functional requirements (performance, security, scalability) are validated against the design
+- Integration point specifications are defined with enough detail for QA to begin writing tests
+- Cross-feature impact assessment is completed
+
+**If the gate criteria are not met:** The story is not ready for sprint commitment. It goes back to refinement with a clear note on what is missing. This is not about blocking work — it is about preventing the most expensive category of defects: building the wrong thing.
+
+**Cultural note:** This gate may feel like "slowing down." In reality, a 30-minute requirements validation session prevents days of rework when Dev builds to one interpretation, QA tests to another, and the PO expected a third.
 
 ### Gate 1: Pre-Commit (Developer's Machine)
 
@@ -688,23 +926,24 @@ Quality gates are hard enforcement points where code must prove itself before it
 ### Gate Summary
 
 ```
-Developer's Machine          GitHub Actions CI           QA Environment
-┌───────────────────┐        ┌──────────────────┐       ┌─────────────────┐
-│   GATE 1          │        │   GATE 2         │       │   GATE 3        │
-│   Pre-Commit      │───────>│   Pull Request   │──────>│   QA Handoff    │
-│                   │        │                  │       │                 │
-│ • Unit tests      │        │ • Smoke tests    │       │ • CI green      │
-│ • Smoke tests     │        │ • Business tests │       │ • Tests run     │
-│ • Code compiles   │        │ • Integration    │       │ • Checklist     │
-│                   │        │ • Peer review    │       │ • Deployed      │
-└───────────────────┘        └──────────────────┘       └─────────────────┘
-     Developer                    Automated                 QA Lead
-     (self-enforced)              (system-enforced)         (human-verified)
+Requirements & Design   Developer's Machine     GitHub Actions CI        QA Environment
+┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   GATE 0         │    │   GATE 1         │    │   GATE 2         │    │   GATE 3        │
+│   Pre-Development│───>│   Pre-Commit     │───>│   Pull Request   │───>│   QA Handoff    │
+│                  │    │                  │    │                  │    │                 │
+│ • ACs confirmed  │    │ • Unit tests     │    │ • Smoke tests    │    │ • CI green      │
+│ • PO sign-off    │    │ • Smoke tests    │    │ • Business tests │    │ • Tests run     │
+│ • Design traced  │    │ • Code compiles  │    │ • Integration    │    │ • Checklist     │
+│ • Testability OK │    │                  │    │ • Peer review    │    │ • Deployed      │
+│ • NFRs validated │    │                  │    │                  │    │                 │
+└──────────────────┘    └──────────────────┘    └──────────────────┘    └─────────────────┘
+     PM/BA + SD              Developer               Automated               QA Lead
+     (human-enforced)        (self-enforced)          (system-enforced)       (human-verified)
 ```
 
 ---
 
-## 8. Defect Management Workflow
+## 9. Defect Management Workflow
 
 ### Dual Defect List System
 
@@ -761,7 +1000,7 @@ When QA finds a defect:
 
 ---
 
-## 9. Katalon to Playwright Transition Plan
+## 10. Katalon to Playwright Transition Plan
 
 ### Current State
 
@@ -830,7 +1069,7 @@ When converting a Katalon test to Playwright:
 
 ---
 
-## 10. Training Roadmap
+## 11. Training Roadmap
 
 ### For QA Testers (Non-Technical Background)
 
@@ -914,7 +1153,7 @@ Developers may be skeptical about shift-left. The training focuses on demonstrat
 
 #### Session 2: Running QA Tests Locally (30 minutes, hands-on)
 
-- Walk through the commands in [Section 4 — Developer Testing Contract](#4-the-developer-testing-contract).
+- Walk through the commands in [Section 5 — Developer Testing Contract](#5-the-developer-testing-contract).
 - Run smoke tests, run feature-specific integration tests, interpret results.
 - Practice: each developer runs tests for their current story and reports pass/fail.
 
@@ -932,7 +1171,7 @@ Developers may be skeptical about shift-left. The training focuses on demonstrat
 
 ---
 
-## 11. Metrics and Success Criteria
+## 12. Metrics and Success Criteria
 
 These metrics help the team track whether shift-left is working. They should be reviewed in sprint retrospectives and monthly leadership reviews.
 
@@ -950,6 +1189,9 @@ These metrics help the team track whether shift-left is working. They should be 
 
 | Metric                        | Definition                                                          | Target              |
 |-------------------------------|---------------------------------------------------------------------|---------------------|
+| **Gate 0 Pass Rate**          | % of stories entering the sprint with PO-confirmed, testable ACs    | > 95%               |
+| **Requirements Change Rate**  | Number of AC changes after sprint commitment per sprint              | Decreasing trend    |
+| **Design Traceability Score** | % of ACs with documented design-to-requirement traceability (complex stories) | > 90%         |
 | **Unit Test Count (Dev-authored)** | Number of unit tests written by developers per sprint            | Increasing trend    |
 | **Katalon Test Count**        | Remaining Katalon tests not yet migrated to Playwright              | 0 (at sunset)       |
 | **Playwright Test Count**     | Total Playwright E2E test count                                     | Increasing trend    |
@@ -959,6 +1201,9 @@ These metrics help the team track whether shift-left is working. They should be 
 
 ### How to Collect Metrics
 
+- **Gate 0 Pass Rate:** Track whether each story entering the sprint has a "PO Approved" label or comment in Jira. Calculate per sprint.
+- **Requirements Change Rate:** Count Jira AC edits or comments indicating requirement changes after sprint commitment. Decreasing trend indicates improving requirements quality.
+- **Design Traceability Score:** For stories flagged as "complex" during refinement, verify whether a design-to-requirements traceability table exists. Calculate per sprint.
 - **Defect Escape Rate:** Tag Jira defects with the environment where they were found (Dev, QA, Staging, Prod). Calculate the ratio monthly.
 - **PR Test Pass Rate:** GitHub Actions provides pass/fail data per PR. Extract from the `qa-tests.yml` workflow.
 - **Dev Test Execution:** Add a checkbox to the PR template: "I have run the relevant QA test suite locally." Track completion rate.
@@ -967,7 +1212,7 @@ These metrics help the team track whether shift-left is working. They should be 
 
 ---
 
-## 12. Tooling Reference
+## 13. Tooling Reference
 
 ### Tool Inventory
 
@@ -1049,34 +1294,58 @@ Developer pushes code / creates PR
 A one-page summary for printing or pinning to the team board.
 
 ```
-╔═══════════════════════════════════════════════════════════════════════════╗
-║                    SHIFT-LEFT QUICK REFERENCE                            ║
-╠═══════════════════════════════════════════════════════════════════════════╣
-║                                                                          ║
-║  DEVELOPERS MUST:                  QA MUST:                              ║
-║  ─────────────────                 ────────                              ║
-║  ✓ Write unit tests               ✓ Author integration/E2E test specs   ║
-║  ✓ Run QA tests locally pre-PR    ✓ Provide edge case checklists        ║
-║  ✓ Fix code when tests fail       ✓ Perform exploratory testing         ║
-║  ✓ Review edge case checklists    ✓ Run E2E regression before release   ║
-║  ✓ Pass CI gates before merge     ✓ Log and track defects               ║
-║                                                                          ║
-║  DEVELOPERS MUST NOT:              QA MUST NOT:                          ║
-║  ────────────────────              ────────────                          ║
-║  ✗ Skip running QA tests          ✗ Write unit tests                    ║
-║  ✗ Weaken test assertions         ✗ Modify production source code       ║
-║  ✗ Modify QA tests without        ✗ Wait until dev is done to start     ║
-║    QA approval                       authoring tests                     ║
-║                                                                          ║
-║  HANDSHAKE POINTS:                                                       ║
-║  ──────────────────                                                      ║
-║  Day 1-2:  Three Amigos (edge case checklists)                           ║
-║  Day 3-5:  QA pushes test specs → Dev pulls and runs                     ║
-║  Day 6-8:  Dev marks "Ready for QA" → QA explores + regresses            ║
-║  Day 8-9:  Joint bug triage                                              ║
-║  Day 10:   Sprint demo (test metrics) + Retrospective                    ║
-║                                                                          ║
-╚═══════════════════════════════════════════════════════════════════════════╝
+╔═════════════════════════════════════════════════════════════════════════════════════╗
+║                         SHIFT-LEFT QUICK REFERENCE                                 ║
+╠═════════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                    ║
+║  PM/BA MUST:                        SOLUTION DESIGNER MUST:                        ║
+║  ───────────                        ────────────────────────                        ║
+║  ✓ Validate ACs with PO            ✓ Trace design to every AC                     ║
+║  ✓ Apply testability gate           ✓ Conduct testability review with QA           ║
+║  ✓ Document all business rules      ✓ Validate NFRs against design                ║
+║  ✓ Assess cross-feature impact      ✓ Specify integration points for test authoring║
+║  ✓ Manage requirement changes       ✓ Present design walkthrough to Dev + QA       ║
+║                                                                                    ║
+║  PM/BA MUST NOT:                    SOLUTION DESIGNER MUST NOT:                    ║
+║  ────────────────                   ───────────────────────────                     ║
+║  ✗ Allow stories without PO-        ✗ Hand off design without                      ║
+║    confirmed ACs into sprint          traceability to ACs                           ║
+║  ✗ Leave business rules as          ✗ Assume testability — QA must                 ║
+║    tribal knowledge                   confirm they can test it                     ║
+║  ✗ Allow silent scope changes       ✗ Defer NFR validation to "later"              ║
+║                                                                                    ║
+║  DEVELOPERS MUST:                   QA MUST:                                       ║
+║  ─────────────────                  ────────                                       ║
+║  ✓ Write unit tests                 ✓ Author integration/E2E test specs            ║
+║  ✓ Run QA tests locally pre-PR      ✓ Provide edge case checklists                ║
+║  ✓ Fix code when tests fail         ✓ Perform exploratory testing                  ║
+║  ✓ Review edge case checklists      ✓ Run E2E regression before release            ║
+║  ✓ Pass CI gates before merge       ✓ Log and track defects                        ║
+║                                                                                    ║
+║  DEVELOPERS MUST NOT:               QA MUST NOT:                                   ║
+║  ────────────────────               ────────────                                   ║
+║  ✗ Skip running QA tests            ✗ Write unit tests                             ║
+║  ✗ Weaken test assertions           ✗ Modify production source code                ║
+║  ✗ Modify QA tests without          ✗ Wait until dev is done to start              ║
+║    QA approval                         authoring tests                             ║
+║                                                                                    ║
+║  QUALITY GATES:                                                                    ║
+║  ───────────────                                                                   ║
+║  Gate 0:  Pre-Development (ACs confirmed, design validated, testability OK)        ║
+║  Gate 1:  Pre-Commit (unit tests, smoke tests, code compiles)                      ║
+║  Gate 2:  Pull Request (CI: smoke, business, integration, peer review)             ║
+║  Gate 3:  QA Handoff (CI green, tests run, checklist reviewed, deployed)           ║
+║                                                                                    ║
+║  HANDSHAKE POINTS:                                                                 ║
+║  ──────────────────                                                                ║
+║  Pre-Sprint:  Requirements validation (PM/BA + PO) — Gate 0                       ║
+║  Day 1-2:  Design walkthrough (SD + Dev + QA) + Three Amigos (edge cases)          ║
+║  Day 3-5:  QA pushes test specs → Dev pulls and runs                               ║
+║  Day 6-8:  Dev marks "Ready for QA" → QA explores + regresses                      ║
+║  Day 8-9:  Joint bug triage                                                        ║
+║  Day 10:   Sprint demo (test metrics) + Retrospective                              ║
+║                                                                                    ║
+╚═════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 ---
@@ -1106,6 +1375,8 @@ A one-page summary for printing or pinning to the team board.
 
 A story is "Done" when ALL of the following are true:
 
+- [ ] Acceptance criteria were PO-confirmed before sprint commitment (Gate 0).
+- [ ] Design-to-requirements traceability was validated (for complex stories).
 - [ ] Code is written and peer-reviewed (PR approved).
 - [ ] Unit tests written by dev and passing in CI.
 - [ ] QA-authored integration tests passing in CI.
@@ -1137,8 +1408,14 @@ A: Initially, there may be a small increase in developer time per story (running
 **Q: What if developers refuse to run QA tests?**  
 A: CI enforces the tests automatically — PRs that fail integration tests cannot be merged. Running tests locally is recommended (faster feedback) but CI is the enforced gate. Leadership support is essential to make this cultural shift stick.
 
+**Q: Does this mean PM/BAs and Solution Designers are now "testers"?**  
+A: No. They are validating their own deliverables — requirements and designs — against clear quality criteria. Just as developers "test" their code with unit tests, PM/BAs "test" their requirements for completeness and testability, and Solution Designers "test" their designs for traceability and feasibility. The testing pyramid starts before code.
+
+**Q: What if the PM/BA cannot get PO confirmation before sprint commitment?**  
+A: The story is not ready. An unconfirmed story is a best guess, not a requirement. Committing to it risks building the wrong thing. If PO availability is the bottleneck, escalate — this is a process issue that affects the entire team's effectiveness, not just QA.
+
 **Q: How does this work with our current (imperfect) Scrum process?**  
-A: Shift-left does not require perfect Scrum. It requires three things: (1) QA attends planning, (2) QA writes tests early, (3) devs run tests before handoff. Everything else is an improvement opportunity, not a prerequisite.
+A: Shift-left does not require perfect Scrum. It requires four things: (1) PM/BA validates requirements with PO before commitment, (2) Solution Designer validates design before coding starts, (3) QA writes tests early, (4) devs run tests before handoff. Everything else is an improvement opportunity, not a prerequisite.
 
 **Q: What happens to manual testing?**  
 A: Manual testing becomes more focused and valuable. Instead of manually clicking through the same regression paths every sprint, QA uses that time for creative exploratory testing — finding the bugs that automation cannot.
@@ -1182,3 +1459,4 @@ That guide is the single source of truth for onboarding. Hand it to new hires on
 | 1.1     | 2026-03-05 | QA Lead    | Added: Quality Gates section (Section 7), defect cost statistics, blame-free post-mortems |
 | 1.2     | 2026-03-05 | QA Lead    | Extracted onboarding content from Appendix E into standalone ONBOARDING_GUIDE.md |
 | 1.3     | 2026-03-05 | QA Lead    | Comprehensive test type coverage: Restructured Testing Pyramid to 5 labeled levels (L1–L5) showing all 16 test types. Added Functional Tests (3.5), Validation Tests (3.6), Concurrency Tests (3.8), Playwright Test Automation (L4). Moved Regression Testing to cross-cutting. Added "Test Types vs. Test Categories (3:1 Ratio)" section explaining relationship between pyramid test types and ratio categories (Positive, Negative, Edge/Boundary). Added Level column to Ownership Matrix. Renumbered Section 3 subsections (3.1–3.14). Synced documentation to PDJ project. |
+| 1.4     | 2026-03-09 | QA Lead    | Added pre-development validation roles: New L0 layer in Testing Pyramid for Requirements Validation (PM/BA) and Design Validation (Solution Designer). New Section 4 "Pre-Development Validation Contracts" with Solution Designer Validation Contract (4.1) and PM/BA Requirements Validation Contract (4.2). Added Gate 0 (Pre-Development) to Quality Gates — now four gates instead of three. Updated Handshake Points with Requirements Validation, Design Walkthrough, and PM/BA participation in Three Amigos. Added Solution Designer and PM/BA to Ownership Matrix, Quick Reference (Appendix A), Core Principles, and Audience. Added Gate 0 metrics (Gate 0 Pass Rate, Requirements Change Rate, Design Traceability Score). Added FAQ entries for PM/BA and SD roles. Renumbered Sections 4–12 to 5–13. |

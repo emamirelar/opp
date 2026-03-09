@@ -7,6 +7,8 @@
  *
  * All tests are EXECUTABLE - uses API mocks for page verification
  * and real backend for CRUD operations.
+ *
+ * @tests 10
  */
 
 import { test, expect } from '@playwright/test';

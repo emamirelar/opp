@@ -62,65 +62,76 @@ export class OpportunityItemPage extends EntityDetailPage {
   
   /**
    * Get opportunity status badge
-   * Uses actual data-testid="opportunity-status" (p-badge in header)
+   * Uses actual data-testid="opportunity-status" (p-badge in header).
+   * Fallback: span.bg-badge-danger (Closed) or first p-badge when no data-testid.
    */
   get opportunityStatus(): Locator {
-    return this.getByTestId('opportunity-status');
+    return this.getByTestId('opportunity-status')
+      .or(this.page.locator('app-opportunity-view span.bg-badge-danger'))
+      .or(this.page.locator('app-opportunity-view p-badge').first());
   }
   
   /**
    * Get opportunity stage badge
-   * Uses actual data-testid="opportunity-stage" (p-badge in header)
+   * Uses actual data-testid="opportunity-stage" (p-badge in header).
+   * Fallback: last p-badge in header (stage is always last badge) when no data-testid.
    */
   get opportunityStage(): Locator {
-    return this.getByTestId('opportunity-stage');
+    return this.getByTestId('opportunity-stage')
+      .or(this.page.locator('app-opportunity-view p-badge').last());
   }
   
   /**
    * Get opportunity metadata row
-   * Uses actual data-testid="opportunity-metadata" or PrimeNG panels/fieldsets with detail fields
+   * Uses actual data-testid="opportunity-metadata" or PrimeNG panels/fieldsets with detail fields.
+   * Fallback: sub-header metadata div (flex flex-wrap with ID, Manager, Org Unit, Target Signing Date).
    */
   get opportunityMetadata(): Locator {
     return this.getByTestId('opportunity-metadata')
       .or(this.page.locator('app-opportunity-view .metadata, app-opportunity-view [class*="metadata"]').first())
+      .or(this.page.locator('app-opportunity-view .flex.flex-wrap.items-center.gap-x-2').filter({ hasText: /ID:|Manager:|Org Unit:/i }).first())
       .or(this.page.locator('app-opportunity-view p-panel, app-opportunity-view p-fieldset').first())
       .or(this.page.locator('app-opportunity-view #section-overview, app-opportunity-view #section-what').first());
   }
   
   /**
    * Get opportunity ID display
-   * Uses actual data-testid="opportunity-id"
+   * Uses actual data-testid="opportunity-id".
+   * Fallback: metadata span containing "ID:" label.
    */
   get opportunityId(): Locator {
     return this.getByTestId('opportunity-id')
-      .or(this.page.locator('app-opportunity-view').first());
+      .or(this.page.locator('app-opportunity-view').filter({ hasText: /ID:\s*\d+/ }).first());
   }
   
   /**
    * Get opportunity manager display
-   * Uses actual data-testid="opportunity-manager"
+   * Uses actual data-testid="opportunity-manager".
+   * Fallback: metadata span containing "Manager:" label.
    */
   get opportunityManager(): Locator {
     return this.getByTestId('opportunity-manager')
-      .or(this.page.locator('app-opportunity-view').first());
+      .or(this.page.locator('app-opportunity-view').filter({ hasText: /Manager:/ }).first());
   }
   
   /**
    * Get opportunity org unit display
-   * Uses actual data-testid="opportunity-orgunit"
+   * Uses actual data-testid="opportunity-orgunit".
+   * Fallback: metadata span containing "Org Unit:" label.
    */
   get opportunityOrgUnit(): Locator {
     return this.getByTestId('opportunity-orgunit')
-      .or(this.page.locator('app-opportunity-view').first());
+      .or(this.page.locator('app-opportunity-view').filter({ hasText: /Org Unit:/ }).first());
   }
   
   /**
    * Get opportunity target signing date
-   * Uses actual data-testid="opportunity-target-signing-date"
+   * Uses actual data-testid="opportunity-target-signing-date".
+   * Fallback: metadata span containing "Target Signing Date:" label.
    */
   get opportunityTargetSigningDate(): Locator {
     return this.getByTestId('opportunity-target-signing-date')
-      .or(this.page.locator('app-opportunity-view').first());
+      .or(this.page.locator('app-opportunity-view').filter({ hasText: /Target Signing Date:/ }).first());
   }
   
   // ============================================
@@ -185,6 +196,42 @@ export class OpportunityItemPage extends EntityDetailPage {
    */
   get risksChip(): Locator {
     return this.page.locator('button:has-text("Risks"), button:has-text("DST")').first();
+  }
+
+  /**
+   * Get section nav chip by label (for PNO-877 section navigation tests).
+   * Labels: Analysis, Overview, What, Why, Who, Where, When, Risks, Related, Comments, Statement, Team
+   */
+  getSectionChip(label: string): Locator {
+    return this.page.locator(`button:has-text("${label}")`).first();
+  }
+
+  /**
+   * Desktop section chips container (hidden on mobile via lg:hidden / hidden lg:block)
+   */
+  get sectionChipsContainer(): Locator {
+    return this.page.locator('.hidden.lg\\:block .flex.items-center.gap-2').first();
+  }
+
+  /**
+   * Mobile section dropdown (visible only on lg:hidden viewport)
+   */
+  get mobileSectionDropdown(): Locator {
+    return this.page.locator('.lg\\:hidden p-select').first();
+  }
+
+  /**
+   * Overflow "More..." dropdown (when chips overflow)
+   */
+  get overflowChipsDropdown(): Locator {
+    return this.page.locator('p-select.more-chips-dropdown, p-select[styleclass="more-chips-dropdown"]').first();
+  }
+
+  /**
+   * Active chip (has primary background)
+   */
+  get activeSectionChip(): Locator {
+    return this.page.locator('button.bg-unops-primary.text-unops-primary-on').first();
   }
 
   /**
@@ -306,7 +353,36 @@ export class OpportunityItemPage extends EntityDetailPage {
   override get documentsSection(): Locator {
     return this.page.locator('app-opportunity-documents').first();
   }
-  
+
+  // ============================================
+  // LAYOUT — PNO-882 visual consistency selectors
+  // ============================================
+
+  /** Banner image container — visibility based on viewport height (min-height: 850px) */
+  get opportunityBanner(): Locator {
+    return this.page.locator('.opportunity-banner').first();
+  }
+
+  /** Workflow action overlay — shown during Submit/Approve/Reject/Recall */
+  get workflowActionOverlay(): Locator {
+    return this.page.locator('.workflow-action-overlay').first();
+  }
+
+  /** Loading progress strip — shown during initial data load */
+  get loadingProgressStrip(): Locator {
+    return this.page.locator('.loading-progress-strip').first();
+  }
+
+  /** Section hover containers — editable sections show border glow on hover */
+  get sectionHoverContainers(): Locator {
+    return this.page.locator('.section-hover-container');
+  }
+
+  /** Documents panel toggle (collapsed state) — click to expand */
+  get documentsPanelToggle(): Locator {
+    return this.page.locator('app-opportunity-documents').first();
+  }
+
   // ============================================
   // WORKFLOW — Using component selectors
   // ============================================

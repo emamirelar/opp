@@ -1,3 +1,6 @@
+/**
+ * @tests 11
+ */
 import { test, expect } from '@playwright/test';
 import { PartnersPage } from './pages/partners.page';
 import { PartnerItemPage } from './pages/partner-item.page';

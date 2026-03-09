@@ -9,6 +9,8 @@
  * via the responsive tabs component.
  *
  * Route: /partnerships/partners/:recordId/funding-agreements
+ *
+ * @tests 12
  */
 
 import { test, expect } from '@playwright/test';

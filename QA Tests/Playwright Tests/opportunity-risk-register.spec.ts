@@ -10,6 +10,8 @@
  * risk categories, likelihood, impact, and mitigation measures.
  *
  * All tests are EXECUTABLE - no skips.
+ *
+ * @tests 16
  */
 
 import { test, expect } from '@playwright/test';

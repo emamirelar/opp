@@ -15,8 +15,9 @@
  * 
  * Section IDs used (#section-overview, #section-what, #section-who, etc.)
  * Component selectors used (app-stage-workflow, app-opportunity-documents, etc.)
- * 
+ *
  * @created 2026-02-12
+ * @tests 34
  */
 
 import { test, expect } from '@playwright/test';

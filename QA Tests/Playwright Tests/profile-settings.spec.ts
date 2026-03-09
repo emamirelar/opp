@@ -7,6 +7,8 @@
  * Shows personal info, work info, preferences, system info
  *
  * All tests are EXECUTABLE - no skips.
+ *
+ * @tests 5
  */
 
 import { test, expect } from '@playwright/test';

@@ -4,6 +4,8 @@
  *
  * JIRA Stories: PNO-233, PNO-120, PNO-562
  * Total Test Cases: 49
+ *
+ * @tests 21
  */
 
 import { test, expect } from '@playwright/test';

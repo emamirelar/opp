@@ -1,3 +1,6 @@
+/**
+ * @tests 9
+ */
 import { test, expect } from '@playwright/test';
 import { DashboardPage } from './pages/dashboard.page';
 import { authenticateWithRealBackend } from './helpers/auth.helper';

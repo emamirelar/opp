@@ -9,6 +9,8 @@
  * Actual selectors:
  * - Section: #section-statement, app-opportunity-statement-section
  * - Section chip: text "Statement"
+ *
+ * @tests 6
  */
 
 import { test, expect } from '@playwright/test';

@@ -84,13 +84,6 @@ public class OpportunityValidationTests : IDisposable
         // Seed remaining reference data (test user already exists from Phase 1)
         SeedTestData();
 
-        // Setup real AutoMapper
-        var mapperConfig = new MapperConfiguration(cfg =>
-        {
-            cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
-        });
-        _mapper = mapperConfig.CreateMapper();
-        
         _configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -106,7 +99,19 @@ public class OpportunityValidationTests : IDisposable
                 ["ExchangeRate:BaseUrl"] = "https://test-api.example.com"
             })
             .Build();
-        
+
+        // Setup real AutoMapper
+        var mapperConfig = new MapperConfiguration(cfg =>
+        {
+            cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
+            cfg.ConstructServicesUsing(serviceType =>
+            {
+                try { return Activator.CreateInstance(serviceType)!; }
+                catch { return null!; }
+            });
+        });
+        _mapper = mapperConfig.CreateMapper();
+
         _mockPermissionService = new Mock<IPermissionService>();
         _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
         _mockDbContextFactory = new Mock<IDbContextFactory<UNOPSAppDbContext>>();

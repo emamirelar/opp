@@ -11,6 +11,8 @@
  * .ai-input-area, #messageInput, #chatContainer
  * 
  * All tests are EXECUTABLE - no skips.
+ *
+ * @tests 9
  */
 
 import { test, expect } from '@playwright/test';

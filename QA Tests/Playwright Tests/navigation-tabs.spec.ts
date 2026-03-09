@@ -1,3 +1,7 @@
+/**
+ * @tests 11
+ */
+
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
 import { waitForPermissions } from './helpers/wait.helper';

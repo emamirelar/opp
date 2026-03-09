@@ -11,6 +11,8 @@
  * Run: cd "QA Tests" && npx playwright test --project=real-api edge-boundary-cases.real.spec.ts
  *
  * @author UNOPS Opportunity+ QA Team
+ *
+ * @tests 12
  */
 
 import { test, expect } from '@playwright/test';

@@ -1,3 +1,7 @@
+/**
+ * @tests 5
+ */
+
 import { test, expect } from '@playwright/test';
 import { LoginPage } from './pages/login.page';
 import { getTestCredentials } from './helpers/test-config';

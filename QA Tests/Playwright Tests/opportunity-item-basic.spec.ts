@@ -3,6 +3,7 @@
  * Uses OpportunityItemPage POM and meaningful assertions.
  *
  * @updated 2026-03-03 - Fixed quality issues: POM usage, proper waits, meaningful assertions
+ * @tests 32
  */
 
 import { test, expect } from '@playwright/test';

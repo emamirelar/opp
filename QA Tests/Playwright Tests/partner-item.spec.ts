@@ -10,6 +10,8 @@
  *   so navigating to those partner URLs would load non-existent partners.
  *   Also fixed page object selectors to match actual data-testid attributes in the template.
  *   Strengthened all assertions to provide meaningful pass/fail signals.
+ *
+ * @tests 23
  */
 
 import { test, expect } from '@playwright/test';

@@ -16,6 +16,8 @@
  *
  * Note: For comprehensive accessibility testing, integrate
  * axe-core via @axe-core/playwright package.
+ *
+ * @tests 10
  */
 
 import { test, expect } from '@playwright/test';

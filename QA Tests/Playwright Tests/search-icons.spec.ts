@@ -20,6 +20,8 @@
  *   5. Icons are not empty / undefined / showing the string "help" for known entities
  *
  * @author UNOPS Opportunity+ QA Team
+ *
+ * @tests 17
  */
 
 import { test, expect } from '@playwright/test';

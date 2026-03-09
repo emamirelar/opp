@@ -7,11 +7,17 @@
  * @author UNOPS Opportunity+ QA Team
  * @see WorkflowPRD_TraceabilityTestPlan.md
  * @see https://unops.atlassian.net/browse/PNO-969
+ *
+ * @tests 39
  */
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
 import { waitForPermissions, waitForPageReady } from './helpers/wait.helper';
+import {
+  createPendingApproval,
+  setupPendingApprovalsMock,
+} from './helpers/workflow-mocks.helper';
 
 const featureReady = process.env.WORKFLOW_ACTIONS_REQUIRED_IMPLEMENTED !== 'false';
 

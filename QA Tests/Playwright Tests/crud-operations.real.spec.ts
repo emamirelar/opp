@@ -10,6 +10,8 @@
  * Run: cd "QA Tests" && npx playwright test --project=real-api crud-operations.real.spec.ts
  *
  * @author UNOPS Opportunity+ QA Team
+ *
+ * @tests 6
  */
 
 import { test, expect } from '@playwright/test';

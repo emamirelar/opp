@@ -9,6 +9,8 @@
  * Actual selectors:
  * - Analysis: #section-analysis, app-opportunity-analysis-section
  * - DST/Risks: #section-risks, app-opportunity-dst-section
+ *
+ * @tests 7
  */
 
 import { test, expect } from '@playwright/test';

@@ -1,3 +1,7 @@
+/**
+ * @tests 7
+ */
+
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
 import { setupAPIMocks } from './helpers/api-mocks.helper';
