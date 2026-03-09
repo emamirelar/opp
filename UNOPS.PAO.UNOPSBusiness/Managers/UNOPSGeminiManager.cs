@@ -4771,7 +4771,8 @@ public class UNOPSGeminiManager : IGeminiManager
                     PartnerId = partnerId,
                     PartnerName = partnerName,
                     IsFundingPartner = request.IsFundingPartner,
-                    IsClientPartner = request.IsClientPartner
+                    IsClientPartner = request.IsClientPartner,
+                    RawAiResponse = aiResponse
                 };
             }
             catch (Exception ex)

@@ -252,6 +252,8 @@ export interface ProposedOpportunityResponse {
   partnerName: string;
   isFundingPartner: boolean;
   isClientPartner: boolean;
+  /** Raw AI response (for debugging - compare with processed opportunity data) */
+  rawAiResponse?: string | null;
 }
 
 /**
