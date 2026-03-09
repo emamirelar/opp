@@ -442,6 +442,25 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return result;
         }
 
+        /// <summary>
+        /// Extracts the raw JSON text from a Gemini API response (the AI's output before parsing).
+        /// </summary>
+        public string GetExtractedJsonTextFromGeminiResponse(string modelResponse)
+        {
+            if (string.IsNullOrEmpty(modelResponse)) return string.Empty;
+            try
+            {
+                var json = JObject.Parse(modelResponse);
+                var text = json["candidates"]?[0]?["content"]?["parts"]?[0]?["text"]?.ToString();
+                if (string.IsNullOrEmpty(text)) return string.Empty;
+                return text.Replace("```json", "").Replace("```", "").Trim();
+            }
+            catch
+            {
+                return modelResponse;
+            }
+        }
+
         public JObject GetDetailsFromGeminiResponse(string modelResponse)
         {
             JObject json = JObject.Parse(modelResponse);
@@ -3408,10 +3427,13 @@ Keywords:";
                 }
 
                 // When we have sdgNumber (1-17), use direct lookup by SDGNumber
+                // DB stores SDGNumber as "Goal 1", "Goal 4", etc. (see SDGSeeder) - try both formats
                 if (aiSdgNumber.HasValue && aiSdgNumber.Value >= 1 && aiSdgNumber.Value <= 17)
                 {
+                    var numStr = aiSdgNumber.Value.ToString();
+                    var goalStr = $"Goal {aiSdgNumber.Value}";
                     var sdgByNumber = await _context.SDGs
-                        .Where(s => s.SDGNumber == aiSdgNumber.Value.ToString())
+                        .Where(s => s.SDGNumber == numStr || s.SDGNumber == goalStr)
                         .Select(s => new { s.Id, s.SDGNumber, s.Name })
                         .FirstOrDefaultAsync();
 
