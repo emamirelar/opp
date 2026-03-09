@@ -7,14 +7,20 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Business.Interfaces;
+using UNOPS.PAO.Business.Workflow;
+using UNOPS.PAO.DataAccess.Context;
+using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Identity.Context;
 using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.Identity.Security.Enums;
+using UNOPS.PAO.Models.Documents;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDataAccess.Seed.Seeders;
 using UNOPS.PAO.UNOPSDataAccess.Utilities;
+using UNOPS.Workflow.Business.Interfaces;
+using UNOPS.Workflow.Models;
 
 [Route("/")]
 [ApiController]
@@ -26,27 +32,33 @@ public class SystemAdminController : ControllerBase
     private readonly RoleManager<PAOIdentityRole> roleManager;
     private readonly IPAOExecutionContext executionContext;
     private readonly UNOPSAppDbContext unopsContext;
+    private readonly AppDbContext appContext;
     private readonly IConfiguration configuration;
     private readonly ILogger<SystemAdminController> logger;
     private readonly IManagerWrapper managerWrapper;
-    
+    private readonly IWorkflowManager workflowManager;
+
     public SystemAdminController(
-        IManagerWrapper manager, 
+        IManagerWrapper manager,
         UserManager<PAOIdentityUser> userManager,
         RoleManager<PAOIdentityRole> roleManager,
         IPAOExecutionContext executionContext,
         UNOPSAppDbContext unopsContext,
+        AppDbContext appContext,
         IConfiguration configuration,
-        ILogger<SystemAdminController> logger)
+        ILogger<SystemAdminController> logger,
+        IWorkflowManager workflowManager)
     {
-        this.systemAdminManager = manager.SystemAdminManager;
+        systemAdminManager = manager.SystemAdminManager;
         this.userManager = userManager;
         this.roleManager = roleManager;
         this.executionContext = executionContext;
         this.unopsContext = unopsContext;
+        this.appContext = appContext;
         this.configuration = configuration;
         this.logger = logger;
-        this.managerWrapper = manager;
+        managerWrapper = manager;
+        this.workflowManager = workflowManager;
     }
 
     /// <summary>
@@ -142,6 +154,18 @@ public class SystemAdminController : ControllerBase
                 path = APIDictionary.SystemAdmin + "/clean-up-users",
                 description = "Migrate placeholder AspNetUsers IDs to ERP Resource IDs (runs Fix_AspNetUsers_conflicts.sql)",
                 parameters = Array.Empty<object>(),
+                permission = "CanRunSeedings",
+                examples = (string[]?)null
+            },
+            new
+            {
+                method = "POST",
+                path = APIDictionary.SystemAdmin + "/regenerate-go-opportunity-pdfs",
+                description = "Generate Submission and Approval PDFs for opportunities in Stage=GO. Checks each type separately - an opportunity may have submission PDF but not approval PDF (or vice versa).",
+                parameters = new[]
+                {
+                    new { name = "onlyMissing", type = "bool", location = "query", description = "If true (default), only generate PDFs that are missing (checks submission and approval separately). If false, regenerate all." }
+                },
                 permission = "CanRunSeedings",
                 examples = (string[]?)null
             }
@@ -335,5 +359,296 @@ public class SystemAdminController : ControllerBase
             logger.LogError(ex, "Error running AspNetUsers cleanup");
             return StatusCode(500, new { error = "Failed to run AspNetUsers cleanup", details = ex.Message });
         }
+    }
+
+    /// <summary>
+    /// Regenerates Submission and Approval PDFs for opportunities in Stage=GO.
+    /// Use to fix existing approved opportunities that are missing PDFs.
+    /// Checks submission and approval PDFs separately - an opportunity may have one but not the other.
+    /// Only available to System Admins (CanRunSeedings permission).
+    /// </summary>
+    /// <param name="onlyMissing">If true (default), only generate PDFs that are missing. If false, regenerate all.</param>
+    [HttpPost(APIDictionary.SystemAdmin + "/regenerate-go-opportunity-pdfs")]
+    [PermissionAuthorize(PermissionNames.CanRunSeedings)]
+    public async Task<IActionResult> RegenerateGoOpportunityPdfs([FromQuery] bool onlyMissing = true)
+    {
+        try
+        {
+            logger.LogInformation("Starting regeneration of GO opportunity PDFs (onlyMissing={OnlyMissing})", onlyMissing);
+
+            var statementDocTypeId = await unopsContext.DocumentTypes
+                .AsNoTracking()
+                .Where(dt => dt.EntityType == "Opportunity" && dt.Name == "Opportunity Statement" && !dt.IsDeleted)
+                .Select(dt => dt.Id)
+                .FirstOrDefaultAsync();
+
+            var opportunities = await appContext.Opportunities
+                .AsNoTracking()
+                .Include(o => o.ResponsibleOrgUnit)
+                .Include(o => o.ProposedInitiativeType)
+                .Where(o => o.Stage == OpportunityWorkflow.Stages.Go && !o.IsDeleted && !string.IsNullOrEmpty(o.OpportunityStatementMarkdown))
+                .ToListAsync();
+
+            HashSet<int> opportunityIdsWithSubmissionPdf = new();
+            HashSet<int> opportunityIdsWithApprovalPdf = new();
+
+            if (onlyMissing && statementDocTypeId > 0)
+            {
+                var submissionDocRelationships = await appContext.DocumentRelationships
+                    .AsNoTracking()
+                    .Where(dr => dr.EntityType == "Opportunity" && !dr.IsDeleted)
+                    .Join(appContext.Documents.AsNoTracking().Where(d =>
+                        d.DocumentTypeId == statementDocTypeId && !d.IsDeleted &&
+                        d.Name != null && d.Name.Contains("_Submission_")),
+                        dr => dr.DocumentId,
+                        d => d.Id,
+                        (dr, _) => dr.EntityId)
+                    .Distinct()
+                    .ToListAsync();
+                opportunityIdsWithSubmissionPdf = submissionDocRelationships.ToHashSet();
+
+                var approvalDocRelationships = await appContext.DocumentRelationships
+                    .AsNoTracking()
+                    .Where(dr => dr.EntityType == "Opportunity" && !dr.IsDeleted)
+                    .Join(appContext.Documents.AsNoTracking().Where(d =>
+                        d.DocumentTypeId == statementDocTypeId && !d.IsDeleted &&
+                        d.Name != null && d.Name.Contains("_Approved_")),
+                        dr => dr.DocumentId,
+                        d => d.Id,
+                        (dr, _) => dr.EntityId)
+                    .Distinct()
+                    .ToListAsync();
+                opportunityIdsWithApprovalPdf = approvalDocRelationships.ToHashSet();
+            }
+
+            var results = new List<object>();
+            var submissionSuccess = 0;
+            var submissionFailed = 0;
+            var submissionSkipped = 0;
+            var approvalSuccess = 0;
+            var approvalFailed = 0;
+            var approvalSkipped = 0;
+
+            foreach (var opp in opportunities)
+            {
+                var oppId = opp.Id;
+                var now = DateTime.UtcNow;
+                var dateStr = now.ToString("yyyyMMdd");
+                var timeStr = now.ToString("HHmm");
+
+                var needsSubmissionPdf = !onlyMissing || !opportunityIdsWithSubmissionPdf.Contains(oppId);
+                var needsApprovalPdf = !onlyMissing || !opportunityIdsWithApprovalPdf.Contains(oppId);
+
+                try
+                {
+                    GeneratePdfResult? submissionResult = null;
+                    if (needsSubmissionPdf)
+                    {
+                        var submissionFilename = $"Opportunity_{oppId}_Submission_{dateStr}_{timeStr}";
+                        submissionResult = await managerWrapper.OpportunityManager.GenerateStatementPdfAsync(new GeneratePdfRequest
+                        {
+                            EntityName = "Opportunity",
+                            EntityId = oppId,
+                            Filename = submissionFilename
+                        });
+
+                        if (submissionResult.Success)
+                        {
+                            submissionSuccess++;
+                            logger.LogInformation("Generated submission PDF for Opportunity {OpportunityId}", oppId);
+                        }
+                        else
+                        {
+                            submissionFailed++;
+                            logger.LogWarning("Failed to generate submission PDF for Opportunity {OpportunityId}: {Error}", oppId, submissionResult.Error);
+                        }
+                    }
+                    else
+                    {
+                        submissionSkipped++;
+                    }
+
+                    GeneratePdfResult? approvalResult = null;
+                    if (needsApprovalPdf)
+                    {
+                        var history = workflowManager.GetWorkflowHistory(OpportunityWorkflow.StateMachine, "Opportunity", oppId).ToList();
+                        var auditTrail = await BuildAuditTrailMarkdownForApprovalAsync(
+                            history, oppId, opp.ResponsibleOrgUnitId,
+                            opp.ResponsibleOrgUnit?.Name, opp.ProposedInitiativeType?.Name);
+                        var combinedMarkdown = opp.OpportunityStatementMarkdown + "\n\n" + auditTrail;
+
+                        var approvalFilename = $"Opportunity_{oppId}_Approved_{dateStr}";
+                        approvalResult = await managerWrapper.OpportunityManager.GenerateStatementPdfAsync(new GeneratePdfRequest
+                        {
+                            EntityName = "Opportunity",
+                            EntityId = oppId,
+                            Data = combinedMarkdown,
+                            Filename = approvalFilename
+                        });
+
+                        if (approvalResult.Success)
+                        {
+                            approvalSuccess++;
+                            logger.LogInformation("Generated approval PDF for Opportunity {OpportunityId}", oppId);
+                        }
+                        else
+                        {
+                            approvalFailed++;
+                            logger.LogWarning("Failed to generate approval PDF for Opportunity {OpportunityId}: {Error}", oppId, approvalResult.Error);
+                        }
+                    }
+                    else
+                    {
+                        approvalSkipped++;
+                    }
+
+                    results.Add(new
+                    {
+                        opportunityId = oppId,
+                        opportunityName = opp.Name,
+                        submissionGenerated = needsSubmissionPdf,
+                        submissionSuccess = submissionResult?.Success,
+                        submissionError = submissionResult?.Error,
+                        submissionSkipped = !needsSubmissionPdf,
+                        approvalGenerated = needsApprovalPdf,
+                        approvalSuccess = approvalResult?.Success,
+                        approvalError = approvalResult?.Error,
+                        approvalSkipped = !needsApprovalPdf
+                    });
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error generating PDFs for Opportunity {OpportunityId}", oppId);
+                    if (needsSubmissionPdf) submissionFailed++;
+                    if (needsApprovalPdf) approvalFailed++;
+                    results.Add(new
+                    {
+                        opportunityId = oppId,
+                        opportunityName = opp.Name,
+                        submissionGenerated = needsSubmissionPdf,
+                        submissionSuccess = (bool?)false,
+                        submissionError = ex.Message,
+                        submissionSkipped = !needsSubmissionPdf,
+                        approvalGenerated = needsApprovalPdf,
+                        approvalSuccess = (bool?)false,
+                        approvalError = ex.Message,
+                        approvalSkipped = !needsApprovalPdf
+                    });
+                }
+            }
+
+            logger.LogInformation(
+                "Completed GO opportunity PDF regeneration. Processed: {Count}, Submission: {SubSuccess} success, {SubFailed} failed, {SubSkipped} skipped. Approval: {AppSuccess} success, {AppFailed} failed, {AppSkipped} skipped",
+                opportunities.Count, submissionSuccess, submissionFailed, submissionSkipped, approvalSuccess, approvalFailed, approvalSkipped);
+
+            return Ok(new
+            {
+                message = "GO opportunity PDF regeneration completed",
+                totalProcessed = opportunities.Count,
+                submissionSuccess,
+                submissionFailed,
+                submissionSkipped,
+                approvalSuccess,
+                approvalFailed,
+                approvalSkipped,
+                results
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error during GO opportunity PDF regeneration");
+            return StatusCode(500, new { error = "Failed to regenerate GO opportunity PDFs", details = ex.Message });
+        }
+    }
+
+    private async Task<string> BuildAuditTrailMarkdownForApprovalAsync(
+        List<WorkflowHistoryModel> history,
+        int opportunityId,
+        int? responsibleOrgUnitId,
+        string? responsibleOrgUnitName,
+        string? proposedInitiativeTypeName)
+    {
+        var sortedHistory = history.OrderByDescending(h => h.CreatedDate).ToList();
+        var submitRecord = sortedHistory.FirstOrDefault(h => string.Equals(h.Action, "Submit", StringComparison.OrdinalIgnoreCase));
+        var approveRecord = sortedHistory.FirstOrDefault(h => string.Equals(h.Action, "Approve", StringComparison.OrdinalIgnoreCase));
+
+        static string FormatDate(DateTime? date) =>
+            date.HasValue ? date.Value.ToString("dd MMM yyyy, HH:mm", System.Globalization.CultureInfo.InvariantCulture) : "N/A";
+
+        var orgUnitCode = responsibleOrgUnitName ?? "N/A";
+        var initiativeType = proposedInitiativeTypeName ?? "initiative";
+        var acknowledgmentStatement = $"I confirm that, based on the information presented in the Opportunity Statement, I give approval for UNOPS Org Unit \"{orgUnitCode}\" to continue development of this Opportunity as a {initiativeType}.";
+
+        var submitDate = submitRecord != null ? submitRecord.CreatedDate : (DateTime?)null;
+        var (submitUserName, submitPosition, _) = await GetUserDetailsForAuditTrailAsync(submitRecord?.User?.Id ?? 0);
+        var submitRemarks = submitRecord?.Comment ?? "None provided";
+
+        var approveDate = approveRecord?.CompletedOn ?? approveRecord?.CreatedDate;
+        var (approveUserName, approvePosition, approveDoa) = await GetUserDetailsForAuditTrailAsync(
+            approveRecord?.User?.Id ?? 0, opportunityId, responsibleOrgUnitId);
+
+        return $@"
+---
+
+## Go Decision Audit Trail
+
+### Submission Details
+| Field | Value |
+|-------|-------|
+| **Date of Submission** | {FormatDate(submitDate)} |
+| **Submitted By** | {submitUserName} |
+| **Position Title** | {submitPosition} |
+| **Remarks for Decision Maker** | {submitRemarks} |
+
+### Decision Details
+| Field | Value |
+|-------|-------|
+| **Date of Decision** | {FormatDate(approveDate)} |
+| **Decision Maker** | {approveUserName} |
+| **DOA Level** | {approveDoa} |
+| **Position Title** | {approvePosition} |
+| **Acknowledged Statement** | {acknowledgmentStatement} |
+| **Decision Rationale** | {approveRecord?.Comment ?? "None provided"} |
+
+---
+";
+    }
+
+    private async Task<(string userName, string position, string? doaLevel)> GetUserDetailsForAuditTrailAsync(
+        int userId, int? opportunityId = null, int? responsibleOrgUnitId = null)
+    {
+        if (userId <= 0)
+            return ("N/A", "N/A", null);
+
+        var user = await appContext.PAOUsers
+            .AsNoTracking()
+            .Include(u => u.UserProfile)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null)
+            return ("N/A", "N/A", null);
+
+        var userName = user.UserProfile?.Name ?? user.Email ?? "N/A";
+        var position = user.UserProfile?.Position ?? "N/A";
+
+        string? doaLevel = null;
+        if (opportunityId.HasValue && responsibleOrgUnitId.HasValue)
+        {
+            var doaEntityUserRole = await appContext.EntityUserRoles
+                .AsNoTracking()
+                .Include(eur => eur.EntityRole)
+                .Where(eur => eur.UserId == userId
+                    && eur.EntityId == responsibleOrgUnitId.Value
+                    && eur.EntityType == "OrganizationHierarchy"
+                    && eur.EntityRole != null
+                    && eur.EntityRole.Code != null
+                    && eur.EntityRole.Code.StartsWith("DoA"))
+                .FirstOrDefaultAsync();
+
+            if (doaEntityUserRole?.EntityRole != null)
+                doaLevel = doaEntityUserRole.EntityRole.Name ?? doaEntityUserRole.EntityRole.Code;
+        }
+
+        return (userName, position, doaLevel ?? "N/A");
     }
 }

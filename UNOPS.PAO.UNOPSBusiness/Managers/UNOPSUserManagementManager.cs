@@ -94,15 +94,24 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         }
 
         // Add search filter if provided
+        // Split search term into words so "John Smith" matches FirstName=John + LastName=Smith
         if (!string.IsNullOrEmpty(request.SearchTerm))
         {
-            whereConditions.Add($@"(
-                LOWER(up.""FirstName"") LIKE @p{paramIndex} OR 
-                LOWER(up.""LastName"") LIKE @p{paramIndex} OR 
-                LOWER(up.""UserEmail"") LIKE @p{paramIndex}
-            )");
-            sqlParams.Add($"%{request.SearchTerm.ToLower()}%");
-            paramIndex++;
+            var searchTerms = request.SearchTerm.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var termConditions = new List<string>();
+
+            foreach (var term in searchTerms)
+            {
+                termConditions.Add($@"(
+                    LOWER(up.""FirstName"") LIKE @p{paramIndex} OR 
+                    LOWER(up.""LastName"") LIKE @p{paramIndex} OR 
+                    LOWER(up.""UserEmail"") LIKE @p{paramIndex}
+                )");
+                sqlParams.Add($"%{term}%");
+                paramIndex++;
+            }
+
+            whereConditions.Add($"({string.Join(" AND ", termConditions)})");
         }
 
         var whereClause = string.Join(" AND ", whereConditions);
