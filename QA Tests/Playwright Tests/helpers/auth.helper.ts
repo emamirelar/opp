@@ -87,6 +87,63 @@ const RESTRICTED_TEST_USERS: Record<string, { roles: string[]; isInternal: boole
   },
 };
 
+/**
+ * Mock-only authentication: sets up full API mocks and navigates to the target URL.
+ * Use when tests do NOT require a real backend — all API responses are mocked.
+ * API mocks must be set up via setupAPIMocks() BEFORE calling this function.
+ */
+export async function authenticateWithMocks(
+  page: Page,
+  targetUrl: string,
+  testUserEmail: string = 'test@playwright.local'
+): Promise<void> {
+  await page.context().clearCookies();
+
+  const restrictedUser = RESTRICTED_TEST_USERS[testUserEmail];
+  const claims = restrictedUser
+    ? [
+        { type: 'email', value: testUserEmail },
+        { type: 'name', value: restrictedUser.name },
+        ...restrictedUser.roles.map(role => ({ type: 'role', value: role })),
+        { type: 'IsInternal', value: String(restrictedUser.isInternal) },
+        { type: 'IAPAuthenticated', value: 'true' },
+        { type: 'sub', value: '99999' },
+        { type: 'userId', value: '99999' },
+      ]
+    : [
+        { type: 'email', value: testUserEmail },
+        { type: 'name', value: 'Test User' },
+        { type: 'role', value: 'Administrator' },
+        { type: 'role', value: 'Internal' },
+        { type: 'IsInternal', value: 'true' },
+        { type: 'IAPAuthenticated', value: 'true' },
+        { type: 'sub', value: '12345' },
+        { type: 'userId', value: '12345' },
+      ];
+
+  await page.unroute(url => url.toString().includes('/user/claims'));
+  await page.route(url => url.toString().includes('/user/claims'), async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(claims),
+    });
+  });
+
+  await page.context().addCookies([{
+    name: 'dev-user-email',
+    value: testUserEmail,
+    domain: '127.0.0.1',
+    path: '/',
+  }]);
+
+  const baseUrl = process.env.BASE_URL || 'http://localhost:4200';
+  const url = targetUrl.startsWith('http') ? targetUrl : `${baseUrl}${targetUrl}`;
+  authLog(`[Auth-Mocks] Navigating to ${url}`);
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: getTimeout('navigation') });
+  await page.waitForLoadState('networkidle').catch(() => {});
+}
+
 export async function authenticateWithRealBackend(
   page: Page,
   targetUrl: string,

@@ -1418,7 +1418,7 @@ A: The story is not ready. An unconfirmed story is a best guess, not a requireme
 A: Shift-left does not require perfect Scrum. It requires four things: (1) PM/BA validates requirements with PO before commitment, (2) Solution Designer validates design before coding starts, (3) QA writes tests early, (4) devs run tests before handoff. Everything else is an improvement opportunity, not a prerequisite.
 
 **Q: What happens to manual testing?**  
-A: Manual testing becomes more focused and valuable. Instead of manually clicking through the same regression paths every sprint, QA uses that time for creative exploratory testing — finding the bugs that automation cannot.
+A: Manual testing becomes more focused and valuable. Instead of manually clicking through the same regression paths every sprint, QA uses that time for end-to-end scenario testing — validating complete happy-path workflows and edge cases across the system that automated unit and integration tests cannot fully cover. This includes testing complex multi-step user journeys, cross-feature interactions, and real-world data scenarios that reveal issues only visible when the full system is exercised together.
 
 ---
 

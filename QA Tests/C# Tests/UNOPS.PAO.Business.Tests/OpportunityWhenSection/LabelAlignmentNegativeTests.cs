@@ -128,11 +128,15 @@ public class PNO1182NegativeTests
 
     [Fact]
     [Trait("Category", "Negative")]
-    public void ScssRule_DefaultLabelMustNotHaveBackgroundColor()
+    public void ScssRule_DefaultLabelMustNotHaveNonWhiteBackgroundColor()
     {
         var scss = ReadWhenSectionScss();
         var defaultBlock = ExtractDefaultDatepickerLabelBlock(scss);
-        defaultBlock.Should().NotContain("background-color");
+        if (defaultBlock.Contains("background-color"))
+        {
+            defaultBlock.Should().Contain("background-color: white",
+                "PNO-1182: Default label background must be white (variant='on' requires opaque background on border)");
+        }
     }
 
     [Fact]

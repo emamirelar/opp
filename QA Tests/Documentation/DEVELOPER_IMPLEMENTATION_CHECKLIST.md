@@ -1,11 +1,40 @@
 # ✅ **DEVELOPER IMPLEMENTATION CHECKLIST**
 
 **Generated:** January 13, 2026  
-**Last Reviewed:** March 9, 2026  
+**Last Updated:** March 9, 2026  
 **Test Suite:** Originally 605 Opportunity Tests — now significantly expanded (~10,040 total C# test methods + 1,629 Playwright tests)  
 **Status:** Historical reference — most items completed. See [ACTION_ITEMS.md](ACTION_ITEMS.md) for current open items.
 
 > **Note:** This checklist was created during the initial Opportunity feature build-out. Many items have been implemented. It is preserved for reference but the active tracking document is now [ACTION_ITEMS.md](ACTION_ITEMS.md).
+
+---
+
+## ⬛ **GATE 0: PRE-DEVELOPMENT PREREQUISITES (Before You Start Coding)**
+
+Before beginning any implementation work, confirm that the following pre-development validation has been completed. Gate 0 is defined in the [Shift-Left Testing Manifesto, Section 8](SHIFT_LEFT_TESTING_MANIFESTO.md#8-quality-gates--the-four-checkpoints). If these items are not met, the story is not ready for development.
+
+### Requirements Validated (PM/BA Responsibility)
+
+- [ ] **Acceptance criteria are PO-confirmed** — documented in Jira with PO sign-off ("PO confirmed ACs on [date]")
+- [ ] **Acceptance criteria are testable** — each AC is specific enough that QA can write a test for it (no vague criteria like "user-friendly" or "fast")
+- [ ] **Business rules are documented** — all validation rules, approval logic, notification triggers, and calculations are written in the Jira ticket, not just known verbally
+- [ ] **Cross-feature impact is assessed** — PM/BA has identified which existing features may be affected by this change
+
+### Design Validated (Solution Designer Responsibility, Complex/New Features)
+
+- [ ] **Design-to-requirements traceability exists** — every acceptance criterion is mapped to a design component
+- [ ] **Testability review completed** — Solution Designer has walked through the design with QA; QA has confirmed they can test every component
+- [ ] **NFRs validated** — performance, security, and scalability requirements are confirmed achievable with the proposed design
+- [ ] **Integration points specified** — API contracts (request/response schemas, status codes, error formats) are documented with enough detail for QA to begin writing test specs
+
+### What This Means for You as a Developer
+
+- If ACs are not PO-confirmed, you risk building something the PO did not agree to. Raise it in standup.
+- If business rules are not documented, you risk implementing them differently from what QA will test against. Ask the PM/BA to document them.
+- If integration point specs are not available, QA cannot write integration tests early — which means you will not have QA tests to run before your PR.
+- If any Gate 0 item is missing, **do not start coding**. The 30-minute delay to get requirements clarified prevents days of rework.
+
+> **See also:** [Manifesto Section 4](SHIFT_LEFT_TESTING_MANIFESTO.md#4-the-pre-development-validation-contracts) for the full PM/BA and Solution Designer validation contracts.
 
 ---
 

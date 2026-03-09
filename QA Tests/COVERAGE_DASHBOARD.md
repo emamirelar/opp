@@ -10,8 +10,8 @@
 
 | Metric | Value | Target | Status |
 |---|---|---|---|
-| **Total C# Test Files** | ~290 files (~10,040 test methods) | — | — |
-| **Total Playwright Specs** | 108 (1,629 tests) | — | — |
+| **Total C# Test Files** | ~313 files (~10,630 test methods) | — | — |
+| **Total Playwright Specs** | 110 (1,669 tests) | — | — |
 | **Tier 1 Coverage** | 5/5 types | 5/5 | ✅ Complete |
 | **Tier 2 Coverage** | 5/5 types | 5/5 | ✅ Complete |
 | **Tier 3 Coverage** | 6/6 types | 6/6 | ✅ Complete (all gaps closed 2026-03-09) |
@@ -67,7 +67,7 @@
 | # | Test Type | Specs | Status | Gap Action |
 |---|---|---|---|---|
 | T17 | E2E Smoke | 6 | ✅ Complete | Core CRM flows covered |
-| T18 | E2E Feature | 108 total (1,629 tests) | ✅ Complete | All major features have specs |
+| T18 | E2E Feature | 110 total (1,669 tests) | ✅ Complete | All major features have specs. PNO-669, PNO-1182 E2E added 2026-03-09 |
 | T19 | E2E Cross-Browser | Manual trigger | ⚠️ Exists | Chrome, Firefox, WebKit configured |
 | T20 | E2E Accessibility (axe-core) | 1 with axe | ✅ Created | — | `accessibility-axe.spec.ts` with 15 axe-core WCAG tests |
 
@@ -152,3 +152,5 @@ A CI job should be created to automatically count test files by Trait category a
 |---|---|---|---|
 | 1.0 | 2026-03-09 | QA Team | Initial dashboard creation. Baseline coverage analysis across all 4 tiers and 16 test types. Identified T12 (API Contract) and T14 (i18n) as critical gaps. |
 | 1.1 | 2026-03-09 | QA Team | All gaps closed: API Contract (65 tests), i18n (50 tests), Error Recovery (50 tests), Rate Limiting (30 tests), Performance Baselines (30 tests), axe-core Playwright (15 tests), PSS-007–012 E2E specs (6 tests). Updated create-tests agent with coverage matrix check. |
+| 1.2 | 2026-03-09 | QA Team | PNO-1166/PNO-669/PNO-1182 test session: C# suites created and repaired (169 QATestingCode, 170 MobileSidebarClose, ~170 LabelAlignment). Playwright specs added (sidebar-mobile-close, when-date-label-alignment). DEF-251 logged (OpportunityWhenSection missing features). QA-106 (InMemory deprecation), QA-107 (authenticateWithMocks resolved). |
+| 1.3 | 2026-03-09 | QA Team | dev-deploy merge test coverage: SDGProcessing (130 tests — dedup + primary fallback), ConnectionStringEncoding (156 tests — UTF-8 encoding fix), DeliverablesProposal (136 tests — model/template refactor). All 422 new tests passing. |

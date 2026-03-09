@@ -264,6 +264,8 @@ When InMemory is in use (`IsUsingPostgres = false`), all these tests return earl
 | QA-101 | 🟡 Medium | Playwright webServer config fails when TestApiServer DLLs are locked | Infrastructure | Playwright's `webServer` configuration attempts to build and start `TestApiServer`, but fails when DLL files (`UNOPS.Workflow.Models.dll`, `UNOPS.Workflow.Domain.dll`) are locked by a previously running TestApiServer process. **Workaround Applied:** Set `SKIP_WEB_SERVER=1` environment variable to disable Playwright's auto-start of webServer. The TestApiServer is unnecessary when using `page.route()` mocks or `USE_REAL_API=true` mode. | N/A | 2026-03-04 | Workaround Applied |
 | QA-100 | 🟢 Low | Restricted-user Playwright tests fail with real backend — fake users don't exist in DB | Test Data | Tests using `test-readonly@playwright.local` and other fake restricted-user emails get blank/error pages when `USE_REAL_API=true` because these users don't exist in the real database. 2 of 11 partners tests affected. **Workaround:** These tests still use full API mocks when run against real backend. Long-term fix: create real test users with restricted roles in the dev database. | N/A | 2026-03-04 | Open |
 | QA-102 | 🟡 Medium | Playwright .or() chains cause strict mode violations in CI | Tooling | 4 Playwright smoke tests failed in CI with `strict mode violation: ... resolved to 2 elements`. The `.or()` locator combinator matches all elements from both sides; when both a sidebar nav link (e.g., "Interactions") AND a page element (e.g., `app-listview`) are visible simultaneously, `.or()` resolves to 2 elements, violating Playwright's strict-mode assertion. **Resolved (2026-03-05):** Added `.first()` at the end of each `.or()` chain before `.toBeVisible()` in `interactions.spec.ts` (3 tests) and `opportunities.spec.ts` (1 test). | N/A | 2026-03-05 | Resolved (2026-03-05) |
+| QA-106 | 🟡 Medium | Test project references deprecated Microsoft.EntityFrameworkCore.InMemory provider | Infrastructure | `UNOPS.PAO.Business.Tests.csproj` references `Microsoft.EntityFrameworkCore.InMemory` 9.0.0 which is deprecated per PNO-1166 REQ-5. Cannot be removed because 6+ existing test files (`OpportunityAIFeatures`, `DataEntryPermutations`, etc.) depend on `UseInMemoryDatabase()`. Migration to SQLite in-memory required. **1 test skipped:** `QATestingCode/NegativeTests.cs:N21_TestProjects_DoNotReference_DeprecatedInMemoryProvider_REQ5` | N/A | 2026-03-09 | Open |
+| QA-107 | 🟡 Medium | Playwright auth helper missing `authenticateWithMocks` export — RESOLVED | Mocking | New Playwright E2E specs for PNO-669 and PNO-1182 imported `authenticateWithMocks` from `helpers/auth.helper.ts` but the function did not exist. All 40 Playwright tests failed with `TypeError: (0 , _auth.authenticateWithMocks) is not a function`. **Resolved (2026-03-09):** Created `authenticateWithMocks()` function in `auth.helper.ts` — sets up mock claims, dev cookie, and navigates to target URL without requiring `USE_REAL_API` env var. Tests now progress past authentication (remaining failures are `ERR_CONNECTION_REFUSED` due to no dev server running). | N/A | 2026-03-09 | Resolved (2026-03-09) |
 
 ---
 
@@ -1794,14 +1796,14 @@ Update the permissions mock in the Playwright mock helper to return a denied/blo
 | **QA-009 (InMemory DB)** | **~72+ Opportunity tests** | Need real PostgreSQL or repository mocking |
 | ~~QA-039 (Permission Mock)~~ | ~~1 Playwright test~~ | ✅ **RESOLVED (2026-02-09)** - Added RESTRICTED_TEST_USERS map + permission overrides |
 | QA-014 (oUP Credentials) | 34+ Playwright + C# tests | Request credentials from IT |
-| DEF-008 (Go Decision) | 60 automated skips (40 C# + 20 Playwright) + ~2 manual blocked + ~50 manual awaiting | Core workflow operational — **532 automated passed, 0 failed** (2026-02-13). Collaborator assignment confirmed implemented. Notifications, UI remain |
-| DEF-010 (PNO-1193) | TC-039 + role transfer tests | OM role transfer not working |
-| DEF-011 (PNO-1171) | TC-030 (workflow history accuracy) | Reject appears twice in history |
+| QA-048 (Blocked by DEF-008, Go Decision) | 60 automated skips (40 C# + 20 Playwright) + ~2 manual blocked + ~50 manual awaiting | Core workflow operational — **532 automated passed, 0 failed** (2026-02-13). Collaborator assignment confirmed implemented. Notifications, UI remain |
+| QA-049 (Blocked by DEF-010, PNO-1193) | TC-039 + role transfer tests | OM role transfer not working |
+| QA-050 (Blocked by DEF-011, PNO-1171) | TC-030 (workflow history accuracy) | Reject appears twice in history |
 | QA-008 (PrimeNG Dialog) | ~5 Playwright tests (all skipped, 0 failing) | ✅ All dialog tests now use conditional `test.skip()` |
 | QA-042 (DST/Gemini) | 28 tests skipped | Need DST mock or sandbox Gemini API key |
 | QA-043 (BigQuery) | ~35 tests skipped | Need BigQuery mock or GCP sandbox credentials |
-| DEF-013 (LiaisonOffice) | 9 tests blocked | Backend: Register LiaisonOfficeManager in IManagerWrapper |
-| DEF-014 (FocalPoint) | 12 tests blocked | Backend: Register FocalPointManager in IManagerWrapper |
+| QA-051 (Blocked by DEF-013, LiaisonOffice) | 9 tests blocked | Backend: Register LiaisonOfficeManager in IManagerWrapper |
+| QA-052 (Blocked by DEF-014, FocalPoint) | 12 tests blocked | Backend: Register FocalPointManager in IManagerWrapper |
 | ~~QA-046 (Manager coverage)~~ | ~~6 managers, 0 tests~~ | ✅ **RESOLVED (2026-02-20):** 3 new test files created — `UNOPSAiPromptManagerTests.cs`, `BaseEngagementManagerTests.cs`, `ImageGenerationManagerTests.cs` |
 | ~~QA-047 (Controller coverage)~~ | ~~3 controllers, 0 tests~~ | ✅ **RESOLVED (2026-02-20):** 2 new test files created — `AuditLogControllerTests.cs`, `AIRetrieverControllerTests.cs` |
 
@@ -1853,12 +1855,12 @@ Created **1,117 tests** across **3 suites** with **10 categories each** (30 file
 |-------|---------|-------|-------|--------|--------|-----------|
 | PNO-1166 | Reject Duplicate Fix + OM Transfer | 10 | 373 | 363 | 10 | 97.3% |
 | PNO-1197 | DoA Level 3 Fallback | 10 (+1 base) | 372 | 309 | 63 | 83.1% |
-| DEF-012 | ForAllMembers Fix | 10 | 372 | 358 | 14 | 96.2% |
+| QA-053 (DEF-012) | ForAllMembers Fix | 10 | 372 | 358 | 14 | 96.2% |
 | **TOTAL** | | **30** | **1,117** | **1,030** | **87** | **92.2%** |
 
 ### Per-Category Breakdown (Per Suite)
 
-| Category | PNO-1166 | PNO-1197 | DEF-012 | Minimum Required | Status |
+| Category | PNO-1166 | PNO-1197 | QA-053 (DEF-012) | Minimum Required | Status |
 |----------|----------|----------|---------|-----------------|--------|
 | Positive | 30 | 30 | 30 | 30 (Baseline P) | ✅ |
 | Negative | 60 | 60 | 60 | Max(50, 2×P) = 60 | ✅ |
@@ -1877,7 +1879,7 @@ Created **1,117 tests** across **3 suites** with **10 categories each** (30 file
 |-------|---|---|---|-----|-----|-----------|
 | PNO-1166 | 30 | 60 | 61 | 121 | 90 | ✅ (121 >= 90) |
 | PNO-1197 | 30 | 60 | 60 | 120 | 90 | ✅ (120 >= 90) |
-| DEF-012 | 30 | 60 | 60 | 120 | 90 | ✅ (120 >= 90) |
+| QA-053 (DEF-012) | 30 | 60 | 60 | 120 | 90 | ✅ (120 >= 90) |
 
 ### Failure Analysis (87 failures)
 

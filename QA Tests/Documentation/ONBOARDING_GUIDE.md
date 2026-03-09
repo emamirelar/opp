@@ -1,9 +1,9 @@
 # Onboarding Guide — Joining a Shift-Left Team
 
-**Version:** 1.2  
+**Version:** 1.3  
 **Date:** March 9, 2026  
 **Status:** Active  
-**Audience:** New QA testers joining the team; new developers who need to understand how to work with QA in the shift-left model  
+**Audience:** New QA testers, developers, PM/BAs, and Solution Designers joining the team  
 **Prerequisites:** Read the [Shift-Left Testing Manifesto](SHIFT_LEFT_TESTING_MANIFESTO.md) first. It explains what shift-left means, who does what, and why.
 
 ---
@@ -16,10 +16,12 @@
 4. [Shadowing and Reverse Shadowing](#4-shadowing-and-reverse-shadowing)
 5. [QA Tester Onboarding Track](#5-qa-tester-onboarding-track)
 6. [Developer Onboarding Track — Working with QA](#6-developer-onboarding-track--working-with-qa)
-7. [Your First Sprint](#7-your-first-sprint)
-8. [Common Questions from New Hires](#8-common-questions-from-new-hires)
-9. [Onboarding Checklists](#9-onboarding-checklists)
-10. [Related Documents](#10-related-documents)
+7. [PM/BA Onboarding Track — Requirements Validation](#7-pmba-onboarding-track--requirements-validation)
+8. [Solution Designer Onboarding Track — Design Validation](#8-solution-designer-onboarding-track--design-validation)
+9. [Your First Sprint](#9-your-first-sprint)
+10. [Common Questions from New Hires](#10-common-questions-from-new-hires)
+11. [Onboarding Checklists](#11-onboarding-checklists)
+12. [Related Documents](#12-related-documents)
 
 ---
 
@@ -287,7 +289,108 @@ A: Running smoke tests takes ~30 seconds. Running feature-specific integration t
 
 ---
 
-## 7. Your First Sprint
+## 7. PM/BA Onboarding Track — Requirements Validation
+
+This section is for PM/BAs joining the team. Under the shift-left model, PM/BAs are the first line of quality defence — their validation of requirements prevents the most expensive category of defects: building the wrong thing. For the full contract, see [Manifesto Section 4.2](SHIFT_LEFT_TESTING_MANIFESTO.md#42-the-pmba-requirements-validation-contract).
+
+### What PM/BAs Need to Know About Shift-Left
+
+1. **You own Gate 0.** No story enters the sprint without PO-confirmed, testable acceptance criteria. This is the single most impactful quality activity in the entire process.
+
+2. **QA depends on your outputs.** QA authors test specs from your acceptance criteria and documented business rules. Incomplete or ambiguous requirements produce incomplete or wrong tests — and the defect cost multiplies downstream.
+
+3. **Testability is a requirement.** Every acceptance criterion must be specific enough that QA can write a test for it. "The system should be fast" is not testable. "The partner list loads in under 2 seconds for 1,000 records" is testable. If it cannot be tested, it must be rewritten before sprint commitment.
+
+4. **Business rules must be written down.** Undocumented business rules are the #1 source of "it works as coded but not as expected" defects. Who can approve? What triggers a notification? When is a field required? Write it down.
+
+5. **Requirement changes must be communicated.** When requirements change mid-sprint, update the Jira ticket, notify Dev and QA, and get acknowledgement. Silent scope changes cause Dev to build the old spec while QA tests the new spec.
+
+### PM/BA's First Sprint Checklist
+
+- [ ] Read Manifesto Section 4.2 (PM/BA Requirements Validation Contract)
+- [ ] Read Manifesto Section 7 (Handshake Points — Requirements Validation ceremony)
+- [ ] Read Manifesto Section 8 (Quality Gates — Gate 0)
+- [ ] For each story entering the sprint, confirm acceptance criteria are PO-approved
+- [ ] Apply the testability gate to every AC — can QA write a test for each one?
+- [ ] Document all business rules explicitly in the Jira ticket
+- [ ] Perform cross-feature impact analysis — which existing features might be affected?
+- [ ] Attend Three Amigos and surface any undocumented business rules or missing scenarios
+- [ ] Record PO confirmation in Jira ("PO confirmed ACs on [date]")
+
+### 30-60-90 Day Framework for PM/BAs
+
+| Phase | Days | Theme | Activities |
+|-------|------|-------|------------|
+| Foundations | 1-30 | "Learn the Quality Standards" | Read the Manifesto (Sections 1, 4.2, 7, 8). Observe a Three Amigos session. Shadow an experienced PM/BA during requirements validation. Understand the defect cost curve and why Gate 0 exists. |
+| Collaboration | 31-60 | "Apply with Support" | Lead requirements validation for low-risk stories with buddy oversight. Write testable acceptance criteria reviewed by QA. Perform cross-feature impact assessment with guidance. Document business rules for at least two stories. |
+| Ownership | 61-90 | "Own Gate 0" | Independently validate requirements for all assigned stories. Apply the testability gate without prompting. Manage requirement changes with full team communication. Mentor new team members on requirements quality. |
+
+### Common PM/BA Questions
+
+**Q: Am I now a tester?**
+A: No. You are validating your own deliverable — requirements — against clear quality criteria. Just as developers "test" their code with unit tests, you "test" your requirements for completeness and testability. You do not write automated tests.
+
+**Q: What if the PO is unavailable to confirm ACs before sprint commitment?**
+A: The story is not ready. An unconfirmed story is a best guess, not a requirement. Committing to it risks building the wrong thing. If PO availability is the bottleneck, escalate — this is a process issue that affects the entire team.
+
+**Q: How do I know if an AC is "testable"?**
+A: Ask yourself: "Could QA write a test that proves this criterion is met?" If the answer involves subjective judgment ("user-friendly," "fast," "intuitive"), it is not testable. Rewrite it with specific, measurable criteria.
+
+---
+
+## 8. Solution Designer Onboarding Track — Design Validation
+
+This section is for Solution Designers joining the team. Under the shift-left model, Solution Designers validate that the technical design actually addresses the stated requirements. A design that looks elegant but cannot be tested, does not meet NFRs, or leaves integration points undefined is a defect waiting to happen. For the full contract, see [Manifesto Section 4.1](SHIFT_LEFT_TESTING_MANIFESTO.md#41-the-solution-designer-validation-contract).
+
+### What Solution Designers Need to Know About Shift-Left
+
+1. **Your design feeds both Dev and QA.** Developers build from your design. QA tests against it. If the design does not address a requirement, Dev will not implement it and QA will not test it — the gap becomes a production defect.
+
+2. **Design-to-requirements traceability is mandatory.** For every acceptance criterion in the Jira story, confirm the design explicitly addresses it. Produce a traceability table: Requirement → Design Component → How It Will Be Tested.
+
+3. **Testability must be validated with QA.** Before development starts, walk through the design with QA. QA asks: "How do we test this? What are the boundaries? What happens when this external service is down?" If any part of the design cannot be tested, it must be redesigned or a monitoring/observability plan must be agreed.
+
+4. **NFR validation is your responsibility.** If a requirement says "page loads in under 3 seconds" and the design calls for 15 sequential API calls, that is a design defect. Review performance, security, scalability, and availability requirements against the proposed architecture.
+
+5. **Integration point specifications enable early test authoring.** QA uses your API contracts, data flow diagrams, and error format definitions to begin writing integration tests before development starts. The more detail you provide, the earlier QA can start.
+
+### Solution Designer's First Sprint Checklist
+
+- [ ] Read Manifesto Section 4.1 (Solution Designer Validation Contract)
+- [ ] Read Manifesto Section 7 (Handshake Points — Design Walkthrough ceremony)
+- [ ] Read Manifesto Section 8 (Quality Gates — Gate 0)
+- [ ] For each complex story, produce a design-to-requirements traceability table
+- [ ] Conduct a testability review with QA before development starts
+- [ ] Validate NFRs (performance, security, scalability) against the proposed design
+- [ ] Specify integration points with enough detail for QA to begin writing tests (API contracts, data flows, error formats)
+- [ ] Present a design walkthrough to Dev + QA on Day 1-2 of the sprint
+- [ ] Document architecture decisions (ADRs or inline documentation)
+
+### 30-60-90 Day Framework for Solution Designers
+
+| Phase | Days | Theme | Activities |
+|-------|------|-------|------------|
+| Foundations | 1-30 | "Learn the Quality Standards" | Read the Manifesto (Sections 1, 4.1, 7, 8). Shadow an experienced SD during a design walkthrough. Understand how QA uses integration point specs to author tests. Review the existing architecture documentation and patterns. |
+| Collaboration | 31-60 | "Apply with Support" | Lead design validation for low-risk stories with buddy oversight. Produce design-to-requirements traceability tables reviewed by Dev Lead. Conduct testability reviews with QA (with buddy present). Specify integration points and get QA feedback on test-authoring readiness. |
+| Ownership | 61-90 | "Own Design Quality" | Independently validate designs for all assigned stories. Conduct testability reviews and design walkthroughs without prompting. Identify NFR risks proactively and propose mitigations. Mentor new team members on design validation practices. |
+
+### Common Solution Designer Questions
+
+**Q: Am I now a tester?**
+A: No. You are validating your own deliverable — the design — against clear quality criteria. You verify that every acceptance criterion is addressed by the design, that the design can be tested, and that NFRs are achievable. You do not write automated tests.
+
+**Q: What if QA says part of the design is not testable?**
+A: That is exactly the feedback the testability review is designed to surface. Work with QA to either redesign the component to have observable outputs, add monitoring/logging that makes the behavior verifiable, or agree on a monitoring-based observability plan as a documented alternative.
+
+**Q: How much detail do I need in the integration point specifications?**
+A: Enough for QA to start writing test specs. At minimum: request/response schemas, expected HTTP status codes, error response format, and any authentication/authorization requirements. Think of it this way: if QA cannot write a mock or stub from your spec, it is not detailed enough.
+
+**Q: Do I need to attend every Three Amigos session?**
+A: For complex or new features, yes. For straightforward stories where the design is well-established (e.g., standard CRUD), your attendance is optional. When in doubt, attend — your 15 minutes in the meeting can prevent days of rework.
+
+---
+
+## 9. Your First Sprint
 
 Here is what a typical 2-week sprint looks like from the perspective of a new team member. In your first sprint, you will mostly observe and do paired work. By your third sprint, you will be doing most of this independently.
 
@@ -315,9 +418,31 @@ Here is what a typical 2-week sprint looks like from the perspective of a new te
 | Day 8-9    | Bug triage — review defects found by QA                          | Participate, own one defect fix |
 | Day 10     | Sprint demo + Retrospective                                      | Share your shift-left experience |
 
+### For a New PM/BA
+
+| Sprint Day | Activity                                                         | Your Role (First Sprint) |
+|------------|------------------------------------------------------------------|--------------------------|
+| Pre-Sprint | Requirements Validation — confirm ACs with PO (Gate 0)           | Shadow an experienced PM/BA, observe the process |
+| Day 1      | Sprint Planning — confirm all stories have testable, PO-confirmed ACs | Observe, check that ACs are specific and measurable |
+| Day 1-2    | Three Amigos — surface business rules and missing scenarios       | Observe, note how QA asks "what could go wrong?" |
+| Day 3-5    | Cross-feature impact analysis for new stories                    | Shadow buddy, learn how to identify affected areas |
+| Ongoing    | Manage any requirement changes — update Jira, notify Dev + QA    | Follow the checklist in Section 7 |
+| Day 10     | Sprint demo + Retrospective                                      | Share one observation about requirements clarity |
+
+### For a New Solution Designer
+
+| Sprint Day | Activity                                                         | Your Role (First Sprint) |
+|------------|------------------------------------------------------------------|--------------------------|
+| Pre-Sprint | Design-to-requirements traceability for complex stories           | Shadow an experienced SD, observe the traceability process |
+| Day 1      | Sprint Planning — confirm design covers every AC                  | Observe, check integration point coverage |
+| Day 1-2    | Design Walkthrough — present design to Dev + QA for challenge     | Observe a walkthrough, note what Dev and QA ask |
+| Day 1-2    | Three Amigos — provide design context for edge case discussion    | Attend for complex stories, listen to QA's perspective |
+| Day 3-5    | Integration point specification — document API contracts for QA   | Shadow buddy, learn the level of detail QA needs |
+| Day 10     | Sprint demo + Retrospective                                      | Share one observation about design-to-test alignment |
+
 ---
 
-## 8. Common Questions from New Hires
+## 10. Common Questions from New Hires
 
 **Q: I am not a coder. How can I write automated tests?**  
 A: You describe what to test in plain English. Claude AI writes the code. You review it, run it, and commit it. You are the test designer — Claude is the typist. Your value is knowing what to test, not how to code it.
@@ -342,7 +467,7 @@ A: Previously, developers wrote code and handed it to QA for all testing. QA fou
 
 ---
 
-## 9. Onboarding Checklists
+## 11. Onboarding Checklists
 
 ### Day 1 Checklist — QA Tester
 
@@ -399,8 +524,57 @@ A: Previously, developers wrote code and handed it to QA for all testing. QA fou
 
 **Reading List Delivered:**
 - [ ] This Onboarding Guide (Section 6 specifically)
-- [ ] Shift-Left Testing Manifesto (Section 4 specifically)
+- [ ] Shift-Left Testing Manifesto (Section 5 specifically)
 - [ ] Project README and architecture overview
+
+### Day 1 Checklist — PM/BA
+
+**Access and Accounts:**
+- [ ] Jira access with correct project permissions (must be able to edit stories and acceptance criteria)
+- [ ] Confluence or documentation access (if applicable)
+- [ ] Team communication channel (Slack/Teams) joined
+- [ ] QA environment URL and credentials provided (for UAT verification)
+- [ ] Staging environment URL and credentials provided
+
+**People:**
+- [ ] Buddy assigned (experienced PM/BA) and introductory meeting completed
+- [ ] PM/BA Lead or manager 1:1 scheduled (first week)
+- [ ] Introduced to the QA team (your requirements feed their test authoring)
+- [ ] Introduced to the development team
+- [ ] Introduced to the Product Owner
+
+**Reading List Delivered:**
+- [ ] This Onboarding Guide (Section 7 specifically)
+- [ ] Shift-Left Testing Manifesto (Sections 4.2, 7, and 8 specifically)
+
+**Gate 0 Understanding:**
+- [ ] Understands what "PO-confirmed acceptance criteria" means and how to document it in Jira
+- [ ] Understands the testability gate — can identify whether an AC is testable vs. vague
+- [ ] Knows where to find the cross-feature impact analysis template
+
+### Day 1 Checklist — Solution Designer
+
+**Access and Accounts:**
+- [ ] Jira access with correct project permissions
+- [ ] Git access to the repository (read access to understand the codebase architecture)
+- [ ] Architecture documentation access (Confluence, ADRs, design documents)
+- [ ] Team communication channel (Slack/Teams) joined
+
+**People:**
+- [ ] Buddy assigned (experienced Solution Designer or Dev Lead) and introductory meeting completed
+- [ ] Dev Lead 1:1 scheduled (first week)
+- [ ] Introduced to the QA team (your integration point specs feed their test authoring)
+- [ ] Introduced to the development team
+
+**Reading List Delivered:**
+- [ ] This Onboarding Guide (Section 8 specifically)
+- [ ] Shift-Left Testing Manifesto (Sections 4.1, 7, and 8 specifically)
+- [ ] Existing architecture documentation and ADRs
+
+**Gate 0 Understanding:**
+- [ ] Understands design-to-requirements traceability and the expected table format
+- [ ] Understands what a testability review with QA involves
+- [ ] Knows the level of detail QA needs in integration point specifications
 
 ### 30-Day Check-In Template
 
@@ -418,7 +592,7 @@ The QA Lead or manager uses this template for the Day 30 check-in:
 
 ---
 
-## 10. Related Documents
+## 12. Related Documents
 
 | Document                          | Location                                                   | Purpose                              |
 |-----------------------------------|------------------------------------------------------------|--------------------------------------|
@@ -440,3 +614,4 @@ The QA Lead or manager uses this template for the Day 30 check-in:
 | 1.0     | 2026-03-05 | QA Lead    | Initial version — extracted and expanded from Shift-Left Manifesto Appendix E |
 | 1.1     | 2026-03-06 | QA Lead    | Updated Related Documents with Scorecard, Action Items, and current defect counts |
 | 1.2     | 2026-03-09 | QA Lead    | Updated test counts (10,040 C# methods, 1,629 Playwright tests). Updated defect counts (135 open DEF, 11 active QA). Added test data infrastructure context (TestEntityBuilder, Bogus, JSON fixtures, workflow-mocks.helper). |
+| 1.3     | 2026-03-09 | QA Lead    | Added PM/BA and Solution Designer onboarding tracks: Section 7 (PM/BA Onboarding Track — Requirements Validation) with 30-60-90 framework, first sprint checklist, and FAQ. Section 8 (Solution Designer Onboarding Track — Design Validation) with 30-60-90 framework, first sprint checklist, and FAQ. Added PM/BA and SD first sprint schedules to Section 9. Added Day 1 checklists for PM/BA and Solution Designer to Section 11. Updated audience and section numbering. |

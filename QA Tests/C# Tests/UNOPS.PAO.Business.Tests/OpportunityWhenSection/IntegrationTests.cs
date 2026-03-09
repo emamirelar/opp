@@ -495,6 +495,7 @@ public class OpportunityWhenSectionIntegrationTests
 
     [Fact]
     [Trait("Category", "Integration")]
+    [Trait("Defect", "DEF-251")]
     public void Workflow_OpportunityUpdated_Output()
     {
         var html = ReadWhenSectionHtml();

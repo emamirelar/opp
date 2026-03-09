@@ -1,9 +1,9 @@
 # Shift-Left Testing Scorecard — Measuring Success
 
-**Version:** 1.1  
+**Version:** 1.2  
 **Date:** March 9, 2026  
 **Status:** Living document — update each sprint  
-**Audience:** QA Lead, Engineering Lead, Scrum Masters, Engineering Leadership  
+**Audience:** Solution Designers, PM/BAs, QA Lead, Engineering Lead, Scrum Masters, Product Owners, Engineering Leadership  
 **Companion to:** [Shift-Left Testing Manifesto](SHIFT_LEFT_TESTING_MANIFESTO.md)
 
 ---
@@ -44,7 +44,19 @@ Leading indicators tell you if the *process* is changing — are testing activit
 | Test PR coupling | Tests in separate PRs, days later | Tests in the same PR as production code | GitHub: % of PRs that include test files |
 | Defect discovery phase | Found in QA/staging | Found during dev via failing spec tests | JIRA: defect `created_date` vs. sprint phase |
 
-### 2.2 AI-Assisted Test Generation
+### 2.2 Pre-Development Validation (Gate 0)
+
+These metrics track whether requirements and design are validated *before* code is written — the cheapest place to find defects (see Manifesto Section 4).
+
+| Metric | Baseline | Target | How to Measure |
+|---|---|---|---|
+| Gate 0 Pass Rate | Not tracked | >95% | % of stories entering the sprint with PO-confirmed, testable ACs. Track via Jira "PO Approved" label or comment. |
+| Requirements Change Rate | Not tracked | Decreasing trend | Number of AC changes after sprint commitment per sprint. Count Jira AC edits or comments indicating post-commitment changes. |
+| Design Traceability Score | Not tracked | >90% | % of complex stories with a design-to-requirements traceability table. Verify during refinement. |
+| Stories rejected at Gate 0 | Not tracked | <10% | Stories returned to backlog during refinement due to incomplete/untestable ACs. |
+| PM/BA requirements quality | Not tracked | Increasing | Number of requirement-originated defects per sprint (should decrease). |
+
+### 2.3 AI-Assisted Test Generation
 
 | Metric | Baseline | Target | How to Measure |
 |---|---|---|---|
@@ -113,7 +125,30 @@ Process indicators tell you if the *behaviors* are changing — are devs and QAs
 | QA uses AI (Cursor/Claude) to author tests | Agent transcripts show test authoring patterns | Cursor agent transcript folder | |
 | QA automates, not manual regression | Ratio of automated vs. manual test cases increasing | JIRA test management, Confluence test plans | |
 
-### 4.3 Team Collaboration Behaviors
+### 4.3 PM/BA Behaviors
+
+| Behavior | Evidence to Look For | Where to Check | Current? (Y/N) |
+|---|---|---|---|
+| PM/BA validates ACs with PO before sprint commitment | Stories have "PO Approved" label or sign-off comment | JIRA tickets | |
+| ACs are testable (specific, measurable, unambiguous) | QA can derive test cases directly from ACs without clarification | JIRA AC text quality review | |
+| PM/BA documents business rules and edge cases | Business rule documentation attached to stories | JIRA attachments/comments, Confluence | |
+| PM/BA participates in Three Amigos sessions | Meeting attendance and contribution to edge case checklists | JIRA ticket comments, calendar invites | |
+| Requirements changes after commitment are rare | AC edit count after sprint commitment is low | JIRA history on AC fields | |
+| PM/BA provides cross-feature impact assessment | New stories include impact notes for related features | JIRA ticket descriptions | |
+| PM/BA confirms Gate 0 for all sprint stories | All committed stories have passed Gate 0 at sprint planning | Sprint planning notes, JIRA board | |
+
+### 4.4 Solution Designer Behaviors
+
+| Behavior | Evidence to Look For | Where to Check | Current? (Y/N) |
+|---|---|---|---|
+| SD validates design against requirements before dev starts | Design-to-requirements traceability table exists for complex stories | Confluence, JIRA attachments | |
+| SD participates in Design Walkthrough ceremony | Design walkthrough meeting held within Day 1-2 of sprint | Calendar invites, meeting notes | |
+| SD identifies NFR risks (performance, security, scalability) | NFR risks documented and shared with dev team | Confluence, JIRA ticket comments | |
+| SD participates in testability review with QA | QA confirms design is testable before dev begins | Meeting notes, JIRA comments | |
+| SD provides edge case input during Three Amigos | Design-specific edge cases are documented | JIRA edge case checklists | |
+| SD reviews design changes during sprint | If design changes mid-sprint, SD re-validates traceability | JIRA comments, Confluence updates | |
+
+### 4.5 Team Collaboration Behaviors
 
 | Behavior | Evidence to Look For | Where to Check | Current? (Y/N) |
 |---|---|---|---|
@@ -194,22 +229,24 @@ This baseline was captured before the first sprint dashboard entry. Use these va
 | **Test data infrastructure** | Operational | TestEntityBuilder (C#), Bogus fake data, JSON fixtures (Playwright), workflow-mocks.helper |
 | **CI/CD pipeline** | 11 jobs | Build, smoke, fast, business, presentation, frontend, integration, defect, playwright (3 tiers), summary |
 
-### Top 10 Metrics Dashboard
+### Top 12 Metrics Dashboard
 
 Copy this table and fill it in at the end of every sprint. Track trends with arrows.
 
 | # | Metric | Sprint __ | Sprint __ | Sprint __ | Sprint __ | Sprint __ | Trend |
 |---|---|---|---|---|---|---|---|
-| 1 | % PRs with test files included | | | | | | |
-| 2 | % defects found in Dev/CI (vs. QA/Prod) | | | | | | |
-| 3 | 3:1 ratio compliance rate | | | | | | |
-| 4 | Defect escape rate (prod defects / total) | | | | | | |
-| 5 | Mean time: story creation to first test commit | | | | | | |
-| 6 | AI-generated test acceptance rate | | | | | | |
-| 7 | Playwright E2E coverage % (features covered) | | | | | | |
-| 8 | Open DEF-XXX count | | | | | | |
-| 9 | CI first-pass success rate (PRs green on first try) | | | | | | |
-| 10 | Dev test execution rate (devs who ran QA tests pre-PR) | | | | | | |
+| 1 | Gate 0 Pass Rate (% stories with PO-confirmed ACs) | | | | | | |
+| 2 | Requirements Change Rate (AC changes post-commitment) | | | | | | |
+| 3 | % PRs with test files included | | | | | | |
+| 4 | % defects found in Dev/CI (vs. QA/Prod) | | | | | | |
+| 5 | 3:1 ratio compliance rate | | | | | | |
+| 6 | Defect escape rate (prod defects / total) | | | | | | |
+| 7 | Mean time: story creation to first test commit | | | | | | |
+| 8 | AI-generated test acceptance rate | | | | | | |
+| 9 | Playwright E2E coverage % (features covered) | | | | | | |
+| 10 | Open DEF-XXX count | | | | | | |
+| 11 | CI first-pass success rate (PRs green on first try) | | | | | | |
+| 12 | Dev test execution rate (devs who ran QA tests pre-PR) | | | | | | |
 
 ### Defect Distribution Dashboard
 
@@ -245,7 +282,7 @@ Copy this table and fill it in at the end of every sprint. Track trends with arr
 3. **AI accelerates, not replaces** — Cursor/Claude generates scaffolding; humans verify correctness against requirements
 4. **DEF-XXX list shrinks** — `Defect List for Developers.md` has more resolved entries than open ones, and new entries slow down
 5. **QA becomes a design partner** — QA contributes test scenarios *during* sprint planning, not after development
-6. **Manual regression disappears** — Playwright covers critical paths; manual testing is exploratory, not repetitive
+6. **Manual regression disappears** — Playwright covers critical paths through automated E2E scenario testing (happy paths and edge cases); manual testing is focused and creative, not repetitive
 7. **The 3:1 ratio is natural** — Teams stop thinking about the ratio because negative/edge/functional tests are habitual
 8. **CI is trusted** — Developers trust CI results and investigate failures immediately instead of ignoring them
 9. **Post-mortems are rare** — Escaped defects become unusual enough that post-mortems are events, not routine
@@ -261,7 +298,7 @@ Copy this table and fill it in at the end of every sprint. Track trends with arr
 6. **Edge case checklists are skipped** — Three Amigos sessions don't happen or don't produce checklists
 7. **QA is still the bottleneck** — Stories pile up in "Ready for QA" because all testing waits for handoff
 8. **Blame culture persists** — Failed CI builds are treated as personal failures rather than system wins
-9. **Manual regression still dominates** — Playwright adoption is slow; the same manual test scripts run every sprint
+9. **Manual regression still dominates** — Playwright adoption is slow; E2E scenario coverage is minimal; the same manual test scripts run every sprint
 10. **Metrics aren't collected** — This scorecard exists but is never filled in
 
 ---
@@ -272,6 +309,9 @@ Copy this table and fill it in at the end of every sprint. Track trends with arr
 
 | Metric | Primary Source | Secondary Source | Collection Method |
 |---|---|---|---|
+| Gate 0 Pass Rate | JIRA "PO Approved" labels | Sprint planning notes | % of stories with PO sign-off before sprint commitment |
+| Requirements Change Rate | JIRA AC edit history | Sprint retrospective notes | Count AC changes after sprint commitment per sprint |
+| Design Traceability Score | Confluence design docs | JIRA attachments | % of complex stories with design-to-requirement traceability table |
 | PRs with test files | GitHub PR file list | Git log | Manual review or script: `git log --name-only` filtered for test paths |
 | Defect found-in phase | JIRA defect labels | `Defect List for Developers.md` | JIRA filter: `label = "found_in_dev"` etc. |
 | 3:1 ratio compliance | Test file ratio tables | CI output | Review compliance tables printed in test files |
@@ -305,7 +345,8 @@ Use this model to assess where the team is and what to aim for next.
 |---|---|
 | Team has read the Shift-Left Manifesto | ☐ |
 | Team understands the cost-of-defect curve | ☐ |
-| QA and Dev roles in shift-left are defined | ☐ |
+| All roles (PM/BA, SD, Dev, QA) in shift-left are defined | ☐ |
+| PM/BA and SD understand their Gate 0 responsibilities | ☐ |
 | Tooling is available (Cursor, Playwright, CI) | ☐ |
 | Training plan exists | ☐ |
 
@@ -313,7 +354,9 @@ Use this model to assess where the team is and what to aim for next.
 
 | Characteristic | Status |
 |---|---|
-| Three Amigos sessions happening for most stories | ☐ |
+| PM/BA validates ACs with PO before sprint commitment (Gate 0 started) | ☐ |
+| SD participates in design walkthroughs for complex stories | ☐ |
+| Three Amigos sessions happening for most stories (PM/BA + SD + Dev + QA) | ☐ |
 | QA is pushing test specs before dev is done (at least some stories) | ☐ |
 | Developers are running smoke tests locally before PRs | ☐ |
 | CI pipeline includes test gates (smoke, business, integration) | ☐ |
@@ -325,6 +368,9 @@ Use this model to assess where the team is and what to aim for next.
 
 | Characteristic | Status |
 |---|---|
+| Gate 0 Pass Rate >90% (PO-confirmed ACs before sprint commitment) | ☐ |
+| Design traceability tables exist for >80% of complex stories | ☐ |
+| Requirements change rate is decreasing sprint-over-sprint | ☐ |
 | >80% of stories have QA test specs pushed by Day 5 | ☐ |
 | >80% of PRs include test files | ☐ |
 | >70% of defects found in Dev/CI (not QA/Prod) | ☐ |
@@ -339,11 +385,13 @@ Use this model to assess where the team is and what to aim for next.
 
 | Characteristic | Status |
 |---|---|
+| Gate 0 Pass Rate consistently >95% | ☐ |
+| Requirement-originated defects are rare (<5% of total) | ☐ |
 | Defect escape rate (production) consistently <5% | ☐ |
 | CI first-pass success rate >90% | ☐ |
 | Katalon fully decommissioned | ☐ |
 | Mean story cycle time reduced by >30% vs. baseline | ☐ |
-| Manual regression limited to exploratory sessions only | ☐ |
+| Manual regression replaced by automated E2E scenario testing | ☐ |
 | Post-mortems are rare events, not routine | ☐ |
 | QA contributes to design/architecture discussions | ☐ |
 | Test metrics are reviewed by leadership monthly | ☐ |
@@ -354,8 +402,10 @@ Use this model to assess where the team is and what to aim for next.
 | Characteristic | Status |
 |---|---|
 | Quality is genuinely everyone's responsibility — not a slogan | ☐ |
+| PM/BA requirements quality is consistently high (Gate 0 is routine) | ☐ |
+| SD design validation is embedded in the workflow | ☐ |
 | Developers proactively write tests without being reminded | ☐ |
-| QA focuses primarily on exploratory testing and quality strategy | ☐ |
+| QA focuses on E2E scenario testing (happy paths + edge cases) and quality strategy | ☐ |
 | The team self-corrects when shift-left practices slip | ☐ |
 | Shift-left metrics are stable and healthy without active management | ☐ |
 | New projects adopt shift-left from Day 1 | ☐ |
@@ -390,6 +440,22 @@ Use these questions at the end of each sprint to assess shift-left progress.
 4. Do you trust the CI test results? Do you investigate failures immediately?
 5. Is the shift-left process adding value or just adding overhead?
 
+### For PM/BAs
+
+1. Were all acceptance criteria confirmed by the PO before sprint commitment (Gate 0)?
+2. How many ACs were changed after the sprint started? What caused the changes?
+3. Were the business rules and edge cases documented clearly enough for QA to write tests?
+4. Did you participate in Three Amigos sessions? Did your input prevent any requirement gaps?
+5. Are there stories where requirement ambiguity caused defects? How can we prevent that?
+
+### For Solution Designers
+
+1. Did you provide design-to-requirements traceability for all complex stories?
+2. Were your design walkthroughs held before development started (Day 1-2)?
+3. Did the testability review with QA surface any design issues early?
+4. Were there any design changes mid-sprint? If so, was the traceability re-validated?
+5. Did you identify NFR risks (performance, security, scalability) that needed attention?
+
 ### For Leadership
 
 1. Is the defect escape rate improving? Are fewer bugs reaching staging/production?
@@ -420,3 +486,4 @@ Use these questions at the end of each sprint to assess shift-left progress.
 |---|---|---|---|
 | 1.0 | 2026-03-06 | QA Lead | Initial scorecard with 4 measurement dimensions, sprint dashboard, maturity model, and retrospective questions |
 | 1.1 | 2026-03-09 | QA Lead | Added baseline snapshot (10,040 C# methods, 1,629 Playwright tests, 22 POMs, 13 helpers, 6 fixtures). Updated Playwright toolchain metrics with current counts. Added helper/fixture maturity metric. |
+| 1.2 | 2026-03-09 | QA Lead | Aligned with Manifesto v1.4: Added Gate 0 / Pre-Development Validation metrics (Section 2.2) — Gate 0 Pass Rate, Requirements Change Rate, Design Traceability Score. Added PM/BA Behaviors (Section 4.3) and Solution Designer Behaviors (Section 4.4) to Process Indicators. Expanded Top 10 to Top 12 dashboard with Gate 0 metrics. Updated maturity model all levels to include pre-development validation milestones. Added PM/BA and Solution Designer retrospective questions. Added Gate 0 metrics to Data Collection Guide. Updated green flags/red flags to reference E2E scenario testing. Updated audience to include Solution Designers and PM/BAs. |

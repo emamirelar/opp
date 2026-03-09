@@ -1,6 +1,6 @@
 # QA Tester Playbook
 
-**Version:** 2.0  
+**Version:** 2.2  
 **Last Updated:** March 9, 2026  
 **Audience:** QA Testers (New and Experienced)  
 **Scope:** Universal guide applicable to any software project
@@ -17,6 +17,7 @@
    - [3.5 Starting the Development Proxy for Real Backend Testing](#35-starting-the-development-proxy-for-real-backend-testing)
 4. [Phase 2: Test Planning](#4-phase-2-test-planning)
    - [4.3 Stakeholder Alignment on Test Cases](#43-stakeholder-alignment-on-test-cases)
+   - [4.5 What QA Should Receive Before Writing Tests](#45-what-qa-should-receive-before-writing-tests)
 5. [Phase 3: Test Development](#5-phase-3-test-development)
 6. [Phase 4: Test Execution](#6-phase-4-test-execution)
 7. [Phase 5: Defect Management](#7-phase-5-defect-management)
@@ -688,6 +689,55 @@ Low Risk (Score 1-3):     Basic testing, manual coverage sufficient
 | **Data Sensitivity** | Public info | Internal data | PII, financial |
 | **Change Frequency** | Stable | Occasional | Frequent changes |
 | **Integration Points** | None | Internal APIs | External systems |
+
+### 4.5 What QA Should Receive Before Writing Tests
+
+**MANDATORY**: Before authoring test specs for any story, verify that you have received the required inputs from PM/BA and Solution Designer. These inputs are defined by the [Shift-Left Manifesto Gate 0](SHIFT_LEFT_TESTING_MANIFESTO.md#8-quality-gates--the-four-checkpoints). If they are missing, raise the gap in standup — do not guess at requirements.
+
+#### Required Inputs from PM/BA
+
+| Input | What It Should Contain | Why QA Needs It | If Missing |
+|-------|----------------------|-----------------|------------|
+| **PO-confirmed acceptance criteria** | Specific, measurable criteria with PO sign-off documented in Jira | Your tests validate these criteria — they are the specification | Do not write tests. Raise in standup. Story is not ready. |
+| **Documented business rules** | Explicit rules: who can approve, what triggers a notification, when a field is required, what formula calculates a value | Business rules become your test assertions — undocumented rules cannot be tested | Ask PM/BA to document them. Log as a gap in Three Amigos. |
+| **Cross-feature impact assessment** | Which existing features the new requirement might affect | Determines your regression scope — which existing test suites to re-run | Ask PM/BA: "What else does this touch?" Add to Three Amigos agenda. |
+| **Requirements change log** | Any changes to ACs after sprint commitment, with Dev + QA acknowledgement | Prevents testing against outdated requirements | If you discover a change during testing that you were not notified of, raise it immediately with PM/BA. |
+
+#### Required Inputs from Solution Designer (Complex/New Features)
+
+| Input | What It Should Contain | Why QA Needs It | If Missing |
+|-------|----------------------|-----------------|------------|
+| **Design-to-requirements traceability table** | Requirement → Design Component → How It Will Be Tested | Confirms every AC is addressed by the design — gaps here become untested areas | Ask SD during design walkthrough: "Which design component covers AC #3?" |
+| **Integration point specifications** | API contracts (request/response schemas, status codes, error formats), data flows, external dependencies | You write integration tests and mocks from these specs — insufficient detail means wrong tests | Ask SD: "Can I write a mock or stub from this spec?" If not, it needs more detail. |
+| **NFR validation** | Performance targets, security requirements, scalability constraints with design confirmation | Feeds your performance and security test scenarios | Ask SD: "What are the performance targets, and does the design meet them?" |
+| **Testability assessment** | Confirmation from the design walkthrough that every component can be tested | Prevents writing tests for components that have no observable outputs | If you cannot figure out how to test a component, raise it at the design walkthrough. |
+
+#### How to Use These Inputs
+
+```
+1. Receive PO-confirmed ACs from PM/BA           ──> Write positive tests (happy path)
+2. Review business rules documentation            ──> Write functional and validation tests
+3. Study integration point specs from SD          ──> Write integration and API tests
+4. Combine with Three Amigos edge case checklist  ──> Write negative, boundary, and edge case tests
+5. Review NFR targets                             ──> Write performance and security tests
+6. Check cross-feature impact assessment          ──> Identify regression scope
+```
+
+#### Gate 0 Verification Checklist for QA
+
+Before writing your first test for a story, confirm:
+
+- [ ] Acceptance criteria exist in Jira and are marked as PO-confirmed
+- [ ] Each AC is specific enough that you can write a test for it (testability gate)
+- [ ] Business rules are documented — not just "the BA told me verbally"
+- [ ] For complex stories: design-to-requirements traceability table exists
+- [ ] For stories with API changes: integration point specifications are available
+- [ ] Cross-feature impact assessment identifies which existing tests to re-run
+- [ ] Three Amigos has been conducted and edge case checklist is attached to the ticket
+
+If any item is missing, raise it in standup and with the PM/BA or SD directly. Do not proceed with test authoring based on assumptions — assumptions produce tests that validate guesses, not requirements.
+
+> **See also:** [Manifesto Section 4](SHIFT_LEFT_TESTING_MANIFESTO.md#4-the-pre-development-validation-contracts) for the full PM/BA and Solution Designer validation contracts.
 
 ---
 
@@ -3244,6 +3294,7 @@ Fix: Add wait, verify selector, check for dynamic content
 | 1.9 | 2026-03-06 | QA Lead | Updated Project Map: Playwright now 102 specs (was 25), 21 POMs. Updated Documentation folder listing to include Manifesto, Scorecard, Action Items, Onboarding Guide. Updated CI pipeline reference to qa-tests.yml (11-job pipeline). Updated Related Documents with full documentation index and current defect counts. |
 | 2.0 | 2026-03-09 | QA Lead | Added Section 7.5: Developer Defect Resolution Workflow — step-by-step guide for developers to pick up defects, use Claude to implement fixes, run defect-tagged tests to verify, remove Trait tags to promote tests to gating suite, and update the defect list. Added Section 7.6: AI Tools & Cursor Subagents for QA — documents all available subagents (create-tests, load-tests, performance-tests, playwright-test-generator, playwright-test-healer, playwright-test-planner), skills, invocation patterns, and governing Cursor rules. Added Section 7.7: Playwright Setup & Running E2E Tests — first-time installation, verification, common commands, project structure, configuration, and AI-assisted test writing. Updated Table of Contents with new subsections. |
 | 2.1 | 2026-03-09 | QA Lead | Added Section 5.4: Test Data Conventions & Infrastructure — documents TestEntityBuilder fluent builders, user creation patterns, database modes (SQLite/PostgreSQL), Bogus fake data, Playwright JSON fixtures, workflow mock helpers, data isolation, and mock ID conventions. |
+| 2.2 | 2026-03-09 | QA Lead | Added Section 4.5: What QA Should Receive Before Writing Tests — documents required inputs from PM/BA (PO-confirmed ACs, business rules, cross-feature impact, change log) and Solution Designer (traceability table, integration point specs, NFR validation, testability assessment). Includes Gate 0 verification checklist for QA and cross-reference to Manifesto Section 4. |
 
 ---
 

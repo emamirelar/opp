@@ -854,6 +854,7 @@ public class OpportunityWhenSectionNegativeTests
 
     [Fact]
     [Trait("Category", "Negative")]
+    [Trait("Defect", "DEF-251")]
     public void HtmlTemplate_OpportunityUpdated_OutputExists()
     {
         var html = ReadWhenSectionHtml();
@@ -862,6 +863,7 @@ public class OpportunityWhenSectionNegativeTests
 
     [Fact]
     [Trait("Category", "Negative")]
+    [Trait("Defect", "DEF-251")]
     public void HtmlTemplate_ChangesDetected_OutputExists()
     {
         var html = ReadWhenSectionHtml();
@@ -933,6 +935,7 @@ public class OpportunityWhenSectionNegativeTests
 
     [Fact]
     [Trait("Category", "Negative")]
+    [Trait("Defect", "DEF-251")]
     public void Spec_Deliverables_PlannedDates()
     {
         var html = ReadWhenSectionHtml();

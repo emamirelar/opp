@@ -581,6 +581,7 @@ public class OpportunityWhenSectionBoundaryTests
 
     [Fact]
     [Trait("Category", "Boundary")]
+    [Trait("Defect", "DEF-251")]
     public void Spec_DateValidation_BlocksSave()
     {
         var html = ReadWhenSectionHtml();

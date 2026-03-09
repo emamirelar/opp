@@ -708,6 +708,7 @@ public class OpportunityWhenSectionFunctionalTests
 
     [Fact]
     [Trait("Category", "Functional")]
+    [Trait("Defect", "DEF-251")]
     public void Spec_Workflow_SaveSection_ValidatesFirst()
     {
         var html = ReadWhenSectionHtml();

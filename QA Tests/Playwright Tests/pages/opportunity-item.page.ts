@@ -273,6 +273,56 @@ export class OpportunityItemPage extends EntityDetailPage {
   get scheduleSection(): Locator {
     return this.page.locator('#section-when, app-opportunity-when-section').first();
   }
+
+  /**
+   * Get When section chip/button (scrolls to #section-when)
+   */
+  get whenChip(): Locator {
+    return this.page.locator('button:has-text("When")').first();
+  }
+
+  // ── PNO-1182: Date field floating label locators ──────────────────────
+
+  /** Target Signing Date datepicker */
+  get targetSigningDateField(): Locator {
+    return this.whenSection.locator('#targetSigningDate, [id="targetSigningDate"]').first();
+  }
+
+  /** Implementation Start Date datepicker */
+  get implementationStartDateField(): Locator {
+    return this.whenSection.locator('#implementationStartDate, [id="implementationStartDate"]').first();
+  }
+
+  /** Target Delivery Date datepicker */
+  get targetDeliveryDateField(): Locator {
+    return this.whenSection.locator('#targetDeliveryDate, [id="targetDeliveryDate"]').first();
+  }
+
+  /** Submission Deadline / Proposal Submission Date datepicker */
+  get submissionDeadlineField(): Locator {
+    return this.whenSection.locator('#submissionDeadline, [id="submissionDeadline"]').first();
+  }
+
+  /** All floating labels within the When section */
+  get whenFloatLabels(): Locator {
+    return this.whenSection.locator('p-floatlabel');
+  }
+
+  /** All date labels in the When section */
+  get whenDateLabels(): Locator {
+    return this.whenSection.locator('p-floatlabel label');
+  }
+
+  /**
+   * Click When chip and wait for section content to be visible
+   */
+  async openWhenSection(): Promise<void> {
+    const chip = this.whenChip;
+    if (await chip.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await chip.click();
+      await waitForElementReady(this.whenSection, 5000);
+    }
+  }
   
   /**
    * Get "Related" section (interactions, source interactions)
