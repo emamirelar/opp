@@ -1,11 +1,10 @@
 import {
   HttpErrorResponse,
   HttpEvent,
-  HttpEventType,
   HttpHandlerFn,
   HttpRequest,
 } from '@angular/common/http';
-import { Observable, tap, switchMap, of, catchError } from 'rxjs';
+import { Observable, of, catchError } from 'rxjs';
 import { Router } from '@angular/router';
 import { inject } from '@angular/core';
 
@@ -14,21 +13,24 @@ export function authInterceptor(
   next: HttpHandlerFn,
 ): Observable<HttpEvent<unknown>> {
   const router = inject(Router);
-  
-  // Check for dev cookie to add a custom header
-  const cookies = document.cookie.split(';').map(c => c.trim());
-  const devCookie = cookies.find(c => c.startsWith('dev-user-email='));
-  
-  // Clone the request if we have a dev cookie to explicitly mark it
+
+  const cookies = document.cookie.split(';').map((c) => c.trim());
+  const devCookie = cookies.find((c) => c.startsWith('dev-user-email='));
+
+  const setHeaders: Record<string, string> = {
+    // Google IAP: X-Requested-With tells IAP the request is from JavaScript (AJAX).
+    // Without it, IAP may return 302 redirect instead of 401, causing CORS errors.
+    'X-Requested-With': 'XMLHttpRequest',
+    // Ensure API responses use UTF-8 for accented characters (e.g. Ángel María)
+    'Accept-Charset': 'utf-8',
+  };
+
   if (devCookie && request.url.startsWith('/api')) {
-    // This is optional but helpful for debugging
-    request = request.clone({
-      setHeaders: {
-        'X-Using-Dev-Cookie': 'true',
-      }
-    });
+    setHeaders['X-Using-Dev-Cookie'] = 'true';
   }
-  
+
+  request = request.clone({ setHeaders });
+
   return next(request).pipe(
     catchError(error => {
       // Handle authentication errors
