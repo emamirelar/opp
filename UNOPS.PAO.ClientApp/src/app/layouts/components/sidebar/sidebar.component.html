@@ -1,4 +1,14 @@
 <div class="layout-sidebar bg-white flex flex-col h-full main-navigation-sidebar">
+    <!-- Close button for mobile when sidebar fills the screen (PNO-669) -->
+    <div class="sidebar-mobile-header">
+        <button type="button"
+                class="sidebar-close-btn"
+                (click)="closeSidebar()"
+                [attr.aria-label]="'button.closeMenu' | translate">
+            <i class="pi pi-times"></i>
+        </button>
+    </div>
+
     <!-- Wrapper scrollable contenant tout -->
     <div class="flex-1 overflow-y-auto flex flex-col">
         <!-- Section Menu -->
