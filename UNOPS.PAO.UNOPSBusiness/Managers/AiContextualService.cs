@@ -3271,6 +3271,30 @@ Keywords:";
                 }
             }
             
+            // Deduplicate SDGs by sdgId (AI may return "Goal 4" and "Quality Education" - both resolve to same SDG)
+            // When duplicate, prefer the one with isPrimary: true; preserve first-occurrence order
+            if (dependent.Equals("sdGs", StringComparison.OrdinalIgnoreCase) && objectsArray.Count > 1)
+            {
+                var byId = new Dictionary<int, JObject>();
+                var order = new List<int>();
+                foreach (var item in objectsArray.OfType<JObject>())
+                {
+                    var sdgId = item["sdgId"]?.Value<int>();
+                    if (!sdgId.HasValue) continue;
+                    var isPrimary = item["isPrimary"]?.Value<bool>() ?? false;
+                    if (!byId.TryGetValue(sdgId.Value, out var existing))
+                    {
+                        byId[sdgId.Value] = item;
+                        order.Add(sdgId.Value);
+                    }
+                    else if (isPrimary && !(existing["isPrimary"]?.Value<bool>() ?? false))
+                    {
+                        byId[sdgId.Value] = item;
+                    }
+                }
+                return new JArray(order.Select(id => byId[id]));
+            }
+            
             return objectsArray;
         }
         

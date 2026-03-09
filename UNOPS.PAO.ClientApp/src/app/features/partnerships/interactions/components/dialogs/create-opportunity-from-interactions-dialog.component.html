@@ -1030,7 +1030,7 @@
               </div>
             }
 
-            <!-- Deliverables (Products and Services) -->
+            <!-- Deliverables - aligned with opportunity-what-section display -->
             @if (proposedOpportunity()!.opportunity.deliverables && proposedOpportunity()!.opportunity.deliverables!.length > 0) {
               <div>
                 <div class="flex items-center justify-between mb-3">
@@ -1050,49 +1050,73 @@
                     </label>
                   </div>
                 </div>
-                <div class="space-y-3">
-                  @for (deliverable of proposedOpportunity()!.opportunity.deliverables; track $index) {
+                <div class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                  @for (deliverable of proposedOpportunity()!.opportunity.deliverables; track deliverable.outputId || $index; let idx = $index) {
                     <div 
-                      class="rounded-lg p-4 transition-all cursor-pointer"
+                      class="bg-unops-surface-secondary rounded-unops-lg p-4 border border-unops-neutral-300 shadow-unops-sm transition-all cursor-pointer"
                       [ngClass]="{
-                        'bg-blue-50 border border-blue-300': isFieldSelected('deliverables[' + $index + ']'),
-                        'bg-yellow-50 border border-yellow-200 hover:shadow-sm': !isFieldSelected('deliverables[' + $index + ']')
+                        'ring-2 ring-blue-400': isFieldSelected('deliverables[' + idx + ']'),
+                        'hover:shadow-md': true
                       }"
-                      (click)="toggleField('deliverables[' + $index + ']')">
-                      <div class="flex items-start gap-3">
-                        <p-checkbox
-                          [binary]="true"
-                          [ngModel]="isFieldSelected('deliverables[' + $index + ']')"
-                          (ngModelChange)="toggleField('deliverables[' + $index + ']')"
-                          [inputId]="'deliverable-' + $index"
-                          (click)="$event.stopPropagation()"
-                        />
-                        <i class="pi pi-box text-gray-600 mt-1"></i>
+                      (click)="toggleField('deliverables[' + idx + ']')">
+                      <div class="flex items-start justify-between">
                         <div class="flex-1 min-w-0">
-                          <h4 class="font-semibold text-gray-900 mb-2">
-                            {{ deliverable.outputName || deliverable }}
-                          </h4>
-                          @if (deliverable.outputDescription) {
-                            <p class="text-sm text-gray-700 leading-relaxed mb-3">
-                              {{ deliverable.outputDescription }}
-                            </p>
-                          }
-                          <div class="flex items-center gap-2 flex-wrap">
-                            @if (deliverable.outputGroup || deliverable.outputSubGroup) {
-                              <span class="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">
-                                {{ deliverable.outputSubGroup || deliverable.outputGroup }}
-                              </span>
-                            }
-                            @if (deliverable.outputServiceLine) {
-                              <span class="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded">
-                                {{ deliverable.outputServiceLine }}
-                              </span>
-                            }
-                            @if (deliverable.quantity) {
-                              <span class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded font-bold">
-                                {{ deliverable.quantity }} {{ deliverable.unitCode || 'units' }}
-                              </span>
-                            }
+                          <div class="flex items-start gap-3">
+                            <p-checkbox
+                              [binary]="true"
+                              [ngModel]="isFieldSelected('deliverables[' + idx + ']')"
+                              (ngModelChange)="toggleField('deliverables[' + idx + ']')"
+                              [inputId]="'deliverable-' + idx"
+                              (click)="$event.stopPropagation()"
+                            />
+                            <div class="flex-1">
+                              <!-- Product/Service Name (level4 || level3 || level2 || level1 || level0 - same as opportunity-what-section) -->
+                              <h4 class="font-semibold text-unops-secondary mb-2">
+                                {{ deliverable.level4 || deliverable.level3 || deliverable.level2 || deliverable.level1 || deliverable.level0 || deliverable.outputName }}
+                              </h4>
+                              
+                              <!-- Hierarchical Path (same condition as opportunity-what-section) -->
+                              @if (deliverable.level0 || deliverable.level1 || deliverable.level2) {
+                                <div class="text-xs text-unops-neutral-600 mb-3 space-y-0.5">
+                                  @if (deliverable.level0) {
+                                    <div><span class="font-medium">Level 0:</span> {{ deliverable.level0 }}</div>
+                                  }
+                                  @if (deliverable.level1) {
+                                    <div><span class="font-medium">Level 1:</span> {{ deliverable.level1 }}</div>
+                                  }
+                                  @if (deliverable.level2) {
+                                    <div><span class="font-medium">Level 2:</span> {{ deliverable.level2 }}</div>
+                                  }
+                                  @if (deliverable.level3 && deliverable.level4) {
+                                    <div><span class="font-medium">Level 3:</span> {{ deliverable.level3 }}</div>
+                                  }
+                                </div>
+                              }
+                              
+                              <div class="flex items-center gap-2 flex-wrap">
+                                @if (deliverable.serviceLine) {
+                                  <p-chip 
+                                    [label]="deliverable.serviceLine" 
+                                    styleClass="text-xs"
+                                    [style]="{ 'background-color': '#e0f2fe', 'color': '#0369a1' }"
+                                  />
+                                }
+                                @if (deliverable.level0) {
+                                  <p-chip 
+                                    [label]="deliverable.level0" 
+                                    styleClass="text-xs"
+                                    [style]="{ 'background-color': '#f3f4f6', 'color': '#374151' }"
+                                  />
+                                }
+                                @if (deliverable.quantity !== null && deliverable.quantity !== undefined) {
+                                  <p-chip 
+                                    [label]="'Qty: ' + deliverable.quantity.toString()" 
+                                    styleClass="text-xs font-bold"
+                                    [style]="{ 'background-color': '#fef3c7', 'color': '#92400e' }"
+                                  />
+                                }
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>

@@ -56,18 +56,23 @@ export interface ProposedField {
 }
 
 /**
- * Proposed deliverable from AI analysis
+ * Proposed deliverable from /generate-proposal
+ * Matches backend BuildDeliverableObject response: outputId, outputName, level0-4, definitionLevel1-4, serviceLine, quantity
  */
 export interface ProposedDeliverable {
+  outputId?: number;
   outputName: string;
-  outputDescription?: string;
-  outputGroup?: string;
-  outputSubGroup?: string;
-  outputServiceLine?: string;
-  unitCode?: string;
-  projectCategoryCode?: string;
-  quantity?: number;
-  notes?: string;
+  level0?: string;
+  level1?: string;
+  level2?: string;
+  level3?: string;
+  level4?: string;
+  definitionLevel1?: string;
+  definitionLevel2?: string;
+  definitionLevel3?: string;
+  definitionLevel4?: string;
+  serviceLine?: string;
+  quantity?: number | null;
 }
 
 /**
