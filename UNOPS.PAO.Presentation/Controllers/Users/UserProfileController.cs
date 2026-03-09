@@ -222,7 +222,7 @@ public class UserProfileController : BaseController
                             _userResolverService.GetUserEmail();
             
             // Extract email from identity provider format if needed
-            // Format: "securetoken.google.com/unops-partneropportunity:email@domain.com"
+            // Format: "securetoken.google.com/unops-opportunityplus-dev:email@domain.com"
             if (!string.IsNullOrEmpty(claimEmail) && claimEmail.Contains(':'))
             {
                 var emailParts = claimEmail.Split(':');

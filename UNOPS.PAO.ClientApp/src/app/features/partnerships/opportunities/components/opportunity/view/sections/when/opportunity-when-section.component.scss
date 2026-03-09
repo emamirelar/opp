@@ -19,12 +19,16 @@
       left: 0.75rem !important;
     }
 
-    // Prevents long labels from clashing with the field border and calendar icon
+    // Prevents long labels from clashing with the field border and calendar icon.
+    // variant="on" keeps the label on the border at all times, so background
+    // and padding must apply in the default state too (not just filled/focus).
     .p-datepicker ~ label {
       max-width: calc(100% - 3.5rem);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      background-color: white;
+      padding: 0 0.25rem;
     }
 
     .p-datepicker {
@@ -32,8 +36,6 @@
       &.p-inputwrapper-focus {
         ~ label {
           max-width: calc(100% - 3rem);
-          background-color: white;
-          padding: 0 0.25rem;
         }
       }
     }

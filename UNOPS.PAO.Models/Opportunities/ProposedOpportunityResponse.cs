@@ -51,6 +51,11 @@ public class OpportunityProposalResponse
     /// Whether partner is client partner
     /// </summary>
     public bool IsClientPartner { get; set; }
+
+    /// <summary>
+    /// Raw response from AI (for debugging - compare with processed Opportunity data).
+    /// </summary>
+    public string? RawAiResponse { get; set; }
 }
 
 /// <summary>
@@ -113,6 +118,10 @@ public class ProposedOpportunityData
     public string? Countries { get; set; }
     public string? SdGs { get; set; }
     public string? UnopsMissions { get; set; }
+    /// <summary>
+    /// When true, indicates UNOPS Strategic Mission alignment is "Not Applicable".
+    /// </summary>
+    public bool? UnopsMissionsNotApplicable { get; set; }
     
     // Dependents list indicating which fields need ID resolution
     public List<string> Dependents { get; set; } = new();

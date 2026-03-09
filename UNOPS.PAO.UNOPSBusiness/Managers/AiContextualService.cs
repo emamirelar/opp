@@ -442,6 +442,25 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return result;
         }
 
+        /// <summary>
+        /// Extracts the raw JSON text from a Gemini API response (the AI's output before parsing).
+        /// </summary>
+        public string GetExtractedJsonTextFromGeminiResponse(string modelResponse)
+        {
+            if (string.IsNullOrEmpty(modelResponse)) return string.Empty;
+            try
+            {
+                var json = JObject.Parse(modelResponse);
+                var text = json["candidates"]?[0]?["content"]?["parts"]?[0]?["text"]?.ToString();
+                if (string.IsNullOrEmpty(text)) return string.Empty;
+                return text.Replace("```json", "").Replace("```", "").Trim();
+            }
+            catch
+            {
+                return modelResponse;
+            }
+        }
+
         public JObject GetDetailsFromGeminiResponse(string modelResponse)
         {
             JObject json = JObject.Parse(modelResponse);
@@ -3359,23 +3378,32 @@ Keywords:";
         }
         
         /// <summary>
-        /// Builds an SDG object from AI output. Handles both object format (sdgNumber, sdgName, isPrimary) and legacy string format.
+        /// Builds an SDG object from AI output. Handles: object with sdgNumber/sdgName, object with reference (for similarity), string format.
         /// Opp+ terminology: isPrimary=true = Main SDG, isPrimary=false = Cross-cutting SDG.
+        /// Backend uses similarity search to resolve text references (e.g. "Poverty", "SDG-4") to the correct SDG.
         /// </summary>
         private async Task<JObject?> BuildSDGObject(JToken sdgData)
         {
             string? sdgText = null;
             bool isPrimary = false;
+            int? aiSdgNumber = null;
 
-            // Handle object format: { "sdgNumber": 6, "sdgName": "Clean Water and Sanitation", "isPrimary": true }
+            // Handle object format: { "sdgNumber": 6, "sdgName": "..." } or { "reference": "Poverty", "isPrimary": false }
             if (sdgData is JObject sdgObj)
             {
                 isPrimary = sdgObj["isPrimary"]?.Value<bool>() ?? false;
-                var sdgNumber = sdgObj["sdgNumber"]?.Value<int?>();
+                aiSdgNumber = sdgObj["sdgNumber"]?.Value<int?>();
+                var reference = sdgObj["reference"]?.ToString();
                 var sdgName = sdgObj["sdgName"]?.ToString();
-                sdgText = sdgNumber.HasValue ? $"Goal {sdgNumber}" : sdgName;
+
+                if (aiSdgNumber.HasValue)
+                    sdgText = $"Goal {aiSdgNumber}";
+                else if (!string.IsNullOrEmpty(reference))
+                    sdgText = reference;
+                else
+                    sdgText = sdgName;
             }
-            // Handle legacy string format: "Goal 6", "SDG 9"
+            // Handle string format: "SDG-4", "Poverty", "Goal 6", "Quality Education"
             else if (sdgData is JValue jVal && jVal.Type == JTokenType.String)
             {
                 sdgText = jVal.ToString();
@@ -3385,12 +3413,47 @@ Keywords:";
                 sdgText = sdgData?.ToString();
             }
 
-            if (string.IsNullOrEmpty(sdgText))
+            if (string.IsNullOrEmpty(sdgText) && !aiSdgNumber.HasValue)
                 return null;
 
             try
             {
-                var sdgId = await GetEntityIdFromText(sdgText, "sdGs");
+                // Try to extract SDG number from text (e.g. "SDG-4", "SDG 4", "Goal 4") for direct lookup
+                if (!aiSdgNumber.HasValue && !string.IsNullOrEmpty(sdgText))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(sdgText, @"(?:SDG[- ]?|Goal\s*)(\d{1,2})", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    if (match.Success && int.TryParse(match.Groups[1].Value, out var extractedNum) && extractedNum >= 1 && extractedNum <= 17)
+                        aiSdgNumber = extractedNum;
+                }
+
+                // When we have sdgNumber (1-17), use direct lookup by SDGNumber
+                // DB stores SDGNumber as "Goal 1", "Goal 4", etc. (see SDGSeeder) - try both formats
+                if (aiSdgNumber.HasValue && aiSdgNumber.Value >= 1 && aiSdgNumber.Value <= 17)
+                {
+                    var numStr = aiSdgNumber.Value.ToString();
+                    var goalStr = $"Goal {aiSdgNumber.Value}";
+                    var sdgByNumber = await _context.SDGs
+                        .Where(s => s.SDGNumber == numStr || s.SDGNumber == goalStr)
+                        .Select(s => new { s.Id, s.SDGNumber, s.Name })
+                        .FirstOrDefaultAsync();
+
+                    if (sdgByNumber != null)
+                    {
+                        var sdgNumStr = sdgByNumber.SDGNumber ?? aiSdgNumber.Value.ToString();
+                        string sdgLogoUrl = $"https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-{sdgNumStr.PadLeft(2, '0')}.jpg";
+                        return new JObject
+                        {
+                            ["sdgId"] = sdgByNumber.Id,
+                            ["sdgNumber"] = int.TryParse(sdgNumStr, out var n) ? n : aiSdgNumber.Value,
+                            ["sdgName"] = sdgByNumber.Name,
+                            ["sdgLogoUrl"] = sdgLogoUrl,
+                            ["isPrimary"] = isPrimary
+                        };
+                    }
+                }
+
+                // Similarity search for text references (e.g. "Poverty", "Quality Education", "Clean Water")
+                var sdgId = await GetEntityIdFromText(sdgText ?? aiSdgNumber?.ToString() ?? "", "sdGs");
                 if (sdgId == null || sdgId is DBNull)
                 {
                     Console.WriteLine($"[WARNING] SDG not found: '{sdgText}'");
@@ -3406,14 +3469,14 @@ Keywords:";
 
                 if (sdg == null) return null;
 
-                string sdgLogoUrl = $"https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-{sdg.SDGNumber.ToString().PadLeft(2, '0')}.jpg";
+                string logoUrl = $"https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-{(sdg.SDGNumber ?? "").PadLeft(2, '0')}.jpg";
 
                 return new JObject
                 {
                     ["sdgId"] = sdg.Id,
-                    ["sdgNumber"] = sdg.SDGNumber,
+                    ["sdgNumber"] = int.TryParse(sdg.SDGNumber ?? "", out var num) ? num : sdg.Id,
                     ["sdgName"] = sdg.Name,
-                    ["sdgLogoUrl"] = sdgLogoUrl,
+                    ["sdgLogoUrl"] = logoUrl,
                     ["isPrimary"] = isPrimary
                 };
             }

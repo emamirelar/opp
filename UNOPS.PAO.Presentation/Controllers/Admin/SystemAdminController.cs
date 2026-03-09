@@ -159,7 +159,7 @@ public class SystemAdminController : ControllerBase
             },
             new
             {
-                method = "POST",
+                method = "GET",
                 path = APIDictionary.SystemAdmin + "/regenerate-go-opportunity-pdfs",
                 description = "Generate Submission and Approval PDFs for opportunities in Stage=GO. Checks each type separately - an opportunity may have submission PDF but not approval PDF (or vice versa).",
                 parameters = new[]
@@ -368,7 +368,7 @@ public class SystemAdminController : ControllerBase
     /// Only available to System Admins (CanRunSeedings permission).
     /// </summary>
     /// <param name="onlyMissing">If true (default), only generate PDFs that are missing. If false, regenerate all.</param>
-    [HttpPost(APIDictionary.SystemAdmin + "/regenerate-go-opportunity-pdfs")]
+    [HttpGet(APIDictionary.SystemAdmin + "/regenerate-go-opportunity-pdfs")]
     [PermissionAuthorize(PermissionNames.CanRunSeedings)]
     public async Task<IActionResult> RegenerateGoOpportunityPdfs([FromQuery] bool onlyMissing = true)
     {

@@ -1715,7 +1715,7 @@ Create a comprehensive summary including their complete profile, interaction his
 - **teamMembers** (array): List of UNOPS internal team member names as text strings (e.g., ["Jane Smith - UNOPS Project Manager", "John Doe - UNOPS Technical Lead"])
 - **deliverables** (array): List of deliverable descriptions as text strings (e.g., ["Project Feasibility Study", "Infrastructure Design", "Implementation Plan"])
 - **countries** (array): List of country names as text strings (e.g., ["Kenya", "Tanzania", "Uganda"])
-- **sdGs** (array of objects): **Return whatever SDG references are present** - "SDG 6", "Goal 9", "SDG 6: Clean Water", or any text clearly referring to an SDG. **DO NOT invent or hallucinate** - only extract what is explicitly stated. Use **sdgNumber** (int 1-17), **sdgName** (string - use official name or document text), **isPrimary** (boolean: true=Main, false=Cross-cutting). Exactly ONE SDG must be Main (most central), others Cross-cutting. If document uses non-standard wording (e.g. "goal 6", "sustainable development goal 6"), map to correct sdgNumber. **NEVER add SDGs not mentioned in the document.**
+- **sdGs** (array): **Extract ALL SDG references in whatever form they appear.** Can be numbers ("SDG 4", "Goal 5", "SDG-4"), text ("Poverty", "Quality Education", "Clean Water"), or combinations. Return as array - each item can be a **string** (raw reference as it appears) or **object** with **reference** (string) and **isPrimary** (boolean). Examples: ["SDG-4", "Poverty", "Quality Education"] or [{"reference": "SDG-4", "isPrimary": true}, {"reference": "Poverty", "isPrimary": false}]. Backend uses similarity to resolve each to the correct SDG. Pick the single most central as Main (isPrimary=true), others Cross-cutting (isPrimary=false). **SDG text hints:** Poverty→1, Hunger→2, Health→3, Education→4, Gender→5, Water→6, Energy→7, Work→8, Industry→9, Inequalities→10, Cities→11, Consumption→12, Climate→13, Oceans→14, Land→15, Peace→16, Partnerships→17.
 - **unopsMissions** (array): List of UNOPS Strategic Mission names as text strings. **CRITICAL: ALWAYS extract** when document content relates to climate, energy, health, digital, humanitarian, food systems, SIDS, social protection, or crisis response. **VALID VALUES** (use full names): "Triple Planetary Crisis", "Energy Transition", "SIDS Resilience and Sustainability", "Quality Healthcare", "Just Digital Transformation", "Social Protection, Equality, Education and Jobs", "Humanitarian, Development and Peace Nexus", "Food Systems Transformation". Map content themes: climate/environment → "Triple Planetary Crisis"; energy/renewables → "Energy Transition"; health/healthcare → "Quality Healthcare"; digital/ICT → "Just Digital Transformation"; humanitarian/crisis → "Humanitarian, Development and Peace Nexus"; food/agriculture → "Food Systems Transformation"; SIDs/small islands → "SIDS Resilience and Sustainability"; jobs/education/social → "Social Protection, Equality, Education and Jobs". **MUST add "unopsMissions" to dependents array**. Do NOT omit unless document explicitly states "Not Applicable".
 - **unopsMissionsNotApplicable** (boolean): Set to **true** when the document explicitly states that UNOPS Strategic Mission alignment is "Not Applicable", "N/A", "not applicable", "no alignment", "does not apply", or similar. When true, set **unopsMissions** to [] and omit from dependents. When false or missions are listed, set unopsMissionsNotApplicable: false.
 
@@ -1736,7 +1736,7 @@ Create a comprehensive summary including their complete profile, interaction his
 - Add the collection field name to the "dependents" array
 - The backend will convert these text values to proper object structures with IDs
 
-**For sdGs specifically:** Extract as **array of objects** with sdgNumber, sdgName, isPrimary. **Only include SDGs explicitly mentioned** - do not invent. Main (isPrimary=true) for the single most central SDG, Cross-cutting (isPrimary=false) for others.
+**For sdGs specifically:** Extract as **array of strings or objects**. Each item = raw SDG reference as it appears: numbers ("SDG 4", "SDG-4", "Goal 5"), text ("Poverty", "Quality Education"), or objects with **reference** and **isPrimary**. Backend similarity resolves each. Main (isPrimary=true) for single most central, Cross-cutting (isPrimary=false) for others.
 
 **Example mapping:**
 - If you extract "Kenya" → Add "Kenya" to **countries** array, add "countries" to dependents
@@ -1761,7 +1761,7 @@ Create a comprehensive summary including their complete profile, interaction his
    - Organizational unit names (for **responsibleOrgUnitName** field)
    - Initiative type names (put in **proposedInitiativeTypeId** as text - ONLY "Project", "Programme", or "Portfolio"; map any other wording to the closest of these three)
    - Geographic locations, country names (for **countries** array)
-   - SDG references (SDG 1, SDG 6, Goal 9, etc. → **sdGs** array of objects; pick the single most central SDG as Main (isPrimary=true), others as Cross-cutting (isPrimary=false))
+   - SDG references: **Extract ALL in whatever form** - numbers ("SDG 4", "SDG-4"), text ("Poverty", "Quality Education"), combinations → **sdGs** array of strings or {reference, isPrimary}; backend similarity resolves; pick single most central as Main, others Cross-cutting
    - UNOPS Strategic Mission alignments (references to climate, energy, health, digital, etc. → **unopsMissions** array). If document says "Not Applicable" or "N/A" for missions → **unopsMissionsNotApplicable: true**, unopsMissions: []
    - Dates for signing, delivery, completion (for **targetSigningDate**, **targetDeliveryDate** fields)
    - Proposal submission deadlines (for **submissionDeadline** field)
@@ -1793,7 +1793,7 @@ Create a comprehensive summary including their complete profile, interaction his
 - Document describes project activities → Extract as **description**
 - Document mentions "World Bank" as funder → Add to **fundingPartners** array
 - Document mentions "Kenya" as location → Add to **countries** array
-- Document mentions "SDG 6" or "Goal 9" → Add to **sdGs** as objects; identify the single most central SDG as Main (isPrimary=true), others as Cross-cutting (isPrimary=false)
+- Document mentions "SDG 6", "Goal 9", "SDG-4", "Poverty", "Quality Education" → Add each to **sdGs** as string or {reference, isPrimary}; backend similarity resolves; identify single most central as Main, others Cross-cutting.
 - Document states "$25 million from World Bank" → Add to **partnerBudgets**: `[{"partnerName": "World Bank", "amount": 25000000, "currency": "USD"}]`
 - Document states "€10 million from European Union" → Add to **partnerBudgets**: `[{"partnerName": "European Union", "amount": 10000000, "currency": "EUR"}]`
 - Document states "Total budget $65 million" (NO partner breakdown) → Set **initiativeBudgetUSD**: 65000000
@@ -2987,7 +2987,7 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
   - **MUST add "stakeholders" to dependents array**
 - **deliverables** (array): List of deliverable descriptions as text strings - extract outputs, deliverables, or project components mentioned in interactions or document names (e.g., ["Feasibility Study", "Infrastructure Design", "Training Program"]) - **MUST add "deliverables" to dependents array**
 - **countries** (array): List of country names as text strings - extract all countries mentioned in interactions or documents (e.g., ["Kenya", "Tanzania", "Uganda"]) - **MUST add "countries" to dependents array**
-- **sdGs** (array of objects): **Return whatever SDG references are present** in interactions/documents - "SDG 6", "Goal 9", or any text clearly referring to an SDG. **DO NOT invent or hallucinate** - only extract what is explicitly stated. Use **sdgNumber** (int 1-17), **sdgName** (string), **isPrimary** (boolean: true=Main, false=Cross-cutting). Exactly ONE Main, others Cross-cutting. **NEVER add SDGs not mentioned.** **MUST add "sdGs" to dependents array**
+- **sdGs** (array): **Extract ALL SDG references in whatever form** - numbers ("SDG 4", "SDG-4", "Goal 5"), text ("Poverty", "Quality Education"), combinations. Return as array of strings or objects with **reference** and **isPrimary**. Example: ["SDG-4", "Poverty", "Quality Education"] or [{"reference": "SDG-4", "isPrimary": true}, {"reference": "Poverty", "isPrimary": false}]. Backend similarity resolves each. Main (isPrimary=true) for single most central, Cross-cutting for others. **MUST add "sdGs" to dependents array**
 - **unopsMissions** (array): List of UNOPS Strategic Mission names as text strings. **CRITICAL: ALWAYS infer** from interaction topics, document themes, and sector focus. **VALID VALUES**: "Triple Planetary Crisis", "Energy Transition", "SIDS Resilience and Sustainability", "Quality Healthcare", "Just Digital Transformation", "Social Protection, Equality, Education and Jobs", "Humanitarian, Development and Peace Nexus", "Food Systems Transformation". Map: climate/environment → "Triple Planetary Crisis"; energy → "Energy Transition"; health → "Quality Healthcare"; digital/ICT → "Just Digital Transformation"; humanitarian/crisis → "Humanitarian, Development and Peace Nexus"; food/agriculture → "Food Systems Transformation"; SIDs → "SIDS Resilience and Sustainability"; jobs/education/social → "Social Protection, Equality, Education and Jobs". **MUST add "unopsMissions" to dependents array**. Do NOT omit unless explicitly "Not Applicable".
 - **unopsMissionsNotApplicable** (boolean): Set to **true** when interactions or documents explicitly state that UNOPS Strategic Mission alignment is "Not Applicable", "N/A", "not applicable", "no alignment", "does not apply", or similar. When true, set **unopsMissions** to [] and omit "unopsMissions" from dependents. When false or missions are listed, set unopsMissionsNotApplicable: false.
 
@@ -3000,7 +3000,7 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 **For responsibleOrgUnitId:** Put text in responsibleOrgUnitName, keep responsibleOrgUnitId as null. Add "responsibleOrgUnitId" to dependents.
 
 **For Collection Fields (fundingPartners, clientPartners, stakeholders, deliverables, countries, sdGs, unopsMissions):**
-- Extract as **simple arrays of text strings** (except **sdGs** - extract as array of objects with sdgNumber, sdgName, isPrimary; Main=isPrimary true, Cross-cutting=isPrimary false)
+- Extract as **simple arrays of text strings** (except **sdGs** - extract as array of strings or {reference, isPrimary}; backend similarity resolves; Main=isPrimary true, Cross-cutting=isPrimary false)
 - Add the collection field name to the "dependents" array
 - The backend will convert these text values to proper object structures with IDs
 
@@ -3670,13 +3670,13 @@ Please analyze this information and return only valid JSON as specified in the s
 
 - **(a) UN Cooperation Framework:** [Extract from "uncfOutcomes" field. If it shows "No UNCF Outcomes" or is empty, use [Information not available]. DO NOT INVENT UNCF outcomes.]
 
-- **(b) SDGs:** [CRITICAL: Use Opp+ terminology ONLY - "Main" and "Cross-cutting". NEVER use "Primary" or "Secondary". Format as:
+- **(b) SDGs:** [CRITICAL - OPP+ TERMINOLOGY: In your output, use ONLY "Main" and "Cross-cutting". NEVER write "Primary" or "Secondary". The data fields primarySdGs and secondarySdGs map to Main and Cross-cutting respectively. Format as:
   **Main SDG(s):** [List from primarySdGs field - the central focus area]
   **Cross-cutting SDG(s):** [List from secondarySdGs field - supporting goals]
   If primarySdGs shows "No primary SDGs selected", use [Information not available] for Main.
-  If secondarySdGs shows "No secondary SDGs selected", omit the Cross-cutting section.
+  If secondarySdGs shows "No secondary SDGs selected", omit the Cross-cutting section entirely.
   The "sdGs" field contains full details with targets and indicators if needed.
-  DO NOT INVENT SDGs - ONLY list those actually in the data.]
+  DO NOT INVENT SDGs - ONLY list those actually in the data. REMINDER: Output labels must be "Main" and "Cross-cutting", never "Primary" or "Secondary".]
 
 - **(c) UNOPS Strategy:** [Extract from "unopsMissions" and "unopsMissionsNotApplicable" fields. If unopsMissionsNotApplicable is true, state "Not Applicable". If unopsMissions shows "No UNOPS Mission alignments" or is empty (and not Not Applicable), use [Information not available]. CRITICAL: Use ONLY the full mission description names (e.g. "Triple Planetary Crisis", "Energy Transition", "Quality Healthcare") - NEVER use codes or identifiers with underscores (e.g. TRIPLE_PLANETARY_CRISIS, ENERGY_TRANSITION). DO NOT INVENT mission alignments.]
 

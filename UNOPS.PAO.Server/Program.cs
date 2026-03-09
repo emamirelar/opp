@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Unicode;
 using UNOPS.PAO.Business.Workflow.Seeders;
 using UNOPS.Workflow.DataAccess;
 
@@ -57,6 +59,8 @@ public partial class Program
                             options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
                             // Add global JsonStringEnumConverter to ensure consistent enum serialization
                             options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                            // Use encoder that preserves accented characters (e.g. Ángel María) - prevents ?? corruption
+                            options.JsonSerializerOptions.Encoder = JavaScriptEncoder.Create(UnicodeRanges.All);
                         });
                     services.AddCors(options =>
                     {

@@ -42,7 +42,18 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
         {
             _logger = logger;
             _configuration = configuration;
-            ProjectId = configuration.GetSection("PubSub")["ProjectId"] ?? string.Empty;
+            var pubSubProjectId = configuration.GetSection("PubSub")["ProjectId"] ?? string.Empty;
+            // Fallback: use AppConfig:ProjectId when PubSub project is empty
+            if (string.IsNullOrEmpty(pubSubProjectId))
+            {
+                ProjectId = configuration.GetSection("AppConfig")["ProjectId"] ?? string.Empty;
+                if (!string.IsNullOrEmpty(ProjectId))
+                    _logger.LogInformation("PubSub: Using AppConfig:ProjectId ({ProjectId}) - PubSub:ProjectId was not configured", ProjectId);
+            }
+            else
+            {
+                ProjectId = pubSubProjectId;
+            }
             SubscriptionId = configuration.GetSection("PubSub")["SubscriptionId"] ?? string.Empty;
             _dbContextFactory = dbContextFactory;
             _managerWrapper = managerWrapper;
@@ -50,6 +61,12 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            if (string.IsNullOrEmpty(ProjectId) || string.IsNullOrEmpty(SubscriptionId))
+            {
+                _logger.LogWarning("PubSub Pull Service disabled: ProjectId or SubscriptionId is not configured. Set PubSub:ProjectId and PubSub:SubscriptionId in appsettings.");
+                await Task.Delay(Timeout.Infinite, stoppingToken);
+                return;
+            }
             var subscriptionName = SubscriptionName.FromProjectSubscription(ProjectId, SubscriptionId);
             var subscriber = await SubscriberClient.CreateAsync(subscriptionName);
 
