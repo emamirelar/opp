@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -16,6 +17,8 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 // Mock component for testing (replace with actual import when available)
 @Component({
   selector: 'app-base-entity-view',
+  standalone: true,
+  imports: [CommonModule],
   template: `
     <div class="entity-view" [class.loading]="loading()">
       <header class="entity-header">
@@ -58,6 +61,7 @@ class MockBaseEntityViewComponent {
   tabs = signal<any[]>([]);
   activeTab = signal<string>('');
   actions = signal<any[]>([]);
+  recordPermissions = signal<any>({ permissions: { canUpdate: true, canDelete: true, canRead: true } });
   
   @Output() tabChange = new EventEmitter<string>();
   @Output() actionClick = new EventEmitter<any>();
@@ -78,8 +82,7 @@ describe('BaseEntityViewComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [MockBaseEntityViewComponent],
-      imports: [NoopAnimationsModule]
+      imports: [NoopAnimationsModule, MockBaseEntityViewComponent]
     }).compileComponents();
 
     fixture = TestBed.createComponent(MockBaseEntityViewComponent);

@@ -81,6 +81,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies retrieval of organization unit details by ID
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-001")]
@@ -107,6 +108,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies retrieval of simplified list for UI dropdowns
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-002")]
@@ -132,6 +134,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies retrieval of full organization hierarchy tree structure
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-003")]
@@ -157,6 +160,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies retrieval of org units accessible to current user
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-004")]
@@ -182,6 +186,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies handling of non-existent org unit ID
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-005")]
@@ -203,6 +208,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies retrieval of top-level org units only
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-006")]
@@ -228,6 +234,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies retrieval of direct child units
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-007")]
@@ -254,6 +261,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies retrieval of ancestor chain (path to root)
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-008")]
@@ -284,6 +292,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies retrieval of all nested units recursively
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-OHLC-009")]
@@ -310,6 +319,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies retrieval of units at same level
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-OHLC-010")]
@@ -336,6 +346,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies quick search for org unit autocomplete
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-OHLC-011")]
@@ -362,6 +373,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies filtering org units by unit type
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-OHLC-012")]
@@ -388,6 +400,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies filtering by active status
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-OHLC-013")]
@@ -413,6 +426,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies limiting tree depth in hierarchy retrieval
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-OHLC-014")]
@@ -439,6 +453,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies retrieval of breadcrumb path for an org unit
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-OHLC-015")]
@@ -465,6 +480,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies searching within a specific branch of hierarchy
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-OHLC-016")]
@@ -496,6 +512,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies that users see only their permitted org units
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-017")]
@@ -523,6 +540,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies that hierarchy tree is filtered by user permissions
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-018")]
@@ -554,6 +572,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies that unauthenticated requests are rejected
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-A001")]
@@ -576,6 +595,7 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
     /// Verifies that results are filtered by user permissions
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-033")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-OHLC-A002")]
@@ -596,6 +616,24 @@ public class OrganizationHierarchyLookupControllerTests : IntegrationTestBase
         orgUnits.Should().NotBeNullOrEmpty("because only accessible units should be returned");
         }
         // TODO: Verify permission filtering applied
+    }
+
+    [Fact]
+    [Trait("Category", "Edge")]
+    [Trait("Priority", "P1")]
+    [Trait("TestId", "TC-OHL-EDGE-001")]
+    [Trait("Ticket", "PNO-1194")]
+    public async Task GetOrgUnitLookup_ResponseContent_NoEncodingArtifacts()
+    {
+        var client = Factory.CreateAuthenticatedClient();
+        var response = await client.GetAsync("/api/org-units/lookup");
+        if (response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            content.Should().NotContain("??",
+                "PNO-1194: org unit names in lookup must not contain encoding artifacts");
+            content.Should().NotContain("\uFFFD");
+        }
     }
 
     #endregion

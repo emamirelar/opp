@@ -6,6 +6,7 @@
 import { Page } from '@playwright/test';
 import { getTestCredentials, getTimeout } from './test-config';
 import { setupAPIMocks } from './api-mocks.helper';
+import { setupAuthOnlyMocks } from './auth-only-mocks.helper';
 import { waitForPageReady, waitForAngularReady } from './wait.helper';
 import path from 'path';
 
@@ -86,19 +87,84 @@ const RESTRICTED_TEST_USERS: Record<string, { roles: string[]; isInternal: boole
   },
 };
 
-export async function authenticateWithRealBackend(
+/**
+ * Mock-only authentication: sets up full API mocks and navigates to the target URL.
+ * Use when tests do NOT require a real backend — all API responses are mocked.
+ * API mocks must be set up via setupAPIMocks() BEFORE calling this function.
+ */
+export async function authenticateWithMocks(
   page: Page,
   targetUrl: string,
   testUserEmail: string = 'test@playwright.local'
+): Promise<void> {
+  await page.context().clearCookies();
+
+  const restrictedUser = RESTRICTED_TEST_USERS[testUserEmail];
+  const claims = restrictedUser
+    ? [
+        { type: 'email', value: testUserEmail },
+        { type: 'name', value: restrictedUser.name },
+        ...restrictedUser.roles.map(role => ({ type: 'role', value: role })),
+        { type: 'IsInternal', value: String(restrictedUser.isInternal) },
+        { type: 'IAPAuthenticated', value: 'true' },
+        { type: 'sub', value: '99999' },
+        { type: 'userId', value: '99999' },
+      ]
+    : [
+        { type: 'email', value: testUserEmail },
+        { type: 'name', value: 'Test User' },
+        { type: 'role', value: 'Administrator' },
+        { type: 'role', value: 'Internal' },
+        { type: 'IsInternal', value: 'true' },
+        { type: 'IAPAuthenticated', value: 'true' },
+        { type: 'sub', value: '12345' },
+        { type: 'userId', value: '12345' },
+      ];
+
+  await page.unroute(url => url.toString().includes('/user/claims'));
+  await page.route(url => url.toString().includes('/user/claims'), async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(claims),
+    });
+  });
+
+  await page.context().addCookies([{
+    name: 'dev-user-email',
+    value: testUserEmail,
+    domain: '127.0.0.1',
+    path: '/',
+  }]);
+
+  const baseUrl = process.env.BASE_URL || 'http://localhost:4200';
+  const url = targetUrl.startsWith('http') ? targetUrl : `${baseUrl}${targetUrl}`;
+  authLog(`[Auth-Mocks] Navigating to ${url}`);
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: getTimeout('navigation') });
+  await page.waitForLoadState('networkidle').catch(() => {});
+}
+
+export async function authenticateWithRealBackend(
+  page: Page,
+  targetUrl: string,
+  testUserEmail: string = process.env.USE_REAL_API === 'true'
+    ? (process.env.TEST_USER_EMAIL || 'test@playwright.local')
+    : 'test@playwright.local'
 ): Promise<void> {
   // Step 1: Clear all cookies
   await page.context().clearCookies();
   
   // Step 2: Setup API mocks BEFORE navigation (FIX for DEF-001)
-  // This ensures permission checks pass even when backend is not running
-  // Pass userEmail so permission mocks can return role-appropriate responses
-  authLog('[Auth] Setting up API mocks for authenticateWithRealBackend...');
-  await setupAPIMocks(page, testUserEmail);
+  // When USE_REAL_API=true, only mock auth/permissions — let data flow to real backend.
+  // Otherwise, mock everything (original behavior for environments without backend).
+  const useRealApi = process.env.USE_REAL_API === 'true';
+  if (useRealApi) {
+    authLog('[Auth] USE_REAL_API=true — setting up auth-only mocks (data flows to real backend)...');
+    await setupAuthOnlyMocks(page, testUserEmail);
+  } else {
+    authLog('[Auth] Setting up full API mocks (no real backend)...');
+    await setupAPIMocks(page, testUserEmail);
+  }
   
   // Step 3: Setup authenticated user claims mock
   // QA-039 FIX: Differentiate claims based on user email
@@ -125,7 +191,8 @@ export async function authenticateWithRealBackend(
         { type: 'userId', value: '12345' }, // Required for topbar notification polling
       ];
   
-  // Override the default empty claims with authenticated user
+  // Override the default empty claims with authenticated user.
+  // Always mock /user/claims — the real backend requires IAP auth for this endpoint.
   await page.unroute(url => url.toString().includes('/user/claims'));
   await page.route(url => url.toString().includes('/user/claims'), async (route) => {
     const roleDesc = restrictedUser ? restrictedUser.roles.join(',') : 'Administrator';
@@ -145,7 +212,14 @@ export async function authenticateWithRealBackend(
     
     // Override /api/permissions/check/* — route-level permission checks
     // Admin routes (entity-manager, user-management, translations) must return hasAccess: false for restricted users
-    const adminBlockedPaths = ['admin/entity-manager', 'admin/user-management', 'admin/translations', 'admin/ai-prompt-management'];
+    const adminBlockedPaths = [
+      'admin/entity-manager',
+      'admin/user-management',
+      'admin/translations',
+      'admin/ai-prompt-management',
+      'admin/entity-artifacts',
+      'admin/bulk-entity-artifacts',
+    ];
     await page.route(url => url.toString().includes('/api/permissions/check/'), async (route) => {
       const requestUrl = route.request().url();
       const isAdminRoute = adminBlockedPaths.some(p => requestUrl.includes(p));
@@ -195,8 +269,26 @@ export async function authenticateWithRealBackend(
     });
   }
 
-  // Step 4: Set authentication cookies
+  // Step 4: Set authentication cookies for both localhost and 127.0.0.1
   await page.context().addCookies([
+    {
+      name: 'dev-user-email',
+      value: testUserEmail,
+      domain: 'localhost',
+      path: '/',
+      httpOnly: false,
+      secure: false,
+      sameSite: 'Lax',
+    },
+    {
+      name: 'DevIAPAuth',
+      value: testUserEmail,
+      domain: 'localhost',
+      path: '/',
+      httpOnly: true,
+      secure: false,
+      sameSite: 'Lax',
+    },
     {
       name: 'dev-user-email',
       value: testUserEmail,

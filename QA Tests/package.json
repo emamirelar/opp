@@ -1,0 +1,19 @@
+{
+  "name": "opportunity-plus-playwright-tests",
+  "version": "1.0.0",
+  "description": "Playwright E2E tests for UNOPS Opportunity+ system",
+  "private": true,
+  "scripts": {
+    "test": "npx playwright test",
+    "test:chromium": "npx playwright test --project=chromium",
+    "test:firefox": "npx playwright test --project=firefox",
+    "test:webkit": "npx playwright test --project=webkit",
+    "test:headed": "npx playwright test --headed",
+    "report": "npx playwright show-report TestResults/playwright-html-report",
+    "install:browsers": "npx playwright install"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "dotenv": "^16.4.0"
+  }
+}

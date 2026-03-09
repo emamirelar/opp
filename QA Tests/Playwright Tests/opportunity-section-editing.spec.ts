@@ -7,11 +7,18 @@
  *
  * @author UNOPS Opportunity+ QA Team
  * @see https://unops.atlassian.net/browse/PNO-OPP-SECTIONS
+ * @tests 34
  */
 
 import { test, expect, Page } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
-import { waitForPermissions } from './helpers/wait.helper';
+import {
+  waitForElementReady,
+  waitForLoadingToComplete,
+  waitForNetworkIdle,
+  waitForPermissions,
+} from './helpers/wait.helper';
+import { OpportunityItemPage } from './pages/opportunity-item.page';
 
 const featureReady = process.env.OPPORTUNITY_EDITING_IMPLEMENTED === 'true';
 
@@ -30,16 +37,17 @@ function oppUrl(id: string, section?: string): string {
 }
 
 async function navigateToSection(page: Page, sectionName: string): Promise<void> {
+  const sectionId = `section-${sectionName.toLowerCase()}`;
+  const sectionLocator = page.locator(`#${sectionId}, app-opportunity-${sectionName.toLowerCase()}-section`);
   const chip = page.locator(`button:has-text("${sectionName}")`).first();
   if (await chip.isVisible({ timeout: 3000 }).catch(() => false)) {
     await chip.click();
-    await page.waitForTimeout(1000);
+    await waitForElementReady(sectionLocator.first(), 5000);
     return;
   }
-  const section = page.locator(`#section-${sectionName.toLowerCase()}`);
-  if (await section.count() > 0) {
-    await section.scrollIntoViewIfNeeded().catch(() => {});
-    await page.waitForTimeout(500);
+  if ((await sectionLocator.count()) > 0) {
+    await sectionLocator.first().scrollIntoViewIfNeeded().catch(() => {});
+    await waitForLoadingToComplete(page);
   }
 }
 
@@ -49,7 +57,7 @@ async function clickEditButton(page: Page, sectionSelector: string): Promise<boo
   const isVisible = await editBtn.isVisible({ timeout: 5000 }).catch(() => false);
   if (isVisible) {
     await editBtn.click();
-    await page.waitForTimeout(1000);
+    await waitForLoadingToComplete(page);
   }
   return isVisible;
 }
@@ -60,7 +68,7 @@ async function clickSaveButton(page: Page, sectionSelector: string): Promise<boo
   const isVisible = await saveBtn.isVisible({ timeout: 3000 }).catch(() => false);
   if (isVisible) {
     await saveBtn.click();
-    await page.waitForLoadState('networkidle');
+    await waitForNetworkIdle(page);
   }
   return isVisible;
 }
@@ -71,7 +79,7 @@ async function clickCancelButton(page: Page, sectionSelector: string): Promise<b
   const isVisible = await cancelBtn.isVisible({ timeout: 3000 }).catch(() => false);
   if (isVisible) {
     await cancelBtn.click();
-    await page.waitForTimeout(500);
+    await waitForLoadingToComplete(page);
   }
   return isVisible;
 }
@@ -89,10 +97,10 @@ test.describe('Section Editing — Overview', () => {
   });
 
   test('EDIT-OVW-001: Edit button visible on overview section for admin', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'Overview');
-    const editBtn = page.locator('#section-overview button:has(i.pi-pencil), app-opportunity-overview-section button:has(i.pi-pencil)').first();
-    const isVisible = await editBtn.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(isVisible || await page.locator('#section-overview, app-opportunity-overview-section').first().isVisible()).toBeTruthy();
+    const editBtn = oppPage.overviewSection.locator('button:has(i.pi-pencil), [data-testid*="edit"]').first();
+    await expect(editBtn).toBeVisible({ timeout: 5000 });
   });
 
   test('EDIT-OVW-002: Can edit and save opportunity name', async ({ page }) => {
@@ -123,17 +131,15 @@ test.describe('Section Editing — Overview', () => {
   });
 
   test('EDIT-OVW-003: Can edit and save opportunity description', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'Overview');
     await clickEditButton(page, '#section-overview, app-opportunity-overview-section');
 
-    const descInput = page.locator('#section-overview textarea, app-opportunity-overview-section textarea').first();
-    const isEditable = await descInput.isVisible({ timeout: 5000 }).catch(() => false);
-    if (isEditable) {
-      await descInput.clear();
-      await descInput.fill('Updated description from E2E test');
-      await clickSaveButton(page, '#section-overview, app-opportunity-overview-section');
-    }
-    expect(isEditable || await page.locator('#section-overview').isVisible()).toBeTruthy();
+    const descInput = oppPage.overviewSection.locator('textarea').first();
+    await expect(descInput).toBeVisible({ timeout: 5000 });
+    await descInput.clear();
+    await descInput.fill('Updated description from E2E test');
+    await clickSaveButton(page, '#section-overview, app-opportunity-overview-section');
   });
 
   test('EDIT-OVW-004: Cancel discards changes in overview', async ({ page }) => {
@@ -157,8 +163,9 @@ test.describe('Section Editing — Overview', () => {
   test('EDIT-OVW-005: Read-only user cannot see edit button on overview', async ({ page }) => {
     await authenticateWithRealBackend(page, oppUrl(TEST_OPP.draft), READONLY_USER);
     await waitForPermissions(page);
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'Overview');
-    const editBtn = page.locator('#section-overview button:has(i.pi-pencil)').first();
+    const editBtn = oppPage.overviewSection.locator('button:has(i.pi-pencil)').first();
     await expect(editBtn).not.toBeVisible({ timeout: 5000 });
   });
 });
@@ -176,42 +183,42 @@ test.describe('Section Editing — What', () => {
   });
 
   test('EDIT-WHAT-001: Edit button visible on What section', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'What');
-    const section = page.locator('#section-what, app-opportunity-what-section').first();
-    await expect(section).toBeVisible({ timeout: 5000 });
+    await expect(oppPage.whatSection).toBeVisible({ timeout: 5000 });
   });
 
   test('EDIT-WHAT-002: Can enter edit mode and modify org unit', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'What');
     const editClicked = await clickEditButton(page, '#section-what, app-opportunity-what-section');
-    if (editClicked) {
-      const orgUnitSelect = page.locator('#section-what p-select, app-opportunity-what-section p-select').first();
-      const hasSelect = await orgUnitSelect.isVisible({ timeout: 3000 }).catch(() => false);
-      expect(hasSelect).toBeTruthy();
-    }
+    expect(editClicked).toBeTruthy();
+    const orgUnitSelect = oppPage.whatSection.locator('p-select').first();
+    await expect(orgUnitSelect).toBeVisible({ timeout: 3000 });
   });
 
   test('EDIT-WHAT-003: Can save What section changes', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'What');
     await clickEditButton(page, '#section-what, app-opportunity-what-section');
     const saved = await clickSaveButton(page, '#section-what, app-opportunity-what-section');
-    expect(saved || await page.locator('#section-what').isVisible()).toBeTruthy();
+    expect(saved).toBeTruthy();
   });
 
   test('EDIT-WHAT-004: Initiative type dropdown available in edit mode', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'What');
     await clickEditButton(page, '#section-what, app-opportunity-what-section');
-    const initiativeDropdown = page.locator('#initiativeType, [data-testid="initiative-type-select"]').first();
-    const hasDropdown = await initiativeDropdown.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(hasDropdown || await page.locator('#section-what').isVisible()).toBeTruthy();
+    const initiativeDropdown = oppPage.whatSection.locator('#initiativeType, [data-testid="initiative-type-select"]').first();
+    await expect(initiativeDropdown).toBeVisible({ timeout: 5000 });
   });
 
   test('EDIT-WHAT-005: Delivery modality dropdown available in edit mode', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'What');
     await clickEditButton(page, '#section-what, app-opportunity-what-section');
-    const modalityDropdown = page.locator('[data-testid="delivery-modality-select"]').first();
-    const hasDropdown = await modalityDropdown.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(hasDropdown || await page.locator('#section-what').isVisible()).toBeTruthy();
+    const modalityDropdown = oppPage.whatSection.locator('[data-testid="delivery-modality-select"]').first();
+    await expect(modalityDropdown).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -230,15 +237,15 @@ test.describe('Section Editing — Why', () => {
   test('EDIT-WHY-001: Can enter edit mode on Why section', async ({ page }) => {
     await navigateToSection(page, 'Why');
     const editClicked = await clickEditButton(page, '#section-why, app-opportunity-why-section');
-    expect(editClicked || await page.locator('#section-why').isVisible()).toBeTruthy();
+    expect(editClicked).toBeTruthy();
   });
 
   test('EDIT-WHY-002: SDG multiselect available in edit mode', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'Why');
     await clickEditButton(page, '#section-why, app-opportunity-why-section');
-    const sdgSelect = page.locator('#section-why p-multiselect, [data-testid="sdg-multiselect"]').first();
-    const hasSelect = await sdgSelect.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(hasSelect || await page.locator('#section-why').isVisible()).toBeTruthy();
+    const sdgSelect = oppPage.whySection.locator('p-multiselect, [data-testid="sdg-multiselect"]').first();
+    await expect(sdgSelect).toBeVisible({ timeout: 5000 });
   });
 
   test('EDIT-WHY-003: Can edit challenges textarea', async ({ page }) => {
@@ -252,27 +259,27 @@ test.describe('Section Editing — Why', () => {
   });
 
   test('EDIT-WHY-004: Can edit expected impact field', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'Why');
     await clickEditButton(page, '#section-why, app-opportunity-why-section');
-    const impactInput = page.locator('#section-why textarea, #section-why input').nth(1);
-    const isEditable = await impactInput.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(isEditable || await page.locator('#section-why').isVisible()).toBeTruthy();
+    const impactInput = oppPage.whySection.locator('textarea, input').nth(1);
+    await expect(impactInput).toBeVisible({ timeout: 5000 });
   });
 
   test('EDIT-WHY-005: Can edit beneficiary numbers', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'Why');
     await clickEditButton(page, '#section-why, app-opportunity-why-section');
-    const benefInput = page.locator('#section-why p-inputnumber, #section-why input[type="number"]').first();
-    const isEditable = await benefInput.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(isEditable || await page.locator('#section-why').isVisible()).toBeTruthy();
+    const benefInput = oppPage.whySection.locator('p-inputnumber, input[type="number"]').first();
+    await expect(benefInput).toBeVisible({ timeout: 5000 });
   });
 
   test('EDIT-WHY-006: UNOPS missions multiselect available', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'Why');
     await clickEditButton(page, '#section-why, app-opportunity-why-section');
-    const missionSelect = page.locator('[data-testid="missions-multiselect"]').first();
-    const hasSelect = await missionSelect.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(hasSelect || await page.locator('#section-why').isVisible()).toBeTruthy();
+    const missionSelect = oppPage.whySection.locator('[data-testid="missions-multiselect"]').first();
+    await expect(missionSelect).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -295,34 +302,34 @@ test.describe('Section Editing — Who', () => {
   });
 
   test('EDIT-WHO-002: Can add a funding partner', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'Who');
     await clickEditButton(page, '#section-who, app-opportunity-who-section');
-    const addPartnerBtn = page.locator('#section-who button:has-text("Add"), [data-testid="add-funding-partner"]').first();
-    const hasAdd = await addPartnerBtn.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(hasAdd || await page.locator('#section-who').isVisible()).toBeTruthy();
+    const addPartnerBtn = oppPage.whoSection.locator('button:has-text("Add"), [data-testid="add-funding-partner"]').first();
+    await expect(addPartnerBtn).toBeVisible({ timeout: 5000 });
   });
 
   test('EDIT-WHO-003: Can add a client partner', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'Who');
     await clickEditButton(page, '#section-who, app-opportunity-who-section');
-    const addClientBtn = page.locator('[data-testid="add-client-partner"]').first();
-    const hasAdd = await addClientBtn.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(hasAdd || await page.locator('#section-who').isVisible()).toBeTruthy();
+    const addClientBtn = oppPage.whoSection.locator('[data-testid="add-client-partner"]').first();
+    await expect(addClientBtn).toBeVisible({ timeout: 5000 });
   });
 
   test('EDIT-WHO-004: Can remove a funding partner', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'Who');
     await clickEditButton(page, '#section-who, app-opportunity-who-section');
-    const removeBtn = page.locator('#section-who button:has(i.pi-trash), #section-who button:has(i.pi-times)').first();
-    const hasRemove = await removeBtn.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(hasRemove || await page.locator('#section-who').isVisible()).toBeTruthy();
+    const removeBtn = oppPage.whoSection.locator('button:has(i.pi-trash), button:has(i.pi-times)').first();
+    await expect(removeBtn).toBeVisible({ timeout: 5000 });
   });
 
   test('EDIT-WHO-005: External stakeholder management area visible', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'Who');
-    const stakeholderArea = page.getByText(/external stakeholder/i).first();
-    const hasArea = await stakeholderArea.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(hasArea || await page.locator('#section-who').isVisible()).toBeTruthy();
+    const stakeholderArea = oppPage.whoSection.getByText(/external stakeholder/i).first();
+    await expect(stakeholderArea).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -348,15 +355,14 @@ test.describe('Section Editing — Where', () => {
     await navigateToSection(page, 'Where');
     await clickEditButton(page, '#section-where, app-opportunity-where-section');
     const countrySelect = page.locator('#section-where p-multiselect, #section-where p-select, [data-testid="country-select"]').first();
-    const hasSelect = await countrySelect.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(hasSelect || await page.locator('#section-where').isVisible()).toBeTruthy();
+    await expect(countrySelect).toBeVisible({ timeout: 5000 });
   });
 
   test('EDIT-WHERE-003: Can save country changes', async ({ page }) => {
     await navigateToSection(page, 'Where');
     await clickEditButton(page, '#section-where, app-opportunity-where-section');
-    await clickSaveButton(page, '#section-where, app-opportunity-where-section');
-    expect(await page.locator('#section-where').isVisible()).toBeTruthy();
+    const saved = await clickSaveButton(page, '#section-where, app-opportunity-where-section');
+    expect(saved).toBeTruthy();
   });
 });
 
@@ -373,45 +379,48 @@ test.describe('Section Editing — When', () => {
   });
 
   test('EDIT-WHEN-001: When section has date fields in edit mode', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'When');
     await clickEditButton(page, '#section-when, app-opportunity-when-section');
-    const dateField = page.locator('#section-when p-datepicker, #section-when input[type="date"]').first();
-    const hasDate = await dateField.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(hasDate || await page.locator('#section-when').isVisible()).toBeTruthy();
+    const dateField = oppPage.whenSection.locator('p-datepicker, input[type="date"]').first();
+    await expect(dateField).toBeVisible({ timeout: 5000 });
   });
 
   test('EDIT-WHEN-002: Target signing date field available', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'When');
     await clickEditButton(page, '#section-when, app-opportunity-when-section');
-    const signingDate = page.getByText(/target signing/i).first();
-    const hasLabel = await signingDate.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(hasLabel || await page.locator('#section-when').isVisible()).toBeTruthy();
+    const signingDate = oppPage.whenSection.getByText(/target signing/i).first();
+    await expect(signingDate).toBeVisible({ timeout: 5000 });
   });
 
   test('EDIT-WHEN-003: Implementation start date field available', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'When');
     await clickEditButton(page, '#section-when, app-opportunity-when-section');
-    const startDate = page.getByText(/implementation start/i).first();
-    const hasLabel = await startDate.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(hasLabel || await page.locator('#section-when').isVisible()).toBeTruthy();
+    const startDate = oppPage.whenSection.getByText(/implementation start/i).first();
+    await expect(startDate).toBeVisible({ timeout: 5000 });
   });
 
   test('EDIT-WHEN-004: Target delivery date field available', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'When');
     await clickEditButton(page, '#section-when, app-opportunity-when-section');
-    const deliveryDate = page.getByText(/target delivery|delivery date/i).first();
-    const hasLabel = await deliveryDate.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(hasLabel || await page.locator('#section-when').isVisible()).toBeTruthy();
+    const deliveryDate = oppPage.whenSection.getByText(/target delivery|delivery date/i).first();
+    await expect(deliveryDate).toBeVisible({ timeout: 5000 });
   });
 
   test('EDIT-WHEN-005: Date validation — implementation start before signing date rejected', async ({ page }) => {
     await navigateToSection(page, 'When');
     const editClicked = await clickEditButton(page, '#section-when, app-opportunity-when-section');
+    expect(editClicked).toBeTruthy();
     if (editClicked) {
       await clickSaveButton(page, '#section-when, app-opportunity-when-section');
       const error = page.locator('.p-error, .p-message-error, [class*="error"]').first();
       const hasError = await error.isVisible({ timeout: 3000 }).catch(() => false);
-      expect(true).toBeTruthy();
+      const successToast = page.locator('.p-toast-message').filter({ hasText: /success|saved|updated/i });
+      const hasSuccess = await successToast.isVisible({ timeout: 2000 }).catch(() => false);
+      expect(hasError || !hasSuccess).toBeTruthy();
     }
   });
 });
@@ -435,32 +444,32 @@ test.describe('Section Editing — Team', () => {
   });
 
   test('EDIT-TEAM-002: Opportunity Manager dropdown available', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'Team');
     await clickEditButton(page, '#section-team');
-    const omSelect = page.locator('#opportunityManager, [data-testid="opportunity-manager-select"]').first();
-    const hasOM = await omSelect.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(hasOM || await page.locator('#section-team').isVisible()).toBeTruthy();
+    const omSelect = oppPage.teamSection.locator('#opportunityManager, [data-testid="opportunity-manager-select"]').first();
+    await expect(omSelect).toBeVisible({ timeout: 5000 });
   });
 
   test('EDIT-TEAM-003: Can add collaborator', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'Team');
     await clickEditButton(page, '#section-team');
-    const addBtn = page.locator('#section-team button:has-text("Add"), [data-testid="add-collaborator"]').first();
-    const hasAdd = await addBtn.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(hasAdd || await page.locator('#section-team').isVisible()).toBeTruthy();
+    const addBtn = oppPage.teamSection.locator('button:has-text("Add"), [data-testid="add-collaborator"]').first();
+    await expect(addBtn).toBeVisible({ timeout: 5000 });
   });
 
   test('EDIT-TEAM-004: SME/relevant people section visible', async ({ page }) => {
+    const oppPage = new OpportunityItemPage(page, TEST_OPP.draft);
     await navigateToSection(page, 'Team');
-    const smeText = page.getByText(/relevant people|SME|subject matter/i).first();
-    const hasSME = await smeText.isVisible({ timeout: 5000 }).catch(() => false);
-    expect(hasSME || await page.locator('#section-team').isVisible()).toBeTruthy();
+    const smeText = oppPage.teamSection.getByText(/relevant people|SME|subject matter/i).first();
+    await expect(smeText).toBeVisible({ timeout: 5000 });
   });
 
   test('EDIT-TEAM-005: Can save team section changes', async ({ page }) => {
     await navigateToSection(page, 'Team');
     await clickEditButton(page, '#section-team');
-    await clickSaveButton(page, '#section-team');
-    expect(await page.locator('#section-team').isVisible()).toBeTruthy();
+    const saved = await clickSaveButton(page, '#section-team');
+    expect(saved).toBeTruthy();
   });
 });

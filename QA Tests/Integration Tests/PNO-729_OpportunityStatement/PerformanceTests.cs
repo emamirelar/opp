@@ -24,9 +24,11 @@ public class PerformanceTests : PNO729TestFixtureBase
     {
         await SeedOpportunityAsync(11001, null);
         var sw = Stopwatch.StartNew();
-        await RunStatementFixMigrationAsync();
+        var count = await RunStatementFixMigrationAsync();
         sw.Stop();
-        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(1));
+        count.Should().Be(1, "exactly 1 null statement should be fixed");
+        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(1),
+            $"single statement fix took {sw.ElapsedMilliseconds}ms");
     }
 
     [Fact] [Trait("TestId", "PERF-002")]
@@ -35,9 +37,11 @@ public class PerformanceTests : PNO729TestFixtureBase
         for (var i = 11100; i <= 11149; i++)
             await SeedOpportunityAsync(i, null);
         var sw = Stopwatch.StartNew();
-        await RunStatementFixMigrationAsync();
+        var count = await RunStatementFixMigrationAsync();
         sw.Stop();
-        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(5));
+        count.Should().Be(50, "all 50 null statements should be fixed");
+        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(5),
+            $"50 statement fixes took {sw.ElapsedMilliseconds}ms");
     }
 
     [Fact] [Trait("TestId", "PERF-003")]
@@ -91,9 +95,11 @@ public class PerformanceTests : PNO729TestFixtureBase
         for (var i = 11300; i <= 11399; i++)
             await SeedOpportunityAsync(i, null);
         var sw = Stopwatch.StartNew();
-        await RunStatementFixMigrationAsync();
+        var count = await RunStatementFixMigrationAsync();
         sw.Stop();
-        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(10));
+        count.Should().Be(100, "all 100 null statements should be fixed");
+        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(10),
+            $"100 statement fixes took {sw.ElapsedMilliseconds}ms, expected <10000ms");
     }
 
     [Fact] [Trait("TestId", "PERF-008")]
@@ -123,7 +129,9 @@ public class PerformanceTests : PNO729TestFixtureBase
 
         GC.Collect();
         var after = GC.GetTotalMemory(forceFullCollection: true);
-        ((after - before) / 1_048_576.0).Should().BeLessThan(50);
+        var growthMb = (after - before) / 1_048_576.0;
+        growthMb.Should().BeLessThan(50,
+            $"50 idempotent migration runs caused {growthMb:F1}MB memory growth");
     }
 
     [Fact] [Trait("TestId", "PERF-010")]

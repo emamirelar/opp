@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using UNOPS.PAO.Business.Managers;
@@ -71,9 +72,16 @@ public class PaoWorkflowNotificationServiceCCTests : IDisposable
         // NotificationManager requires AppDbContext + UserResolverService constructor args
         _mockNotificationManager = new Mock<NotificationManager>(_appDbContext, userResolverService);
 
+        var mockServiceScope = new Mock<IServiceScope>();
+        var mockServiceProvider = new Mock<IServiceProvider>();
+        mockServiceScope.Setup(s => s.ServiceProvider).Returns(mockServiceProvider.Object);
+        var mockServiceScopeFactory = new Mock<IServiceScopeFactory>();
+        mockServiceScopeFactory.Setup(f => f.CreateScope()).Returns(mockServiceScope.Object);
+
         _notificationService = new PaoWorkflowNotificationService(
             _mockEmailSender.Object,
             _mockContextFactory.Object,
+            mockServiceScopeFactory.Object,
             _mockLogger.Object,
             _mockConfiguration.Object,
             _mockNotificationManager.Object);
@@ -341,9 +349,15 @@ public class PaoWorkflowNotificationServiceCCTests : IDisposable
             .Setup(f => f.CreateDbContext())
             .Returns(() => new AppDbContext(appOptions, userResolverService, mockDbContextSchema.Object));
 
+        var mockServiceScope = new Mock<IServiceScope>();
+        var mockServiceProvider = new Mock<IServiceProvider>();
+        mockServiceScope.Setup(s => s.ServiceProvider).Returns(mockServiceProvider.Object);
+        var mockServiceScopeFactory = new Mock<IServiceScopeFactory>();
+        mockServiceScopeFactory.Setup(f => f.CreateScope()).Returns(mockServiceScope.Object);
+
         var service = new PaoWorkflowNotificationService(
-            _mockEmailSender.Object, localContextFactory.Object, _mockLogger.Object, 
-            _mockConfiguration.Object, _mockNotificationManager.Object);
+            _mockEmailSender.Object, localContextFactory.Object, mockServiceScopeFactory.Object,
+            _mockLogger.Object, _mockConfiguration.Object, _mockNotificationManager.Object);
 
         var notification = new WorkflowNotification
         {

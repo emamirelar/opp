@@ -103,9 +103,10 @@ public class NegativeTests : PNO1146TestFixtureBase
     [Trait("Category", "Negative")]
     public async Task NotifyRejected_EmptyComment_StillSendsEmail()
     {
-        // Arrange
+        // Arrange — seed OM so rejection recipient lookup finds a valid user
         await SeedOpportunityAsync(1);
         await SeedUserAsync(1, "user@unops.org");
+        await SeedOpportunityManagerAsync(1, 1);
         var notification = BuildWorkflowNotification(comment: "", recipientUserIds: new List<int> { 1 });
 
         // Act

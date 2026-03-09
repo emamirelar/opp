@@ -69,9 +69,9 @@ describe('PictureEditorDataLoaderService', () => {
     });
 
     it('should return empty string if upload URL is not set', (done) => {
-      const newService = TestBed.inject(PictureEditorDataLoaderService);
+      service.setUploadUrl('');
       
-      newService.uploadImage(mockFile).subscribe(result => {
+      service.uploadImage(mockFile).subscribe(result => {
         expect(result).toBe('');
         done();
       });

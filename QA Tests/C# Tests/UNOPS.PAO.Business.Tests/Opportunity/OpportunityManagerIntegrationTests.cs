@@ -213,6 +213,7 @@ public class OpportunityManagerIntegrationTests : IntegrationTestBase
         var updateRequest = new UpdateOpportunityRequest
         {
             Id = created.Id,
+            Name = "Budget Update Test",
             InitiativeBudgetUSD = 2000000m
         };
 

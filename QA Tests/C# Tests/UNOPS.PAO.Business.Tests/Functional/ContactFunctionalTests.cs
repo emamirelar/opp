@@ -488,6 +488,7 @@ namespace UNOPS.PAO.Business.Tests.Functional
         /// <summary>
         /// BR-C024: Title/prefix is optional
         /// </summary>
+#pragma warning disable xUnit1026 // Theory method has unused parameter(s)
         [Theory]
         [InlineData("Mr.", true)]
         [InlineData("Dr.", true)]
@@ -501,6 +502,7 @@ namespace UNOPS.PAO.Business.Tests.Functional
             // Assert
             isValid.Should().Be(expectedValid);
         }
+#pragma warning restore xUnit1026
 
         #endregion
 

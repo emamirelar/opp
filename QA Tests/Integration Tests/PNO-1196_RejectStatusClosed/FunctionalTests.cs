@@ -577,7 +577,9 @@ public class FunctionalTests : PNO1196TestFixtureBase
         opp!.Status.Should().Be(EntityStatus.Closed);
     }
 
-    [Fact(Skip = "DEF-025: WorkflowController.Reject() does not check pendingTask.RequiresApproval. Tasks with RequiresApproval=false should return 400 but are accepted.")] [Trait("TestId", "FUN-038")]
+    [Fact]
+
+    [Trait("Defect", "DEF-025")] [Trait("TestId", "FUN-038")]
     public async Task Reject_PendingTaskFacingApproval_IsRequiredForReject()
     {
         await SeedOpportunityAsync(4038, "GO");
@@ -986,7 +988,9 @@ public class FunctionalTests : PNO1196TestFixtureBase
         (await DbContext.Opportunities.FindAsync(4088))!.Status.Should().NotBe(EntityStatus.Closed);
     }
 
-    [Fact(Skip = "DEF-029: WorkflowController.Reject() sets Opportunity.Status=Closed BEFORE calling workflowManager.Reject() and ignores its return value. Status is always Closed for Opportunities with a pending task.")] [Trait("TestId", "FUN-070")]
+    [Fact]
+
+    [Trait("Defect", "DEF-029")] [Trait("TestId", "FUN-070")]
     public async Task Reject_RejectReturnsFalse_StatusUnchanged()
     {
         await SeedOpportunityAsync(4089, "GO");

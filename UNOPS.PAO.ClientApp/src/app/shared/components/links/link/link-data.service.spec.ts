@@ -35,6 +35,10 @@ describe('LinkDataService', () => {
       'update',
       'delete'
     ]);
+    mockLinkService.getAll.and.returnValue(of(emptyLinksResponse));
+    mockLinkService.create.and.returnValue(of(linkResponse));
+    mockLinkService.update.and.returnValue(of(new HttpResponse<void>({ body: undefined })));
+    mockLinkService.delete.and.returnValue(of(void 0));
 
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
@@ -93,20 +97,24 @@ describe('LinkDataService', () => {
 
   describe('load', () => {
     beforeEach(() => {
+      mockLinkService.getAll.calls.reset();
+      mockLinkService.getAll.and.returnValue(of(emptyLinksResponse));
       service.initialize(EntityType.Partner, 123);
     });
 
     it('should not load if entityType is undefined', () => {
+      mockLinkService.getAll.calls.reset();
       service.entityType.set(undefined);
-      
+
       service.load();
 
       expect(mockLinkService.getAll).not.toHaveBeenCalled();
     });
 
     it('should not load if entityId is undefined', () => {
+      mockLinkService.getAll.calls.reset();
       service.entityId.set(undefined);
-      
+
       service.load();
 
       expect(mockLinkService.getAll).not.toHaveBeenCalled();

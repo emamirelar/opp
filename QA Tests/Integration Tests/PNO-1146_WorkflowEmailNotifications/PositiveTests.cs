@@ -37,7 +37,7 @@ public class PositiveTests : PNO1146TestFixtureBase
         // Assert
         MockEmailSender.Verify(
             e => e.SendEmailAsync(
-                It.Is<EmailMessage>(m => m.TemplateName == "WorkflowApprovalRequest.html"),
+                It.Is<EmailMessage>(m => m.TemplateName == TemplateApprovalRequest),
                 It.IsAny<ApprovalRequestEmailModel>(),
                 It.IsAny<string?>()),
             Times.Once);
@@ -66,7 +66,7 @@ public class PositiveTests : PNO1146TestFixtureBase
         // Assert
         MockEmailSender.Verify(
             e => e.SendEmailAsync(
-                It.Is<EmailMessage>(m => m.TemplateName == "WorkflowCompleted.html"),
+                It.Is<EmailMessage>(m => m.TemplateName == TemplateCompleted),
                 It.IsAny<WorkflowCompletedEmailModel>(),
                 It.IsAny<string?>()),
             Times.Once);
@@ -77,9 +77,10 @@ public class PositiveTests : PNO1146TestFixtureBase
     [Trait("Category", "Positive")]
     public async Task NotifyWorkflowRejected_SendsRejectionEmail_WithComment()
     {
-        // Arrange
+        // Arrange — seed OM so rejection recipient lookup finds a valid user
         await SeedOpportunityAsync(1);
         await SeedUserAsync(1, "submitter@unops.org", "Submitter", "User");
+        await SeedOpportunityManagerAsync(1, 1);
         SetupEmailCapture();
 
         var notification = BuildWorkflowNotification(
@@ -93,7 +94,7 @@ public class PositiveTests : PNO1146TestFixtureBase
         // Assert
         MockEmailSender.Verify(
             e => e.SendEmailAsync(
-                It.Is<EmailMessage>(m => m.TemplateName == "WorkflowRejected.html"),
+                It.Is<EmailMessage>(m => m.TemplateName == TemplateRejected),
                 It.IsAny<WorkflowRejectedEmailModel>(),
                 It.IsAny<string?>()),
             Times.Once);
@@ -120,7 +121,7 @@ public class PositiveTests : PNO1146TestFixtureBase
         // Assert
         MockEmailSender.Verify(
             e => e.SendEmailAsync(
-                It.Is<EmailMessage>(m => m.TemplateName == "WorkflowRecalled.html"),
+                It.Is<EmailMessage>(m => m.TemplateName == TemplateRecalled),
                 It.IsAny<WorkflowRecalledEmailModel>(),
                 It.IsAny<string?>()),
             Times.Once);

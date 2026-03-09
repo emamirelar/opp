@@ -127,6 +127,32 @@ public static class TestDbContextFactory
     }
 
     /// <summary>
+    /// Creates a UNOPSAppDbContext backed by SQLite in-memory, ignoring TestEnvironment.UsePostgreSQL.
+    /// Used as a fallback when PostgreSQL is configured but unreachable (Cloud SQL IAM auth failure, proxy down).
+    /// </summary>
+    public static AppDbContext CreateFallbackSqlite()
+    {
+        var connection = new Microsoft.Data.Sqlite.SqliteConnection("DataSource=:memory:");
+        connection.Open();
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = "PRAGMA foreign_keys = OFF;";
+        cmd.ExecuteNonQuery();
+
+        var builder = new DbContextOptionsBuilder<UNOPSAppDbContext>();
+        builder.UseSqlite(connection);
+        var options = builder.Options;
+
+        var mockAccessor = CreateMockHttpContextAccessor();
+        var userResolver = new UserResolverService<int>(mockAccessor.Object);
+        var mockSchema = new Mock<IDbContextSchema>();
+        mockSchema.Setup(x => x.Schema).Returns("public");
+
+        var context = new SqliteTestAppDbContext(options, userResolver, mockSchema.Object);
+        context.Database.EnsureCreated();
+        return context;
+    }
+
+    /// <summary>
     /// Creates DbContextOptions for AppDbContext (backward compatibility).
     /// </summary>
     public static DbContextOptions<AppDbContext> CreateOptions(string? databaseName = null)
@@ -188,12 +214,11 @@ public static class TestDbContextFactory
         var identity = new ClaimsIdentity(claims, "TestAuth");
         var claimsPrincipal = new ClaimsPrincipal(identity);
 
-        var mockHttpContext = new Mock<HttpContext>();
-        mockHttpContext.Setup(x => x.User).Returns(claimsPrincipal);
-        mockHttpContext.Setup(x => x.Request.Headers).Returns(new HeaderDictionary());
+        var httpContext = new DefaultHttpContext();
+        httpContext.User = claimsPrincipal;
 
         var mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
-        mockHttpContextAccessor.Setup(x => x.HttpContext).Returns(mockHttpContext.Object);
+        mockHttpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
 
         return mockHttpContextAccessor;
     }

@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { of, throwError } from 'rxjs';
 import { AiPanelComponent, AiDataService } from './ai-panel.component';
 import { MarkdownPipe } from '@shared/pipes/markdown.pipe';
@@ -12,6 +13,7 @@ describe('AiPanelComponent', () => {
 
   beforeEach(async () => {
     mockAiService = jasmine.createSpyObj('AiDataService', ['get']);
+    mockAiService.get.and.returnValue(of('')); // Must return Observable - component calls .pipe().subscribe()
     mockTranslateService = jasmine.createSpyObj('TranslateService', ['instant']);
     mockTranslateService.instant.and.returnValue('Translated text');
 
@@ -22,14 +24,15 @@ describe('AiPanelComponent', () => {
         MarkdownPipe
       ],
       providers: [
-        { provide: TranslateService, useValue: mockTranslateService }
+        { provide: TranslateService, useValue: mockTranslateService },
+        provideNoopAnimations()
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(AiPanelComponent);
     component = fixture.componentInstance;
-    
-    // Set required inputs
+
+    // Set required inputs BEFORE detectChanges (ngDoCheck may trigger loadData)
     fixture.componentRef.setInput('title', 'Test Title');
     fixture.componentRef.setInput('entityId', 'entity-123');
     fixture.componentRef.setInput('promptType', 'test-prompt');
@@ -119,7 +122,7 @@ describe('AiPanelComponent', () => {
       component.hasError.set(false);
       component.content.set('Some content');
 
-      expect(component.shouldShowContent()).toBeTrue();
+      expect(component.shouldShowContent()).toBeTruthy();
     });
 
     it('shouldShowError should be true when error occurred', () => {

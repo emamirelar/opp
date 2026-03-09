@@ -65,7 +65,8 @@ describe('ListviewExportService', () => {
 
       result$.subscribe({
         next: (result) => {
-          expect(result).toEqual(mockExportResult);
+          expect(result).toEqual(jasmine.objectContaining(mockExportResult));
+          expect((result as { recordCount?: number }).recordCount).toBe(mockData.length);
           expect(feedbackDialogService.showInfoToast).toHaveBeenCalledWith({
             detail: 'Preparing contacts for export...',
             sticky: true
@@ -77,7 +78,7 @@ describe('ListviewExportService', () => {
         error: done.fail
       });
 
-      const req = httpMock.expectOne(req => 
+      const req = httpMock.expectOne(req =>
         req.url === '/api/contacts' && req.params.get('export') === 'true'
       );
       req.flush(mockData);
@@ -131,7 +132,7 @@ describe('ListviewExportService', () => {
 
       result$.subscribe({
         next: (result) => {
-          expect(result).toEqual(mockExportResult);
+          expect(result).toEqual(jasmine.objectContaining(mockExportResult));
           done();
         },
         error: done.fail
@@ -139,7 +140,7 @@ describe('ListviewExportService', () => {
 
       const req = httpMock.expectOne(req => 
         req.url === '/api/contacts' && 
-        req.params.get('searchText') === 'test search'
+        req.params.get('query') === 'test search'
       );
       req.flush(mockData);
     });
@@ -161,7 +162,7 @@ describe('ListviewExportService', () => {
 
       result$.subscribe({
         next: (result) => {
-          expect(result).toEqual(mockExportResult);
+          expect(result).toEqual(jasmine.objectContaining(mockExportResult));
           done();
         },
         error: done.fail
@@ -169,8 +170,7 @@ describe('ListviewExportService', () => {
 
       const req = httpMock.expectOne(req => 
         req.url === '/api/contacts' && 
-        req.params.get('advancedSearch') === 'true' &&
-        req.params.get('searchCriteria') === JSON.stringify(searchParams.fieldSearches)
+        req.params.get('filters') === JSON.stringify(searchParams.fieldSearches)
       );
       req.flush(mockData);
     });
@@ -190,7 +190,7 @@ describe('ListviewExportService', () => {
 
       result$.subscribe({
         next: (result) => {
-          expect(result).toEqual(mockExportResult);
+          expect(result).toEqual(jasmine.objectContaining(mockExportResult));
           done();
         },
         error: done.fail
@@ -198,7 +198,7 @@ describe('ListviewExportService', () => {
 
       const req = httpMock.expectOne(req => 
         req.url === '/api/contacts' && 
-        req.params.get('searchText') === 'general search term'
+        req.params.get('query') === 'general search term'
       );
       req.flush(mockData);
     });
@@ -218,7 +218,7 @@ describe('ListviewExportService', () => {
 
       result$.subscribe({
         next: (result) => {
-          expect(result).toEqual(mockExportResult);
+          expect(result).toEqual(jasmine.objectContaining(mockExportResult));
           done();
         },
         error: done.fail
@@ -245,7 +245,7 @@ describe('ListviewExportService', () => {
 
       result$.subscribe({
         next: (result) => {
-          expect(result).toEqual(mockExportResult);
+          expect(result).toEqual(jasmine.objectContaining(mockExportResult));
           done();
         },
         error: done.fail
@@ -273,7 +273,7 @@ describe('ListviewExportService', () => {
 
       result$.subscribe({
         next: (result) => {
-          expect(result).toEqual(mockExportResult);
+          expect(result).toEqual(jasmine.objectContaining(mockExportResult));
           expect(exportGoogleSheetService.exportToSheet).toHaveBeenCalledWith(
             jasmine.any(Array),
             jasmine.stringMatching(/Contacts Export \d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}/)
@@ -299,7 +299,7 @@ describe('ListviewExportService', () => {
 
       result$.subscribe({
         next: (result) => {
-          expect(result).toEqual(mockExportResult);
+          expect(result).toEqual(jasmine.objectContaining(mockExportResult));
           done();
         },
         error: done.fail
@@ -316,7 +316,7 @@ describe('ListviewExportService', () => {
 
       result$.subscribe({
         next: (result) => {
-          expect(result).toEqual(mockExportResult);
+          expect(result).toEqual(jasmine.objectContaining(mockExportResult));
           done();
         },
         error: done.fail
@@ -373,7 +373,7 @@ describe('ListviewExportService', () => {
         {
           id: 1,
           name: 'Test Partner',
-          shortName: 'TP',
+          partnerShortDescription: 'TP',
           status: 'Active',
           phone: '123-456-7890'
         }
@@ -388,9 +388,8 @@ describe('ListviewExportService', () => {
               jasmine.objectContaining({
                 ID: 1,
                 Name: 'Test Partner',
-                ShortName: 'TP',
-                Status: 'Active',
-                Phone: '123-456-7890'
+                ShortDescription: 'TP',
+                Status: 'Active'
               })
             ]),
             jasmine.any(String)

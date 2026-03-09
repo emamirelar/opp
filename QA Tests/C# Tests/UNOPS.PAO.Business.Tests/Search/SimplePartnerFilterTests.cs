@@ -3,6 +3,7 @@ using UNOPS.PAO.IntegrationTests.TestData;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Enums;
 using Xunit;
 
 namespace UNOPS.PAO.IntegrationTests.UnitTests;
@@ -23,7 +24,7 @@ public class SimplePartnerFilterTests
         // Assert
         partners.Should().HaveCount(10);
         partners.Should().OnlyContain(p => !string.IsNullOrEmpty(p.Name));
-        partners.Should().OnlyContain(p => p.Status != null);
+        partners.Should().OnlyContain(p => Enum.IsDefined(typeof(EntityStatus), p.Status));
         // PartnerGroupId is generated from 1-10 in TestDataBuilder
         partners.Should().OnlyContain(p => p.PartnerGroupId >= 1 && p.PartnerGroupId <= 10);
     }
@@ -352,7 +353,6 @@ public class SimplePartnerFilterTests
         // Arrange
         var partners = GetTestPartnersWithOrgUnits();
         var targetOrgUnitId = 10;
-        var targetStatus = "Active";
 
         // Act - Combine OrgUnitId and Status filters using the new relationship structure
         var filteredPartners = partners

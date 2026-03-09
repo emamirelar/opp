@@ -39,7 +39,7 @@ public class IntegrationTests : PNO1146TestFixtureBase
 
         // Assert
         LastCapturedEmail.Should().NotBeNull();
-        LastCapturedEmail!.TemplateName.Should().Be("WorkflowApprovalRequest.html");
+        LastCapturedEmail!.TemplateName.Should().Be(TemplateApprovalRequest);
         LastCapturedEmail.EmailReceivers.Should().Contain("approver@unops.org");
     }
 
@@ -63,7 +63,7 @@ public class IntegrationTests : PNO1146TestFixtureBase
 
         // Assert
         LastCapturedEmail.Should().NotBeNull();
-        LastCapturedEmail!.TemplateName.Should().Be("WorkflowCompleted.html");
+        LastCapturedEmail!.TemplateName.Should().Be(TemplateCompleted);
         LastCapturedEmail.EmailReceivers.Should().Contain("submitter@unops.org");
     }
 
@@ -71,9 +71,10 @@ public class IntegrationTests : PNO1146TestFixtureBase
     [Trait("Category", "Integration")]
     public async Task RejectWorkflow_TriggersRejectedEmail_EndToEnd()
     {
-        // Arrange
+        // Arrange — seed OM so rejection recipient lookup finds a valid user
         await SeedOpportunityAsync(1);
         await SeedUserAsync(1, "submitter@unops.org");
+        await SeedOpportunityManagerAsync(1, 1);
         SetupEmailCapture();
 
         var notification = BuildWorkflowNotification(
@@ -86,7 +87,7 @@ public class IntegrationTests : PNO1146TestFixtureBase
 
         // Assert
         LastCapturedEmail.Should().NotBeNull();
-        LastCapturedEmail!.TemplateName.Should().Be("WorkflowRejected.html");
+        LastCapturedEmail!.TemplateName.Should().Be(TemplateRejected);
     }
 
     [Fact]
@@ -108,7 +109,7 @@ public class IntegrationTests : PNO1146TestFixtureBase
 
         // Assert
         LastCapturedEmail.Should().NotBeNull();
-        LastCapturedEmail!.TemplateName.Should().Be("WorkflowRecalled.html");
+        LastCapturedEmail!.TemplateName.Should().Be(TemplateRecalled);
     }
 
     [Fact]
@@ -134,13 +135,13 @@ public class IntegrationTests : PNO1146TestFixtureBase
         // Assert
         MockEmailSender.Verify(
             e => e.SendEmailAsync(
-                It.Is<EmailMessage>(m => m.TemplateName == "WorkflowApprovalRequest.html"),
+                It.Is<EmailMessage>(m => m.TemplateName == TemplateApprovalRequest),
                 It.IsAny<object>(),
                 It.IsAny<string?>()),
             Times.Once);
         MockEmailSender.Verify(
             e => e.SendEmailAsync(
-                It.Is<EmailMessage>(m => m.TemplateName == "WorkflowRecalled.html"),
+                It.Is<EmailMessage>(m => m.TemplateName == TemplateRecalled),
                 It.IsAny<object>(),
                 It.IsAny<string?>()),
             Times.Once);
@@ -257,7 +258,7 @@ public class IntegrationTests : PNO1146TestFixtureBase
 
         // Assert
         capturedModel.Should().NotBeNull();
-        capturedModel!.EntityUrl.Should().Contain("opportunity");
+        capturedModel!.EntityUrl.Should().Contain("opportunities");
         capturedModel.EntityUrl.Should().Contain("1");
     }
 

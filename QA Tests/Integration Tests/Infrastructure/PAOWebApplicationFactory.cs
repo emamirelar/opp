@@ -474,8 +474,9 @@ public class PAOWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup
                 var appContext = sp.GetRequiredService<AppDbContext>();
                 var userResolver = sp.GetRequiredService<UserResolverService<int>>();
                 var notifManager = new NotificationManager(appContext, userResolver);
+                var serviceScopeFactory = sp.GetRequiredService<IServiceScopeFactory>();
                 return new PaoWorkflowNotificationService(
-                    emailSender, dbContextFactory, logger, config, notifManager);
+                    emailSender, dbContextFactory, serviceScopeFactory, logger, config, notifManager);
             });
             services.AddScoped<IWorkflowNotificationService>(sp =>
                 sp.GetRequiredService<PaoWorkflowNotificationService>());
@@ -507,6 +508,17 @@ public class PAOWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup
         client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-Email", "accounts.google.com:testuser@unops.org");
         client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-ID", "accounts.google.com:123");
         client.DefaultRequestHeaders.Add("Cookie", "DevIAPAuth=testuser@unops.org; dev-user-email=testuser@unops.org");
+        return client;
+    }
+
+    /// <summary>
+    /// Creates an HttpClient with PARTNER_GLOB_ADMIN role for admin endpoints.
+    /// Use for entities that require CheckRoleAuthorizationAsync(BaseRole.PARTNER_GLOB_ADMIN).
+    /// </summary>
+    public HttpClient CreateAuthenticatedAdminClient()
+    {
+        var client = CreateAuthenticatedClient();
+        client.DefaultRequestHeaders.Add("Test-Role", "PARTNER_GLOB_ADMIN");
         return client;
     }
     

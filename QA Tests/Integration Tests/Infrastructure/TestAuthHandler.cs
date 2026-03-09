@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -26,6 +28,18 @@ public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions
         if (Request.Headers.TryGetValue("Test-NoAuth", out var noAuth) &&
             string.Equals(noAuth.FirstOrDefault(), "true", StringComparison.OrdinalIgnoreCase))
         {
+            // QA-075 / DEF-063: Honor [AllowAnonymous] on the endpoint.
+            // Currently blocked by DEF-063 (IAPVerificationMiddleware runs first),
+            // but this is correct defense-in-depth for when DEF-063 is resolved.
+            var endpoint = Context.GetEndpoint();
+            if (endpoint?.Metadata?.GetMetadata<IAllowAnonymous>() != null)
+            {
+                var anonIdentity = new ClaimsIdentity();
+                var anonPrincipal = new ClaimsPrincipal(anonIdentity);
+                var anonTicket = new AuthenticationTicket(anonPrincipal, Scheme.Name);
+                return Task.FromResult(AuthenticateResult.Success(anonTicket));
+            }
+
             return Task.FromResult(AuthenticateResult.NoResult());
         }
         
@@ -41,7 +55,15 @@ public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions
                 
                 if (!string.IsNullOrEmpty(claimValue))
                 {
-                    claims.Add(new Claim(claimType, claimValue));
+                    // Use ClaimTypes.Role for Test-Role so User.IsInRole() works (e.g. PARTNER_GLOB_ADMIN)
+                    if (string.Equals(claimType, "Role", StringComparison.OrdinalIgnoreCase))
+                    {
+                        claims.Add(new Claim(ClaimTypes.Role, claimValue));
+                    }
+                    else
+                    {
+                        claims.Add(new Claim(claimType, claimValue));
+                    }
                 }
             }
         }

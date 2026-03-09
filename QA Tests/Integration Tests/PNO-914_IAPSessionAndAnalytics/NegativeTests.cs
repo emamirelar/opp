@@ -47,7 +47,9 @@ public class NegativeTests : PNO914TestFixtureBase
             .Should().ThrowAsync<Exception>();
     }
 
-    [Fact(Skip = "DEF-048: Manager does not validate empty Name — needs BusinessException")]
+    [Fact]
+
+    [Trait("Defect", "DEF-048")]
     [Trait("TestId", "TC-PNO914-NEG-003")]
     public async Task CreateFromInteractions_EmptyName_ThrowsValidation()
     {
@@ -143,7 +145,9 @@ public class NegativeTests : PNO914TestFixtureBase
         await Task.CompletedTask;
     }
 
-    [Fact(Skip = "DEF-048: Manager does not validate whitespace-only Name — needs BusinessException")]
+    [Fact]
+
+    [Trait("Defect", "DEF-048")]
     [Trait("TestId", "TC-PNO914-NEG-010")]
     public async Task CreateFromInteractions_WhitespaceOnlyName_ThrowsValidation()
     {
@@ -157,7 +161,9 @@ public class NegativeTests : PNO914TestFixtureBase
             .Should().ThrowAsync<Exception>();
     }
 
-    [Fact(Skip = "DEF-049: Manager does not validate Name max length (120 chars) — needs BusinessException")]
+    [Fact]
+
+    [Trait("Defect", "DEF-049")]
     [Trait("TestId", "TC-PNO914-NEG-011")]
     public async Task CreateFromInteractions_NameExceeds120Chars_ThrowsValidation()
     {

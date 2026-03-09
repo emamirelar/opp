@@ -6,7 +6,7 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './base.page';
 import { assertVisible, assertPageHeader, assertListviewVisible } from '../helpers/assertions.helper';
-import { waitForTableData, waitForDialog } from '../helpers/wait.helper';
+import { waitForTableData, waitForDialog, waitForLoadingToComplete } from '../helpers/wait.helper';
 
 export abstract class EntityListPage extends BasePage {
   protected abstract entityName: string;
@@ -16,66 +16,65 @@ export abstract class EntityListPage extends BasePage {
   }
   
   /**
-   * Get page header locator
+   * Display name for the entity (e.g., "Partners", "Contacts") used in text-based locators.
+   * Override in subclass if the display name differs from entityName capitalization.
    */
+  protected get displayName(): string {
+    return this.entityName.charAt(0).toUpperCase() + this.entityName.slice(1);
+  }
+
+  /**
+   * Singular display name (e.g., "Partner") derived from entityName by removing trailing 's'.
+   */
+  protected get singularDisplayName(): string {
+    const name = this.displayName;
+    if (name.endsWith('ies')) return name.slice(0, -3) + 'y';
+    if (name.endsWith('s')) return name.slice(0, -1);
+    return name;
+  }
+
   get header(): Locator {
-    return this.getByTestId(`${this.entityName}-header`);
+    return this.page.getByText(this.displayName, { exact: true }).first()
+      .or(this.getByTestId(`${this.entityName}-header`));
   }
-  
-  /**
-   * Get page icon locator
-   */
+
   get icon(): Locator {
-    return this.getByTestId(`${this.entityName}-icon`);
+    return this.getByTestId(`${this.entityName}-icon`)
+      .or(this.page.locator('.material-icons, .material-symbols-outlined').first());
   }
-  
-  /**
-   * Get page title locator
-   */
+
   get title(): Locator {
-    return this.getByTestId(`${this.entityName}-title`);
+    return this.page.getByText(this.displayName, { exact: true }).first()
+      .or(this.getByTestId(`${this.entityName}-title`));
   }
-  
-  /**
-   * Get listview component locator
-   */
+
   get listview(): Locator {
-    return this.getByTestId(`${this.entityName}-listview`);
+    return this.page.locator('app-listview').first()
+      .or(this.getByTestId(`${this.entityName}-listview`));
   }
-  
-  /**
-   * Get new entity button locator
-   */
+
   get newButton(): Locator {
-    return this.getByTestId(`new-${this.entityName.slice(0, -1)}-button`);
+    return this.page.getByRole('button', { name: new RegExp(`new ${this.singularDisplayName}`, 'i') })
+      .or(this.getByTestId(`new-${this.entityName.slice(0, -1)}-button`));
   }
-  
-  /**
-   * Get export button locator
-   */
+
   get exportButton(): Locator {
-    return this.getByTestId('export-button');
+    return this.page.getByRole('button', { name: /export/i })
+      .or(this.getByTestId('export-button'));
   }
-  
-  /**
-   * Get import button locator
-   */
+
   get importButton(): Locator {
-    return this.getByTestId('import-button');
+    return this.page.getByRole('button', { name: /import/i })
+      .or(this.getByTestId('import-button'));
   }
-  
-  /**
-   * Get table rows
-   */
+
   get tableRows(): Locator {
-    return this.page.locator('tbody tr, .p-datatable-tbody tr');
+    return this.page.locator('app-listview-card .cursor-pointer, tbody tr, .p-datatable-tbody tr');
   }
-  
-  /**
-   * Get search input
-   */
+
   get searchInput(): Locator {
-    return this.page.locator('input[type="text"]').first();
+    return this.page.getByPlaceholder(/search/i).first()
+      .or(this.page.locator('input.quick-search, app-listview input[type="text"], [placeholder*="Search"]').first());
   }
   
   /**
@@ -148,7 +147,7 @@ export abstract class EntityListPage extends BasePage {
    */
   async clickFirstRow(): Promise<void> {
     await this.tableRows.first().click();
-    await this.page.waitForTimeout(1000);
+    await waitForLoadingToComplete(this.page);
   }
   
   /**
@@ -157,7 +156,7 @@ export abstract class EntityListPage extends BasePage {
   async search(searchText: string): Promise<void> {
     if (await this.searchInput.isVisible().catch(() => false)) {
       await this.searchInput.fill(searchText);
-      await this.page.waitForTimeout(1000); // Wait for search debounce
+      await waitForTableData(this.page);
     }
   }
   
@@ -166,9 +165,7 @@ export abstract class EntityListPage extends BasePage {
    */
   async verifyMobileResponsive(): Promise<void> {
     await this.page.setViewportSize({ width: 375, height: 667 });
-    await this.page.waitForTimeout(1000);
-    
-    await assertVisible(this.header);
-    await assertVisible(this.listview);
+    await assertVisible(this.header, 10000);
+    await assertVisible(this.listview, 10000);
   }
 }

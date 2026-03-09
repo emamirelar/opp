@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Services;
 using UNOPS.PAO.Domain.Entities;
+using OpportunityEntity = UNOPS.PAO.Domain.Entities.Opportunity;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Opportunities;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
@@ -83,12 +84,6 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
             _transaction = _context.Database.BeginTransaction();
         }
 
-        var mapperConfig = new MapperConfiguration(cfg =>
-        {
-            cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
-        });
-        _mapper = mapperConfig.CreateMapper();
-        
         _configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -104,7 +99,18 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
                 ["ExchangeRate:BaseUrl"] = "https://test-api.example.com"
             })
             .Build();
-        
+
+        var mapperConfig = new MapperConfiguration(cfg =>
+        {
+            cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
+            cfg.ConstructServicesUsing(serviceType =>
+            {
+                try { return Activator.CreateInstance(serviceType)!; }
+                catch { return null!; }
+            });
+        });
+        _mapper = mapperConfig.CreateMapper();
+
         _mockPermissionService = new Mock<IPermissionService>();
         _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
         _mockDbContextFactory = new Mock<IDbContextFactory<UNOPSAppDbContext>>();
@@ -222,7 +228,7 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
         string? challenges = null,
         DateTime? createdDate = null)
     {
-        var opportunity = new Domain.Entities.Opportunity
+        var opportunity = new OpportunityEntity
         {
             Name = name ?? $"Test Opportunity {_testMarker}",
             Description = description ?? "Test Description",
@@ -451,7 +457,9 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
         result.Name.Should().Contain("Développement");
     }
 
-    [Fact(Skip = "DEF: AutoMapper ForAllMembers Condition prevents clearing nullable fields via null - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-105")]
     [Trait("Category", "P2")]
     [Trait("Type", "EdgeCase")]
     [Trait("TestId", "TC-UNOPS-ADV-007")]
@@ -481,7 +489,8 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
         savedOpportunity!.PartnerReference.Should().BeNull(); // Cleared
     }
 
-    [Fact(Skip = "DEF: DbContext is not thread-safe - parallel reads on same instance cause ConcurrencyDetector failure - requires DbContextFactory per-task pattern")]
+    [Fact]
+    [Trait("Defect", "DEF-089")]
     [Trait("Category", "P2")]
     [Trait("Type", "EdgeCase")]
     [Trait("TestId", "TC-UNOPS-ADV-008")]
@@ -727,7 +736,7 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
         var oppId2 = await CreateTestOpportunityAsync(name: "Partner Opp 2", description: "Test Description");
 
         // Link opportunity to partner via FundingPartners
-        _context.Set<Domain.Entities.OpportunityFundingPartner>().Add(new Domain.Entities.OpportunityFundingPartner
+        _context.Set<OpportunityFundingPartner>().Add(new OpportunityFundingPartner
         {
             OpportunityId = oppId1,
             PartnerId = partner.Id,
@@ -785,7 +794,9 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
         result.Should().BeNull();
     }
 
-    [SkipIfInMemoryFact]
+    [Fact]
+
+    [Trait("Defect", "DEF-072")]
     [Trait("Category", "P2")]
     [Trait("Type", "ErrorHandling")]
     [Trait("TestId", "TC-UNOPS-ADV-019")]
@@ -911,7 +922,9 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
         result.DeliveryModality.Should().Be(1);
     }
 
-    [Fact(Skip = "DeliveryModality not available in UpdateOpportunityRequest - needs to be added to the DTO - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-105")]
     [Trait("Category", "P2")]
     [Trait("Type", "Functional")]
     [Trait("TestId", "TC-UNOPS-ADV-025")]
@@ -1016,7 +1029,9 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
 
     #region P2 - User Role Context Tests
 
-    [Fact(Skip = "UserRole not populated in GetOpportunityAsync - requires IPermissionService integration - DEV task")]
+    [Fact]
+
+    [Trait("Defect", "DEF-104")]
     [Trait("Category", "P2")]
     [Trait("Type", "Security")]
     [Trait("TestId", "TC-UNOPS-ADV-029")]
@@ -1090,7 +1105,7 @@ public class OpportunityAdvancedFeaturesTests : IDisposable
             if (TestEnvironment.UsePostgreSQL && _createdOpportunityIds.Any())
             {
                 var ids = string.Join(",", _createdOpportunityIds);
-                _context.Database.ExecuteSqlRaw($"DELETE FROM public.\"Opportunities\" WHERE \"Id\" IN ({ids})");
+                _context.Database.ExecuteSql($"DELETE FROM public.\"Opportunities\" WHERE \"Id\" IN ({ids})");
             }
         }
         catch { /* Best-effort cleanup */ }

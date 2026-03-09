@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule, TranslateService, TranslateLoader, TranslateFakeLoader } from '@ngx-translate/core';
 import { SearchResultComponent } from './search-result.component';
 import { EntityConfigurationService } from '@shared/services/api/entity-configuration.service';
 import { GlobalFilterService } from '@core/services/filters';
@@ -22,7 +23,7 @@ describe('SearchResultComponent', () => {
   let mockOrganizationHierarchyService: jasmine.SpyObj<OrganizationHierarchyService>;
   let mockAuthService: jasmine.SpyObj<AuthService>;
   let mockGlobalFiltersDialogService: jasmine.SpyObj<GlobalFiltersDialogService>;
-  let mockTranslateService: jasmine.SpyObj<TranslateService>;
+  let translateService: TranslateService;
   let queryParamsSubject: Subject<any>;
   let activeOrgUnitIdSubject: BehaviorSubject<number | null>;
   let filtersChangedSubject: Subject<void>;
@@ -62,7 +63,6 @@ describe('SearchResultComponent', () => {
     mockAuthService = jasmine.createSpyObj('AuthService', ['user']);
     mockGlobalFiltersDialogService = jasmine.createSpyObj('GlobalFiltersDialogService', 
       ['openDialog']);
-    mockTranslateService = jasmine.createSpyObj('TranslateService', ['instant']);
 
     mockGlobalFilterService = {
       activeOrgUnitId$: activeOrgUnitIdSubject.asObservable(),
@@ -71,6 +71,7 @@ describe('SearchResultComponent', () => {
       setFilterEnabled: jasmine.createSpy('setFilterEnabled')
     };
 
+    mockOrganizationHierarchyService.getOrganizationHierarchy.and.returnValue(of([]));
     mockEntityConfigService.getEntityListViewConfiguration.and.returnValue(of(mockColumns));
     mockUserPreferenceService.getGlobalFilters.and.returnValue(of({
       orgUnitId: null,
@@ -81,15 +82,22 @@ describe('SearchResultComponent', () => {
       dateTo: null
     }));
     mockAuthService.user.and.returnValue(of([{ type: 'userId', value: 'user123' }]));
-    mockTranslateService.instant.and.returnValue('Translated');
 
     await TestBed.configureTestingModule({
-      imports: [SearchResultComponent, HttpClientTestingModule, TranslateModule.forRoot()],
+      imports: [
+        SearchResultComponent,
+        HttpClientTestingModule,
+        TranslateModule.forRoot({
+          loader: { provide: TranslateLoader, useClass: TranslateFakeLoader }
+        })
+      ],
       providers: [
         {
           provide: ActivatedRoute,
           useValue: {
-            queryParams: queryParamsSubject.asObservable()
+            params: of({}),
+            queryParams: queryParamsSubject.asObservable(),
+            snapshot: { paramMap: { get: () => null } }
           }
         },
         { provide: Router, useValue: mockRouter },
@@ -98,14 +106,15 @@ describe('SearchResultComponent', () => {
         { provide: UserPreferenceService, useValue: mockUserPreferenceService },
         { provide: OrganizationHierarchyService, useValue: mockOrganizationHierarchyService },
         { provide: AuthService, useValue: mockAuthService },
-        { provide: GlobalFiltersDialogService, useValue: mockGlobalFiltersDialogService },
-        { provide: TranslateService, useValue: mockTranslateService }
+        { provide: GlobalFiltersDialogService, useValue: mockGlobalFiltersDialogService }
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(SearchResultComponent);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
+    translateService = TestBed.inject(TranslateService);
+    spyOn(translateService, 'instant').and.returnValue('Translated');
   });
 
   afterEach(() => {
@@ -171,14 +180,18 @@ describe('SearchResultComponent', () => {
       expect(component['performUnifiedSearch']).not.toHaveBeenCalled();
     });
 
-    it('should update search control value when query param changes', () => {
+    it('should update search control value when query param changes', fakeAsync(() => {
       fixture.detectChanges();
 
       queryParamsSubject.next({ q: 'new query' });
+      tick();
 
       expect(component.searchControl.value).toBe('new query');
       expect(component.currentSearchTerm()).toBe('new query');
-    });
+
+      const req = httpMock.expectOne((r) => r.url.includes('/api/global/search'));
+      req.flush(mockSearchResponse);
+    }));
   });
 
   describe('search functionality', () => {
@@ -315,7 +328,7 @@ describe('SearchResultComponent', () => {
     it('should set activeTabKey correctly', () => {
       component.activeTabKey = 'partners';
 
-      expect(component.activeTabKey).toBe('Partner');
+      expect(component.activeTabKey).toBe('partners');
     });
 
     it('should filter results by active tab', () => {

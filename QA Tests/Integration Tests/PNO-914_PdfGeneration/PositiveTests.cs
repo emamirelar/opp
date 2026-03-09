@@ -20,7 +20,9 @@ public class PositiveTests : PdfGenerationTestFixtureBase
 {
     public PositiveTests(PAOWebApplicationFactory<Program> factory) : base(factory) { }
 
-    [Fact(Skip = "DEF-021/DEF-024: DocumentController blocked by route conflict and Google Secret Manager dependency")]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-POS-001")]
     public async Task CreatePdf_ValidMarkdown_ReturnsPdfWithCorrectContentType()
     {
@@ -38,7 +40,9 @@ public class PositiveTests : PdfGenerationTestFixtureBase
         bytes.Should().NotBeEmpty();
     }
 
-    [Fact(Skip = "DEF-021/DEF-024: DocumentController blocked by route conflict and Google Secret Manager dependency")]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-POS-002")]
     public async Task CreatePdf_SimpleMarkdown_GeneratesNonEmptyPdf()
     {
@@ -56,7 +60,9 @@ public class PositiveTests : PdfGenerationTestFixtureBase
         bytes.Length.Should().BeGreaterThan(100);
     }
 
-    [Fact(Skip = "DEF-021/DEF-024: DocumentController blocked by route conflict and Google Secret Manager dependency")]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-POS-003")]
     public async Task CreatePdf_WithFilename_UsesProvidedFilenameInContentDisposition()
     {
@@ -72,7 +78,9 @@ public class PositiveTests : PdfGenerationTestFixtureBase
         response.Content.Headers.ContentDisposition?.FileName.Should().Contain("MyReport");
     }
 
-    [Fact(Skip = "DEF-021/DEF-024: DocumentController blocked by route conflict and Google Secret Manager dependency")]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-POS-004")]
     public async Task CreatePdf_MarkdownWithHeaders_ConvertsCorrectly()
     {
@@ -93,7 +101,9 @@ public class PositiveTests : PdfGenerationTestFixtureBase
         bytes.Should().NotBeEmpty();
     }
 
-    [Fact(Skip = "DEF-021/DEF-024: DocumentController blocked by route conflict and Google Secret Manager dependency")]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-POS-005")]
     public async Task CreatePdf_MarkdownWithLists_ConvertsCorrectly()
     {
@@ -114,7 +124,9 @@ public class PositiveTests : PdfGenerationTestFixtureBase
         bytes.Should().NotBeEmpty();
     }
 
-    [Fact(Skip = "DEF-021/DEF-024: DocumentController blocked by route conflict and Google Secret Manager dependency")]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-POS-006")]
     public async Task CreatePdf_MarkdownWithBoldAndItalic_ConvertsCorrectly()
     {
@@ -135,7 +147,9 @@ public class PositiveTests : PdfGenerationTestFixtureBase
         bytes.Should().NotBeEmpty();
     }
 
-    [Fact(Skip = "DEF-021/DEF-024: DocumentController blocked by route conflict and Google Secret Manager dependency")]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-POS-007")]
     public async Task CreatePdf_WithoutFilename_UsesDefaultFilename()
     {
@@ -151,7 +165,9 @@ public class PositiveTests : PdfGenerationTestFixtureBase
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/pdf");
     }
 
-    [Fact(Skip = "DEF-021/DEF-024: DocumentController blocked by route conflict and Google Secret Manager dependency")]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-POS-008")]
     public async Task CreatePdf_OpportunityStatementMarkdown_GeneratesPdf()
     {
@@ -169,7 +185,9 @@ public class PositiveTests : PdfGenerationTestFixtureBase
         bytes.Should().NotBeEmpty();
     }
 
-    [Fact(Skip = "DEF-021/DEF-024: DocumentController blocked by route conflict and Google Secret Manager dependency")]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-POS-009")]
     public async Task CreatePdf_MarkdownWithLinks_ConvertsCorrectly()
     {
@@ -190,7 +208,9 @@ public class PositiveTests : PdfGenerationTestFixtureBase
         bytes.Should().NotBeEmpty();
     }
 
-    [Fact(Skip = "DEF-021/DEF-024: DocumentController blocked by route conflict and Google Secret Manager dependency")]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-POS-010")]
     public async Task CreatePdf_MarkdownWithTables_ConvertsCorrectly()
     {

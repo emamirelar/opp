@@ -1,8 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FileUploadComponent } from './file-upload.component';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { AiAssistantService } from '@ai/services/ai-assistant.service';
+
+const mockAiAssistantService = {
+  supportedFileTypes: ['image/jpeg', 'image/png', 'application/pdf'],
+  validateFiles: (files: File[]) => ({ valid: files, invalid: [] }),
+  isImageFile: () => false,
+  getFilePreview: () => Promise.resolve(null)
+};
 
 describe('FileUploadComponent', () => {
   let component: FileUploadComponent;
@@ -12,10 +18,11 @@ describe('FileUploadComponent', () => {
     await TestBed.configureTestingModule({
       imports: [
         FileUploadComponent,
-        HttpClientTestingModule,
         TranslateModule.forRoot()
       ],
-      providers: [AiAssistantService]
+      providers: [
+        { provide: AiAssistantService, useValue: mockAiAssistantService }
+      ]
     })
     .compileComponents();
 

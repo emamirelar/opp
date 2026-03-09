@@ -1,8 +1,29 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ElementRef } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
+import { InteractionIconService } from '@shared/services/domain/interaction-icon.service';
 
 import { TimelineComponent, TimelineItem, TimelineConfig } from './timeline.component';
+
+const defaultIconInfo = {
+  icon: 'pi pi-comments',
+  materialIcon: 'chat',
+  materialIconFilled: 'chat',
+  color: '#3B82F6',
+  bgColor: 'bg-cyan-50',
+  textColor: 'text-cyan-800',
+  gradient: 'linear-gradient(135deg, #74b9ff 0%, #0984e3 100%)',
+  shadowColor: 'rgba(116, 185, 255, 0.3)'
+};
+const mockInteractionIconService = jasmine.createSpyObj('InteractionIconService', [
+  'getInteractionIcon', 'getInteractionColor', 'getInteractionMaterialIcon', 'getInteractionMaterialIconFilled', 'getInteractionIconInfo'
+]);
+mockInteractionIconService.getInteractionIcon.and.returnValue('pi pi-comments');
+mockInteractionIconService.getInteractionColor.and.returnValue('#3B82F6');
+mockInteractionIconService.getInteractionMaterialIcon.and.returnValue('chat');
+mockInteractionIconService.getInteractionMaterialIconFilled.and.returnValue('chat');
+mockInteractionIconService.getInteractionIconInfo.and.returnValue(defaultIconInfo);
 
 describe('TimelineComponent', () => {
   let component: TimelineComponent;
@@ -65,7 +86,11 @@ describe('TimelineComponent', () => {
     await TestBed.configureTestingModule({
       imports: [
         TimelineComponent,
-        HttpClientTestingModule
+        HttpClientTestingModule,
+        TranslateModule.forRoot()
+      ],
+      providers: [
+        { provide: InteractionIconService, useValue: mockInteractionIconService }
       ]
     }).compileComponents();
 
@@ -142,14 +167,16 @@ describe('TimelineComponent', () => {
 
   afterEach(() => {
     httpMock.verify();
-    // Safely destroy timeline if it exists
-    if (component.timeline) {
-      try {
-        component.timeline.destroy();
-        component.timeline = undefined;
-      } catch (e) {
-        // Ignore timeline destruction errors in tests
+    // Safely destroy timeline if it exists and has destroy method
+    try {
+      if (component?.timeline && typeof (component.timeline as any).destroy === 'function') {
+        (component.timeline as any).destroy();
       }
+    } catch {
+      // Ignore timeline destruction errors in tests
+    }
+    if (component) {
+      component.timeline = undefined;
     }
   });
 
@@ -223,7 +250,8 @@ describe('TimelineComponent', () => {
     it('should update timeline data when items input changes', () => {
       spyOn(component.timelineData, 'clear');
       spyOn(component.timelineData, 'add');
-      component.timeline = {} as any; // Mock timeline existence
+      component.timeline = { destroy: () => {} } as any; // Mock timeline existence
+      component.items = mockTimelineItems; // Set items so updateTimelineData receives correct value
 
       component.ngOnChanges({
         items: {
@@ -304,7 +332,7 @@ describe('TimelineComponent', () => {
       expect(component.selectionWidth).toBe(0);
     });
 
-    it('should handle navigator mouse move event when dragging', () => {
+    it('should handle navigator mouse move event when dragging', fakeAsync(() => {
       component.isDragging = true;
       component.dragStartX = 50;
 
@@ -313,9 +341,12 @@ describe('TimelineComponent', () => {
 
       component.onNavigatorMouseMove(event);
 
+      tick(20); // Flush requestAnimationFrame callback
+      fixture.detectChanges();
+
       expect(component.selectionLeft).toBe(50);
       expect(component.selectionWidth).toBe(100);
-    });
+    }));
 
     it('should not handle navigator mouse move when not dragging', () => {
       component.isDragging = false;
@@ -333,7 +364,7 @@ describe('TimelineComponent', () => {
 
     it('should get correct year range string', () => {
       const now = new Date();
-      const startYear = now.getFullYear() - 10;
+      const startYear = now.getFullYear() - 3; // Component uses 3-year navigator range
       const endYear = now.getFullYear();
 
       const result = component.getYearRange();
@@ -355,7 +386,8 @@ describe('TimelineComponent', () => {
 
     it('should fit timeline when timeline exists', () => {
       const mockTimeline = {
-        fit: jasmine.createSpy('fit')
+        fit: jasmine.createSpy('fit'),
+        destroy: () => {}
       };
       component.timeline = mockTimeline as any;
       (component as any).createTimeline.and.callThrough(); // Allow actual call for this test
@@ -371,7 +403,8 @@ describe('TimelineComponent', () => {
         end: new Date('2024-01-31')
       };
       const mockTimeline = {
-        getWindow: jasmine.createSpy('getWindow').and.returnValue(mockWindow)
+        getWindow: jasmine.createSpy('getWindow').and.returnValue(mockWindow),
+        destroy: () => {}
       };
       component.timeline = mockTimeline as any;
 
@@ -521,7 +554,8 @@ describe('TimelineComponent', () => {
         getWindow: jasmine.createSpy('getWindow').and.returnValue({
           start: new Date('2024-01-01'),
           end: new Date('2024-12-31') // 1 year range
-        })
+        }),
+        destroy: () => {}
       };
       component.timeline = mockTimeline as any;
 

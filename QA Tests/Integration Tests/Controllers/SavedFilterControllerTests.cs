@@ -247,6 +247,7 @@ public class SavedFilterControllerTests : IntegrationTestBase
     /// Verifies sharing a filter with another user
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-031")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-SFC-007")]
@@ -269,6 +270,7 @@ public class SavedFilterControllerTests : IntegrationTestBase
     /// Verifies sharing a filter with all users in a role
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-031")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-SFC-008")]
@@ -291,6 +293,7 @@ public class SavedFilterControllerTests : IntegrationTestBase
     /// Verifies retrieval of filters shared with current user
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-031")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-SFC-009")]
@@ -316,6 +319,7 @@ public class SavedFilterControllerTests : IntegrationTestBase
     /// Verifies removal of filter sharing
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-031")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-SFC-010")]
@@ -338,6 +342,7 @@ public class SavedFilterControllerTests : IntegrationTestBase
     /// Verifies cloning a saved filter
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-031")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-SFC-011")]
@@ -368,6 +373,7 @@ public class SavedFilterControllerTests : IntegrationTestBase
     /// Verifies setting a filter as default for entity type
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-031")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-SFC-012")]
@@ -389,6 +395,7 @@ public class SavedFilterControllerTests : IntegrationTestBase
     /// Verifies retrieval of default filter for entity type
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-031")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-SFC-013")]
@@ -415,6 +422,7 @@ public class SavedFilterControllerTests : IntegrationTestBase
     /// Verifies clearing default filter for entity type
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-031")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-SFC-014")]
@@ -436,6 +444,7 @@ public class SavedFilterControllerTests : IntegrationTestBase
     /// Verifies exporting filter as JSON
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-031")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-SFC-015")]
@@ -529,6 +538,44 @@ public class SavedFilterControllerTests : IntegrationTestBase
         // Assert
         response.StatusCode.Should().BeOneOf(new[] { HttpStatusCode.NotFound, HttpStatusCode.Forbidden }, 
             "because private filters should not be accessible to other users");
+    }
+
+    [Fact]
+    [Trait("Category", "Edge")]
+    [Trait("Priority", "P1")]
+    [Trait("TestId", "TC-SFC-EDGE-001")]
+    [Trait("Ticket", "PNO-1194")]
+    public async Task GetSavedFilters_ResponseContent_NoEncodingArtifacts()
+    {
+        var client = Factory.CreateAuthenticatedClient();
+        var response = await client.GetAsync("/api/SavedFilter");
+        if (response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            content.Should().NotContain("??",
+                "PNO-1194: saved filter names must not contain encoding artifacts");
+            content.Should().NotContain("\uFFFD");
+        }
+    }
+
+    [Fact]
+    [Trait("Category", "Edge")]
+    [Trait("Priority", "P1")]
+    [Trait("TestId", "TC-SFC-EDGE-002")]
+    public async Task CreateSavedFilter_UnicodeFilterName_Accepted()
+    {
+        var client = Factory.CreateAuthenticatedClient();
+        var filterData = new
+        {
+            Name = "Filtre pour Jos\u00e9 Garc\u00eda",
+            EntityName = "Partner",
+            IsPublic = false,
+            FilterData = "{}"
+        };
+        var response = await client.PostAsJsonAsync("/api/SavedFilter", filterData);
+        response.StatusCode.Should().BeOneOf(
+            HttpStatusCode.OK, HttpStatusCode.Created,
+            HttpStatusCode.BadRequest, HttpStatusCode.NotFound);
     }
 
     #endregion

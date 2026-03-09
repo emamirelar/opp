@@ -12,6 +12,7 @@
     "build:ssr": "ng run UNOPS.PAO.ClientApp:server:dev",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:ci": "ng test --configuration=ci --watch=false --code-coverage",
     "format": "prettier --write \"**/*.{js,mjs,ts,mts,d.ts,html}\" --cache",
     "extract-i18n": "ngx-translate-extract --input ./src --output ./public/assets/i18n/*.json --sort --format json && node sync_translation_keys.js",
     "extract-i18n:watch": "ngx-translate-extract --input ./src --output ./public/assets/i18n/*.json --sort --format json --watch",

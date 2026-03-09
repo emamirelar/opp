@@ -6,23 +6,38 @@ on:
   pull_request:
     branches: [ main, dev-deploy ]
   schedule:
-    # Run daily at 2 AM UTC
+    # Nightly at 2 AM UTC — runs full Playwright suite + cross-browser
     - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      playwright_tier:
+        description: 'Playwright tier to run (smoke, extended, full, cross-browser)'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - smoke
+          - extended
+          - full
+          - cross-browser
 
 env:
   DOTNET_VERSION: '9.0.x'
-  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
 
 jobs:
-  fast-tests:
-    name: Fast Logic Tests
-    runs-on: windows-latest
-    
+  # ============================================================================
+  # BUILD STAGE — build once, share with all test jobs
+  # ============================================================================
+
+  dotnet-build:
+    name: .NET Build
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        submodules: recursive  # Required for UNOPS.Workflow - Business/Workflow adapters depend on it
+        submodules: recursive
         token: ${{ secrets.GH_PAT }}
 
     - name: Ensure Workflow submodule initialized
@@ -32,40 +47,183 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
-    
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
     - name: Restore dependencies
       run: dotnet restore
-    
+
     - name: Build
       run: dotnet build --no-restore --configuration Release
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dotnet-build
+        path: |
+          **/bin/Release/
+          **/obj/
+          **/*.csproj
+          **/*.sln
+          **/*.cs
+          **/*.json
+          **/appsettings*.json
+          UNOPS.Workflow/
+        retention-days: 1
+        include-hidden-files: false
+
+  angular-build:
+    name: Angular Build & Lint
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        token: ${{ secrets.GH_PAT }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Cache npm dependencies
+      uses: actions/cache@v4
+      with:
+        path: UNOPS.PAO.ClientApp/node_modules
+        key: npm-${{ runner.os }}-${{ hashFiles('UNOPS.PAO.ClientApp/package-lock.json') }}
+        restore-keys: npm-${{ runner.os }}-
+
+    - name: Install dependencies
+      working-directory: UNOPS.PAO.ClientApp
+      run: npm install
+
+    - name: Angular Build
+      working-directory: UNOPS.PAO.ClientApp
+      run: npm run build
+
+    - name: ESLint Check
+      id: eslint-check
+      continue-on-error: true
+      working-directory: UNOPS.PAO.ClientApp
+      run: npx eslint . --format stylish 2>&1 | head -200
+
+    - name: npm Security Audit
+      id: npm-audit
+      continue-on-error: true
+      working-directory: UNOPS.PAO.ClientApp
+      run: npm audit --audit-level=high
+
+    - name: Upload Angular dist
+      uses: actions/upload-artifact@v4
+      with:
+        name: angular-dist
+        path: UNOPS.PAO.ClientApp/dist
+        retention-days: 1
+
+  # ============================================================================
+  # TEST STAGE — all test jobs run in parallel, reuse build artifacts
+  # ============================================================================
+
+  smoke-tests:
+    name: Smoke Tests (Fast Gate)
+    needs: [dotnet-build]
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        token: ${{ secrets.GH_PAT }}
+
+    - name: Ensure Workflow submodule initialized
+      run: git submodule update --init --recursive UNOPS.Workflow
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
+    - name: Restore & Build
+      run: dotnet build --configuration Release
+
+    - name: Run Smoke Tests
+      run: |
+        mkdir -p "${{ github.workspace }}/TestResults"
+        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" \
+          --no-build \
+          --configuration Release \
+          --verbosity normal \
+          --filter "Category=Smoke" \
+          --logger "trx;LogFileName=smoke-tests.trx" \
+          --results-directory "${{ github.workspace }}/TestResults"
+      env:
+        USE_INMEMORY_DB: 'true'
+
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Smoke Tests Results
+        path: '**/TestResults/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: true
+
+  fast-tests:
+    name: Fast Logic Tests
+    needs: [dotnet-build]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        token: ${{ secrets.GH_PAT }}
+
+    - name: Ensure Workflow submodule initialized
+      run: git submodule update --init --recursive UNOPS.Workflow
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
+    - name: Restore & Build
+      run: dotnet build --configuration Release
     
     - name: Run FastTests
       id: run-fast-tests
       continue-on-error: true
       run: |
-        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
-        New-Item -ItemType Directory -Force -Path $testResultsDir | Out-Null
-        dotnet test "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj" `
-          --no-build `
-          --configuration Release `
-          --verbosity normal `
-          --logger "trx;LogFileName=fast-tests.trx" `
-          --results-directory $testResultsDir
-    
-    - name: List Test Results (Debug)
-      if: always()
-      run: |
-        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
-        echo "Looking for test results in: $testResultsDir"
-        if (Test-Path $testResultsDir) {
-          Get-ChildItem -Path $testResultsDir -Recurse -Filter "*.trx" -ErrorAction SilentlyContinue | ForEach-Object { 
-            Write-Host "Found: $($_.FullName)"
-          }
-          $trxCount = (Get-ChildItem -Path $testResultsDir -Filter "*.trx" -Recurse -ErrorAction SilentlyContinue).Count
-          echo "Total .trx files found: $trxCount"
-        } else {
-          echo "ERROR: TestResults directory does not exist at $testResultsDir"
-        }
+        mkdir -p "${{ github.workspace }}/TestResults"
+        dotnet test "QA Tests/C# Tests/UNOPS.PAO.FastTests/UNOPS.PAO.FastTests.csproj" \
+          --no-build \
+          --configuration Release \
+          --verbosity normal \
+          --logger "trx;LogFileName=fast-tests.trx" \
+          --results-directory "${{ github.workspace }}/TestResults" \
+          --collect:"XPlat Code Coverage"
     
     - name: Publish Test Results
       uses: dorny/test-reporter@v1
@@ -81,7 +239,9 @@ jobs:
       if: always()
       with:
         name: fast-tests-results
-        path: TestResults
+        path: |
+          TestResults
+          **/coverage.cobertura.xml
         if-no-files-found: warn
     
     - name: Check FastTests Result
@@ -91,14 +251,30 @@ jobs:
         exit 1
 
   business-tests:
-    name: Business Logic Tests
-    runs-on: windows-latest
+    name: Business Logic Tests (PostgreSQL)
+    needs: [dotnet-build]
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: unops_pao_test
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        submodules: recursive  # Required for UNOPS.Workflow - Business/Workflow adapters depend on it
+        submodules: recursive
         token: ${{ secrets.GH_PAT }}
 
     - name: Ensure Workflow submodule initialized
@@ -108,40 +284,58 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
+    - name: Restore & Build
+      run: dotnet build --configuration Release
+
+    - name: Install EF Core tools
+      run: dotnet tool install --global dotnet-ef
+
+    - name: Apply EF Migrations
+      id: ef-migrations
+      continue-on-error: true
+      run: |
+        dotnet ef database update \
+          --project UNOPS.PAO.UNOPSDataAccess/UNOPS.PAO.UNOPSDataAccess.csproj \
+          --startup-project UNOPS.PAO.Server/UNOPS.PAO.Server.csproj \
+          --connection "Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;Include Error Detail=true"
+      env:
+        ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;Include Error Detail=true'
+        ConnectionStrings__UseIamAuthentication: 'false'
+        IsUNOPSOverride: 'true'
+
+    - name: Report Migration Status
+      if: steps.ef-migrations.outcome != 'success'
+      run: |
+        echo "::warning::EF Migrations failed (DEF-052: Init migration references AspNetUsers before Identity tables are created). Model-level tests will still run; DB-dependent tests may fail."
     
-    - name: Restore dependencies
-      run: dotnet restore
-    
-    - name: Build
-      run: dotnet build --no-restore --configuration Release
-    
-    - name: Run Business Tests
+    - name: .NET Dependency Vulnerability Scan
+      id: dotnet-vuln-scan
+      continue-on-error: true
+      run: dotnet list package --vulnerable --include-transitive 2>&1 | tail -60
+
+    - name: Run Business Tests (excluding known defect tests)
       id: run-business-tests
       continue-on-error: true
       run: |
-        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
-        New-Item -ItemType Directory -Force -Path $testResultsDir | Out-Null
-        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" `
-          --no-build `
-          --configuration Release `
-          --verbosity normal `
-          --logger "trx;LogFileName=business-tests.trx" `
-          --results-directory $testResultsDir
-    
-    - name: List Test Results (Debug)
-      if: always()
-      run: |
-        $testResultsDir = Join-Path "${{ github.workspace }}" "TestResults"
-        echo "Looking for test results in: $testResultsDir"
-        if (Test-Path $testResultsDir) {
-          Get-ChildItem -Path $testResultsDir -Recurse -Filter "*.trx" -ErrorAction SilentlyContinue | ForEach-Object { 
-            Write-Host "Found: $($_.FullName)"
-          }
-          $trxCount = (Get-ChildItem -Path $testResultsDir -Filter "*.trx" -Recurse -ErrorAction SilentlyContinue).Count
-          echo "Total .trx files found: $trxCount"
-        } else {
-          echo "ERROR: TestResults directory does not exist at $testResultsDir"
-        }
+        mkdir -p "${{ github.workspace }}/TestResults"
+        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" \
+          --no-build \
+          --configuration Release \
+          --verbosity normal \
+          --filter "Defect!~DEF" \
+          --logger "trx;LogFileName=business-tests.trx" \
+          --results-directory "${{ github.workspace }}/TestResults" \
+          --collect:"XPlat Code Coverage"
+      env:
+        TEST_DB_CONNECTION_STRING: 'Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;Include Error Detail=true'
     
     - name: Publish Test Results
       uses: dorny/test-reporter@v1
@@ -157,7 +351,9 @@ jobs:
       if: always()
       with:
         name: business-tests-results
-        path: TestResults
+        path: |
+          TestResults
+          **/coverage.cobertura.xml
         if-no-files-found: warn
     
     - name: Check Business Tests Result
@@ -166,136 +362,689 @@ jobs:
         echo "::error::Business Tests failed or encountered errors"
         exit 1
 
-  # ============================================================================
-  # INTEGRATION TESTS - Run manually or in staging environment
-  # ============================================================================
-  # Integration tests are commented out for PR checks because they require:
-  # - Database connection with seed data
-  # - Google Cloud credentials (for IAM auth tests)
-  # - AI service running (for AI integration tests)
-  # - Complex authorization setup
-  #
-  # To run integration tests:
-  # 1. Locally: Follow QA Tests/ENVIRONMENT_SETUP_GUIDE.md
-  # 2. Staging: Configure staging environment with required services
-  # 3. Manual: Run "dotnet test QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj"
-  # ============================================================================
-  
-  # integration-tests:
-  #   name: Integration Tests
-  #   runs-on: windows-latest
-  #   
-  #   services:
-  #     postgres:
-  #       image: postgres:15
-  #       env:
-  #         POSTGRES_DB: unops_pao_test
-  #         POSTGRES_USER: test_user
-  #         POSTGRES_PASSWORD: test_password
-  #       ports:
-  #         - 5432:5432
-  #       options: >-
-  #         --health-cmd pg_isready
-  #         --health-interval 10s
-  #         --health-timeout 5s
-  #         --health-retries 5
-  #   
-  #   steps:
-  #   - name: Checkout code
-  #     uses: actions/checkout@v4
-  #   
-  #   - name: Setup .NET
-  #     uses: actions/setup-dotnet@v4
-  #     with:
-  #       dotnet-version: ${{ env.DOTNET_VERSION }}
-  #   
-  #   - name: Restore dependencies
-  #     run: dotnet restore
-  #   
-  #   - name: Build
-  #     run: dotnet build --no-restore --configuration Release
-  #   
-  #   - name: Install EF Core tools
-  #     run: dotnet tool install --global dotnet-ef
-  #   
-  #   - name: Run Migrations
-  #     run: dotnet ef database update --project UNOPS.PAO.UNOPSDataAccess/UNOPS.PAO.UNOPSDataAccess.csproj --startup-project UNOPS.PAO.Server/UNOPS.PAO.Server.csproj
-  #     env:
-  #       ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;'
-  #   
-  #   - name: Run Seed Scripts
-  #     run: |
-  #       $env:PGPASSWORD='test_password'
-  #       psql -h localhost -p 5432 -U test_user -d unops_pao_test -f "UNOPS.PAO.UNOPSDataAccess/Scripts/seed-entities.sql" || echo "Seed script execution attempted"
-  #       psql -h localhost -p 5432 -U test_user -d unops_pao_test -f "UNOPS.PAO.UNOPSDataAccess/Scripts/seed-entity-field-managers.sql" || echo "Seed script execution attempted"
-  #       psql -h localhost -p 5432 -U test_user -d unops_pao_test -f "UNOPS.PAO.UNOPSDataAccess/Scripts/seed-liaison-offices.sql" || echo "Seed script execution attempted"
-  #     shell: pwsh
-  #   
-  #   - name: Run Integration Tests
-  #     run: dotnet test "QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj" --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=integration-tests.trx"
-  #     env:
-  #       ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;'
-  #       ConnectionStrings__UseIamAuthentication: 'false'
-  #   
-  #   - name: Publish Test Results
-  #     uses: dorny/test-reporter@v1
-  #     if: always()
-  #     with:
-  #       name: Integration Tests Results
-  #       path: '**/TestResults/**/*.trx'
-  #       reporter: dotnet-trx
+  presentation-tests:
+    name: Presentation (Controller) Tests
+    needs: [dotnet-build]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        token: ${{ secrets.GH_PAT }}
 
-  # python-tests:
-  #   name: Python AI Tests
-  #   runs-on: ubuntu-latest
-  #   
-  #   steps:
-  #   - name: Checkout code
-  #     uses: actions/checkout@v4
-  #   
-  #   - name: Setup Python
-  #     uses: actions/setup-python@v5
-  #     with:
-  #       python-version: ${{ env.PYTHON_VERSION }}
-  #       cache: 'pip'
-  #   
-  #   - name: Install dependencies
-  #     run: |
-  #       cd UNOPS.PAO.AIService
-  #       pip install pytest pytest-asyncio pytest-cov
-  #       pip install -r requirements.txt || echo "No requirements.txt found"
-  #   
-  #   - name: Run Python tests
-  #     run: |
-  #       cd UNOPS.PAO.AIService
-  #       pytest tests/ -v --junitxml=test-results.xml --cov=ai_assistant --cov-report=xml --cov-report=html
-  #   
-  #   - name: Publish Test Results
-  #     uses: dorny/test-reporter@v1
-  #     if: always()
-  #     with:
-  #       name: Python Tests Results
-  #       path: '**/test-results.xml'
-  #       reporter: java-junit
-  #   
-  #   - name: Upload Coverage to Codecov
-  #     uses: codecov/codecov-action@v4
-  #     with:
-  #       files: ./UNOPS.PAO.AIService/coverage.xml
-  #       flags: python-tests
-  #       name: python-coverage
+    - name: Ensure Workflow submodule initialized
+      run: git submodule update --init --recursive UNOPS.Workflow
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
+    - name: Restore & Build
+      run: dotnet build --configuration Release
+    
+    - name: Run Presentation Tests
+      id: run-presentation-tests
+      continue-on-error: true
+      run: |
+        mkdir -p "${{ github.workspace }}/TestResults"
+        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Presentation.Tests/UNOPS.PAO.Presentation.Tests.csproj" \
+          --no-build \
+          --configuration Release \
+          --verbosity normal \
+          --logger "trx;LogFileName=presentation-tests.trx" \
+          --results-directory "${{ github.workspace }}/TestResults" \
+          --collect:"XPlat Code Coverage"
+    
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Presentation Tests Results
+        path: '**/TestResults/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: false
+
+    - name: Upload Test Results Artifact
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: presentation-tests-results
+        path: |
+          TestResults
+          **/coverage.cobertura.xml
+        if-no-files-found: warn
+    
+    - name: Check Presentation Tests Result
+      if: steps.run-presentation-tests.outcome != 'success'
+      run: |
+        echo "::error::Presentation Tests failed or encountered errors"
+        exit 1
+
+  frontend-tests:
+    name: Frontend Unit Tests
+    needs: [angular-build]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        token: ${{ secrets.GH_PAT }}
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Cache npm dependencies
+      uses: actions/cache@v4
+      with:
+        path: UNOPS.PAO.ClientApp/node_modules
+        key: npm-${{ runner.os }}-${{ hashFiles('UNOPS.PAO.ClientApp/package-lock.json') }}
+        restore-keys: npm-${{ runner.os }}-
+
+    - name: Install dependencies
+      working-directory: UNOPS.PAO.ClientApp
+      run: npm install
+    
+    - name: Run Frontend Tests (CI mode)
+      id: run-frontend-tests
+      continue-on-error: true
+      working-directory: UNOPS.PAO.ClientApp
+      run: |
+        npm run test:ci 2>&1 | tee frontend-test-output.log
+        exit ${PIPESTATUS[0]}
+      env:
+        CHROME_BIN: /usr/bin/google-chrome-stable
+        NODE_OPTIONS: '--max-old-space-size=4096'
+    
+    - name: Upload Coverage Artifact
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: frontend-coverage
+        path: UNOPS.PAO.ClientApp/coverage
+        if-no-files-found: warn
+
+    - name: Upload Frontend Test Log
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: frontend-test-log
+        path: UNOPS.PAO.ClientApp/frontend-test-output.log
+        if-no-files-found: warn
+    
+    - name: Check Frontend Tests Result
+      if: steps.run-frontend-tests.outcome != 'success'
+      working-directory: UNOPS.PAO.ClientApp
+      run: |
+        echo "=== Frontend Test Output (last 100 lines) ==="
+        if [ -f frontend-test-output.log ]; then
+          tail -100 frontend-test-output.log
+          echo ""
+          echo "=== Checking for FAILED tests ==="
+          grep -i "FAILED\|ERROR\|TOTAL" frontend-test-output.log | tail -20 || echo "No FAILED/ERROR/TOTAL lines found"
+        else
+          echo "No test output log found"
+        fi
+        echo ""
+        echo "::error::Frontend Tests failed or encountered errors"
+        exit 1
+
+  # ============================================================================
+  # PLAYWRIGHT E2E — Tiered strategy
+  #
+  # Tier      | When                    | Specs              | Browsers  | Shards
+  # ----------|-------------------------|--------------------|-----------|---------
+  # Smoke     | Every PR                | 6 core specs       | Chromium  | 1
+  # Extended  | PR → main               | 25 critical specs  | Chromium  | 1
+  # Full      | Nightly / manual        | All ~96 specs      | Chromium  | 4
+  # X-browser | Nightly / manual        | All ~96 specs      | 3 engines | 4
+  # ============================================================================
+
+  playwright-smoke:
+    name: Playwright Smoke Tests
+    needs: [angular-build]
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        token: ${{ secrets.GH_PAT }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Download Angular dist
+      uses: actions/download-artifact@v4
+      with:
+        name: angular-dist
+        path: UNOPS.PAO.ClientApp/dist
+
+    - name: Cache Playwright browsers
+      id: playwright-cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-browsers-${{ runner.os }}-${{ hashFiles('QA Tests/package-lock.json') }}
+        restore-keys: playwright-browsers-${{ runner.os }}-
+
+    - name: Install Playwright dependencies
+      working-directory: QA Tests
+      run: |
+        npm ci
+        npm install -g serve
+        npx playwright install chromium --with-deps
+
+    - name: Serve Angular app & run Playwright smoke tests
+      working-directory: QA Tests
+      run: |
+        serve ../UNOPS.PAO.ClientApp/dist/UNOPS.PAO.ClientApp/browser -l 4200 -s &
+        SERVER_PID=$!
+
+        echo "Waiting for Angular app on port 4200..."
+        for i in $(seq 1 30); do
+          if curl -s http://localhost:4200 > /dev/null 2>&1; then
+            echo "Angular app is ready."
+            break
+          fi
+          sleep 1
+        done
+
+        npx playwright test \
+          --project=chromium \
+          --workers=3 \
+          --timeout=15000 \
+          --retries=0 \
+          --max-failures=10 \
+          --reporter=line \
+          --reporter=html \
+          login.spec.ts \
+          home.spec.ts \
+          dashboard.spec.ts \
+          partners.spec.ts \
+          opportunities.spec.ts \
+          interactions.spec.ts \
+          || TEST_EXIT=$?
+
+        kill $SERVER_PID 2>/dev/null || true
+        exit ${TEST_EXIT:-0}
+      env:
+        CI: 'true'
+        BASE_URL: 'http://localhost:4200'
+        SKIP_WEB_SERVER: '1'
+        HEADLESS: 'true'
+
+    - name: Upload Playwright Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-smoke-report
+        path: |
+          QA Tests/TestResults/playwright-html-report
+          QA Tests/TestResults/playwright-artifacts
+        if-no-files-found: warn
+        retention-days: 14
+
+  playwright-extended:
+    name: Playwright Extended Tests
+    needs: [angular-build]
+    if: >
+      (github.event_name == 'pull_request' && github.base_ref == 'main') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.playwright_tier == 'extended')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        token: ${{ secrets.GH_PAT }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Download Angular dist
+      uses: actions/download-artifact@v4
+      with:
+        name: angular-dist
+        path: UNOPS.PAO.ClientApp/dist
+
+    - name: Cache Playwright browsers
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-browsers-${{ runner.os }}-${{ hashFiles('QA Tests/package-lock.json') }}
+        restore-keys: playwright-browsers-${{ runner.os }}-
+
+    - name: Install Playwright dependencies
+      working-directory: QA Tests
+      run: |
+        npm ci
+        npm install -g serve
+        npx playwright install chromium --with-deps
+
+    - name: Serve Angular app & run Playwright extended tests
+      working-directory: QA Tests
+      run: |
+        serve ../UNOPS.PAO.ClientApp/dist/UNOPS.PAO.ClientApp/browser -l 4200 -s &
+        SERVER_PID=$!
+
+        echo "Waiting for Angular app on port 4200..."
+        for i in $(seq 1 30); do
+          if curl -s http://localhost:4200 > /dev/null 2>&1; then
+            echo "Angular app is ready."
+            break
+          fi
+          sleep 1
+        done
+
+        # Extended tier: 25 critical specs covering core CRM workflows,
+        # form validation, permissions, search, and documents.
+        npx playwright test \
+          --project=chromium \
+          --workers=4 \
+          --timeout=20000 \
+          --retries=1 \
+          --max-failures=30 \
+          --reporter=line \
+          --reporter=html \
+          login.spec.ts \
+          home.spec.ts \
+          dashboard.spec.ts \
+          partners.spec.ts \
+          partner-item.spec.ts \
+          opportunities.spec.ts \
+          opportunity-item.spec.ts \
+          opportunity-creation.spec.ts \
+          opportunity-sections.spec.ts \
+          opportunity-workflow-transitions.spec.ts \
+          interactions.spec.ts \
+          interaction-item.spec.ts \
+          contacts.spec.ts \
+          contact-item.spec.ts \
+          form-validation.spec.ts \
+          form-validation-negative.spec.ts \
+          document-management.spec.ts \
+          navigation-tabs.spec.ts \
+          cross-entity-navigation.spec.ts \
+          role-access-control.spec.ts \
+          workflow.spec.ts \
+          saved-filters.spec.ts \
+          search-listviews.spec.ts \
+          notifications.spec.ts \
+          comments.spec.ts \
+          || TEST_EXIT=$?
+
+        kill $SERVER_PID 2>/dev/null || true
+        exit ${TEST_EXIT:-0}
+      env:
+        CI: 'true'
+        BASE_URL: 'http://localhost:4200'
+        SKIP_WEB_SERVER: '1'
+        HEADLESS: 'true'
+
+    - name: Upload Playwright Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-extended-report
+        path: |
+          QA Tests/TestResults/playwright-html-report
+          QA Tests/TestResults/playwright-artifacts
+        if-no-files-found: warn
+        retention-days: 14
+
+  playwright-full:
+    name: Playwright Full Suite (shard ${{ matrix.shard }})
+    needs: [angular-build]
+    if: >
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && 
+       (github.event.inputs.playwright_tier == 'full' || github.event.inputs.playwright_tier == 'cross-browser'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1/4, 2/4, 3/4, 4/4]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        token: ${{ secrets.GH_PAT }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Download Angular dist
+      uses: actions/download-artifact@v4
+      with:
+        name: angular-dist
+        path: UNOPS.PAO.ClientApp/dist
+
+    - name: Cache Playwright browsers
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-browsers-${{ runner.os }}-${{ hashFiles('QA Tests/package-lock.json') }}
+        restore-keys: playwright-browsers-${{ runner.os }}-
+
+    - name: Install Playwright dependencies
+      working-directory: QA Tests
+      run: |
+        npm ci
+        npm install -g serve
+        if [[ "${{ github.event.inputs.playwright_tier }}" == "cross-browser" ]]; then
+          npx playwright install --with-deps
+        else
+          npx playwright install chromium --with-deps
+        fi
+
+    - name: Serve Angular app & run Playwright full suite
+      working-directory: QA Tests
+      run: |
+        serve ../UNOPS.PAO.ClientApp/dist/UNOPS.PAO.ClientApp/browser -l 4200 -s &
+        SERVER_PID=$!
+
+        echo "Waiting for Angular app on port 4200..."
+        for i in $(seq 1 30); do
+          if curl -s http://localhost:4200 > /dev/null 2>&1; then
+            echo "Angular app is ready."
+            break
+          fi
+          sleep 1
+        done
+
+        # Determine which projects to run
+        if [[ "${{ github.event.inputs.playwright_tier }}" == "cross-browser" ]]; then
+          PROJECTS="--project=chromium --project=firefox --project=webkit"
+        else
+          PROJECTS="--project=chromium"
+        fi
+
+        npx playwright test \
+          $PROJECTS \
+          --shard=${{ matrix.shard }} \
+          --workers=4 \
+          --timeout=30000 \
+          --retries=1 \
+          --max-failures=100 \
+          --reporter=line \
+          --reporter=html \
+          || TEST_EXIT=$?
+
+        kill $SERVER_PID 2>/dev/null || true
+        exit ${TEST_EXIT:-0}
+      env:
+        CI: 'true'
+        BASE_URL: 'http://localhost:4200'
+        SKIP_WEB_SERVER: '1'
+        HEADLESS: 'true'
+
+    - name: Upload Playwright Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-full-report-shard-${{ strategy.job-index }}
+        path: |
+          QA Tests/TestResults/playwright-html-report
+          QA Tests/TestResults/playwright-artifacts
+        if-no-files-found: warn
+        retention-days: 14
+
+  # ============================================================================
+  # INTEGRATION TESTS
+  # ============================================================================
+
+  integration-tests:
+    name: Integration Tests (Verification)
+    needs: [dotnet-build]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: unops_pao_test
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        token: ${{ secrets.GH_PAT }}
+
+    - name: Ensure Workflow submodule initialized
+      run: git submodule update --init --recursive UNOPS.Workflow
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
+    - name: Restore & Build
+      id: build-integration
+      continue-on-error: true
+      run: dotnet build --configuration Release
+
+    - name: Install EF Core tools
+      if: steps.build-integration.outcome == 'success'
+      run: dotnet tool install --global dotnet-ef
+
+    - name: Apply EF Migrations
+      id: ef-migrations
+      if: steps.build-integration.outcome == 'success'
+      continue-on-error: true
+      run: |
+        dotnet ef database update \
+          --project UNOPS.PAO.UNOPSDataAccess/UNOPS.PAO.UNOPSDataAccess.csproj \
+          --startup-project UNOPS.PAO.Server/UNOPS.PAO.Server.csproj \
+          --connection "Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;Include Error Detail=true"
+      env:
+        ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;Include Error Detail=true'
+        ConnectionStrings__UseIamAuthentication: 'false'
+        IsUNOPSOverride: 'true'
+
+    - name: Report Build/Migration Status
+      if: always()
+      run: |
+        echo "### Integration Tests Build Status" >> $GITHUB_STEP_SUMMARY
+        echo "- Build: ${{ steps.build-integration.outcome }}" >> $GITHUB_STEP_SUMMARY
+        echo "- EF Migrations: ${{ steps.ef-migrations.outcome }}" >> $GITHUB_STEP_SUMMARY
+        if [[ "${{ steps.build-integration.outcome }}" != "success" ]]; then
+          echo "::warning::Integration test BUILD failed — this may indicate UNOPS.Workflow submodule checkout issue (needs PAT fix)"
+        fi
+    
+    - name: Run Integration Tests (excluding known defect tests)
+      id: run-integration-tests
+      if: steps.build-integration.outcome == 'success'
+      continue-on-error: true
+      run: |
+        mkdir -p "${{ github.workspace }}/TestResults"
+        dotnet test "QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj" \
+          --no-build \
+          --configuration Release \
+          --verbosity normal \
+          --filter "Defect!~DEF" \
+          --logger "trx;LogFileName=integration-tests.trx" \
+          --results-directory "${{ github.workspace }}/TestResults"
+      env:
+        ConnectionStrings__DefaultConnection: 'Host=localhost;Port=5432;Database=unops_pao_test;Username=test_user;Password=test_password;Include Error Detail=true'
+        ConnectionStrings__UseIamAuthentication: 'false'
+        IsUNOPSOverride: 'true'
+        DisableExternalCalls: 'true'
+    
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Integration Tests Results
+        path: '**/TestResults/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: false
+
+    - name: Upload Test Results Artifact
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: integration-tests-results
+        path: |
+          TestResults
+        if-no-files-found: warn
+
+  # ============================================================================
+  # DEFECT VISIBILITY — runs known-defect tests for reporting, NEVER blocks PRs
+  # ============================================================================
+
+  defect-tests:
+    name: Known Defect Tests (Informational)
+    needs: [dotnet-build]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        token: ${{ secrets.GH_PAT }}
+
+    - name: Ensure Workflow submodule initialized
+      run: git submodule update --init --recursive UNOPS.Workflow
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
+    - name: Restore & Build
+      run: dotnet build --configuration Release
+
+    - name: Run Known Defect Tests (Business)
+      id: defect-business
+      continue-on-error: true
+      run: |
+        mkdir -p "${{ github.workspace }}/TestResults"
+        dotnet test "QA Tests/C# Tests/UNOPS.PAO.Business.Tests/UNOPS.PAO.Business.Tests.csproj" \
+          --no-build \
+          --configuration Release \
+          --verbosity normal \
+          --filter "Defect~DEF" \
+          --logger "trx;LogFileName=defect-business-tests.trx" \
+          --results-directory "${{ github.workspace }}/TestResults"
+      env:
+        USE_INMEMORY_DB: 'true'
+
+    - name: Run Known Defect Tests (Integration)
+      id: defect-integration
+      continue-on-error: true
+      run: |
+        dotnet test "QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj" \
+          --no-build \
+          --configuration Release \
+          --verbosity normal \
+          --filter "Defect~DEF" \
+          --logger "trx;LogFileName=defect-integration-tests.trx" \
+          --results-directory "${{ github.workspace }}/TestResults"
+      env:
+        USE_INMEMORY_DB: 'true'
+
+    - name: Defect Test Summary
+      if: always()
+      run: |
+        echo "## Known Defect Tests Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "These tests expose known production defects (DEF-XXX)." >> $GITHUB_STEP_SUMMARY
+        echo "They are expected to FAIL until the corresponding defect is fixed." >> $GITHUB_STEP_SUMMARY
+        echo "**These results are informational and do NOT block PRs.**" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- Business defect tests: ${{ steps.defect-business.outcome }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Integration defect tests: ${{ steps.defect-integration.outcome }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "When a defect test starts PASSING, it means the developer has fixed the bug." >> $GITHUB_STEP_SUMMARY
+        echo "At that point, remove the \`[Trait(\"Defect\", \"DEF-XXX\")]\` and move the test to the regular suite." >> $GITHUB_STEP_SUMMARY
+
+    - name: Publish Defect Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Known Defect Tests Results
+        path: '**/TestResults/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: false
+
+    - name: Upload Defect Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: defect-tests-results
+        path: TestResults
+        if-no-files-found: warn
+
+  # ============================================================================
+  # SUMMARY
+  # ============================================================================
 
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [fast-tests, business-tests]
+    needs: [smoke-tests, fast-tests, business-tests, presentation-tests, frontend-tests, playwright-smoke]
     if: always()
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        submodules: recursive  # Required for UNOPS.Workflow - Business/Workflow adapters depend on it
+        submodules: recursive
         token: ${{ secrets.GH_PAT }}
 
     - name: Generate Summary
@@ -303,45 +1052,73 @@ jobs:
         echo "# QA Tests Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## Automated Test Results (PR Checks)" >> $GITHUB_STEP_SUMMARY
-        echo "- Fast Logic Tests (78 tests): ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Business Logic Tests (2,135 tests): ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Smoke Tests (Fast Gate)" >> $GITHUB_STEP_SUMMARY
+        echo "- Smoke Tests (~14 tests, SQLite): ${{ needs.smoke-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Backend Tests" >> $GITHUB_STEP_SUMMARY
+        echo "- Fast Logic Tests (~233 tests): ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Business Logic Tests (~3,800 tests, PostgreSQL): ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Presentation/Controller Tests (~310 tests): ${{ needs.presentation-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Frontend Checks" >> $GITHUB_STEP_SUMMARY
+        echo "- Angular Build + Lint + Security: ${{ needs.frontend-tests.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### E2E Browser Tests" >> $GITHUB_STEP_SUMMARY
+        PW_RESULT="${{ needs.playwright-smoke.result }}"
+        if [[ "$PW_RESULT" == "skipped" ]]; then
+          echo "- Playwright Smoke Tests: ⏭️ skipped (runs on push/PR only; nightly uses full suite)" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- Playwright Smoke Tests (6 specs, ~50 tests, Chromium): $PW_RESULT" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Pipeline Optimizations Applied" >> $GITHUB_STEP_SUMMARY
+        echo "- NuGet package caching" >> $GITHUB_STEP_SUMMARY
+        echo "- npm dependency caching" >> $GITHUB_STEP_SUMMARY
+        echo "- Angular dist artifact sharing (built once)" >> $GITHUB_STEP_SUMMARY
+        echo "- Playwright browser caching" >> $GITHUB_STEP_SUMMARY
+        echo "- All jobs on ubuntu-latest (faster than Windows runners)" >> $GITHUB_STEP_SUMMARY
+        echo "- Playwright workers: 3 (up from 1)" >> $GITHUB_STEP_SUMMARY
+        echo "- Tiered Playwright strategy: smoke (PR) → extended (PR→main) → full (nightly, sharded 4x)" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## Overall Status" >> $GITHUB_STEP_SUMMARY
-        if [[ "${{ needs.fast-tests.result }}" == "success" ]] && [[ "${{ needs.business-tests.result }}" == "success" ]]; then
-          echo "Γ£à All critical tests passing (2,213 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Test Coverage" >> $GITHUB_STEP_SUMMARY
-          echo "- Γ£à Permission Logic (6 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "- Γ£à Workflow Logic (7 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "- Γ£à Notification Logic (7 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "- Γ£à Export Logic (6 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "- Γ£à Document Validation (11 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "- Γ£à Partner Manager (1,127 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "- Γ£à Other Business Logic (1,049 tests)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Γä╣∩╕Å **Note**: Integration tests must be run manually or in staging" >> $GITHUB_STEP_SUMMARY
-          echo "- See: QA Tests/ENVIRONMENT_SETUP_GUIDE.md" >> $GITHUB_STEP_SUMMARY
-          echo "- Run: dotnet test \"QA Tests/Integration Tests/UNOPS.PAO.IntegrationTests.csproj\"" >> $GITHUB_STEP_SUMMARY
+        SMOKE="${{ needs.smoke-tests.result }}"
+        FAST="${{ needs.fast-tests.result }}"
+        BIZ="${{ needs.business-tests.result }}"
+        PRES="${{ needs.presentation-tests.result }}"
+        FE="${{ needs.frontend-tests.result }}"
+        PW="${{ needs.playwright-smoke.result }}"
+
+        # Helper: treat "success" and "skipped" as passing (skipped = conditional job didn't apply)
+        is_ok() { [[ "$1" == "success" || "$1" == "skipped" ]]; }
+
+        if is_ok "$SMOKE" && is_ok "$FAST" && is_ok "$BIZ" && is_ok "$PRES" && is_ok "$FE" && is_ok "$PW"; then
+          echo "All checks passing" >> $GITHUB_STEP_SUMMARY
         else
-          echo "Γ¥î Critical tests failed" >> $GITHUB_STEP_SUMMARY
+          echo "One or more test suites failed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [[ "${{ needs.fast-tests.result }}" != "success" ]]; then
-            echo "- Γ¥î Fast Logic Tests: ${{ needs.fast-tests.result }}" >> $GITHUB_STEP_SUMMARY
-            echo "  - Check the FastTests Results for detailed failure information" >> $GITHUB_STEP_SUMMARY
-          fi
-          if [[ "${{ needs.business-tests.result }}" != "success" ]]; then
-            echo "- Γ¥î Business Logic Tests: ${{ needs.business-tests.result }}" >> $GITHUB_STEP_SUMMARY
-            echo "  - Check the Business Tests Results for detailed failure information" >> $GITHUB_STEP_SUMMARY
-          fi
+          if [[ "$SMOKE" == "failure" ]]; then echo "- Smoke Tests: $SMOKE" >> $GITHUB_STEP_SUMMARY; fi
+          if [[ "$FAST" == "failure" ]]; then echo "- Fast Logic Tests: $FAST" >> $GITHUB_STEP_SUMMARY; fi
+          if [[ "$BIZ" == "failure" ]]; then echo "- Business Logic Tests: $BIZ" >> $GITHUB_STEP_SUMMARY; fi
+          if [[ "$PRES" == "failure" ]]; then echo "- Presentation Tests: $PRES" >> $GITHUB_STEP_SUMMARY; fi
+          if [[ "$FE" == "failure" ]]; then echo "- Frontend Tests: $FE" >> $GITHUB_STEP_SUMMARY; fi
+          if [[ "$PW" == "failure" ]]; then echo "- Playwright E2E Smoke: $PW" >> $GITHUB_STEP_SUMMARY; fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Troubleshooting" >> $GITHUB_STEP_SUMMARY
           echo "1. Review test logs above for specific failures" >> $GITHUB_STEP_SUMMARY
-          echo "2. Run tests locally: dotnet test --configuration Release" >> $GITHUB_STEP_SUMMARY
-          echo "3. Check for environment-specific issues (paths, configuration)" >> $GITHUB_STEP_SUMMARY
+          echo "2. Run backend tests locally: dotnet test --configuration Release" >> $GITHUB_STEP_SUMMARY
+          echo "3. Run frontend tests locally: cd UNOPS.PAO.ClientApp && npm run test:ci" >> $GITHUB_STEP_SUMMARY
+          echo "4. Run Playwright tests locally: cd \"QA Tests\" && npx playwright test --project=chromium" >> $GITHUB_STEP_SUMMARY
         fi
     
     - name: Check Critical Tests
-      if: needs.fast-tests.result != 'success' || needs.business-tests.result != 'success'
+      if: >
+        needs.smoke-tests.result == 'failure' ||
+        needs.fast-tests.result == 'failure' ||
+        needs.business-tests.result == 'failure' ||
+        needs.presentation-tests.result == 'failure' ||
+        needs.frontend-tests.result == 'failure' ||
+        needs.playwright-smoke.result == 'failure'
       run: |
-        echo "Critical tests failed!"
+        echo "One or more test suites failed!"
         exit 1

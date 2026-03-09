@@ -1,0 +1,225 @@
+---
+description: Enforces specification-based testing — tests validate REQUIREMENTS not just implementation. Prevents the class of defects found in PNO-1146 where tests passed but bugs were hidden.
+alwaysApply: true
+---
+
+# Requirement-Driven Testing — MANDATORY
+
+## The Rule
+
+**Before creating tests for any Jira story or feature, the business requirements MUST be obtained and cross-referenced against the production code.** Tests must validate the SPECIFICATION (what the code SHOULD do), not just the IMPLEMENTATION (what the code currently does).
+
+## Why This Matters
+
+Implementation-based testing only confirms the code works as written. If the code has a bug (e.g., missing recipients, wrong query logic), implementation-based tests will pass while the bug goes undetected. Specification-based testing catches these defects by comparing code behavior against the agreed business requirements.
+
+## Mandatory Steps Before Creating Tests
+
+### Step 1: Obtain Requirements
+
+Before launching the create-tests agent or writing any tests for a Jira story:
+
+- [ ] **Retrieve the Jira ticket** content (description, acceptance criteria, comments)
+- [ ] **Check for linked documents** (PRDs, Google Sheets matrices, Confluence pages)
+- [ ] **Read QA observations** from Jira comments (testers often identify discrepancies)
+- [ ] **Check for requirement updates** — later comments may override the original description
+
+If the Jira ticket is not accessible:
+- [ ] Ask the user to provide the ticket content (XML, copy-paste, screenshots)
+- [ ] Check for existing PRD/design docs in the codebase (`tasks/`, `docs/`, `QA Tests/Documentation/`)
+- [ ] Check existing test files for requirement references in comments
+
+### Step 2: Cross-Reference Requirements vs Code
+
+Before generating tests, perform this analysis:
+
+```
+For each requirement/acceptance criterion:
+├── Does the production code implement this requirement?
+│   ├── YES, correctly → Generate positive + negative + edge tests
+│   ├── YES, but differently → Log DEF-XXX defect, create test that FAILS (Pattern A)
+│   └── NO, not implemented → Log DEF-XXX defect, create test that FAILS (Pattern A)
+└── Are there code behaviors NOT covered by requirements?
+    ├── YES → Flag for clarification (may be undocumented requirements)
+    └── NO → All code paths have requirement traceability
+```
+
+**CRITICAL:** Defect-exposing tests must use Pattern A (run and FAIL), NOT Pattern B (Skip).
+The purpose of specification-based testing is to make defects VISIBLE in CI reports.
+Use `[Trait("Defect", "DEF-XXX")]` to tag them for filtering, NOT `[Fact(Skip = "...")]`.
+
+### Step 3: Include Requirements in Agent Prompts
+
+When using the create-tests agent, the prompt MUST include:
+
+1. **The Jira ticket text** (or equivalent requirement document)
+2. **Acceptance criteria** (numbered/bulleted)
+3. **QA observations** from comments (if any)
+4. **Explicit instruction:** "Generate tests that validate the REQUIREMENT, not just current code behavior. If code behavior differs from the requirement, create a defect-exposing test that RUNS and FAILS with `[Trait('Defect', 'DEF-XXX')]` — do NOT Skip it."
+
+### Step 4: Traceability Comments
+
+Every test file for a Jira story MUST include a traceability header:
+
+```csharp
+/// <summary>
+/// Tests for PNO-XXXX: [Story Title]
+/// 
+/// Requirements validated:
+/// - REQ-1: [Requirement description] → Tests: TestName1, TestName2
+/// - REQ-2: [Requirement description] → Tests: TestName3, TestName4
+/// 
+/// Defects found:
+/// - DEF-XXX: [Code does X but requirement says Y]
+/// </summary>
+```
+
+## Specification-Based Test Categories
+
+Beyond the standard 3:1 ratio tests, add these specification-based tests:
+
+### Recipient/Routing Tests (for notification features)
+- Test that each recipient type specified in the requirement actually receives the notification
+- Test that recipients NOT specified in the requirement do NOT receive it
+- Test deduplication when the same person has multiple roles
+
+### Soft-Delete Audit Tests
+For every query method in the service under test:
+- Seed a soft-deleted record that would match the query
+- Verify the soft-deleted record is excluded from results
+- This directly enforces the IsDeleted filtering rule
+
+### Requirement Boundary Tests
+- Test the exact boundaries described in the requirement (not just code boundaries)
+- Example: "DoA2 holders (or DoA3 if no DoA2)" → test both scenarios
+
+## Common Defect Patterns to Check
+
+| Pattern | What to Look For | Example |
+|---|---|---|
+| Missing recipients | Requirement lists recipients A, B, C; code only sends to A, B | Recall email missing DoA approvers |
+| Wrong recipient field | Requirement says TO; code puts them in CC (or vice versa) | DoA holders in CC instead of TO |
+| Missing IsDeleted filter | Query doesn't filter `!e.IsDeleted` | Soft-deleted OM still gets emails |
+| Incomplete stakeholder query | Code queries one stakeholder source but requirement implies multiple | Only EntityUserRole, not OpportunityStakeholder |
+| Fallback logic gaps | "Use X, or Y if X is absent" not fully implemented | DoA3 fallback when DoA2 absent |
+| Deduplication missing | Same person with multiple roles gets duplicate notifications | OM who is also DoA2 |
+
+## Checklist Before Completing Test Creation
+
+- [ ] Every acceptance criterion from the Jira ticket has at least one test
+- [ ] Requirements vs code discrepancies are logged as DEF-XXX defects
+- [ ] Tests exposing defects use `[Fact]` with `[Trait("Defect", "DEF-XXX")]` — they FAIL to report the bug, NOT skipped
+- [ ] IsDeleted audit tests exist for every query method
+- [ ] Recipient/routing tests validate the REQUIREMENT's recipient list, not the code's
+- [ ] Traceability comments link tests back to specific requirements
+- [ ] 3:1 ratio compliance is maintained across all categories
+
+## Enforcement — How This Rule Gets Applied
+
+### Where to Find Requirements (In Priority Order)
+
+1. **PRD documents in repo** — `tasks/*/` folders contain PRDs with acceptance criteria
+2. **Test Plans** — `QA Tests/Test Plans/` has traceability matrices
+3. **Existing test case docs** — `QA Tests/Opportunity Tests/BusinessLogic/` has detailed test case specs
+4. **Gap analysis** — `QA Tests/REQUIREMENTS_GAP_ANALYSIS.md` identifies coverage gaps
+5. **Jira tickets** — Ask the user for content if not available in repo
+
+### Mandatory Output — Requirement Traceability Table
+
+Every time the create-tests agent (or any agent) creates tests for a feature, it MUST output this table:
+
+```
+### Requirement Traceability
+| Requirement | Source | Test(s) | Validated? | Defect? |
+|---|---|---|---|---|
+| [Acceptance Criterion 1] | PRD Section X / Jira AC-1 | TestName1, TestName2 | ✅ | — |
+| [Acceptance Criterion 2] | PRD Section Y / Jira AC-2 | TestName3 | ❌ Code differs | DEF-XXX |
+| [Acceptance Criterion 3] | PRD Section Z / Jira AC-3 | — | ❌ Not implemented | DEF-YYY |
+```
+
+If this table is not printed, the task is NOT complete.
+
+### Defect-Exposing Test Pattern (Pattern A)
+
+```csharp
+// Defect-exposing test — RUNS and FAILS until the bug is fixed
+[Fact]
+[Trait("Category", "Negative")]
+[Trait("Defect", "DEF-096")]
+public async Task Recalled_TORecipients_ShouldIncludeDoAApprovers()
+{
+    // Setup...
+    
+    // This WILL FAIL because production code ignores DoA approvers
+    // When DEF-096 is fixed by developers, this test will PASS
+    LastCapturedEmail!.EmailReceivers.Should().Contain("doa2@unops.org");
+}
+```
+
+### CI Integration
+
+Defect-exposing tests can be filtered in CI using xUnit traits:
+- **Run only defect tests:** `dotnet test --filter "Defect!="`
+- **Exclude defect tests from gate:** `dotnet test --filter "Defect="`  
+- **Run specific defect:** `dotnet test --filter "Defect=DEF-096"`
+
+This allows CI to:
+1. Run all tests including defect-exposing ones (full visibility)
+2. Optionally gate on non-defect tests only (so known defects don't block deployment)
+3. Track defect resolution over time (when defect tests start passing)
+
+---
+
+## oUP Integration Testing Patterns
+
+When testing data mapping between Opportunity+ and oneUNOPS Projects (oUP):
+
+### Field Mapping Validation
+For each mapped field in the integration contract, verify:
+1. The field is **present** in the API response (not omitted or null when data exists)
+2. The field **value matches** what was set in Opportunity+
+3. **Soft-deleted entities** are excluded from sync data
+4. **Empty/null fields** are handled gracefully (sent as empty, not omitted)
+
+### Credential-Gated Tests
+Tests requiring live oUP connection use:
+```csharp
+[Fact(Skip = "QA-014: oUP credentials not available")]
+```
+Tests validating the Opportunity+ side of the API contract do NOT require oUP credentials.
+
+### Common oUP Mapping Defects
+- Missing field in API response (e.g., DOA3 not mapped — PNO-1209)
+- Collection not transferred (e.g., Collaborators not mapped — PNO-1143)
+- Notification not triggered on sync (e.g., email missing — PNO-1142)
+- Related entity data incomplete (e.g., Client Partner missing — PNO-1141)
+
+---
+
+## Notification Testing Patterns
+
+### Email Notification Tests
+For each workflow email event, validate:
+1. **Template name**: Correct `.html` template used
+2. **Subject line**: Matches Jira specification format
+3. **TO recipients**: Correct users receive the email
+4. **CC recipients**: Correct users in CC list
+5. **Model data**: Entity URL, display name, approver name populated
+6. **Body content**: Key phrases present in rendered output (if template rendering is testable)
+
+### In-System Notification Tests
+For each in-system notification event, validate:
+1. **Notification created**: Record exists in database after action
+2. **Response type**: ActionRequired vs Informational correctly set
+3. **Status**: Pending for new, Read after clicked
+4. **Entity reference**: Correct entity type and ID linked
+5. **UI behavior**: Appears in bell panel, badge count updates, navigation works
+
+### Notification Recipient Rules (Go Decision)
+| Event | TO | CC | Reference |
+|-------|----|----|-----------|
+| Approval Request | DoA2 (or DoA3 fallback) | OM, Collaborators | PNO-969, PNO-1005 |
+| Completed (Go) | OM, Initiator | Collaborators | PNO-1070 |
+| Rejected (No Go) | OM, Initiator | Collaborators | PNO-1071 |
+| Recalled | DoA holders, OM, Initiator | None | DEF-096 |
+| FYI | Internal stakeholders | None | PNO-968 |

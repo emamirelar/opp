@@ -1,20 +1,19 @@
 /**
  * @fileoverview Playwright configuration for UNOPS Opportunity+ E2E test suite.
  *
- * QA-041 FIX: Reduced workers from default 4 → 2 to balance speed vs. memory.
- * The full suite (1025 tests/browser × 3 browsers = 3075 total) runs with 2 workers
- * to stay within memory limits while reducing total execution time.
+ * Tiered execution strategy:
+ *   - Smoke  (PR):      6 core specs, Chromium only, 3 workers     (~2 min)
+ *   - Extended (PR→main): 20-25 critical specs, Chromium, 4 workers (~8 min)
+ *   - Full   (nightly):  All specs, Chromium, 4 workers, sharded   (~22 min)
+ *   - Cross-browser (weekly): All specs, 3 browsers, sharded       (~30 min)
  *
  * Run commands:
  *   cd "QA Tests"
- *   npx playwright test                             # Run all 3 browsers (3075 tests)
- *   npx playwright test --project=chromium          # Chromium only (1025 tests)
+ *   npx playwright test                             # Run all 3 browsers (~5,700 tests)
+ *   npx playwright test --project=chromium          # Chromium only (~1,900 tests)
+ *   npx playwright test --shard=1/4                 # Run 1 of 4 shards (for CI)
  *   npx playwright test contacts.spec.ts            # Run specific spec file
  *   npx playwright test --project=chromium --headed # Run with visible browser
- *
- * Cross-browser execution note:
- *   Firefox and WebKit are now enabled. Tests run 2-at-a-time across all projects.
- *   Total estimated runtime: ~85 minutes (3 × 28 min at 2 workers).
  */
 
 import { defineConfig, devices } from '@playwright/test';
@@ -40,17 +39,9 @@ export default defineConfig({
   // Match spec files
   testMatch: '**/*.spec.ts',
 
-  // =========================================================================
-  // Worker configuration: 2 workers balances speed vs. memory.
-  //
-  // With 3 browser projects × ~1,009 tests = ~3,027 total tests.
-  // 2 workers = 2 tests run concurrently, each in their own browser context.
-  // Memory estimate: 2 browsers × ~200 MB = ~400 MB baseline — safe.
-  //
-  // Set PLAYWRIGHT_WORKERS env var to override (e.g., PLAYWRIGHT_WORKERS=4
-  // on machines with ≥32 GB RAM for faster runs).
-  // =========================================================================
-  workers: IS_CI ? 1 : parseInt(process.env.PLAYWRIGHT_WORKERS || '2', 10),
+  // Workers: 3 in CI (GitHub runners have 2+ cores), 4 locally.
+  // Override with PLAYWRIGHT_WORKERS env var.
+  workers: IS_CI ? 3 : parseInt(process.env.PLAYWRIGHT_WORKERS || '4', 10),
 
   // Allow test files from different projects to run in parallel across workers.
   fullyParallel: true,
@@ -64,14 +55,14 @@ export default defineConfig({
   // Previous value of 30 caused ~275 chromium tests to "Did Not Run" because
   // 30 failures were hit across 4 workers before the suite could complete.
   // =========================================================================
-  maxFailures: IS_CI ? 100 : 100,
+  maxFailures: IS_CI ? 100 : 0,
 
   // Global timeout per test (30 seconds — generous for Angular app load times)
   timeout: 30_000,
 
   // Timeout for each assertion
   expect: {
-    timeout: 10_000,
+    timeout: 5_000,
   },
 
   // Test reporter: line reporter for CI (compact), html for local (detailed)
@@ -100,8 +91,8 @@ export default defineConfig({
 
     // Capture artifacts on failure
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
-    trace: 'on-first-retry',
+    video: 'off',
+    trace: 'off',
   },
 
   // Test projects — all three browser engines + real-API project.
@@ -192,7 +183,7 @@ export default defineConfig({
             command: `dotnet run --no-launch-profile --project "${path.join(REPO_ROOT, 'QA Tests', 'TestApiServer')}"`,
             url: API_BASE_URL,
             reuseExistingServer: true,
-            timeout: 120_000,
+            timeout: 300_000,
             stdout: 'pipe',
             stderr: 'pipe',
           },
@@ -201,7 +192,7 @@ export default defineConfig({
             url: BASE_URL,
             cwd: CLIENT_APP,
             reuseExistingServer: true,
-            timeout: 120_000,
+            timeout: 300_000,
             stdout: 'pipe',
             stderr: 'pipe',
             env: {

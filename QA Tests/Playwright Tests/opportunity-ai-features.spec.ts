@@ -7,11 +7,17 @@
  *
  * @author UNOPS Opportunity+ QA Team
  * @see https://unops.atlassian.net/browse/PNO-OPP-AI
+ *
+ * @tests 13
  */
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
-import { waitForPermissions } from './helpers/wait.helper';
+import {
+  waitForPermissions,
+  waitForElementReady,
+  waitForTableData,
+} from './helpers/wait.helper';
 
 const featureReady = process.env.OPPORTUNITY_AI_IMPLEMENTED === 'true';
 
@@ -122,7 +128,7 @@ test.describe('AI Features — Relevant People', () => {
     const chipBtn = page.locator('button:has-text("Team")').first();
     if (await chipBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await chipBtn.click();
-      await page.waitForTimeout(1000);
+      await waitForElementReady(page.locator('#section-team').first(), 5000).catch(() => {});
     }
 
     const relevantPeople = page.getByText(/relevant people|suggested/i).first();
@@ -145,7 +151,7 @@ test.describe('AI Features — Deliverable Extraction', () => {
     const chipBtn = page.locator('button:has-text("What")').first();
     if (await chipBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await chipBtn.click();
-      await page.waitForTimeout(1000);
+      await waitForElementReady(page.locator('#section-what').first(), 5000).catch(() => {});
     }
 
     const extractBtn = page.locator('button:has-text("Extract"), [data-testid="extract-deliverables"]').first();
@@ -190,7 +196,7 @@ test.describe('AI Features — Proposal Generation', () => {
   test('AI-011: Create from AI proposal flow accessible from list page', async ({ page }) => {
     await authenticateWithRealBackend(page, OPPORTUNITIES_URL);
     await waitForPermissions(page);
-    await page.waitForTimeout(3000);
+    await waitForTableData(page);
 
     const newBtn = page.locator('[data-testid="new-opportunity-button"], button:has-text("New Opportunity")').first();
     const isVisible = await newBtn.isVisible({ timeout: 5000 }).catch(() => false);

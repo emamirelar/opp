@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule, TranslateService, TranslateLoader, TranslateFakeLoader } from '@ngx-translate/core';
 import { DomSanitizer } from '@angular/platform-browser';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { MessageService } from 'primeng/api';
 import { of, throwError } from 'rxjs';
 import { AiTranscribeComponent } from './ai-transcribe.component';
@@ -11,30 +12,34 @@ describe('AiTranscribeComponent', () => {
   let fixture: ComponentFixture<AiTranscribeComponent>;
   let mockGeminiService: jasmine.SpyObj<GeminiService>;
   let mockMessageService: jasmine.SpyObj<MessageService>;
-  let mockTranslateService: jasmine.SpyObj<TranslateService>;
   let mockSanitizer: jasmine.SpyObj<DomSanitizer>;
+  let translateService: TranslateService;
 
   beforeEach(async () => {
     mockGeminiService = jasmine.createSpyObj('GeminiService', ['scanFile']);
     mockMessageService = jasmine.createSpyObj('MessageService', ['add']);
-    mockTranslateService = jasmine.createSpyObj('TranslateService', ['instant']);
     mockSanitizer = jasmine.createSpyObj('DomSanitizer', ['bypassSecurityTrustUrl']);
-    
-    mockTranslateService.instant.and.returnValue('Translated text');
     mockSanitizer.bypassSecurityTrustUrl.and.returnValue('safe-url');
 
     await TestBed.configureTestingModule({
       imports: [
         AiTranscribeComponent,
-        TranslateModule.forRoot()
+        TranslateModule.forRoot({
+          loader: { provide: TranslateLoader, useClass: TranslateFakeLoader }
+        })
       ],
       providers: [
         { provide: GeminiService, useValue: mockGeminiService },
         { provide: MessageService, useValue: mockMessageService },
-        { provide: TranslateService, useValue: mockTranslateService },
-        { provide: DomSanitizer, useValue: mockSanitizer }
+        { provide: DomSanitizer, useValue: mockSanitizer },
+        provideNoopAnimations()
       ]
     }).compileComponents();
+
+    translateService = TestBed.inject(TranslateService);
+    spyOn(translateService, 'instant').and.returnValue('Translated text');
+    spyOn(translateService, 'get').and.returnValue(of('Translated text'));
+    translateService.use('en');
 
     fixture = TestBed.createComponent(AiTranscribeComponent);
     component = fixture.componentInstance;
@@ -74,15 +79,13 @@ describe('AiTranscribeComponent', () => {
 
       component.onFileSelect(mockEvent);
 
-      // Should set uploadedFile without preview
-      setTimeout(() => {
-        expect(component.uploadedFile()).toBeTruthy();
-        expect(component.uploadedFile()?.file).toBe(mockFile);
-      }, 100);
+      // Audio files are set synchronously (no FileReader)
+      expect(component.uploadedFile()).toBeTruthy();
+      expect(component.uploadedFile()?.file).toBe(mockFile);
     });
 
     it('should handle empty file selection', () => {
-      const mockEvent = { target: { files: [] } };
+      const mockEvent = { target: { files: [] }, files: [] };
 
       component.onFileSelect(mockEvent);
 

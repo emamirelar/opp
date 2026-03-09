@@ -20,7 +20,7 @@ describe('ListviewComponent', () => {
   let exportService: jasmine.SpyObj<ListviewExportService>;
   let router: jasmine.SpyObj<Router>;
   let activatedRoute: jasmine.SpyObj<ActivatedRoute>;
-  let translateService: jasmine.SpyObj<TranslateService>;
+  let translateService: TranslateService;
   let confirmationService: jasmine.SpyObj<ConfirmationService>;
   let globalFilterService: jasmine.SpyObj<GlobalFilterService>;
   let authService: jasmine.SpyObj<AuthService>;
@@ -54,15 +54,13 @@ describe('ListviewComponent', () => {
     ]);
 
     const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    routerSpy.navigate.and.returnValue(Promise.resolve(true));
     
     const activatedRouteSpy = jasmine.createSpyObj('ActivatedRoute', [], {
       snapshot: {
         queryParams: {}
       }
     });
-
-    const translateSpy = jasmine.createSpyObj('TranslateService', ['instant']);
-    translateSpy.instant.and.returnValue('Translated text');
 
     const confirmationSpy = jasmine.createSpyObj('ConfirmationService', ['confirm']);
 
@@ -97,7 +95,6 @@ describe('ListviewComponent', () => {
         { provide: ListviewExportService, useValue: exportSpy },
         { provide: Router, useValue: routerSpy },
         { provide: ActivatedRoute, useValue: activatedRouteSpy },
-        { provide: TranslateService, useValue: translateSpy },
         { provide: ConfirmationService, useValue: confirmationSpy },
         { provide: GlobalFilterService, useValue: globalFilterSpy },
         { provide: AuthService, useValue: authSpy },
@@ -111,7 +108,8 @@ describe('ListviewComponent', () => {
     exportService = TestBed.inject(ListviewExportService) as jasmine.SpyObj<ListviewExportService>;
     router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
     activatedRoute = TestBed.inject(ActivatedRoute) as jasmine.SpyObj<ActivatedRoute>;
-    translateService = TestBed.inject(TranslateService) as jasmine.SpyObj<TranslateService>;
+    translateService = TestBed.inject(TranslateService);
+    spyOn(translateService, 'instant').and.returnValue('Translated text');
     confirmationService = TestBed.inject(ConfirmationService) as jasmine.SpyObj<ConfirmationService>;
     globalFilterService = TestBed.inject(GlobalFilterService) as jasmine.SpyObj<GlobalFilterService>;
     authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;

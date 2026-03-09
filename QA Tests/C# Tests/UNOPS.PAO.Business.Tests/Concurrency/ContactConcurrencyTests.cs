@@ -50,7 +50,7 @@ public class ContactConcurrencyTests : ConcurrencyTestBase
             {
                 using var ctx = TestDbContextFactory.Create();
                 var ids = string.Join(",", contactIds);
-                await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
+                await ctx.Database.ExecuteSqlAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
             }
         });
 
@@ -105,7 +105,7 @@ public class ContactConcurrencyTests : ConcurrencyTestBase
             {
                 using var ctx = TestDbContextFactory.Create();
                 var ids = string.Join(",", createdIds);
-                await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
+                await ctx.Database.ExecuteSqlAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
             }
         });
 
@@ -148,7 +148,7 @@ public class ContactConcurrencyTests : ConcurrencyTestBase
             {
                 using var ctx = TestDbContextFactory.Create();
                 var ids = string.Join(",", contactIds);
-                await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
+                await ctx.Database.ExecuteSqlAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
             }
         });
 
@@ -202,7 +202,7 @@ public class ContactConcurrencyTests : ConcurrencyTestBase
             {
                 using var ctx = TestDbContextFactory.Create();
                 var ids = string.Join(",", contactIds);
-                await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
+                await ctx.Database.ExecuteSqlAsync($"DELETE FROM public.\"Contacts\" WHERE \"Id\" IN ({ids})");
             }
         });
 

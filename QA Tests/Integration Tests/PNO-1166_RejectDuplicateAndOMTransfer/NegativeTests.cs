@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using UNOPS.PAO.Business.Interfaces;
@@ -113,9 +114,15 @@ public class NegativeTests : IDisposable
         var mockNotificationManager = new Mock<NotificationManager>(
             new AppDbContext(options, _userResolverService, mockDbContextSchema.Object),
             _userResolverService);
+        var mockServiceScope = new Mock<IServiceScope>();
+        var mockServiceProvider = new Mock<IServiceProvider>();
+        mockServiceScope.Setup(s => s.ServiceProvider).Returns(mockServiceProvider.Object);
+        var mockServiceScopeFactory = new Mock<IServiceScopeFactory>();
+        mockServiceScopeFactory.Setup(f => f.CreateScope()).Returns(mockServiceScope.Object);
         _notificationService = new PaoWorkflowNotificationService(
             _mockEmailSender.Object,
             mockContextFactory.Object,
+            mockServiceScopeFactory.Object,
             mockNotificationLogger.Object,
             mockConfiguration.Object,
             mockNotificationManager.Object);
@@ -310,7 +317,9 @@ public class NegativeTests : IDisposable
         result.Should().BeOfType<BadRequestObjectResult>();
     }
 
-    [Fact(Skip = "DEF-055: WorkflowController.Reject throws NullReferenceException on null EntityName instead of 400 BadRequest")]
+    [Fact]
+
+    [Trait("Defect", "DEF-055")]
     public async Task NEG_007_Reject_NullEntityName_Returns400()
     {
         var request = new RejectWorkflowRequest

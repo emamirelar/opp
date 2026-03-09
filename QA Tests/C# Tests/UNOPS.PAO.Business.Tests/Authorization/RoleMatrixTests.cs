@@ -321,7 +321,6 @@ namespace UNOPS.PAO.Business.Tests.Authorization
         public void POS_018_OrgUnitAdmin_CanManageOwnUnitPartners()
         {
             // Arrange
-            var userId = 100;
             var userOrgUnitId = 1;
             var partner = new { Id = 1, OrgUnitId = 1 }; // Same org unit
             var userRoles = OrgUnitAdminRoles;

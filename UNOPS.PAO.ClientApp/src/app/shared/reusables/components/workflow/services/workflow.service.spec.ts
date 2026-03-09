@@ -184,7 +184,7 @@ describe('WorkflowService', () => {
         {
           fromStage: 'IDENTIFY & PROFILE',
           toStage: 'GO',
-          completedOn: new Date(),
+          performedOn: new Date(),
           action: 'Approved',
           comment: 'Looks good',
           requiresApproval: true,

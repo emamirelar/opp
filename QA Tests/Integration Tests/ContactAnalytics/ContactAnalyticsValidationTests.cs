@@ -24,6 +24,7 @@ public class ContactAnalyticsValidationTests
 {
     private readonly PAOWebApplicationFactory<Program> _factory;
     private readonly HttpClient _client;
+    private readonly bool _isPostgresAvailable;
     private const string BaseUrl = "/api/contact-analytics";
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -34,6 +35,7 @@ public class ContactAnalyticsValidationTests
     public ContactAnalyticsValidationTests(PAOWebApplicationFactory<Program> factory)
     {
         _factory = factory;
+        _isPostgresAvailable = factory.IsUsingPostgres;
         _client = factory.CreateAuthenticatedClient();
         _client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-Email", "accounts.google.com:testuser@unops.org");
         _client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-ID", "accounts.google.com:123");
@@ -44,8 +46,9 @@ public class ContactAnalyticsValidationTests
     [Trait("TestId", "TC-CA-VAL-001")]
     public async Task GetMostActiveContacts_ResponseHasExpectedStructure()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync($"{BaseUrl}/getMostActiveContacts");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions);
         result.GetProperty("success").GetBoolean();
         result.TryGetProperty("data", out _);
@@ -57,8 +60,9 @@ public class ContactAnalyticsValidationTests
     [Trait("TestId", "TC-CA-VAL-002")]
     public async Task GetContactsByGeographicRegion_ResponseHasDataArray()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync($"{BaseUrl}/getContactsByGeographicRegion");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (response.IsSuccessStatusCode)
         {
             var content = await response.Content.ReadAsStringAsync();
@@ -79,8 +83,9 @@ public class ContactAnalyticsValidationTests
     [Trait("TestId", "TC-CA-VAL-003")]
     public async Task GetContactEngagementTrends_DataIsArray()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync($"{BaseUrl}/getContactEngagementTrends");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions);
         result.GetProperty("data").ValueKind.Should().Be(JsonValueKind.Array);
         result.TryGetProperty("period", out _);
@@ -91,8 +96,9 @@ public class ContactAnalyticsValidationTests
     [Trait("TestId", "TC-CA-VAL-004")]
     public async Task GetContactsByPartner_ResponseHasValidMetadata()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync($"{BaseUrl}/getContactsByPartner");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions);
         result.GetProperty("success").GetBoolean();
         result.TryGetProperty("minContacts", out _);
@@ -103,8 +109,9 @@ public class ContactAnalyticsValidationTests
     [Trait("TestId", "TC-CA-VAL-005")]
     public async Task GetRecentlyActiveContacts_ResponseHasCorrectContentType()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync($"{BaseUrl}/getRecentlyActiveContacts");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         response.Content.Headers.ContentType?.MediaType.Should().Contain("application/json");
         var result = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions);
         result.TryGetProperty("days", out _);
@@ -115,8 +122,9 @@ public class ContactAnalyticsValidationTests
     [Trait("TestId", "TC-CA-VAL-006")]
     public async Task GetContactsByJobTitle_ResponseHasValidStructure()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync($"{BaseUrl}/getContactsByJobTitle");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (response.IsSuccessStatusCode)
         {
             var content = await response.Content.ReadAsStringAsync();
@@ -137,8 +145,9 @@ public class ContactAnalyticsValidationTests
     [Trait("TestId", "TC-CA-VAL-007")]
     public async Task GetContactGrowthTrends_ResponseHasPeriodAndMonths()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync($"{BaseUrl}/getContactGrowthTrends");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions);
         result.TryGetProperty("period", out var period);
         result.TryGetProperty("months", out var months);
@@ -150,8 +159,9 @@ public class ContactAnalyticsValidationTests
     [Trait("TestId", "TC-CA-VAL-008")]
     public async Task GetContactsWithMostDocuments_ResponseHasDataAndTotal()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync($"{BaseUrl}/getContactsWithMostDocuments");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions);
         result.GetProperty("success").GetBoolean();
         result.TryGetProperty("data", out _);
@@ -162,8 +172,9 @@ public class ContactAnalyticsValidationTests
     [Trait("TestId", "TC-CA-VAL-009")]
     public async Task GetContactsByInteractionType_ResponseHasValidFields()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync($"{BaseUrl}/getContactsByInteractionType");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions);
         result.GetProperty("success").GetBoolean();
         result.GetProperty("data").ValueKind.Should().Be(JsonValueKind.Array);
@@ -173,6 +184,7 @@ public class ContactAnalyticsValidationTests
     [Trait("TestId", "TC-CA-VAL-010")]
     public async Task AllEndpoints_ReturnJsonContentType()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var urls = new[]
         {
             $"{BaseUrl}/getMostActiveContacts",

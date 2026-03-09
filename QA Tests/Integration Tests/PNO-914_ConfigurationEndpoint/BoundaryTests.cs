@@ -88,7 +88,9 @@ public class ConfigurationBoundaryTests : ConfigurationTestFixtureBase
         act.Should().NotThrow();
     }
 
-    [Fact(Skip = "DEF-051: ConfigurationController uses ?? instead of IsNullOrEmpty for Environment fallback")]
+    [Fact]
+
+    [Trait("Defect", "DEF-051")]
     [Trait("TestId", "PNO914-CFG-BND-007")]
     public void Get_AllSectionsEmpty_ReturnsMinimalResponse()
     {

@@ -1,0 +1,188 @@
+# Dual-Layer Testing Mandate — MANDATORY
+
+## The Rule
+
+**Every feature, endpoint, or workflow MUST have BOTH layers of tests:**
+
+```
+Layer 1: Mocked Tests (Unit/Integration with mocks)
+  → Fast, deterministic, run in CI on every commit
+  → Verify business logic, validation, permissions, edge cases
+  → Use in-memory DB, stubbed services, mock HTTP
+
+Layer 2: Real Environment Tests (*.real.spec.ts)
+  → Slower, require deployed environment
+  → Verify system-level integration, data persistence, real workflows
+  → Hit actual backend, real database, real API endpoints
+```
+
+**Both layers are required. Neither alone provides full coverage.**
+
+## Why This Exists
+
+Analysis of 25+ JIRA defects (PNO-1149 through PNO-1211) proved that
+100% of production bugs were in the integration gap between layers:
+
+| Bug Type | Mocked Tests Catch? | Real Tests Catch? |
+|---|---|---|
+| Workflow state machine (Go/No Go/Reopen status) | ❌ No — mocks return expected status | ✅ Yes |
+| Cross-system integration (oUP sync, field mapping) | ❌ No — mocks bypass real sync | ✅ Yes |
+| Character encoding in real data | ❌ No — test data is ASCII | ✅ Yes |
+| Validation false positives with real data | ❌ No — mocks return clean data | ✅ Yes |
+| Deep link routing with real Angular | ❌ No — mocks intercept navigation | ✅ Yes |
+| Exchange rate date accuracy | ❌ No — mocks return fake rates | ✅ Yes |
+| Permission edge cases with real roles | ❌ No — mocks grant/deny per test | ✅ Yes |
+| Server errors on team management | ❌ No — mocks return 200 | ✅ Yes |
+
+## File Naming Convention
+
+```
+Feature.spec.ts           → Mocked test (Layer 1)
+Feature.real.spec.ts      → Real environment test (Layer 2)
+```
+
+The Playwright config already has a `real-api` project that matches `**/*.real.spec.ts`
+with extended timeouts and Chrome-only execution.
+
+## Required Test Categories for Real Environment Tests
+
+### For Every New Feature
+
+When creating tests for a new feature, you MUST create BOTH:
+
+1. **Mocked spec** (`feature.spec.ts`) covering:
+   - Happy path with mocked responses
+   - Negative cases with mocked error responses
+   - Edge/boundary cases
+   - Permission checks with mocked roles
+   - UI rendering with mocked data
+
+2. **Real spec** (`feature.real.spec.ts`) covering:
+   - API endpoint returns correct data from real DB
+   - Data persistence (create → read back → verify)
+   - Real workflow transitions and state changes
+   - Permission endpoints with real user credentials
+   - No server errors (500) on any endpoint
+   - Character encoding with real production-like data
+   - Cross-entity references (foreign keys resolve)
+
+### Minimum Real-Env Test Coverage per Feature
+
+| Area | Required Real-Env Tests |
+|---|---|
+| **CRUD Operations** | Create, read, update, delete through real API |
+| **Workflow Transitions** | Each state change produces correct status |
+| **Validation** | Validation endpoint reflects real data state |
+| **Permissions** | Permission endpoint returns correct flags |
+| **Search** | Search returns results matching real data |
+| **UI Rendering** | Page loads without JS errors or 500s |
+
+## Real Environment Test Pattern
+
+```typescript
+import { test, expect } from '@playwright/test';
+import {
+  authenticateRealApi,
+  isBackendAvailable,
+} from './helpers/real-api-auth.helper';
+
+const BACKEND_READY = process.env.REAL_API_TESTS === 'true';
+const API = process.env.API_BASE_URL || 'http://localhost:5159';
+
+function apiHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'X-Goog-Authenticated-User-Email': `accounts.google.com:${process.env.TEST_USER_EMAIL || 'leonardc@unops.org'}`,
+    'X-Goog-Authenticated-User-ID': 'accounts.google.com:1',
+    'Cookie': `DevIAPAuth=${process.env.TEST_USER_EMAIL || 'leonardc@unops.org'}`,
+  };
+}
+
+test.describe('Feature — Real API', () => {
+  test.slow();
+
+  let backendOk = false;
+
+  test.beforeAll(async ({ browser }) => {
+    if (!BACKEND_READY) return;
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    backendOk = await isBackendAvailable(page);
+    await ctx.close();
+  });
+
+  test.beforeEach(async () => {
+    test.skip(!BACKEND_READY, 'Set REAL_API_TESTS=true to enable');
+    test.skip(!backendOk, 'Backend not reachable');
+  });
+
+  test('endpoint returns valid data', async ({ page }) => {
+    const res = await page.request.get(`${API}/api/feature`, { headers: apiHeaders() });
+    expect(res.ok()).toBeTruthy();
+    expect(res.status()).not.toBe(500);
+
+    const body = await res.json();
+    expect(body).toBeTruthy();
+  });
+});
+```
+
+## Running Real Environment Tests
+
+```bash
+# Set environment variable
+$env:REAL_API_TESTS = "true"
+
+# Prerequisites
+# 1. Cloud SQL proxy running (port 5432)
+# 2. .NET backend running (http://localhost:5159)
+# 3. Angular frontend running (http://localhost:4200)
+
+# Run all real-env tests
+cd "QA Tests" && npx playwright test --project=real-api
+
+# Run a specific real-env test file
+cd "QA Tests" && npx playwright test --project=real-api workflow-state-transitions.real.spec.ts
+```
+
+## Compliance Checklist
+
+Before completing any test task, verify:
+
+```
+### Dual-Layer Testing Compliance
+| Check | Status |
+|---|---|
+| Mocked tests exist (*.spec.ts)? | ✅/❌ |
+| Real-env tests exist (*.real.spec.ts)? | ✅/❌ |
+| Real tests check API returns ≠ 500? | ✅/❌ |
+| Real tests verify data persistence? | ✅/❌ |
+| Real tests check workflow state? | ✅/❌ |
+| Real tests use `test.skip(!BACKEND_READY)` guard? | ✅/❌ |
+| Real tests use `apiHeaders()` for auth? | ✅/❌ |
+| Real tests clean up created test data? | ✅/❌ |
+```
+
+If any check is ❌, you MUST add the missing tests before proceeding.
+
+## Common Mistakes to Avoid
+
+- ❌ Creating only mocked tests and saying "real tests can be added later"
+- ❌ Creating real-env tests without the `REAL_API_TESTS` gate
+- ❌ Using `page.route()` (mocks) in `.real.spec.ts` files
+- ❌ Hardcoding test data IDs (use API to discover existing data)
+- ❌ Not cleaning up test data created during tests
+- ❌ Skipping real-env tests for "simple" features
+- ❌ Assuming mocked tests are sufficient because they pass
+
+## Integration with 3:1 Ratio Rule
+
+The 3:1 ratio rule (Negative ≥ 3× Positive, etc.) applies to EACH layer independently:
+
+- Mocked tests must meet 3:1 ratio
+- Real-env tests should meet 3:1 ratio where practical
+- For real-env tests, emphasis should be on:
+  - No 500 errors (negative)
+  - Data consistency checks (functional)
+  - Cross-entity integrity (integration)
+  - Permission boundary verification (edge/boundary)

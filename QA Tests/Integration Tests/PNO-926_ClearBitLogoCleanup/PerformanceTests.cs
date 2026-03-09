@@ -142,8 +142,9 @@ public class PerformanceTests : PNO926TestFixtureBase
         var affected = await RunClearbitCleanupMigrationAsync();
         sw.Stop();
 
-        affected.Should().Be(0);
-        sw.Elapsed.Should().BeLessThan(TimeSpan.FromMilliseconds(500));
+        affected.Should().Be(0, "null URLs should not be treated as clearbit URLs");
+        sw.Elapsed.Should().BeLessThan(TimeSpan.FromMilliseconds(500),
+            $"null URL migration took {sw.ElapsedMilliseconds}ms");
     }
 
     [Fact] [Trait("TestId", "PERF-011")]
@@ -156,8 +157,9 @@ public class PerformanceTests : PNO926TestFixtureBase
         var affected = await RunClearbitCleanupMigrationAsync();
         sw.Stop();
 
-        affected.Should().Be(0);
-        sw.Elapsed.Should().BeLessThan(TimeSpan.FromMilliseconds(500));
+        affected.Should().Be(0, "safe (non-clearbit) URLs should not be affected");
+        sw.Elapsed.Should().BeLessThan(TimeSpan.FromMilliseconds(500),
+            $"safe URL migration took {sw.ElapsedMilliseconds}ms");
     }
 
     [Fact] [Trait("TestId", "PERF-012")]
@@ -208,7 +210,8 @@ public class PerformanceTests : PNO926TestFixtureBase
         var memAfter = GC.GetTotalMemory(forceFullCollection: true);
 
         var growthMb = (memAfter - memBefore) / 1_048_576.0;
-        growthMb.Should().BeLessThan(50);
+        growthMb.Should().BeLessThan(50,
+            $"30 migration runs caused {growthMb:F1}MB memory growth");
     }
 
     [Fact] [Trait("TestId", "PERF-015")]

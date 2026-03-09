@@ -168,7 +168,7 @@ describe('RequirementsValidationComponent', () => {
       expect(sdgsReq?.isMet).toBe(false);
 
       // Update form value with items
-      form.get('sdgs')?.setValue([1, 2, 3]);
+      form.get('sdgs')?.setValue([1, 2, 3] as never);
       tick();
 
       const updatedSdgsReq = component.requirements().find((r) => r.name === 'sdgsRequired');

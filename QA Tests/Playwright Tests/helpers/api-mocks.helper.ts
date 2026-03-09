@@ -8,6 +8,12 @@
  */
 
 import { Page } from '@playwright/test';
+import referenceData from '../fixtures/reference-data.json';
+import partnersFixture from '../fixtures/partners.json';
+import contactsFixture from '../fixtures/contacts.json';
+import opportunitiesFixture from '../fixtures/opportunities.json';
+import dashboardFixture from '../fixtures/dashboard.json';
+import interactionsFixture from '../fixtures/interactions.json';
 
 /**
  * Set to true to enable verbose mock logging (useful for debugging individual tests).
@@ -34,6 +40,8 @@ const RESTRICTED_MOCK_USERS = [
   'doa2@example.com',
   'collaborator@example.com',
   'other-user@example.com',
+  'partner.user@test.local',
+  'general.user@test.local',
 ];
 
 /** Go Decision workflow stages for opportunity */
@@ -45,7 +53,14 @@ const OPPORTUNITY_STAGES = {
 };
 
 /** In-memory state for workflow mocks (enables Cancel/Reopen/Submit transitions in tests) */
-const workflowMockState: Record<number, { stage: string; status: string; isInWorkflow: boolean }> = {};
+let workflowMockState: Record<number, { stage: string; status: string; isInWorkflow: boolean }> = {};
+
+/**
+ * Reset the workflow mock state. Call in beforeEach to ensure test isolation.
+ */
+export function resetWorkflowMockState(): void {
+  workflowMockState = {};
+}
 
 /**
  * Setup API mocks for authentication and configuration.
@@ -55,6 +70,9 @@ const workflowMockState: Record<number, { stage: string; status: string; isInWor
  *   Default/admin users receive full permissions.
  */
 export async function setupAPIMocks(page: Page, userEmail?: string): Promise<void> {
+  // Reset workflow state for each test to ensure isolation
+  workflowMockState = {};
+
   const isRestrictedUser = userEmail ? RESTRICTED_MOCK_USERS.includes(userEmail) : false;
   mockLog('[API Mock] Setting up route interceptions...');
   
@@ -140,11 +158,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, name: 'Test Partner 1', type: 'Government' },
-        { id: 2, name: 'Test Partner 2', type: 'NGO' },
-        { id: 3, name: 'Test Partner 3', type: 'Private Sector' },
-      ]),
+      body: JSON.stringify(referenceData.partners),
     });
   });
 
@@ -154,11 +168,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, name: 'HQ - Headquarters', code: 'HQ' },
-        { id: 2, name: 'RO - Regional Office', code: 'RO' },
-        { id: 3, name: 'CO - Country Office', code: 'CO' },
-      ]),
+      body: JSON.stringify(referenceData.organizationUnits),
     });
   });
 
@@ -168,21 +178,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        {
-          id: 1,
-          name: 'Test Partner 1',
-          children: [
-            { id: 11, name: 'Test Partner 1 - Division A', children: [] },
-            { id: 12, name: 'Test Partner 1 - Division B', children: [] },
-          ],
-        },
-        {
-          id: 2,
-          name: 'Test Partner 2',
-          children: [],
-        },
-      ]),
+      body: JSON.stringify(referenceData.partnerTreeStructure),
     });
   });
 
@@ -192,11 +188,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, name: 'New York Office', location: 'USA' },
-        { id: 2, name: 'Geneva Office', location: 'Switzerland' },
-        { id: 3, name: 'Copenhagen Office', location: 'Denmark' },
-      ]),
+      body: JSON.stringify(referenceData.liaisonOffices),
     });
   });
 
@@ -206,11 +198,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, name: 'John Smith', email: 'john.smith@test.com' },
-        { id: 2, name: 'Jane Doe', email: 'jane.doe@test.com' },
-        { id: 3, name: 'Bob Johnson', email: 'bob.johnson@test.com' },
-      ]),
+      body: JSON.stringify(referenceData.contacts),
     });
   });
 
@@ -221,12 +209,8 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        items: [
-          { id: 1, name: 'Test User 1', email: 'user1@unops.org' },
-          { id: 2, name: 'Test User 2', email: 'user2@unops.org' },
-          { id: 3, name: 'Test User 3', email: 'user3@unops.org' },
-        ],
-        totalCount: 3,
+        items: referenceData.users,
+        totalCount: referenceData.users.length,
         pageIndex: 1,
         pageSize: 20,
       }),
@@ -244,13 +228,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, name: 'Mr.' },
-        { id: 2, name: 'Ms.' },
-        { id: 3, name: 'Mrs.' },
-        { id: 4, name: 'Dr.' },
-        { id: 5, name: 'Prof.' },
-      ]),
+      body: JSON.stringify(referenceData.salutations),
     });
   });
 
@@ -260,10 +238,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, name: 'Active' },
-        { id: 2, name: 'Inactive' },
-      ]),
+      body: JSON.stringify(referenceData.statuses),
     });
   });
 
@@ -273,12 +248,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 1, name: 'He/Him' },
-        { id: 2, name: 'She/Her' },
-        { id: 3, name: 'They/Them' },
-        { id: 4, name: 'Other' },
-      ]),
+      body: JSON.stringify(referenceData.pronouns),
     });
   });
 
@@ -288,14 +258,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 'US', name: 'United States', code: 'US' },
-        { id: 'GB', name: 'United Kingdom', code: 'GB' },
-        { id: 'FR', name: 'France', code: 'FR' },
-        { id: 'DE', name: 'Germany', code: 'DE' },
-        { id: 'CH', name: 'Switzerland', code: 'CH' },
-        { id: 'DK', name: 'Denmark', code: 'DK' },
-      ]),
+      body: JSON.stringify(referenceData.countries),
     });
   });
 
@@ -305,11 +268,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 'NY', name: 'New York', countryCode: 'US' },
-        { id: 'CA', name: 'California', countryCode: 'US' },
-        { id: 'TX', name: 'Texas', countryCode: 'US' },
-      ]),
+      body: JSON.stringify(referenceData.states),
     });
   });
 
@@ -329,14 +288,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        records: [
-          { id: 1, name: 'UNICEF Regional Office', type: 'Government', status: 'Active', stage: 'Active', country: 'United States', createdDate: '2024-01-15T00:00:00Z' },
-          { id: 2, name: 'Red Cross International', type: 'NGO', status: 'Active', stage: 'Active', country: 'Switzerland', createdDate: '2024-02-20T00:00:00Z' },
-          { id: 3, name: 'World Bank Group', type: 'Multilateral', status: 'Active', stage: 'Active', country: 'United States', createdDate: '2024-03-10T00:00:00Z' },
-        ],
-        totalCount: 3,
-      }),
+      body: JSON.stringify(partnersFixture.list),
     });
   });
 
@@ -346,12 +298,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        records: [
-          { id: 1, name: 'UNICEF Regional Office', type: 'Government', status: 'Active', stage: 'Active', country: 'United States', createdDate: '2024-01-15T00:00:00Z' },
-        ],
-        totalCount: 1,
-      }),
+      body: JSON.stringify(partnersFixture.search),
     });
   });
 
@@ -364,14 +311,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        records: [
-          { id: 1, firstName: 'John', lastName: 'Smith', name: 'John Smith', email: 'john.smith@test.com', status: 'Active', partner: { id: 1, name: 'UNICEF Regional Office' }, createdDate: '2024-01-20T00:00:00Z' },
-          { id: 2, firstName: 'Jane', lastName: 'Doe', name: 'Jane Doe', email: 'jane.doe@test.com', status: 'Active', partner: { id: 2, name: 'Red Cross International' }, createdDate: '2024-02-15T00:00:00Z' },
-          { id: 3, firstName: 'Bob', lastName: 'Johnson', name: 'Bob Johnson', email: 'bob.johnson@test.com', status: 'Active', partner: { id: 3, name: 'World Bank Group' }, createdDate: '2024-03-05T00:00:00Z' },
-        ],
-        totalCount: 3,
-      }),
+      body: JSON.stringify(contactsFixture.list),
     });
   });
 
@@ -381,12 +321,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        records: [
-          { id: 1, firstName: 'John', lastName: 'Smith', name: 'John Smith', email: 'john.smith@test.com', status: 'Active', partner: { id: 1, name: 'UNICEF Regional Office' }, createdDate: '2024-01-20T00:00:00Z' },
-        ],
-        totalCount: 1,
-      }),
+      body: JSON.stringify(contactsFixture.search),
     });
   });
 
@@ -400,14 +335,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        records: [
-          { id: 1, subject: 'Quarterly Partnership Review', type: 'Meeting', status: 'Completed', date: '2024-06-15T10:00:00Z', partner: { id: 1, name: 'UNICEF Regional Office' }, createdDate: '2024-06-10T00:00:00Z' },
-          { id: 2, subject: 'Follow-up Call on Project Scope', type: 'Call', status: 'Completed', date: '2024-07-01T14:00:00Z', partner: { id: 2, name: 'Red Cross International' }, createdDate: '2024-06-28T00:00:00Z' },
-          { id: 3, subject: 'Technical Assessment Visit', type: 'Visit', status: 'Scheduled', date: '2024-08-15T09:00:00Z', partner: { id: 3, name: 'World Bank Group' }, createdDate: '2024-07-20T00:00:00Z' },
-        ],
-        totalCount: 3,
-      }),
+      body: JSON.stringify(interactionsFixture.list),
     });
   });
 
@@ -417,12 +345,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        records: [
-          { id: 1, subject: 'Quarterly Partnership Review', type: 'Meeting', status: 'Completed', date: '2024-06-15T10:00:00Z', partner: { id: 1, name: 'UNICEF Regional Office' }, createdDate: '2024-06-10T00:00:00Z' },
-        ],
-        totalCount: 1,
-      }),
+      body: JSON.stringify(interactionsFixture.search),
     });
   });
 
@@ -435,14 +358,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        records: [
-          { id: 1, name: 'Infrastructure Development Program', title: 'Infrastructure Development', status: 'Active', stage: 'Identification', value: 1500000, currency: 'USD', partner: { id: 1, name: 'UNICEF Regional Office' }, organizationUnit: { id: 1, name: 'HQ' }, createdDate: '2024-01-15T00:00:00Z' },
-          { id: 2, name: 'Education Support Initiative', title: 'Education Support', status: 'Active', stage: 'Active', value: 800000, currency: 'USD', partner: { id: 2, name: 'Red Cross International' }, organizationUnit: { id: 2, name: 'RO' }, createdDate: '2024-03-01T00:00:00Z' },
-          { id: 3, name: 'Healthcare Capacity Building', title: 'Healthcare Capacity', status: 'Draft', stage: 'Draft', value: 2000000, currency: 'USD', partner: { id: 3, name: 'World Bank Group' }, organizationUnit: { id: 1, name: 'HQ' }, createdDate: '2024-05-10T00:00:00Z' },
-        ],
-        totalCount: 3,
-      }),
+      body: JSON.stringify(opportunitiesFixture.list),
     });
   });
 
@@ -452,12 +368,7 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        records: [
-          { id: 1, name: 'Infrastructure Development Program', title: 'Infrastructure Development', status: 'Active', stage: 'Identification', value: 1500000, currency: 'USD', partner: { id: 1, name: 'UNICEF Regional Office' }, createdDate: '2024-01-15T00:00:00Z' },
-        ],
-        totalCount: 1,
-      }),
+      body: JSON.stringify(opportunitiesFixture.search),
     });
   });
 
@@ -733,6 +644,93 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     });
   });
 
+  // Mock /api/contact/{id}/permissions - Contact permissions (required for contact detail page)
+  await page.route(url => {
+    const urlString = url.toString();
+    return /\/api\/contact\/\d+\/permissions/.test(urlString);
+  }, async (route) => {
+    mockLog('[API Mock] Intercepted: /api/contact/{id}/permissions');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(isRestrictedUser ? {
+        canView: true,
+        canEdit: false,
+        canDelete: false,
+      } : {
+        canView: true,
+        canEdit: true,
+        canDelete: true,
+      }),
+    });
+  });
+
+  // Mock /api/interaction/{id}/permissions - Interaction permissions (required for interaction detail page)
+  await page.route(url => {
+    const urlString = url.toString();
+    return /\/api\/interaction\/\d+\/permissions/.test(urlString);
+  }, async (route) => {
+    mockLog('[API Mock] Intercepted: /api/interaction/{id}/permissions');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(isRestrictedUser ? {
+        canView: true,
+        canEdit: false,
+        canDelete: false,
+      } : {
+        canView: true,
+        canEdit: true,
+        canDelete: true,
+      }),
+    });
+  });
+
+  // ==========================================
+  // DASHBOARD ENDPOINTS - Required for home/dashboard page
+  // ==========================================
+
+  // Mock /api/dashboard/content - Combined dashboard data (DashboardCombinedResponse)
+  // Must match DashboardCombinedResponse interface: myPartners, myContacts, myInteractions,
+  // myOpportunities, draftPartners, draftContacts, draftInteractions, draftOpportunities,
+  // orgUnitRecentUpdates, orgUnitName
+  await page.route(url => url.toString().includes('/api/dashboard/content'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/dashboard/content');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(dashboardFixture.content),
+    });
+  });
+
+  // Mock /api/dashboard/org-unit-recent-updates - Used when loading "View All" recent activity
+  await page.route(url => url.toString().includes('/api/dashboard/org-unit-recent-updates'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/dashboard/org-unit-recent-updates');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(dashboardFixture.orgUnitRecentUpdates),
+    });
+  });
+
+  // Mock /api/global/search - Cross-entity search (SearchResponse: availableEntities, results)
+  await page.route(url => url.toString().includes('/api/global/search'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/global/search');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        availableEntities: ['partners', 'contacts', 'interactions', 'opportunities'],
+        results: {
+          partners: [],
+          contacts: [],
+          interactions: [],
+          opportunities: [],
+        },
+      }),
+    });
+  });
+
   // ==========================================
   // NOTIFICATION ENDPOINTS - Required for topbar notification panel
   // ==========================================
@@ -806,6 +804,34 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
   // ==========================================
 
   const isCollaborator = userEmail === 'collaborator@example.com';
+
+  // Mock GET /api/workflow/pending-approvals - Pending workflow approvals for Actions Required card
+  await page.route(url => url.toString().includes('/api/workflow/pending-approvals'), async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.continue();
+      return;
+    }
+    mockLog('[API Mock] Intercepted: GET /api/workflow/pending-approvals');
+    // Return mock pending approvals for DoA2 user (used by workflow-actions-required.spec.ts)
+    const mockPendingApprovals = [
+      {
+        entityName: 'Opportunity',
+        entityId: 12,
+        entityDisplayName: 'Healthcare Capacity Building - Go Decision Pending',
+        currentStage: 'IDENTIFY & PROFILE',
+        pendingStage: 'GO',
+        submittedBy: 'Test OM',
+        submittedOn: new Date().toISOString(),
+        orgUnitName: 'HQ - Headquarters',
+        submissionComment: 'Ready for review',
+      },
+    ];
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(mockPendingApprovals),
+    });
+  });
 
   // Mock /api/workflow/{entity} - Workflow stages list (no /id)
   await page.route(url => {
@@ -1003,6 +1029,193 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     });
   });
 
+  // ==========================================
+  // DOCUMENT ENDPOINTS - Required for document tabs and AI comparison
+  // ==========================================
+
+  // Mock /api/document/entity/{entityType}/{entityId} - Document list for entity
+  await page.route(url => /\/api\/document\/entity\/\w+\/\d+/.test(url.toString()), async (route) => {
+    const url = route.request().url();
+    const match = url.match(/\/api\/document\/entity\/(\w+)\/(\d+)/);
+    const entityType = match?.[1] || 'Partner';
+    const entityId = match?.[2] || '1';
+    mockLog(`[API Mock] Intercepted: /api/document/entity/${entityType}/${entityId}`);
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 1, name: 'Partnership Agreement.pdf', type: 'Contract', size: 245000, createdDate: '2024-06-01T00:00:00Z', aiTranscribed: true, mimeType: 'application/pdf' },
+        { id: 2, name: 'Meeting Notes.docx', type: 'Report', size: 52000, createdDate: '2024-06-10T00:00:00Z', aiTranscribed: false, mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+      ]),
+    });
+  });
+
+  // Mock /api/document-transcribe (POST) - AI document transcription
+  await page.route(url => url.toString().includes('/api/document-transcribe'), async (route) => {
+    mockLog('[API Mock] Intercepted: POST /api/document-transcribe');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        name: 'Transcribed Document',
+        description: 'AI-extracted description from document content',
+        estimatedValue: 1500000,
+        currency: 'USD',
+        sector: 'Infrastructure',
+        country: 'Kenya',
+        transcriptionStatus: 'completed',
+      }),
+    });
+  });
+
+  // Mock /api/auditlog/latest - Latest audit log entry (used by AI comparison)
+  await page.route(url => url.toString().includes('/api/auditlog/latest'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/auditlog/latest');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: 1,
+        entityId: 1,
+        entityType: 'Opportunity',
+        action: 'Update',
+        jsonData: JSON.stringify({
+          name: 'Infrastructure Development Program',
+          description: 'Current description before AI changes',
+          estimatedValue: 1500000,
+        }),
+        createdDate: new Date().toISOString(),
+        createdBy: 'system',
+      }),
+    });
+  });
+
+  // Mock /api/auditlog - Audit log list
+  await page.route(url => {
+    const urlString = url.toString();
+    return urlString.includes('/api/auditlog') && !urlString.includes('/api/auditlog/latest');
+  }, async (route) => {
+    mockLog('[API Mock] Intercepted: /api/auditlog');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([]),
+    });
+  });
+
+  // ==========================================
+  // ADDITIONAL REFERENCE DATA - CachedDataService and form dropdowns
+  // ==========================================
+
+  // Mock /api/values/partner-groups - Partner group dropdown
+  await page.route(url => url.toString().includes('/api/values/partner-groups'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/values/partner-groups');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(referenceData.partnerGroups),
+    });
+  });
+
+  // Mock /api/values/users/search - User search for DOA/team dialogs
+  await page.route(url => url.toString().includes('/api/values/users/search'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/values/users/search');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(referenceData.usersSearch),
+    });
+  });
+
+  // Mock /api/values/sdg - Sustainable Development Goals
+  await page.route(url => {
+    const urlString = url.toString();
+    return urlString.includes('/api/values/sdg') && !urlString.includes('/api/values/sdg-indicators');
+  }, async (route) => {
+    mockLog('[API Mock] Intercepted: /api/values/sdg');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(referenceData.sdgs),
+    });
+  });
+
+  // Mock /api/values/sdg-indicators - SDG Indicators
+  await page.route(url => url.toString().includes('/api/values/sdg-indicators'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/values/sdg-indicators');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(referenceData.sdgIndicators),
+    });
+  });
+
+  // Mock /api/values/currency - Currency dropdown
+  await page.route(url => url.toString().includes('/api/values/currency'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/values/currency');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(referenceData.currencies),
+    });
+  });
+
+  // Mock /api/partner/{id}/interactions - Partner interactions for Create Opportunity
+  await page.route(url => /\/api\/partner\/\d+\/interactions/.test(url.toString()), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/partner/{id}/interactions');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(interactionsFixture.partnerInteractions),
+    });
+  });
+
+  // Mock /api/interactions-brief - Brief interaction list for Create Opportunity dialog
+  await page.route(url => url.toString().includes('/api/interactions-brief'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/interactions-brief');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(interactionsFixture.interactionsBrief),
+    });
+  });
+
+  // Mock /api/values/gemini-models - AI model selection
+  await page.route(url => url.toString().includes('/api/values/gemini-models'), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/values/gemini-models');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(referenceData.geminiModels),
+    });
+  });
+
+  // Mock /api/opportunity/{id}/apply-ai-changes (POST) - Apply AI-suggested changes
+  await page.route(url => /\/api\/opportunity\/\d+\/apply-ai-changes/.test(url.toString()), async (route) => {
+    const url = route.request().url();
+    const id = url.match(/\/api\/opportunity\/(\d+)/)?.[1] || '1';
+    mockLog(`[API Mock] Intercepted: POST /api/opportunity/${id}/apply-ai-changes`);
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: parseInt(id),
+        name: 'Updated Opportunity',
+        success: true,
+      }),
+    });
+  });
+
+  // Mock /api/contact/{id}/profile-picture - Contact profile picture
+  await page.route(url => /\/api\/contact\/\d+\/profile-picture/.test(url.toString()), async (route) => {
+    mockLog('[API Mock] Intercepted: /api/contact/{id}/profile-picture');
+    await route.fulfill({
+      status: 404,
+      contentType: 'application/json',
+      body: JSON.stringify({ message: 'No profile picture' }),
+    });
+  });
+
   // Catch-all for any other /api/ and /user/ calls - return smart defaults based on URL pattern
   await page.route(url => {
     const urlString = url.toString();
@@ -1019,11 +1232,19 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
            !urlString.includes('/api/values/liaison-offices') &&
            !urlString.includes('/api/values/contacts') &&
            !urlString.includes('/api/values/users/paged') &&
+           !urlString.includes('/api/values/users/search') &&
            !urlString.includes('/api/values/salutations') &&
            !urlString.includes('/api/values/status') &&
            !urlString.includes('/api/values/pronouns') &&
            !urlString.includes('/api/values/countries') &&
            !urlString.includes('/api/values/states') &&
+           !urlString.includes('/api/values/partner-groups') &&
+           !urlString.includes('/api/values/sdg') &&
+           !urlString.includes('/api/values/currency') &&
+           !urlString.includes('/api/values/gemini-models') &&
+           !urlString.includes('/api/document-transcribe') &&
+           !urlString.includes('/api/auditlog') &&
+           !urlString.includes('/api/interactions-brief') &&
            // Exclude the entity list endpoints (handled above)
            !/\/api\/partner(\?|$)/.test(urlString) &&
            !/\/api\/partner\/search/.test(urlString) &&
@@ -1039,10 +1260,14 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
            // from the catch-all AND not matched by the specific mock, causing proxy hangs
            !/\/api\/partner\/\d+$/.test(urlString) &&
            !/\/api\/partner\/\d+\/permissions/.test(urlString) &&
+           !/\/api\/partner\/\d+\/interactions/.test(urlString) &&
            !/\/api\/opportunity\/\d+$/.test(urlString) &&
            !/\/api\/opportunity\/\d+\/permissions/.test(urlString) &&
+           !/\/api\/opportunity\/\d+\/apply-ai-changes/.test(urlString) &&
            !/\/api\/contact\/\d+$/.test(urlString) &&
+           !/\/api\/contact\/\d+\/profile-picture/.test(urlString) &&
            !/\/api\/interaction\/\d+$/.test(urlString) &&
+           !/\/api\/document\/entity\//.test(urlString) &&
            // Exclude only workflow URLs with entity AND id (handled above)
            !/\/api\/workflow\/\w+\/\d+/.test(urlString) &&
            !urlString.includes('/api/workflow/');
@@ -1053,6 +1278,27 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
     
     // Smart responses based on URL patterns
     if (method === 'GET') {
+      // /api/permissions - Permission config (PermissionService constructor)
+      if (url.includes('/api/permissions') && !url.includes('/api/permissions/check/')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            permissions: [],
+            roles: [],
+          }),
+        });
+        return;
+      }
+      // /api/dev/check-iap-simulation - Dev IAP auth check
+      if (url.includes('/api/dev/check-iap-simulation')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ isIapSimulation: true }),
+        });
+        return;
+      }
       // Permission check endpoints - return correct structure matching Angular PermissionService expectations
       // Restricted users get view-only permissions
       if (url.includes('/api/permissions/check/')) {
@@ -1193,17 +1439,6 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
           body: JSON.stringify([]),
         });
       }
-      // Dashboard content
-      else if (url.includes('/api/dashboard/content')) {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            recentUpdates: [],
-            quickStats: {},
-          }),
-        });
-      }
       // User info
       else if (url.includes('/api/user-info/')) {
         await route.fulfill({
@@ -1229,10 +1464,67 @@ export async function setupAPIMocks(page: Page, userEmail?: string): Promise<voi
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
+          body: JSON.stringify(referenceData.documentTypes),
+        });
+      }
+      // Comments endpoint - required for collaboration section
+      else if (url.includes('/api/comment') || url.includes('/api/collaboration')) {
+        const idMatch = url.match(/\/(\d+)\/comments/);
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(idMatch ? [
+            { id: 1, text: 'Initial review completed', author: 'Test User', createdDate: '2024-06-15T10:00:00Z', isPinned: false },
+            { id: 2, text: 'Budget approved for phase 1', author: 'Jane Doe', createdDate: '2024-06-16T14:00:00Z', isPinned: true },
+          ] : []),
+        });
+      }
+      // Entity artifacts endpoint
+      else if (url.includes('/api/entity-artifact')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            records: [
+              { id: 1, name: 'Partner Logo', entityType: 'Partner', artifactType: 'Image', status: 'Active', createdDate: '2024-01-01T00:00:00Z' },
+              { id: 2, name: 'Contact Photo', entityType: 'Contact', artifactType: 'Image', status: 'Active', createdDate: '2024-02-01T00:00:00Z' },
+            ],
+            totalCount: 2,
+          }),
+        });
+      }
+      // Translation endpoint for admin
+      else if (url.includes('/api/translation') || url.includes('/api/translations')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            records: [
+              { id: 1, key: 'partner.name', en: 'Name', fr: 'Nom', es: 'Nombre', pt: 'Nome' },
+              { id: 2, key: 'partner.status', en: 'Status', fr: 'Statut', es: 'Estado', pt: 'Estado' },
+            ],
+            totalCount: 2,
+          }),
+        });
+      }
+      // Link endpoints for partner/entity links
+      else if (url.includes('/api/link') || url.includes('/links')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
           body: JSON.stringify([
-            { id: 1, name: 'Contract', description: 'Contract document' },
-            { id: 2, name: 'Report', description: 'Report document' },
-            { id: 3, name: 'Proposal', description: 'Proposal document' },
+            { id: 1, title: 'Partner Website', url: 'https://example.org', type: 'External', createdDate: '2024-01-01T00:00:00Z' },
+          ]),
+        });
+      }
+      // AI prompt management endpoint
+      else if (url.includes('/api/ai-prompt') || url.includes('/api/aiprompt')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([
+            { id: 1, name: 'Default Summary Prompt', category: 'Summary', isActive: true },
+            { id: 2, name: 'Risk Assessment Prompt', category: 'Risk', isActive: true },
           ]),
         });
       }

@@ -230,7 +230,9 @@ public class NegativeTests : PNO1196TestFixtureBase
         result.Should().BeOfType<BadRequestObjectResult>();
     }
 
-    [Fact(Skip = "DEF-026: WorkflowController.NormalizeEntityNameForWorkflow() throws NullReferenceException on null entityName instead of returning 400 BadRequest.")] [Trait("TestId", "NEG-018")]
+    [Fact]
+
+    [Trait("Defect", "DEF-026")] [Trait("TestId", "NEG-018")]
     public async Task Reject_NullEntityNameInRequest_Returns400()
     {
         var result = await Controller.Reject(new RejectWorkflowRequest
@@ -262,7 +264,9 @@ public class NegativeTests : PNO1196TestFixtureBase
 
     // ─── §2.4 Workflow Manager Exceptions (NEG-021 – 030) ─────────────────
 
-    [Fact(Skip = "DEF-027: WorkflowController.Reject() does not handle exceptions from IWorkflowManager. Exception propagates to caller instead of returning error response.")] [Trait("TestId", "NEG-021")]
+    [Fact]
+
+    [Trait("Defect", "DEF-027")] [Trait("TestId", "NEG-021")]
     public async Task Reject_WorkflowManagerThrows_ReturnsErrorResponse()
     {
         await SeedOpportunityAsync(1021, "GO");
@@ -302,7 +306,9 @@ public class NegativeTests : PNO1196TestFixtureBase
         result.Should().BeOfType<BadRequestObjectResult>();
     }
 
-    [Fact(Skip = "DEF-027: WorkflowController.Reject() does not handle exceptions from IWorkflowManager.PendingTask(). Exception propagates to caller instead of returning 400.")] [Trait("TestId", "NEG-024")]
+    [Fact]
+
+    [Trait("Defect", "DEF-027")] [Trait("TestId", "NEG-024")]
     public async Task Reject_WorkflowManagerPendingTaskThrows_Returns400()
     {
         MockWorkflowManager.Setup(x => x.PendingTask("Opportunity", 1024))
@@ -313,7 +319,9 @@ public class NegativeTests : PNO1196TestFixtureBase
         result.Should().NotBeNull();
     }
 
-    [Fact(Skip = "DEF-025: WorkflowController.Reject() does not check pendingTask.RequiresApproval before proceeding. Tasks with RequiresApproval=false should be rejected with 400 but are accepted.")] [Trait("TestId", "NEG-025")]
+    [Fact]
+
+    [Trait("Defect", "DEF-025")] [Trait("TestId", "NEG-025")]
     public async Task Reject_PendingTaskFacingIsNotApproval_Returns400()
     {
         await SeedOpportunityAsync(1025, "GO");
@@ -478,7 +486,9 @@ public class NegativeTests : PNO1196TestFixtureBase
         result.Should().BeOfType<BadRequestObjectResult>();
     }
 
-    [Fact(Skip = "DEF-025: WorkflowController.Reject() does not check pendingTask.RequiresApproval. Tasks with RequiresApproval=false should return 400 but are accepted.")] [Trait("TestId", "NEG-038")]
+    [Fact]
+
+    [Trait("Defect", "DEF-025")] [Trait("TestId", "NEG-038")]
     public async Task Reject_PendingTaskFacingSubmission_Returns400()
     {
         await SeedOpportunityAsync(1038, "GO");
@@ -639,7 +649,9 @@ public class NegativeTests : PNO1196TestFixtureBase
         results.Should().AllBeOfType<BadRequestObjectResult>();
     }
 
-    [Fact(Skip = "DEF-025: WorkflowController.Reject() does not check pendingTask.RequiresApproval. Tasks with RequiresApproval=false should return 400 but are accepted.")] [Trait("TestId", "NEG-051")]
+    [Fact]
+
+    [Trait("Defect", "DEF-025")] [Trait("TestId", "NEG-051")]
     public async Task Reject_PendingTaskFacingReview_Returns400()
     {
         await SeedOpportunityAsync(1051, "GO");
@@ -651,7 +663,9 @@ public class NegativeTests : PNO1196TestFixtureBase
         result.Should().BeOfType<BadRequestObjectResult>();
     }
 
-    [Fact(Skip = "DEF-025: WorkflowController.Reject() does not check pendingTask.RequiresApproval. Tasks with RequiresApproval=false should return 400 but are accepted.")] [Trait("TestId", "NEG-052")]
+    [Fact]
+
+    [Trait("Defect", "DEF-025")] [Trait("TestId", "NEG-052")]
     public async Task Reject_PendingTaskFacingNotification_Returns400()
     {
         await SeedOpportunityAsync(1052, "GO");
@@ -789,7 +803,9 @@ public class NegativeTests : PNO1196TestFixtureBase
         await act.Should().NotThrowAsync();
     }
 
-    [Fact(Skip = "DEF-029: WorkflowController.Reject() sets Opportunity.Stage to 'NO GO' BEFORE calling workflowManager.Reject() and ignores its return value. Stage is always changed regardless of Reject() result.")] [Trait("TestId", "NEG-063")]
+    [Fact]
+
+    [Trait("Defect", "DEF-029")] [Trait("TestId", "NEG-063")]
     public async Task Reject_RejectFalse_StageUnchanged()
     {
         await SeedOpportunityAsync(1072, "GO");
@@ -801,7 +817,9 @@ public class NegativeTests : PNO1196TestFixtureBase
         (await DbContext.Opportunities.FindAsync(1072))!.Stage.Should().NotBe("NO GO");
     }
 
-    [Fact(Skip = "DEF-029: WorkflowController.Reject() sets Opportunity.WorkflowStatus=None BEFORE calling workflowManager.Reject() and ignores its return value.")] [Trait("TestId", "NEG-064")]
+    [Fact]
+
+    [Trait("Defect", "DEF-029")] [Trait("TestId", "NEG-064")]
     public async Task Reject_RejectFalse_WorkflowStatusUnchanged()
     {
         await SeedOpportunityAsync(1073, "GO");
@@ -870,7 +888,9 @@ public class NegativeTests : PNO1196TestFixtureBase
         (await DbContext.Opportunities.FindAsync(1079))!.Name.Should().Be(name);
     }
 
-    [Fact(Skip = "DEF-029: WorkflowController.Reject() sets Opportunity.Status=Closed BEFORE calling workflowManager.Reject() and ignores its return value.")] [Trait("TestId", "NEG-070")]
+    [Fact]
+
+    [Trait("Defect", "DEF-029")] [Trait("TestId", "NEG-070")]
     public async Task Reject_ActiveNotChanged_WhenRejectFalse()
     {
         await SeedOpportunityAsync(1080, "GO");
@@ -891,7 +911,9 @@ public class NegativeTests : PNO1196TestFixtureBase
         MockWorkflowManager.Verify(x => x.Reject(It.IsAny<WorkflowLog>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
-    [Fact(Skip = "DEF-029: WorkflowController.Reject() ignores workflowManager.Reject() return value. Opportunity is always closed when there is a pending task, regardless of Reject() result.")] [Trait("TestId", "NEG-072")]
+    [Fact]
+
+    [Trait("Defect", "DEF-029")] [Trait("TestId", "NEG-072")]
     public async Task Reject_ClosedStatusQuery_Empty_OnRejectFalse()
     {
         await SeedOpportunityAsync(1082, "GO");
@@ -931,7 +953,9 @@ public class NegativeTests : PNO1196TestFixtureBase
         (await DbContext.Opportunities.FindAsync(1085))!.Status.Should().NotBe(EntityStatus.Closed);
     }
 
-    [Fact(Skip = "DEF-029: WorkflowController.Reject() sets Stage to 'NO GO' BEFORE calling workflowManager.Reject() and ignores its return value.")] [Trait("TestId", "NEG-076")]
+    [Fact]
+
+    [Trait("Defect", "DEF-029")] [Trait("TestId", "NEG-076")]
     public async Task Reject_RejectFalse_StageStaysGo()
     {
         await SeedOpportunityAsync(1086, "GO");
@@ -957,7 +981,9 @@ public class NegativeTests : PNO1196TestFixtureBase
         await act.Should().NotThrowAsync();
     }
 
-    [Fact(Skip = "DEF-029: WorkflowController.Reject() sets Opportunity.WorkflowStatus=None BEFORE calling workflowManager.Reject() and ignores its return value.")] [Trait("TestId", "NEG-078")]
+    [Fact]
+
+    [Trait("Defect", "DEF-029")] [Trait("TestId", "NEG-078")]
     public async Task Reject_WorkflowStatus_NotPending_AfterRejectFalse()
     {
         await SeedOpportunityAsync(1088, "GO");
@@ -1037,7 +1063,9 @@ public class NegativeTests : PNO1196TestFixtureBase
         (await DbContext.Opportunities.FindAsync(1093))!.Status.Should().NotBe(EntityStatus.Closed);
     }
 
-    [Fact(Skip = "DEF-029: WorkflowController.Reject() sets Opportunity.Status=Closed BEFORE calling workflowManager.Reject() and ignores its return value.")] [Trait("TestId", "NEG-087")]
+    [Fact]
+
+    [Trait("Defect", "DEF-029")] [Trait("TestId", "NEG-087")]
     public async Task Reject_WithTask_RejectFalse_NotClosed()
     {
         await SeedOpportunityAsync(1094, "PIPELINE");
@@ -1049,7 +1077,9 @@ public class NegativeTests : PNO1196TestFixtureBase
         (await DbContext.Opportunities.FindAsync(1094))!.Status.Should().NotBe(EntityStatus.Closed);
     }
 
-    [Fact(Skip = "DEF-029: WorkflowController.Reject() sets Stage to 'NO GO' BEFORE calling workflowManager.Reject() and ignores its return value.")] [Trait("TestId", "NEG-088")]
+    [Fact]
+
+    [Trait("Defect", "DEF-029")] [Trait("TestId", "NEG-088")]
     public async Task Reject_WithTask_RejectFalse_StageStaysPipeline()
     {
         await SeedOpportunityAsync(1095, "PIPELINE");
@@ -1074,7 +1104,9 @@ public class NegativeTests : PNO1196TestFixtureBase
         closedCount.Should().Be(0);
     }
 
-    [Fact(Skip = "DEF-029: WorkflowController.Reject() sets Opportunity.Status=Closed BEFORE calling workflowManager.Reject() and ignores its return value. All 5 will be closed.")] [Trait("TestId", "NEG-090")]
+    [Fact]
+
+    [Trait("Defect", "DEF-029")] [Trait("TestId", "NEG-090")]
     public async Task Reject_RejectFalse_5Times_NoneAreClosed()
     {
         for (var i = 1105; i <= 1109; i++)

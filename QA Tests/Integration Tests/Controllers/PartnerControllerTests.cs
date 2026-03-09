@@ -10,8 +10,6 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Domain.Entities;
 using Xunit;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Models.Partners;
 using UNOPS.PAO.Models.Shared;
@@ -21,8 +19,6 @@ namespace UNOPS.PAO.IntegrationTests.Controllers;
 [Collection("Integration Tests")]
 public class PartnerControllerTests : IntegrationTestBase
 {
-    private readonly ILogger<PartnerControllerTests>? _logger;
-
     /// <summary>
     /// True when the test environment connected to real PostgreSQL.
     /// All tests in this class require pg_trgm and raw SQL, so they are
@@ -177,9 +173,10 @@ public class PartnerControllerTests : IntegrationTestBase
 
     #region Basic Filtering Tests
 
-    [Fact(Skip = "Authorization mocking required - high effort, low value")]
+    [Fact]
     public async Task GetAll_NoFilters_ReturnsAllPartners()
     {
+        if (!_isPostgresAvailable) return;
         // Act
         var response = await GetAsync<PaginationResponse<PartnerModel>>("/api/partner?pageSize=20&pageIndex=1");
         

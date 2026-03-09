@@ -8,11 +8,14 @@
  * Stage indicators use p-steps component.
  * 
  * All tests are EXECUTABLE - no skips.
+ *
+ * @tests 16
  */
 
 import { test, expect } from '@playwright/test';
 import { WorkflowPage } from './pages/workflow.page';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
+import { waitForVisible } from './helpers/wait.helper';
 
 // ============================================================================
 // WORKFLOW DISPLAY
@@ -86,7 +89,7 @@ test.describe('Workflow - Display', () => {
     const buttonCount = await buttons.count();
 
     // Workflow should have at least the primary action button
-    expect(buttonCount).toBeGreaterThanOrEqual(0);
+    expect(buttonCount).toBeGreaterThanOrEqual(1);
   });
 });
 
@@ -214,10 +217,8 @@ test.describe('Workflow - History & Tabs', () => {
 
     if (historyVisible) {
       await historyTab.click();
-      await page.waitForTimeout(500);
-
-      // History content should appear (table or timeline)
       const historyContent = stageWorkflow.locator('p-table, app-timeline, .history, table').first();
+      await historyContent.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
       const contentVisible = await historyContent.isVisible({ timeout: 3000 }).catch(() => false);
       expect(contentVisible).toBeTruthy();
     }
@@ -238,7 +239,7 @@ test.describe('Workflow - Cross-Entity', () => {
     const workflowVisible = await workflow.isVisible({ timeout: 10000 }).catch(() => false);
 
     // At minimum, partner detail should load
-    const header = page.locator('[data-testid="partner-detail-header"]').first();
+    const header = page.locator('app-partner-view, app-partner-detail').first();
     await expect(header).toBeVisible({ timeout: 10000 });
 
     // Workflow presence depends on entity configuration
@@ -248,14 +249,14 @@ test.describe('Workflow - Cross-Entity', () => {
   test('WF-027: Interaction detail page loads', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/interactions/1');
 
-    const header = page.locator('[data-testid="interaction-detail-header"]').first();
+    const header = page.locator('app-interaction-detail').first();
     await expect(header).toBeVisible({ timeout: 10000 });
   });
 
   test('WF-028: Contact detail page loads', async ({ page }) => {
     await authenticateWithRealBackend(page, '/partnerships/contacts/1');
 
-    const header = page.locator('[data-testid="contact-detail-header"]').first();
+    const header = page.locator('app-contact-view, app-contact-tabs').first();
     await expect(header).toBeVisible({ timeout: 10000 });
   });
 });

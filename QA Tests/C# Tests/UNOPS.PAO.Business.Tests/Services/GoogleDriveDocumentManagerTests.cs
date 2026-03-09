@@ -54,7 +54,6 @@ namespace UNOPS.PAO.Business.Tests.Services
         public async Task DownloadFileAsync_ExistingFile_ReturnsStream()
         {
             // Arrange
-            var fileId = "existing-file-id";
             var expectedContent = "File content from Google Drive";
 
             // Note: Placeholder for mocked behavior
@@ -148,7 +147,6 @@ namespace UNOPS.PAO.Business.Tests.Services
         public void ShareWithUserAsync_ValidEmail_AddsPermission()
         {
             // Arrange
-            var fileId = "file-to-share";
             var email = "user@unops.org";
             var role = "reader";
 

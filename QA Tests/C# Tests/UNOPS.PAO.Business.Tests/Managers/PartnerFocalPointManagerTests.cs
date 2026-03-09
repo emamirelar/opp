@@ -1,142 +1,31 @@
 using Xunit;
-using Moq;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
-using AutoMapper;
-using Microsoft.EntityFrameworkCore;
-using UNOPS.PAO.Business.Tests.TestBase;
-using UNOPS.PAO.DataAccess.Context;
-using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.Domain.Enums;
 
 namespace UNOPS.PAO.Business.Tests.Managers
 {
     /// <summary>
-    /// Unit tests for PartnerFocalPointManager
-    /// Tests focal point assignment and management
+    /// Tests for PartnerFocalPoint management — CANCELLED.
+    /// 
+    /// Per developer clarification (Anusha, 2026-03-04):
+    /// FocalPoint does NOT have a dedicated manager. FocalPoint is not a managed entity
+    /// in Opp+; it can only be selected as part of a Partner (via PartnerFocalPointUserId FK).
+    /// 
+    /// DEF-014 closed as Won't Fix — no PartnerFocalPointManager is needed.
+    /// QA-045 closed — 12 tests cancelled (not blocked).
+    /// 
+    /// FocalPoint data is served through:
+    /// - Partner.PartnerFocalPointUserId FK selection
+    /// - Contact role "Focal Point" (EntityRole, tested in ContactFunctionalTests)
+    /// - Partner analytics includeFocalPoint filter
     /// </summary>
-    public class PartnerFocalPointManagerTests : ManagerTestBase
+    public class PartnerFocalPointManagerTests
     {
-        private readonly AppDbContext _context;
-        private readonly Mock<IMapper> _mockMapper;
-
-        public PartnerFocalPointManagerTests()
+        [Fact(Skip = "CANCELLED: FocalPoint does not have a dedicated manager by design — selected as part of Partner only (DEF-014 closed Won't Fix)")]
+        public void TestSuite_Cancelled_FocalPointNotManagedEntity()
         {
-            _mockMapper = new Mock<IMapper>();
-
-            var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(databaseName: $"TestDb_PFP_{System.Guid.NewGuid()}")
-                .Options;
-
-            _context = TestDbContextFactory.Create(options);
-            SeedData();
+            // All 12 original tests cancelled per developer clarification.
+            // FocalPoint is a user FK on Partner, not a managed entity.
+            // See ContactFunctionalTests for "Focal Point" role coverage.
         }
-
-        private void SeedData()
-        {
-            // Seed will be implemented when PartnerFocalPoint entity is available
-        }
-
-        #region CRUD Tests
-
-        [Fact(Skip = "PartnerFocalPoint entity not yet implemented per PRD")]
-        public async Task CreateFocalPoint_ValidData_ReturnsFocalPoint()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        [Fact(Skip = "PartnerFocalPoint entity not yet implemented per PRD")]
-        public async Task GetByPartnerId_ExistingPartner_ReturnsFocalPoints()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        [Fact(Skip = "PartnerFocalPoint entity not yet implemented per PRD")]
-        public async Task GetByUserId_ExistingUser_ReturnsAssignments()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        [Fact(Skip = "PartnerFocalPoint entity not yet implemented per PRD")]
-        public async Task DeleteFocalPoint_ExistingId_RemovesAssignment()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        #endregion
-
-        #region Primary Focal Point Tests
-
-        [Fact(Skip = "PartnerFocalPoint entity not yet implemented per PRD")]
-        public async Task SetPrimaryFocalPoint_ValidUser_MarksAsPrimary()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        [Fact(Skip = "PartnerFocalPoint entity not yet implemented per PRD")]
-        public async Task SetPrimaryFocalPoint_ClearsExistingPrimary()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        [Fact(Skip = "PartnerFocalPoint entity not yet implemented per PRD")]
-        public async Task GetPrimaryFocalPoint_ExistingPrimary_ReturnsPrimary()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        #endregion
-
-        #region Delegation Tests
-
-        [Fact(Skip = "PartnerFocalPoint entity not yet implemented per PRD")]
-        public async Task DelegateFocalPoint_ValidPeriod_CreatesDelegation()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        [Fact(Skip = "PartnerFocalPoint entity not yet implemented per PRD")]
-        public async Task EndDelegation_ActiveDelegation_EndsDelegation()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        [Fact(Skip = "PartnerFocalPoint entity not yet implemented per PRD")]
-        public async Task HandoverFocalPoint_TransfersAllAssignments()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        #endregion
-
-        #region Validation Tests
-
-        [Fact(Skip = "PartnerFocalPoint entity not yet implemented per PRD")]
-        public async Task CreateFocalPoint_MissingPartner_ThrowsException()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        [Fact(Skip = "PartnerFocalPoint entity not yet implemented per PRD")]
-        public async Task CreateFocalPoint_DuplicatePair_ThrowsException()
-        {
-            await Task.CompletedTask;
-            Assert.True(true);
-        }
-
-        #endregion
     }
 }
 

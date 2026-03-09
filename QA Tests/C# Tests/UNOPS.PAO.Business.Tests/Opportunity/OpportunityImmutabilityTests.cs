@@ -13,6 +13,7 @@ using UNOPS.PAO.Business.Services;
 using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Domain.Entities;
+using OpportunityEntity = UNOPS.PAO.Domain.Entities.Opportunity;
 using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
@@ -138,7 +139,7 @@ public class OpportunityImmutabilityTests : IDisposable
 
     private async Task<int> CreateOpportunityWithStage(string stage)
     {
-        var opportunity = new Domain.Entities.Opportunity
+        var opportunity = new OpportunityEntity
         {
             Name = $"Test Opportunity - {stage}",
             Description = $"Test opportunity in {stage} stage for immutability testing",
@@ -311,7 +312,7 @@ public class OpportunityImmutabilityTests : IDisposable
         // Arrange
         var opportunityId = await CreateOpportunityWithStage("IDENTIFY & PROFILE");
 
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<OpportunityEntity>()))
             .Returns(new OpportunityModel { Id = opportunityId, Name = "Updated Name" });
 
         var request = new OverviewSectionRequest
@@ -343,7 +344,7 @@ public class OpportunityImmutabilityTests : IDisposable
         // Arrange
         var opportunityId = await CreateOpportunityWithStage("Draft");
 
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<OpportunityEntity>()))
             .Returns(new OpportunityModel { Id = opportunityId, Name = "Updated Name" });
 
         var request = new OverviewSectionRequest
@@ -373,7 +374,7 @@ public class OpportunityImmutabilityTests : IDisposable
         // Arrange
         var opportunityId = await CreateOpportunityWithStage("SEND FOR GO DECISION");
 
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<OpportunityEntity>()))
             .Returns(new OpportunityModel { Id = opportunityId, Name = "Updated Name" });
 
         var request = new OverviewSectionRequest
@@ -412,7 +413,7 @@ public class OpportunityImmutabilityTests : IDisposable
         opportunity!.Stage = "IDENTIFY & PROFILE";
         await _context.SaveChangesAsync();
 
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<OpportunityEntity>()))
             .Returns(new OpportunityModel { Id = opportunityId, Name = "Reopened Opportunity" });
 
         var request = new OverviewSectionRequest
@@ -447,7 +448,7 @@ public class OpportunityImmutabilityTests : IDisposable
         opportunity!.Stage = "IDENTIFY & PROFILE";
         await _context.SaveChangesAsync();
 
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<OpportunityEntity>()))
             .Returns(new OpportunityModel { Id = opportunityId, Name = "Reopened Opportunity" });
 
         var request = new OverviewSectionRequest
@@ -500,7 +501,7 @@ public class OpportunityImmutabilityTests : IDisposable
                 CanDelete = true
             }
         };
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<OpportunityEntity>()))
             .Returns(goModel);
         _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<object>(), It.IsAny<Action<IMappingOperationOptions<object, OpportunityModel>>>()))
             .Returns(goModel);
@@ -537,7 +538,7 @@ public class OpportunityImmutabilityTests : IDisposable
                 CanDelete = true
             }
         };
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<OpportunityEntity>()))
             .Returns(noGoModel);
         _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<object>(), It.IsAny<Action<IMappingOperationOptions<object, OpportunityModel>>>()))
             .Returns(noGoModel);
@@ -573,7 +574,7 @@ public class OpportunityImmutabilityTests : IDisposable
                 CanDelete = true
             }
         };
-        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<Domain.Entities.Opportunity>()))
+        _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<OpportunityEntity>()))
             .Returns(editableModel);
         _mockMapper.Setup(m => m.Map<OpportunityModel>(It.IsAny<object>(), It.IsAny<Action<IMappingOperationOptions<object, OpportunityModel>>>()))
             .Returns(editableModel);

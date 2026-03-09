@@ -1,7 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { LinkListComponent } from './link-list.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { EntityType } from '../../../../models/link.model';
+import LinkDataService from '../link-data.service';
+
+const mockLinkDataService = jasmine.createSpyObj('LinkDataService', ['initialize', 'load', 'createLink', 'saveLink', 'deleteLink', 'createEmptyLink']);
+mockLinkDataService.links = signal([]);
+mockLinkDataService.loading = signal(false);
+mockLinkDataService.saving = signal(false);
+mockLinkDataService.hasMore = signal(true);
+mockLinkDataService.currentPage = signal(0);
+mockLinkDataService.pageSize = signal(20);
+mockLinkDataService.entityType = signal(undefined);
+mockLinkDataService.entityId = signal(undefined);
 
 describe('LinkListComponent', () => {
   let component: LinkListComponent;
@@ -12,6 +24,9 @@ describe('LinkListComponent', () => {
       imports: [
         LinkListComponent,
         TranslateModule.forRoot()
+      ],
+      providers: [
+        { provide: LinkDataService, useValue: mockLinkDataService }
       ]
     })
     .compileComponents();

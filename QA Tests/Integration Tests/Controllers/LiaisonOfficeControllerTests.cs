@@ -133,6 +133,7 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// Verifies creation of new liaison office
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-003")]
@@ -166,6 +167,7 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// Verifies that duplicate office codes are prevented
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-004")]
@@ -192,6 +194,7 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// Verifies successful update of liaison office
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-005")]
@@ -223,6 +226,7 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// Verifies soft deletion of liaison office
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-006")]
@@ -244,6 +248,7 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// Verifies that offices with partners cannot be deleted
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-007")]
@@ -265,6 +270,7 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// Verifies lookup of liaison office by unique code
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-008")]
@@ -291,6 +297,7 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// Verifies linking a partner to liaison office
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-009")]
@@ -313,6 +320,7 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// Verifies unlinking a partner from liaison office
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-010")]
@@ -573,6 +581,7 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// Verifies export of office list to CSV/Excel
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-LO-020")]
@@ -672,6 +681,7 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// Verifies that read-only users cannot modify offices
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-A004")]
@@ -725,6 +735,7 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// Verifies that office code must match required format
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-V001")]
@@ -751,6 +762,7 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// Verifies that required fields must be provided
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-V002")]
@@ -776,6 +788,7 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// Verifies that country code must be valid ISO code
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-V003")]
@@ -802,6 +815,7 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// Verifies that email format is validated
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-V004")]
@@ -829,6 +843,7 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
     /// Verifies that phone format is validated
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-029")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-LO-V005")]
@@ -849,6 +864,24 @@ public class LiaisonOfficeControllerTests : IntegrationTestBase
 
         // Assert
         response.StatusCode.Should().BeOneOf(new[] { HttpStatusCode.BadRequest, HttpStatusCode.MethodNotAllowed }, "because invalid phone format should be rejected");
+    }
+
+    [Fact]
+    [Trait("Category", "Edge")]
+    [Trait("Priority", "P1")]
+    [Trait("TestId", "TC-LOC-EDGE-001")]
+    [Trait("Ticket", "PNO-1194")]
+    public async Task GetLiaisonOffices_ResponseContent_NoEncodingArtifacts()
+    {
+        var client = Factory.CreateAuthenticatedClient();
+        var response = await client.GetAsync("/api/LiaisonOffice");
+        if (response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            content.Should().NotContain("??",
+                "PNO-1194: liaison office names and addresses must not contain encoding artifacts");
+            content.Should().NotContain("\uFFFD");
+        }
     }
 
     #endregion

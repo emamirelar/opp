@@ -211,7 +211,9 @@ public class IntegrationTests : PNO914TestFixtureBase
         opp!.ResponsibleOrgUnitId.Should().Be(22);
     }
 
-    [Fact(Skip = "DEF-053: AI proposal then create requires GeminiManager - covered by API/E2E tests")]
+    [Fact]
+
+    [Trait("Defect", "DEF-053")]
     [Trait("TestId", "TC-PNO914-INT-009")]
     public async Task AIProposal_Generate_ThenCreateOpportunity_EndToEnd()
     {

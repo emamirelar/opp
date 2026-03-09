@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Services;
 using UNOPS.PAO.Domain.Entities;
+using OpportunityEntity = UNOPS.PAO.Domain.Entities.Opportunity;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Opportunities;
@@ -280,7 +281,7 @@ public class OpportunityIntegrationTests : IDisposable
         string? partnerReference = null,
         string? challenges = null)
     {
-        var opportunity = new Domain.Entities.Opportunity
+        var opportunity = new OpportunityEntity
         {
             Name = name ?? $"Test Opportunity {_testMarker}",
             Description = description ?? "Test Description",
@@ -741,7 +742,8 @@ public class OpportunityIntegrationTests : IDisposable
 
         var updateRequest = new UpdateOpportunityRequest
         {
-            Id = oppId
+            Id = oppId,
+            Name = "Evolving Stakeholder Initiative"
         };
 
         // Act
@@ -882,7 +884,7 @@ public class OpportunityIntegrationTests : IDisposable
             if (TestEnvironment.UsePostgreSQL && _createdOpportunityIds.Any())
             {
                 var ids = string.Join(",", _createdOpportunityIds);
-                _context.Database.ExecuteSqlRaw($"DELETE FROM public.\"Opportunities\" WHERE \"Id\" IN ({ids})");
+                _context.Database.ExecuteSql($"DELETE FROM public.\"Opportunities\" WHERE \"Id\" IN ({ids})");
             }
         }
         catch { /* Best-effort cleanup */ }

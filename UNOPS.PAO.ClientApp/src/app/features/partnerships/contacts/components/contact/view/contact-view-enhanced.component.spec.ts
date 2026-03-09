@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { CommonModule } from '@angular/common';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
@@ -18,6 +19,8 @@ import { of } from 'rxjs';
 // Mock contact view component
 @Component({
   selector: 'app-contact-view-enhanced',
+  standalone: true,
+  imports: [CommonModule],
   template: `
     <div class="contact-view-enhanced">
       <div class="layout-header">
@@ -111,6 +114,7 @@ class MockContactViewEnhancedComponent {
   communications = signal<any[]>([]);
   activeTab = signal<string>('overview');
   communicationFilter = signal<string>('all');
+  recordPermissions = signal<any>({ permissions: { canUpdate: true, canDelete: true, canRead: true } });
 
   setActiveTab(tab: string) {
     this.activeTab.set(tab);
@@ -142,10 +146,9 @@ describe('ContactViewEnhancedComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [MockContactViewEnhancedComponent],
-      imports: [NoopAnimationsModule],
+      imports: [NoopAnimationsModule, MockContactViewEnhancedComponent],
       providers: [
-        { provide: ActivatedRoute, useValue: { params: of({ id: 1 }) } }
+        { provide: ActivatedRoute, useValue: { params: of({ id: 1 }), queryParams: of({}), snapshot: { paramMap: { get: () => null } } } }
       ]
     }).compileComponents();
 

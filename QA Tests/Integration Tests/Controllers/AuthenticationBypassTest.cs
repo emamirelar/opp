@@ -6,6 +6,7 @@ using Xunit;
 
 namespace UNOPS.PAO.IntegrationTests.Controllers;
 
+[Collection("Integration Tests")]
 public class AuthenticationBypassTest
 {
     private readonly PAOWebApplicationFactory<Program> _factory;
@@ -17,7 +18,9 @@ public class AuthenticationBypassTest
         _client = _factory.CreateClient();
     }
 
-    [Fact(Skip = "Skipping authentication bypass tests for now")]
+    [Fact]
+
+    [Trait("Defect", "DEF-107")]
     public async Task TestAuthenticationBypass_ReturnsNotFound_NotUnauthorized()
     {
         // Act - Try to access a non-existent endpoint
@@ -28,7 +31,9 @@ public class AuthenticationBypassTest
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
     
-    [Fact(Skip = "Skipping authentication bypass tests for now")]
+    [Fact]
+    
+    [Trait("Defect", "DEF-107")]
     public async Task TestRootEndpoint_Works()
     {
         // Act

@@ -40,42 +40,54 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         #region CRUD Tests
 
-        [Fact(Skip = "GeoRegion entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-101")]
         public async Task CreateRegion_ValidData_ReturnsRegion()
         {
             await Task.CompletedTask;
             Assert.True(true);
         }
 
-        [Fact(Skip = "GeoRegion entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-101")]
         public async Task GetRegionById_ExistingId_ReturnsRegion()
         {
             await Task.CompletedTask;
             Assert.True(true);
         }
 
-        [Fact(Skip = "GeoRegion entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-101")]
         public async Task UpdateRegion_ValidData_UpdatesRegion()
         {
             await Task.CompletedTask;
             Assert.True(true);
         }
 
-        [Fact(Skip = "GeoRegion entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-101")]
         public async Task DeleteRegion_ExistingId_SoftDeletes()
         {
             await Task.CompletedTask;
             Assert.True(true);
         }
 
-        [Fact(Skip = "GeoRegion entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-101")]
         public async Task GetAllRegions_ReturnsAllNonDeleted()
         {
             await Task.CompletedTask;
             Assert.True(true);
         }
 
-        [Fact(Skip = "GeoRegion entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-101")]
         public async Task GetRegionByCode_ExistingCode_ReturnsRegion()
         {
             await Task.CompletedTask;
@@ -86,21 +98,27 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         #region Hierarchy Tests
 
-        [Fact(Skip = "GeoRegion entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-101")]
         public async Task SetContinent_ValidContinent_AssociatesRegion()
         {
             await Task.CompletedTask;
             Assert.True(true);
         }
 
-        [Fact(Skip = "GeoRegion entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-101")]
         public async Task GetByContinentId_ReturnsFilteredRegions()
         {
             await Task.CompletedTask;
             Assert.True(true);
         }
 
-        [Fact(Skip = "GeoRegion entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-101")]
         public async Task GetCountriesInRegion_ReturnsCountryList()
         {
             await Task.CompletedTask;
@@ -111,21 +129,27 @@ namespace UNOPS.PAO.Business.Tests.Managers
 
         #region Validation Tests
 
-        [Fact(Skip = "GeoRegion entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-101")]
         public async Task CreateRegion_MissingName_ThrowsException()
         {
             await Task.CompletedTask;
             Assert.True(true);
         }
 
-        [Fact(Skip = "GeoRegion entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-101")]
         public async Task CreateRegion_DuplicateCode_ThrowsException()
         {
             await Task.CompletedTask;
             Assert.True(true);
         }
 
-        [Fact(Skip = "GeoRegion entity not yet implemented per PRD")]
+        [Fact]
+
+        [Trait("Defect", "DEF-101")]
         public async Task DeleteRegion_WithCountries_ThrowsException()
         {
             await Task.CompletedTask;

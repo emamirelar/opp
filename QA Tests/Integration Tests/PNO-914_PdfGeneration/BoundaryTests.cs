@@ -22,7 +22,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
 
     private const string SkipReason = "DEF-021/DEF-024: DocumentController blocked by route conflict and Google Secret Manager dependency";
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-001")]
     public async Task CreatePdf_SingleCharacterContent_GeneratesPdf()
     {
@@ -33,7 +35,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         (await response.Content.ReadAsByteArrayAsync()).Should().NotBeEmpty();
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-002")]
     public async Task CreatePdf_VeryLongMarkdown_HandlesWithinLimits()
     {
@@ -44,7 +48,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest, HttpStatusCode.RequestEntityTooLarge);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-003")]
     public async Task CreatePdf_MaxReasonableLength_HandlesCorrectly()
     {
@@ -55,7 +61,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-004")]
     public async Task CreatePdf_UnicodeContent_ConvertsCorrectly()
     {
@@ -66,7 +74,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         (await response.Content.ReadAsByteArrayAsync()).Should().NotBeEmpty();
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-005")]
     public async Task CreatePdf_EmojiInContent_HandlesCorrectly()
     {
@@ -76,7 +86,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-006")]
     public async Task CreatePdf_SpecialCharacters_HandlesCorrectly()
     {
@@ -86,7 +98,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-007")]
     public async Task CreatePdf_EmptyFilename_AcceptsOrUsesDefault()
     {
@@ -96,7 +110,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-008")]
     public async Task CreatePdf_NullFilename_AcceptsOrUsesDefault()
     {
@@ -106,7 +122,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-009")]
     public async Task CreatePdf_FilenameWithExtension_HandlesCorrectly()
     {
@@ -116,7 +134,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-010")]
     public async Task CreatePdf_ContentWithOnlyWhitespace_HandlesOrRejects()
     {
@@ -126,7 +146,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-011")]
     public async Task CreatePdf_MarkdownWithManyNewlines_HandlesCorrectly()
     {
@@ -136,7 +158,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-012")]
     public async Task CreatePdf_ContentWithMixedLineEndings_HandlesCorrectly()
     {
@@ -146,7 +170,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-013")]
     public async Task CreatePdf_ContentWithRtlText_HandlesCorrectly()
     {
@@ -156,7 +182,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-014")]
     public async Task CreatePdf_ContentAtExactMinLength_GeneratesPdf()
     {
@@ -166,7 +194,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-015")]
     public async Task CreatePdf_ContentWithHtmlTags_ConvertsOrEscapes()
     {
@@ -176,7 +206,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-016")]
     public async Task CreatePdf_ContentWithCodeBlock_ConvertsCorrectly()
     {
@@ -186,7 +218,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-017")]
     public async Task CreatePdf_ContentWithBlockquote_ConvertsCorrectly()
     {
@@ -196,7 +230,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-018")]
     public async Task CreatePdf_ContentWithHorizontalRule_ConvertsCorrectly()
     {
@@ -206,7 +242,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-019")]
     public async Task CreatePdf_ContentWithEscapedChars_HandlesCorrectly()
     {
@@ -216,7 +254,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-020")]
     public async Task CreatePdf_ContentWithVeryLongWord_HandlesCorrectly()
     {
@@ -226,7 +266,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-021")]
     public async Task CreatePdf_ContentWithMixedLanguages_ConvertsCorrectly()
     {
@@ -236,7 +278,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-022")]
     public async Task CreatePdf_ContentWithZeroWidthChars_HandlesCorrectly()
     {
@@ -246,7 +290,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-023")]
     public async Task CreatePdf_ContentWithSurrogatePairs_HandlesCorrectly()
     {
@@ -256,7 +302,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-024")]
     public async Task CreatePdf_ContentWithJsonLikeStructure_ConvertsAsText()
     {
@@ -266,7 +314,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-025")]
     public async Task CreatePdf_ContentWithUrl_ConvertsCorrectly()
     {
@@ -276,7 +326,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-026")]
     public async Task CreatePdf_ContentWithBackticks_ConvertsCorrectly()
     {
@@ -286,7 +338,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-027")]
     public async Task CreatePdf_ContentWithStrikethrough_ConvertsCorrectly()
     {
@@ -296,7 +350,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-028")]
     public async Task CreatePdf_ContentWithNestedLists_ConvertsCorrectly()
     {
@@ -306,7 +362,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-029")]
     public async Task CreatePdf_ContentWithOrderedList_ConvertsCorrectly()
     {
@@ -316,7 +374,9 @@ public class BoundaryTests : PdfGenerationTestFixtureBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
+
+    [Trait("Defect", "DEF-021")]
     [Trait("TestId", "TC-PDF-BND-030")]
     public async Task CreatePdf_ContentWithImageSyntax_ConvertsCorrectly()
     {

@@ -9,10 +9,13 @@
  * Actual selectors:
  * - Section: #section-statement, app-opportunity-statement-section
  * - Section chip: text "Statement"
+ *
+ * @tests 6
  */
 
 import { test, expect } from '@playwright/test';
 import { authenticateWithRealBackend } from './helpers/auth.helper';
+import { waitForVisible } from './helpers/wait.helper';
 
 test.describe('Opportunity Statement Section', () => {
   test.slow();
@@ -37,9 +40,9 @@ test.describe('Opportunity Statement Section', () => {
     const statementChip = page.getByText(/statement/i).first();
     await expect(statementChip).toBeVisible({ timeout: 10000 });
     await statementChip.click();
-    await page.waitForTimeout(500);
-    
+
     const statementSection = page.locator('#section-statement').first();
+    await waitForVisible(statementSection, 5000);
     await expect(statementSection).toBeVisible();
   });
 

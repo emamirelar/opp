@@ -1,17 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, NavigationEnd } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
+import { TranslateModule, TranslateService, TranslateLoader, TranslateFakeLoader } from '@ngx-translate/core';
 import { ResponsiveTabsComponent } from './responsive-tabs.component';
 import { ResponsiveTabItem } from './responsive-tabs.model';
-import { Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 
 describe('ResponsiveTabsComponent', () => {
   let component: ResponsiveTabsComponent;
   let fixture: ComponentFixture<ResponsiveTabsComponent>;
   let mockRouter: jasmine.SpyObj<Router>;
-  let mockTranslateService: jasmine.SpyObj<TranslateService>;
+  let translateService: TranslateService;
   let routerEventsSubject: Subject<any>;
-  let langChangeSubject: Subject<any>;
   const setRouterUrl = (url: string) => {
     Object.defineProperty(mockRouter, 'url', {
       get: () => url,
@@ -27,29 +26,36 @@ describe('ResponsiveTabsComponent', () => {
 
   beforeEach(async () => {
     routerEventsSubject = new Subject();
-    langChangeSubject = new Subject();
 
     mockRouter = jasmine.createSpyObj('Router', ['navigate'], {
       events: routerEventsSubject.asObservable()
     });
     setRouterUrl('/tab1');
 
-    mockTranslateService = jasmine.createSpyObj('TranslateService', ['instant'], {
-      onLangChange: langChangeSubject.asObservable()
-    });
-
-    mockTranslateService.instant.and.callFake((key: string) => `Translated ${key}`);
-
     await TestBed.configureTestingModule({
-      imports: [ResponsiveTabsComponent, TranslateModule.forRoot()],
+      imports: [
+        ResponsiveTabsComponent,
+        TranslateModule.forRoot({
+          loader: { provide: TranslateLoader, useClass: TranslateFakeLoader }
+        })
+      ],
       providers: [
         { provide: Router, useValue: mockRouter },
-        { provide: TranslateService, useValue: mockTranslateService }
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: of({}),
+            queryParams: of({}),
+            snapshot: { paramMap: { get: () => null } }
+          }
+        }
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(ResponsiveTabsComponent);
     component = fixture.componentInstance;
+    translateService = TestBed.inject(TranslateService);
+    spyOn(translateService, 'instant').and.callFake((key: string) => `Translated ${key}`);
   });
 
   it('should create', () => {
@@ -76,7 +82,7 @@ describe('ResponsiveTabsComponent', () => {
       component.tabs = mockTabs;
       fixture.detectChanges();
 
-      expect(mockTranslateService.instant).toHaveBeenCalledWith('tab.one');
+      expect(translateService.instant).toHaveBeenCalledWith('tab.one');
       expect(component.tabs[0].translatedLabel).toBe('Translated tab.one');
     });
 
@@ -122,15 +128,12 @@ describe('ResponsiveTabsComponent', () => {
 
     it('should update view mode on window resize', () => {
       component.breakpoint = 768;
-      spyOnProperty(window, 'innerWidth').and.returnValue(500);
+      spyOnProperty(window, 'innerWidth').and.returnValues(500, 1024);
       
       component.onResize({});
-
       expect(component.isMobileView).toBeTrue();
 
-      spyOnProperty(window, 'innerWidth').and.returnValue(1024);
       component.onResize({});
-
       expect(component.isMobileView).toBeFalse();
     });
 
@@ -149,6 +152,7 @@ describe('ResponsiveTabsComponent', () => {
       component.tabs = mockTabs;
       fixture.detectChanges();
 
+      setRouterUrl('/tab2');
       routerEventsSubject.next(new NavigationEnd(1, '/tab2', '/tab2'));
 
       expect(component.activeRoute).toBe('/tab2');
@@ -190,8 +194,8 @@ describe('ResponsiveTabsComponent', () => {
       component.tabs = mockTabs;
       fixture.detectChanges();
 
-      mockTranslateService.instant.and.callFake((key: string) => `French ${key}`);
-      langChangeSubject.next({ lang: 'fr' });
+      (translateService.instant as jasmine.Spy).and.callFake((key: string) => `French ${key}`);
+      translateService.onLangChange.emit({ lang: 'fr' } as any);
 
       expect(component.tabs[0].translatedLabel).toBe('French tab.one');
     });
@@ -313,7 +317,8 @@ describe('ResponsiveTabsComponent', () => {
         component.addTab(newTab);
 
         expect(component.tabs.length).toBe(4);
-        expect(component.tabs[3]).toBe(newTab);
+        expect(component.tabs[3].route).toBe('/tab4');
+        expect(component.tabs[3].label).toBe('tab.four');
       });
 
       it('should translate new tab label', () => {
@@ -322,7 +327,7 @@ describe('ResponsiveTabsComponent', () => {
         
         component.addTab(newTab);
 
-        expect(mockTranslateService.instant).toHaveBeenCalledWith('tab.four');
+        expect(translateService.instant).toHaveBeenCalledWith('tab.four');
       });
     });
 

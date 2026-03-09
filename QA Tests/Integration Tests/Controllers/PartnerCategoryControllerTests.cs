@@ -133,6 +133,7 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// Verifies creation of new partner category
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PCC-003")]
@@ -163,6 +164,7 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// Verifies successful update of existing category
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PCC-004")]
@@ -194,6 +196,7 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// Verifies deletion of unused category
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PCC-005")]
@@ -236,6 +239,7 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// Verifies validation of required fields
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PCC-007")]
@@ -261,6 +265,7 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// Verifies that categories with partners cannot be deleted
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PCC-008")]
@@ -286,6 +291,7 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// Verifies retrieval of hierarchical category structure
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-009")]
@@ -311,6 +317,7 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// Verifies retrieval of top-level categories only
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-010")]
@@ -336,6 +343,7 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// Verifies retrieval of direct child categories
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-011")]
@@ -362,6 +370,7 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// Verifies changing category parent in hierarchy
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-012")]
@@ -387,6 +396,7 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// Verifies that circular parent-child relationships are prevented
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-013")]
@@ -412,6 +422,7 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// Verifies retrieval of breadcrumb path for a category
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-014")]
@@ -442,6 +453,7 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// Verifies retrieval of all partners associated with category
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-015")]
@@ -468,6 +480,7 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// Verifies creation of partner-category association
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-016")]
@@ -490,6 +503,7 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// Verifies removal of partner-category association
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-017")]
@@ -512,6 +526,7 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// Verifies simplified list for UI dropdowns
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Integration")]
     [Trait("Priority", "P1")]
     [Trait("TestId", "TC-PCC-018")]
@@ -589,6 +604,7 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// Verifies that only admin users can create/update categories
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PCC-A002")]
@@ -614,6 +630,7 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
     /// Verifies that only admin users can delete categories
     /// </summary>
     [Fact]
+    [Trait("Defect", "DEF-035")]
     [Trait("Category", "Security")]
     [Trait("Priority", "P0")]
     [Trait("TestId", "TC-PCC-A003")]
@@ -629,6 +646,43 @@ public class PartnerCategoryControllerTests : IntegrationTestBase
 
         // Assert
         response.StatusCode.Should().BeOneOf(new[] { HttpStatusCode.Forbidden, HttpStatusCode.MethodNotAllowed }, "because non-admin users cannot delete categories");
+    }
+
+    [Fact]
+    [Trait("Category", "Edge")]
+    [Trait("Priority", "P1")]
+    [Trait("TestId", "TC-PCC-EDGE-001")]
+    [Trait("Ticket", "PNO-1194")]
+    public async Task GetCategories_ResponseContent_NoEncodingArtifacts()
+    {
+        var client = Factory.CreateAuthenticatedClient();
+        var response = await client.GetAsync("/api/PartnerCategory");
+        if (response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            content.Should().NotContain("??",
+                "PNO-1194: partner category names must not contain encoding artifacts");
+            content.Should().NotContain("\uFFFD");
+        }
+    }
+
+    [Fact]
+    [Trait("Category", "Edge")]
+    [Trait("Priority", "P1")]
+    [Trait("TestId", "TC-PCC-EDGE-002")]
+    public async Task CreateCategory_UnicodeNameAndDescription_Accepted()
+    {
+        if (!Factory.IsUsingPostgres) return; // QA-054a: InMemory DB incompatible
+        var client = Factory.CreateAuthenticatedClient();
+        var categoryData = new
+        {
+            Name = "Cat\u00e9gorie partenaire G\u00e9n\u00e9rale",
+            Description = "Soci\u00e9t\u00e9s de d\u00e9veloppement"
+        };
+        var response = await client.PostAsJsonAsync("/api/PartnerCategory", categoryData);
+        response.StatusCode.Should().BeOneOf(
+            HttpStatusCode.OK, HttpStatusCode.Created,
+            HttpStatusCode.BadRequest, HttpStatusCode.Forbidden);
     }
 
     #endregion

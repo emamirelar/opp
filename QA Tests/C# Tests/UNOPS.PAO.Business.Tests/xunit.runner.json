@@ -3,7 +3,7 @@
   "appDomain": "ifAvailable",
   "diagnosticMessages": false,
   "internalDiagnosticMessages": false,
-  "maxParallelThreads": 2,
+  "maxParallelThreads": 0,
   "methodDisplay": "classAndMethod",
   "parallelizeAssembly": false,
   "parallelizeTestCollections": true,

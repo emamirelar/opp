@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -15,6 +16,8 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 @Component({
   selector: 'app-enhanced-entity-layout',
+  standalone: true,
+  imports: [CommonModule],
   template: `
     <div class="enhanced-entity-layout" [class.side-panel-collapsed]="sidePanelCollapsed()">
       <header class="layout-header" *ngIf="showHeader()">
@@ -80,6 +83,7 @@ class MockEnhancedEntityLayoutComponent {
   tabs = signal<any[]>([]);
   activeTab = signal<string>('');
   actions = signal<any[]>([]);
+  recordPermissions = signal<any>({ permissions: { canUpdate: true, canDelete: true, canRead: true } });
 
   @Output() tabChange = new EventEmitter<string>();
   @Output() actionClick = new EventEmitter<any>();
@@ -108,8 +112,7 @@ describe('EnhancedEntityLayoutComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [MockEnhancedEntityLayoutComponent],
-      imports: [NoopAnimationsModule]
+      imports: [NoopAnimationsModule, MockEnhancedEntityLayoutComponent]
     }).compileComponents();
 
     fixture = TestBed.createComponent(MockEnhancedEntityLayoutComponent);

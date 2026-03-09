@@ -907,7 +907,6 @@ namespace UNOPS.PAO.Business.Tests.OpportunitySections
         {
             // Arrange
             var session = CreateSession(100);
-            var originalIP = "192.168.1.1";
             var hijackerIP = "10.0.0.1";
 
             // Act - Access from different IP

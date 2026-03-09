@@ -30,6 +30,7 @@
 import { Page, Locator } from '@playwright/test';
 import { EntityDetailPage } from './entity-detail.page';
 import { assertVisible } from '../helpers/assertions.helper';
+import { waitForDialog, waitForPageReady } from '../helpers/wait.helper';
 
 export class InteractionItemPage extends EntityDetailPage {
   protected entityName = 'interaction';
@@ -39,128 +40,155 @@ export class InteractionItemPage extends EntityDetailPage {
   }
   
   /**
+   * Get edit button locator
+   * Template uses class="edit-button" (no data-testid). Fallback to class selector and role.
+   */
+  override get editButton(): Locator {
+    return this.getByTestId('edit-interaction-button')
+      .or(this.page.locator('button.edit-button, .edit-button'))
+      .or(this.page.getByRole('button', { name: /edit/i }))
+      .first();
+  }
+
+  /**
+   * Get delete button locator
+   * Template uses class="delete-button" (no data-testid). Fallback to class selector and role.
+   */
+  override get deleteButton(): Locator {
+    return this.getByTestId('delete-interaction-button')
+      .or(this.page.locator('button.delete-button, .delete-button'))
+      .or(this.page.getByRole('button', { name: /delete/i }))
+      .first();
+  }
+
+  /**
    * Get interaction type display
-   * No single data-testid covers "interaction type" across both layouts.
-   * Mobile has data-testid="interaction-type-icon".
-   * Desktop shows type text in a <p class="text-sm text-gray-600"> element.
-   * Falls back to looking for the type text near the icon area.
+   * No data-testid. Desktop shows type in <p class="text-sm text-gray-600">. Mobile uses icon.
    */
   get interactionType(): Locator {
-    // Try the mobile icon first, then the desktop type text area
     return this.page.locator(
-      '[data-testid="interaction-type-icon"], .text-sm.text-gray-600'
+      '[data-testid="interaction-type-icon"], .text-sm.text-gray-600, p.text-sm.text-gray-600'
     ).first();
   }
-  
+
   /**
    * Get interaction date field
-   * Uses actual data-testid="interaction-date" from interaction-detail.component.html
+   * No data-testid. Date is in Interaction Details panel under "Date and Time" label.
    */
   get interactionDate(): Locator {
-    return this.getByTestId('interaction-date');
+    return this.getByTestId('interaction-date')
+      .or(this.page.locator('p-panel').filter({ hasText: /interaction details/i }).locator('p.text-sm.text-gray-900').first());
   }
-  
+
   /**
    * Get interaction description/notes field
-   * Uses actual data-testid="interaction-description" from interaction-detail.component.html
-   * NOTE: Two elements may exist (full and truncated versions) — uses first()
+   * Template uses class="interaction-description".
    */
   get interactionDescription(): Locator {
-    return this.getByTestId('interaction-description');
+    return this.getByTestId('interaction-description')
+      .or(this.page.locator('.interaction-description').first());
   }
-  
+
   /**
    * Get interaction description section panel
-   * Uses actual data-testid="interaction-description-section"
+   * No data-testid. p-panel with "Description" header.
    */
   get interactionDescriptionSection(): Locator {
-    return this.getByTestId('interaction-description-section');
+    return this.getByTestId('interaction-description-section')
+      .or(this.page.locator('p-panel').filter({ hasText: /description/i }).first());
   }
-  
+
   /**
    * Get interaction location field
-   * Uses actual data-testid="interaction-location" from interaction-detail.component.html
+   * No data-testid. Location is in Interaction Details panel (div with map-marker icon).
    */
   get interactionLocation(): Locator {
-    return this.getByTestId('interaction-location');
+    return this.getByTestId('interaction-location')
+      .or(this.page.locator('div:has(i.pi-map-marker)').locator('p.text-sm.text-gray-900').first());
   }
-  
+
   /**
    * Get interaction status field
-   * Uses actual data-testid="interaction-status" from interaction-detail.component.html
+   * No data-testid. Status is in Interaction Details panel (has calendar icon).
    */
   get interactionStatus(): Locator {
-    return this.getByTestId('interaction-status');
+    const detailsPanel = this.page.locator('p-panel').filter({ has: this.page.locator('i.pi-calendar') }).first();
+    return this.getByTestId('interaction-status')
+      .or(detailsPanel.locator('p-tag').first());
   }
-  
+
   /**
    * Get interaction details section (date, location, status)
-   * Uses actual data-testid="interaction-details-section"
+   * No data-testid. p-panel containing calendar icon (date/time section).
    */
   get interactionDetailsSection(): Locator {
-    return this.getByTestId('interaction-details-section');
+    return this.getByTestId('interaction-details-section')
+      .or(this.page.locator('p-panel').filter({ has: this.page.locator('i.pi-calendar') }).first());
   }
-  
+
   /**
    * Get related contacts section
-   * Uses actual data-testid="interaction-contacts-section" from interaction-detail.component.html
+   * No data-testid. p-panel with "Related Contacts" header.
    */
   get relatedContactsSection(): Locator {
-    return this.getByTestId('interaction-contacts-section');
+    return this.getByTestId('interaction-contacts-section')
+      .or(this.page.locator('p-panel').filter({ hasText: /related contacts/i }).first());
   }
-  
+
   /**
    * Get related partners section
-   * Uses actual data-testid="interaction-partners-section" from interaction-detail.component.html
+   * No data-testid. p-panel with "Related Partners" header.
    */
   get relatedPartnersSection(): Locator {
-    return this.getByTestId('interaction-partners-section');
+    return this.getByTestId('interaction-partners-section')
+      .or(this.page.locator('p-panel').filter({ hasText: /related partners/i }).first());
   }
   
   /**
    * Get participants section (combined: contacts + partners)
-   * No single "participants" data-testid exists. The template splits participants into
-   * separate "Related Contacts" and "Related Partners" panels.
-   * Returns the contacts section as primary, or partners as fallback.
+   * No data-testid. Template uses p-panel with "Related Contacts" or "Related Partners" headers.
    */
   get participantsSection(): Locator {
-    return this.page.locator(
-      '[data-testid="interaction-contacts-section"], [data-testid="interaction-partners-section"]'
-    ).first();
+    return this.relatedContactsSection.or(this.relatedPartnersSection);
   }
-  
+
   /**
    * Get related opportunities section
-   * No data-testid exists on the opportunities panel.
-   * Falls back to a p-panel with the "Related Opportunities" header text.
-   * NOTE: This section currently shows a "Coming Soon" placeholder.
+   * No data-testid. p-panel with "Related Opportunities" header. Shows "Coming Soon" placeholder.
    */
   get relatedOpportunitiesSection(): Locator {
     return this.page.locator('p-panel').filter({ hasText: /related opportunities/i }).first();
   }
-  
+
   /**
    * Get create opportunity button
-   * Uses actual data-testid="create-opportunity-button" from interaction-detail.component.html
-   * NOTE: Previously referenced as "create-opportunity-from-interaction-button" which does NOT exist.
+   * Template uses class="create-opportunity-button" (no data-testid). Permission-based visibility.
    */
   get createOpportunityButton(): Locator {
-    return this.getByTestId('create-opportunity-button');
+    return this.getByTestId('create-opportunity-button')
+      .or(this.page.locator('button.create-opportunity-button, .create-opportunity-button'))
+      .or(this.page.getByRole('button', { name: /create.*opportunity|opportunity/i }))
+      .first();
   }
-  
+
   /**
    * Get documents section
-   * Uses actual data-testid="interaction-documents-section" from interaction-detail.component.html
+   * No data-testid. p-panel with "Related Documents" header or app-document component.
    */
   override get documentsSection(): Locator {
-    return this.getByTestId('interaction-documents-section');
+    return this.getByTestId('interaction-documents-section')
+      .or(this.page.locator('p-panel').filter({ hasText: /related documents|documentos|documents/i }).first())
+      .or(this.page.locator('app-document, .documents-container').first());
   }
   
   /**
    * Navigate to interaction detail page
+   * @param interactionId - Interaction ID
    */
-  async navigate(interactionId: string | number): Promise<void> {
-    await this.navigateToDetail(interactionId);
+  override async navigate(interactionId: string | number): Promise<void> {
+    this.recordId = interactionId;
+    await this.goto(`/partnerships/interactions/${interactionId}`);
+    await waitForPageReady(this.page);
   }
   
   /**
@@ -322,7 +350,7 @@ export class InteractionItemPage extends EntityDetailPage {
   async clickCreateOpportunityButton(): Promise<void> {
     if (await this.isCreateOpportunityButtonVisible()) {
       await this.createOpportunityButton.click();
-      await this.page.waitForTimeout(1000);
+      await waitForDialog(this.page);
     }
   }
   

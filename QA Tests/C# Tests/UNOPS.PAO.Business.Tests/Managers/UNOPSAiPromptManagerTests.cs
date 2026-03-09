@@ -118,7 +118,8 @@ public class UNOPSAiPromptManagerTests : ManagerTestBase
     // ==========================================
 
     /// <summary>TC-AIPROMPT-NEG-001: Soft-deleted prompt is excluded from IsDeleted=false queries.</summary>
-    [Fact(Skip = "DEF-023: AiPrompt.IsDeleted property missing - soft delete not supported")]
+    [Fact]
+    [Trait("Defect", "DEF-023")]
     [Trait("TestId", "TC-AIPROMPT-NEG-001")]
     public async Task AiPrompt_SoftDeleted_ExcludedFromActiveQueries()
     {
@@ -186,7 +187,8 @@ public class UNOPSAiPromptManagerTests : ManagerTestBase
     }
 
     /// <summary>TC-AIPROMPT-NEG-006: Soft-deleted prompts are not counted in active totals.</summary>
-    [Fact(Skip = "DEF-023: AiPrompt.IsDeleted property missing - soft delete not supported; both seeded records are always visible")]
+    [Fact]
+    [Trait("Defect", "DEF-023")]
     [Trait("TestId", "TC-AIPROMPT-NEG-006")]
     public async Task AiPrompt_SoftDeletedNotCountedInActiveTotal()
     {
@@ -200,7 +202,8 @@ public class UNOPSAiPromptManagerTests : ManagerTestBase
     }
 
     /// <summary>TC-AIPROMPT-NEG-007: Prompt with IsDeleted=true is accessible via All() but not filtered query.</summary>
-    [Fact(Skip = "DEF-023: AiPrompt.IsDeleted property missing - soft delete not supported")]
+    [Fact]
+    [Trait("Defect", "DEF-023")]
     [Trait("TestId", "TC-AIPROMPT-NEG-007")]
     public async Task AiPrompt_SoftDeleted_PresentInAllButNotFiltered()
     {
@@ -336,7 +339,8 @@ public class UNOPSAiPromptManagerTests : ManagerTestBase
     }
 
     /// <summary>TC-AIPROMPT-EDGE-005: Soft-delete toggle works (false → true → false).</summary>
-    [Fact(Skip = "DEF-023: AiPrompt.IsDeleted property missing - soft delete not supported")]
+    [Fact]
+    [Trait("Defect", "DEF-023")]
     [Trait("TestId", "TC-AIPROMPT-EDGE-005")]
     public async Task AiPrompt_SoftDeleteToggle_WorksCorrectly()
     {
@@ -746,7 +750,8 @@ public class UNOPSAiPromptManagerTests : ManagerTestBase
     }
 
     /// <summary>TC-AIPROMPT-INT-006: Bulk seed then delete leaves correct active count.</summary>
-    [Fact(Skip = "DEF-023: AiPrompt.IsDeleted property missing - soft delete not supported")]
+    [Fact]
+    [Trait("Defect", "DEF-023")]
     [Trait("TestId", "TC-AIPROMPT-INT-006")]
     public async Task AiPrompt_BulkSeedThenDelete_LeavesCorrectActiveCount()
     {
@@ -807,7 +812,8 @@ public class UNOPSAiPromptManagerTests : ManagerTestBase
     }
 
     /// <summary>TC-AIPROMPT-INT-009: Record count consistency before and after soft delete.</summary>
-    [Fact(Skip = "DEF-023: AiPrompt.IsDeleted property missing - soft delete not supported")]
+    [Fact]
+    [Trait("Defect", "DEF-023")]
     [Trait("TestId", "TC-AIPROMPT-INT-009")]
     public async Task AiPrompt_SoftDelete_TotalCountUnchangedActiveCountDecreases()
     {

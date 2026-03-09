@@ -4,6 +4,7 @@
  */
 
 using FluentAssertions;
+using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Opportunities;
 using Xunit;
 
@@ -106,7 +107,9 @@ public class BoundaryTests : PNO1156TestFixtureBase
         result.ResponsibleOrgUnitId.Should().BeNull();
     }
 
-    [Fact(Skip = "DEF-050: Manager fails on null Description instead of defaulting to empty string")]
+    [Fact]
+
+    [Trait("Defect", "DEF-050")]
     [Trait("TestId", "TC-PNO1156-BND-006")]
     public async Task CreateOpportunity_WithAllOptionalFieldsNull_OnlyRequiredFieldsSaved()
     {

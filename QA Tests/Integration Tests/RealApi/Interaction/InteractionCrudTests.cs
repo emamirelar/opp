@@ -21,6 +21,7 @@ namespace UNOPS.PAO.IntegrationTests.RealApi.Interaction;
 public class InteractionCrudTests : IntegrationTestBase
 {
     private readonly ITestOutputHelper _output;
+    private readonly bool _isPostgresAvailable;
     private const string BaseUrl = "/api/interactions";
     private const string PartnerBaseUrl = "/api/partner";
 
@@ -28,6 +29,7 @@ public class InteractionCrudTests : IntegrationTestBase
         : base(factory)
     {
         _output = output;
+        _isPostgresAvailable = factory.IsUsingPostgres;
     }
 
     private async Task<int?> CreatePartnerForInteractionAsync()
@@ -80,12 +82,13 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task Create_MinimalFields_Returns201AndId()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
 
         var (response, body) = await CreateInteractionAsync(partnerId.Value);
         _output.WriteLine($"Create response: {response.StatusCode}");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created);
         if (response.StatusCode != HttpStatusCode.Created) return;
         body.Should().NotBeNull();
         var id = GetIdFromCreateResponse(response, body);
@@ -96,6 +99,7 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task Get_ExistingInteraction_ReturnsCorrectData()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var (createResp, createBody) = await CreateInteractionAsync(partnerId.Value);
@@ -104,7 +108,7 @@ public class InteractionCrudTests : IntegrationTestBase
         if (id == null) return;
 
         var getResp = await Client.GetAsync($"{BaseUrl}/{id}");
-        getResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        getResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (getResp.StatusCode != HttpStatusCode.OK) return;
         var content = await getResp.Content.ReadAsStringAsync();
         content.Should().NotBeNullOrEmpty();
@@ -116,6 +120,7 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task Update_ExistingInteraction_ChangesPersist()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var (createResp, createBody) = await CreateInteractionAsync(partnerId.Value);
@@ -134,11 +139,11 @@ public class InteractionCrudTests : IntegrationTestBase
             PartnerIds = new[] { partnerId.Value }
         };
         var putResp = await Client.PutAsJsonAsync(BaseUrl, updatePayload);
-        putResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        putResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (putResp.StatusCode != HttpStatusCode.OK) return;
 
         var getResp = await Client.GetAsync($"{BaseUrl}/{id}");
-        getResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        getResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (getResp.StatusCode != HttpStatusCode.OK) return;
         var doc = JsonDocument.Parse(await getResp.Content.ReadAsStringAsync());
         doc.RootElement.GetProperty("subject").GetString().Should().Be(newSubject);
@@ -151,70 +156,79 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task Create_EmptySubject_Returns400()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var (response, _) = await CreateInteractionAsync(partnerId.Value, CreateInteractionRequest(partnerId.Value, subject: ""));
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task Create_NoParticipants_Returns400()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var req = new { Subject = "Test", Date = DateTime.UtcNow.Date, Type = "VirtualMeeting", PartnerIds = Array.Empty<int>(), ConfirmDuplicateCreation = true };
         var response = await Client.PostAsJsonAsync(BaseUrl, req);
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task Create_InvalidPartnerId_Returns400()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var req = new { Subject = "Test", Date = DateTime.UtcNow.Date, Type = "VirtualMeeting", PartnerIds = new[] { 999999 }, ConfirmDuplicateCreation = true };
         var response = await Client.PostAsJsonAsync(BaseUrl, req);
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task Create_NegativePartnerId_Returns400()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var req = new { Subject = "Test", Date = DateTime.UtcNow.Date, Type = "VirtualMeeting", PartnerIds = new[] { -1 }, ConfirmDuplicateCreation = true };
         var response = await Client.PostAsJsonAsync(BaseUrl, req);
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task Get_NonExistentInteraction_Returns404()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await Client.GetAsync($"{BaseUrl}/999999");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task Get_NegativeId_Returns404()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await Client.GetAsync($"{BaseUrl}/-1");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task Update_NonExistentInteraction_Returns404()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var payload = new { Id = 999999, Subject = "Test", Date = DateTime.UtcNow.Date, Type = "VirtualMeeting", PartnerIds = new[] { partnerId.Value } };
         var response = await Client.PutAsJsonAsync(BaseUrl, payload);
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task Delete_NonExistentInteraction_Returns404()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await Client.DeleteAsync($"{BaseUrl}/999999");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.NoContent, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.NoContent);
     }
 
     [Fact]
     public async Task Delete_AlreadyDeletedInteraction_Returns404()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var (createResp, createBody) = await CreateInteractionAsync(partnerId.Value);
@@ -232,24 +246,27 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task Create_NullBody_Returns400()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var content = new StringContent("null", Encoding.UTF8, "application/json");
         var response = await Client.PostAsync(BaseUrl, content);
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task Create_ZeroPartnerId_Returns400()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var req = new { Subject = "Test", Date = DateTime.UtcNow.Date, Type = "VirtualMeeting", PartnerIds = new[] { 0 }, ConfirmDuplicateCreation = true };
         var response = await Client.PostAsJsonAsync(BaseUrl, req);
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task Get_ZeroId_Returns404()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await Client.GetAsync($"{BaseUrl}/0");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
     }
 
     #endregion
@@ -259,11 +276,12 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task Create_FutureDate_Accepts()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var futureDate = DateTime.UtcNow.AddMonths(6);
         var (response, body) = await CreateInteractionAsync(partnerId.Value, CreateInteractionRequest(partnerId.Value, date: futureDate));
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.BadRequest);
         if (response.IsSuccessStatusCode)
             GetIdFromCreateResponse(response, body).Should().NotBeNull();
     }
@@ -271,11 +289,12 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task Create_PastDate_Accepts()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var pastDate = DateTime.UtcNow.AddYears(-1);
         var (response, body) = await CreateInteractionAsync(partnerId.Value, CreateInteractionRequest(partnerId.Value, date: pastDate));
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created);
         if (response.IsSuccessStatusCode)
             GetIdFromCreateResponse(response, body).Should().HaveValue();
     }
@@ -283,20 +302,22 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task Create_LongDescription_HandlesGracefully()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var longDesc = new string('d', 5000);
         var (response, _) = await CreateInteractionAsync(partnerId.Value, CreateInteractionRequest(partnerId.Value, description: longDesc));
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task Create_OneCharSubject_MinBoundary_Succeeds()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var (response, body) = await CreateInteractionAsync(partnerId.Value, CreateInteractionRequest(partnerId.Value, subject: "X"));
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created);
         if (response.IsSuccessStatusCode)
             GetIdFromCreateResponse(response, body).Should().HaveValue();
     }
@@ -304,35 +325,75 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task Create_SpecialCharactersInSubject_HandlesUnicode()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var (response, body) = await CreateInteractionAsync(partnerId.Value, CreateInteractionRequest(partnerId.Value, subject: "Meeting 日本é"));
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.BadRequest);
         if (response.IsSuccessStatusCode)
-            GetIdFromCreateResponse(response, body).Should().NotBeNull();
+        {
+            var id = GetIdFromCreateResponse(response, body);
+            id.Should().NotBeNull();
+
+            // PNO-1194: verify encoding preserved in round-trip
+            var getResp = await Client.GetAsync($"{BaseUrl}/{id}");
+            if (getResp.IsSuccessStatusCode)
+            {
+                var content = await getResp.Content.ReadAsStringAsync();
+                content.Should().NotContain("??",
+                    "PNO-1194: unicode interaction subjects must survive create→DB→read round-trip");
+                content.Should().NotContain("\uFFFD");
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Create_AccentedSubject_PreservedInRoundTrip()
+    {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
+        var partnerId = await CreatePartnerForInteractionAsync();
+        if (partnerId == null) return;
+        var (response, body) = await CreateInteractionAsync(partnerId.Value,
+            CreateInteractionRequest(partnerId.Value, subject: "Réunion avec Señor García — Données clés"));
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.BadRequest);
+        if (response.IsSuccessStatusCode)
+        {
+            var id = GetIdFromCreateResponse(response, body);
+            if (id == null) return;
+            var getResp = await Client.GetAsync($"{BaseUrl}/{id}");
+            if (getResp.IsSuccessStatusCode)
+            {
+                var content = await getResp.Content.ReadAsStringAsync();
+                content.Should().NotContain("??");
+                content.Should().NotContain("\uFFFD");
+            }
+        }
     }
 
     [Fact]
     public async Task Create_SqlInjectionCharsInSubject_DoesNotBreak()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var (response, _) = await CreateInteractionAsync(partnerId.Value, CreateInteractionRequest(partnerId.Value, subject: "'; DROP TABLE Interaction;--"));
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task Pagination_Page0_ReturnsFirstPageOrBadRequest()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await Client.GetAsync($"{BaseUrl}?pageIndex=0&pageSize=10");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task Pagination_VeryLargePageNumber_ReturnsEmptyOrLastPage()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await Client.GetAsync($"{BaseUrl}?pageIndex=999999&pageSize=10");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (response.StatusCode != HttpStatusCode.OK) return;
         var page = await response.Content.ReadFromJsonAsync<PaginationResponse<JsonElement>>(JsonOptions);
         page!.Records.Should().NotBeNull();
@@ -341,8 +402,9 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task Pagination_PageSize1_ReturnsOneRecord()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await Client.GetAsync($"{BaseUrl}?pageIndex=1&pageSize=1");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (response.StatusCode != HttpStatusCode.OK) return;
         var page = await response.Content.ReadFromJsonAsync<PaginationResponse<JsonElement>>(JsonOptions);
         page!.Records.Count.Should().BeLessThanOrEqualTo(1);
@@ -351,6 +413,7 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task Create_DifferentInteractionTypes_Accepts()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var types = new[] { "Email", "Call", "VirtualMeeting", "InPersonMeeting" };
@@ -358,18 +421,19 @@ public class InteractionCrudTests : IntegrationTestBase
         {
             var req = new { Subject = $"Test {type} {Guid.NewGuid():N}", Date = DateTime.UtcNow.Date, Type = type, PartnerIds = new[] { partnerId.Value }, ConfirmDuplicateCreation = true };
             var response = await Client.PostAsJsonAsync(BaseUrl, req);
-            response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+            response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.BadRequest);
         }
     }
 
     [Fact]
     public async Task Create_EmptyDescription_Optional_Succeeds()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var req = new { Subject = $"Test {Guid.NewGuid():N}", Date = DateTime.UtcNow.Date, Type = "VirtualMeeting", PartnerIds = new[] { partnerId.Value }, ConfirmDuplicateCreation = true };
         var (response, body) = await CreateInteractionAsync(partnerId.Value, req);
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created);
         if (response.IsSuccessStatusCode)
             GetIdFromCreateResponse(response, body).Should().HaveValue();
     }
@@ -381,10 +445,11 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task CreatedInteraction_HasPartnerIds()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var (response, body) = await CreateInteractionAsync(partnerId.Value);
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created);
         if (response.StatusCode != HttpStatusCode.Created || body == null) return;
         if (body.Value.TryGetProperty("data", out var data) && data.TryGetProperty("partnerIds", out var pids))
             pids.GetArrayLength().Should().BeGreaterThan(0);
@@ -393,6 +458,7 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task SoftDelete_GetAfterDelete_Returns404()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var (createResp, createBody) = await CreateInteractionAsync(partnerId.Value);
@@ -402,7 +468,7 @@ public class InteractionCrudTests : IntegrationTestBase
 
         await Client.DeleteAsync($"{BaseUrl}/{id}");
         var getResp = await Client.GetAsync($"{BaseUrl}/{id}");
-        getResp.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError);
+        getResp.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -426,8 +492,9 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task List_WithPagination_ReturnsPaginatedResults()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var listResp = await Client.GetAsync($"{BaseUrl}?pageIndex=1&pageSize=5");
-        listResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        listResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (listResp.StatusCode != HttpStatusCode.OK) return;
         var page = await listResp.Content.ReadFromJsonAsync<PaginationResponse<JsonElement>>(JsonOptions);
         page.Should().NotBeNull();
@@ -439,6 +506,7 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task GetPermissions_ExistingInteraction_ReturnsPermissions()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var (createResp, createBody) = await CreateInteractionAsync(partnerId.Value);
@@ -453,6 +521,7 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task Update_ChangesLastModifiedDate()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var (createResp, createBody) = await CreateInteractionAsync(partnerId.Value);
@@ -463,7 +532,7 @@ public class InteractionCrudTests : IntegrationTestBase
         var updatePayload = new { Id = id!.Value, Subject = $"Updated {Guid.NewGuid():N}", Date = DateTime.UtcNow.Date, Type = "VirtualMeeting", PartnerIds = new[] { partnerId.Value } };
         await Client.PutAsJsonAsync(BaseUrl, updatePayload);
         var getResp = await Client.GetAsync($"{BaseUrl}/{id}");
-        getResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        getResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (getResp.StatusCode != HttpStatusCode.OK) return;
         var doc = JsonDocument.Parse(await getResp.Content.ReadAsStringAsync());
         doc.RootElement.TryGetProperty("lastModifiedDate", out _).Should().BeTrue();
@@ -472,10 +541,11 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task CreatedInteraction_HasDate()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var (response, body) = await CreateInteractionAsync(partnerId.Value);
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created);
         if (response.StatusCode != HttpStatusCode.Created || body == null) return;
         if (body.Value.TryGetProperty("data", out var data) && data.TryGetProperty("date", out var dateProp))
             dateProp.GetDateTime().Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromDays(1));
@@ -484,11 +554,12 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task CreatedInteraction_HasSubject()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var subject = $"HasSubject {Guid.NewGuid():N}";
         var (response, body) = await CreateInteractionAsync(partnerId.Value, CreateInteractionRequest(partnerId.Value, subject: subject));
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created);
         if (response.StatusCode != HttpStatusCode.Created || body == null) return;
         if (body.Value.TryGetProperty("data", out var data) && data.TryGetProperty("subject", out var sub))
             sub.GetString().Should().Be(subject);
@@ -497,8 +568,9 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task GetPermissions_NonExistentInteraction_Returns404()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await Client.GetAsync($"{BaseUrl}/999999/permissions");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound);
     }
 
     #endregion
@@ -508,6 +580,7 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task FullCrudCycle_CreateReadUpdateReadDeleteRead404()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var (createResp, createBody) = await CreateInteractionAsync(partnerId.Value);
@@ -516,29 +589,30 @@ public class InteractionCrudTests : IntegrationTestBase
         if (id == null) return;
 
         var get1 = await Client.GetAsync($"{BaseUrl}/{id}");
-        get1.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        get1.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (get1.StatusCode != HttpStatusCode.OK) return;
 
         var updatePayload = new { Id = id!.Value, Subject = $"Updated {Guid.NewGuid():N}", Date = DateTime.UtcNow.Date, Type = "VirtualMeeting", PartnerIds = new[] { partnerId.Value } };
         var putResp = await Client.PutAsJsonAsync(BaseUrl, updatePayload);
-        putResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        putResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (putResp.StatusCode != HttpStatusCode.OK) return;
 
         var get2 = await Client.GetAsync($"{BaseUrl}/{id}");
-        get2.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        get2.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (get2.StatusCode != HttpStatusCode.OK) return;
 
         var deleteResp = await Client.DeleteAsync($"{BaseUrl}/{id}");
-        deleteResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NoContent, HttpStatusCode.InternalServerError);
+        deleteResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NoContent);
         if (!deleteResp.IsSuccessStatusCode) return;
 
         var get3 = await Client.GetAsync($"{BaseUrl}/{id}");
-        get3.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError);
+        get3.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task CreatePartnerFirst_ThenInteraction_FullFlow()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var (createResp, createBody) = await CreateInteractionAsync(partnerId.Value);
@@ -547,7 +621,7 @@ public class InteractionCrudTests : IntegrationTestBase
         if (id == null) return;
 
         var getResp = await Client.GetAsync($"{BaseUrl}/{id}");
-        getResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        getResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (getResp.StatusCode != HttpStatusCode.OK) return;
         var doc = JsonDocument.Parse(await getResp.Content.ReadAsStringAsync());
         doc.RootElement.TryGetProperty("partnerIds", out var pids).Should().BeTrue();
@@ -557,12 +631,13 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task CreateMultiple_VerifyPagination()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         await CreateInteractionAsync(partnerId.Value);
         await CreateInteractionAsync(partnerId.Value);
         var resp = await Client.GetAsync($"{BaseUrl}?pageIndex=1&pageSize=2");
-        resp.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        resp.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (resp.StatusCode != HttpStatusCode.OK) return;
         var page = await resp.Content.ReadFromJsonAsync<PaginationResponse<JsonElement>>(JsonOptions);
         page!.TotalCount.Should().BeGreaterThanOrEqualTo(0);
@@ -572,6 +647,7 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task CreateDelete_VerifyListExcludesDeleted()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var (createResp, createBody) = await CreateInteractionAsync(partnerId.Value);
@@ -589,6 +665,7 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task CreateThenList_FindsInteraction()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var (createResp, createBody) = await CreateInteractionAsync(partnerId.Value);
@@ -597,7 +674,7 @@ public class InteractionCrudTests : IntegrationTestBase
         if (id == null) return;
 
         var listResp = await Client.GetAsync($"{BaseUrl}?pageIndex=1&pageSize=100");
-        listResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        listResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (listResp.StatusCode != HttpStatusCode.OK) return;
         var page = await listResp.Content.ReadFromJsonAsync<PaginationResponse<JsonElement>>(JsonOptions);
         var found = page!.Records.Any(r => r.TryGetProperty("id", out var i) && i.GetInt32() == id!.Value);
@@ -607,6 +684,7 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task CreateUpdateGet_VerifyPersisted()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var (createResp, createBody) = await CreateInteractionAsync(partnerId.Value);
@@ -618,7 +696,7 @@ public class InteractionCrudTests : IntegrationTestBase
         var updatePayload = new { Id = id!.Value, Subject = newSubject, Date = DateTime.UtcNow.Date, Type = "VirtualMeeting", PartnerIds = new[] { partnerId.Value } };
         await Client.PutAsJsonAsync(BaseUrl, updatePayload);
         var getResp = await Client.GetAsync($"{BaseUrl}/{id}");
-        getResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        getResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (getResp.StatusCode != HttpStatusCode.OK) return;
         var doc = JsonDocument.Parse(await getResp.Content.ReadAsStringAsync());
         doc.RootElement.GetProperty("subject").GetString().Should().Be(newSubject);
@@ -627,8 +705,9 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task List_OrderBy_ReturnsSorted()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var resp = await Client.GetAsync($"{BaseUrl}?pageIndex=1&pageSize=5&orderBy=Subject&ascending=true");
-        resp.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        resp.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (resp.StatusCode != HttpStatusCode.OK) return;
         var page = await resp.Content.ReadFromJsonAsync<PaginationResponse<JsonElement>>(JsonOptions);
         page.Should().NotBeNull();
@@ -637,6 +716,7 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task CreateThenDelete_Verify404OnGet()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var (createResp, createBody) = await CreateInteractionAsync(partnerId.Value);
@@ -646,12 +726,13 @@ public class InteractionCrudTests : IntegrationTestBase
 
         await Client.DeleteAsync($"{BaseUrl}/{id}");
         var getResp = await Client.GetAsync($"{BaseUrl}/{id}");
-        getResp.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError);
+        getResp.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task CreatePartnerThenInteraction_PartnerAssociation()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerReq = new { Name = $"Partner {Guid.NewGuid():N}", ConfirmDuplicateCreation = true };
         var partnerResp = await Client.PostAsJsonAsync(PartnerBaseUrl, partnerReq);
         if (!partnerResp.IsSuccessStatusCode) return;
@@ -666,7 +747,7 @@ public class InteractionCrudTests : IntegrationTestBase
         if (interactionId == null) return;
 
         var getResp = await Client.GetAsync($"{BaseUrl}/{interactionId}");
-        getResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        getResp.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (getResp.StatusCode != HttpStatusCode.OK) return;
         var doc = JsonDocument.Parse(await getResp.Content.ReadAsStringAsync());
         doc.RootElement.TryGetProperty("partnerIds", out var pids).Should().BeTrue();
@@ -677,6 +758,7 @@ public class InteractionCrudTests : IntegrationTestBase
     [Fact]
     public async Task CreateThenGetPermissions()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var partnerId = await CreatePartnerForInteractionAsync();
         if (partnerId == null) return;
         var (createResp, createBody) = await CreateInteractionAsync(partnerId.Value);

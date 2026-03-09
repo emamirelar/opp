@@ -1,0 +1,30 @@
+{
+  "list": {
+    "records": [
+      { "id": 1, "firstName": "John", "lastName": "Smith", "name": "John Smith", "email": "john.smith@test.com", "status": "Active", "partner": { "id": 1, "name": "UNICEF Regional Office" }, "createdDate": "2024-01-20T00:00:00Z" },
+      { "id": 2, "firstName": "Jane", "lastName": "Doe", "name": "Jane Doe", "email": "jane.doe@test.com", "status": "Active", "partner": { "id": 2, "name": "Red Cross International" }, "createdDate": "2024-02-15T00:00:00Z" },
+      { "id": 3, "firstName": "Bob", "lastName": "Johnson", "name": "Bob Johnson", "email": "bob.johnson@test.com", "status": "Active", "partner": { "id": 3, "name": "World Bank Group" }, "createdDate": "2024-03-05T00:00:00Z" }
+    ],
+    "totalCount": 3
+  },
+  "search": {
+    "records": [
+      { "id": 1, "firstName": "John", "lastName": "Smith", "name": "John Smith", "email": "john.smith@test.com", "status": "Active", "partner": { "id": 1, "name": "UNICEF Regional Office" }, "createdDate": "2024-01-20T00:00:00Z" }
+    ],
+    "totalCount": 1
+  },
+  "detail": {
+    "id": 1,
+    "firstName": "John",
+    "lastName": "Smith",
+    "name": "John Smith",
+    "email": "john.smith@test.com",
+    "phone": "+1-555-0123",
+    "title": "Director",
+    "department": "Partnerships",
+    "status": "Active",
+    "partner": { "id": 1, "name": "Test Partner Organization" },
+    "createdDate": "2024-01-01T00:00:00Z",
+    "lastModifiedDate": "2024-06-15T12:00:00Z"
+  }
+}

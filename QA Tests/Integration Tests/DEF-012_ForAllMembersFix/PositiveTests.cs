@@ -346,7 +346,7 @@ public class PositiveTests
 
     [Fact]
     [Trait("DEF012", "POS_028")]
-    public void POS_028_Mapper_ThreadSafe()
+    public async Task POS_028_Mapper_ThreadSafe()
     {
         var dest = CreateOpportunity();
         var tasks = Enumerable.Range(0, 10).Select(i => System.Threading.Tasks.Task.Run(() =>
@@ -355,8 +355,8 @@ public class PositiveTests
             _mapper.Map(new UpdateOpportunityRequest { Id = 10, Name = $"Name{i}" }, d);
             return d.Name;
         })).ToArray();
-        System.Threading.Tasks.Task.WaitAll(tasks);
-        tasks.Select(t => t.Result).Should().OnlyHaveUniqueItems();
+        var results = await System.Threading.Tasks.Task.WhenAll(tasks);
+        results.Should().OnlyHaveUniqueItems();
     }
 
     [Fact]

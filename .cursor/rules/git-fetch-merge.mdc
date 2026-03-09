@@ -1,0 +1,94 @@
+---
+description: Reliable git fetch, pull, and merge operations — prevents stale ref bugs
+globs: 
+alwaysApply: true
+---
+
+# Git Fetch & Merge — MANDATORY Protocol
+
+## The Problem
+
+`git fetch origin <branch>` writes to `FETCH_HEAD` only — it does NOT update `refs/remotes/origin/<branch>`. Merging against the remote-tracking ref after such a fetch uses stale data and silently reports "Already up to date" even when new commits exist.
+
+## MANDATORY: Use Explicit Refspec for All Fetch Operations
+
+### When fetching a specific branch:
+
+```bash
+# ✅ CORRECT — Always use explicit refspec to update remote-tracking ref
+git fetch origin refs/heads/<branch>:refs/remotes/origin/<branch>
+
+# ✅ ALSO CORRECT — Pull directly (fetches + merges from FETCH_HEAD)
+git pull origin <branch>
+
+# ❌ WRONG — Only updates FETCH_HEAD, NOT origin/<branch>
+git fetch origin <branch>
+```
+
+### When fetching all branches:
+
+```bash
+# ✅ CORRECT — Fetches all refs using configured refspecs
+git fetch origin --prune
+
+# ✅ CORRECT — Force-update all remote-tracking refs
+git fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
+```
+
+## MANDATORY: Verify After Every Fetch
+
+After every fetch, ALWAYS verify the remote-tracking ref was actually updated before merging:
+
+```bash
+# Step 1: Check what the remote actually has
+git ls-remote origin <branch>
+
+# Step 2: Check what the local tracking ref has
+git rev-parse origin/<branch>
+
+# Step 3: If they differ, the fetch didn't update the ref — re-fetch with explicit refspec
+```
+
+## MANDATORY: Never Trust "Already up to date"
+
+If `git merge origin/<branch>` says "Already up to date" after a fetch intended to pull new code:
+
+1. **Do NOT accept it at face value**
+2. Run `git ls-remote origin <branch>` to check the actual remote HEAD
+3. Compare with `git rev-parse origin/<branch>` locally
+4. If they differ, re-fetch with explicit refspec:
+   ```bash
+   git fetch origin refs/heads/<branch>:refs/remotes/origin/<branch>
+   ```
+5. Then retry the merge
+
+## Complete Pull Workflow (Use This Every Time)
+
+```bash
+# 1. Fetch with explicit refspec
+git fetch origin refs/heads/<branch>:refs/remotes/origin/<branch>
+
+# 2. Verify the ref was updated
+git log --oneline -5 origin/<branch>
+
+# 3. Check what's incoming
+git log --oneline HEAD..origin/<branch>
+
+# 4. Merge
+git merge origin/<branch>
+```
+
+## Stash Protocol (When Local Changes Block Merge)
+
+```bash
+# 1. Stash local changes
+git stash push -m "Stash before merging <branch>"
+
+# 2. Perform merge (using workflow above)
+git merge origin/<branch>
+
+# 3. Restore local changes
+git stash pop
+
+# 4. If stash pop conflicts, resolve them
+```

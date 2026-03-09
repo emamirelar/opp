@@ -491,7 +491,6 @@ namespace UNOPS.PAO.Business.Tests.Functional
         public void BR012_ActiveStatus_RestrictedEdits()
         {
             // Arrange
-            var partnerStatus = "Active";
             var restrictedFields = new[] { "Name", "Type", "Country" };
 
             // Act & Assert

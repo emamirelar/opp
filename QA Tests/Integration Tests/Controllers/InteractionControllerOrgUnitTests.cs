@@ -22,6 +22,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
     /// <summary>
     /// Integration tests for InteractionController OrgUnit filtering functionality
     /// </summary>
+    [Collection("Integration Tests")]
     public class InteractionControllerOrgUnitTests : IntegrationTestBase
     {
         private const string BaseUrl = "/api/interaction";
@@ -30,7 +31,9 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
         {
         }
 
-        [Fact(Skip = "Endpoint not implemented yet")]
+        [Fact]
+
+        [Trait("Defect", "DEF-106")]
         public async Task GetInteractions_WithOrgUnitIdFilter_ShouldAcceptParameter()
         {
             // Act
@@ -45,7 +48,9 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             // Note: Actual filtering will be handled by OrgUnitFilterService
         }
 
-        [Fact(Skip = "Endpoint not implemented yet")]
+        [Fact]
+
+        [Trait("Defect", "DEF-106")]
         public async Task GetInteractions_WithOrgUnitIdAndSearchText_ShouldAcceptBothParameters()
         {
             // Act
@@ -58,7 +63,9 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             // The service will combine both filters
         }
 
-        [Fact(Skip = "Endpoint not implemented yet")]
+        [Fact]
+
+        [Trait("Defect", "DEF-106")]
         public async Task GetInteractions_WithOrgUnitIdInAdvancedSearch_ShouldWork()
         {
             // Arrange

@@ -24,6 +24,7 @@ public class OrgHierarchyValidationTests
 {
     private readonly PAOWebApplicationFactory<Program> _factory;
     private readonly HttpClient _client;
+    private readonly bool _isPostgresAvailable;
     private const string BaseUrl = "/api/organizationhierarchy";
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -34,6 +35,7 @@ public class OrgHierarchyValidationTests
     public OrgHierarchyValidationTests(PAOWebApplicationFactory<Program> factory)
     {
         _factory = factory;
+        _isPostgresAvailable = factory.IsUsingPostgres;
         _client = factory.CreateAuthenticatedClient();
         _client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-Email", "accounts.google.com:testuser@unops.org");
         _client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-ID", "accounts.google.com:123");
@@ -44,8 +46,9 @@ public class OrgHierarchyValidationTests
     [Trait("TestId", "TC-ORG-VAL-001")]
     public async Task GetList_ReturnsValidJsonStructure()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync(BaseUrl);
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         if (response.IsSuccessStatusCode)
         {
             response.Content.Headers.ContentType?.MediaType.Should().Contain("application/json");
@@ -59,8 +62,9 @@ public class OrgHierarchyValidationTests
     [Trait("TestId", "TC-ORG-VAL-002")]
     public async Task GetList_RecordsIsArray()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync(BaseUrl);
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (response.IsSuccessStatusCode)
         {
             var result = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions);
@@ -73,9 +77,10 @@ public class OrgHierarchyValidationTests
     [Trait("TestId", "TC-ORG-VAL-003")]
     public async Task PostSearch_ReturnsValidJsonStructure()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var content = JsonContent.Create(new { searchTerm = "HQ", pageSize = 10, pageIndex = 1 });
         var response = await _client.PostAsync($"{BaseUrl}/search", content);
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         if (response.IsSuccessStatusCode)
         {
             response.Content.Headers.ContentType?.MediaType.Should().Contain("application/json");
@@ -88,6 +93,7 @@ public class OrgHierarchyValidationTests
     [Trait("TestId", "TC-ORG-VAL-004")]
     public async Task GetById_ReturnsValidJsonStructure()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync($"{BaseUrl}/1");
         if (response.StatusCode != HttpStatusCode.OK)
             return; // May be 404 if no data
@@ -101,8 +107,9 @@ public class OrgHierarchyValidationTests
     [Trait("TestId", "TC-ORG-VAL-005")]
     public async Task GetList_RecordHasExpectedFields()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync($"{BaseUrl}?pageSize=1");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK);
         if (response.IsSuccessStatusCode)
         {
             var result = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions);
@@ -119,18 +126,20 @@ public class OrgHierarchyValidationTests
     [Trait("TestId", "TC-ORG-VAL-006")]
     public async Task PostSearch_AcceptsContentTypeApplicationJson()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var content = JsonContent.Create(new { pageSize = 5 });
         content.Headers.ContentType!.MediaType.Should().Be("application/json");
         var response = await _client.PostAsync($"{BaseUrl}/search", content);
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]
     [Trait("TestId", "TC-ORG-VAL-007")]
     public async Task GetList_TotalCountIsNumber()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync(BaseUrl);
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         if (response.IsSuccessStatusCode)
         {
             var result = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions);
@@ -143,8 +152,9 @@ public class OrgHierarchyValidationTests
     [Trait("TestId", "TC-ORG-VAL-008")]
     public async Task GetList_PaginationFieldsPresent()
     {
+        if (!_isPostgresAvailable) return; // QA-054a: InMemory DB incompatible
         var response = await _client.GetAsync($"{BaseUrl}?pageSize=5&pageIndex=1");
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         if (response.IsSuccessStatusCode)
         {
             var result = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions);
