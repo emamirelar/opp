@@ -120,6 +120,11 @@ export class OpportunityDstSectionComponent {
    * @description Input signal for update permission - controls visibility of edit button
    */
   readonly canUpdate = input<boolean>(false);
+
+  /**
+   * @description When true, defers DST AI calls by 5s to prevent connection exhaustion after opportunity creation
+   */
+  readonly deferFromCreate = input<boolean>(false);
   
   /**
    * @description Output event when opportunity is updated
@@ -605,21 +610,29 @@ export class OpportunityDstSectionComponent {
     // Effect to load data when opportunity ID changes
     effect(() => {
       const opp = this.opportunity();
+      const defer = this.deferFromCreate();
 
       // Only load if we have a valid opportunity and it's different from the last loaded one
       if (opp && opp.id && opp.id !== this.lastLoadedOpportunityId) {
-        console.log('🔄 DST Section: Opportunity changed, loading DST data for ID:', opp.id);
+        console.log(
+          '🔄 DST Section: Opportunity changed, loading DST data for ID:',
+          opp.id,
+          defer ? '(deferred from create)' : ''
+        );
         this.lastLoadedOpportunityId = opp.id;
+
+        // When navigating from create, add 5s delay to let server finish creation work
+        const initialDelay = defer ? 5000 : 0;
 
         // Load risks first (most important for user), then stagger AI-heavy calls
         // This prevents connection exhaustion and allows notifications endpoint to work
         this.loadDSTRisks();
 
         // Stagger AI-powered calls with delays to prevent overwhelming the backend
-        setTimeout(() => this.loadDSTRecommendations(), 500);
-        setTimeout(() => this.loadSimilarOpportunities(), 1000);
-        setTimeout(() => this.loadSimilarProjects(), 1500);
-        setTimeout(() => this.loadRelevantPeople(), 2000);
+        setTimeout(() => this.loadDSTRecommendations(), initialDelay + 500);
+        setTimeout(() => this.loadSimilarOpportunities(), initialDelay + 1000);
+        setTimeout(() => this.loadSimilarProjects(), initialDelay + 1500);
+        setTimeout(() => this.loadRelevantPeople(), initialDelay + 2000);
       }
     });
 

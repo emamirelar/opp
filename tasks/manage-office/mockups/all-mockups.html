@@ -1,0 +1,3049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Office - All Mockups</title>
+  <link href="https://cdn.jsdelivr.net/npm/primeicons@6.0.1/primeicons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+  <style>
+    /* ===================================== */
+    /* UNOPS DESIGN TOKENS                   */
+    /* ===================================== */
+    :root {
+      --unops-primary: #0092d1;
+      --unops-primary-light: #1aa3db;
+      --unops-primary-lighter: #4ec3e0;
+      --unops-primary-dark: #007bb8;
+      --unops-primary-darker: #005a8a;
+      --unops-primary-on: #ffffff;
+      --unops-primary-container: #b3e0f7;
+      --unops-primary-container-soft: #e3f2fd;
+
+      --unops-secondary: #004976;
+      --unops-secondary-on: #ffffff;
+
+      --unops-neutral-50: #f9fafb;
+      --unops-neutral-100: #f3f4f6;
+      --unops-neutral-200: #e8e9ea;
+      --unops-neutral-300: #d1d2d3;
+      --unops-neutral-400: #b8babb;
+      --unops-neutral-500: #97999b;
+      --unops-neutral-600: #7a7c7e;
+      --unops-neutral-700: #5c5e60;
+      --unops-neutral-800: #1a1b1c;
+      --unops-neutral-900: #00070a;
+
+      --unops-surface-primary: #ffffff;
+      --unops-surface-secondary: #f8fafc;
+      --unops-surface-cool: #f1f5f9;
+      --unops-surface-overlay: rgba(15, 23, 42, 0.8);
+
+      --unops-error: #991e66;
+      --unops-error-light: #c2185b;
+      --unops-error-on: #ffffff;
+      --unops-success: #10b981;
+      --unops-success-dark: #059669;
+      --unops-success-on: #ffffff;
+      --unops-warning: #cc8400;
+      --unops-warning-light: #f59e0b;
+      --unops-warning-on: #ffffff;
+      --unops-info: #4ec3e0;
+
+      --unops-accent-teal: #00a997;
+      --unops-accent-orange: #e85c0e;
+      --unops-accent-lime: #c4d600;
+
+      --unops-spacing-xs: 4px;
+      --unops-spacing-sm: 8px;
+      --unops-spacing-md: 16px;
+      --unops-spacing-lg: 24px;
+      --unops-spacing-xl: 32px;
+      --unops-spacing-2xl: 48px;
+
+      --unops-font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --unops-font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --unops-font-weight-regular: 400;
+      --unops-font-weight-medium: 500;
+      --unops-font-weight-semibold: 600;
+      --unops-font-weight-bold: 700;
+      --unops-font-size-body-small: 0.75rem;
+      --unops-font-size-body-medium: 0.875rem;
+      --unops-font-size-body-large: 1rem;
+      --unops-font-size-headline-small: 1.25rem;
+      --unops-font-size-headline-medium: 1.5rem;
+
+      --unops-radius-xs: 4px;
+      --unops-radius-sm: 6px;
+      --unops-radius-md: 8px;
+      --unops-radius-lg: 12px;
+      --unops-radius-xl: 16px;
+      --unops-radius-full: 9999px;
+
+      --unops-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --unops-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --unops-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --unops-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+      --unops-min-touch: 44px;
+      --unops-duration-short: 200ms;
+      --unops-easing-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ===================================== */
+    /* BASE STYLES                           */
+    /* ===================================== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      font-family: var(--unops-font-body);
+      font-size: var(--unops-font-size-body-medium);
+      color: var(--unops-neutral-900);
+      background-color: var(--unops-surface-secondary);
+      line-height: 1.5;
+    }
+
+    /* ===================================== */
+    /* MOCKUP NAVIGATION                     */
+    /* ===================================== */
+    .mockup-header {
+      background: var(--unops-primary);
+      color: var(--unops-primary-on);
+      padding: var(--unops-spacing-md) var(--unops-spacing-lg);
+      box-shadow: var(--unops-shadow-lg);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .mockup-header h1 {
+      font-family: var(--unops-font-display);
+      font-size: var(--unops-font-size-headline-small);
+      font-weight: var(--unops-font-weight-semibold);
+    }
+
+    .mockup-header-steps {
+      display: flex;
+      gap: var(--unops-spacing-md);
+      align-items: center;
+    }
+
+    .mockup-header-step {
+      display: flex;
+      align-items: center;
+      gap: var(--unops-spacing-sm);
+      padding: 6px 14px;
+      border-radius: var(--unops-radius-full);
+      font-size: var(--unops-font-size-body-small);
+      font-weight: var(--unops-font-weight-semibold);
+      background: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.8);
+    }
+
+    .mockup-header-step.active {
+      background: rgba(255,255,255,0.95);
+      color: var(--unops-primary-dark);
+    }
+
+    .mockup-nav {
+      background: var(--unops-surface-primary);
+      border-bottom: 1px solid var(--unops-neutral-200);
+      padding: var(--unops-spacing-sm) var(--unops-spacing-lg);
+      position: sticky;
+      top: 56px;
+      z-index: 90;
+      overflow-x: auto;
+    }
+
+    .mockup-nav-inner {
+      display: flex;
+      gap: var(--unops-spacing-sm);
+      min-width: max-content;
+    }
+
+    .nav-btn {
+      padding: var(--unops-spacing-sm) var(--unops-spacing-md);
+      border: 1px solid transparent;
+      border-radius: var(--unops-radius-lg);
+      background: transparent;
+      color: var(--unops-neutral-700);
+      font-family: var(--unops-font-body);
+      font-size: var(--unops-font-size-body-medium);
+      font-weight: var(--unops-font-weight-medium);
+      cursor: pointer;
+      transition: all var(--unops-duration-short) var(--unops-easing-smooth);
+      white-space: nowrap;
+    }
+
+    .nav-btn:hover {
+      background: var(--unops-primary-container-soft);
+      color: var(--unops-primary-dark);
+    }
+
+    .nav-btn.active {
+      background: var(--unops-primary);
+      color: var(--unops-primary-on);
+    }
+
+    .nav-divider {
+      width: 1px;
+      background: var(--unops-neutral-300);
+      margin: 4px 8px;
+    }
+
+    /* ===================================== */
+    /* LAYOUT - SIDEBAR + CONTENT            */
+    /* ===================================== */
+    .app-layout {
+      display: flex;
+      height: calc(100vh - 64px);
+      overflow: hidden;
+    }
+
+    .app-sidebar {
+      width: 280px;
+      min-width: 280px;
+      background: var(--unops-surface-primary);
+      border-right: 1px solid var(--unops-neutral-200);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: var(--unops-spacing-sm) 0 var(--unops-spacing-sm) var(--unops-spacing-md);
+    }
+
+    .app-content {
+      flex: 1;
+      overflow-y: auto;
+      background: var(--unops-surface-secondary);
+      padding: var(--unops-spacing-md) var(--unops-spacing-2xl);
+    }
+
+    /* Sidebar menu items */
+    .sidebar-section-label {
+      font-size: var(--unops-font-size-body-small);
+      font-weight: var(--unops-font-weight-semibold);
+      color: var(--unops-neutral-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: var(--unops-spacing-md) var(--unops-spacing-sm) var(--unops-spacing-xs);
+    }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: var(--unops-spacing-sm);
+      padding: 10px var(--unops-spacing-sm);
+      border-radius: var(--unops-radius-md);
+      color: var(--unops-neutral-700);
+      font-size: var(--unops-font-size-body-medium);
+      cursor: pointer;
+      transition: all var(--unops-duration-short) var(--unops-easing-smooth);
+      text-decoration: none;
+    }
+
+    .sidebar-item:hover {
+      background: var(--unops-neutral-50);
+    }
+
+    .sidebar-item.active {
+      background: rgba(0, 146, 209, 0.08);
+      color: var(--unops-primary);
+      font-weight: var(--unops-font-weight-bold);
+    }
+
+    .sidebar-item .material-symbols-outlined {
+      font-size: 20px;
+    }
+
+    .sidebar-parent {
+      font-weight: var(--unops-font-weight-medium);
+    }
+
+    .sidebar-children {
+      padding-left: var(--unops-spacing-lg);
+    }
+
+    .sidebar-expand {
+      margin-left: auto;
+      font-size: 18px;
+      transition: transform var(--unops-duration-short) var(--unops-easing-smooth);
+    }
+
+    .sidebar-expand.open {
+      transform: rotate(180deg);
+    }
+
+    /* ===================================== */
+    /* TOPBAR (inside mockup)                */
+    /* ===================================== */
+    .app-topbar {
+      height: 64px;
+      background: var(--unops-surface-primary);
+      border-bottom: 1px solid var(--unops-neutral-200);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--unops-spacing-lg);
+      gap: var(--unops-spacing-md);
+    }
+
+    .app-topbar-logo {
+      height: 32px;
+    }
+
+    .app-topbar-search {
+      flex: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .app-topbar-search input {
+      width: 100%;
+      padding: 10px 16px 10px 40px;
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-lg);
+      font-family: var(--unops-font-body);
+      font-size: var(--unops-font-size-body-medium);
+      background: var(--unops-neutral-50);
+      outline: none;
+    }
+
+    .app-topbar-search i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--unops-neutral-400);
+    }
+
+    .app-topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--unops-spacing-md);
+    }
+
+    .app-topbar-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--unops-radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--unops-neutral-600);
+      cursor: pointer;
+      transition: background var(--unops-duration-short);
+    }
+
+    .app-topbar-icon:hover {
+      background: var(--unops-neutral-100);
+    }
+
+    .app-topbar-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--unops-primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: var(--unops-font-weight-semibold);
+      font-size: var(--unops-font-size-body-small);
+    }
+
+    /* ===================================== */
+    /* SECTION VISIBILITY                    */
+    /* ===================================== */
+    .mockup-main { max-width: 100%; }
+    .mockup-section { display: none; }
+    .mockup-section.active { display: block; }
+    .mockup-title { margin-bottom: var(--unops-spacing-lg); }
+    .mockup-title h2 {
+      font-family: var(--unops-font-display);
+      font-size: var(--unops-font-size-headline-medium);
+      font-weight: var(--unops-font-weight-semibold);
+      color: var(--unops-neutral-900);
+    }
+    .mockup-title p {
+      color: var(--unops-neutral-600);
+      margin-top: var(--unops-spacing-xs);
+    }
+
+    /* ===================================== */
+    /* LIST PAGE HEADER                      */
+    /* ===================================== */
+    .list-header {
+      display: flex;
+      align-items: center;
+      gap: var(--unops-spacing-md);
+      margin-bottom: var(--unops-spacing-xl);
+    }
+
+    .list-header-icon {
+      font-size: 32px;
+      color: var(--unops-neutral-800);
+    }
+
+    .list-header h1 {
+      font-family: var(--unops-font-display);
+      font-size: 1.875rem;
+      font-weight: var(--unops-font-weight-bold);
+    }
+
+    .list-header-actions {
+      margin-left: auto;
+      display: flex;
+      gap: var(--unops-spacing-sm);
+    }
+
+    /* ===================================== */
+    /* SEARCH / FILTER BAR                   */
+    /* ===================================== */
+    .search-bar {
+      display: flex;
+      gap: var(--unops-spacing-md);
+      align-items: center;
+      margin-bottom: var(--unops-spacing-lg);
+    }
+
+    .search-input-wrap {
+      flex: 1;
+      position: relative;
+    }
+
+    .search-input-wrap i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--unops-neutral-400);
+    }
+
+    .search-input-wrap input {
+      width: 100%;
+      padding: 10px 16px 10px 40px;
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-lg);
+      font-family: var(--unops-font-body);
+      font-size: var(--unops-font-size-body-medium);
+      outline: none;
+      transition: border-color var(--unops-duration-short);
+    }
+
+    .search-input-wrap input:focus {
+      border-color: var(--unops-primary);
+    }
+
+    .sort-dropdown {
+      display: flex;
+      align-items: center;
+      gap: var(--unops-spacing-sm);
+      padding: 10px var(--unops-spacing-md);
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-lg);
+      background: var(--unops-surface-primary);
+      font-family: var(--unops-font-body);
+      font-size: var(--unops-font-size-body-medium);
+      color: var(--unops-neutral-600);
+      cursor: pointer;
+    }
+
+    /* ===================================== */
+    /* RECORD COUNT BAR                      */
+    /* ===================================== */
+    .record-count-bar {
+      display: flex;
+      align-items: center;
+      gap: var(--unops-spacing-sm);
+      padding: var(--unops-spacing-sm) var(--unops-spacing-md);
+      background: var(--unops-neutral-50);
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-lg);
+      margin-bottom: var(--unops-spacing-lg);
+      color: var(--unops-neutral-700);
+      font-weight: var(--unops-font-weight-medium);
+    }
+
+    /* ===================================== */
+    /* LIST VIEW CARDS                       */
+    /* ===================================== */
+    .list-cards {
+      display: flex;
+      flex-direction: column;
+      gap: var(--unops-spacing-md);
+    }
+
+    .list-card {
+      background: var(--unops-surface-primary);
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-lg);
+      padding: var(--unops-spacing-lg);
+      cursor: pointer;
+      transition: all var(--unops-duration-short) var(--unops-easing-smooth);
+      display: flex;
+      gap: var(--unops-spacing-lg);
+    }
+
+    .list-card:hover {
+      border-color: var(--unops-primary-light);
+      box-shadow: var(--unops-shadow-md);
+    }
+
+    .list-card-icon {
+      width: 48px;
+      height: 48px;
+      min-width: 48px;
+      border-radius: var(--unops-radius-md);
+      background: var(--unops-primary-container-soft);
+      color: var(--unops-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .list-card-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .list-card-title {
+      font-weight: var(--unops-font-weight-semibold);
+      color: var(--unops-neutral-900);
+      margin-bottom: 2px;
+      font-size: var(--unops-font-size-body-large);
+    }
+
+    .list-card-subtitle {
+      font-size: var(--unops-font-size-body-small);
+      color: var(--unops-neutral-500);
+      margin-bottom: var(--unops-spacing-sm);
+    }
+
+    .list-card-meta {
+      display: flex;
+      gap: var(--unops-spacing-lg);
+      flex-wrap: wrap;
+    }
+
+    .list-card-meta-item {
+      display: flex;
+      align-items: center;
+      gap: var(--unops-spacing-xs);
+      font-size: var(--unops-font-size-body-small);
+      color: var(--unops-neutral-600);
+    }
+
+    .list-card-meta-item .material-symbols-outlined {
+      font-size: 16px;
+    }
+
+    .list-card-badges {
+      display: flex;
+      gap: var(--unops-spacing-sm);
+      align-items: flex-start;
+    }
+
+    /* ===================================== */
+    /* BADGES                                */
+    /* ===================================== */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--unops-spacing-xs);
+      padding: 3px 10px;
+      border-radius: var(--unops-radius-sm);
+      font-size: var(--unops-font-size-body-small);
+      font-weight: var(--unops-font-weight-semibold);
+      white-space: nowrap;
+    }
+
+    .badge-primary { background: var(--unops-primary-container-soft); color: var(--unops-primary-dark); }
+    .badge-success { background: #d1fae5; color: var(--unops-success-dark); }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-danger { background: #fce7f3; color: var(--unops-error); }
+    .badge-neutral { background: var(--unops-neutral-100); color: var(--unops-neutral-700); }
+    .badge-teal { background: #ccfbf1; color: #0d9488; }
+    .badge-secondary { background: #dbeafe; color: #1e40af; }
+    .badge-pill { border-radius: var(--unops-radius-full); }
+
+    /* ===================================== */
+    /* BUTTONS                               */
+    /* ===================================== */
+    .p-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--unops-spacing-sm);
+      padding: var(--unops-spacing-sm) var(--unops-spacing-md);
+      border: 1px solid transparent;
+      border-radius: var(--unops-radius-lg);
+      font-family: var(--unops-font-body);
+      font-size: var(--unops-font-size-body-medium);
+      font-weight: var(--unops-font-weight-medium);
+      cursor: pointer;
+      transition: all var(--unops-duration-short) var(--unops-easing-smooth);
+      min-height: var(--unops-min-touch);
+      text-decoration: none;
+    }
+
+    .p-button-primary { background: var(--unops-primary); color: var(--unops-primary-on); border-color: var(--unops-primary); }
+    .p-button-primary:hover { background: var(--unops-primary-dark); border-color: var(--unops-primary-dark); box-shadow: var(--unops-shadow-md); }
+    .p-button-outlined { background: transparent; color: var(--unops-primary); border-color: var(--unops-primary); }
+    .p-button-outlined:hover { background: var(--unops-primary-container-soft); color: var(--unops-primary-dark); }
+    .p-button-text { background: transparent; color: var(--unops-neutral-700); border: none; }
+    .p-button-text:hover { background: var(--unops-neutral-100); }
+    .p-button-sm { padding: 6px 12px; min-height: 32px; font-size: var(--unops-font-size-body-small); }
+
+    /* ===================================== */
+    /* CARD / PANEL                          */
+    /* ===================================== */
+    .unops-card {
+      background: var(--unops-surface-primary);
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-lg);
+      box-shadow: var(--unops-shadow-md);
+      margin-bottom: var(--unops-spacing-lg);
+    }
+
+    .unops-card-header {
+      padding: var(--unops-spacing-md) var(--unops-spacing-lg);
+      border-bottom: 1px solid var(--unops-neutral-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .unops-card-title {
+      font-family: var(--unops-font-display);
+      font-size: var(--unops-font-size-headline-small);
+      font-weight: var(--unops-font-weight-semibold);
+      color: var(--unops-neutral-900);
+      display: flex;
+      align-items: center;
+      gap: var(--unops-spacing-sm);
+    }
+
+    .unops-card-body {
+      padding: var(--unops-spacing-lg);
+    }
+
+    .unops-card-footer {
+      padding: var(--unops-spacing-sm) var(--unops-spacing-lg);
+      border-top: 1px solid var(--unops-neutral-200);
+      background: var(--unops-neutral-50);
+      border-radius: 0 0 var(--unops-radius-lg) var(--unops-radius-lg);
+    }
+
+    /* ===================================== */
+    /* PAGE HEADER (Detail View)             */
+    /* ===================================== */
+    .page-header {
+      background: var(--unops-surface-primary);
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-lg);
+      padding: var(--unops-spacing-lg);
+      margin-bottom: var(--unops-spacing-lg);
+      box-shadow: var(--unops-shadow-md);
+    }
+
+    .page-header-back {
+      color: var(--unops-neutral-500);
+      font-size: var(--unops-font-size-body-medium);
+      text-decoration: none;
+      margin-bottom: var(--unops-spacing-sm);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--unops-spacing-xs);
+      cursor: pointer;
+    }
+
+    .page-header-back:hover { color: var(--unops-primary); }
+
+    .page-header-top {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--unops-spacing-md);
+      margin-top: var(--unops-spacing-sm);
+    }
+
+    .page-header-icon {
+      width: 56px;
+      height: 56px;
+      min-width: 56px;
+      border-radius: var(--unops-radius-lg);
+      background: var(--unops-primary-container-soft);
+      color: var(--unops-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .page-header-icon .material-symbols-outlined { font-size: 28px; }
+
+    .page-header h1 {
+      font-family: var(--unops-font-display);
+      font-size: var(--unops-font-size-headline-medium);
+      font-weight: var(--unops-font-weight-bold);
+      color: var(--unops-neutral-900);
+      margin-bottom: 2px;
+    }
+
+    .page-header-badges {
+      display: flex;
+      gap: var(--unops-spacing-sm);
+      margin-top: var(--unops-spacing-xs);
+      flex-wrap: wrap;
+    }
+
+    .page-header-actions {
+      margin-left: auto;
+      display: flex;
+      gap: var(--unops-spacing-sm);
+      flex-shrink: 0;
+    }
+
+    .page-header-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--unops-spacing-lg);
+      margin-top: var(--unops-spacing-md);
+      font-size: var(--unops-font-size-body-medium);
+      color: var(--unops-neutral-600);
+      flex-wrap: wrap;
+      padding-top: var(--unops-spacing-md);
+      border-top: 1px solid var(--unops-neutral-100);
+    }
+
+    .page-header-meta-item {
+      display: flex;
+      align-items: center;
+      gap: var(--unops-spacing-xs);
+    }
+
+    .page-header-meta-item .material-symbols-outlined { font-size: 18px; }
+
+    /* ===================================== */
+    /* TABS                                  */
+    /* ===================================== */
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid var(--unops-neutral-200);
+      margin-bottom: var(--unops-spacing-lg);
+      gap: 0;
+    }
+
+    .tab {
+      padding: var(--unops-spacing-md) var(--unops-spacing-lg);
+      border: none;
+      background: transparent;
+      color: var(--unops-neutral-600);
+      font-family: var(--unops-font-body);
+      font-size: var(--unops-font-size-body-medium);
+      font-weight: var(--unops-font-weight-medium);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all var(--unops-duration-short) var(--unops-easing-smooth);
+    }
+
+    .tab:hover { color: var(--unops-primary); }
+    .tab.active { color: var(--unops-primary); border-bottom-color: var(--unops-primary); font-weight: var(--unops-font-weight-semibold); }
+
+    .tab-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      background: var(--unops-neutral-200);
+      border-radius: var(--unops-radius-full);
+      font-size: 11px;
+      font-weight: var(--unops-font-weight-semibold);
+      margin-left: 6px;
+      color: var(--unops-neutral-700);
+    }
+
+    .tab.active .tab-count {
+      background: var(--unops-primary-container-soft);
+      color: var(--unops-primary-dark);
+    }
+
+    /* ===================================== */
+    /* DETAIL GRID                           */
+    /* ===================================== */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--unops-spacing-lg) var(--unops-spacing-2xl);
+    }
+
+    .detail-grid-3col {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .detail-field {}
+
+    .detail-label {
+      font-size: var(--unops-font-size-body-small);
+      font-weight: var(--unops-font-weight-medium);
+      color: var(--unops-neutral-500);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+
+    .detail-value {
+      font-size: var(--unops-font-size-body-medium);
+      color: var(--unops-neutral-900);
+      font-weight: var(--unops-font-weight-regular);
+    }
+
+    .detail-value a {
+      color: var(--unops-primary);
+      text-decoration: none;
+    }
+
+    .detail-value a:hover { text-decoration: underline; }
+
+    .detail-full { grid-column: 1 / -1; }
+
+    /* ===================================== */
+    /* HIERARCHY TREE                        */
+    /* ===================================== */
+    .hierarchy-tree {
+      padding-left: 0;
+    }
+
+    .hierarchy-node {
+      display: flex;
+      align-items: center;
+      gap: var(--unops-spacing-sm);
+      padding: var(--unops-spacing-sm) var(--unops-spacing-md);
+      border-radius: var(--unops-radius-md);
+      margin-bottom: 2px;
+      font-size: var(--unops-font-size-body-medium);
+      cursor: pointer;
+      transition: background var(--unops-duration-short);
+    }
+
+    .hierarchy-node:hover { background: var(--unops-neutral-50); }
+
+    .hierarchy-node.current {
+      background: var(--unops-primary-container-soft);
+      font-weight: var(--unops-font-weight-semibold);
+      color: var(--unops-primary-dark);
+    }
+
+    .hierarchy-node .material-symbols-outlined { font-size: 18px; color: var(--unops-neutral-400); }
+    .hierarchy-node.current .material-symbols-outlined { color: var(--unops-primary); }
+
+    .hierarchy-children {
+      padding-left: var(--unops-spacing-xl);
+      border-left: 2px solid var(--unops-neutral-200);
+      margin-left: var(--unops-spacing-md);
+    }
+
+    /* ===================================== */
+    /* TABLE                                 */
+    /* ===================================== */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table thead th {
+      text-align: left;
+      padding: var(--unops-spacing-sm) var(--unops-spacing-md);
+      font-size: var(--unops-font-size-body-small);
+      font-weight: var(--unops-font-weight-semibold);
+      color: var(--unops-neutral-600);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 2px solid var(--unops-neutral-200);
+      background: var(--unops-surface-secondary);
+    }
+
+    .data-table tbody td {
+      padding: var(--unops-spacing-sm) var(--unops-spacing-md);
+      border-bottom: 1px solid var(--unops-neutral-100);
+      font-size: var(--unops-font-size-body-medium);
+      vertical-align: top;
+    }
+
+    .data-table tbody tr:hover { background: var(--unops-primary-container-soft); }
+
+    .data-table tbody tr:last-child td { border-bottom: none; }
+
+    /* ===================================== */
+    /* SECTION DIVIDER                       */
+    /* ===================================== */
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--unops-neutral-200);
+      margin: var(--unops-spacing-lg) 0;
+    }
+
+    /* ===================================== */
+    /* TWO COLUMN LAYOUT (Detail view)       */
+    /* ===================================== */
+    .two-col-layout {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: var(--unops-spacing-lg);
+      align-items: start;
+    }
+
+    /* ===================================== */
+    /* AUDIT BAR                             */
+    /* ===================================== */
+    .audit-bar {
+      display: flex;
+      gap: var(--unops-spacing-xl);
+      padding: var(--unops-spacing-md) var(--unops-spacing-lg);
+      background: var(--unops-neutral-50);
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-lg);
+      font-size: var(--unops-font-size-body-small);
+      color: var(--unops-neutral-500);
+      margin-top: var(--unops-spacing-lg);
+    }
+
+    .audit-bar-item {
+      display: flex;
+      align-items: center;
+      gap: var(--unops-spacing-xs);
+    }
+
+    .audit-bar-item strong {
+      color: var(--unops-neutral-700);
+      font-weight: var(--unops-font-weight-medium);
+    }
+
+    /* ===================================== */
+    /* DIALOG                                */
+    /* ===================================== */
+    .dialog-backdrop {
+      position: relative;
+      min-height: 400px;
+      margin-top: var(--unops-spacing-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.08);
+      border-radius: var(--unops-radius-lg);
+      padding: var(--unops-spacing-xl);
+    }
+
+    .dialog {
+      background: var(--unops-surface-primary);
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-xl);
+      box-shadow: var(--unops-shadow-xl);
+      width: 100%;
+      max-width: 640px;
+    }
+
+    .dialog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--unops-spacing-lg);
+      border-bottom: 1px solid var(--unops-neutral-200);
+    }
+
+    .dialog-title {
+      font-family: var(--unops-font-display);
+      font-size: var(--unops-font-size-headline-small);
+      font-weight: var(--unops-font-weight-semibold);
+    }
+
+    .dialog-close {
+      background: none;
+      border: none;
+      color: var(--unops-neutral-500);
+      cursor: pointer;
+      font-size: 20px;
+    }
+
+    .dialog-body { padding: var(--unops-spacing-lg); }
+
+    .dialog-footer {
+      padding: var(--unops-spacing-md) var(--unops-spacing-lg);
+      border-top: 1px solid var(--unops-neutral-200);
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--unops-spacing-sm);
+    }
+
+    /* ===================================== */
+    /* MAP PLACEHOLDER                       */
+    /* ===================================== */
+    .map-placeholder {
+      width: 100%;
+      height: 200px;
+      background: var(--unops-neutral-100);
+      border-radius: var(--unops-radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--unops-neutral-400);
+      font-size: var(--unops-font-size-body-medium);
+      gap: var(--unops-spacing-sm);
+    }
+
+    /* ===================================== */
+    /* HELPER CLASSES                        */
+    /* ===================================== */
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-sm { gap: var(--unops-spacing-sm); }
+    .gap-md { gap: var(--unops-spacing-md); }
+    .gap-lg { gap: var(--unops-spacing-lg); }
+    .mt-md { margin-top: var(--unops-spacing-md); }
+    .mt-lg { margin-top: var(--unops-spacing-lg); }
+    .mb-md { margin-bottom: var(--unops-spacing-md); }
+    .mb-lg { margin-bottom: var(--unops-spacing-lg); }
+    .text-sm { font-size: var(--unops-font-size-body-small); }
+    .text-muted { color: var(--unops-neutral-500); }
+    .text-primary { color: var(--unops-primary); }
+    .font-medium { font-weight: var(--unops-font-weight-medium); }
+    .font-semibold { font-weight: var(--unops-font-weight-semibold); }
+    .w-full { width: 100%; }
+
+    /* Info callout */
+    .info-callout {
+      display: flex;
+      gap: var(--unops-spacing-md);
+      padding: var(--unops-spacing-md);
+      background: var(--unops-primary-container-soft);
+      border: 1px solid var(--unops-primary-container);
+      border-radius: var(--unops-radius-md);
+      color: var(--unops-primary-darker);
+      font-size: var(--unops-font-size-body-medium);
+    }
+
+    .info-callout i { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+
+    /* Warning callout */
+    .warn-callout {
+      display: flex;
+      gap: var(--unops-spacing-md);
+      padding: var(--unops-spacing-md);
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      border-radius: var(--unops-radius-md);
+      color: #92400e;
+      font-size: var(--unops-font-size-body-medium);
+    }
+
+    .warn-callout i { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+
+    /* Document cards */
+    .doc-item {
+      display: flex;
+      align-items: center;
+      gap: var(--unops-spacing-md);
+      padding: var(--unops-spacing-md);
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-md);
+      margin-bottom: var(--unops-spacing-sm);
+    }
+
+    .doc-icon {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      border-radius: var(--unops-radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .doc-icon.pdf { background: #fee2e2; color: #b91c1c; }
+    .doc-icon.doc { background: #dbeafe; color: #1e40af; }
+    .doc-icon.xls { background: #d1fae5; color: #059669; }
+
+    /* ===================================== */
+    /* SECTION CHIPS (Opportunity-style)      */
+    /* ===================================== */
+    .section-chips {
+      display: flex;
+      gap: var(--unops-spacing-sm);
+      padding: var(--unops-spacing-sm) 0 var(--unops-spacing-md);
+      overflow-x: auto;
+      flex-wrap: wrap;
+    }
+
+    .section-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: var(--unops-radius-full);
+      border: 1px solid var(--unops-neutral-200);
+      background: var(--unops-surface-primary);
+      color: var(--unops-neutral-700);
+      font-family: var(--unops-font-body);
+      font-size: var(--unops-font-size-body-small);
+      font-weight: var(--unops-font-weight-medium);
+      cursor: pointer;
+      transition: all var(--unops-duration-short) var(--unops-easing-smooth);
+      white-space: nowrap;
+    }
+
+    .section-chip:hover {
+      border-color: var(--unops-primary);
+      color: var(--unops-primary);
+      background: var(--unops-primary-container-soft);
+    }
+
+    .section-chip.active {
+      background: var(--unops-primary);
+      color: var(--unops-primary-on);
+      border-color: var(--unops-primary);
+    }
+
+    .section-chip .material-symbols-outlined {
+      font-size: 16px;
+    }
+
+    /* ===================================== */
+    /* ORGANIGRAM                             */
+    /* ===================================== */
+    .view-toggle {
+      display: inline-flex;
+      border: 1px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-lg);
+      overflow: hidden;
+      background: var(--unops-surface-primary);
+    }
+
+    .view-toggle-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: none;
+      background: transparent;
+      color: var(--unops-neutral-600);
+      font-family: var(--unops-font-body);
+      font-size: var(--unops-font-size-body-medium);
+      font-weight: var(--unops-font-weight-medium);
+      cursor: pointer;
+      transition: all var(--unops-duration-short) var(--unops-easing-smooth);
+    }
+
+    .view-toggle-btn:not(:last-child) {
+      border-right: 1px solid var(--unops-neutral-200);
+    }
+
+    .view-toggle-btn.active {
+      background: var(--unops-primary);
+      color: var(--unops-primary-on);
+    }
+
+    .view-toggle-btn:hover:not(.active) {
+      background: var(--unops-neutral-50);
+    }
+
+    .org-chart {
+      overflow-x: auto;
+      padding: var(--unops-spacing-lg) 0;
+    }
+
+    .org-tree {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .org-node-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .org-node {
+      background: var(--unops-surface-primary);
+      border: 2px solid var(--unops-neutral-200);
+      border-radius: var(--unops-radius-lg);
+      padding: 12px 20px;
+      min-width: 180px;
+      max-width: 220px;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--unops-duration-short) var(--unops-easing-smooth);
+      position: relative;
+      box-shadow: var(--unops-shadow-sm);
+    }
+
+    .org-node:hover {
+      border-color: var(--unops-primary);
+      box-shadow: var(--unops-shadow-md);
+      transform: translateY(-1px);
+    }
+
+    .org-node.level-1 { border-color: var(--unops-secondary); background: var(--unops-secondary); color: white; }
+    .org-node.level-1 .org-node-type { color: rgba(255,255,255,0.7); }
+    .org-node.level-1:hover { box-shadow: var(--unops-shadow-lg); }
+
+    .org-node.level-2 { border-color: var(--unops-primary-dark); }
+    .org-node.level-2 .org-node-name { color: var(--unops-primary-darker); }
+
+    .org-node.level-3 { border-color: var(--unops-primary); }
+    .org-node.level-3 .org-node-name { color: var(--unops-primary-dark); }
+
+    .org-node.functional { border-style: dashed; }
+
+    .org-node-name {
+      font-weight: var(--unops-font-weight-semibold);
+      font-size: var(--unops-font-size-body-medium);
+      color: var(--unops-neutral-900);
+      margin-bottom: 2px;
+      line-height: 1.3;
+    }
+
+    .org-node-type {
+      font-size: 11px;
+      color: var(--unops-neutral-500);
+      font-weight: var(--unops-font-weight-medium);
+    }
+
+    .org-node-code {
+      font-size: 10px;
+      color: var(--unops-neutral-400);
+      margin-top: 2px;
+      font-family: monospace;
+    }
+
+    .org-node-expand {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--unops-neutral-100);
+      color: var(--unops-neutral-600);
+      font-size: 11px;
+      font-weight: var(--unops-font-weight-bold);
+      position: absolute;
+      bottom: -11px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 2px solid var(--unops-surface-secondary);
+      z-index: 1;
+    }
+
+    .org-connector-v {
+      width: 2px;
+      height: 24px;
+      background: var(--unops-neutral-300);
+    }
+
+    .org-children-row {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      position: relative;
+    }
+
+    .org-children-row::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      height: 2px;
+      background: var(--unops-neutral-300);
+    }
+
+    .org-child-branch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 12px;
+    }
+
+    .org-child-branch .org-connector-v {
+      height: 20px;
+    }
+
+    .org-grandchildren {
+      display: flex;
+      gap: 0;
+      justify-content: center;
+      position: relative;
+      margin-top: 0;
+    }
+
+    .org-grandchildren::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      height: 2px;
+      background: var(--unops-neutral-300);
+    }
+
+    .org-grandchild-branch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 8px;
+    }
+
+    .org-grandchild-branch .org-connector-v {
+      height: 16px;
+    }
+
+    .org-more-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 16px;
+      border: 2px dashed var(--unops-neutral-300);
+      border-radius: var(--unops-radius-lg);
+      color: var(--unops-neutral-500);
+      font-size: var(--unops-font-size-body-small);
+      font-weight: var(--unops-font-weight-medium);
+      min-width: 120px;
+      cursor: pointer;
+    }
+
+    .org-more-indicator:hover {
+      border-color: var(--unops-primary);
+      color: var(--unops-primary);
+      background: var(--unops-primary-container-soft);
+    }
+
+    .org-legend {
+      display: flex;
+      gap: var(--unops-spacing-lg);
+      padding: var(--unops-spacing-md) var(--unops-spacing-lg);
+      background: var(--unops-neutral-50);
+      border-radius: var(--unops-radius-md);
+      margin-top: var(--unops-spacing-lg);
+      flex-wrap: wrap;
+    }
+
+    .org-legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--unops-spacing-sm);
+      font-size: var(--unops-font-size-body-small);
+      color: var(--unops-neutral-600);
+    }
+
+    .org-legend-swatch {
+      width: 24px;
+      height: 14px;
+      border-radius: 3px;
+      border: 2px solid;
+    }
+
+    .org-legend-swatch.l1 { background: var(--unops-secondary); border-color: var(--unops-secondary); }
+    .org-legend-swatch.l2 { background: white; border-color: var(--unops-primary-dark); }
+    .org-legend-swatch.l3 { background: white; border-color: var(--unops-primary); }
+    .org-legend-swatch.l4 { background: white; border-color: var(--unops-neutral-200); }
+    .org-legend-swatch.func { background: white; border-color: var(--unops-neutral-400); border-style: dashed; }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================= -->
+<!-- MOCKUP HEADER AND NAVIGATION                                  -->
+<!-- ============================================================= -->
+<div class="mockup-header" id="mockup-header">
+  <h1>Manage Office — UI Mockups</h1>
+</div>
+
+<div class="mockup-nav" id="mockup-nav">
+  <div class="mockup-nav-inner">
+    <!-- Step 1 screens -->
+    <button class="nav-btn active" onclick="showSection('sidebar-menu')">1. Sidebar Menu</button>
+    <button class="nav-btn" onclick="showSection('office-list')">2. Office List</button>
+    <button class="nav-btn" onclick="showSection('office-detail')">3. Office Detail</button>
+    <button class="nav-btn" onclick="showSection('office-detail-financial')">4. Financial</button>
+    <button class="nav-btn" onclick="showSection('office-detail-scope')">5. Scope</button>
+    <button class="nav-btn" onclick="showSection('office-detail-roles-doa')">6. Roles & DoA</button>
+    <button class="nav-btn" onclick="showSection('office-detail-opportunities')">7. Related Opportunities</button>
+    <button class="nav-btn" onclick="showSection('office-detail-partners')">8. Related Partner Accounts</button>
+    <button class="nav-btn" onclick="showSection('office-detail-documents')">9. Documents</button>
+  </div>
+</div>
+
+<div class="mockup-main">
+
+<!-- ============================================================= -->
+<!-- SCREEN 1: SIDEBAR MENU                                        -->
+<!-- ============================================================= -->
+<div class="mockup-section active" id="sidebar-menu">
+  <div class="mockup-title">
+    <h2>Sidebar Navigation — Office Menu Item</h2>
+    <p>Shows where 'Offices' appears in the main navigation sidebar. Visible to all users under a top-level group or directly in the main menu.</p>
+  </div>
+
+  <!-- Topbar -->
+  <div class="app-topbar">
+    <svg width="28" height="28" viewBox="0 0 32 32" style="flex-shrink:0;">
+      <circle cx="16" cy="16" r="16" fill="var(--unops-primary)"/>
+      <circle cx="16" cy="16" r="11" fill="white"/>
+      <circle cx="16" cy="16" r="7" fill="var(--unops-primary)"/>
+      <polygon points="16,5 19,13 16,10 13,13" fill="var(--unops-secondary)" opacity="0.8"/>
+    </svg>
+    <span style="font-weight:600; font-size:1.05rem; color:var(--unops-neutral-800); letter-spacing:-0.01em; white-space:nowrap;">Opportunity<span style="color:var(--unops-primary);">+</span></span>
+    <div class="app-topbar-search">
+      <i class="pi pi-search"></i>
+      <input type="text" placeholder="Search across all entities...">
+    </div>
+    <div class="app-topbar-actions">
+      <div class="app-topbar-icon"><i class="pi pi-sliders-h"></i></div>
+      <div class="app-topbar-icon"><span class="material-symbols-outlined" style="font-size:20px;">smart_toy</span></div>
+      <div class="app-topbar-icon"><i class="pi pi-bell"></i></div>
+      <div class="app-topbar-avatar" onclick="toggleDescriptions()" title="Toggle Mockup UI" style="cursor:pointer;">LJ</div>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: var(--unops-spacing-lg); align-items: flex-start;">
+    <!-- Sidebar mockup -->
+    <div style="width: 280px; background: white; border: 1px solid var(--unops-neutral-200); border-radius: var(--unops-radius-lg); box-shadow: var(--unops-shadow-md); overflow: hidden;">
+      <div style="padding: var(--unops-spacing-sm) var(--unops-spacing-md);">
+        <!-- Home -->
+        <div class="sidebar-item">
+          <span class="material-symbols-outlined">home</span>
+          <span>Home</span>
+        </div>
+        <!-- Partnerships (parent) -->
+        <div class="sidebar-item sidebar-parent">
+          <span class="material-symbols-outlined">handshake</span>
+          <span>Partnerships</span>
+          <i class="pi pi-angle-down sidebar-expand open" style="margin-left:auto;"></i>
+        </div>
+        <div class="sidebar-children">
+          <div class="sidebar-item">
+            <span class="material-symbols-outlined">corporate_fare</span>
+            <span>Partners</span>
+          </div>
+          <div class="sidebar-item">
+            <span class="material-symbols-outlined">contacts</span>
+            <span>Contacts</span>
+          </div>
+          <div class="sidebar-item">
+            <span class="material-symbols-outlined">chat</span>
+            <span>Interactions</span>
+          </div>
+          <div class="sidebar-item">
+            <span class="material-symbols-outlined">lightbulb</span>
+            <span>Opportunities</span>
+          </div>
+          <div class="sidebar-item">
+            <span class="material-symbols-outlined">description</span>
+            <span>Partnership Agreements</span>
+          </div>
+        </div>
+        <!-- OFFICES -->
+        <div class="sidebar-item active" style="margin-top: 4px;">
+          <span class="material-symbols-outlined">apartment</span>
+          <span>Offices</span>
+        </div>
+        <!-- Admin (parent) -->
+        <div style="margin-top: var(--unops-spacing-md); padding-top: var(--unops-spacing-md); border-top: 1px solid var(--unops-neutral-100);">
+          <div class="sidebar-item sidebar-parent" style="opacity:0.6;">
+            <span class="material-symbols-outlined">settings</span>
+            <span>Admin</span>
+            <i class="pi pi-angle-down sidebar-expand" style="margin-left:auto;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- SCREEN 2: OFFICE LIST VIEW                                    -->
+<!-- ============================================================= -->
+<div class="mockup-section" id="office-list">
+  <div class="mockup-title">
+    <h2>Office List View — with Organigram</h2>
+    <p>Default view shows the Organigram — a visual tree representation of the UNOPS operational structure. Users can toggle to the card-based List view for search, sort, and filtering. Click any node to navigate to its detail page.</p>
+  </div>
+
+  <!-- Simulated app shell -->
+  <div style="border: 1px solid var(--unops-neutral-200); border-radius: var(--unops-radius-lg); overflow: hidden; box-shadow: var(--unops-shadow-lg);">
+    <!-- Topbar -->
+    <div class="app-topbar">
+      <svg width="28" height="28" viewBox="0 0 32 32" style="flex-shrink:0;">
+        <circle cx="16" cy="16" r="16" fill="var(--unops-primary)"/>
+        <circle cx="16" cy="16" r="11" fill="white"/>
+        <circle cx="16" cy="16" r="7" fill="var(--unops-primary)"/>
+        <polygon points="16,5 19,13 16,10 13,13" fill="var(--unops-secondary)" opacity="0.8"/>
+      </svg>
+      <span style="font-weight:600; font-size:1.05rem; color:var(--unops-neutral-800); letter-spacing:-0.01em; white-space:nowrap;">Opportunity<span style="color:var(--unops-primary);">+</span></span>
+      <div class="app-topbar-search">
+        <i class="pi pi-search"></i>
+        <input type="text" placeholder="Search across all entities...">
+      </div>
+      <div class="app-topbar-actions">
+        <div class="app-topbar-icon"><i class="pi pi-sliders-h"></i></div>
+        <div class="app-topbar-icon"><span class="material-symbols-outlined" style="font-size:20px;">smart_toy</span></div>
+        <div class="app-topbar-icon"><i class="pi pi-bell"></i></div>
+        <div class="app-topbar-avatar" onclick="toggleDescriptions()" title="Toggle Mockup UI" style="cursor:pointer;">LJ</div>
+      </div>
+    </div>
+
+    <div class="app-layout" style="height: auto; min-height: 600px;">
+      <!-- Minimal sidebar -->
+      <div class="app-sidebar" style="padding-top: var(--unops-spacing-md);">
+        <div class="sidebar-item"><span class="material-symbols-outlined">home</span><span>Home</span></div>
+        <div class="sidebar-item sidebar-parent"><span class="material-symbols-outlined">handshake</span><span>Partnerships</span><i class="pi pi-angle-down sidebar-expand" style="margin-left:auto;"></i></div>
+        <div class="sidebar-item active"><span class="material-symbols-outlined">apartment</span><span>Offices</span></div>
+      </div>
+
+      <!-- Content -->
+      <div class="app-content">
+        <!-- Page header -->
+        <div class="list-header">
+          <span class="material-symbols-outlined list-header-icon">apartment</span>
+          <h1>Offices</h1>
+          <div class="list-header-actions">
+            <div class="view-toggle">
+              <button class="view-toggle-btn active" onclick="toggleOfficeView('chart', this)">
+                <span class="material-symbols-outlined" style="font-size:18px;">account_tree</span> Organigram
+              </button>
+              <button class="view-toggle-btn" onclick="toggleOfficeView('list', this)">
+                <span class="material-symbols-outlined" style="font-size:18px;">view_list</span> List
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ======================================= -->
+        <!-- ORGANIGRAM VIEW                         -->
+        <!-- ======================================= -->
+        <div id="office-chart-view">
+          <div class="unops-card">
+            <div class="unops-card-header">
+              <div class="unops-card-title" style="font-size: var(--unops-font-size-body-large);">
+                <span class="material-symbols-outlined" style="font-size:20px;">account_tree</span>
+                UNOPS Operational Structure
+              </div>
+              <div style="display:flex; gap: var(--unops-spacing-sm); align-items:center;">
+                <span class="text-sm text-muted">156 offices across 5 levels</span>
+                <button class="p-button p-button-text p-button-sm" title="Expand all"><span class="material-symbols-outlined" style="font-size:18px;">unfold_more</span></button>
+                <button class="p-button p-button-text p-button-sm" title="Collapse all"><span class="material-symbols-outlined" style="font-size:18px;">unfold_less</span></button>
+              </div>
+            </div>
+            <div class="unops-card-body">
+              <div class="org-chart">
+                <div class="org-tree">
+
+                  <!-- Level 1: Executive Office -->
+                  <div class="org-node-wrapper">
+                    <div class="org-node level-1">
+                      <div class="org-node-name">Executive Office</div>
+                      <div class="org-node-type">Level 1</div>
+                      <div class="org-node-code" style="color: rgba(255,255,255,0.5);">B0001</div>
+                    </div>
+                    <div class="org-connector-v"></div>
+                  </div>
+
+                  <!-- Level 2 row -->
+                  <div class="org-children-row" style="gap: 24px;">
+                    <div style="position:absolute; top:0; left: 12.5%; right: 12.5%; height: 2px; background: var(--unops-neutral-300);"></div>
+
+                    <!-- DED D&P (Geographic) -->
+                    <div class="org-child-branch">
+                      <div class="org-connector-v"></div>
+                      <div class="org-node level-2">
+                        <div class="org-node-name">DED — Delivery & Partnerships</div>
+                        <div class="org-node-type">Level 2 · Geographic</div>
+                        <div class="org-node-code">B0010</div>
+                        <div class="org-node-expand">8</div>
+                      </div>
+                      <div class="org-connector-v" style="height:32px;"></div>
+
+                      <!-- Level 3: Regional Offices -->
+                      <div class="org-grandchildren" style="gap: 12px;">
+                        <div style="position:absolute; top:0; left: 8%; right: 8%; height: 2px; background: var(--unops-neutral-300);"></div>
+
+                        <div class="org-grandchild-branch">
+                          <div class="org-connector-v"></div>
+                          <div class="org-node level-3" style="min-width:140px; padding: 10px 14px;">
+                            <div class="org-node-name" style="font-size:12px;">Africa</div>
+                            <div class="org-node-type">Regional Office</div>
+                            <div class="org-node-code">B0100</div>
+                            <div class="org-node-expand" style="width:20px; height:20px; font-size:10px; bottom:-10px;">22</div>
+                          </div>
+                        </div>
+
+                        <div class="org-grandchild-branch">
+                          <div class="org-connector-v"></div>
+                          <div class="org-node level-3" style="min-width:140px; padding: 10px 14px;">
+                            <div class="org-node-name" style="font-size:12px;">Asia</div>
+                            <div class="org-node-type">Regional Office</div>
+                            <div class="org-node-code">B0200</div>
+                            <div class="org-node-expand" style="width:20px; height:20px; font-size:10px; bottom:-10px;">18</div>
+                          </div>
+                        </div>
+
+                        <div class="org-grandchild-branch">
+                          <div class="org-connector-v"></div>
+                          <div class="org-node level-3" style="min-width:140px; padding: 10px 14px;">
+                            <div class="org-node-name" style="font-size:12px;">Europe & Central Asia</div>
+                            <div class="org-node-type">Regional Office</div>
+                            <div class="org-node-code">B0300</div>
+                            <div class="org-node-expand" style="width:20px; height:20px; font-size:10px; bottom:-10px;">15</div>
+                          </div>
+                        </div>
+
+                        <div class="org-grandchild-branch">
+                          <div class="org-connector-v"></div>
+                          <div class="org-node level-3" style="min-width:140px; padding: 10px 14px;">
+                            <div class="org-node-name" style="font-size:12px;">Latin America & Caribbean</div>
+                            <div class="org-node-type">Regional Office</div>
+                            <div class="org-node-code">B0400</div>
+                            <div class="org-node-expand" style="width:20px; height:20px; font-size:10px; bottom:-10px;">14</div>
+                          </div>
+                        </div>
+
+                        <div class="org-grandchild-branch">
+                          <div class="org-connector-v"></div>
+                          <div class="org-node level-3" style="min-width:140px; padding: 10px 14px;">
+                            <div class="org-node-name" style="font-size:12px;">MENA</div>
+                            <div class="org-node-type">Regional Office</div>
+                            <div class="org-node-code">B0500</div>
+                            <div class="org-node-expand" style="width:20px; height:20px; font-size:10px; bottom:-10px;">12</div>
+                          </div>
+                        </div>
+
+                        <div class="org-grandchild-branch">
+                          <div class="org-connector-v"></div>
+                          <div class="org-node level-3" style="min-width:140px; padding: 10px 14px;">
+                            <div class="org-node-name" style="font-size:12px;">North America</div>
+                            <div class="org-node-type">Regional Office</div>
+                            <div class="org-node-code">B0600</div>
+                            <div class="org-node-expand" style="width:20px; height:20px; font-size:10px; bottom:-10px;">5</div>
+                          </div>
+                        </div>
+
+                        <div class="org-grandchild-branch">
+                          <div class="org-connector-v"></div>
+                          <div class="org-more-indicator" style="min-width:80px; padding: 8px 12px; font-size:11px;">
+                            +2 more
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+
+                    <!-- DED M&P (Functional) -->
+                    <div class="org-child-branch">
+                      <div class="org-connector-v"></div>
+                      <div class="org-node level-2 functional">
+                        <div class="org-node-name">DED — Management & Policy</div>
+                        <div class="org-node-type">Level 2 · Functional</div>
+                        <div class="org-node-code">B0020</div>
+                        <div class="org-node-expand">4</div>
+                      </div>
+                    </div>
+
+                    <!-- Corporate Functions (Functional) -->
+                    <div class="org-child-branch">
+                      <div class="org-connector-v"></div>
+                      <div class="org-node level-2 functional">
+                        <div class="org-node-name">Corporate Functions</div>
+                        <div class="org-node-type">Level 2 · Functional</div>
+                        <div class="org-node-code">B0030</div>
+                        <div class="org-node-expand">6</div>
+                      </div>
+                    </div>
+
+                    <!-- Independent Functions -->
+                    <div class="org-child-branch">
+                      <div class="org-connector-v"></div>
+                      <div class="org-node level-2 functional">
+                        <div class="org-node-name">Independent Functions</div>
+                        <div class="org-node-type">Level 2 · Functional</div>
+                        <div class="org-node-code">B0040</div>
+                        <div class="org-node-expand">3</div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- Legend -->
+              <div class="org-legend">
+                <div class="org-legend-item">
+                  <div class="org-legend-swatch l1"></div>
+                  Level 1 — Executive
+                </div>
+                <div class="org-legend-item">
+                  <div class="org-legend-swatch l2"></div>
+                  Level 2 — DED / Corporate
+                </div>
+                <div class="org-legend-item">
+                  <div class="org-legend-swatch l3"></div>
+                  Level 3 — Regional
+                </div>
+                <div class="org-legend-item">
+                  <div class="org-legend-swatch l4"></div>
+                  Level 4/5 — Country / Project
+                </div>
+                <div class="org-legend-item">
+                  <div class="org-legend-swatch func"></div>
+                  Functional (non-geographic)
+                </div>
+                <div class="org-legend-item">
+                  <span style="width:20px; height:20px; border-radius:50%; background:var(--unops-neutral-100); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:var(--unops-neutral-600);">N</span>
+                  Child office count
+                </div>
+              </div>
+
+              <!-- Click hint -->
+              <div class="info-callout" style="margin-top: var(--unops-spacing-md);">
+                <i class="pi pi-info-circle"></i>
+                <div>Click any office node to open its detail page. The numbered badge shows the count of child offices — click to expand that branch.</div>
+              </div>
+
+              <!-- Implementation options note -->
+              <div style="margin-top: var(--unops-spacing-lg); background: linear-gradient(135deg, #f0f9ff, #e8f4fd); border: 2px solid var(--unops-primary-container); border-radius: var(--unops-radius-lg); padding: var(--unops-spacing-lg); position: relative;">
+                <div style="position: absolute; top: -12px; left: 20px; background: var(--unops-primary); color: white; padding: 2px 12px; border-radius: var(--unops-radius-full); font-size: 11px; font-weight: 600; letter-spacing: 0.05em;">IMPLEMENTATION NOTE</div>
+                <div style="font-weight: var(--unops-font-weight-semibold); font-size: var(--unops-font-size-body-large); margin-bottom: var(--unops-spacing-md); color: var(--unops-primary-darker); margin-top: 4px;">
+                  <span class="material-symbols-outlined" style="font-size: 20px; vertical-align: text-bottom;">engineering</span>
+                  Organigram — Possible Implementation Approaches
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--unops-spacing-md); margin-bottom: var(--unops-spacing-md);">
+
+                  <!-- Option A -->
+                  <div style="background: white; border: 1px solid var(--unops-neutral-200); border-radius: var(--unops-radius-md); padding: var(--unops-spacing-md);">
+                    <div style="display: flex; align-items: center; gap: var(--unops-spacing-sm); margin-bottom: var(--unops-spacing-sm);">
+                      <span style="background: var(--unops-success); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">A</span>
+                      <strong style="color: var(--unops-neutral-900);">PrimeNG OrganizationChart</strong>
+                      <span class="badge badge-success" style="font-size: 10px;">Recommended</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--unops-neutral-600); line-height: 1.6;">
+                      Uses <code style="background: var(--unops-neutral-100); padding: 1px 4px; border-radius: 3px;">p-organizationChart</code> with custom <code style="background: var(--unops-neutral-100); padding: 1px 4px; border-radius: 3px;">ng-template</code> for UNOPS-styled nodes.
+                      <strong>Already in the codebase</strong> (used in partner org-structure dialog — currently WIP/commented out). Zero new dependencies. Built-in expand/collapse and selection events.
+                    </div>
+                    <div style="margin-top: var(--unops-spacing-sm); display: flex; gap: 4px; flex-wrap: wrap;">
+                      <span class="badge badge-success" style="font-size: 10px;">No new deps</span>
+                      <span class="badge badge-primary" style="font-size: 10px;">Existing pattern</span>
+                      <span class="badge badge-warning" style="font-size: 10px;">Table-based layout</span>
+                    </div>
+                  </div>
+
+                  <!-- Option B -->
+                  <div style="background: white; border: 1px solid var(--unops-neutral-200); border-radius: var(--unops-radius-md); padding: var(--unops-spacing-md);">
+                    <div style="display: flex; align-items: center; gap: var(--unops-spacing-sm); margin-bottom: var(--unops-spacing-sm);">
+                      <span style="background: var(--unops-primary); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">B</span>
+                      <strong style="color: var(--unops-neutral-900);">PrimeNG TreeTable</strong>
+                      <span class="badge badge-primary" style="font-size: 10px;">For List View</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--unops-neutral-600); line-height: 1.6;">
+                      Uses <code style="background: var(--unops-neutral-100); padding: 1px 4px; border-radius: 3px;">p-treeTable</code> for the tabular/list toggle. <strong>Already in the codebase</strong> (partner-tree admin).
+                      Handles 150+ nodes well, with sortable columns (Name, Level, Type, Director, B-Code). Best for search and filtering use cases.
+                    </div>
+                    <div style="margin-top: var(--unops-spacing-sm); display: flex; gap: 4px; flex-wrap: wrap;">
+                      <span class="badge badge-success" style="font-size: 10px;">No new deps</span>
+                      <span class="badge badge-primary" style="font-size: 10px;">Existing pattern</span>
+                      <span class="badge badge-success" style="font-size: 10px;">Performant at scale</span>
+                    </div>
+                  </div>
+
+                  <!-- Option C -->
+                  <div style="background: white; border: 1px solid var(--unops-neutral-200); border-radius: var(--unops-radius-md); padding: var(--unops-spacing-md);">
+                    <div style="display: flex; align-items: center; gap: var(--unops-spacing-sm); margin-bottom: var(--unops-spacing-sm);">
+                      <span style="background: var(--unops-warning); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">C</span>
+                      <strong style="color: var(--unops-neutral-900);">Mermaid.js Diagram</strong>
+                    </div>
+                    <div style="font-size: 12px; color: var(--unops-neutral-600); line-height: 1.6;">
+                      Uses <code style="background: var(--unops-neutral-100); padding: 1px 4px; border-radius: 3px;">mermaid ^11.8.0</code> — <strong>already installed</strong>.
+                      Generates crisp SVG with auto-layout. Quick to implement but limited node styling (no rich HTML inside nodes). Best as a read-only "poster view."
+                    </div>
+                    <div style="margin-top: var(--unops-spacing-sm); display: flex; gap: 4px; flex-wrap: wrap;">
+                      <span class="badge badge-success" style="font-size: 10px;">No new deps</span>
+                      <span class="badge badge-neutral" style="font-size: 10px;">SVG output</span>
+                      <span class="badge badge-warning" style="font-size: 10px;">Limited interactivity</span>
+                    </div>
+                  </div>
+
+                  <!-- Option D -->
+                  <div style="background: white; border: 1px solid var(--unops-neutral-200); border-radius: var(--unops-radius-md); padding: var(--unops-spacing-md);">
+                    <div style="display: flex; align-items: center; gap: var(--unops-spacing-sm); margin-bottom: var(--unops-spacing-sm);">
+                      <span style="background: var(--unops-neutral-700); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">D</span>
+                      <strong style="color: var(--unops-neutral-900);">Custom HTML/CSS Recursive Component</strong>
+                    </div>
+                    <div style="font-size: 12px; color: var(--unops-neutral-600); line-height: 1.6;">
+                      Build a custom <code style="background: var(--unops-neutral-100); padding: 1px 4px; border-radius: 3px;">app-office-organigram</code> using recursive Angular templates — matching this mockup exactly.
+                      Full UNOPS design token control, lazy-load children on expand. More development effort but maximum design fidelity.
+                    </div>
+                    <div style="margin-top: var(--unops-spacing-sm); display: flex; gap: 4px; flex-wrap: wrap;">
+                      <span class="badge badge-success" style="font-size: 10px;">No new deps</span>
+                      <span class="badge badge-teal" style="font-size: 10px;">Pixel-perfect match</span>
+                      <span class="badge badge-warning" style="font-size: 10px;">More dev effort</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Recommended approach -->
+                <div style="background: white; border: 2px solid var(--unops-success); border-radius: var(--unops-radius-md); padding: var(--unops-spacing-md);">
+                  <div style="display: flex; align-items: center; gap: var(--unops-spacing-sm); margin-bottom: var(--unops-spacing-sm);">
+                    <span class="material-symbols-outlined" style="color: var(--unops-success); font-size: 20px;">recommend</span>
+                    <strong style="color: var(--unops-neutral-900);">Recommended Approach: A + B Hybrid</strong>
+                  </div>
+                  <div style="font-size: 12px; color: var(--unops-neutral-600); line-height: 1.6;">
+                    <strong>Organigram view:</strong> Option A (PrimeNG OrganizationChart) with custom node templates styled to UNOPS tokens. Show top 2–3 levels by default, expand on click. Falls back to Option D if PrimeNG styling proves too rigid.<br>
+                    <strong>List view:</strong> Option B (PrimeNG TreeTable) reusing the partner-tree pattern. Better for search, filtering, and data-dense scenarios.<br>
+                    Both views share the same <code style="background: var(--unops-neutral-100); padding: 1px 4px; border-radius: 3px;">TreeNode[]</code> data model. <strong>Zero new dependencies</strong> — uses only PrimeNG components already in the project.
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ======================================= -->
+        <!-- LIST VIEW (hidden by default)           -->
+        <!-- ======================================= -->
+        <div id="office-list-view" style="display:none;">
+
+        <!-- Record count -->
+        <div class="record-count-bar">
+          <i class="pi pi-database"></i>
+          <span>Showing <strong>156</strong> offices</span>
+        </div>
+
+        <!-- Search bar -->
+        <div class="search-bar">
+          <div class="search-input-wrap">
+            <i class="pi pi-search"></i>
+            <input type="text" placeholder="Search offices by name, alias, cost centre...">
+          </div>
+          <button class="p-button p-button-outlined p-button-sm">
+            <i class="pi pi-filter"></i> Advanced
+          </button>
+          <div class="sort-dropdown">
+            <i class="pi pi-sort-alt"></i>
+            <span>Sort: Name A-Z</span>
+            <i class="pi pi-angle-down"></i>
+          </div>
+        </div>
+
+        <!-- List cards -->
+        <div class="list-cards">
+          <!-- Card 1: Executive Office -->
+          <div class="list-card">
+            <div class="list-card-icon"><span class="material-symbols-outlined">apartment</span></div>
+            <div class="list-card-body">
+              <div class="list-card-title">UNOPS Executive Office</div>
+              <div class="list-card-subtitle">EXOF - Executive Office</div>
+              <div class="list-card-meta">
+                <div class="list-card-meta-item"><span class="material-symbols-outlined">tag</span> B0001</div>
+                <div class="list-card-meta-item"><span class="material-symbols-outlined">layers</span> Level 1</div>
+                <div class="list-card-meta-item"><span class="material-symbols-outlined">public</span> Global</div>
+              </div>
+            </div>
+            <div class="list-card-badges">
+              <span class="badge badge-secondary">Executive Office</span>
+              <span class="badge badge-success">Active</span>
+            </div>
+          </div>
+
+          <!-- Card 2: DED D&P -->
+          <div class="list-card">
+            <div class="list-card-icon"><span class="material-symbols-outlined">apartment</span></div>
+            <div class="list-card-body">
+              <div class="list-card-title">Office of the DED - Delivery & Partnerships</div>
+              <div class="list-card-subtitle">DEDP - Deputy Executive Director - Delivery & Partnerships</div>
+              <div class="list-card-meta">
+                <div class="list-card-meta-item"><span class="material-symbols-outlined">tag</span> B0010</div>
+                <div class="list-card-meta-item"><span class="material-symbols-outlined">layers</span> Level 2</div>
+                <div class="list-card-meta-item"><span class="material-symbols-outlined">public</span> Global</div>
+                <div class="list-card-meta-item"><span class="material-symbols-outlined">account_tree</span> 8 child offices</div>
+              </div>
+            </div>
+            <div class="list-card-badges">
+              <span class="badge badge-teal">DED Office</span>
+              <span class="badge badge-success">Active</span>
+            </div>
+          </div>
+
+          <!-- Card 3: Africa Region -->
+          <div class="list-card">
+            <div class="list-card-icon"><span class="material-symbols-outlined">apartment</span></div>
+            <div class="list-card-body">
+              <div class="list-card-title">Africa Regional Office</div>
+              <div class="list-card-subtitle">AFR/KERO - Kenya, Nairobi</div>
+              <div class="list-card-meta">
+                <div class="list-card-meta-item"><span class="material-symbols-outlined">tag</span> B0100</div>
+                <div class="list-card-meta-item"><span class="material-symbols-outlined">layers</span> Level 3</div>
+                <div class="list-card-meta-item"><span class="material-symbols-outlined">public</span> Africa</div>
+                <div class="list-card-meta-item"><span class="material-symbols-outlined">account_tree</span> 22 child offices</div>
+                <div class="list-card-meta-item"><span class="material-symbols-outlined">person</span> Ms. Fatima Ndiaye (RD)</div>
+              </div>
+            </div>
+            <div class="list-card-badges">
+              <span class="badge badge-primary">Regional Office</span>
+              <span class="badge badge-success">Active</span>
+            </div>
+          </div>
+
+          <!-- Card 4: Kenya MCO -->
+          <div class="list-card">
+            <div class="list-card-icon"><span class="material-symbols-outlined">apartment</span></div>
+            <div class="list-card-body">
+              <div class="list-card-title">Kenya Multi-Country Office</div>
+              <div class="list-card-subtitle">AFR/KEMCO - Kenya, Nairobi</div>
+              <div class="list-card-meta">
+                <div class="list-card-meta-item"><span class="material-symbols-outlined">tag</span> B0110</div>
+                <div class="list-card-meta-item"><span class="material-symbols-outlined">layers</span> Level 4</div>
+                <div class="list-card-meta-item"><span class="material-symbols-outlined">public</span> Kenya, Somalia, Comoros</div>
+                <div class="list-card-meta-item"><span class="material-symbols-outlined">account_tree</span> 5 child offices</div>
+              </div>
+            </div>
+            <div class="list-card-badges">
+              <span class="badge badge-neutral">MCO</span>
+              <span class="badge badge-success">Active</span>
+            </div>
+          </div>
+
+          <!-- Card 5: Project Office -->
+          <div class="list-card">
+            <div class="list-card-icon"><span class="material-symbols-outlined">apartment</span></div>
+            <div class="list-card-body">
+              <div class="list-card-title">Somalia Project Office</div>
+              <div class="list-card-subtitle">AFR/SOPO - Somalia, Mogadishu</div>
+              <div class="list-card-meta">
+                <div class="list-card-meta-item"><span class="material-symbols-outlined">tag</span> B0115</div>
+                <div class="list-card-meta-item"><span class="material-symbols-outlined">layers</span> Level 5</div>
+                <div class="list-card-meta-item"><span class="material-symbols-outlined">public</span> Somalia</div>
+              </div>
+            </div>
+            <div class="list-card-badges">
+              <span class="badge badge-neutral">Project Office</span>
+              <span class="badge badge-success">Active</span>
+            </div>
+          </div>
+        </div>
+
+        </div> <!-- end office-list-view -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- SCREEN 3: OFFICE DETAIL — FULL DETAILS VIEW                   -->
+<!-- ============================================================= -->
+<div class="mockup-section" id="office-detail">
+  <div class="mockup-title">
+    <h2>Office Detail</h2>
+    <p>The complete detail view of an Office record. The <strong>Details</strong> tab shows Key Information (identifiers, hierarchy, parent/child offices) and <strong>Geographic Implementation</strong> location data at the bottom. All other data — Financial, Scope, Roles & DoA, Related Opportunities, Related Partner Accounts, and Documents — lives in dedicated tabs alongside Details.</p>
+  </div>
+
+  <!-- Topbar -->
+  <div class="app-topbar">
+    <svg width="28" height="28" viewBox="0 0 32 32" style="flex-shrink:0;">
+      <circle cx="16" cy="16" r="16" fill="var(--unops-primary)"/>
+      <circle cx="16" cy="16" r="11" fill="white"/>
+      <circle cx="16" cy="16" r="7" fill="var(--unops-primary)"/>
+      <polygon points="16,5 19,13 16,10 13,13" fill="var(--unops-secondary)" opacity="0.8"/>
+    </svg>
+    <span style="font-weight:600; font-size:1.05rem; color:var(--unops-neutral-800); letter-spacing:-0.01em; white-space:nowrap;">Opportunity<span style="color:var(--unops-primary);">+</span></span>
+    <div class="app-topbar-search">
+      <i class="pi pi-search"></i>
+      <input type="text" placeholder="Search across all entities...">
+    </div>
+    <div class="app-topbar-actions">
+      <div class="app-topbar-icon"><i class="pi pi-sliders-h"></i></div>
+      <div class="app-topbar-icon"><span class="material-symbols-outlined" style="font-size:20px;">smart_toy</span></div>
+      <div class="app-topbar-icon"><i class="pi pi-bell"></i></div>
+      <div class="app-topbar-avatar" onclick="toggleDescriptions()" title="Toggle Mockup UI" style="cursor:pointer;">LJ</div>
+    </div>
+  </div>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <a class="page-header-back"><i class="pi pi-arrow-left"></i> Back to Offices</a>
+    <div class="page-header-top">
+      <div class="page-header-icon"><span class="material-symbols-outlined">apartment</span></div>
+      <div>
+        <h1>Africa Regional Office</h1>
+        <div class="page-header-badges">
+          <span class="badge badge-primary">Regional Office</span>
+          <span class="badge badge-success">Active</span>
+          <span class="badge badge-neutral">Level 3</span>
+          <span class="badge badge-teal">Geographic</span>
+        </div>
+      </div>
+    </div>
+    <div class="page-header-meta">
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">tag</span> <strong>B0100</strong></div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">badge</span> AFR/KERO</div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">person</span> Ms. Fatima Ndiaye (Regional Director)</div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">calendar_today</span> Effective: Jan 1, 2024</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active">Details</button>
+    <button class="tab">Financial</button>
+    <button class="tab">Scope</button>
+    <button class="tab">Roles & DoA</button>
+    <button class="tab">Related Opportunities <span class="tab-count">47</span></button>
+    <button class="tab">Related Partner Accounts <span class="tab-count">23</span></button>
+    <button class="tab">Documents <span class="tab-count">1</span></button>
+  </div>
+
+  <!-- Two column layout -->
+  <div class="two-col-layout">
+    <!-- Main content — all sections stacked vertically -->
+    <div>
+      <!-- KEY INFORMATION SECTION -->
+      <div class="unops-card" id="sec-key-info">
+        <div class="unops-card-header">
+          <div class="unops-card-title">
+            <span class="material-symbols-outlined" style="font-size:20px;">info</span>
+            Key Information
+          </div>
+        </div>
+        <div class="unops-card-body">
+          <div class="detail-grid">
+            <div class="detail-field">
+              <div class="detail-label">ID</div>
+              <div class="detail-value">OFF-0100</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-label">Cost Centre (B-Code)</div>
+              <div class="detail-value">B0100</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-label">Internal Name</div>
+              <div class="detail-value">AFR/KERO - Kenya, Nairobi Regional Office</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-label">External Name</div>
+              <div class="detail-value">UNOPS Africa Regional Office</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-label">Alias</div>
+              <div class="detail-value">Africa RO</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-label">Organisational Entity Type</div>
+              <div class="detail-value">Office of the Regional Director</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-label">Hierarchy Level</div>
+              <div class="detail-value"><span class="badge badge-neutral">Level 3</span></div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-label">Effective Date</div>
+              <div class="detail-value">January 1, 2024</div>
+            </div>
+          </div>
+
+          <hr class="section-divider">
+
+          <!-- Parent hierarchy -->
+          <div style="margin-bottom: var(--unops-spacing-lg);">
+            <div class="detail-label" style="margin-bottom: var(--unops-spacing-sm);">PARENT OFFICES (Hierarchy Above)</div>
+            <div class="hierarchy-tree">
+              <div class="hierarchy-node">
+                <span class="material-symbols-outlined">apartment</span>
+                <a href="#" style="color: var(--unops-primary); text-decoration:none;">UNOPS Executive Office</a>
+                <span class="badge badge-neutral" style="font-size:10px;">Level 1</span>
+              </div>
+              <div class="hierarchy-children">
+                <div class="hierarchy-node">
+                  <span class="material-symbols-outlined">apartment</span>
+                  <a href="#" style="color: var(--unops-primary); text-decoration:none;">Office of the DED - Delivery & Partnerships</a>
+                  <span class="badge badge-neutral" style="font-size:10px;">Level 2</span>
+                </div>
+                <div class="hierarchy-children">
+                  <div class="hierarchy-node current">
+                    <span class="material-symbols-outlined">apartment</span>
+                    <strong>Africa Regional Office</strong>
+                    <span class="badge badge-primary" style="font-size:10px;">Level 3 — Current</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Children -->
+          <div>
+            <div class="detail-label" style="margin-bottom: var(--unops-spacing-sm);">CHILD OFFICES (22)</div>
+            <div class="hierarchy-tree">
+              <div class="hierarchy-node">
+                <span class="material-symbols-outlined">apartment</span>
+                <a href="#" style="color: var(--unops-primary); text-decoration:none;">Kenya Multi-Country Office</a>
+                <span class="badge badge-neutral" style="font-size:10px;">Level 4 — MCO</span>
+              </div>
+              <div class="hierarchy-node">
+                <span class="material-symbols-outlined">apartment</span>
+                <a href="#" style="color: var(--unops-primary); text-decoration:none;">Ethiopia Country Office</a>
+                <span class="badge badge-neutral" style="font-size:10px;">Level 4 — CO</span>
+              </div>
+              <div class="hierarchy-node">
+                <span class="material-symbols-outlined">apartment</span>
+                <a href="#" style="color: var(--unops-primary); text-decoration:none;">Democratic Republic of Congo Country Office</a>
+                <span class="badge badge-neutral" style="font-size:10px;">Level 4 — CO</span>
+              </div>
+              <div class="hierarchy-node" style="color: var(--unops-neutral-500);">
+                <span class="material-symbols-outlined">more_horiz</span>
+                <span>+ 19 more offices</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GEOGRAPHIC IMPLEMENTATION SECTION -->
+      <div class="unops-card">
+        <div class="unops-card-header">
+          <div class="unops-card-title">
+            <span class="material-symbols-outlined" style="font-size:20px;">location_on</span>
+            Geographic Implementation
+          </div>
+          <span class="badge badge-neutral"><i class="pi pi-lock" style="font-size:11px;"></i> Read-only · Source: oneUNOPS Projects</span>
+        </div>
+        <div class="unops-card-body">
+          <div class="info-callout" style="margin-bottom: var(--unops-spacing-lg);">
+            <i class="pi pi-info-circle"></i>
+            <div><strong>Implementation note:</strong> An office may have multiple physical locations. The system should support displaying all locations associated with this org unit.</div>
+          </div>
+          <div class="detail-grid">
+            <div class="detail-field">
+              <div class="detail-label">Office ID (oneUNOPS Projects)</div>
+              <div class="detail-value">LOC-4521</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-label">Office Name</div>
+              <div class="detail-value">Africa Regional Office — Nairobi</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-label">Alias</div>
+              <div class="detail-value">Nairobi RO</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-label">Location Type</div>
+              <div class="detail-value">Org Unit Office</div>
+            </div>
+            <div class="detail-field detail-full">
+              <div class="detail-label">Description</div>
+              <div class="detail-value">Primary office location for the UNOPS Africa Regional Office, serving as the hub for regional operations coordination.</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-label">Address</div>
+              <div class="detail-value">UN Complex, Gigiri<br>P.O. Box 30218-00100<br>Nairobi, Kenya</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-label">Geo Coordinates</div>
+              <div class="detail-value">-1.2286, 36.8055</div>
+            </div>
+          </div>
+        </div>
+        <div class="unops-card-footer">
+          <div class="text-sm text-muted">
+            <i class="pi pi-info-circle" style="font-size:12px;"></i>
+            Source: oneUNOPS Projects Location Management · Active org unit office records only
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right sidebar -->
+    <div>
+      <!-- Audit info -->
+      <div class="unops-card">
+        <div class="unops-card-header">
+          <div class="unops-card-title" style="font-size: var(--unops-font-size-body-large);">
+            <span class="material-symbols-outlined" style="font-size:18px;">history</span>
+            Audit Information
+          </div>
+        </div>
+        <div class="unops-card-body" style="font-size: var(--unops-font-size-body-small); color: var(--unops-neutral-600);">
+          <div class="flex justify-between mb-md">
+            <span>Created by</span>
+            <strong style="color: var(--unops-neutral-800);">System Import</strong>
+          </div>
+          <div class="flex justify-between mb-md">
+            <span>Created date</span>
+            <strong style="color: var(--unops-neutral-800);">Jan 15, 2026</strong>
+          </div>
+          <div class="flex justify-between mb-md">
+            <span>Last modified by</span>
+            <strong style="color: var(--unops-neutral-800);">Roz Beckett</strong>
+          </div>
+          <div class="flex justify-between">
+            <span>Last modified</span>
+            <strong style="color: var(--unops-neutral-800);">Feb 20, 2026</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- SCREEN 4: OFFICE DETAIL — FINANCIAL INFORMATION               -->
+<!-- ============================================================= -->
+<div class="mockup-section" id="office-detail-financial">
+  <div class="mockup-title">
+    <h2>Office Detail — Financial Information</h2>
+    <p>Read-only financial data including cost centre type, funding sources, and NER/EA targets.</p>
+  </div>
+
+  <!-- Topbar -->
+  <div class="app-topbar">
+    <svg width="28" height="28" viewBox="0 0 32 32" style="flex-shrink:0;">
+      <circle cx="16" cy="16" r="16" fill="var(--unops-primary)"/>
+      <circle cx="16" cy="16" r="11" fill="white"/>
+      <circle cx="16" cy="16" r="7" fill="var(--unops-primary)"/>
+      <polygon points="16,5 19,13 16,10 13,13" fill="var(--unops-secondary)" opacity="0.8"/>
+    </svg>
+    <span style="font-weight:600; font-size:1.05rem; color:var(--unops-neutral-800); letter-spacing:-0.01em; white-space:nowrap;">Opportunity<span style="color:var(--unops-primary);">+</span></span>
+    <div class="app-topbar-search">
+      <i class="pi pi-search"></i>
+      <input type="text" placeholder="Search across all entities...">
+    </div>
+    <div class="app-topbar-actions">
+      <div class="app-topbar-icon"><i class="pi pi-sliders-h"></i></div>
+      <div class="app-topbar-icon"><span class="material-symbols-outlined" style="font-size:20px;">smart_toy</span></div>
+      <div class="app-topbar-icon"><i class="pi pi-bell"></i></div>
+      <div class="app-topbar-avatar" onclick="toggleDescriptions()" title="Toggle Mockup UI" style="cursor:pointer;">LJ</div>
+    </div>
+  </div>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <a class="page-header-back"><i class="pi pi-arrow-left"></i> Back to Offices</a>
+    <div class="page-header-top">
+      <div class="page-header-icon"><span class="material-symbols-outlined">apartment</span></div>
+      <div>
+        <h1>Africa Regional Office</h1>
+        <div class="page-header-badges">
+          <span class="badge badge-primary">Regional Office</span>
+          <span class="badge badge-success">Active</span>
+          <span class="badge badge-neutral">Level 3</span>
+          <span class="badge badge-teal">Geographic</span>
+        </div>
+      </div>
+    </div>
+    <div class="page-header-meta">
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">tag</span> <strong>B0100</strong></div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">badge</span> AFR/KERO</div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">person</span> Ms. Fatima Ndiaye (Regional Director)</div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">calendar_today</span> Effective: Jan 1, 2024</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab">Details</button>
+    <button class="tab active">Financial</button>
+    <button class="tab">Scope</button>
+    <button class="tab">Roles & DoA</button>
+    <button class="tab">Related Opportunities <span class="tab-count">47</span></button>
+    <button class="tab">Related Partner Accounts <span class="tab-count">23</span></button>
+    <button class="tab">Documents <span class="tab-count">1</span></button>
+  </div>
+
+  <div class="unops-card">
+    <div class="unops-card-header">
+      <div class="unops-card-title">
+        <span class="material-symbols-outlined" style="font-size:20px;">account_balance</span>
+        Financial Information
+      </div>
+      <span class="badge badge-neutral"><i class="pi pi-lock" style="font-size:11px;"></i> Read-only</span>
+    </div>
+    <div class="unops-card-body">
+      <div class="detail-grid">
+        <div class="detail-field">
+          <div class="detail-label">Cost Centre ID</div>
+          <div class="detail-value">B0100</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-label">Financial Centre Type</div>
+          <div class="detail-value"><span class="badge badge-teal">Revenue Generating Entity</span></div>
+        </div>
+        <div class="detail-field detail-full">
+          <div class="detail-label">Funding</div>
+          <div class="detail-value">
+            <span class="badge badge-neutral" style="margin-right: 4px;">Direct Costs</span>
+            <span class="badge badge-neutral">Management Expense</span>
+          </div>
+        </div>
+      </div>
+
+      <hr class="section-divider">
+
+      <div class="detail-label" style="margin-bottom: var(--unops-spacing-md);">PERFORMANCE TARGETS — FY 2026</div>
+      <div class="detail-grid">
+        <div class="detail-field">
+          <div class="detail-label">NER Target</div>
+          <div class="detail-value" style="font-size: var(--unops-font-size-headline-small); font-weight: var(--unops-font-weight-bold); color: var(--unops-primary);">$12,500,000</div>
+          <div class="text-sm text-muted">Fiscal Year 2026</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-label">EA Target</div>
+          <div class="detail-value" style="font-size: var(--unops-font-size-headline-small); font-weight: var(--unops-font-weight-bold); color: var(--unops-primary);">$45,000,000</div>
+          <div class="text-sm text-muted">Fiscal Year 2026</div>
+        </div>
+      </div>
+    </div>
+    <div class="unops-card-footer">
+      <div class="text-sm text-muted">
+        <i class="pi pi-info-circle" style="font-size:12px;"></i>
+        Source: BigQuery — <code>unopsreporting.Corporate_Performance.Corporate_Performance_Report</code> · Last synced: Feb 25, 2026
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- SCREEN 5: OFFICE DETAIL — SCOPE                               -->
+<!-- ============================================================= -->
+<div class="mockup-section" id="office-detail-scope">
+  <div class="mockup-title">
+    <h2>Office Detail — Scope</h2>
+    <p>Geographic or Functional scope, including assigned countries with responsibility indicators.</p>
+  </div>
+
+  <!-- Topbar -->
+  <div class="app-topbar">
+    <svg width="28" height="28" viewBox="0 0 32 32" style="flex-shrink:0;">
+      <circle cx="16" cy="16" r="16" fill="var(--unops-primary)"/>
+      <circle cx="16" cy="16" r="11" fill="white"/>
+      <circle cx="16" cy="16" r="7" fill="var(--unops-primary)"/>
+      <polygon points="16,5 19,13 16,10 13,13" fill="var(--unops-secondary)" opacity="0.8"/>
+    </svg>
+    <span style="font-weight:600; font-size:1.05rem; color:var(--unops-neutral-800); letter-spacing:-0.01em; white-space:nowrap;">Opportunity<span style="color:var(--unops-primary);">+</span></span>
+    <div class="app-topbar-search">
+      <i class="pi pi-search"></i>
+      <input type="text" placeholder="Search across all entities...">
+    </div>
+    <div class="app-topbar-actions">
+      <div class="app-topbar-icon"><i class="pi pi-sliders-h"></i></div>
+      <div class="app-topbar-icon"><span class="material-symbols-outlined" style="font-size:20px;">smart_toy</span></div>
+      <div class="app-topbar-icon"><i class="pi pi-bell"></i></div>
+      <div class="app-topbar-avatar" onclick="toggleDescriptions()" title="Toggle Mockup UI" style="cursor:pointer;">LJ</div>
+    </div>
+  </div>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <a class="page-header-back"><i class="pi pi-arrow-left"></i> Back to Offices</a>
+    <div class="page-header-top">
+      <div class="page-header-icon"><span class="material-symbols-outlined">apartment</span></div>
+      <div>
+        <h1>Africa Regional Office</h1>
+        <div class="page-header-badges">
+          <span class="badge badge-primary">Regional Office</span>
+          <span class="badge badge-success">Active</span>
+          <span class="badge badge-neutral">Level 3</span>
+          <span class="badge badge-teal">Geographic</span>
+        </div>
+      </div>
+    </div>
+    <div class="page-header-meta">
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">tag</span> <strong>B0100</strong></div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">badge</span> AFR/KERO</div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">person</span> Ms. Fatima Ndiaye (Regional Director)</div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">calendar_today</span> Effective: Jan 1, 2024</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab">Details</button>
+    <button class="tab">Financial</button>
+    <button class="tab active">Scope</button>
+    <button class="tab">Roles & DoA</button>
+    <button class="tab">Related Opportunities <span class="tab-count">47</span></button>
+    <button class="tab">Related Partner Accounts <span class="tab-count">23</span></button>
+    <button class="tab">Documents <span class="tab-count">1</span></button>
+  </div>
+
+  <div class="unops-card">
+    <div class="unops-card-header">
+      <div class="unops-card-title">
+        <span class="material-symbols-outlined" style="font-size:20px;">public</span>
+        Scope
+      </div>
+      <span class="badge badge-neutral"><i class="pi pi-lock" style="font-size:11px;"></i> Read-only</span>
+    </div>
+    <div class="unops-card-body">
+      <div class="detail-grid" style="margin-bottom: var(--unops-spacing-lg);">
+        <div class="detail-field">
+          <div class="detail-label">Scope Type</div>
+          <div class="detail-value"><span class="badge badge-teal">Geographic</span></div>
+        </div>
+      </div>
+
+      <div class="detail-label" style="margin-bottom: var(--unops-spacing-md);">GEOGRAPHIC SCOPE — Countries (12)</div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Country</th>
+            <th>ISO Code</th>
+            <th>Responsible Office</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Kenya</strong></td>
+            <td>KE</td>
+            <td><a href="#" style="color: var(--unops-primary); text-decoration:none;">Kenya MCO (B0110)</a></td>
+            <td><span class="badge badge-success">Assigned</span></td>
+          </tr>
+          <tr>
+            <td><strong>Ethiopia</strong></td>
+            <td>ET</td>
+            <td><a href="#" style="color: var(--unops-primary); text-decoration:none;">Ethiopia CO (B0120)</a></td>
+            <td><span class="badge badge-success">Assigned</span></td>
+          </tr>
+          <tr>
+            <td><strong>Somalia</strong></td>
+            <td>SO</td>
+            <td><a href="#" style="color: var(--unops-primary); text-decoration:none;">Kenya MCO (B0110)</a></td>
+            <td><span class="badge badge-success">Assigned</span></td>
+          </tr>
+          <tr>
+            <td><strong>Democratic Republic of Congo</strong></td>
+            <td>CD</td>
+            <td><a href="#" style="color: var(--unops-primary); text-decoration:none;">DRC CO (B0130)</a></td>
+            <td><span class="badge badge-success">Assigned</span></td>
+          </tr>
+          <tr>
+            <td><strong>South Sudan</strong></td>
+            <td>SS</td>
+            <td><span class="text-muted">Directly under Africa RO</span></td>
+            <td><span class="badge badge-warning">Unassigned child</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- SCREEN 6: OFFICE DETAIL — ROLES & DoA                         -->
+<!-- ============================================================= -->
+<div class="mockup-section" id="office-detail-roles-doa">
+  <div class="mockup-title">
+    <h2>Office Detail — Operational Roles & Delegation of Authority</h2>
+    <p>Key personnel and DoA holders associated with the office. Data sourced from ERP Admin — Management Structure and Core Controls.</p>
+  </div>
+
+  <!-- Topbar -->
+  <div class="app-topbar">
+    <svg width="28" height="28" viewBox="0 0 32 32" style="flex-shrink:0;">
+      <circle cx="16" cy="16" r="16" fill="var(--unops-primary)"/>
+      <circle cx="16" cy="16" r="11" fill="white"/>
+      <circle cx="16" cy="16" r="7" fill="var(--unops-primary)"/>
+      <polygon points="16,5 19,13 16,10 13,13" fill="var(--unops-secondary)" opacity="0.8"/>
+    </svg>
+    <span style="font-weight:600; font-size:1.05rem; color:var(--unops-neutral-800); letter-spacing:-0.01em; white-space:nowrap;">Opportunity<span style="color:var(--unops-primary);">+</span></span>
+    <div class="app-topbar-search">
+      <i class="pi pi-search"></i>
+      <input type="text" placeholder="Search across all entities...">
+    </div>
+    <div class="app-topbar-actions">
+      <div class="app-topbar-icon"><i class="pi pi-sliders-h"></i></div>
+      <div class="app-topbar-icon"><span class="material-symbols-outlined" style="font-size:20px;">smart_toy</span></div>
+      <div class="app-topbar-icon"><i class="pi pi-bell"></i></div>
+      <div class="app-topbar-avatar" onclick="toggleDescriptions()" title="Toggle Mockup UI" style="cursor:pointer;">LJ</div>
+    </div>
+  </div>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <a class="page-header-back"><i class="pi pi-arrow-left"></i> Back to Offices</a>
+    <div class="page-header-top">
+      <div class="page-header-icon"><span class="material-symbols-outlined">apartment</span></div>
+      <div>
+        <h1>Africa Regional Office</h1>
+        <div class="page-header-badges">
+          <span class="badge badge-primary">Regional Office</span>
+          <span class="badge badge-success">Active</span>
+          <span class="badge badge-neutral">Level 3</span>
+          <span class="badge badge-teal">Geographic</span>
+        </div>
+      </div>
+    </div>
+    <div class="page-header-meta">
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">tag</span> <strong>B0100</strong></div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">badge</span> AFR/KERO</div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">person</span> Ms. Fatima Ndiaye (Regional Director)</div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">calendar_today</span> Effective: Jan 1, 2024</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab">Details</button>
+    <button class="tab">Financial</button>
+    <button class="tab">Scope</button>
+    <button class="tab active">Roles & DoA</button>
+    <button class="tab">Related Opportunities <span class="tab-count">47</span></button>
+    <button class="tab">Related Partner Accounts <span class="tab-count">23</span></button>
+    <button class="tab">Documents <span class="tab-count">1</span></button>
+  </div>
+
+  <!-- Operational Roles -->
+  <div class="unops-card">
+    <div class="unops-card-header">
+      <div class="unops-card-title">
+        <span class="material-symbols-outlined" style="font-size:20px;">groups</span>
+        Operational Roles
+      </div>
+      <span class="badge badge-neutral"><i class="pi pi-lock" style="font-size:11px;"></i> Read-only · Source: ERP</span>
+    </div>
+    <div class="unops-card-body">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Personnel</th>
+            <th>Position Title</th>
+            <th>Org Unit Works At</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Director / Manager</strong></td>
+            <td>Ms. Fatima Ndiaye</td>
+            <td>Regional Director, Africa</td>
+            <td>AFR/KERO (B0100)</td>
+            <td><span class="badge badge-success">Active</span></td>
+          </tr>
+          <tr>
+            <td><strong>Director Manager OiC</strong></td>
+            <td>Mr. James Okonkwo</td>
+            <td>Deputy Regional Director, Africa</td>
+            <td>AFR/KERO (B0100)</td>
+            <td><span class="badge badge-success">Active</span></td>
+          </tr>
+          <tr>
+            <td><strong>HSSE Regional Specialist</strong></td>
+            <td>Dr. Amina Hassan</td>
+            <td>HSSE Regional Specialist</td>
+            <td>AFR/KERO (B0100)</td>
+            <td><span class="badge badge-success">Active</span></td>
+          </tr>
+          <tr>
+            <td><strong>HSSE Regional Specialist OiC</strong></td>
+            <td colspan="3" style="color: var(--unops-neutral-400); font-style:italic;">Not assigned</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><strong>HSSE Coordinator</strong></td>
+            <td>Mr. Samuel Mwangi</td>
+            <td>HSSE Coordinator</td>
+            <td>AFR/KERO (B0100)</td>
+            <td><span class="badge badge-success">Active</span></td>
+          </tr>
+          <tr>
+            <td><strong>Head of Programme (HOP)</strong></td>
+            <td>Ms. Grace Abuya</td>
+            <td>Head of Programme</td>
+            <td>AFR/KERO (B0100)</td>
+            <td><span class="badge badge-success">Active</span></td>
+          </tr>
+          <tr>
+            <td><strong>HoSS</strong></td>
+            <td>Mr. Patrick Ochieng</td>
+            <td>Head of Support Services</td>
+            <td>AFR/KERO (B0100)</td>
+            <td><span class="badge badge-success">Active</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="unops-card-footer">
+      <div class="text-sm text-muted">
+        <i class="pi pi-info-circle" style="font-size:12px;"></i>
+        Source: ERP Admin — Management Structure · Last synced: Feb 25, 2026
+      </div>
+    </div>
+  </div>
+
+  <!-- Delegation of Authority Holders -->
+  <div class="unops-card">
+    <div class="unops-card-header">
+      <div class="unops-card-title">
+        <span class="material-symbols-outlined" style="font-size:20px;">verified_user</span>
+        Delegation of Authority Holders
+      </div>
+      <span class="badge badge-neutral"><i class="pi pi-lock" style="font-size:11px;"></i> Read-only · Source: ERP</span>
+    </div>
+    <div class="unops-card-body">
+      <div class="info-callout" style="margin-bottom: var(--unops-spacing-lg);">
+        <i class="pi pi-info-circle"></i>
+        <div>All DoA types are shown. If no holder is currently assigned, the row appears with an empty holder — making gaps immediately visible.</div>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>DoA Type</th>
+            <th>Level</th>
+            <th>Role Holder</th>
+            <th>Applicability Period</th>
+            <th>Conditions</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Engagement Acceptance</strong></td>
+            <td><span class="badge badge-primary">DOA2</span></td>
+            <td>Ms. Fatima Ndiaye</td>
+            <td>Jan 1, 2026 — Dec 31, 2026</td>
+            <td class="text-sm">Up to $10M engagement value</td>
+            <td><span class="badge badge-teal" style="font-size:10px;">Direct</span></td>
+          </tr>
+          <tr>
+            <td><strong>Engagement Acceptance</strong></td>
+            <td><span class="badge badge-secondary">DOA3</span></td>
+            <td>Mr. Jorge Cardenas (DED-D&P)</td>
+            <td>Jan 1, 2026 — Dec 31, 2026</td>
+            <td class="text-sm">Above $10M or high-risk engagements</td>
+            <td><span class="inheritance-indicator"><i class="pi pi-arrow-up" style="font-size:10px;"></i> Inherited</span></td>
+          </tr>
+          <tr>
+            <td><strong>Financial</strong></td>
+            <td><span class="badge badge-primary">DOA2</span></td>
+            <td>Ms. Fatima Ndiaye</td>
+            <td>Jan 1, 2026 — Dec 31, 2026</td>
+            <td class="text-sm">Regional financial authority</td>
+            <td><span class="badge badge-teal" style="font-size:10px;">Direct</span></td>
+          </tr>
+          <tr>
+            <td><strong>HR</strong></td>
+            <td><span class="badge badge-primary">DOA2</span></td>
+            <td>Ms. Fatima Ndiaye</td>
+            <td>Jan 1, 2026 — Dec 31, 2026</td>
+            <td class="text-sm">—</td>
+            <td><span class="badge badge-teal" style="font-size:10px;">Direct</span></td>
+          </tr>
+          <tr>
+            <td><strong>Procurement</strong></td>
+            <td><span class="badge badge-primary">DOA2</span></td>
+            <td style="color: var(--unops-warning); font-style: italic;">
+              <i class="pi pi-exclamation-triangle" style="font-size:12px;"></i> OiC: Mr. James Okonkwo
+            </td>
+            <td>Feb 1, 2026 — Mar 31, 2026</td>
+            <td class="text-sm">Temporary OiC assignment</td>
+            <td><span class="badge badge-teal" style="font-size:10px;">Direct</span></td>
+          </tr>
+          <tr>
+            <td><strong>HSSE</strong></td>
+            <td>—</td>
+            <td style="color: var(--unops-neutral-400); font-style: italic;">Not assigned</td>
+            <td>—</td>
+            <td class="text-sm">—</td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="unops-card-footer">
+      <div class="text-sm text-muted">
+        <i class="pi pi-info-circle" style="font-size:12px;"></i>
+        Source: ERP Core Controls · Last synced: Feb 25, 2026
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- SCREEN 7: OFFICE DETAIL — RELATED OPPORTUNITIES               -->
+<!-- ============================================================= -->
+<div class="mockup-section" id="office-detail-opportunities">
+  <div class="mockup-title">
+    <h2>Office Detail — Related Opportunities</h2>
+    <p>Shows opportunities linked to this office <strong>and all its child offices</strong> (i.e. the entire hierarchy below this office) with an embedded listview. Users can search, sort, and click through to individual opportunity records.</p>
+  </div>
+
+  <!-- Topbar -->
+  <div class="app-topbar">
+    <svg width="28" height="28" viewBox="0 0 32 32" style="flex-shrink:0;">
+      <circle cx="16" cy="16" r="16" fill="var(--unops-primary)"/>
+      <circle cx="16" cy="16" r="11" fill="white"/>
+      <circle cx="16" cy="16" r="7" fill="var(--unops-primary)"/>
+      <polygon points="16,5 19,13 16,10 13,13" fill="var(--unops-secondary)" opacity="0.8"/>
+    </svg>
+    <span style="font-weight:600; font-size:1.05rem; color:var(--unops-neutral-800); letter-spacing:-0.01em; white-space:nowrap;">Opportunity<span style="color:var(--unops-primary);">+</span></span>
+    <div class="app-topbar-search">
+      <i class="pi pi-search"></i>
+      <input type="text" placeholder="Search across all entities...">
+    </div>
+    <div class="app-topbar-actions">
+      <div class="app-topbar-icon"><i class="pi pi-sliders-h"></i></div>
+      <div class="app-topbar-icon"><span class="material-symbols-outlined" style="font-size:20px;">smart_toy</span></div>
+      <div class="app-topbar-icon"><i class="pi pi-bell"></i></div>
+      <div class="app-topbar-avatar" onclick="toggleDescriptions()" title="Toggle Mockup UI" style="cursor:pointer;">LJ</div>
+    </div>
+  </div>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <a class="page-header-back"><i class="pi pi-arrow-left"></i> Back to Offices</a>
+    <div class="page-header-top">
+      <div class="page-header-icon"><span class="material-symbols-outlined">apartment</span></div>
+      <div>
+        <h1>Africa Regional Office</h1>
+        <div class="page-header-badges">
+          <span class="badge badge-primary">Regional Office</span>
+          <span class="badge badge-success">Active</span>
+          <span class="badge badge-neutral">Level 3</span>
+          <span class="badge badge-teal">Geographic</span>
+        </div>
+      </div>
+    </div>
+    <div class="page-header-meta">
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">tag</span> <strong>B0100</strong></div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">badge</span> AFR/KERO</div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">person</span> Ms. Fatima Ndiaye (Regional Director)</div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">calendar_today</span> Effective: Jan 1, 2024</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab">Details</button>
+    <button class="tab">Financial</button>
+    <button class="tab">Scope</button>
+    <button class="tab">Roles & DoA</button>
+    <button class="tab active">Related Opportunities <span class="tab-count">47</span></button>
+    <button class="tab">Related Partner Accounts <span class="tab-count">23</span></button>
+    <button class="tab">Documents <span class="tab-count">1</span></button>
+  </div>
+
+  <div class="unops-card">
+    <div class="unops-card-header">
+      <div class="unops-card-title">
+        <span class="material-symbols-outlined" style="font-size:20px;">lightbulb</span>
+        Related Opportunities
+        <span style="font-size: var(--unops-font-size-body-small); font-weight: var(--unops-font-weight-regular); color: var(--unops-neutral-500); margin-left: var(--unops-spacing-sm);">Includes child offices</span>
+      </div>
+      <span class="badge badge-primary badge-pill">47</span>
+    </div>
+    <div class="unops-card-body">
+      <div class="search-bar" style="margin-bottom: var(--unops-spacing-md);">
+        <div class="search-input-wrap" style="max-width: 400px;">
+          <i class="pi pi-search"></i>
+          <input type="text" placeholder="Search opportunities...">
+        </div>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Opportunity</th>
+            <th>Stage</th>
+            <th>Partner</th>
+            <th>Value (USD)</th>
+            <th>Target Signing</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="#" style="color: var(--unops-primary); text-decoration:none; font-weight:500;">Water Supply Expansion — Nairobi</a></td>
+            <td><span class="badge badge-primary">Development</span></td>
+            <td>World Bank</td>
+            <td>$8,500,000</td>
+            <td>Jun 2026</td>
+          </tr>
+          <tr>
+            <td><a href="#" style="color: var(--unops-primary); text-decoration:none; font-weight:500;">Road Infrastructure — Somalia</a></td>
+            <td><span class="badge badge-warning">Go/No-Go</span></td>
+            <td>EU Delegation</td>
+            <td>$15,200,000</td>
+            <td>Sep 2026</td>
+          </tr>
+          <tr>
+            <td><a href="#" style="color: var(--unops-primary); text-decoration:none; font-weight:500;">Health Centre Construction — DRC</a></td>
+            <td><span class="badge badge-success">Active</span></td>
+            <td>GAVI Alliance</td>
+            <td>$3,400,000</td>
+            <td>Mar 2026</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="text-align:center; padding: var(--unops-spacing-md); color: var(--unops-primary); cursor:pointer; font-weight: var(--unops-font-weight-medium); font-size: var(--unops-font-size-body-medium);">
+        View all 47 opportunities →
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- SCREEN 8: OFFICE DETAIL — RELATED PARTNER ACCOUNTS            -->
+<!-- ============================================================= -->
+<div class="mockup-section" id="office-detail-partners">
+  <div class="mockup-title">
+    <h2>Office Detail — Related Partner Accounts</h2>
+    <p>Shows partner accounts managed by this office <strong>and all its child offices</strong> (i.e. the entire hierarchy below this office) with an embedded listview. Users can browse partners and click through to individual partner records.</p>
+  </div>
+
+  <!-- Topbar -->
+  <div class="app-topbar">
+    <svg width="28" height="28" viewBox="0 0 32 32" style="flex-shrink:0;">
+      <circle cx="16" cy="16" r="16" fill="var(--unops-primary)"/>
+      <circle cx="16" cy="16" r="11" fill="white"/>
+      <circle cx="16" cy="16" r="7" fill="var(--unops-primary)"/>
+      <polygon points="16,5 19,13 16,10 13,13" fill="var(--unops-secondary)" opacity="0.8"/>
+    </svg>
+    <span style="font-weight:600; font-size:1.05rem; color:var(--unops-neutral-800); letter-spacing:-0.01em; white-space:nowrap;">Opportunity<span style="color:var(--unops-primary);">+</span></span>
+    <div class="app-topbar-search">
+      <i class="pi pi-search"></i>
+      <input type="text" placeholder="Search across all entities...">
+    </div>
+    <div class="app-topbar-actions">
+      <div class="app-topbar-icon"><i class="pi pi-sliders-h"></i></div>
+      <div class="app-topbar-icon"><span class="material-symbols-outlined" style="font-size:20px;">smart_toy</span></div>
+      <div class="app-topbar-icon"><i class="pi pi-bell"></i></div>
+      <div class="app-topbar-avatar" onclick="toggleDescriptions()" title="Toggle Mockup UI" style="cursor:pointer;">LJ</div>
+    </div>
+  </div>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <a class="page-header-back"><i class="pi pi-arrow-left"></i> Back to Offices</a>
+    <div class="page-header-top">
+      <div class="page-header-icon"><span class="material-symbols-outlined">apartment</span></div>
+      <div>
+        <h1>Africa Regional Office</h1>
+        <div class="page-header-badges">
+          <span class="badge badge-primary">Regional Office</span>
+          <span class="badge badge-success">Active</span>
+          <span class="badge badge-neutral">Level 3</span>
+          <span class="badge badge-teal">Geographic</span>
+        </div>
+      </div>
+    </div>
+    <div class="page-header-meta">
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">tag</span> <strong>B0100</strong></div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">badge</span> AFR/KERO</div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">person</span> Ms. Fatima Ndiaye (Regional Director)</div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">calendar_today</span> Effective: Jan 1, 2024</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab">Details</button>
+    <button class="tab">Financial</button>
+    <button class="tab">Scope</button>
+    <button class="tab">Roles & DoA</button>
+    <button class="tab">Related Opportunities <span class="tab-count">47</span></button>
+    <button class="tab active">Related Partner Accounts <span class="tab-count">23</span></button>
+    <button class="tab">Documents <span class="tab-count">1</span></button>
+  </div>
+
+  <div class="unops-card">
+    <div class="unops-card-header">
+      <div class="unops-card-title">
+        <span class="material-symbols-outlined" style="font-size:20px;">corporate_fare</span>
+        Related Partner Accounts
+        <span style="font-size: var(--unops-font-size-body-small); font-weight: var(--unops-font-weight-regular); color: var(--unops-neutral-500); margin-left: var(--unops-spacing-sm);">Includes child offices</span>
+      </div>
+      <span class="badge badge-primary badge-pill">23</span>
+    </div>
+    <div class="unops-card-body">
+      <div class="search-bar" style="margin-bottom: var(--unops-spacing-md);">
+        <div class="search-input-wrap" style="max-width: 400px;">
+          <i class="pi pi-search"></i>
+          <input type="text" placeholder="Search partner accounts...">
+        </div>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Partner</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Opportunities</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="#" style="color: var(--unops-primary); text-decoration:none; font-weight:500;">World Bank</a></td>
+            <td>Multilateral</td>
+            <td><span class="badge badge-success">Active</span></td>
+            <td>12</td>
+          </tr>
+          <tr>
+            <td><a href="#" style="color: var(--unops-primary); text-decoration:none; font-weight:500;">EU Delegation to Kenya</a></td>
+            <td>Bilateral</td>
+            <td><span class="badge badge-success">Active</span></td>
+            <td>8</td>
+          </tr>
+          <tr>
+            <td><a href="#" style="color: var(--unops-primary); text-decoration:none; font-weight:500;">GAVI Alliance</a></td>
+            <td>Global Health</td>
+            <td><span class="badge badge-success">Active</span></td>
+            <td>5</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="text-align:center; padding: var(--unops-spacing-md); color: var(--unops-primary); cursor:pointer; font-weight: var(--unops-font-weight-medium); font-size: var(--unops-font-size-body-medium);">
+        View all 23 partner accounts →
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- SCREEN 9: OFFICE DETAIL — DOCUMENTS                           -->
+<!-- ============================================================= -->
+<div class="mockup-section" id="office-detail-documents">
+  <div class="mockup-title">
+    <h2>Office Detail — Documents</h2>
+    <p>Document artifacts associated with the office. Upload is restricted to the Regional Director/Manager or OiC. Only <strong>Strategy</strong> documents are supported initially.</p>
+  </div>
+
+  <!-- Topbar -->
+  <div class="app-topbar">
+    <svg width="28" height="28" viewBox="0 0 32 32" style="flex-shrink:0;">
+      <circle cx="16" cy="16" r="16" fill="var(--unops-primary)"/>
+      <circle cx="16" cy="16" r="11" fill="white"/>
+      <circle cx="16" cy="16" r="7" fill="var(--unops-primary)"/>
+      <polygon points="16,5 19,13 16,10 13,13" fill="var(--unops-secondary)" opacity="0.8"/>
+    </svg>
+    <span style="font-weight:600; font-size:1.05rem; color:var(--unops-neutral-800); letter-spacing:-0.01em; white-space:nowrap;">Opportunity<span style="color:var(--unops-primary);">+</span></span>
+    <div class="app-topbar-search">
+      <i class="pi pi-search"></i>
+      <input type="text" placeholder="Search across all entities...">
+    </div>
+    <div class="app-topbar-actions">
+      <div class="app-topbar-icon"><i class="pi pi-sliders-h"></i></div>
+      <div class="app-topbar-icon"><span class="material-symbols-outlined" style="font-size:20px;">smart_toy</span></div>
+      <div class="app-topbar-icon"><i class="pi pi-bell"></i></div>
+      <div class="app-topbar-avatar" onclick="toggleDescriptions()" title="Toggle Mockup UI" style="cursor:pointer;">LJ</div>
+    </div>
+  </div>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <a class="page-header-back"><i class="pi pi-arrow-left"></i> Back to Offices</a>
+    <div class="page-header-top">
+      <div class="page-header-icon"><span class="material-symbols-outlined">apartment</span></div>
+      <div>
+        <h1>Africa Regional Office</h1>
+        <div class="page-header-badges">
+          <span class="badge badge-primary">Regional Office</span>
+          <span class="badge badge-success">Active</span>
+          <span class="badge badge-neutral">Level 3</span>
+          <span class="badge badge-teal">Geographic</span>
+        </div>
+      </div>
+    </div>
+    <div class="page-header-meta">
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">tag</span> <strong>B0100</strong></div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">badge</span> AFR/KERO</div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">person</span> Ms. Fatima Ndiaye (Regional Director)</div>
+      <div class="page-header-meta-item"><span class="material-symbols-outlined">calendar_today</span> Effective: Jan 1, 2024</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab">Details</button>
+    <button class="tab">Financial</button>
+    <button class="tab">Scope</button>
+    <button class="tab">Roles & DoA</button>
+    <button class="tab">Related Opportunities <span class="tab-count">47</span></button>
+    <button class="tab">Related Partner Accounts <span class="tab-count">23</span></button>
+    <button class="tab active">Documents <span class="tab-count">1</span></button>
+  </div>
+
+  <div class="unops-card">
+    <div class="unops-card-header">
+      <div class="unops-card-title">
+        <span class="material-symbols-outlined" style="font-size:20px;">folder_open</span>
+        Documents
+      </div>
+      <button class="p-button p-button-primary p-button-sm"><i class="pi pi-upload"></i> Upload Document</button>
+    </div>
+    <div class="unops-card-body">
+      <div class="info-callout" style="margin-bottom: var(--unops-spacing-lg);">
+        <i class="pi pi-info-circle"></i>
+        <div>Document upload is restricted to the <strong>Regional Director/Manager</strong> or <strong>OiC</strong> of this office. Only <strong>Strategy</strong> documents are supported at this time.</div>
+      </div>
+      <div class="doc-item">
+        <div class="doc-icon pdf"><i class="pi pi-file-pdf"></i></div>
+        <div style="flex:1;">
+          <div style="font-weight: var(--unops-font-weight-semibold);">Africa Regional Strategy 2024-2027.pdf</div>
+          <div class="text-sm text-muted">Strategy · 2.4 MB · Uploaded Feb 10, 2026 by Roz Beckett</div>
+        </div>
+        <div style="display:flex; gap:var(--unops-spacing-sm);">
+          <span class="badge badge-primary">Strategy</span>
+          <button class="p-button p-button-text p-button-sm"><i class="pi pi-download"></i></button>
+          <button class="p-button p-button-text p-button-sm"><i class="pi pi-eye"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div> <!-- end mockup-main -->
+
+<!-- ===================================== -->
+<!-- JAVASCRIPT                            -->
+<!-- ===================================== -->
+<script>
+  let mockupUIVisible = true;
+  function toggleDescriptions() {
+    mockupUIVisible = !mockupUIVisible;
+    const display = mockupUIVisible ? '' : 'none';
+    document.getElementById('mockup-header').style.display = display;
+    document.getElementById('mockup-nav').style.display = display;
+    document.querySelectorAll('.mockup-title').forEach(el => {
+      el.style.display = display;
+    });
+  }
+
+  function showSection(id) {
+    document.querySelectorAll('.mockup-section').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+
+  }
+
+  function scrollToDetailSection(sectionId, chipEl) {
+    document.querySelectorAll('.section-chip').forEach(c => c.classList.remove('active'));
+    chipEl.classList.add('active');
+    const target = document.getElementById(sectionId);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function toggleOfficeView(view, btn) {
+    const chartView = document.getElementById('office-chart-view');
+    const listView = document.getElementById('office-list-view');
+    if (!chartView || !listView) return;
+
+    btn.closest('.view-toggle').querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    if (view === 'chart') {
+      chartView.style.display = 'block';
+      listView.style.display = 'none';
+    } else {
+      chartView.style.display = 'none';
+      listView.style.display = 'block';
+    }
+  }
+</script>
+
+</body>
+</html>

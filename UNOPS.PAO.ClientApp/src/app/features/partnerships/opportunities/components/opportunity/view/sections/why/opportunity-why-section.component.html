@@ -2586,7 +2586,10 @@
                               [for]="'indicator-' + indicator.id"
                               class="flex-1 text-sm text-gray-700 cursor-pointer"
                             >
-                              {{ indicator.name }}
+                              <span class="font-medium">{{ indicator.name }}</span>
+                              @if (indicator.indicators) {
+                                <span class="block text-xs text-gray-500 mt-0.5">{{ indicator.indicators }}</span>
+                              }
                             </label>
                           </div>
                         }
