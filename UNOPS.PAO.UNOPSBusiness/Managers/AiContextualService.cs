@@ -3271,6 +3271,20 @@ Keywords:";
                 }
             }
             
+            // SDG-specific post-processing
+            if (dependent.Equals("sdGs", StringComparison.OrdinalIgnoreCase) && objectsArray.Count >= 1)
+            {
+                // Fallback: if AI didn't mark any as primary (e.g. returned strings or omitted isPrimary),
+                // treat the first SDG as primary (AI typically lists the main SDG first)
+                var anyPrimary = objectsArray.OfType<JObject>().Any(o => o["isPrimary"]?.Value<bool>() ?? false);
+                if (!anyPrimary)
+                {
+                    var first = objectsArray[0] as JObject;
+                    if (first != null)
+                        first["isPrimary"] = true;
+                }
+            }
+
             // Deduplicate SDGs by sdgId (AI may return "Goal 4" and "Quality Education" - both resolve to same SDG)
             // When duplicate, prefer the one with isPrimary: true; preserve first-occurrence order
             if (dependent.Equals("sdGs", StringComparison.OrdinalIgnoreCase) && objectsArray.Count > 1)
