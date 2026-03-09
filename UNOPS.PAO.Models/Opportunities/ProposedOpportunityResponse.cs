@@ -51,6 +51,11 @@ public class OpportunityProposalResponse
     /// Whether partner is client partner
     /// </summary>
     public bool IsClientPartner { get; set; }
+
+    /// <summary>
+    /// Raw response from AI (for debugging - compare with processed Opportunity data).
+    /// </summary>
+    public string? RawAiResponse { get; set; }
 }
 
 /// <summary>
