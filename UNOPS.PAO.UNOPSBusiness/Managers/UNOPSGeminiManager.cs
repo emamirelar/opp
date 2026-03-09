@@ -4751,6 +4751,7 @@ public class UNOPSGeminiManager : IGeminiManager
                     Countries = parsedResponse["countries"]?.ToString(),
                     SdGs = parsedResponse["sdGs"]?.ToString(),
                     UnopsMissions = parsedResponse["unopsMissions"]?.ToString(),
+                    UnopsMissionsNotApplicable = parsedResponse["unopsMissionsNotApplicable"]?.ToObject<bool?>(),
                     
                     Dependents = parsedResponse["dependents"]?.ToObject<List<string>>() ?? new List<string>()
                 };
