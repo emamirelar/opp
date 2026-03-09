@@ -581,6 +581,14 @@ public class Startup
         
         var optimizedConnectionString = connectionStringBuilder.ToString();
 
+        // Ensure UTF-8 encoding for correct display of accented characters (e.g. Ángel María)
+        // Prevents ?? corruption when PostgreSQL session uses a different default encoding
+        if (!optimizedConnectionString.Contains("Client Encoding", StringComparison.OrdinalIgnoreCase)
+            && !optimizedConnectionString.Contains("ClientEncoding", StringComparison.OrdinalIgnoreCase))
+        {
+            optimizedConnectionString += ";Client Encoding=UTF8";
+        }
+
         // Configure Npgsql data source with optional IAM authentication
         var dataSourceBuilder = new NpgsqlDataSourceBuilder(optimizedConnectionString);
         if (useIamAuth)
