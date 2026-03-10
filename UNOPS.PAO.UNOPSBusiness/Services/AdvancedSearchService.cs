@@ -36,6 +36,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Services;
 public class AdvancedSearchService
 {
     private readonly UNOPSAppDbContext _context;
+    private readonly IDbContextFactory<UNOPSAppDbContext>? _dbContextFactory;
     private readonly ILogger<AdvancedSearchService> _logger;
     private readonly IMapper _mapper;
     private readonly GlobalFilterService _globalFilterService;
@@ -47,9 +48,11 @@ public class AdvancedSearchService
         ILogger<AdvancedSearchService> logger,
         IMapper mapper,
         GlobalFilterService globalFilterService,
-        GoogleCloudStorageService? googleCloudStorageService = null)
+        GoogleCloudStorageService? googleCloudStorageService = null,
+        IDbContextFactory<UNOPSAppDbContext>? dbContextFactory = null)
     {
         _context = context;
+        _dbContextFactory = dbContextFactory;
         _logger = logger;
         _mapper = mapper;
         _globalFilterService = globalFilterService;
@@ -492,12 +495,23 @@ public class AdvancedSearchService
     /// </summary>
     public async Task<List<GlobalSearchResult>> SearchPartnersAsync(string searchText, float textBoost = 1.0f, int snippetLength = 150)
     {
+        return await SearchPartnersWithContextAsync(_context, searchText, textBoost, snippetLength);
+    }
+
+    /// <summary>
+    /// Search Partners using a specific DbContext (for thread-safe parallel execution)
+    /// </summary>
+    private async Task<List<GlobalSearchResult>> SearchPartnersWithContextAsync(
+        UNOPSAppDbContext context,
+        string searchText,
+        float textBoost = 1.0f,
+        int snippetLength = 150)
+    {
         try
         {
             _logger.LogInformation("Searching Partners with nested properties: '{SearchText}'", searchText);
 
-            // Use DbContext's connection which has IAM authentication configured
-            var connection = (NpgsqlConnection)_context.Database.GetDbConnection();
+            var connection = (NpgsqlConnection)context.Database.GetDbConnection();
             if (connection.State != ConnectionState.Open)
                 await connection.OpenAsync();
 
@@ -509,7 +523,7 @@ public class AdvancedSearchService
 
             var results = new List<GlobalSearchResult>();
             using var reader = await command.ExecuteReaderAsync();
-            
+
             while (await reader.ReadAsync())
             {
                 results.Add(new GlobalSearchResult
@@ -540,12 +554,23 @@ public class AdvancedSearchService
     /// </summary>
     public async Task<List<GlobalSearchResult>> SearchContactsAsync(string searchText, float textBoost = 1.0f, int snippetLength = 150)
     {
+        return await SearchContactsWithContextAsync(_context, searchText, textBoost, snippetLength);
+    }
+
+    /// <summary>
+    /// Search Contacts using a specific DbContext (for thread-safe parallel execution)
+    /// </summary>
+    private async Task<List<GlobalSearchResult>> SearchContactsWithContextAsync(
+        UNOPSAppDbContext context,
+        string searchText,
+        float textBoost = 1.0f,
+        int snippetLength = 150)
+    {
         try
         {
             _logger.LogInformation("Searching Contacts with nested properties: '{SearchText}'", searchText);
 
-            // Use DbContext's connection which has IAM authentication configured
-            var connection = (NpgsqlConnection)_context.Database.GetDbConnection();
+            var connection = (NpgsqlConnection)context.Database.GetDbConnection();
             if (connection.State != ConnectionState.Open)
                 await connection.OpenAsync();
 
@@ -557,7 +582,7 @@ public class AdvancedSearchService
 
             var results = new List<GlobalSearchResult>();
             using var reader = await command.ExecuteReaderAsync();
-            
+
             while (await reader.ReadAsync())
             {
                 results.Add(new GlobalSearchResult
@@ -588,12 +613,23 @@ public class AdvancedSearchService
     /// </summary>
     public async Task<List<GlobalSearchResult>> SearchInteractionsAsync(string searchText, float textBoost = 1.0f, int snippetLength = 150)
     {
+        return await SearchInteractionsWithContextAsync(_context, searchText, textBoost, snippetLength);
+    }
+
+    /// <summary>
+    /// Search Interactions using a specific DbContext (for thread-safe parallel execution)
+    /// </summary>
+    private async Task<List<GlobalSearchResult>> SearchInteractionsWithContextAsync(
+        UNOPSAppDbContext context,
+        string searchText,
+        float textBoost = 1.0f,
+        int snippetLength = 150)
+    {
         try
         {
             _logger.LogInformation("Searching Interactions with nested properties: '{SearchText}'", searchText);
 
-            // Use DbContext's connection which has IAM authentication configured
-            var connection = (NpgsqlConnection)_context.Database.GetDbConnection();
+            var connection = (NpgsqlConnection)context.Database.GetDbConnection();
             if (connection.State != ConnectionState.Open)
                 await connection.OpenAsync();
 
@@ -605,7 +641,7 @@ public class AdvancedSearchService
 
             var results = new List<GlobalSearchResult>();
             using var reader = await command.ExecuteReaderAsync();
-            
+
             while (await reader.ReadAsync())
             {
                 results.Add(new GlobalSearchResult
@@ -636,12 +672,23 @@ public class AdvancedSearchService
     /// </summary>
     public async Task<List<GlobalSearchResult>> SearchOpportunitiesAsync(string searchText, float textBoost = 1.0f, int snippetLength = 150)
     {
+        return await SearchOpportunitiesWithContextAsync(_context, searchText, textBoost, snippetLength);
+    }
+
+    /// <summary>
+    /// Search Opportunities using a specific DbContext (for thread-safe parallel execution)
+    /// </summary>
+    private async Task<List<GlobalSearchResult>> SearchOpportunitiesWithContextAsync(
+        UNOPSAppDbContext context,
+        string searchText,
+        float textBoost = 1.0f,
+        int snippetLength = 150)
+    {
         try
         {
             _logger.LogInformation("Searching Opportunities with nested properties: '{SearchText}'", searchText);
 
-            // Use DbContext's connection which has IAM authentication configured
-            var connection = (NpgsqlConnection)_context.Database.GetDbConnection();
+            var connection = (NpgsqlConnection)context.Database.GetDbConnection();
             if (connection.State != ConnectionState.Open)
                 await connection.OpenAsync();
 
@@ -653,7 +700,7 @@ public class AdvancedSearchService
 
             var results = new List<GlobalSearchResult>();
             using var reader = await command.ExecuteReaderAsync();
-            
+
             while (await reader.ReadAsync())
             {
                 results.Add(new GlobalSearchResult
@@ -692,18 +739,51 @@ public class AdvancedSearchService
 
             var startTime = DateTime.UtcNow;
 
-            // Execute searches in parallel for better performance
-            var partnersTask = SearchPartnersAsync(searchText, textBoost);
-            var contactsTask = SearchContactsAsync(searchText, textBoost);
-            var interactionsTask = SearchInteractionsAsync(searchText, textBoost);
-            var opportunitiesTask = SearchOpportunitiesAsync(searchText, textBoost);
+            List<GlobalSearchResult> partners;
+            List<GlobalSearchResult> contacts;
+            List<GlobalSearchResult> interactions;
+            List<GlobalSearchResult> opportunities;
 
-            await Task.WhenAll(partnersTask, contactsTask, interactionsTask, opportunitiesTask);
+            if (_dbContextFactory != null)
+            {
+                // Execute searches in parallel using separate DbContext instances (thread-safe)
+                // Each task creates its own DbContext to avoid "A second operation was started on this context" errors
+                var partnersTask = Task.Run(async () =>
+                {
+                    await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+                    return await SearchPartnersWithContextAsync(ctx, searchText, textBoost);
+                });
+                var contactsTask = Task.Run(async () =>
+                {
+                    await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+                    return await SearchContactsWithContextAsync(ctx, searchText, textBoost);
+                });
+                var interactionsTask = Task.Run(async () =>
+                {
+                    await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+                    return await SearchInteractionsWithContextAsync(ctx, searchText, textBoost);
+                });
+                var opportunitiesTask = Task.Run(async () =>
+                {
+                    await using var ctx = await _dbContextFactory.CreateDbContextAsync();
+                    return await SearchOpportunitiesWithContextAsync(ctx, searchText, textBoost);
+                });
 
-            var partners = await partnersTask;
-            var contacts = await contactsTask;
-            var interactions = await interactionsTask;
-            var opportunities = await opportunitiesTask;
+                await Task.WhenAll(partnersTask, contactsTask, interactionsTask, opportunitiesTask);
+
+                partners = await partnersTask;
+                contacts = await contactsTask;
+                interactions = await interactionsTask;
+                opportunities = await opportunitiesTask;
+            }
+            else
+            {
+                // Fallback: sequential execution when DbContextFactory not available (e.g. unit tests)
+                partners = await SearchPartnersAsync(searchText, textBoost);
+                contacts = await SearchContactsAsync(searchText, textBoost);
+                interactions = await SearchInteractionsAsync(searchText, textBoost);
+                opportunities = await SearchOpportunitiesAsync(searchText, textBoost);
+            }
 
             // Limit results per entity
             var response = new GlobalSearchResponse
