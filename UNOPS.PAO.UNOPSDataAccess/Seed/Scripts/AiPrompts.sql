@@ -3670,14 +3670,14 @@ Please analyze this information and return only valid JSON as specified in the s
 
 - **(a) UN Cooperation Framework:** [Extract from "uncfOutcomes" field. If it shows "No UNCF Outcomes" or is empty, use [Information not available]. DO NOT INVENT UNCF outcomes.]
 
-- **(b) SDGs:** [CRITICAL - OPP+ TERMINOLOGY: In your output, use ONLY "Main" and "Cross-cutting". NEVER write "Primary" or "Secondary". The data fields primarySdGs and secondarySdGs map to Main and Cross-cutting respectively.
-  FORMATTING: Use two subheadings with bullet points under each. Structure as:
-  **Main SDG(s):**
-  - [Each SDG from primarySdGs on its own bullet line, e.g. "SDG Goal 3: GOAL 3: Good Health and Well-being"]
-  **Cross-cutting SDG(s):**
-  - [Each SDG from secondarySdGs on its own bullet line]
-  If primarySdGs shows "No primary SDGs selected", use [Information not available] under Main SDG(s).
-  If secondarySdGs shows "No secondary SDGs selected", omit the Cross-cutting subheading and its bullets entirely.
+- **(b) SDGs:** [CRITICAL - OPP+ TERMINOLOGY: In your output, use ONLY "Main" and "Cross-cutting". NEVER write "Primary" or "Secondary". The data fields primarySdGs and secondarySdGs map to Main and Cross-cutting respectively. Format as:
+  **Main SDG(s):** (on its own line as heading)
+  [List from primarySdGs field - the central focus area, each SDG as bullet]
+  **Cross-cutting SDG(s):** (on its own line as heading)
+  [List from secondarySdGs field - supporting goals, each SDG as bullet]
+  Main SDG(s) and Cross-cutting SDG(s) MUST each be on their own line - never concatenate with SDG content on the same line.
+  If primarySdGs shows "No primary SDGs selected", use [Information not available] for Main.
+  If secondarySdGs shows "No secondary SDGs selected", omit the Cross-cutting section entirely.
   The "sdGs" field contains full details with targets and indicators if needed.
   DO NOT INVENT SDGs - ONLY list those actually in the data. REMINDER: Output labels must be "Main" and "Cross-cutting", never "Primary" or "Secondary".]
 
