@@ -20,24 +20,15 @@
     }
 
     // Prevents long labels from clashing with the field border and calendar icon.
-    // variant="on" keeps the label on the border at all times, so background
-    // and padding must apply in the default state too (not just filled/focus).
-    .p-datepicker ~ label {
-      max-width: calc(100% - 3.5rem);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      background-color: white;
-      padding: 0 0.25rem;
-    }
-
-    .p-datepicker {
-      &.p-inputwrapper-filled,
-      &.p-inputwrapper-focus {
-        ~ label {
-          max-width: calc(100% - 3rem);
-        }
-      }
+    // Uses the element selector (p-datepicker) to reliably target the Angular
+    // host element regardless of which CSS classes PrimeNG adds at runtime.
+    p-datepicker ~ label {
+      max-width: calc(100% - 3.5rem) !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      background-color: white !important;
+      padding: 0 0.25rem !important;
     }
   }
   
