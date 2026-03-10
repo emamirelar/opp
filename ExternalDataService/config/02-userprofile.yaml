@@ -36,10 +36,10 @@ source:
       AND Employment_Status = 'N'
       AND Employment_Type IN ('OPSSTAFF', 'OPSNONSTAFF', 'EXTAFFILIATE')
       AND UPPER(Resource_Email_Address_Primary) LIKE '%UNOPS.ORG'
-      QUALIFY ROW_NUMBER() OVER (
-          PARTITION BY PARSE_NUMERIC(Resource)
-          ORDER BY Resource_Email_Address_Primary
-        ) = 1
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY PARSE_NUMERIC(Resource)
+        ORDER BY Resource_Email_Address_Primary
+      ) = 1
 
   
   primary_key_field: "UserId"
@@ -51,14 +51,9 @@ destination:
   manage_table_structure: false  # Only validate, don't create/alter
   add_standard_fields: false
 
-  # Skip records when UserId does not exist in AspNetUsers (avoids FK errors)
-  foreign_key_mappings:
-    - source_field: "UserId"
-      lookup_table: "AspNetUsers"
-      lookup_field: "Id"
-      lookup_return_field: "Id"
-      destination_field: "UserId"
-      on_lookup_fail: FailRecord
+  # UserId comes directly from field_mappings (source value = AspNetUsers.Id).
+  # No FK lookup needed - the value is already correct; DB FK constraint validates on insert.
+  # (03-aspnetuserroles needs FK lookup because UserId is not in its field_mappings.)
 
   # UserProfile has UserId as PK with unique IX_UserProfile_UserId - one row per user.
   # Use UserId only as conflict target; (UserId, Id) causes duplicate inserts when existing row has Id=0.
