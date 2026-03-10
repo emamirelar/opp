@@ -3670,11 +3670,14 @@ Please analyze this information and return only valid JSON as specified in the s
 
 - **(a) UN Cooperation Framework:** [Extract from "uncfOutcomes" field. If it shows "No UNCF Outcomes" or is empty, use [Information not available]. DO NOT INVENT UNCF outcomes.]
 
-- **(b) SDGs:** [CRITICAL - OPP+ TERMINOLOGY: In your output, use ONLY "Main" and "Cross-cutting". NEVER write "Primary" or "Secondary". The data fields primarySdGs and secondarySdGs map to Main and Cross-cutting respectively. Format as:
-  **Main SDG(s):** [List from primarySdGs field - the central focus area]
-  **Cross-cutting SDG(s):** [List from secondarySdGs field - supporting goals]
-  If primarySdGs shows "No primary SDGs selected", use [Information not available] for Main.
-  If secondarySdGs shows "No secondary SDGs selected", omit the Cross-cutting section entirely.
+- **(b) SDGs:** [CRITICAL - OPP+ TERMINOLOGY: In your output, use ONLY "Main" and "Cross-cutting". NEVER write "Primary" or "Secondary". The data fields primarySdGs and secondarySdGs map to Main and Cross-cutting respectively.
+  FORMATTING: Use two subheadings with bullet points under each. Structure as:
+  **Main SDG(s):**
+  - [Each SDG from primarySdGs on its own bullet line, e.g. "SDG Goal 3: GOAL 3: Good Health and Well-being"]
+  **Cross-cutting SDG(s):**
+  - [Each SDG from secondarySdGs on its own bullet line]
+  If primarySdGs shows "No primary SDGs selected", use [Information not available] under Main SDG(s).
+  If secondarySdGs shows "No secondary SDGs selected", omit the Cross-cutting subheading and its bullets entirely.
   The "sdGs" field contains full details with targets and indicators if needed.
   DO NOT INVENT SDGs - ONLY list those actually in the data. REMINDER: Output labels must be "Main" and "Cross-cutting", never "Primary" or "Secondary".]
 
