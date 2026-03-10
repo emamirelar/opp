@@ -60,13 +60,17 @@ destination:
       destination_field: "UserId"
       on_lookup_fail: FailRecord
 
-  composite_unique_keys:
-    - fields:
-        - "UserId"
-        - "Id"
-      index_name: "PK_UserProfile"
+  # UserProfile has UserId as PK with unique IX_UserProfile_UserId - one row per user.
+  # Use UserId only as conflict target; (UserId, Id) causes duplicate inserts when existing row has Id=0.
+  # UserId from FK mapping; add to field_mappings with is_unique for correct ON CONFLICT (UserId) upsert.
   
   field_mappings:
+    - source_field: "UserId"
+      destination_field: "UserId"
+      data_type: "integer"
+      is_required: true
+      is_unique: true
+
     - source_field: "Id"
       destination_field: "Id"
       data_type: "integer"
@@ -156,7 +160,7 @@ destination:
 sync_options:
   sync_mode: Upsert
   batch_processing: true
-  use_bulk_upsert: true   # Requires unique (UserId, Id); run UNOPSDataAccess/Scripts/AddBulkUpsertUniqueConstraints.sql
+  use_bulk_upsert: true   # Uses ON CONFLICT (UserId) - matches IX_UserProfile_UserId
 
 validation:
   required_source_fields:
