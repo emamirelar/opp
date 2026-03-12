@@ -7,11 +7,11 @@
           <div class="flex flex-wrap gap-6 items-center">
             <p-skeleton height="1.5rem" width="8rem" class="ml-3 mr-3"></p-skeleton>
             <div>
-              <label class="font-semibold">{{ 'label.workflow.currentStage' | translate }} :</label>
+              <label class="font-semibold">{{ 'label.workflow.currentStage' | translate }}:</label>
               <p-skeleton height="1rem" width="6rem" class="inline-block ml-2"></p-skeleton>
             </div>
             <div>
-              <label class="font-semibold">{{ 'label.workflow.nextStage' | translate }} :</label>
+              <label class="font-semibold">{{ 'label.workflow.nextStage' | translate }}:</label>
               <p-skeleton height="1rem" width="6rem" class="inline-block ml-2"></p-skeleton>
             </div>
           </div>
@@ -26,23 +26,23 @@
           />
           <div class="flex flex-wrap gap-6">
             <div>
-              <label class="font-semibold">{{ 'label.workflow.currentStage' | translate }} :</label>
+              <label class="font-semibold">{{ 'label.workflow.currentStage' | translate }}:</label>
               {{ workflowData()?.displayName || workflowData()?.currentStage || '' }}
             </div>
             <div>
-              <label class="font-semibold">{{ 'label.workflow.nextStage' | translate }} :</label>
+              <label class="font-semibold">{{ 'label.workflow.nextStage' | translate }}:</label>
               {{ workflowData()?.workflow?.nextStage || workflowData()?.pendingStage || '' }}
             </div>
           </div>
         } @else if (workflowData()) {
           <div class="flex flex-wrap gap-6">
             <div>
-              <label class="font-semibold">{{ 'label.workflow.currentStage' | translate }} :</label>
+              <label class="font-semibold">{{ 'label.workflow.currentStage' | translate }}:</label>
               {{ workflowData()?.displayName || workflowData()?.currentStageDisplayName || workflowData()?.currentStage || currentStageName() || '' }}
             </div>
             @if (workflowData()?.availableActions && workflowData()?.availableActions.length > 0) {
               <div>
-                <label class="font-semibold">{{ 'label.workflow.nextStage' | translate }} :</label>
+                <label class="font-semibold">{{ 'label.workflow.nextStage' | translate }}:</label>
                 {{ workflowData()?.availableActions[0]?.targetStage || workflowData()?.availableActions[0]?.displayName || '' }}
               </div>
             }

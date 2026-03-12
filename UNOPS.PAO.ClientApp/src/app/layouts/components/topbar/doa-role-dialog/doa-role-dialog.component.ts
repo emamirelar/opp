@@ -60,7 +60,7 @@ interface PendingAssignment {
   ],
   template: `
     <p-dialog 
-      header="Manage DOA Roles" 
+      header="Manage DoA Roles" 
       [(visible)]="visible" 
       [style]="{ width: '900px' }" 
       [modal]="true"
@@ -86,7 +86,7 @@ interface PendingAssignment {
                 <ng-template pTemplate="caption">
                   <div class="flex flex-col gap-3">
                     <div class="flex justify-between items-center">
-                      <span class="text-lg font-semibold">{{ existingRoles.length }} DOA Role(s)</span>
+                      <span class="text-lg font-semibold">{{ existingRoles.length }} DoA Role(s)</span>
                       <p-button icon="pi pi-refresh" label="Refresh" [text]="true" (onClick)="loadExistingRoles()"></p-button>
                     </div>
                     <div class="flex gap-3 items-center">
@@ -105,7 +105,7 @@ interface PendingAssignment {
                   <tr>
                     <th pSortableColumn="orgUnitCode">Org Unit <p-sortIcon field="orgUnitCode"></p-sortIcon></th>
                     <th pSortableColumn="userName">User <p-sortIcon field="userName"></p-sortIcon></th>
-                    <th pSortableColumn="roleName">DOA Role <p-sortIcon field="roleName"></p-sortIcon></th>
+                    <th pSortableColumn="roleName">DoA Role <p-sortIcon field="roleName"></p-sortIcon></th>
                     <th pSortableColumn="createdDate">Created <p-sortIcon field="createdDate"></p-sortIcon></th>
                     <th style="width: 80px">Actions</th>
                   </tr>
@@ -128,7 +128,7 @@ interface PendingAssignment {
                       <span class="px-2 py-1 rounded text-sm" 
                             [ngClass]="{'bg-blue-100 text-blue-800': role.roleName === 'DoA2', 
                                        'bg-green-100 text-green-800': role.roleName === 'DoA3'}">
-                        {{ role.roleName === 'DoA2' ? 'DOA Level 2' : role.roleName === 'DoA3' ? 'DOA Level 3' : role.roleName }}
+                        {{ role.roleName === 'DoA2' ? 'DoA Level 2' : role.roleName === 'DoA3' ? 'DoA Level 3' : role.roleName }}
                       </span>
                     </td>
                     <td class="text-sm text-gray-600">
@@ -149,7 +149,7 @@ interface PendingAssignment {
                 <ng-template pTemplate="emptymessage">
                   <tr>
                     <td colspan="5" class="text-center text-gray-500 py-4">
-                      No DOA roles found
+                      No DoA roles found
                     </td>
                   </tr>
                 </ng-template>
@@ -159,7 +159,7 @@ interface PendingAssignment {
             <!-- Empty State -->
             <div *ngIf="!loadingExisting && existingRoles.length === 0" class="text-center text-gray-500 py-8 border rounded-lg">
               <i class="pi pi-inbox text-4xl mb-4 block"></i>
-              <p>No existing DOA role assignments found</p>
+              <p>No existing DoA role assignments found</p>
             </div>
           </div>
         </p-tabPanel>
@@ -213,14 +213,14 @@ interface PendingAssignment {
                 </p-autoComplete>
               </div>
 
-              <!-- DOA Role Dropdown -->
+              <!-- DoA Role Dropdown -->
               <div class="flex flex-col gap-2">
-                <label class="font-semibold text-sm">DOA Role</label>
+                <label class="font-semibold text-sm">DoA Role</label>
                 <p-dropdown
                   [(ngModel)]="selectedDoaRole"
                   [options]="doaRoleOptions"
                   optionLabel="label"
-                  placeholder="Select DOA Role"
+                  placeholder="Select DoA Role"
                   styleClass="w-full"
                   [style]="{ width: '100%' }">
                 </p-dropdown>
@@ -244,7 +244,7 @@ interface PendingAssignment {
                   <tr>
                     <th>Org Unit</th>
                     <th>User</th>
-                    <th>DOA Role</th>
+                    <th>DoA Role</th>
                     <th style="width: 80px">Actions</th>
                   </tr>
                 </ng-template>
@@ -280,7 +280,7 @@ interface PendingAssignment {
             <!-- Empty State -->
             <div *ngIf="pendingAssignments.length === 0" class="text-center text-gray-500 py-8 border rounded-lg">
               <i class="pi pi-users text-4xl mb-4 block"></i>
-              <p>Add DOA role assignments using the form above</p>
+              <p>Add DoA role assignments using the form above</p>
             </div>
 
             <!-- Save Button -->
@@ -340,14 +340,14 @@ export class DoaRoleDialogComponent implements OnInit {
   filteredUsers: User[] = [];
   
   doaRoleOptions: DoaRoleOption[] = [
-    { label: 'DOA Level 2', value: 'DoA2_OrganizationHierarchy', roleName: 'DoA2' },
-    { label: 'DOA Level 3', value: 'DoA3_OrganizationHierarchy', roleName: 'DoA3' }
+    { label: 'DoA Level 2', value: 'DoA2_OrganizationHierarchy', roleName: 'DoA2' },
+    { label: 'DoA Level 3', value: 'DoA3_OrganizationHierarchy', roleName: 'DoA3' }
   ];
 
   // Filter options for existing roles table
   doaRoleFilterOptions = [
-    { label: 'DOA Level 2', value: 'DoA2' },
-    { label: 'DOA Level 3', value: 'DoA3' }
+    { label: 'DoA Level 2', value: 'DoA2' },
+    { label: 'DoA Level 3', value: 'DoA3' }
   ];
   selectedRoleFilter: string | null = null;
 
@@ -386,11 +386,11 @@ export class DoaRoleDialogComponent implements OnInit {
         this.loadingExisting = false;
       },
       error: (error) => {
-        console.error('Error loading existing DOA roles:', error);
+        console.error('Error loading existing DoA roles:', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'Failed to load existing DOA roles'
+          detail: 'Failed to load existing DoA roles'
         });
         this.loadingExisting = false;
       }
@@ -417,18 +417,18 @@ export class DoaRoleDialogComponent implements OnInit {
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
-          detail: `DOA role removed successfully`
+          detail: `DoA role removed successfully`
         });
         // Remove from local list
         this.existingRoles = this.existingRoles.filter(r => r.id !== role.id);
         this.deletingRoleId = null;
       },
       error: (error) => {
-        console.error('Error deleting DOA role:', error);
+        console.error('Error deleting DoA role:', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: error.error?.message || 'Failed to delete DOA role'
+          detail: error.error?.message || 'Failed to delete DoA role'
         });
         this.deletingRoleId = null;
       }
@@ -587,7 +587,7 @@ export class DoaRoleDialogComponent implements OnInit {
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
-          detail: `${this.pendingAssignments.length} DOA role(s) assigned successfully`
+          detail: `${this.pendingAssignments.length} DoA role(s) assigned successfully`
         });
         this.pendingAssignments = [];
         this.resetForm();
@@ -595,11 +595,11 @@ export class DoaRoleDialogComponent implements OnInit {
         this.loadExistingRoles();
       },
       error: (error) => {
-        console.error('Error saving DOA roles:', error);
+        console.error('Error saving DoA roles:', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: error.error?.message || 'Failed to save DOA role assignments'
+          detail: error.error?.message || 'Failed to save DoA role assignments'
         });
       },
       complete: () => {

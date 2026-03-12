@@ -296,26 +296,23 @@ export class OpportunityTeamSectionComponent implements OnInit {
       stakeholders = enriched.length > 0 ? enriched : this.rawAutoPopulatedStakeholders();
     }
     
-    // Deduplicate by orgUnitId + roleId (unique key for auto-populated stakeholder)
+    // Deduplicate by orgUnitId + roleId + userId (unique key for auto-populated stakeholder)
     // This prevents duplicate entries when data comes from multiple sources
     // Prefer entries with more complete data (userName, position)
     const stakeholderMap = new Map<string, OpportunityStakeholder>();
     for (const s of stakeholders) {
-      const key = `${s.organizationHierarchyId}-${s.entityRoleId}`;
+      const key = `${s.organizationHierarchyId}-${s.entityRoleId}-${s.userId || s.userName || ''}`;
       const existing = stakeholderMap.get(key);
       
       if (!existing) {
-        // First entry for this key
         stakeholderMap.set(key, s);
       } else {
-        // Prefer entry with more complete data
         const existingScore = (existing.userName ? 1 : 0) + (existing.position ? 1 : 0);
         const newScore = (s.userName ? 1 : 0) + (s.position ? 1 : 0);
         
         if (newScore > existingScore) {
           stakeholderMap.set(key, s);
         } else if (newScore === existingScore && s.userName && !existing.userName) {
-          // If scores are equal but new has userName and existing doesn't, prefer new
           stakeholderMap.set(key, s);
         }
       }
@@ -838,26 +835,35 @@ export class OpportunityTeamSectionComponent implements OnInit {
             next: (responses: EntityUserRolesByOrgUnitResponse[]) => {
               this.loadingAutoPopulatedStakeholders.set(false);
 
-              // Create maps of orgUnitId -> roleId -> user names and position
-              const userNameMap = new Map<string, string>();
-              const positionMap = new Map<string, string | null>();
+              // Build a map of orgUnitId -> roleId -> individual users for enrichment
+              // Each user gets their own stakeholder entry with their own position
+              const usersByRoleKey = new Map<string, { userId: number | null; name: string; email: string; position: string | null }[]>();
               for (const response of responses) {
                 for (const group of response.roleGroups) {
                   const key = `${response.organizationHierarchyId}-${group.entityRoleId}`;
-                  const userNames = group.users.map((u) => u.name).join(', ');
-                  userNameMap.set(key, userNames);
-                  const firstUser = group.users?.[0];
-                  positionMap.set(key, firstUser?.position ?? null);
+                  usersByRoleKey.set(key, group.users.map(u => ({
+                    userId: u.userId ?? null,
+                    name: u.name,
+                    email: u.email,
+                    position: u.position ?? null,
+                  })));
                 }
               }
 
-              // Enrich stakeholders with user names and position (third line: Advisor, PMO - Specialist, etc.)
-              const enriched = rawStakeholders.map((s) => {
+              // Expand raw stakeholders: if a stakeholder has multiple users in its role group,
+              // create individual entries per user so each person shows with their own title
+              const enriched: OpportunityStakeholder[] = [];
+              for (const s of rawStakeholders) {
                 const key = `${s.organizationHierarchyId}-${s.entityRoleId}`;
-                const userName = userNameMap.get(key) || null;
-                const position = positionMap.get(key) ?? s.position ?? null;
-                return { ...s, userName, position };
-              });
+                const users = usersByRoleKey.get(key);
+                if (users && users.length > 0) {
+                  for (const user of users) {
+                    enriched.push({ ...s, userId: user.userId, userName: user.name, position: user.position });
+                  }
+                } else {
+                  enriched.push(s);
+                }
+              }
 
               this.enrichedAutoPopulatedStakeholders.set(enriched);
               this.cdr.detectChanges();
@@ -1034,32 +1040,52 @@ export class OpportunityTeamSectionComponent implements OnInit {
       return;
     }
 
-    // Create auto-populated stakeholders for each role group from each org unit
+    // Create one auto-populated stakeholder per user per role group
+    // This ensures each person's title/position is displayed correctly
     const autoStakeholders: OpportunityStakeholder[] = [];
     for (const response of responses) {
       if (!response.roleGroups || response.roleGroups.length === 0) continue;
 
       for (const group of response.roleGroups) {
-        // Get the first user's position if available
-        const firstUser = group.users && group.users.length > 0 ? group.users[0] : null;
-        
-        autoStakeholders.push({
-          id: 0,
-          opportunityId: this.opportunity().id!,
-          entityRoleId: group.entityRoleId,
-          entityRoleName: group.entityRoleName || '',
-          entityRoleCode: group.entityRoleCode || null,
-          isInternal: true,
-          stakeholderType: 'Internal',
-          userId: null,
-          userName: group.users.map((u) => u.name).join(', ') || null,
-          userEmail: null,
-          position: firstUser?.position || null,  // Use first user's position
-          organizationHierarchyId: response.organizationHierarchyId,
-          organizationHierarchyName: response.organizationHierarchyName,
-          isAutoPopulated: true,
-          notes: null,
-        });
+        if (group.users && group.users.length > 0) {
+          for (const user of group.users) {
+            autoStakeholders.push({
+              id: 0,
+              opportunityId: this.opportunity().id!,
+              entityRoleId: group.entityRoleId,
+              entityRoleName: group.entityRoleName || '',
+              entityRoleCode: group.entityRoleCode || null,
+              isInternal: true,
+              stakeholderType: 'Internal',
+              userId: user.userId ?? null,
+              userName: user.name || null,
+              userEmail: user.email || null,
+              position: user.position || null,
+              organizationHierarchyId: response.organizationHierarchyId,
+              organizationHierarchyName: response.organizationHierarchyName,
+              isAutoPopulated: true,
+              notes: null,
+            });
+          }
+        } else {
+          autoStakeholders.push({
+            id: 0,
+            opportunityId: this.opportunity().id!,
+            entityRoleId: group.entityRoleId,
+            entityRoleName: group.entityRoleName || '',
+            entityRoleCode: group.entityRoleCode || null,
+            isInternal: true,
+            stakeholderType: 'Internal',
+            userId: null,
+            userName: null,
+            userEmail: null,
+            position: null,
+            organizationHierarchyId: response.organizationHierarchyId,
+            organizationHierarchyName: response.organizationHierarchyName,
+            isAutoPopulated: true,
+            notes: null,
+          });
+        }
       }
     }
 
@@ -1103,32 +1129,51 @@ export class OpportunityTeamSectionComponent implements OnInit {
               return;
             }
 
-            // Create auto-populated stakeholders for each role group from each org unit
+            // Create one auto-populated stakeholder per user per role group
             const autoStakeholders: OpportunityStakeholder[] = [];
             for (const response of responses) {
               if (!response.roleGroups || response.roleGroups.length === 0) continue;
 
               for (const group of response.roleGroups) {
-                // Get the first user's position if available
-                const firstUser = group.users && group.users.length > 0 ? group.users[0] : null;
-                
-                autoStakeholders.push({
-                  id: 0,
-                  opportunityId: this.opportunity().id!,
-                  entityRoleId: group.entityRoleId,
-                  entityRoleName: group.entityRoleName || '',
-                  entityRoleCode: group.entityRoleCode || null,
-                  isInternal: true,
-                  stakeholderType: 'Internal',
-                  userId: null,
-                  userName: group.users.map((u) => u.name).join(', ') || null,
-                  userEmail: null,
-                  position: firstUser?.position || null,  // Use first user's position
-                  organizationHierarchyId: response.organizationHierarchyId,
-                  organizationHierarchyName: response.organizationHierarchyName,
-                  isAutoPopulated: true,
-                  notes: null,
-                });
+                if (group.users && group.users.length > 0) {
+                  for (const user of group.users) {
+                    autoStakeholders.push({
+                      id: 0,
+                      opportunityId: this.opportunity().id!,
+                      entityRoleId: group.entityRoleId,
+                      entityRoleName: group.entityRoleName || '',
+                      entityRoleCode: group.entityRoleCode || null,
+                      isInternal: true,
+                      stakeholderType: 'Internal',
+                      userId: user.userId ?? null,
+                      userName: user.name || null,
+                      userEmail: user.email || null,
+                      position: user.position || null,
+                      organizationHierarchyId: response.organizationHierarchyId,
+                      organizationHierarchyName: response.organizationHierarchyName,
+                      isAutoPopulated: true,
+                      notes: null,
+                    });
+                  }
+                } else {
+                  autoStakeholders.push({
+                    id: 0,
+                    opportunityId: this.opportunity().id!,
+                    entityRoleId: group.entityRoleId,
+                    entityRoleName: group.entityRoleName || '',
+                    entityRoleCode: group.entityRoleCode || null,
+                    isInternal: true,
+                    stakeholderType: 'Internal',
+                    userId: null,
+                    userName: null,
+                    userEmail: null,
+                    position: null,
+                    organizationHierarchyId: response.organizationHierarchyId,
+                    organizationHierarchyName: response.organizationHierarchyName,
+                    isAutoPopulated: true,
+                    notes: null,
+                  });
+                }
               }
             }
 
@@ -1167,13 +1212,31 @@ export class OpportunityTeamSectionComponent implements OnInit {
           return;
         }
 
-        // Create auto-populated stakeholders for each role group
-        const autoStakeholders: OpportunityStakeholder[] = response.roleGroups.map(
-          (group: EntityUserRoleGroupModel) => {
-            // Get the first user's position if available
-            const firstUser = group.users && group.users.length > 0 ? group.users[0] : null;
-            
-            return {
+        // Create one auto-populated stakeholder per user per role group
+        const autoStakeholders: OpportunityStakeholder[] = [];
+        for (const group of response.roleGroups) {
+          if (group.users && group.users.length > 0) {
+            for (const user of group.users) {
+              autoStakeholders.push({
+                id: 0,
+                opportunityId: this.opportunity().id!,
+                entityRoleId: group.entityRoleId,
+                entityRoleName: group.entityRoleName || '',
+                entityRoleCode: group.entityRoleCode || null,
+                isInternal: true,
+                stakeholderType: 'Internal',
+                userId: user.userId ?? null,
+                userName: user.name || null,
+                userEmail: user.email || null,
+                position: user.position || null,
+                organizationHierarchyId: orgUnitId,
+                organizationHierarchyName: response.organizationHierarchyName,
+                isAutoPopulated: true,
+                notes: null,
+              });
+            }
+          } else {
+            autoStakeholders.push({
               id: 0,
               opportunityId: this.opportunity().id!,
               entityRoleId: group.entityRoleId,
@@ -1181,17 +1244,17 @@ export class OpportunityTeamSectionComponent implements OnInit {
               entityRoleCode: group.entityRoleCode || null,
               isInternal: true,
               stakeholderType: 'Internal',
-              userId: null, // No specific user - auto-populated
-              userName: group.users.map((u) => u.name).join(', ') || null,
+              userId: null,
+              userName: null,
               userEmail: null,
-              position: firstUser?.position || null,  // Use first user's position
+              position: null,
               organizationHierarchyId: orgUnitId,
               organizationHierarchyName: response.organizationHierarchyName,
               isAutoPopulated: true,
               notes: null,
-            };
+            });
           }
-        );
+        }
 
         this.dynamicAutoPopulatedStakeholders.set(autoStakeholders);
         this.cdr.detectChanges();

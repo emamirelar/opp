@@ -105,6 +105,16 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
     /// </summary>
     public const string WorkflowApprovalCategory = "workflow_approval";
 
+    /// <summary>
+    /// Category identifier for Go Decision approved (workflow completed) notifications.
+    /// </summary>
+    public const string WorkflowCompletedCategory = "workflow_completed";
+
+    /// <summary>
+    /// Category identifier for No-Go (workflow rejected) notifications.
+    /// </summary>
+    public const string WorkflowRejectedCategory = "workflow_rejected";
+
     public PaoWorkflowNotificationService(
         IEmailSender emailSender,
         IDbContextFactory<AppDbContext> contextFactory,
@@ -243,6 +253,83 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
     }
 
     /// <summary>
+    /// Creates in-system notifications for OM and Workflow Initiator when a Go/No-Go decision is made.
+    /// These appear in the notification bell as informational notifications.
+    /// Deduplicates when OM and Initiator are the same person.
+    /// </summary>
+    private async Task CreateInSystemNotificationsForDecisionAsync(
+        List<int> recipientUserIds,
+        string message,
+        string category,
+        WorkflowNotification notification,
+        int entityId,
+        string orgUnitName,
+        string decision)
+    {
+        try
+        {
+            if (!recipientUserIds.Any())
+                return;
+
+            var notificationData = new
+            {
+                entityName = notification.EntityName,
+                entityId = entityId,
+                entityDisplayName = notification.EntityDisplayName,
+                orgUnitName = orgUnitName,
+                performedBy = notification.PerformedByUserName,
+                performedOn = notification.Timestamp.ToString("o"),
+                decision = decision
+            };
+
+            foreach (var userId in recipientUserIds.Distinct())
+            {
+                await CreateInformationalNotificationAsync(
+                    userId,
+                    message,
+                    category,
+                    notification.EntityName,
+                    entityId,
+                    notificationData);
+            }
+
+            _logger.LogInformation(
+                "Created {Count} in-system {Decision} notifications for {EntityName} (ID: {EntityId})",
+                recipientUserIds.Distinct().Count(), decision, notification.EntityName, entityId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create in-system {Decision} notifications for entity {EntityName} {EntityId}",
+                decision, notification.EntityName, notification.EntityId);
+        }
+    }
+
+    /// <summary>
+    /// Creates a single informational notification (not action required).
+    /// </summary>
+    private async Task CreateInformationalNotificationAsync(int userId, string message, string category, string entityName, int entityId, object recordData)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        var notificationRecord = new Notification
+        {
+            UserId = userId,
+            Message = message,
+            Category = category,
+            ResponseType = "informational",
+            Entity = entityName,
+            EntityId = entityId,
+            RecordData = JsonSerializer.Serialize(recordData),
+            IsRead = false,
+            Status = NotificationStatus.Pending,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await context.Notifications.AddAsync(notificationRecord);
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
     /// Creates a single workflow approval notification.
     /// </summary>
     private async Task CreateWorkflowNotificationAsync(int userId, string message, string entityName, int entityId, object recordData)
@@ -337,6 +424,22 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
             _logger.LogInformation(
                 "Sent workflow completed email for {EntityName} (ID: {EntityId}) to {ToCount} recipients with {CcCount} CC",
                 notification.EntityDisplayName, notification.EntityId, toEmails.Count, ccEmails.Count);
+
+            // Create in-system notifications for OM and Workflow Initiator
+            if (notification.EntityName.Equals("Opportunity", StringComparison.OrdinalIgnoreCase) &&
+                int.TryParse(notification.EntityId, out var entityIdForBell))
+            {
+                var recipientUserIds = await GetRejectionRecipientUserIdsForOpportunityAsync(notification.EntityId);
+                var orgUnitNameForBell = await GetOrgUnitNameForOpportunityAsync(notification.EntityId);
+                await CreateInSystemNotificationsForDecisionAsync(
+                    recipientUserIds,
+                    $"Go Decision approved for \"{notification.EntityDisplayName}\" ({orgUnitNameForBell})",
+                    WorkflowCompletedCategory,
+                    notification,
+                    entityIdForBell,
+                    orgUnitNameForBell,
+                    "approved");
+            }
         }
         catch (Exception ex)
         {
@@ -414,6 +517,22 @@ public class PaoWorkflowNotificationService : IWorkflowNotificationService
             _logger.LogInformation(
                 "Sent workflow rejected (NO GO) email for {EntityName} (ID: {EntityId}) to {ToCount} recipients with {CcCount} CC",
                 notification.EntityDisplayName, notification.EntityId, toEmails.Count, ccEmails.Count);
+
+            // Create in-system notifications for OM and Workflow Initiator
+            if (string.Equals(notification.EntityName, "Opportunity", StringComparison.OrdinalIgnoreCase) &&
+                int.TryParse(notification.EntityId, out var entityIdForBell))
+            {
+                var recipientUserIds = await GetRejectionRecipientUserIdsForOpportunityAsync(notification.EntityId);
+                var orgUnitNameForBell = await GetOrgUnitNameForOpportunityAsync(notification.EntityId);
+                await CreateInSystemNotificationsForDecisionAsync(
+                    recipientUserIds,
+                    $"\"{notification.EntityDisplayName}\" ({orgUnitNameForBell}) has been set to NO GO",
+                    WorkflowRejectedCategory,
+                    notification,
+                    entityIdForBell,
+                    orgUnitNameForBell,
+                    "rejected");
+            }
         }
         catch (Exception ex)
         {
