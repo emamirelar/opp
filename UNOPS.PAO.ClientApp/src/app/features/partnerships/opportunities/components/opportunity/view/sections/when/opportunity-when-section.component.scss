@@ -43,14 +43,13 @@
   }
 }
 
-// Datepicker float label truncation — prevents long labels from overlapping the
-// calendar icon. Applied via the .dp-label class directly on <label> elements
-// so Angular's emulated encapsulation handles scoping (no ::ng-deep needed).
 .dp-label {
   max-width: calc(100% - 3.5rem) !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
+  background-color: white !important;
+  padding: 0 0.25rem !important;
 }
 
 // Custom Timeline Styles
