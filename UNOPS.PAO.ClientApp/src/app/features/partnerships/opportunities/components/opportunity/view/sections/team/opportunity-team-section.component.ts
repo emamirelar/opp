@@ -837,7 +837,7 @@ export class OpportunityTeamSectionComponent implements OnInit {
 
               // Build a map of orgUnitId -> roleId -> individual users for enrichment
               // Each user gets their own stakeholder entry with their own position
-              const usersByRoleKey = new Map<string, { userId: number | null; name: string; email: string; position: string | null }[]>();
+              const usersByRoleKey = new Map<string, { userId: number | null; name: string | null; email: string | null; position: string | null }[]>();
               for (const response of responses) {
                 for (const group of response.roleGroups) {
                   const key = `${response.organizationHierarchyId}-${group.entityRoleId}`;
