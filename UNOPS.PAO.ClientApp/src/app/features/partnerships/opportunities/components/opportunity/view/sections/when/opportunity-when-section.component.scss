@@ -19,20 +19,30 @@
       left: 0.75rem !important;
     }
   }
-  
-  // Remove border radius from right top and bottom corners of all datepicker inputs
-  .p-datepicker {
-    input.p-inputtext {
-      border-top-right-radius: 0 !important;
-      border-bottom-right-radius: 0 !important;
-      
-      // Responsive font sizes for date pickers
-      @media (max-width: 640px) {
-        font-size: 0.875rem !important; // sm:text-sm
-      }
-      @media (max-width: 768px) {
-        font-size: 0.9rem !important; // md:text-base (slightly smaller)
-      }
+
+  // Force datepicker internal span to fill its container so the floatlabel
+  // and label max-width calculations are based on the actual input width.
+  p-datepicker {
+    display: block;
+    width: 100%;
+  }
+
+  .p-datepicker.p-inputwrapper {
+    width: 100% !important;
+    display: flex !important;
+  }
+
+  .p-datepicker input.p-inputtext {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+
+    @media (max-width: 640px) {
+      font-size: 0.875rem !important;
+    }
+    @media (max-width: 768px) {
+      font-size: 0.9rem !important;
     }
   }
   
@@ -41,15 +51,16 @@
       font-size: 0.875rem !important;
     }
   }
-}
 
-.dp-label {
-  max-width: calc(100% - 3.5rem) !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-  background-color: white !important;
-  padding: 0 0.25rem !important;
+  // Truncate datepicker floating labels so they don't overlap the calendar icon
+  label.dp-label {
+    max-width: calc(100% - 3.5rem) !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    background-color: white !important;
+    padding: 0 0.25rem !important;
+  }
 }
 
 // Custom Timeline Styles
