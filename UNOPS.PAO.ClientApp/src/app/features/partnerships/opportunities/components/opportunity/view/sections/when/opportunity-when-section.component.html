@@ -108,7 +108,7 @@
               class="w-full"
               (onSelect)="onSigningDateManualChange()"
             />
-            <label for="targetSigningDate">{{ 'label.opportunity.targetSigningDate' | translate }} *</label>
+            <label for="targetSigningDate" class="dp-label">{{ 'label.opportunity.targetSigningDate' | translate }} *</label>
           </p-floatlabel>
           <p class="text-xs text-gray-500 mt-1">
             {{ 'label.opportunity.targetSigningDateHint' | translate }}
@@ -128,7 +128,7 @@
               class="w-full"
               (onSelect)="onImplementationStartDateManualChange()"
             />
-            <label for="implementationStartDate">{{ 'label.opportunity.implementationStartDate' | translate }} *</label>
+            <label for="implementationStartDate" class="dp-label">{{ 'label.opportunity.implementationStartDate' | translate }} *</label>
           </p-floatlabel>
           @if (isImplementationStartBeforeSigningDate()) {
             <p-message severity="error" variant="simple" styleClass="mt-2 text-xs text-unops-error">
@@ -163,7 +163,7 @@
               class="w-full"
               (onSelect)="onDeliveryDateManualChange()"
             />
-            <label for="targetDeliveryDate">{{ 'label.opportunity.targetDeliveryDate' | translate }} *</label>
+            <label for="targetDeliveryDate" class="dp-label">{{ 'label.opportunity.targetDeliveryDate' | translate }} *</label>
           </p-floatlabel>
           @if (isDeliveryDateBeforeImplementationStart()) {
             <p-message severity="error" variant="simple" styleClass="mt-2 text-xs text-unops-error">
@@ -277,7 +277,7 @@
                   [maxDate]="targetSigningDateControl.value"
                   class="w-full"
                 />
-                <label for="submissionDeadline">{{ 'label.submissionDeadline' | translate }}</label>
+                <label for="submissionDeadline" class="dp-label">{{ 'label.submissionDeadline' | translate }}</label>
               </p-floatlabel>
               @if (isSubmissionDeadlineAfterSigningDate()) {
                 <p-message severity="error" variant="simple" styleClass="mt-2 text-xs text-unops-error">
