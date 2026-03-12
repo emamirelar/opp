@@ -624,9 +624,13 @@ export class TopbarComponent implements OnInit, OnDestroy {
   getCategoryIcon(notification: Notification): string {
     const category = notification.category?.toLowerCase() || '';
     
-    // Check for workflow approval notifications (Go/No-Go decisions)
+    // Check for workflow notifications (Go/No-Go decisions)
     if (category.includes('workflow_approval') || category.includes('go_decision')) {
       return 'pi pi-check-circle';
+    } else if (category.includes('workflow_completed')) {
+      return 'pi pi-check-circle';
+    } else if (category.includes('workflow_rejected')) {
+      return 'pi pi-times-circle';
     }
     // Check for specific entity types
     else if (category.includes('contact') || category.includes('_contact_')) {
@@ -653,8 +657,12 @@ export class TopbarComponent implements OnInit, OnDestroy {
   getCategoryIconColor(notification: Notification): string {
     const category = notification.category?.toLowerCase() || '';
     
-    // Workflow approval notifications get primary color (important actions)
-    if (category.includes('workflow_approval') || category.includes('go_decision')) {
+    // Workflow notifications get distinct colors
+    if (category.includes('workflow_completed')) {
+      return '#059669'; // Green for approved Go Decision
+    } else if (category.includes('workflow_rejected')) {
+      return '#dc2626'; // Red for No-Go rejection
+    } else if (category.includes('workflow_approval') || category.includes('go_decision')) {
       return '#0057a0'; // UNOPS Primary Blue for workflow approvals
     } else if (category.includes('contact')) {
       return '#10b981'; // Green for contacts
@@ -701,7 +709,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
     // Handle workflow approval notifications (Go/No-Go decision requests)
     const category = notification.category?.toLowerCase() || '';
-    if ((category.includes('workflow_approval') || category.includes('go_decision')) && notification.entityId) {
+    if ((category.includes('workflow_approval') || category.includes('go_decision') || category.includes('workflow_completed') || category.includes('workflow_rejected')) && notification.entityId) {
       // Navigate to the opportunity for Go/No-Go decision
       this.router.navigate(['/partnerships/opportunities', notification.entityId]);
       this.markNotificationAsRead(notification.id);
