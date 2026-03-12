@@ -3678,6 +3678,7 @@ Please analyze this information and return only valid JSON as specified in the s
   **Cross-cutting SDG(s):**
   - [each SDG from secondarySdGs on its own bullet]
   CRITICAL: "Cross-cutting SDG(s):" must start on a NEW line after a blank line - never on the same line as the last Main SDG bullet.
+  SDG FORMATTING: (1) NO REPETITION - output each SDG as "SDG Goal N: [Goal Name]" only. The source may have "SDG Goal 3: GOAL 3: Good Health..." - remove the redundant "GOAL 3" part; output "SDG Goal 3: Good Health and Well-being". (2) CONSISTENT CASING - always use "Goal" (capital G) for all SDGs, never "GOAL" or mixed casing.-
   If primarySdGs shows "No primary SDGs selected", use [Information not available] for Main.
   If secondarySdGs shows "No secondary SDGs selected", omit the Cross-cutting section entirely.
   The "sdGs" field contains full details with targets and indicators if needed.
