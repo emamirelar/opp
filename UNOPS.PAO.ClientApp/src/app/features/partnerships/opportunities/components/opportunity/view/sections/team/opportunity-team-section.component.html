@@ -370,7 +370,7 @@
 
                 <!-- Roles Grid - 2 columns on medium screens, 3 on large -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                  @for (stakeholder of group.stakeholders; track stakeholder.entityRoleId) {
+                  @for (stakeholder of group.stakeholders; track $index) {
                     <div class="bg-unops-surface-secondary rounded-unops-md p-2.5 border border-unops-neutral-300 opacity-90">
                       <div class="flex items-center gap-2">
                         <p-avatar
@@ -469,7 +469,7 @@
 
                 <!-- DoA Roles Display -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                  @for (stakeholder of group.stakeholders; track stakeholder.entityRoleId) {
+                  @for (stakeholder of group.stakeholders; track $index) {
                     <div class="bg-emerald-50 rounded-unops-md p-2.5 border border-emerald-300">
                       <div class="flex items-center gap-2">
                         <p-avatar
@@ -646,7 +646,7 @@
 
               <!-- Roles Grid - 2 columns on medium screens, 3 on large -->
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                @for (stakeholder of group.stakeholders; track stakeholder.entityRoleId) {
+                @for (stakeholder of group.stakeholders; track $index) {
                   <div class="bg-amber-50 rounded-unops-md p-2.5 border border-amber-200 opacity-90">
                     <div class="flex items-center gap-2">
                       <p-avatar

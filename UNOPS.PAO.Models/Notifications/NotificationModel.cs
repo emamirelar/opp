@@ -9,7 +9,9 @@ public class NotificationModel
     public string Category { get; set; } = string.Empty;
     public string ResponseType { get; set; } = string.Empty;
     public List<object> Records { get; set; } = new();
-    public string? Entity { get; set; } // Entity type for navigation
-    public int? EntityId { get; set; } // Entity ID for navigation
+    public string? Entity { get; set; }
+    public int? EntityId { get; set; }
     public NotificationStatus Status { get; set; } = NotificationStatus.Pending;
+    public bool IsRead { get; set; }
+    public DateTime? CreatedAt { get; set; }
 } 

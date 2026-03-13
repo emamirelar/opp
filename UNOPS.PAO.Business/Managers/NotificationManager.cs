@@ -28,14 +28,8 @@ public class NotificationManager : IApplicationService
         var query = appDbContext.Notifications
             .Where(n => n.UserId == userId);
 
-        // Apply unreadOnly filter if specified
-        if (unreadOnly.HasValue)
+        if (unreadOnly == true)
         {
-            query = query.Where(n => n.IsRead == !unreadOnly.Value);
-        }
-        else
-        {
-            // Default behavior: show only unread notifications
             query = query.Where(n => !n.IsRead);
         }
 
@@ -51,6 +45,9 @@ public class NotificationManager : IApplicationService
             ResponseType = n.ResponseType,
             Entity = n.Entity,
             EntityId = n.EntityId,
+            Status = n.Status,
+            IsRead = n.IsRead,
+            CreatedAt = n.CreatedAt,
             Records = ParseRecordData(n.RecordData)
         }).ToList();
     }
