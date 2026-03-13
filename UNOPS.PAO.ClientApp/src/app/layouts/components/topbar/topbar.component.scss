@@ -220,11 +220,15 @@
 
       .notification-content {
         flex: 1;
+        min-width: 0;
+        overflow: hidden;
 
         p {
           margin: 0 0 0.5rem 0;
           line-height: 1.4;
           font-size: 14px;
+          overflow-wrap: break-word;
+          word-break: break-word;
         }
 
         .notification-timestamp {
@@ -406,11 +410,15 @@
 
     .notification-content {
       flex: 1;
+      min-width: 0;
+      overflow: hidden;
 
       p {
         margin: 0 0 0.5rem 0;
         line-height: 1.4;
         font-size: 14px;
+        overflow-wrap: break-word;
+        word-break: break-word;
       }
 
       .notification-timestamp {
