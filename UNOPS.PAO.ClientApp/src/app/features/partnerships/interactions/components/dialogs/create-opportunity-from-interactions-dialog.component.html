@@ -152,7 +152,7 @@
                 }
                 @if (groupedDirectorRoles().length > 0) {
                   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                    @for (stakeholder of groupedDirectorRoles(); track stakeholder.entityRoleId) {
+                    @for (stakeholder of groupedDirectorRoles(); track $index) {
                       <div class="bg-unops-surface-secondary rounded-unops-md p-2.5 border border-unops-neutral-300 opacity-90">
                         <div class="flex items-center gap-2">
                           <p-avatar label="A" shape="circle" size="normal" styleClass="bg-emerald-100 text-emerald-600 flex-shrink-0" />
@@ -177,7 +177,7 @@
                       <span>{{ 'label.opportunity.decisionMakingPathway' | translate }}</span>
                     </h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                      @for (stakeholder of decisionMakingPathwayRoles(); track stakeholder.entityRoleId) {
+                      @for (stakeholder of decisionMakingPathwayRoles(); track $index) {
                         <div class="bg-emerald-50 rounded-unops-md p-2.5 border border-emerald-300">
                           <div class="flex items-center gap-2">
                             <p-avatar label="D" shape="circle" size="normal" styleClass="bg-emerald-100 text-emerald-700 flex-shrink-0" />
@@ -804,7 +804,7 @@
                       }
                       @if (groupedDirectorRoles().length > 0) {
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                          @for (stakeholder of groupedDirectorRoles(); track stakeholder.entityRoleId) {
+                          @for (stakeholder of groupedDirectorRoles(); track $index) {
                             <div class="bg-unops-surface-secondary rounded-unops-md p-2.5 border border-unops-neutral-300 opacity-90">
                               <div class="flex items-center gap-2">
                                 <p-avatar label="A" shape="circle" size="normal" styleClass="bg-emerald-100 text-emerald-600 flex-shrink-0" />
@@ -829,7 +829,7 @@
                             <span>{{ 'label.opportunity.decisionMakingPathway' | translate }}</span>
                           </h4>
                           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                            @for (stakeholder of decisionMakingPathwayRoles(); track stakeholder.entityRoleId) {
+                            @for (stakeholder of decisionMakingPathwayRoles(); track $index) {
                               <div class="bg-emerald-50 rounded-unops-md p-2.5 border border-emerald-300">
                                 <div class="flex items-center gap-2">
                                   <p-avatar label="D" shape="circle" size="normal" styleClass="bg-emerald-100 text-emerald-700 flex-shrink-0" />

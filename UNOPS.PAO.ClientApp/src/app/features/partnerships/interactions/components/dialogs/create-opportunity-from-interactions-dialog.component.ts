@@ -1086,20 +1086,32 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
           this.orgUnitStakeholders.set([]);
           return;
         }
-        const stakeholders: OrgUnitRoleStakeholder[] = response.roleGroups.map(
-          (group: EntityUserRoleGroupModel) => {
-            const firstUser = group.users?.[0];
-            return {
+        const stakeholders: OrgUnitRoleStakeholder[] = [];
+        for (const group of response.roleGroups) {
+          if (group.users && group.users.length > 0) {
+            for (const user of group.users) {
+              stakeholders.push({
+                entityRoleId: group.entityRoleId,
+                entityRoleName: group.entityRoleName || null,
+                entityRoleCode: group.entityRoleCode || null,
+                userName: user.name || null,
+                position: user.position || null,
+                organizationHierarchyId: response.organizationHierarchyId,
+                organizationHierarchyName: response.organizationHierarchyName || null
+              });
+            }
+          } else {
+            stakeholders.push({
               entityRoleId: group.entityRoleId,
               entityRoleName: group.entityRoleName || null,
               entityRoleCode: group.entityRoleCode || null,
-              userName: group.users?.map(u => u.name).filter(Boolean).join(', ') || null,
-              position: firstUser?.position || null,
+              userName: null,
+              position: null,
               organizationHierarchyId: response.organizationHierarchyId,
               organizationHierarchyName: response.organizationHierarchyName || null
-            };
+            });
           }
-        );
+        }
         this.orgUnitStakeholders.set(stakeholders);
       },
       error: () => {
