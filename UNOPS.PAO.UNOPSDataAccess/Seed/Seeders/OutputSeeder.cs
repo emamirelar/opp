@@ -4103,6 +4103,36 @@ This differs from 'cash for training,' where payment is conditional on attending
             IsDeleted = false
         });
 
+        // ===== HQ financial transfers-related services (POBO) — SUP-61017 =====
+
+        outputs.Add(new Output
+        {
+            Name = @"HQ financial transfers-related services",
+            Level0 = @"HQ financial transfers-related services",
+            ServiceLine = @"Financial Management",
+            Status = EntityStatus.Active,
+            IsDeleted = false
+        });
+
+        outputs.Add(new Output
+        {
+            Name = @"In-house bank (HQ exclusive)",
+            Level0 = @"HQ financial transfers-related services",            Level1 = @"In-house bank (HQ exclusive)",
+            ServiceLine = @"Financial Management",
+            Status = EntityStatus.Active,
+            IsDeleted = false
+        });
+
+        outputs.Add(new Output
+        {
+            Name = @"Payments on behalf of (POBO) (HQ exclusive)",
+            Level0 = @"HQ financial transfers-related services",            Level1 = @"In-house bank (HQ exclusive)",            Level2 = @"Payments on behalf of (POBO) (HQ exclusive)",
+            DefinitionLevel2 = @"The execution of payments on behalf of partners based on structured instructions using UNOPS bank accounts.",
+            ServiceLine = @"Financial Management",
+            Status = EntityStatus.Active,
+            IsDeleted = false
+        });
+
         return outputs;
     }
 }
