@@ -87,10 +87,15 @@
 
 .notification-panel {
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 560px;
+  overflow: hidden;
 
   .notification-header {
     padding: 1rem 1rem 0.5rem 1rem;
     border-bottom: 1px solid var(--unops-neutral-200);
+    flex-shrink: 0;
 
     h3 {
       margin: 0;
@@ -105,6 +110,7 @@
     padding: 0 1rem;
     margin-bottom: 0.5rem;
     border-bottom: 1px solid var(--unops-neutral-200);
+    flex-shrink: 0;
 
     .tab-button {
       flex: 1;
@@ -153,6 +159,9 @@
 
   .notification-list {
     padding: 0;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
 
     .notification-item {
       display: flex;
