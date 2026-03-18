@@ -393,7 +393,7 @@ export class TimelineComponent implements OnDestroy, AfterViewInit, OnChanges {
 
     return `
       <div style="display: flex; align-items: center; gap: 6px; padding: 2px;">
-        <span style="font-size: 14px; color: ${iconInfo.color}; font-weight: bold; line-height: 1;">${unicodeIcon}</span>
+        <span style="font-size: var(--unops-font-size-medium); color: ${iconInfo.color}; font-weight: bold; line-height: 1;">${unicodeIcon}</span>
         <span style="font-size: 11px; color: #374151; font-weight: 500; white-space: nowrap;">${record.contactName || 'No contact'}</span>
       </div>
     `;

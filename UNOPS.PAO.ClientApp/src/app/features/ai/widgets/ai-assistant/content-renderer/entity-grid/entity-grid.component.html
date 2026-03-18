@@ -27,8 +27,8 @@
   <!-- Fallback: Show raw data if cards fail to render -->
   <div *ngIf="!isLoading() && gridData && gridData.length > 0 && responsiveColumns().length === 0" class="p-4 bg-yellow-50 border border-yellow-200 rounded">
     <h5 class="font-semibold mb-2">⚠️ {{ 'message.columnConfigurationMissing' | translate }}</h5>
-    <p class="text-sm mb-2">{{ 'message.noColumnConfiguration' | translate:'{entityType: entityType}' }}</p>
-    <pre class="text-xs bg-white p-2 rounded border overflow-auto max-h-32">{{ gridData | json }}</pre>
+    <p class="text-unops-sm mb-2">{{ 'message.noColumnConfiguration' | translate:'{entityType: entityType}' }}</p>
+    <pre class="text-unops-xs bg-white p-2 rounded border overflow-auto max-h-32">{{ gridData | json }}</pre>
   </div>
   
   <div class="entity-grid-empty" *ngIf="!isLoading() && (!gridData || gridData.length === 0)">

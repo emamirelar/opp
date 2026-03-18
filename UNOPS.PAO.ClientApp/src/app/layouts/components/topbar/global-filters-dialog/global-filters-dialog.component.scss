@@ -36,12 +36,12 @@
       }
       
       .p-dialog-title {
-        font-size: 1.375rem;
+        font-size: var(--unops-font-size-headline-small);
         font-weight: 600;
         letter-spacing: -0.025em;
         
         @media (max-width: 480px) {
-          font-size: 1.25rem;
+          font-size: var(--unops-font-size-headline-small);
         }
       }
       
@@ -94,7 +94,7 @@
   gap: 12px;
   padding: 3rem 2rem;
   color: #6b7280;
-  font-size: 0.9375rem;
+  font-size: var(--unops-font-size-base);
   
   @media (max-width: 768px) {
     padding: 2.5rem 1.5rem;
@@ -102,11 +102,11 @@
   
   @media (max-width: 480px) {
     padding: 2rem 1rem;
-    font-size: 0.875rem;
+    font-size: var(--unops-font-size-body-medium);
   }
   
   .pi-spinner {
-    font-size: 1.25rem;
+    font-size: var(--unops-font-size-headline-small);
     color: #6366f1;
   }
 }
@@ -150,7 +150,7 @@
     }
     
     .section-icon {
-      font-size: 1.125rem;
+      font-size: var(--unops-font-size-lg);
       color: #6366f1;
       background: rgba(99, 102, 241, 0.1);
       width: 2.25rem;
@@ -164,13 +164,13 @@
       @media (max-width: 480px) {
         width: 2rem;
         height: 2rem;
-        font-size: 1rem;
+        font-size: var(--unops-font-size-base);
         border-radius: 8px;
       }
     }
     
     .section-title {
-      font-size: 1.125rem;
+      font-size: var(--unops-font-size-lg);
       font-weight: 600;
       color: #1f2937;
       margin: 0;
@@ -178,7 +178,7 @@
       letter-spacing: -0.025em;
       
       @media (max-width: 480px) {
-        font-size: 1rem;
+        font-size: var(--unops-font-size-base);
       }
     }
     
@@ -189,14 +189,14 @@
         .p-button {
           border: 1px solid #d1d5db;
           color: #6b7280;
-          font-size: 0.8125rem;
+          font-size: var(--unops-font-size-sm);
           font-weight: 500;
           padding: 0.375rem 0.875rem;
           border-radius: 8px;
           transition: all 0.2s ease;
           
           @media (max-width: 480px) {
-            font-size: 0.75rem;
+            font-size: var(--unops-font-size-body-small);
             padding: 0.25rem 0.625rem;
           }
           
@@ -213,7 +213,7 @@
   .section-help {
     margin: 0 0 1rem 0;
     padding: 0 2rem;
-    font-size: 0.875rem;
+    font-size: var(--unops-font-size-body-medium);
     color: #6b7280;
     line-height: 1.4;
     
@@ -225,7 +225,7 @@
     @media (max-width: 480px) {
       padding: 0 1rem;
       margin: 0 0 0.75rem 0;
-      font-size: 0.8125rem;
+      font-size: var(--unops-font-size-sm);
     }
   }
   
@@ -249,14 +249,14 @@
   gap: 0.5rem;
   
   .field-label {
-    font-size: 0.875rem;
+    font-size: var(--unops-font-size-body-medium);
     font-weight: 500;
     color: #374151;
     letter-spacing: -0.025em;
   }
   
   .field-help {
-    font-size: 0.8125rem;
+    font-size: var(--unops-font-size-sm);
     color: #6b7280;
     line-height: 1.4;
     margin-top: 0.25rem;
@@ -288,7 +288,7 @@
         
         .p-checkbox-icon {
           color: white;
-          font-size: 0.75rem;
+          font-size: var(--unops-font-size-body-small);
         }
       }
     }
@@ -302,14 +302,14 @@
     flex: 1;
     
     .label-text {
-      font-size: 1rem;
+      font-size: var(--unops-font-size-base);
       font-weight: 500;
       color: #1f2937;
       line-height: 1.25;
     }
     
     .label-help {
-      font-size: 0.8125rem;
+      font-size: var(--unops-font-size-sm);
       color: #6b7280;
       line-height: 1.4;
     }
@@ -376,7 +376,7 @@
       
       .p-dropdown-label {
         padding: 0.875rem 1rem;
-        font-size: 0.9375rem;
+        font-size: var(--unops-font-size-base);
         color: #374151;
         
         &.p-placeholder {
@@ -415,7 +415,7 @@
           border: 2px solid #e5e7eb;
           border-radius: 12px;
           padding: 0.875rem 1rem;
-          font-size: 0.9375rem;
+          font-size: var(--unops-font-size-base);
           transition: all 0.2s ease;
           background: white;
           
@@ -483,12 +483,12 @@
       border-radius: 10px;
       font-weight: 500;
       padding: 0.75rem 1.5rem;
-      font-size: 0.9375rem;
+      font-size: var(--unops-font-size-base);
       transition: all 0.2s ease;
       
       @media (max-width: 480px) {
         padding: 0.625rem 1rem;
-        font-size: 0.875rem;
+        font-size: var(--unops-font-size-body-medium);
         flex: 1;
       }
       

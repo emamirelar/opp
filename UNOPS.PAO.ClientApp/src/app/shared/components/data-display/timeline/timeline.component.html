@@ -5,10 +5,10 @@
       <div class="loading-content">
         @if (currentLoadingState === 'loading') {
           <i class="pi pi-spin pi-spinner text-blue-600"></i>
-          <span class="text-xs text-gray-600 ml-2">{{ 'loading.loadingData' | translate }}</span>
+          <span class="text-unops-xs text-gray-600 ml-2">{{ 'loading.loadingData' | translate }}</span>
         } @else if (currentLoadingState === 'debouncing') {
           <i class="pi pi-clock text-orange-500"></i>
-          <span class="text-xs text-gray-600 ml-2">{{ 'loading.preparing' | translate }}</span>
+          <span class="text-unops-xs text-gray-600 ml-2">{{ 'loading.preparing' | translate }}</span>
         }
       </div>
     </div>
@@ -18,8 +18,8 @@
   @if (config.showNavigator) {
     <div class="timeline-navigator-container mt-2">
       <div class="timeline-navigator-header">
-        <span class="text-sm text-gray-600">{{ 'timeline.navigation' | translate }} ({{getYearRange()}})</span>
-        <button (click)="resetNavigatorView()" class="text-xs text-blue-600 hover:text-blue-800">{{ 'timeline.reset' | translate }}</button>
+        <span class="text-unops-sm text-gray-600">{{ 'timeline.navigation' | translate }} ({{getYearRange()}})</span>
+        <button (click)="resetNavigatorView()" class="text-unops-xs text-blue-600 hover:text-blue-800">{{ 'timeline.reset' | translate }}</button>
       </div>
       <div #navigatorContainer class="timeline-navigator"
            (mousedown)="onNavigatorMouseDown($event)"

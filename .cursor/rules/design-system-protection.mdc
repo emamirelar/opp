@@ -1,0 +1,155 @@
+---
+description: Protects design system integrity — no permission workarounds, no unauthorized style changes, no component modifications outside the design system, no hard-coded values
+globs: "*.ts, *.html, *.scss, *.css, *.cs"
+alwaysApply: true
+---
+
+# Design System and Code Integrity Protection — MANDATORY
+
+## 1. No Permission / Authentication Workarounds
+
+**NEVER** write code that bypasses, skips, or works around authentication or authorization to make something compile or run.
+
+### Prohibited Actions
+
+- Removing or weakening `[Authorize]`, `[PermissionAuthorize]`, or Angular route guards
+- Hardcoding tokens, API keys, session IDs, or credentials anywhere in the codebase
+- Disabling CORS, CSRF, or any security middleware to "unblock" a feature
+- Stubbing or mocking auth in production code (test code under `QA Tests/` is exempt)
+- Adding `[AllowAnonymous]` to endpoints that should be protected
+- Commenting out permission checks to get past a blocker
+
+### Required Behaviour
+
+If a permission or authentication issue blocks progress:
+
+1. **STOP** — do not attempt a workaround
+2. **ASK** the user for the correct authentication details, credentials, or access configuration
+3. **WAIT** for the user's response before proceeding
+4. Follow the server-side permission patterns defined in `component-development.mdc` and `dotnet-implementation.mdc`
+
+---
+
+## 2. No Unauthorized Styling Changes
+
+**NEVER** modify any existing stylesheet, theme file, or style-related configuration unless the user explicitly asks for a styling change.
+
+### Protected Files (Do Not Touch Without Explicit Request)
+
+| File / Path | Purpose |
+|---|---|
+| `UNOPS.PAO.ClientApp/src/styles/unops-design-tokens.scss` | SCSS design token variables |
+| `UNOPS.PAO.ClientApp/src/styles/unops-design-tokens.css` | CSS custom property tokens |
+| `UNOPS.PAO.ClientApp/src/unops-design-tokens.json` | JSON design tokens |
+| `UNOPS.PAO.ClientApp/src/styles/primeng-unops-theme.scss` | PrimeNG component overrides |
+| `UNOPS.PAO.ClientApp/src/styles/unops-utilities.scss` | UNOPS utility classes |
+| `UNOPS.PAO.ClientApp/src/styles/themes/unops.preset.ts` | PrimeNG Material preset |
+| `UNOPS.PAO.ClientApp/tailwind.config.js` | Tailwind configuration |
+| `UNOPS.PAO.ClientApp/src/styles.scss` | Global stylesheet load order |
+| `UNOPS.PAO.ClientApp/public/layout/**/*` | Layout SCSS and theme variables |
+| Any existing component `.scss` file | Component-scoped styles |
+
+### Required Behaviour
+
+Before modifying **any** style-related file:
+
+1. **Tell** the user exactly which file you intend to change and what the change is
+2. **Explain** how it would visually affect the existing project (other components, pages, themes)
+3. **Wait** for explicit confirmation before making the edit
+
+This applies even if the styling change seems minor or cosmetic.
+
+---
+
+## 3. Use Existing Design System Components Only
+
+**NEVER** create custom UI primitives or modify existing shared components without explicit user approval.
+
+### Rules
+
+- All UI must be built using **existing PrimeNG components** (imported as Modules per `component-development.mdc`) and **existing shared/reusable components** in `src/app/shared/`
+- Never create a custom button, input, modal, card, dropdown, tag, or any other primitive when a PrimeNG or existing shared component already covers the use case
+- Never modify an existing shared component (`src/app/shared/components/`, `src/app/shared/reusables/`) to accommodate a new feature — ask the user first
+- If no existing component fits a use case, **ask the user** before creating a new one
+
+### Existing Component Sources (Use These First)
+
+| Source | Location |
+|---|---|
+| PrimeNG components | Imported via `*Module` (e.g., `ButtonModule`, `TableModule`, `DialogModule`) |
+| Shared components | `UNOPS.PAO.ClientApp/src/app/shared/components/` |
+| Reusable components | `UNOPS.PAO.ClientApp/src/app/shared/reusables/components/` |
+| Page components | `UNOPS.PAO.ClientApp/src/app/shared/pages/components/` |
+
+---
+
+## 4. No Hard-Coded Values
+
+**NEVER** hard-code colors, spacing, font sizes, border radii, shadows, or breakpoints. Always use the project's existing design tokens and variables.
+
+### Allowed Value Sources
+
+| Source | Example Usage |
+|---|---|
+| Tailwind UNOPS classes | `bg-unops-primary`, `p-unops-md`, `rounded-unops-md`, `text-unops-sm` |
+| CSS custom properties | `var(--unops-primary)`, `var(--unops-spacing-md)`, `var(--unops-radius-md)` |
+| SCSS variables | `$unops-primary`, `$unops-font-size-base`, `$unops-spacing-lg` |
+| PrimeNG theme tokens | Tokens from `unops.preset.ts` (Material-based preset) |
+
+### Prohibited Patterns
+
+```scss
+/* WRONG — hard-coded hex color */
+color: #0092d1;
+/* CORRECT */
+color: var(--unops-primary);
+
+/* WRONG — hard-coded pixel spacing */
+padding: 16px;
+/* CORRECT */
+padding: var(--unops-spacing-md);
+
+/* WRONG — hard-coded font size */
+font-size: 14px;
+/* CORRECT */
+font-size: var(--unops-font-size-sm);
+
+/* WRONG — hard-coded border radius */
+border-radius: 8px;
+/* CORRECT */
+border-radius: var(--unops-radius-md);
+
+/* WRONG — hard-coded shadow */
+box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+/* CORRECT */
+box-shadow: var(--unops-shadow-sm);
+
+/* WRONG — hard-coded breakpoint */
+@media (min-width: 768px) { ... }
+/* CORRECT */
+@screen unops-tablet { ... }
+```
+
+```html
+<!-- WRONG — hard-coded Tailwind values -->
+<div class="bg-[#0092d1] p-[16px] rounded-[8px]">
+
+<!-- CORRECT — UNOPS design token classes -->
+<div class="bg-unops-primary p-unops-md rounded-unops-md">
+```
+
+### Exceptions
+
+- `0` (zero) is always acceptable
+- `1px` is acceptable for fine borders (e.g., `border: 1px solid`)
+- `100%`, `50%`, and similar percentage-based layout values are acceptable
+- Flexbox/grid utilities (`flex-1`, `grid-cols-2`, `gap-2`) that use Tailwind's unitless scale are acceptable
+
+---
+
+## Checklist Before Every Change
+
+- [ ] Am I bypassing or weakening any auth/permission? If yes — **STOP and ask the user**
+- [ ] Am I modifying an existing style file? If yes — **explain the impact and ask the user**
+- [ ] Am I creating a new UI primitive or modifying a shared component? If yes — **ask the user first**
+- [ ] Am I using a hard-coded color, spacing, font-size, radius, shadow, or breakpoint? If yes — **replace with a design token**

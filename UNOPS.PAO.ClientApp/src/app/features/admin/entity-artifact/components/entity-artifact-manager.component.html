@@ -9,8 +9,8 @@
   <!-- Header Section -->
   <div class="flex flex-wrap items-center gap-4">
     <div class="flex items-center gap-3 w-full">
-      <span class="material-symbols-outlined text-3xl">database</span>
-      <div class="text-3xl font-bold">{{ 'title.entityArtifactManager' | translate }}</div>
+      <span class="material-symbols-outlined text-unops-headline-large">database</span>
+      <div class="text-unops-headline-large font-bold">{{ 'title.entityArtifactManager' | translate }}</div>
     </div>
   </div>
 
@@ -33,7 +33,7 @@
       <div class="mb-6 col-span-full">
         <div class="flex items-center gap-2 mb-4">
           <span class="material-symbols-outlined text-primary">category</span>
-          <h3 class="text-lg font-semibold text-gray-900">
+          <h3 class="text-unops-lg font-semibold text-gray-900">
             {{ 'entityArtifact.step1.title' | translate }}
           </h3>
         </div>
@@ -65,7 +65,7 @@
       <div class="mb-6 col-span-full">
         <div class="flex items-center gap-2 mb-4">
           <span class="material-symbols-outlined text-primary">description</span>
-          <h3 class="text-lg font-semibold text-gray-900">
+          <h3 class="text-unops-lg font-semibold text-gray-900">
             {{ 'entityArtifact.step2.title' | translate }}
           </h3>
         </div>
@@ -89,11 +89,11 @@
         <!-- Display data type info -->
         @if (selectedArtifactType()) {
           <div class="mt-2 flex items-center gap-2">
-            <span class="text-sm text-gray-600">{{ 'entityArtifact.fields.dataType' | translate }}:</span>
-            <span class="text-sm font-semibold text-primary">{{ selectedArtifactType()!.artifactDataTypeName || 'N/A' }}</span>
+            <span class="text-unops-sm text-gray-600">{{ 'entityArtifact.fields.dataType' | translate }}:</span>
+            <span class="text-unops-sm font-semibold text-primary">{{ selectedArtifactType()!.artifactDataTypeName || 'N/A' }}</span>
           </div>
           @if (selectedArtifactType()!.description) {
-            <p class="text-sm text-gray-600 mt-2">{{ selectedArtifactType()!.description }}</p>
+            <p class="text-unops-sm text-gray-600 mt-2">{{ selectedArtifactType()!.description }}</p>
           }
         }
         
@@ -108,7 +108,7 @@
       <div class="mb-6 col-span-full">
         <div class="flex items-center gap-2 mb-4">
           <span class="material-symbols-outlined text-primary">list</span>
-          <h3 class="text-lg font-semibold text-gray-900">
+          <h3 class="text-unops-lg font-semibold text-gray-900">
             {{ 'entityArtifact.step3.title' | translate }}
           </h3>
         </div>
@@ -135,7 +135,7 @@
         </p-floatlabel>
         
         @if (selectedEntityRecord() && selectedEntityRecord()!.description) {
-          <p class="text-sm text-gray-600 mt-2">{{ selectedEntityRecord()!.description }}</p>
+          <p class="text-unops-sm text-gray-600 mt-2">{{ selectedEntityRecord()!.description }}</p>
         }
         
         @if (!selectedEntityRecord() && showValidationError() && selectedArtifactType()) {
@@ -150,7 +150,7 @@
         <div class="mb-6 col-span-full">
           <div class="flex items-center gap-2 mb-4">
             <span class="material-symbols-outlined text-primary">edit</span>
-            <h3 class="text-lg font-semibold text-gray-900">
+            <h3 class="text-unops-lg font-semibold text-gray-900">
               {{ 'entityArtifact.step4.title' | translate }}
             </h3>
           </div>
@@ -254,7 +254,7 @@
       <!-- Document upload via Base64 File Upload -->
       @if (selectedDataType() === 'document') {
         <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
+          <label class="block text-unops-sm font-medium text-gray-700 mb-2">
             {{ 'entityArtifact.fields.documentUpload' | translate }} *
           </label>
           
@@ -263,15 +263,15 @@
             <div class="existing-document-card p-4 border border-blue-300 rounded-lg bg-blue-50">
               <div class="flex items-start justify-between gap-4">
                 <div class="flex items-start gap-3 flex-1">
-                  <span class="material-symbols-outlined text-4xl text-blue-600">description</span>
+                  <span class="material-symbols-outlined text-unops-display-medium text-blue-600">description</span>
                   <div class="flex-1 min-w-0">
-                    <p class="text-base font-medium text-gray-900 truncate">
+                    <p class="text-unops-base font-medium text-gray-900 truncate">
                       {{ existingDocumentData()!.fileName }}
                     </p>
-                    <p class="text-sm text-gray-600 mt-1">
+                    <p class="text-unops-sm text-gray-600 mt-1">
                       {{ formatFileSize(existingDocumentData()!.fileSize) }}
                     </p>
-                    <p class="text-xs text-blue-700 mt-1">
+                    <p class="text-unops-xs text-blue-700 mt-1">
                       {{ 'entityArtifact.messages.existingDocument' | translate }}
                     </p>
                   </div>
@@ -324,13 +324,13 @@
                   <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                       <span class="material-symbols-outlined text-orange-600">info</span>
-                      <span class="text-sm text-orange-800">
+                      <span class="text-unops-sm text-orange-800">
                         {{ 'entityArtifact.messages.replacingDocument' | translate }}
                       </span>
                     </div>
                     <button
                       type="button"
-                      class="text-sm text-orange-600 hover:text-orange-800 font-medium"
+                      class="text-unops-sm text-orange-600 hover:text-orange-800 font-medium"
                       (click)="onCancelReplaceDocument()"
                     >
                       {{ 'button.cancel' | translate }}
@@ -363,10 +363,10 @@
                   <div class="flex items-start gap-3">
                     <span class="material-symbols-outlined text-blue-600">info</span>
                     <div>
-                      <p class="text-sm font-semibold text-blue-900">
+                      <p class="text-unops-sm font-semibold text-blue-900">
                         {{ 'entityArtifact.messages.existingArtifactFound' | translate }}
                       </p>
-                      <p class="text-sm text-blue-700 mt-1">
+                      <p class="text-unops-sm text-blue-700 mt-1">
                         {{ 'entityArtifact.messages.lastModified' | translate }}: 
                         {{ currentArtifact()!.lastModifiedDate || currentArtifact()!.createdDate | date: 'medium' }}
                       </p>

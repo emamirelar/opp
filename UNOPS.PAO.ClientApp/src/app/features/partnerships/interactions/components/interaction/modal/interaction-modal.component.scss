@@ -15,7 +15,7 @@
   label {
     font-weight: 500;
     color: #374151;
-    font-size: 0.875rem;
+    font-size: var(--unops-font-size-body-medium);
   }
 }
 
@@ -46,7 +46,7 @@
   color: white;
   padding: 0.375rem 0.75rem;
   border-radius: 20px;
-  font-size: 0.875rem;
+  font-size: var(--unops-font-size-body-medium);
   font-weight: 500;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
@@ -64,7 +64,7 @@
 .no-partners-message {
   color: #6b7280;
   font-style: italic;
-  font-size: 0.875rem;
+  font-size: var(--unops-font-size-body-medium);
   padding: 0.75rem;
   background: #f9fafb;
   border-radius: 6px;
@@ -90,7 +90,7 @@
 // Responsive adjustments
 @media (max-width: 768px) {
   .partner-chip {
-    font-size: 0.8125rem;
+    font-size: var(--unops-font-size-sm);
     padding: 0.25rem 0.5rem;
   }
 }

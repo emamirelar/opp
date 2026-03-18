@@ -3,7 +3,7 @@
   border: none;
   background: transparent;
   color: var(--text-color);
-  font-size: 0.875rem;
+  font-size: var(--unops-font-size-body-medium);
   cursor: pointer;
   padding: 0.5rem;
   border-radius: var(--border-radius);
@@ -40,7 +40,7 @@
   }
   
   i {
-    font-size: 1rem;
+    font-size: var(--unops-font-size-base);
     
     &.pi-building,
     &.pi-sitemap,
@@ -51,7 +51,7 @@
     
     &.pi-star-fill {
       color: #ffd700;
-      font-size: 0.75rem;
+      font-size: var(--unops-font-size-body-small);
     }
   }
 }
@@ -98,7 +98,7 @@
         }
         
         .org-unit-code {
-          font-size: 0.875rem;
+          font-size: var(--unops-font-size-body-medium);
           margin-left: 0.5rem;
         }
         
@@ -107,13 +107,13 @@
         .pi-map-marker,
         .pi-folder {
           color: var(--primary-color);
-          font-size: 0.875rem;
+          font-size: var(--unops-font-size-body-medium);
         }
         
         .org-unit-star {
           cursor: pointer;
           transition: transform 0.2s ease, color 0.2s ease;
-          font-size: 1rem;
+          font-size: var(--unops-font-size-base);
           
           &:hover {
             transform: scale(1.2);
@@ -142,7 +142,7 @@
         }
         
         .pi-spinner {
-          font-size: 1.5rem;
+          font-size: var(--unops-font-size-headline-medium);
           animation: spin 2s linear infinite;
         }
       }
@@ -237,7 +237,7 @@
           
           .p-treenode-icon {
             color: var(--primary-color);
-            font-size: 0.875rem;
+            font-size: var(--unops-font-size-body-medium);
             margin-right: 0.5rem;
           }
         }
@@ -246,7 +246,7 @@
       // Custom star icon styles
       .pi-star, .pi-star-fill {
         transition: transform 0.2s ease, color 0.2s ease;
-        font-size: 1rem;
+        font-size: var(--unops-font-size-base);
         
         &:hover {
           transform: scale(1.2);

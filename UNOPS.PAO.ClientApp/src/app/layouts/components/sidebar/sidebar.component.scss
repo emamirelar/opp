@@ -28,7 +28,7 @@
     border-radius: 50%;
     background: transparent;
     color: var(--unops-neutral-700, #374151);
-    font-size: 1.25rem;
+    font-size: var(--unops-font-size-headline-small);
     cursor: pointer;
     transition: background-color 0.2s ease;
 

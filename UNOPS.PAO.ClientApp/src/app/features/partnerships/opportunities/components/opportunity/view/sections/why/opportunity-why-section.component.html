@@ -13,7 +13,7 @@
         </div>
         <div class="flex items-center gap-2">
           @if (isSaving()) {
-            <i class="pi pi-spin pi-spinner text-xl text-primary"></i>
+            <i class="pi pi-spin pi-spinner text-unops-xl text-primary"></i>
           }
           @if (canUpdate()) {
             @if (!isEditing()) {
@@ -37,12 +37,12 @@
         <div class="mt-3 bg-amber-100 border-l-4 border-amber-500 px-4 py-3 rounded">
           <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div class="flex items-start gap-2 flex-1">
-              <i class="pi pi-exclamation-triangle text-amber-600 text-lg flex-shrink-0 mt-0.5"></i>
+              <i class="pi pi-exclamation-triangle text-amber-600 text-unops-lg flex-shrink-0 mt-0.5"></i>
               <div class="flex flex-col">
-                <span class="text-sm font-bold text-amber-900">
+                <span class="text-unops-sm font-bold text-amber-900">
                   {{ 'message.unsavedChanges' | translate }}
                 </span>
-                <span class="text-xs font-medium text-amber-800">
+                <span class="text-unops-xs font-medium text-amber-800">
                   {{ 'message.unsavedChangesSectionDetail' | translate }}
                 </span>
               </div>
@@ -78,7 +78,7 @@
     <!-- AI Suggestions -->
     @if (loadingInsightsSuggestions()) {
       <div class="flex items-center gap-3 p-4 bg-unops-surface-secondary rounded-unops-md border border-unops-neutral-light">
-        <i class="pi pi-spin pi-spinner text-xl text-unops-primary"></i>
+        <i class="pi pi-spin pi-spinner text-unops-xl text-unops-primary"></i>
         <span class="text-unops-neutral-700">{{ 'message.opportunity.refreshingInsights' | translate }}</span>
       </div>
     } @else if (suggestions() && suggestions().length > 0) {
@@ -87,9 +87,9 @@
       >
         <div class="flex items-start gap-2 mb-2">
           <i
-            class="pi pi-lightbulb text-unops-warning-darker text-sm mt-0.5"
+            class="pi pi-lightbulb text-unops-warning-darker text-unops-sm mt-0.5"
           ></i>
-          <h4 class="text-xs font-semibold text-unops-secondary">
+          <h4 class="text-unops-xs font-semibold text-unops-secondary">
             {{ "label.aiSuggestions" | translate }}
           </h4>
         </div>
@@ -98,10 +98,10 @@
             <div
               class="bg-unops-surface-primary rounded p-2 border border-unops-warning-light shadow-unops-sm"
             >
-              <div class="font-semibold text-xs text-unops-secondary mb-1">
+              <div class="font-semibold text-unops-xs text-unops-secondary mb-1">
                 {{ suggestion.title }}
               </div>
-              <p class="text-xs text-unops-neutral-800">
+              <p class="text-unops-xs text-unops-neutral-800">
                 {{ suggestion.description }}
               </p>
             </div>
@@ -113,7 +113,7 @@
     <!-- Context and Challenge(s) -->
     <div id="field-challenges">
       <h3
-        class="text-sm font-semibold text-unops-neutral-700 mb-2 flex items-center gap-2"
+        class="text-unops-sm font-semibold text-unops-neutral-700 mb-2 flex items-center gap-2"
       >
         <i class="pi pi-exclamation-triangle text-unops-warning"></i>
         {{ "label.opportunity.contextAndChallenges" | translate }} *
@@ -140,7 +140,7 @@
     <!-- Partner Objective(s) and Expected Results -->
     <div>
       <h3
-        class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2"
+        class="text-unops-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2"
       >
         <i class="pi pi-bullseye text-unops-primary"></i>
         {{ "label.opportunity.partnerObjectivesAndResults" | translate }}
@@ -150,7 +150,7 @@
         <!-- Impact -->
         <div id="field-expectedImpact">
           <h3
-            class="text-sm font-semibold text-unops-neutral-700 mb-2 flex items-center gap-2"
+            class="text-unops-sm font-semibold text-unops-neutral-700 mb-2 flex items-center gap-2"
           >
             <i class="pi pi-chart-line text-unops-secondary"></i>
             {{ "label.opportunity.impact" | translate }} *
@@ -193,7 +193,7 @@
         <!-- Outcome(s) -->
         <div id="field-expectedOutcomes">
           <h3
-            class="text-sm font-semibold text-unops-neutral-700 mb-2 flex items-center gap-2"
+            class="text-unops-sm font-semibold text-unops-neutral-700 mb-2 flex items-center gap-2"
           >
             <i class="pi pi-chart-line text-unops-secondary"></i>
             {{ "label.opportunity.outcomes" | translate }} *
@@ -238,7 +238,7 @@
     <!-- Beneficiaries -->
     <div id="field-beneficiaries">
       <h3
-        class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2"
+        class="text-unops-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2"
       >
         <i class="pi pi-users text-unops-primary"></i>
         {{ "label.opportunity.beneficiaries" | translate }} *
@@ -252,7 +252,7 @@
               [formControl]="beneficiariesToBeDeterminedControl"
               [binary]="true"
             />
-            <span class="text-sm text-gray-700">
+            <span class="text-unops-sm text-gray-700">
               {{
                 "label.opportunity.beneficiaryNumbersToBeDetermined" | translate
               }}
@@ -266,7 +266,7 @@
         <div class="space-y-3">
           @if (opportunity().beneficiariesToBeDetermined) {
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <div class="flex items-center gap-2 text-blue-800 text-sm">
+              <div class="flex items-center gap-2 text-blue-800 text-unops-sm">
                 <i class="pi pi-info-circle"></i>
                 <span>{{
                   "message.opportunity.beneficiariesToBeDetermined" | translate
@@ -286,10 +286,10 @@
                     <i class="pi pi-user text-indigo-600"></i>
                   </div>
                   <div class="flex-1">
-                    <p class="text-xs font-medium text-gray-600 mb-1">
+                    <p class="text-unops-xs font-medium text-gray-600 mb-1">
                       {{ "label.opportunity.directBeneficiaries" | translate }}
                     </p>
-                    <p class="text-2xl font-bold text-indigo-700">
+                    <p class="text-unops-2xl font-bold text-indigo-700">
                       {{
                         opportunity().estimatedDirectBeneficiaries != null
                           ? (opportunity().estimatedDirectBeneficiaries!
@@ -312,12 +312,12 @@
                     <i class="pi pi-users text-purple-600"></i>
                   </div>
                   <div class="flex-1">
-                    <p class="text-xs font-medium text-gray-600 mb-1">
+                    <p class="text-unops-xs font-medium text-gray-600 mb-1">
                       {{
                         "label.opportunity.indirectBeneficiaries" | translate
                       }}
                     </p>
-                    <p class="text-2xl font-bold text-purple-700">
+                    <p class="text-unops-2xl font-bold text-purple-700">
                       {{
                         opportunity().estimatedIndirectBeneficiaries != null
                           ? (opportunity().estimatedIndirectBeneficiaries!
@@ -340,17 +340,17 @@
               >
                 <div class="flex items-center justify-between">
                   <div>
-                    <p class="text-sm font-medium opacity-90">
+                    <p class="text-unops-sm font-medium opacity-90">
                       {{ "label.opportunity.totalBeneficiaries" | translate }}
                     </p>
-                    <p class="text-3xl font-bold">
+                    <p class="text-unops-headline-large font-bold">
                       {{
                         opportunity().estimatedDirectBeneficiaries! +
                           opportunity().estimatedIndirectBeneficiaries! | number
                       }}
                     </p>
                   </div>
-                  <i class="pi pi-chart-bar text-4xl opacity-20"></i>
+                  <i class="pi pi-chart-bar text-unops-display-medium opacity-20"></i>
                 </div>
               </div>
             }
@@ -405,7 +405,7 @@
       <!-- Expected Beneficiaries -->
       <div class="mt-6">
         <h3
-          class="text-sm font-semibold text-unops-neutral-700 mb-2 flex items-center gap-2"
+          class="text-unops-sm font-semibold text-unops-neutral-700 mb-2 flex items-center gap-2"
         >
           <i class="pi pi-users text-unops-accent-orange"></i>
           {{ "label.opportunity.expectedBeneficiaries" | translate }}
@@ -445,7 +445,7 @@
 
     <!-- Alignment with UN, Global and National Goals and Priorities -->
     <div class="pt-4">
-      <h2 class="text-xl font-bold text-unops-secondary mb-4 flex items-center gap-2 border-b border-unops-neutral-200 pb-2">
+      <h2 class="text-unops-xl font-bold text-unops-secondary mb-4 flex items-center gap-2 border-b border-unops-neutral-200 pb-2">
         <i class="pi pi-globe text-unops-primary"></i>
         {{ "label.opportunity.alignmentWithGoalsAndPriorities" | translate }}
       </h2>
@@ -454,7 +454,7 @@
     <div id="field-sdgs">
       <div class="flex items-center justify-between mb-4">
         <h3
-          class="text-lg font-semibold text-unops-secondary flex items-center gap-2"
+          class="text-unops-lg font-semibold text-unops-secondary flex items-center gap-2"
         >
           <i class="pi pi-globe text-unops-success"></i>
           {{ "label.opportunity.sdgAlignment" | translate }} * ({{ sdgCount() }})
@@ -494,7 +494,7 @@
                     />
                   } @else {
                     <div
-                      class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-2xl rounded shadow-sm"
+                      class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-unops-2xl rounded shadow-sm"
                     >
                       {{ sdg.sdgNumber }}
                     </div>
@@ -510,7 +510,7 @@
                     </h4>
                     <div class="flex items-center gap-2 mb-2">
                       <div
-                        class="text-xs font-bold px-2 py-1 rounded-lg text-center"
+                        class="text-unops-xs font-bold px-2 py-1 rounded-lg text-center"
                         [style]="{
                           'background-color': sdg.isPrimary
                             ? 'rgb(76, 175, 80)'
@@ -529,10 +529,10 @@
                     @if (sdg.skipTargetsAndIndicators) {
                       <div class="mt-3">
                         <div style="background-color: rgb(253, 250, 241);" class="flex items-start gap-2 border border-unops-warning-light rounded-lg p-3">
-                          <i class="pi pi-info-circle text-unops-warning-darker text-sm mt-0.5"></i>
-                          <div class="text-sm">
+                          <i class="pi pi-info-circle text-unops-warning-darker text-unops-sm mt-0.5"></i>
+                          <div class="text-unops-sm">
                             <span class="font-medium text-unops-secondary">{{ "label.opportunity.skipTargetsAndIndicators" | translate }}</span>
-                            <p class="text-xs text-unops-neutral-800 mt-1">
+                            <p class="text-unops-xs text-unops-neutral-800 mt-1">
                               {{ "message.opportunity.skipTargetsAndIndicatorsInfo" | translate }}
                             </p>
                           </div>
@@ -543,16 +543,16 @@
                         class="mt-3 pl-4 border-l-2 border-unops-primary-200 space-y-2"
                       >
                         @for (target of sdg.targets; track target.id) {
-                          <div class="text-sm">
+                          <div class="text-unops-sm">
                             <div
                               class="font-medium text-unops-primary flex items-center gap-2"
                             >
-                              <i class="pi pi-check-circle text-xs"></i>
+                              <i class="pi pi-check-circle text-unops-xs"></i>
                               {{ "label.target" | translate }}
                               {{ target.sdgTargetId }}
                             </div>
                             <div
-                              class="text-unops-neutral-700 ml-5 text-xs mt-1"
+                              class="text-unops-neutral-700 ml-5 text-unops-xs mt-1"
                             >
                               {{ target.targetDescription }}
                             </div>
@@ -568,9 +568,9 @@
                                 ) {
                                   <div class="flex items-start gap-1.5">
                                     <i
-                                      class="pi pi-angle-right text-xs text-unops-neutral-500 mt-0.5"
+                                      class="pi pi-angle-right text-unops-xs text-unops-neutral-500 mt-0.5"
                                     ></i>
-                                    <div class="text-xs text-unops-neutral-700">
+                                    <div class="text-unops-xs text-unops-neutral-700">
                                       {{
                                         indicator.sdgIndicatorLongDescription
                                       }}
@@ -590,7 +590,7 @@
           }
         } @else {
           <div class="text-center py-8 text-unops-neutral-500">
-            <i class="pi pi-globe text-4xl mb-3 text-unops-neutral-400"></i>
+            <i class="pi pi-globe text-unops-display-medium mb-3 text-unops-neutral-400"></i>
             <p>{{ "message.opportunity.noSDGs" | translate }}</p>
           </div>
         }
@@ -602,7 +602,7 @@
       <div>
         <div class="flex items-center justify-between mb-4">
           <h3
-            class="text-lg font-semibold text-unops-secondary flex items-center gap-2"
+            class="text-unops-lg font-semibold text-unops-secondary flex items-center gap-2"
           >
             <i class="pi pi-flag text-unops-primary"></i>
             {{ "label.opportunity.uncfAlignment" | translate }} ({{
@@ -625,7 +625,7 @@
                   <!-- Country Header with Edit/Delete buttons (like SDG) -->
                   <div class="flex items-center justify-between mb-3">
                     <h4
-                      class="text-sm font-semibold text-gray-500 flex items-center gap-2"
+                      class="text-unops-sm font-semibold text-gray-500 flex items-center gap-2"
                     >
                       <i class="pi pi-map-marker text-blue-600"></i>
                       {{ oppCountry.country?.name }}
@@ -667,7 +667,7 @@
                   @if (outcomesForCountry.length > 0) {
                     @let firstOutcome = outcomesForCountry[0];
                     @if (firstOutcome.versionNo) {
-                      <div class="text-xs font-semibold text-gray-600 mb-2">
+                      <div class="text-unops-xs font-semibold text-gray-600 mb-2">
                         {{ "label.outcomes" | translate }} ({{
                           "label.version" | translate
                         }}: {{ firstOutcome.versionNo }})
@@ -678,12 +678,12 @@
                         uncfOutcome of outcomesForCountry;
                         track uncfOutcome.id
                       ) {
-                        <div class="text-sm">
+                        <div class="text-unops-sm">
                           <!-- Outcome -->
                           <div
                             class="font-medium text-gray-700 flex items-center gap-2"
                           >
-                            <i class="pi pi-check-circle text-xs"></i>
+                            <i class="pi pi-check-circle text-unops-xs"></i>
                             {{ uncfOutcome.uncfOutcomeName }}
                           </div>
 
@@ -699,9 +699,9 @@
                               ) {
                                 <div class="flex items-start gap-1.5">
                                   <i
-                                    class="pi pi-angle-right text-xs text-gray-400 mt-0.5"
+                                    class="pi pi-angle-right text-unops-xs text-gray-400 mt-0.5"
                                   ></i>
-                                  <div class="text-xs text-gray-600">
+                                  <div class="text-unops-xs text-gray-600">
                                     {{ indicator.uncfIndicatorName }}
                                   </div>
                                 </div>
@@ -713,7 +713,7 @@
                     </div>
                   } @else {
                     <!-- No outcomes selected for this country -->
-                    <div class="text-sm text-gray-500 italic">
+                    <div class="text-unops-sm text-gray-500 italic">
                       {{ "label.noOutcomesSelected" | translate }}
                     </div>
                   }
@@ -727,14 +727,14 @@
       <div>
         <div class="flex items-center justify-between mb-4">
           <h3
-            class="text-lg font-semibold text-unops-secondary flex items-center gap-2"
+            class="text-unops-lg font-semibold text-unops-secondary flex items-center gap-2"
           >
             <i class="pi pi-flag text-unops-primary"></i>
             {{ "label.opportunity.uncfAlignment" | translate }}
           </h3>
         </div>
         <div class="bg-unops-primary-container-soft rounded-unops-sm p-4">
-          <p class="text-sm text-gray-500 italic">
+          <p class="text-unops-sm text-gray-500 italic">
             {{ "message.opportunity.uncfNotAvailable" | translate }}
           </p>
         </div>
@@ -744,7 +744,7 @@
     <!-- Humanitarian, Peace & Security Framework Alignment -->
     <div>
       <h3
-        class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2"
+        class="text-unops-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2"
       >
         <i class="pi pi-shield text-unops-primary"></i>
         {{ "label.opportunity.humanitarianFramework" | translate }}
@@ -760,16 +760,16 @@
                   <div
                     class="w-10 h-10 bg-white rounded flex items-center justify-center flex-shrink-0 border border-green-300"
                   >
-                    <span class="text-sm font-bold text-green-700">{{
+                    <span class="text-unops-sm font-bold text-green-700">{{
                       country.country?.iso2Code || "XX"
                     }}</span>
                   </div>
 
                   <div class="flex-1">
-                    <h4 class="text-sm font-semibold text-gray-900 mb-2">
+                    <h4 class="text-unops-sm font-semibold text-gray-900 mb-2">
                       {{ country.country?.name }}
                     </h4>
-                    <p class="text-xs text-gray-600 mb-3">
+                    <p class="text-unops-xs text-gray-600 mb-3">
                       {{
                         "message.opportunity.humanitarianFrameworkAvailable"
                           | translate
@@ -779,7 +779,7 @@
                     @if (isEditing()) {
                       <div class="space-y-2">
                         <label
-                          class="block text-xs font-medium text-gray-700 mb-2"
+                          class="block text-unops-xs font-medium text-gray-700 mb-2"
                         >
                           {{
                             "label.opportunity.frameworkAlignmentStatus"
@@ -800,7 +800,7 @@
                               "
                               class="w-4 h-4 text-green-600"
                             />
-                            <span class="text-xs text-gray-700">
+                            <span class="text-unops-xs text-gray-700">
                               {{
                                 "label.opportunity.frameworkWillAlign"
                                   | translate
@@ -820,7 +820,7 @@
                               "
                               class="w-4 h-4 text-green-600"
                             />
-                            <span class="text-xs text-gray-700">
+                            <span class="text-unops-xs text-gray-700">
                               {{
                                 "label.opportunity.frameworkNotAtThisTime"
                                   | translate
@@ -840,7 +840,7 @@
                               "
                               class="w-4 h-4 text-green-600"
                             />
-                            <span class="text-xs text-gray-700">
+                            <span class="text-unops-xs text-gray-700">
                               {{
                                 "label.opportunity.frameworkNotSpecified"
                                   | translate
@@ -853,7 +853,7 @@
                       <div class="flex items-center gap-2">
                         @if (country.humanitarianFrameworkAlignment === true) {
                           <i class="pi pi-check-circle text-green-600"></i>
-                          <span class="text-xs font-medium text-green-700">
+                          <span class="text-unops-xs font-medium text-green-700">
                             {{
                               "label.opportunity.frameworkWillAlign" | translate
                             }}
@@ -862,7 +862,7 @@
                           country.humanitarianFrameworkAlignment === false
                         ) {
                           <i class="pi pi-times-circle text-amber-600"></i>
-                          <span class="text-xs font-medium text-amber-700">
+                          <span class="text-unops-xs font-medium text-amber-700">
                             {{
                               "label.opportunity.frameworkNotAtThisTime"
                                 | translate
@@ -870,7 +870,7 @@
                           </span>
                         } @else {
                           <i class="pi pi-info-circle text-gray-400"></i>
-                          <span class="text-xs text-gray-500 italic">
+                          <span class="text-unops-xs text-gray-500 italic">
                             {{
                               "label.opportunity.frameworkNotSpecified"
                                 | translate
@@ -889,21 +889,21 @@
                   <div
                     class="w-10 h-10 bg-white rounded flex items-center justify-center flex-shrink-0 border border-amber-300"
                   >
-                    <span class="text-sm font-bold text-amber-700">{{
+                    <span class="text-unops-sm font-bold text-amber-700">{{
                       country.country?.iso2Code || "XX"
                     }}</span>
                   </div>
 
                   <div class="flex-1">
-                    <h4 class="text-sm font-semibold text-gray-900 mb-2">
+                    <h4 class="text-unops-sm font-semibold text-gray-900 mb-2">
                       {{ country.country?.name }}
                     </h4>
                     
                     <!-- Warning message -->
                     <div style="background-color: rgb(253, 250, 241);" class="mb-3 border border-unops-warning-light rounded-md p-2">
                       <div class="flex items-start gap-2">
-                        <i class="pi pi-info-circle text-unops-warning-darker mt-0.5 flex-shrink-0 text-xs"></i>
-                        <p class="text-xs text-unops-secondary">
+                        <i class="pi pi-info-circle text-unops-warning-darker mt-0.5 flex-shrink-0 text-unops-xs"></i>
+                        <p class="text-unops-xs text-unops-secondary">
                           {{
                             "message.opportunity.countriesWithoutFramework" | translate
                           }}
@@ -914,7 +914,7 @@
                     @if (isEditing()) {
                       <div class="space-y-2">
                         <label
-                          class="block text-xs font-medium text-gray-700 mb-2"
+                          class="block text-unops-xs font-medium text-gray-700 mb-2"
                         >
                           {{
                             "label.opportunity.frameworkAlignmentStatus"
@@ -935,7 +935,7 @@
                               "
                               class="w-4 h-4 text-green-600"
                             />
-                            <span class="text-xs text-gray-700">
+                            <span class="text-unops-xs text-gray-700">
                               {{
                                 "label.opportunity.frameworkWillAlign"
                                   | translate
@@ -955,7 +955,7 @@
                               "
                               class="w-4 h-4 text-green-600"
                             />
-                            <span class="text-xs text-gray-700">
+                            <span class="text-unops-xs text-gray-700">
                               {{
                                 "label.opportunity.frameworkNotAtThisTime"
                                   | translate
@@ -975,7 +975,7 @@
                               "
                               class="w-4 h-4 text-green-600"
                             />
-                            <span class="text-xs text-gray-700">
+                            <span class="text-unops-xs text-gray-700">
                               {{
                                 "label.opportunity.frameworkNotSpecified"
                                   | translate
@@ -988,7 +988,7 @@
                       <div class="flex items-center gap-2">
                         @if (country.humanitarianFrameworkAlignment === true) {
                           <i class="pi pi-check-circle text-green-600"></i>
-                          <span class="text-xs font-medium text-green-700">
+                          <span class="text-unops-xs font-medium text-green-700">
                             {{
                               "label.opportunity.frameworkWillAlign" | translate
                             }}
@@ -997,7 +997,7 @@
                           country.humanitarianFrameworkAlignment === false
                         ) {
                           <i class="pi pi-times-circle text-amber-600"></i>
-                          <span class="text-xs font-medium text-amber-700">
+                          <span class="text-unops-xs font-medium text-amber-700">
                             {{
                               "label.opportunity.frameworkNotAtThisTime"
                                 | translate
@@ -1005,7 +1005,7 @@
                           </span>
                         } @else {
                           <i class="pi pi-info-circle text-gray-400"></i>
-                          <span class="text-xs text-gray-500 italic">
+                          <span class="text-unops-xs text-gray-500 italic">
                             {{
                               "label.opportunity.frameworkNotSpecified"
                                 | translate
@@ -1025,7 +1025,7 @@
         <div style="background-color: rgb(253, 250, 241);" class="border border-unops-warning-light rounded-lg p-4">
           <div class="flex items-start gap-3">
             <i class="pi pi-info-circle text-unops-warning-darker mt-0.5 flex-shrink-0"></i>
-            <p class="text-xs font-medium text-unops-secondary">
+            <p class="text-unops-xs font-medium text-unops-secondary">
               {{ "message.opportunity.noCountriesAddedForAlignment" | translate }}
             </p>
           </div>
@@ -1036,7 +1036,7 @@
     <!-- NDC (Nationally Determined Contributions) Alignment -->
     <div>
       <h3
-        class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2"
+        class="text-unops-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2"
       >
         <i class="pi pi-sun text-unops-primary"></i>
         {{ "label.opportunity.ndc" | translate }}
@@ -1052,23 +1052,23 @@
                   <div
                     class="w-10 h-10 bg-white rounded flex items-center justify-center flex-shrink-0 border border-green-300"
                   >
-                    <span class="text-sm font-bold text-green-700">{{
+                    <span class="text-unops-sm font-bold text-green-700">{{
                       country.country?.iso2Code || "XX"
                     }}</span>
                   </div>
 
                   <div class="flex-1">
-                    <h4 class="text-sm font-semibold text-gray-900 mb-2">
+                    <h4 class="text-unops-sm font-semibold text-gray-900 mb-2">
                       {{ country.country?.name }}
                     </h4>
-                    <p class="text-xs text-gray-600 mb-3">
+                    <p class="text-unops-xs text-gray-600 mb-3">
                       {{ "message.opportunity.ndcAvailable" | translate }}
                     </p>
 
                     @if (isEditing()) {
                       <div class="space-y-2">
                         <label
-                          class="block text-xs font-medium text-gray-700 mb-2"
+                          class="block text-unops-xs font-medium text-gray-700 mb-2"
                         >
                           {{
                             "label.opportunity.ndcAlignmentStatus" | translate
@@ -1087,7 +1087,7 @@
                               "
                               class="w-4 h-4 text-green-600"
                             />
-                            <span class="text-xs text-gray-700">
+                            <span class="text-unops-xs text-gray-700">
                               {{ "label.opportunity.ndcWillAlign" | translate }}
                             </span>
                           </label>
@@ -1103,7 +1103,7 @@
                               "
                               class="w-4 h-4 text-green-600"
                             />
-                            <span class="text-xs text-gray-700">
+                            <span class="text-unops-xs text-gray-700">
                               {{
                                 "label.opportunity.ndcNotAtThisTime" | translate
                               }}
@@ -1121,7 +1121,7 @@
                               "
                               class="w-4 h-4 text-green-600"
                             />
-                            <span class="text-xs text-gray-700">
+                            <span class="text-unops-xs text-gray-700">
                               {{
                                 "label.opportunity.ndcNotSpecified" | translate
                               }}
@@ -1133,19 +1133,19 @@
                       <div class="flex items-center gap-2">
                         @if (country.ndcAlignment === true) {
                           <i class="pi pi-check-circle text-green-600"></i>
-                          <span class="text-xs font-medium text-green-700">
+                          <span class="text-unops-xs font-medium text-green-700">
                             {{ "label.opportunity.ndcWillAlign" | translate }}
                           </span>
                         } @else if (country.ndcAlignment === false) {
                           <i class="pi pi-times-circle text-amber-600"></i>
-                          <span class="text-xs font-medium text-amber-700">
+                          <span class="text-unops-xs font-medium text-amber-700">
                             {{
                               "label.opportunity.ndcNotAtThisTime" | translate
                             }}
                           </span>
                         } @else {
                           <i class="pi pi-info-circle text-gray-400"></i>
-                          <span class="text-xs text-gray-500 italic">
+                          <span class="text-unops-xs text-gray-500 italic">
                             {{
                               "label.opportunity.ndcNotSpecified" | translate
                             }}
@@ -1163,21 +1163,21 @@
                   <div
                     class="w-10 h-10 bg-white rounded flex items-center justify-center flex-shrink-0 border border-amber-300"
                   >
-                    <span class="text-sm font-bold text-amber-700">{{
+                    <span class="text-unops-sm font-bold text-amber-700">{{
                       country.country?.iso2Code || "XX"
                     }}</span>
                   </div>
 
                   <div class="flex-1">
-                    <h4 class="text-sm font-semibold text-gray-900 mb-2">
+                    <h4 class="text-unops-sm font-semibold text-gray-900 mb-2">
                       {{ country.country?.name }}
                     </h4>
                     
                     <!-- Warning message -->
                     <div style="background-color: rgb(253, 250, 241);" class="mb-3 border border-unops-warning-light rounded-md p-2">
                       <div class="flex items-start gap-2">
-                        <i class="pi pi-info-circle text-unops-warning-darker mt-0.5 flex-shrink-0 text-xs"></i>
-                        <p class="text-xs text-unops-secondary">
+                        <i class="pi pi-info-circle text-unops-warning-darker mt-0.5 flex-shrink-0 text-unops-xs"></i>
+                        <p class="text-unops-xs text-unops-secondary">
                           {{ "message.opportunity.countriesWithoutNdc" | translate }}
                         </p>
                       </div>
@@ -1186,7 +1186,7 @@
                     @if (isEditing()) {
                       <div class="space-y-2">
                         <label
-                          class="block text-xs font-medium text-gray-700 mb-2"
+                          class="block text-unops-xs font-medium text-gray-700 mb-2"
                         >
                           {{
                             "label.opportunity.ndcAlignmentStatus" | translate
@@ -1205,7 +1205,7 @@
                               "
                               class="w-4 h-4 text-green-600"
                             />
-                            <span class="text-xs text-gray-700">
+                            <span class="text-unops-xs text-gray-700">
                               {{ "label.opportunity.ndcWillAlign" | translate }}
                             </span>
                           </label>
@@ -1221,7 +1221,7 @@
                               "
                               class="w-4 h-4 text-green-600"
                             />
-                            <span class="text-xs text-gray-700">
+                            <span class="text-unops-xs text-gray-700">
                               {{
                                 "label.opportunity.ndcNotAtThisTime" | translate
                               }}
@@ -1239,7 +1239,7 @@
                               "
                               class="w-4 h-4 text-green-600"
                             />
-                            <span class="text-xs text-gray-700">
+                            <span class="text-unops-xs text-gray-700">
                               {{
                                 "label.opportunity.ndcNotSpecified" | translate
                               }}
@@ -1251,19 +1251,19 @@
                       <div class="flex items-center gap-2">
                         @if (country.ndcAlignment === true) {
                           <i class="pi pi-check-circle text-green-600"></i>
-                          <span class="text-xs font-medium text-green-700">
+                          <span class="text-unops-xs font-medium text-green-700">
                             {{ "label.opportunity.ndcWillAlign" | translate }}
                           </span>
                         } @else if (country.ndcAlignment === false) {
                           <i class="pi pi-times-circle text-amber-600"></i>
-                          <span class="text-xs font-medium text-amber-700">
+                          <span class="text-unops-xs font-medium text-amber-700">
                             {{
                               "label.opportunity.ndcNotAtThisTime" | translate
                             }}
                           </span>
                         } @else {
                           <i class="pi pi-info-circle text-gray-400"></i>
-                          <span class="text-xs text-gray-500 italic">
+                          <span class="text-unops-xs text-gray-500 italic">
                             {{
                               "label.opportunity.ndcNotSpecified" | translate
                             }}
@@ -1282,7 +1282,7 @@
         <div style="background-color: rgb(253, 250, 241);" class="border border-unops-warning-light rounded-lg p-4">
           <div class="flex items-start gap-3">
             <i class="pi pi-info-circle text-unops-warning-darker mt-0.5 flex-shrink-0"></i>
-            <p class="text-xs font-medium text-unops-secondary">
+            <p class="text-unops-xs font-medium text-unops-secondary">
               {{ "message.opportunity.noCountriesAddedForAlignment" | translate }}
             </p>
           </div>
@@ -1293,7 +1293,7 @@
     <!-- NAP (National Adaptation Plan) Alignment -->
     <div>
       <h3
-        class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2"
+        class="text-unops-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2"
       >
         <i class="pi pi-cloud text-unops-primary"></i>
         {{ "label.opportunity.nap" | translate }}
@@ -1309,23 +1309,23 @@
                   <div
                     class="w-10 h-10 bg-white rounded flex items-center justify-center flex-shrink-0 border border-teal-300"
                   >
-                    <span class="text-sm font-bold text-teal-700">{{
+                    <span class="text-unops-sm font-bold text-teal-700">{{
                       country.country?.iso2Code || "XX"
                     }}</span>
                   </div>
 
                   <div class="flex-1">
-                    <h4 class="text-sm font-semibold text-gray-900 mb-2">
+                    <h4 class="text-unops-sm font-semibold text-gray-900 mb-2">
                       {{ country.country?.name }}
                     </h4>
-                    <p class="text-xs text-gray-600 mb-3">
+                    <p class="text-unops-xs text-gray-600 mb-3">
                       {{ "message.opportunity.napAvailable" | translate }}
                     </p>
 
                     @if (isEditing()) {
                       <div class="space-y-2">
                         <label
-                          class="block text-xs font-medium text-gray-700 mb-2"
+                          class="block text-unops-xs font-medium text-gray-700 mb-2"
                         >
                           {{
                             "label.opportunity.napAlignmentStatus" | translate
@@ -1344,7 +1344,7 @@
                               "
                               class="w-4 h-4 text-teal-600"
                             />
-                            <span class="text-xs text-gray-700">
+                            <span class="text-unops-xs text-gray-700">
                               {{ "label.opportunity.napWillAlign" | translate }}
                             </span>
                           </label>
@@ -1360,7 +1360,7 @@
                               "
                               class="w-4 h-4 text-teal-600"
                             />
-                            <span class="text-xs text-gray-700">
+                            <span class="text-unops-xs text-gray-700">
                               {{
                                 "label.opportunity.napNotAtThisTime" | translate
                               }}
@@ -1378,7 +1378,7 @@
                               "
                               class="w-4 h-4 text-teal-600"
                             />
-                            <span class="text-xs text-gray-700">
+                            <span class="text-unops-xs text-gray-700">
                               {{
                                 "label.opportunity.napNotSpecified" | translate
                               }}
@@ -1390,19 +1390,19 @@
                       <div class="flex items-center gap-2">
                         @if (country.napAlignment === true) {
                           <i class="pi pi-check-circle text-green-600"></i>
-                          <span class="text-xs font-medium text-green-700">
+                          <span class="text-unops-xs font-medium text-green-700">
                             {{ "label.opportunity.napWillAlign" | translate }}
                           </span>
                         } @else if (country.napAlignment === false) {
                           <i class="pi pi-times-circle text-amber-600"></i>
-                          <span class="text-xs font-medium text-amber-700">
+                          <span class="text-unops-xs font-medium text-amber-700">
                             {{
                               "label.opportunity.napNotAtThisTime" | translate
                             }}
                           </span>
                         } @else {
                           <i class="pi pi-info-circle text-gray-400"></i>
-                          <span class="text-xs text-gray-500 italic">
+                          <span class="text-unops-xs text-gray-500 italic">
                             {{
                               "label.opportunity.napNotSpecified" | translate
                             }}
@@ -1420,21 +1420,21 @@
                   <div
                     class="w-10 h-10 bg-white rounded flex items-center justify-center flex-shrink-0 border border-amber-300"
                   >
-                    <span class="text-sm font-bold text-amber-700">{{
+                    <span class="text-unops-sm font-bold text-amber-700">{{
                       country.country?.iso2Code || "XX"
                     }}</span>
                   </div>
 
                   <div class="flex-1">
-                    <h4 class="text-sm font-semibold text-gray-900 mb-2">
+                    <h4 class="text-unops-sm font-semibold text-gray-900 mb-2">
                       {{ country.country?.name }}
                     </h4>
                     
                     <!-- Warning message -->
                     <div style="background-color: rgb(253, 250, 241);" class="mb-3 border border-unops-warning-light rounded-md p-2">
                       <div class="flex items-start gap-2">
-                        <i class="pi pi-info-circle text-unops-warning-darker mt-0.5 flex-shrink-0 text-xs"></i>
-                        <p class="text-xs text-unops-secondary">
+                        <i class="pi pi-info-circle text-unops-warning-darker mt-0.5 flex-shrink-0 text-unops-xs"></i>
+                        <p class="text-unops-xs text-unops-secondary">
                           {{ "message.opportunity.countriesWithoutNap" | translate }}
                         </p>
                       </div>
@@ -1443,7 +1443,7 @@
                     @if (isEditing()) {
                       <div class="space-y-2">
                         <label
-                          class="block text-xs font-medium text-gray-700 mb-2"
+                          class="block text-unops-xs font-medium text-gray-700 mb-2"
                         >
                           {{
                             "label.opportunity.napAlignmentStatus" | translate
@@ -1462,7 +1462,7 @@
                               "
                               class="w-4 h-4 text-teal-600"
                             />
-                            <span class="text-xs text-gray-700">
+                            <span class="text-unops-xs text-gray-700">
                               {{ "label.opportunity.napWillAlign" | translate }}
                             </span>
                           </label>
@@ -1478,7 +1478,7 @@
                               "
                               class="w-4 h-4 text-teal-600"
                             />
-                            <span class="text-xs text-gray-700">
+                            <span class="text-unops-xs text-gray-700">
                               {{
                                 "label.opportunity.napNotAtThisTime" | translate
                               }}
@@ -1496,7 +1496,7 @@
                               "
                               class="w-4 h-4 text-teal-600"
                             />
-                            <span class="text-xs text-gray-700">
+                            <span class="text-unops-xs text-gray-700">
                               {{
                                 "label.opportunity.napNotSpecified" | translate
                               }}
@@ -1508,19 +1508,19 @@
                       <div class="flex items-center gap-2">
                         @if (country.napAlignment === true) {
                           <i class="pi pi-check-circle text-green-600"></i>
-                          <span class="text-xs font-medium text-green-700">
+                          <span class="text-unops-xs font-medium text-green-700">
                             {{ "label.opportunity.napWillAlign" | translate }}
                           </span>
                         } @else if (country.napAlignment === false) {
                           <i class="pi pi-times-circle text-amber-600"></i>
-                          <span class="text-xs font-medium text-amber-700">
+                          <span class="text-unops-xs font-medium text-amber-700">
                             {{
                               "label.opportunity.napNotAtThisTime" | translate
                             }}
                           </span>
                         } @else {
                           <i class="pi pi-info-circle text-gray-400"></i>
-                          <span class="text-xs text-gray-500 italic">
+                          <span class="text-unops-xs text-gray-500 italic">
                             {{
                               "label.opportunity.napNotSpecified" | translate
                             }}
@@ -1539,7 +1539,7 @@
         <div style="background-color: rgb(253, 250, 241);" class="border border-unops-warning-light rounded-lg p-4">
           <div class="flex items-start gap-3">
             <i class="pi pi-info-circle text-unops-warning-darker mt-0.5 flex-shrink-0"></i>
-            <p class="text-xs font-medium text-unops-secondary">
+            <p class="text-unops-xs font-medium text-unops-secondary">
               {{ "message.opportunity.noCountriesAddedForAlignment" | translate }}
             </p>
           </div>
@@ -1551,7 +1551,7 @@
     <div id="field-unopsMissions">
       <div class="flex items-center justify-between mb-4">
         <h3
-          class="text-lg font-semibold text-unops-secondary flex items-center gap-2"
+          class="text-unops-lg font-semibold text-unops-secondary flex items-center gap-2"
         >
           <i class="pi pi-building text-unops-primary"></i>
           {{ "label.opportunity.alignmentToUNOPSStrategy" | translate }} * ({{ unopsMissionCount() }})
@@ -1567,7 +1567,7 @@
         }
       </div>
 
-      <p class="text-xs text-gray-600 mb-3">
+      <p class="text-unops-xs text-gray-600 mb-3">
         {{ "helpText.opportunity.unopsMissions" | translate }}
       </p>
 
@@ -1582,24 +1582,24 @@
               <div class="flex items-start gap-3">
                 @if (mission.iconClass) {
                   <i
-                    [class]="mission.iconClass + ' text-2xl text-blue-600'"
+                    [class]="mission.iconClass + ' text-unops-2xl text-blue-600'"
                   ></i>
                 } @else {
-                  <i class="pi pi-check-circle text-2xl text-blue-600"></i>
+                  <i class="pi pi-check-circle text-unops-2xl text-blue-600"></i>
                 }
                 <div class="flex-1">
                   <div class="flex items-center gap-2">
-                    <h4 class="font-medium text-gray-900 text-sm">
+                    <h4 class="font-medium text-gray-900 text-unops-sm">
                       {{ mission.name }}
                     </h4>
                     @if (mission.status !== 'Active') {
-                      <span class="text-xs px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full border border-amber-300">
+                      <span class="text-unops-xs px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full border border-amber-300">
                         {{ 'label.inactive' | translate }}
                       </span>
                     }
                   </div>
                   @if (mission.description) {
-                    <p class="text-xs text-gray-600 mt-1">
+                    <p class="text-unops-xs text-gray-600 mt-1">
                       {{ mission.description }}
                     </p>
                   }
@@ -1623,16 +1623,16 @@
         <!-- Display "Not Applicable" only when no missions are selected -->
         <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
           <div class="flex items-center gap-3">
-            <i class="pi pi-minus-circle text-xl text-gray-400"></i>
+            <i class="pi pi-minus-circle text-unops-xl text-gray-400"></i>
             <div>
-              <p class="text-sm text-gray-600">
+              <p class="text-unops-sm text-gray-600">
                 {{ "label.opportunity.unopsMissionsNotApplicable" | translate }}
               </p>
             </div>
           </div>
         </div>
       } @else {
-        <p class="text-sm text-gray-400 italic">
+        <p class="text-unops-sm text-gray-400 italic">
           {{ "message.opportunity.noUNOPSMissionsSelected" | translate }}
         </p>
       }
@@ -1641,7 +1641,7 @@
     <!-- Organization Unit Strategy Alignment -->
     <div>
       <h3
-        class="text-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2"
+        class="text-unops-lg font-semibold text-unops-secondary mb-4 flex items-center gap-2"
       >
         <i class="pi pi-building text-unops-primary"></i>
         {{ "label.opportunity.orgUnitStrategy" | translate }}
@@ -1657,21 +1657,21 @@
                   <div
                     class="w-10 h-10 bg-white rounded flex items-center justify-center flex-shrink-0 border border-blue-300"
                   >
-                    <span class="text-sm font-bold text-blue-700">{{
+                    <span class="text-unops-sm font-bold text-blue-700">{{
                       country.country?.iso2Code || "XX"
                     }}</span>
                   </div>
 
                   <div class="flex-1">
                     <div class="flex items-center gap-2 mb-1">
-                      <span class="text-sm font-medium text-gray-900">{{
+                      <span class="text-unops-sm font-medium text-gray-900">{{
                         country.country?.name
                       }}</span>
                       @if (country.orgUnitWithStrategyName) {
                         <span
-                          class="inline-flex items-center gap-1 text-xs text-blue-700 bg-white px-2 py-0.5 rounded-full border border-blue-300"
+                          class="inline-flex items-center gap-1 text-unops-xs text-blue-700 bg-white px-2 py-0.5 rounded-full border border-blue-300"
                         >
-                          <i class="pi pi-building text-xs"></i>
+                          <i class="pi pi-building text-unops-xs"></i>
                           {{ country.orgUnitWithStrategyName }}
                         </span>
                       }
@@ -1687,13 +1687,13 @@
                             class="pi pi-info-circle text-blue-600 mt-0.5 flex-shrink-0"
                           ></i>
                           <div class="flex-1">
-                            <p class="text-xs font-semibold text-blue-900 mb-1">
+                            <p class="text-unops-xs font-semibold text-blue-900 mb-1">
                               {{
                                 "message.opportunity.moreLocalStrategyAvailable"
                                   | translate
                               }}
                             </p>
-                            <div class="text-xs text-blue-800 space-y-1">
+                            <div class="text-unops-xs text-blue-800 space-y-1">
                               <div class="flex items-center gap-2">
                                 <span class="font-medium"
                                   >{{
@@ -1732,7 +1732,7 @@
                                 </span>
                               </div>
                             </div>
-                            <p class="text-xs text-blue-700 mt-2 italic">
+                            <p class="text-unops-xs text-blue-700 mt-2 italic">
                               {{
                                 "message.opportunity.reviewNewStrategy"
                                   | translate
@@ -1745,7 +1745,7 @@
 
                     <!-- View mode -->
                     @if (!isEditing()) {
-                      <div class="text-xs text-gray-600 mt-2">
+                      <div class="text-unops-xs text-gray-600 mt-2">
                         @if (country.orgUnitStrategyAlignment === true) {
                           <div class="flex items-center gap-1.5 text-green-700">
                             <i class="pi pi-check-circle"></i>
@@ -1794,7 +1794,7 @@
                             "
                             class="w-4 h-4 text-blue-600"
                           />
-                          <span class="text-xs text-gray-700">{{
+                          <span class="text-unops-xs text-gray-700">{{
                             "label.opportunity.willAlignToStrategyPriorities"
                               | translate
                           }}</span>
@@ -1815,7 +1815,7 @@
                             "
                             class="w-4 h-4 text-blue-600"
                           />
-                          <span class="text-xs text-gray-700">{{
+                          <span class="text-unops-xs text-gray-700">{{
                             "label.opportunity.notAlignedAtThisTime" | translate
                           }}</span>
                         </label>
@@ -1835,7 +1835,7 @@
                             "
                             class="w-4 h-4 text-blue-600"
                           />
-                          <span class="text-xs text-gray-700">{{
+                          <span class="text-unops-xs text-gray-700">{{
                             "message.opportunity.notSpecified" | translate
                           }}</span>
                         </label>
@@ -1851,14 +1851,14 @@
                   <div
                     class="w-10 h-10 bg-white rounded flex items-center justify-center flex-shrink-0 border border-amber-300"
                   >
-                    <span class="text-sm font-bold text-amber-700">{{
+                    <span class="text-unops-sm font-bold text-amber-700">{{
                       country.country?.iso2Code || "XX"
                     }}</span>
                   </div>
 
                   <div class="flex-1">
                     <div class="flex items-center gap-2 mb-2">
-                      <span class="text-sm font-medium text-gray-900">{{
+                      <span class="text-unops-sm font-medium text-gray-900">{{
                         country.country?.name
                       }}</span>
                     </div>
@@ -1866,8 +1866,8 @@
                     <!-- Warning message -->
                     <div style="background-color: rgb(253, 250, 241);" class="mb-3 border border-unops-warning-light rounded-md p-2">
                       <div class="flex items-start gap-2">
-                        <i class="pi pi-info-circle text-unops-warning-darker mt-0.5 flex-shrink-0 text-xs"></i>
-                        <p class="text-xs text-unops-secondary">
+                        <i class="pi pi-info-circle text-unops-warning-darker mt-0.5 flex-shrink-0 text-unops-xs"></i>
+                        <p class="text-unops-xs text-unops-secondary">
                           {{
                             "message.opportunity.countriesWithoutOrgUnitStrategy"
                               | translate
@@ -1895,7 +1895,7 @@
                             "
                             class="w-4 h-4 text-blue-600"
                           />
-                          <span class="text-xs text-gray-700">{{
+                          <span class="text-unops-xs text-gray-700">{{
                             "label.opportunity.willAlignToStrategyPriorities"
                               | translate
                           }}</span>
@@ -1916,7 +1916,7 @@
                             "
                             class="w-4 h-4 text-blue-600"
                           />
-                          <span class="text-xs text-gray-700">{{
+                          <span class="text-unops-xs text-gray-700">{{
                             "label.opportunity.notAlignedAtThisTime" | translate
                           }}</span>
                         </label>
@@ -1936,7 +1936,7 @@
                             "
                             class="w-4 h-4 text-blue-600"
                           />
-                          <span class="text-xs text-gray-700">{{
+                          <span class="text-unops-xs text-gray-700">{{
                             "message.opportunity.notSpecified" | translate
                           }}</span>
                         </label>
@@ -1945,7 +1945,7 @@
 
                     <!-- View mode -->
                     @if (!isEditing()) {
-                      <div class="text-xs text-gray-600 mt-2">
+                      <div class="text-unops-xs text-gray-600 mt-2">
                         @if (country.orgUnitStrategyAlignment === true) {
                           <div class="flex items-center gap-1.5 text-green-700">
                             <i class="pi pi-check-circle"></i>
@@ -1985,7 +1985,7 @@
         <div style="background-color: rgb(253, 250, 241);" class="border border-unops-warning-light rounded-lg p-4">
           <div class="flex items-start gap-3">
             <i class="pi pi-info-circle text-unops-warning-darker mt-0.5 flex-shrink-0"></i>
-            <p class="text-xs font-medium text-unops-secondary">
+            <p class="text-unops-xs font-medium text-unops-secondary">
               {{ "message.opportunity.noCountriesAddedForAlignment" | translate }}
             </p>
           </div>
@@ -2001,12 +2001,12 @@
       <div class="bg-amber-100 border-t-4 border-amber-500 px-4 py-3 rounded-b">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div class="flex items-start gap-2 flex-1">
-            <i class="pi pi-exclamation-triangle text-amber-600 text-lg flex-shrink-0 mt-0.5"></i>
+            <i class="pi pi-exclamation-triangle text-amber-600 text-unops-lg flex-shrink-0 mt-0.5"></i>
             <div class="flex flex-col">
-              <span class="text-sm font-bold text-amber-900">
+              <span class="text-unops-sm font-bold text-amber-900">
                 {{ 'message.unsavedChanges' | translate }}
               </span>
-              <span class="text-xs font-medium text-amber-800">
+              <span class="text-unops-xs font-medium text-amber-800">
                 {{ 'message.unsavedChangesSectionDetail' | translate }}
               </span>
             </div>
@@ -2061,7 +2061,7 @@
           1
         </div>
         <span
-          class="text-sm font-medium"
+          class="text-unops-sm font-medium"
           [class.text-unops-primary]="sdgDialogStep() === 1"
           [class.text-gray-600]="sdgDialogStep() !== 1"
         >
@@ -2080,7 +2080,7 @@
           2
         </div>
         <span
-          class="text-sm font-medium"
+          class="text-unops-sm font-medium"
           [class.text-unops-primary]="sdgDialogStep() === 2"
           [class.text-gray-600]="sdgDialogStep() !== 2"
         >
@@ -2140,7 +2140,7 @@
                   />
                 } @else {
                   <div
-                    class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-2xl rounded shadow-sm flex-shrink-0"
+                    class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-unops-2xl rounded shadow-sm flex-shrink-0"
                   >
                     {{ sdg.sdgNumber }}
                   </div>
@@ -2158,7 +2158,7 @@
                   <!-- Primary/Secondary Selection (shown when SDG is selected) -->
                   @if (isSelected) {
                     <div class="mt-3 pt-3 border-t border-gray-200" (click)="$event.stopPropagation()">
-                      <label class="block text-sm font-semibold text-gray-600 mb-2">
+                      <label class="block text-unops-sm font-semibold text-gray-600 mb-2">
                         {{ "label.opportunity.alignmentType" | translate }} *
                       </label>
                       <div class="flex items-center gap-4">
@@ -2172,7 +2172,7 @@
                             class="w-4 h-4 text-green-600"
                           />
                           <div
-                            class="text-xs font-bold px-2 py-1 rounded-lg text-center transition-opacity"
+                            class="text-unops-xs font-bold px-2 py-1 rounded-lg text-center transition-opacity"
                             [style]="{
                               'background-color': 'rgb(76, 175, 80)',
                               color: 'white',
@@ -2193,7 +2193,7 @@
                             class="w-4 h-4 text-blue-600"
                           />
                           <div
-                            class="text-xs font-bold px-2 py-1 rounded-lg text-center transition-opacity"
+                            class="text-unops-xs font-bold px-2 py-1 rounded-lg text-center transition-opacity"
                             [style]="{
                               'background-color': 'var(--p-badge-info-background)',
                               color: 'var(--p-badge-info-color)',
@@ -2205,7 +2205,7 @@
                           </div>
                         </label>
                         @if (isNASDG) {
-                          <span class="text-xs text-gray-500 italic">
+                          <span class="text-unops-xs text-gray-500 italic">
                             ({{ "message.opportunity.naSDGAlwaysPrimary" | translate }})
                           </span>
                         }
@@ -2231,11 +2231,11 @@
         <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
           <div class="flex items-start gap-2">
             <i class="pi pi-info-circle text-blue-600 mt-0.5"></i>
-            <div class="text-sm text-blue-800">
+            <div class="text-unops-sm text-blue-800">
               <p class="font-medium mb-1">
                 {{ "message.opportunity.selectTargetsStep2" | translate }}
               </p>
-              <p class="text-xs">
+              <p class="text-unops-xs">
                 {{ "message.opportunity.selectTargetsStep2Description" | translate }}
               </p>
             </div>
@@ -2266,7 +2266,7 @@
                         />
                       } @else {
                         <div
-                          class="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-xl rounded shadow-sm flex-shrink-0"
+                          class="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-unops-xl rounded shadow-sm flex-shrink-0"
                         >
                           {{ sdg.sdgNumber }}
                         </div>
@@ -2282,7 +2282,7 @@
                         </div>
                         <div class="flex items-center gap-2 mt-1">
                           <div
-                            class="text-xs font-bold px-2 py-0.5 rounded-lg text-center"
+                            class="text-unops-xs font-bold px-2 py-0.5 rounded-lg text-center"
                             [style]="{
                               'background-color': sdgData.isPrimary
                                 ? 'rgb(76, 175, 80)'
@@ -2294,7 +2294,7 @@
                             {{ sdgData.isPrimary ? ("label.opportunity.sdgPrimary" | translate) : ("label.opportunity.sdgSecondary" | translate) }}
                           </div>
                           @if (sdg.sdgId === 'N/A') {
-                            <span class="text-xs text-gray-500 italic">
+                            <span class="text-unops-xs text-gray-500 italic">
                               ({{ "message.opportunity.naSDGAlwaysPrimary" | translate }})
                             </span>
                           }
@@ -2307,12 +2307,12 @@
                   <!-- Targets and Indicators (only if not N/A) -->
                   @if (sdg.sdgId !== 'N/A') {
                     <div class="space-y-3">
-                      <label class="block text-sm font-semibold text-gray-700 mb-2">
+                      <label class="block text-unops-sm font-semibold text-gray-700 mb-2">
                         {{ "label.opportunity.sdgTargets" | translate }}
                       </label>
 
                       @if (sdgData.loadingTargets) {
-                        <div class="flex items-center gap-2 text-sm text-blue-600 py-4">
+                        <div class="flex items-center gap-2 text-unops-sm text-blue-600 py-4">
                           <i class="pi pi-spin pi-spinner"></i>
                           <span>{{ "message.loading" | translate }}...</span>
                         </div>
@@ -2336,7 +2336,7 @@
                                     <div class="font-semibold text-gray-900">
                                       {{ "label.target" | translate }} {{ target.sdgTargetId }}
                                     </div>
-                                    <div class="text-sm text-gray-600 mt-1">
+                                    <div class="text-unops-sm text-gray-600 mt-1">
                                       {{ target.targetDescription }}
                                     </div>
                                   </label>
@@ -2346,12 +2346,12 @@
                               <!-- Indicators for selected target -->
                               @if (isTargetSelectedInStep2(sdg.sdgId || '', target.id)) {
                                 <div class="p-3 bg-white border-t border-gray-200">
-                                  <div class="text-xs font-semibold text-gray-700 mb-2 uppercase">
+                                  <div class="text-unops-xs font-semibold text-gray-700 mb-2 uppercase">
                                     {{ "label.opportunity.sdgIndicators" | translate }}
                                   </div>
 
                                   @if (sdgData.loadingIndicatorsForTargets.has(target.id)) {
-                                    <div class="flex items-center gap-2 text-xs text-blue-600 pl-4 py-2">
+                                    <div class="flex items-center gap-2 text-unops-xs text-blue-600 pl-4 py-2">
                                       <i class="pi pi-spin pi-spinner"></i>
                                       <span>{{ "message.loading" | translate }}...</span>
                                     </div>
@@ -2370,7 +2370,7 @@
                                           />
                                           <label
                                             [for]="'indicator-' + sdg.sdgId + '-' + target.id + '-' + indicator.id"
-                                            class="flex-1 cursor-pointer text-sm text-gray-700"
+                                            class="flex-1 cursor-pointer text-unops-sm text-gray-700"
                                           >
                                             {{ indicator.sdgIndicatorLongDescription }}
                                           </label>
@@ -2378,7 +2378,7 @@
                                       }
                                     </div>
                                   } @else {
-                                    <div class="text-xs text-amber-600 pl-4 py-2">
+                                    <div class="text-unops-xs text-amber-600 pl-4 py-2">
                                       <i class="pi pi-info-circle"></i>
                                       <span class="ml-2">
                                         {{ "message.noIndicatorsAvailable" | translate }}
@@ -2391,7 +2391,7 @@
                           }
                         </div>
                       } @else {
-                        <p class="text-sm text-gray-500 italic">
+                        <p class="text-unops-sm text-gray-500 italic">
                           {{ "message.noTargetsAvailable" | translate }}
                         </p>
                       }
@@ -2412,7 +2412,7 @@
       @if (sdgDialogStep() === 1 && selectedSDGCount() > 0) {
         <div class="flex items-center gap-2 text-green-800">
           <i class="pi pi-check-circle"></i>
-          <span class="text-sm font-medium">
+          <span class="text-unops-sm font-medium">
             {{ selectedSDGCount() }}
             {{ selectedSDGCount() === 1 ? ("label.sdgSelected" | translate) : ("label.sdgsSelected" | translate) }}
           </span>
@@ -2502,8 +2502,8 @@
     <!-- Loading State -->
     @if (loadingUNCFOutcomesForDialog()) {
       <div class="text-center py-8">
-        <i class="pi pi-spin pi-spinner text-2xl text-blue-600"></i>
-        <p class="text-sm text-gray-600 mt-2">
+        <i class="pi pi-spin pi-spinner text-unops-2xl text-blue-600"></i>
+        <p class="text-unops-sm text-gray-600 mt-2">
           {{ "message.loadingUNCFOutcomes" | translate }}
         </p>
       </div>
@@ -2514,7 +2514,7 @@
       !loadingUNCFOutcomesForDialog() && availableUNCFOutcomes().length > 0
     ) {
       <div class="border-t border-gray-200 pt-4 mt-4">
-        <label class="block text-sm font-semibold text-gray-700 mb-3">
+        <label class="block text-unops-sm font-semibold text-gray-700 mb-3">
           {{ "label.opportunity.selectUNCFOutcomes" | translate }}
         </label>
 
@@ -2539,7 +2539,7 @@
                     {{ outcome.name }}
                   </div>
                   @if (outcome.versionNo) {
-                    <div class="text-xs text-gray-500 mt-1">
+                    <div class="text-unops-xs text-gray-500 mt-1">
                       {{ "label.version" | translate }}: {{ outcome.versionNo }}
                     </div>
                   }
@@ -2552,7 +2552,7 @@
                   @if (isLoadingUNCFIndicators(outcome.id)) {
                     <div class="text-center py-4">
                       <i class="pi pi-spin pi-spinner text-blue-600"></i>
-                      <p class="text-xs text-gray-600 mt-2">
+                      <p class="text-unops-xs text-gray-600 mt-2">
                         {{ "message.loadingIndicators" | translate }}
                       </p>
                     </div>
@@ -2560,7 +2560,7 @@
                     getIndicatorsForUNCFOutcome(outcome.id).length > 0
                   ) {
                     <div>
-                      <p class="text-sm font-semibold text-gray-700 mb-2">
+                      <p class="text-unops-sm font-semibold text-gray-700 mb-2">
                         {{ "label.indicators" | translate }}:
                       </p>
                       <div class="space-y-2">
@@ -2584,11 +2584,11 @@
                             />
                             <label
                               [for]="'indicator-' + indicator.id"
-                              class="flex-1 text-sm text-gray-700 cursor-pointer"
+                              class="flex-1 text-unops-sm text-gray-700 cursor-pointer"
                             >
                               <span class="font-medium">{{ indicator.name }}</span>
                               @if (indicator.indicators) {
-                                <span class="block text-xs text-gray-500 mt-0.5">{{ indicator.indicators }}</span>
+                                <span class="block text-unops-xs text-gray-500 mt-0.5">{{ indicator.indicators }}</span>
                               }
                             </label>
                           </div>
@@ -2597,7 +2597,7 @@
                     </div>
                   } @else {
                     <div class="text-center py-4">
-                      <p class="text-sm text-gray-500">
+                      <p class="text-unops-sm text-gray-500">
                         <i class="pi pi-info-circle"></i>
                         {{ "message.noIndicatorsAvailable" | translate }}
                       </p>
@@ -2615,7 +2615,7 @@
       !loadingUNCFOutcomesForDialog() && availableUNCFOutcomes().length === 0
     ) {
       <div class="text-center py-8 text-gray-400">
-        <i class="pi pi-flag text-4xl mb-3"></i>
+        <i class="pi pi-flag text-unops-display-medium mb-3"></i>
         <p>{{ "message.opportunity.noUNCFOutcomesForCountry" | translate }}</p>
       </div>
     }
@@ -2647,7 +2647,7 @@
   [contentStyle]="{ overflow: 'auto' }"
 >
   <div class="space-y-3">
-    <p class="text-sm text-gray-600 mb-4">
+    <p class="text-unops-sm text-gray-600 mb-4">
       {{ "helpText.opportunity.unopsMissions" | translate }}
     </p>
 
@@ -2674,13 +2674,13 @@
               />
             </div>
             @if (mission.iconClass) {
-              <i [class]="mission.iconClass + ' text-2xl text-blue-600'"></i>
+              <i [class]="mission.iconClass + ' text-unops-2xl text-blue-600'"></i>
             } @else {
-              <i class="pi pi-circle text-xl text-blue-600"></i>
+              <i class="pi pi-circle text-unops-xl text-blue-600"></i>
             }
             <div class="flex-1">
               <h4
-                class="font-medium text-sm"
+                class="font-medium text-unops-sm"
                 [class.text-gray-900]="isUNOPSMissionSelected(mission.id)"
                 [class.text-gray-700]="!isUNOPSMissionSelected(mission.id)"
               >
@@ -2688,7 +2688,7 @@
               </h4>
               @if (mission.description) {
                 <p
-                  class="text-xs mt-1"
+                  class="text-unops-xs mt-1"
                   [class.text-gray-700]="isUNOPSMissionSelected(mission.id)"
                   [class.text-gray-600]="!isUNOPSMissionSelected(mission.id)"
                 >
@@ -2701,7 +2701,7 @@
       }
 
       @if (activeMissionsForDialog().length === 0) {
-        <p class="text-sm text-gray-400 italic">
+        <p class="text-unops-sm text-gray-400 italic">
           {{ "message.opportunity.loadingUNOPSMissions" | translate }}
         </p>
       }
@@ -2717,7 +2717,7 @@
             (ngModelChange)="toggleUNOPSNotApplicable($event)"
           />
         </div>
-        <span class="text-sm text-gray-700">
+        <span class="text-unops-sm text-gray-700">
           {{ "label.opportunity.unopsMissionsNotApplicable" | translate }}
         </span>
       </label>
@@ -2725,7 +2725,7 @@
 
     <!-- Selected Count -->
     <div
-      class="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800"
+      class="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-unops-sm text-blue-800"
     >
       <i class="pi pi-info-circle mr-2"></i>
       @if (unopsMissionCount() > 0) {

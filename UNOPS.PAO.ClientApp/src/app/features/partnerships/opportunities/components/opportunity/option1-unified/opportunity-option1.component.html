@@ -6,10 +6,10 @@
         routerLink="/partnerships/opportunities"
         class="text-gray-600 hover:text-gray-900"
       >
-        <i class="pi pi-arrow-left text-xl"></i>
+        <i class="pi pi-arrow-left text-unops-xl"></i>
       </a>
       <div>
-        <h1 class="text-3xl font-bold text-gray-900">
+        <h1 class="text-unops-headline-large font-bold text-gray-900">
           {{ opportunity()?.name || "Loading..." }}
         </h1>
       </div>
@@ -21,7 +21,7 @@
   </div>
 
   @if (opportunity()) {
-    <div class="flex items-center gap-2 text-sm text-gray-600">
+    <div class="flex items-center gap-2 text-unops-sm text-gray-600">
       <span
         ><strong>Partner Ref:</strong>
         {{ opportunity()!.partnerReference }}</span
@@ -42,7 +42,7 @@
 
 @if (loading()) {
   <div class="flex items-center justify-center py-12">
-    <i class="pi pi-spin pi-spinner text-4xl text-unops-primary"></i>
+    <i class="pi pi-spin pi-spinner text-unops-display-medium text-unops-primary"></i>
   </div>
 }
 
@@ -93,11 +93,11 @@
           <div
             class="border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50 text-center hover:border-blue-400 cursor-pointer transition-colors"
           >
-            <i class="pi pi-cloud-upload text-4xl text-blue-600 mb-2"></i>
-            <p class="text-sm font-semibold text-gray-700 mb-1">
+            <i class="pi pi-cloud-upload text-unops-display-medium text-blue-600 mb-2"></i>
+            <p class="text-unops-sm font-semibold text-gray-700 mb-1">
               Drag & Drop Documents
             </p>
-            <p class="text-xs text-gray-500">or click to browse</p>
+            <p class="text-unops-xs text-gray-500">or click to browse</p>
           </div>
         </div>
 
@@ -105,7 +105,7 @@
           <!-- Document List -->
           <div class="px-4 pb-4">
             <div class="flex items-center justify-between mb-3">
-              <h4 class="text-sm font-semibold text-gray-700">All Documents</h4>
+              <h4 class="text-unops-sm font-semibold text-gray-700">All Documents</h4>
               <p-button
                 icon="pi pi-filter"
                 [text]="true"
@@ -123,17 +123,17 @@
                 >
                   <i
                     [class]="
-                      'pi text-lg ' +
+                      'pi text-unops-lg ' +
                       getFileIcon(doc.fileType || '') +
                       ' ' +
                       getFileIconColor(doc.fileType || '')
                     "
                   ></i>
                   <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-gray-900 truncate">
+                    <p class="text-unops-sm font-medium text-gray-900 truncate">
                       {{ doc.name }}
                     </p>
-                    <div class="flex items-center gap-2 text-xs text-gray-500">
+                    <div class="flex items-center gap-2 text-unops-xs text-gray-500">
                       <span>{{ doc.size }}</span>
                       @if (doc.aiProcessed) {
                         <p-badge
@@ -201,7 +201,7 @@
             "
           >
             <i class="pi pi-file text-blue-600"></i>
-            <span class="font-medium text-gray-900 text-sm">Documents</span>
+            <span class="font-medium text-gray-900 text-unops-sm">Documents</span>
             @if (opportunity()) {
               <p-badge
                 [value]="opportunity()!.documents.length.toString()"
@@ -244,11 +244,11 @@
               (click)="scrollToSection(section.id)"
               [class]="
                 activeSection() === section.id
-                  ? 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-primary text-white font-medium text-sm transition-all duration-200 whitespace-nowrap'
-                  : 'flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium text-sm transition-all duration-200 whitespace-nowrap'
+                  ? 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-primary text-white font-medium text-unops-sm transition-all duration-200 whitespace-nowrap'
+                  : 'flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium text-unops-sm transition-all duration-200 whitespace-nowrap'
               "
             >
-              <i [class]="'pi ' + section.icon + ' text-sm'"></i>
+              <i [class]="'pi ' + section.icon + ' text-unops-sm'"></i>
               <span>{{ section.label }}</span>
             </button>
           }
@@ -256,7 +256,7 @@
 
         <!-- Dropdown Navigation (shown when chips don't fit) -->
         <div [class]="showDropdown() ? 'flex items-center gap-3' : 'hidden'">
-          <label class="text-sm font-medium text-gray-700">Section:</label>
+          <label class="text-unops-sm font-medium text-gray-700">Section:</label>
           <p-dropdown
             [options]="sections"
             [(ngModel)]="selectedSection"
@@ -300,40 +300,40 @@
               <div class="space-y-4">
                 <!-- Quick Stats -->
                 <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
-                  <h3 class="text-sm font-semibold text-gray-900 mb-3">
+                  <h3 class="text-unops-sm font-semibold text-gray-900 mb-3">
                     Quick Stats
                   </h3>
                   <div class="space-y-3">
                     <div class="flex items-center gap-2">
                       <i class="pi pi-dollar text-unops-success"></i>
                       <div>
-                        <div class="text-lg font-bold text-gray-900">
+                        <div class="text-unops-lg font-bold text-gray-900">
                           {{
                             formatCurrency(opportunity()!.initiativeBudgetUSD)
                           }}
                         </div>
-                        <div class="text-xs text-gray-500">Total Budget</div>
+                        <div class="text-unops-xs text-gray-500">Total Budget</div>
                       </div>
                     </div>
                     <p-divider styleClass="my-2" />
                     <div class="flex items-center gap-2">
                       <i class="pi pi-calendar text-blue-600"></i>
                       <div>
-                        <div class="text-sm font-semibold text-gray-900">
+                        <div class="text-unops-sm font-semibold text-gray-900">
                           {{ formatDate(opportunity()!.targetSigningDate) }}
                         </div>
-                        <div class="text-xs text-gray-500">Target Signing</div>
+                        <div class="text-unops-xs text-gray-500">Target Signing</div>
                       </div>
                     </div>
                     <p-divider styleClass="my-2" />
                     <div class="flex items-center gap-2">
                       <i class="pi pi-map-marker text-red-600"></i>
                       <div>
-                        <div class="text-sm font-semibold text-gray-900">
+                        <div class="text-unops-sm font-semibold text-gray-900">
                           {{ opportunity()!.implementationCountries.length }}
                           Countries
                         </div>
-                        <div class="text-xs text-gray-500">Implementation</div>
+                        <div class="text-unops-xs text-gray-500">Implementation</div>
                       </div>
                     </div>
                   </div>
@@ -341,7 +341,7 @@
 
                 <!-- Insights & Suggestions -->
                 <div>
-                  <h3 class="text-sm font-semibold text-gray-900 mb-2">
+                  <h3 class="text-unops-sm font-semibold text-gray-900 mb-2">
                     Insights & Suggestions
                   </h3>
                   <div class="space-y-2">
@@ -351,9 +351,9 @@
                       >
                         <div class="flex items-start gap-2">
                           <i
-                            class="pi pi-info-circle text-blue-600 text-sm mt-0.5"
+                            class="pi pi-info-circle text-blue-600 text-unops-sm mt-0.5"
                           ></i>
-                          <p class="text-xs text-gray-700">{{ suggestion }}</p>
+                          <p class="text-unops-xs text-gray-700">{{ suggestion }}</p>
                         </div>
                       </div>
                     }
@@ -390,7 +390,7 @@
               </ng-template>
               <div class="space-y-6">
                 <div>
-                  <h3 class="text-sm font-semibold text-gray-600 mb-2">
+                  <h3 class="text-unops-sm font-semibold text-gray-600 mb-2">
                     Description
                   </h3>
                   <p class="text-gray-700 leading-relaxed">
@@ -400,7 +400,7 @@
 
                 <div class="grid grid-cols-2 gap-4">
                   <div>
-                    <h4 class="text-sm font-semibold text-gray-600 mb-1">
+                    <h4 class="text-unops-sm font-semibold text-gray-600 mb-1">
                       Responsible Org Unit
                     </h4>
                     <p class="text-gray-900">
@@ -408,7 +408,7 @@
                     </p>
                   </div>
                   <div>
-                    <h4 class="text-sm font-semibold text-gray-600 mb-1">
+                    <h4 class="text-unops-sm font-semibold text-gray-600 mb-1">
                       Initiative Type
                     </h4>
                     <p class="text-gray-900">
@@ -419,7 +419,7 @@
 
                 <div>
                   <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900">
+                    <h3 class="text-unops-lg font-semibold text-gray-900">
                       Deliverables ({{ opportunity()!.deliverables.length }})
                     </h3>
                     <p-button
@@ -442,12 +442,12 @@
                             <h4 class="font-semibold text-gray-900 mb-1">
                               {{ $index + 1 }}. {{ deliverable.name }}
                             </h4>
-                            <p class="text-sm text-gray-600 mb-2">
+                            <p class="text-unops-sm text-gray-600 mb-2">
                               {{ deliverable.description }}
                             </p>
                             <p-chip
                               [label]="deliverable.serviceLine"
-                              styleClass="text-xs"
+                              styleClass="text-unops-xs"
                             />
                           </div>
                           <div class="flex gap-2">
@@ -487,9 +487,9 @@
                 <div>
                   <div class="flex items-center justify-between mb-3">
                     <h3
-                      class="text-sm font-semibold text-gray-900 flex items-center gap-2"
+                      class="text-unops-sm font-semibold text-gray-900 flex items-center gap-2"
                     >
-                      <i class="pi pi-globe text-unops-success text-base"></i>
+                      <i class="pi pi-globe text-unops-success text-unops-base"></i>
                       <span
                         >SDG Alignment ({{
                           opportunity()!.sdgAlignment.length
@@ -515,7 +515,7 @@
                           <div class="font-semibold text-gray-900">
                             SDG {{ sdg.sdgNumber }}: {{ sdg.sdgName }}
                           </div>
-                          <div class="text-sm text-gray-600 mt-1">
+                          <div class="text-unops-sm text-gray-600 mt-1">
                             {{ sdg.contribution }}
                           </div>
                         </div>
@@ -534,26 +534,26 @@
 
                 <div>
                   <h3
-                    class="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2"
+                    class="text-unops-sm font-semibold text-gray-900 mb-2 flex items-center gap-2"
                   >
-                    <i class="pi pi-users text-unops-info text-base"></i>
+                    <i class="pi pi-users text-unops-info text-unops-base"></i>
                     <span>Expected Beneficiaries</span>
                   </h3>
-                  <p class="text-sm text-gray-700">
+                  <p class="text-unops-sm text-gray-700">
                     {{ opportunity()!.expectedBeneficiaries }}
                   </p>
                 </div>
 
                 <div>
                   <h3
-                    class="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2"
+                    class="text-unops-sm font-semibold text-gray-900 mb-2 flex items-center gap-2"
                   >
                     <i
-                      class="pi pi-chart-line text-unops-success text-base"
+                      class="pi pi-chart-line text-unops-success text-unops-base"
                     ></i>
                     <span>Expected Outcomes</span>
                   </h3>
-                  <p class="text-sm text-gray-700">
+                  <p class="text-unops-sm text-gray-700">
                     {{ opportunity()!.expectedOutcomes }}
                   </p>
                 </div>
@@ -574,9 +574,9 @@
                 <div>
                   <div class="flex items-center justify-between mb-3">
                     <h3
-                      class="text-sm font-semibold text-gray-900 flex items-center gap-2"
+                      class="text-unops-sm font-semibold text-gray-900 flex items-center gap-2"
                     >
-                      <i class="pi pi-dollar text-unops-success text-base"></i>
+                      <i class="pi pi-dollar text-unops-success text-unops-base"></i>
                       <span
                         >Funding Partners ({{
                           opportunity()!.fundingPartners.length
@@ -606,7 +606,7 @@
                           severity="info"
                         />
                       </div>
-                      <div class="grid grid-cols-2 gap-2 text-sm">
+                      <div class="grid grid-cols-2 gap-2 text-unops-sm">
                         <div>
                           <span class="text-gray-600">Amount:</span>
                           <span class="font-semibold ml-2">{{
@@ -621,7 +621,7 @@
                         </div>
                       </div>
                       @if (partner.partnershipAgreement) {
-                        <div class="text-xs text-blue-700 mt-2">
+                        <div class="text-unops-xs text-blue-700 mt-2">
                           <i class="pi pi-file"></i>
                           {{ partner.partnershipAgreement }}
                         </div>
@@ -635,10 +635,10 @@
                 <div>
                   <div class="flex items-center justify-between mb-3">
                     <h3
-                      class="text-sm font-semibold text-gray-900 flex items-center gap-2"
+                      class="text-unops-sm font-semibold text-gray-900 flex items-center gap-2"
                     >
                       <i
-                        class="pi pi-building text-unops-primary text-base"
+                        class="pi pi-building text-unops-primary text-unops-base"
                       ></i>
                       <span>Client Partners</span>
                     </h3>
@@ -659,7 +659,7 @@
                       <div class="font-semibold text-gray-900">
                         {{ client.name }}
                       </div>
-                      <div class="text-sm text-gray-600">
+                      <div class="text-unops-sm text-gray-600">
                         {{ client.type }} - {{ client.country }}
                       </div>
                     </div>
@@ -670,12 +670,12 @@
 
                 <div>
                   <h3
-                    class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2"
+                    class="text-unops-sm font-semibold text-gray-900 mb-3 flex items-center gap-2"
                   >
-                    <i class="pi pi-user text-unops-secondary text-base"></i>
+                    <i class="pi pi-user text-unops-secondary text-unops-base"></i>
                     <span>Team & Stakeholders</span>
                   </h3>
-                  <div class="space-y-2 text-sm">
+                  <div class="space-y-2 text-unops-sm">
                     <div class="flex items-center gap-2">
                       <p-avatar
                         [label]="
@@ -687,7 +687,7 @@
                         <div class="font-semibold">
                           {{ opportunity()!.opportunityManager.name }}
                         </div>
-                        <div class="text-xs text-gray-500">
+                        <div class="text-unops-xs text-gray-500">
                           {{ opportunity()!.opportunityManager.role }}
                         </div>
                       </div>
@@ -703,7 +703,7 @@
                         />
                         <div>
                           <div class="font-semibold">{{ member.name }}</div>
-                          <div class="text-xs text-gray-500">
+                          <div class="text-unops-xs text-gray-500">
                             {{ member.role }}
                           </div>
                         </div>
@@ -728,7 +728,7 @@
               </ng-template>
               <div class="space-y-4">
                 <div class="flex items-center justify-between mb-3">
-                  <h3 class="text-sm font-semibold text-gray-900">
+                  <h3 class="text-unops-sm font-semibold text-gray-900">
                     Implementation Countries ({{
                       opportunity()!.implementationCountries.length
                     }})
@@ -748,12 +748,12 @@
                   <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <div class="flex items-start justify-between mb-2">
                       <div class="flex items-center gap-2">
-                        <span class="text-3xl">{{ country.flag }}</span>
+                        <span class="text-unops-headline-large">{{ country.flag }}</span>
                         <div>
                           <h4 class="font-semibold text-gray-900">
                             {{ country.name }}
                           </h4>
-                          <p class="text-sm text-gray-600">
+                          <p class="text-unops-sm text-gray-600">
                             {{ country.specificAreas }}
                           </p>
                         </div>
@@ -792,18 +792,18 @@
               <div class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                   <div>
-                    <h4 class="text-sm font-semibold text-gray-600 mb-1">
+                    <h4 class="text-unops-sm font-semibold text-gray-600 mb-1">
                       Target Signing Date
                     </h4>
-                    <p class="text-lg font-semibold text-gray-900">
+                    <p class="text-unops-lg font-semibold text-gray-900">
                       {{ formatDate(opportunity()!.targetSigningDate) }}
                     </p>
                   </div>
                   <div>
-                    <h4 class="text-sm font-semibold text-gray-600 mb-1">
+                    <h4 class="text-unops-sm font-semibold text-gray-600 mb-1">
                       Target Delivery Date
                     </h4>
-                    <p class="text-lg font-semibold text-gray-900">
+                    <p class="text-unops-lg font-semibold text-gray-900">
                       {{ formatDate(opportunity()!.targetDeliveryDate) }}
                     </p>
                   </div>
@@ -812,7 +812,7 @@
                 <p-divider />
 
                 <div>
-                  <h3 class="text-sm font-semibold text-gray-900 mb-3">
+                  <h3 class="text-unops-sm font-semibold text-gray-900 mb-3">
                     Development Timeline
                   </h3>
                   <div class="relative">
@@ -824,13 +824,13 @@
                         <div
                           class="w-8 h-8 rounded-full bg-unops-success flex items-center justify-center text-white z-10 flex-shrink-0"
                         >
-                          <i class="pi pi-check text-sm"></i>
+                          <i class="pi pi-check text-unops-sm"></i>
                         </div>
                         <div class="flex-1 pb-4">
                           <div class="font-semibold text-gray-900">
                             Kickoff & Initial Setup
                           </div>
-                          <div class="text-sm text-gray-500">
+                          <div class="text-unops-sm text-gray-500">
                             Week 1 - Completed
                           </div>
                         </div>
@@ -839,13 +839,13 @@
                         <div
                           class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white z-10 flex-shrink-0"
                         >
-                          <i class="pi pi-spin pi-spinner text-sm"></i>
+                          <i class="pi pi-spin pi-spinner text-unops-sm"></i>
                         </div>
                         <div class="flex-1 pb-4">
                           <div class="font-semibold text-gray-900">
                             Profile & Analysis
                           </div>
-                          <div class="text-sm text-gray-500">
+                          <div class="text-unops-sm text-gray-500">
                             Week 5 - In Progress
                           </div>
                         </div>
@@ -854,13 +854,13 @@
                         <div
                           class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white z-10 flex-shrink-0"
                         >
-                          <i class="pi pi-circle text-sm"></i>
+                          <i class="pi pi-circle text-unops-sm"></i>
                         </div>
                         <div class="flex-1 pb-4">
                           <div class="font-semibold text-gray-900">
                             Budget Development & Review
                           </div>
-                          <div class="text-sm text-gray-500">
+                          <div class="text-unops-sm text-gray-500">
                             Week 9 - Pending
                           </div>
                         </div>
@@ -889,7 +889,7 @@
                   <div>
                     <div class="flex items-center justify-between mb-4">
                       <h3
-                        class="text-lg font-semibold text-gray-900 flex items-center gap-2"
+                        class="text-unops-lg font-semibold text-gray-900 flex items-center gap-2"
                       >
                         <i
                           class="pi pi-exclamation-triangle text-unops-warning"
@@ -923,10 +923,10 @@
                             [severity]="getSeverityClass(risk.severity)"
                           />
                         </div>
-                        <p class="text-sm text-gray-600 mb-2">
+                        <p class="text-unops-sm text-gray-600 mb-2">
                           {{ risk.description }}
                         </p>
-                        <div class="text-xs text-gray-500">
+                        <div class="text-unops-xs text-gray-500">
                           <strong>Recommendation:</strong>
                           {{ risk.recommendation }}
                         </div>
@@ -937,7 +937,7 @@
                   <!-- Recommendations -->
                   <div>
                     <h3
-                      class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2"
+                      class="text-unops-lg font-semibold text-gray-900 mb-4 flex items-center gap-2"
                     >
                       <i class="pi pi-lightbulb text-unops-info"></i>
                       <span
@@ -956,7 +956,7 @@
                         <h4 class="font-semibold text-gray-900 mb-2">
                           {{ rec.title }}
                         </h4>
-                        <p class="text-sm text-gray-600 mb-3">
+                        <p class="text-unops-sm text-gray-600 mb-3">
                           {{ rec.rationale }}
                         </p>
                         <div class="flex gap-2">
@@ -985,7 +985,7 @@
                 <!-- Similar Opportunities -->
                 <div>
                   <h3
-                    class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2"
+                    class="text-unops-lg font-semibold text-gray-900 mb-4 flex items-center gap-2"
                   >
                     <i class="pi pi-search text-unops-secondary"></i>
                     <span
@@ -1010,13 +1010,13 @@
                           />
                           <p-chip
                             [label]="similar.status"
-                            styleClass="text-xs"
+                            styleClass="text-unops-xs"
                           />
                         </div>
-                        <h4 class="font-semibold text-gray-900 mb-2 text-sm">
+                        <h4 class="font-semibold text-gray-900 mb-2 text-unops-sm">
                           {{ similar.name }}
                         </h4>
-                        <div class="text-xs text-gray-600 space-y-1">
+                        <div class="text-unops-xs text-gray-600 space-y-1">
                           <div>
                             Budget: {{ formatCurrency(similar.budget) }}
                           </div>
@@ -1053,7 +1053,7 @@
                 <!-- Related Contacts -->
                 <div>
                   <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-sm font-semibold text-gray-700">
+                    <h3 class="text-unops-sm font-semibold text-gray-700">
                       Contacts ({{ opportunity()!.relatedContacts.length }})
                     </h3>
                     <p-button
@@ -1074,25 +1074,25 @@
                         <p-avatar
                           [label]="contact.name.charAt(0)"
                           shape="circle"
-                          styleClass="text-xs"
+                          styleClass="text-unops-xs"
                         />
                         <div class="flex-1 min-w-0">
-                          <p class="text-sm font-medium text-gray-900 truncate">
+                          <p class="text-unops-sm font-medium text-gray-900 truncate">
                             {{ contact.name }}
                           </p>
-                          <p class="text-xs text-gray-500 truncate">
+                          <p class="text-unops-xs text-gray-500 truncate">
                             {{ contact.organization }}
                           </p>
                         </div>
                         <i
-                          class="pi pi-external-link text-gray-400 text-xs"
+                          class="pi pi-external-link text-gray-400 text-unops-xs"
                         ></i>
                       </div>
                     }
                   </div>
                   @if (opportunity()!.relatedContacts.length > 5) {
                     <button
-                      class="text-xs text-blue-600 hover:text-blue-700 mt-2 w-full text-center"
+                      class="text-unops-xs text-blue-600 hover:text-blue-700 mt-2 w-full text-center"
                     >
                       View all
                       {{ opportunity()!.relatedContacts.length }} contacts →
@@ -1105,7 +1105,7 @@
                 <!-- Related Partners -->
                 <div>
                   <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-sm font-semibold text-gray-700">
+                    <h3 class="text-unops-sm font-semibold text-gray-700">
                       Partners ({{ opportunity()!.relatedPartners.length }})
                     </h3>
                     <p-button
@@ -1126,18 +1126,18 @@
                         <div
                           class="w-8 h-8 bg-blue-100 rounded flex items-center justify-center flex-shrink-0"
                         >
-                          <i class="pi pi-building text-blue-600 text-xs"></i>
+                          <i class="pi pi-building text-blue-600 text-unops-xs"></i>
                         </div>
                         <div class="flex-1 min-w-0">
-                          <p class="text-sm font-medium text-gray-900 truncate">
+                          <p class="text-unops-sm font-medium text-gray-900 truncate">
                             {{ partner.name }}
                           </p>
-                          <p class="text-xs text-gray-500 truncate">
+                          <p class="text-unops-xs text-gray-500 truncate">
                             {{ partner.type }}
                           </p>
                         </div>
                         <i
-                          class="pi pi-external-link text-gray-400 text-xs"
+                          class="pi pi-external-link text-gray-400 text-unops-xs"
                         ></i>
                       </div>
                     }
@@ -1149,7 +1149,7 @@
                 <!-- Recent Interactions -->
                 <div>
                   <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-sm font-semibold text-gray-700">
+                    <h3 class="text-unops-sm font-semibold text-gray-700">
                       Recent Activity
                     </h3>
                     <p-button
@@ -1175,15 +1175,15 @@
                         >
                           <i
                             [class]="
-                              'text-xs ' + getInteractionIcon(interaction.type)
+                              'text-unops-xs ' + getInteractionIcon(interaction.type)
                             "
                           ></i>
                         </div>
                         <div class="flex-1 min-w-0">
-                          <p class="text-sm font-medium text-gray-900 truncate">
+                          <p class="text-unops-sm font-medium text-gray-900 truncate">
                             {{ interaction.title }}
                           </p>
-                          <p class="text-xs text-gray-500">
+                          <p class="text-unops-xs text-gray-500">
                             {{ formatDate(interaction.date) }}
                           </p>
                         </div>
@@ -1191,7 +1191,7 @@
                     }
                   </div>
                   <button
-                    class="text-xs text-blue-600 hover:text-blue-700 mt-2 w-full text-center"
+                    class="text-unops-xs text-blue-600 hover:text-blue-700 mt-2 w-full text-center"
                   >
                     View all interactions →
                   </button>
@@ -1221,17 +1221,17 @@
                         <span class="font-semibold text-gray-900">{{
                           comment.author
                         }}</span>
-                        <span class="text-xs text-gray-500">{{
+                        <span class="text-unops-xs text-gray-500">{{
                           comment.timestamp
                         }}</span>
                       </div>
-                      <p class="text-sm text-gray-700">{{ comment.content }}</p>
+                      <p class="text-unops-sm text-gray-700">{{ comment.content }}</p>
                       @if (comment.mentions && comment.mentions.length > 0) {
                         <div class="flex gap-1 mt-2">
                           @for (mention of comment.mentions; track mention) {
                             <p-chip
                               [label]="'@' + mention"
-                              styleClass="text-xs"
+                              styleClass="text-unops-xs"
                             />
                           }
                         </div>
@@ -1271,7 +1271,7 @@
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <i class="pi pi-info-circle text-blue-600"></i>
-                <span class="text-sm text-gray-600"
+                <span class="text-unops-sm text-gray-600"
                   >Completeness:
                   <strong>{{ opportunity()!.completeness }}%</strong></span
                 >

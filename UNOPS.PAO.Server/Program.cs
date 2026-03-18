@@ -91,15 +91,23 @@ public partial class Program
         
         // Ensure workflow schema is created and migrations are applied FIRST (before seeders)
         // This handles IAM auth case where schema creation was skipped during service registration
-        using (var scope = app.Services.CreateScope())
+        try
         {
-            var workflowContext = scope.ServiceProvider.GetRequiredService<WorkflowDbContext>();
-            workflowContext.EnsureWorkflowSchemaCreated(); // Creates schema AND applies migrations
-        }
+            using (var scope = app.Services.CreateScope())
+            {
+                var workflowContext = scope.ServiceProvider.GetRequiredService<WorkflowDbContext>();
+                workflowContext.EnsureWorkflowSchemaCreated();
+            }
         
-        // Seed workflow configuration data AFTER migrations (idempotent - safe to run on every startup)
-        await app.Services.SeedStateMachineStageChangesAsync();
-        await app.Services.SeedStateMachineStageChangeRolesAsync();
+            // Seed workflow configuration data AFTER migrations (idempotent - safe to run on every startup)
+            await app.Services.SeedStateMachineStageChangesAsync();
+            await app.Services.SeedStateMachineStageChangeRolesAsync();
+        }
+        catch (Exception ex) when (ex.InnerException is Npgsql.PostgresException pg && pg.SqlState == "42501"
+                                   || ex is Npgsql.PostgresException { SqlState: "42501" })
+        {
+            Console.WriteLine($"[Workflow] Skipping workflow schema/migration (permission denied) - schema likely already exists: {ex.Message}");
+        }
         
         await app.RunAsync();
     }

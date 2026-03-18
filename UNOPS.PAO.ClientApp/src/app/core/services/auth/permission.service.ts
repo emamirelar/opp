@@ -303,6 +303,9 @@ export class PermissionService {
     // Remove leading and trailing slashes
     route = route.replace(/^\/+|\/+$/g, '');
 
+    // Map alt/dev routes to their canonical equivalents for permission checks
+    route = route.replace(/\bopportunities-alt\b/, 'opportunities');
+
     // Extract entity ID if present (e.g., partnerships/contacts/123)
     const segments = route.split('/');
     let entityId: string | undefined;

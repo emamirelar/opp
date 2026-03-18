@@ -12,7 +12,7 @@
       </div>
       <div class="flex items-center gap-2">
         @if (generatingStatement()) {
-          <i class="pi pi-spin pi-spinner text-xl text-primary"></i>
+          <i class="pi pi-spin pi-spinner text-unops-xl text-primary"></i>
         }
         @if (opportunity().opportunityStatementMarkdown) {
           <p-button
@@ -35,12 +35,12 @@
     @if (showApproverGuidance()) {
       <div class="mb-6 p-4 bg-unops-info-lighter border border-unops-info-light rounded-unops-lg">
         <div class="flex items-start gap-3">
-          <i class="pi pi-info-circle text-xl text-unops-info mt-0.5"></i>
+          <i class="pi pi-info-circle text-unops-xl text-unops-info mt-0.5"></i>
           <div class="flex-1">
             <div class="font-semibold text-unops-neutral-900 mb-2">
               {{ 'workflow.goDecision.statementGuidance.title' | translate }}
             </div>
-            <p class="text-sm text-unops-neutral-700 leading-relaxed">
+            <p class="text-unops-sm text-unops-neutral-700 leading-relaxed">
               {{ 'workflow.goDecision.statementGuidance.message' | translate }}
             </p>
           </div>
@@ -54,11 +54,11 @@
         class="flex flex-col items-center justify-center min-h-[300px] gap-4"
       >
         <div class="text-center text-unops-neutral-600 mb-4">
-          <i class="pi pi-file-edit text-6xl mb-4 text-unops-neutral-400"></i>
-          <p class="text-lg">
+          <i class="pi pi-file-edit text-unops-display-large mb-4 text-unops-neutral-400"></i>
+          <p class="text-unops-lg">
             {{ "message.opportunity.noStatement" | translate }}
           </p>
-          <p class="text-sm mt-2">
+          <p class="text-unops-sm mt-2">
             {{ "message.opportunity.generateStatementPrompt" | translate }}
           </p>
         </div>
@@ -82,7 +82,7 @@
             <!-- Validation Loading State -->
             @if (isValidating()) {
               <div class="flex items-center gap-3 p-4 bg-unops-surface-secondary rounded-unops-md border border-unops-neutral-light">
-                <i class="pi pi-spin pi-spinner text-xl text-unops-primary"></i>
+                <i class="pi pi-spin pi-spinner text-unops-xl text-unops-primary"></i>
                 <span class="text-unops-neutral-700">{{ 'message.opportunity.validatingStatement' | translate }}</span>
               </div>
             }
@@ -91,10 +91,10 @@
             @if (!isValidating() && validationResult() && validationResult()?.isAligned) {
               <p-message severity="success" styleClass="w-full">
                 <div class="flex items-start gap-3">
-                  <i class="pi pi-check-circle text-xl"></i>
+                  <i class="pi pi-check-circle text-unops-xl"></i>
                   <div class="flex-1">
                     <div class="font-semibold mb-1">{{ 'message.opportunity.statementAligned' | translate }}</div>
-                    <div class="text-sm">{{ validationResult()?.message }}</div>
+                    <div class="text-unops-sm">{{ validationResult()?.message }}</div>
                   </div>
                 </div>
               </p-message>
@@ -105,13 +105,13 @@
               <div style="background-color: rgb(253, 250, 241);" class="w-full border border-unops-warning-light rounded-unops-lg p-4">
                 <div class="flex flex-col gap-3">
                   <div class="flex items-start gap-3">
-                    <i class="pi pi-exclamation-triangle text-unops-warning-darker text-xl"></i>
+                    <i class="pi pi-exclamation-triangle text-unops-warning-darker text-unops-xl"></i>
                     <div class="flex-1">
-                      <div class="text-xs font-semibold text-unops-secondary mb-1">{{ 'message.opportunity.statementNotAligned' | translate }}</div>
-                      <div class="text-xs text-unops-neutral-800 mb-2">{{ validationResult()?.message }}</div>
+                      <div class="text-unops-xs font-semibold text-unops-secondary mb-1">{{ 'message.opportunity.statementNotAligned' | translate }}</div>
+                      <div class="text-unops-xs text-unops-neutral-800 mb-2">{{ validationResult()?.message }}</div>
                       
                       @if (validationResult()?.misalignmentItems && validationResult()!.misalignmentItems.length > 0) {
-                        <ul class="list-disc list-inside space-y-1 text-xs bg-unops-surface-primary text-unops-neutral-800 pl-2 mt-3">
+                        <ul class="list-disc list-inside space-y-1 text-unops-xs bg-unops-surface-primary text-unops-neutral-800 pl-2 mt-3">
                           @for (item of validationResult()!.misalignmentItems; track item) {
                             <li>{{ item }}</li>
                           }
@@ -178,8 +178,8 @@
   <ng-template pTemplate="header">
     <div class="flex items-center justify-between w-full pr-4">
       <div class="flex items-center gap-3">
-        <i class="pi pi-file-edit text-unops-secondary text-xl"></i>
-        <span class="font-semibold text-lg">{{ "label.opportunityStatement" | translate }}</span>
+        <i class="pi pi-file-edit text-unops-secondary text-unops-xl"></i>
+        <span class="font-semibold text-unops-lg">{{ "label.opportunityStatement" | translate }}</span>
         <span class="text-unops-neutral-500">—</span>
         <span class="text-unops-neutral-600">{{ opportunity().name }}</span>
       </div>
@@ -193,7 +193,7 @@
         <!-- Validation Loading State -->
         @if (isValidating()) {
           <div class="flex items-center gap-3 p-4 bg-unops-surface-secondary rounded-unops-md border border-unops-neutral-light">
-            <i class="pi pi-spin pi-spinner text-xl text-unops-primary"></i>
+            <i class="pi pi-spin pi-spinner text-unops-xl text-unops-primary"></i>
             <span class="text-unops-neutral-700">{{ 'message.opportunity.validatingStatement' | translate }}</span>
           </div>
         }
@@ -202,10 +202,10 @@
         @if (!isValidating() && validationResult() && validationResult()?.isAligned) {
           <p-message severity="success" styleClass="w-full">
             <div class="flex items-start gap-3">
-              <i class="pi pi-check-circle text-xl"></i>
+              <i class="pi pi-check-circle text-unops-xl"></i>
               <div class="flex-1">
                 <div class="font-semibold mb-1">{{ 'message.opportunity.statementAligned' | translate }}</div>
-                <div class="text-sm">{{ validationResult()?.message }}</div>
+                <div class="text-unops-sm">{{ validationResult()?.message }}</div>
               </div>
             </div>
           </p-message>
@@ -216,13 +216,13 @@
           <div style="background-color: rgb(253, 250, 241);" class="w-full border border-unops-warning-light rounded-unops-lg p-4">
             <div class="flex flex-col gap-3">
               <div class="flex items-start gap-3">
-                <i class="pi pi-exclamation-triangle text-unops-warning-darker text-xl"></i>
+                <i class="pi pi-exclamation-triangle text-unops-warning-darker text-unops-xl"></i>
                 <div class="flex-1">
-                  <div class="text-xs font-semibold text-unops-secondary mb-1">{{ 'message.opportunity.statementNotAligned' | translate }}</div>
-                  <div class="text-xs text-unops-neutral-800 mb-2">{{ validationResult()?.message }}</div>
+                  <div class="text-unops-xs font-semibold text-unops-secondary mb-1">{{ 'message.opportunity.statementNotAligned' | translate }}</div>
+                  <div class="text-unops-xs text-unops-neutral-800 mb-2">{{ validationResult()?.message }}</div>
                   
                   @if (validationResult()?.misalignmentItems && validationResult()!.misalignmentItems.length > 0) {
-                    <ul class="list-disc list-inside space-y-1 text-xs bg-unops-surface-primary text-unops-neutral-800 pl-2 mt-3">
+                    <ul class="list-disc list-inside space-y-1 text-unops-xs bg-unops-surface-primary text-unops-neutral-800 pl-2 mt-3">
                       @for (item of validationResult()!.misalignmentItems; track item) {
                         <li>{{ item }}</li>
                       }
@@ -237,7 +237,7 @@
     }
 
     <!-- Markdown Content in Fullscreen -->
-    <div class="prose max-w-none markdown-content text-base leading-relaxed">
+    <div class="prose max-w-none markdown-content text-unops-base leading-relaxed">
       <markdown
         [data]="opportunity().opportunityStatementMarkdown"
         (ready)="onMarkdownReady()"
@@ -281,12 +281,12 @@
 >
   <div class="flex flex-col gap-4">
     <div class="flex items-start gap-3">
-      <i class="pi pi-check-circle text-4xl text-unops-success"></i>
+      <i class="pi pi-check-circle text-unops-display-medium text-unops-success"></i>
       <div class="flex-1">
         <p class="text-unops-neutral-800 mb-2">
           {{ "message.opportunity.exportSuccessDetail" | translate }}
         </p>
-        <p class="text-sm text-unops-neutral-600">
+        <p class="text-unops-sm text-unops-neutral-600">
           {{ "message.opportunity.exportClickToOpen" | translate }}
         </p>
       </div>
@@ -296,7 +296,7 @@
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2 flex-1 min-w-0">
           <i class="pi pi-google text-unops-info"></i>
-          <span class="text-sm text-unops-neutral-800 truncate">{{
+          <span class="text-unops-sm text-unops-neutral-800 truncate">{{
             opportunity().name
           }}</span>
         </div>

@@ -10,8 +10,8 @@
 >
   <ng-template pTemplate="header">
     <div class="flex items-center gap-2">
-      <i class="pi pi-check-circle text-xl" style="color: #10b981;"></i>
-      <span class="font-semibold text-lg">
+      <i class="pi pi-check-circle text-unops-xl" style="color: #10b981;"></i>
+      <span class="font-semibold text-unops-lg">
         {{ 'workflow.goDecision.dialog.approve.title' | translate }}
       </span>
     </div>
@@ -48,7 +48,7 @@
         class="w-full"
         [placeholder]="'workflow.goDecision.dialog.approve.rationalePlaceholder' | translate"
       ></textarea>
-      <div class="flex items-center gap-2 text-sm" style="color: #7a7c7e;">
+      <div class="flex items-center gap-2 text-unops-sm" style="color: #7a7c7e;">
         <i class="pi pi-info-circle"></i>
         <span>{{ 'workflow.goDecision.dialog.approve.rationaleHint' | translate }}</span>
       </div>
@@ -58,7 +58,7 @@
     <div class="flex flex-col gap-2">
       <label class="font-semibold">{{ 'workflow.goDecision.dialog.approve.executiveLabel' | translate }} *</label>
       <small class="text-unops-success flex items-center gap-1 -mt-1 mb-1">
-        <i class="pi pi-lightbulb text-xs"></i>
+        <i class="pi pi-lightbulb text-unops-xs"></i>
         {{ 'workflow.goDecision.dialog.approve.executiveHint' | translate }}
       </small>
       <p-select
@@ -81,18 +81,18 @@
         <ng-template let-item pTemplate="item">
           <div class="flex items-center gap-2">
             @if (item.description === 'Suggested') {
-              <i class="pi pi-star-fill text-unops-warning text-xs"></i>
+              <i class="pi pi-star-fill text-unops-warning text-unops-xs"></i>
             }
             <span [class.font-semibold]="item.description === 'Suggested'">{{ item.label }}</span>
             @if (item.description === 'Suggested') {
-              <span class="text-xs text-unops-success ml-auto">{{ 'label.suggested' | translate }}</span>
+              <span class="text-unops-xs text-unops-success ml-auto">{{ 'label.suggested' | translate }}</span>
             }
           </div>
         </ng-template>
         <ng-template let-item pTemplate="selectedItem">
           <div class="flex items-center gap-2">
             @if (item.description === 'Suggested') {
-              <i class="pi pi-star-fill text-unops-warning text-xs"></i>
+              <i class="pi pi-star-fill text-unops-warning text-unops-xs"></i>
             }
             <span>{{ item.label }}</span>
           </div>

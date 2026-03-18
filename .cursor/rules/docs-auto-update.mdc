@@ -1,0 +1,126 @@
+# Automatic Documentation Updates — MANDATORY
+
+## Purpose
+
+Keep all project documentation current automatically after every code change. This rule defines **when** and **what** to update.
+
+---
+
+## Trigger 1: Angular Component Created or Modified
+
+**Files affected:** Any `.component.ts` file under `UNOPS.PAO.ClientApp/src/app/`
+
+**Actions:**
+
+1. Ensure **file-level JSDoc** at line 1:
+   ```typescript
+   /**
+    * @fileoverview Brief description of the component
+    * @author UNOPS Opportunity+ Development Team
+    */
+   ```
+2. Ensure **class-level JSDoc** directly above `export class`:
+   ```typescript
+   /**
+    * @class ComponentName
+    * @description What this component does
+    * @since 1.0.0
+    */
+   ```
+3. Ensure every `input()`, `output()`, and public method has a `@description` JSDoc tag.
+
+---
+
+## Trigger 2: API Endpoint Created or Modified
+
+**Files affected:** Any controller `.cs` file in `UNOPS.PAO.Presentation/Controllers/` or `Overrides/UNOPS.PAO.UNOPSPresentation/Controllers/`
+
+**Actions:**
+
+1. Add or update the endpoint entry in `docs/Development/API_REFERENCE.md`:
+   - HTTP method, route path, method name, and brief description
+   - Place it in the correct domain group table
+2. Ensure public controller methods have XML doc comments (`/// <summary>`).
+
+---
+
+## Trigger 3: Any Feature, Fix, or Change Completed
+
+**Applies to:** Every code change that adds, modifies, or removes functionality.
+
+**Actions:**
+
+1. Append a dated entry to the root `CHANGELOG.md` under the `[Unreleased]` section.
+2. Use the correct category:
+
+| Category | When to use |
+|---|---|
+| **Added** | New feature, endpoint, component, or capability |
+| **Changed** | Modified existing behavior, updated dependencies, refactored code |
+| **Fixed** | Bug fix, defect resolution |
+| **Removed** | Deleted feature, deprecated endpoint, removed code |
+
+3. Format:
+   ```markdown
+   ### Added
+   - Brief description of what was added ([component/area])
+   ```
+
+---
+
+## Trigger 4: Project Structure Changed
+
+**Files affected:** New or removed folders/projects at the top level, new `.csproj` files, new Angular feature modules.
+
+**Actions:**
+
+1. Update the "Project Structure" section in the root `README.md` to reflect the new folder tree.
+
+---
+
+## Trigger 5: New Documentation File Created in `docs/`
+
+**Files affected:** Any new `.md` file added under `docs/`.
+
+**Actions:**
+
+1. Add the file to `docs/README.md` in the appropriate category section with its path and a one-line description.
+
+---
+
+## Trigger 6: Design Tokens, Styles, or Tailwind Config Modified
+
+**Files affected:**
+- `UNOPS.PAO.ClientApp/src/styles/unops-design-tokens.css`
+- `UNOPS.PAO.ClientApp/src/styles/themes/unops.preset.ts`
+- `UNOPS.PAO.ClientApp/tailwind.config.js`
+- `UNOPS.PAO.ClientApp/src/styles/unops-utilities.scss`
+- `UNOPS.PAO.ClientApp/src/styles.scss`
+
+**Actions:**
+
+1. Add a `Changed` entry in `CHANGELOG.md` describing what was modified.
+
+---
+
+## Documentation File Locations
+
+| Document | Path | Purpose |
+|---|---|---|
+| Project README | `README.md` | Top-level project overview, setup, structure |
+| Changelog | `CHANGELOG.md` | Running log of all changes (Keep a Changelog format) |
+| API Reference | `docs/Development/API_REFERENCE.md` | All API endpoints grouped by domain |
+| Docs Index | `docs/README.md` | Table of contents for the `docs/` folder |
+| QA Documentation | `QA Tests/Documentation/` | Testing guides, playbooks, checklists |
+| Feature PRDs | `tasks/` | Product requirement documents and task lists |
+
+---
+
+## Checklist (run mentally after every change)
+
+- [ ] Did I create or modify an Angular component? Update JSDoc.
+- [ ] Did I add, change, or remove an API endpoint? Update `docs/Development/API_REFERENCE.md`.
+- [ ] Did I complete any feature, fix, or change? Add a `CHANGELOG.md` entry.
+- [ ] Did I add or remove top-level folders/projects? Update `README.md` structure section.
+- [ ] Did I create a new doc in `docs/`? Add it to `docs/README.md`.
+- [ ] Did I modify design tokens or styles? Add a `CHANGELOG.md` entry.

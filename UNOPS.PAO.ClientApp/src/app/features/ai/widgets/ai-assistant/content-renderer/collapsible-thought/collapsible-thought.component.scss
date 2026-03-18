@@ -34,7 +34,7 @@
 }
 
 .thought-icon {
-  font-size: 1.25rem;
+  font-size: var(--unops-font-size-headline-small);
   flex-shrink: 0;
   opacity: 0.7;
   transition: transform 0.3s ease;
@@ -81,7 +81,7 @@
 }
 
 .thought-preview ::ng-deep code {
-  font-size: 0.9em;
+  font-size: var(--unops-font-size-sm);
   padding: 0.125rem 0.25rem;
   background: var(--unops-surface-primary);
   border-radius: var(--unops-radius-sm);
@@ -163,7 +163,7 @@
   background: var(--unops-surface-primary);
   padding: 0.125rem 0.375rem;
   border-radius: var(--unops-radius-sm);
-  font-size: 0.875em;
+  font-size: var(--unops-font-size-body-medium);
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 }
 
@@ -188,6 +188,6 @@
   }
   
   .thought-icon {
-    font-size: 1rem;
+    font-size: var(--unops-font-size-base);
   }
 }

@@ -9,7 +9,7 @@
         </div>
         <div class="flex items-center gap-2">
           @if (isSaving()) {
-            <i class="pi pi-spin pi-spinner text-xl text-primary"></i>
+            <i class="pi pi-spin pi-spinner text-unops-xl text-primary"></i>
           }
           @if (canUpdate()) {
             @if (!isEditing()) {
@@ -32,12 +32,12 @@
         <div class="mt-3 bg-amber-100 border-l-4 border-amber-500 px-4 py-3 rounded">
           <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div class="flex items-start gap-2 flex-1">
-              <i class="pi pi-exclamation-triangle text-amber-600 text-lg flex-shrink-0 mt-0.5"></i>
+              <i class="pi pi-exclamation-triangle text-amber-600 text-unops-lg flex-shrink-0 mt-0.5"></i>
               <div class="flex flex-col">
-                <span class="text-sm font-bold text-amber-900">
+                <span class="text-unops-sm font-bold text-amber-900">
                   {{ 'message.unsavedChanges' | translate }}
                 </span>
-                <span class="text-xs font-medium text-amber-800">
+                <span class="text-unops-xs font-medium text-amber-800">
                   {{ 'message.unsavedChangesSectionDetail' | translate }}
                 </span>
               </div>
@@ -72,7 +72,7 @@
   <div class="space-y-6">
     <!-- Name -->
     <div id="field-name">
-      <h3 class="text-sm font-semibold text-unops-neutral-700 mb-2">{{ 'label.opportunity.name' | translate }} *</h3>
+      <h3 class="text-unops-sm font-semibold text-unops-neutral-700 mb-2">{{ 'label.opportunity.name' | translate }} *</h3>
       @if (isEditing()) {
         <input
           pInputText
@@ -92,7 +92,7 @@
           <small class="text-unops-neutral-600 ml-auto">{{ (nameControl.value?.length || 0) }} / 120</small>
         </div>
       } @else {
-        <p class="text-unops-secondary font-medium text-lg">
+        <p class="text-unops-secondary font-medium text-unops-lg">
           {{ opportunity().name || '-' }}
         </p>
       }
@@ -100,7 +100,7 @@
 
     <!-- Description -->
     <div id="field-description">
-      <h3 class="text-sm font-semibold text-unops-neutral-700 mb-2">{{ 'label.opportunity.description' | translate }} *</h3>
+      <h3 class="text-unops-sm font-semibold text-unops-neutral-700 mb-2">{{ 'label.opportunity.description' | translate }} *</h3>
       @if (isEditing()) {
         <textarea
           pInputTextarea
@@ -110,13 +110,13 @@
           [placeholder]="'label.opportunity.descriptionPlaceholder' | translate"
         ></textarea>
       } @else {
-        <p class="text-unops-neutral-800 text-base leading-loose whitespace-pre-wrap w-full tracking-normal">{{ opportunity().description || '-' }}</p>
+        <p class="text-unops-neutral-800 text-unops-base leading-loose whitespace-pre-wrap w-full tracking-normal">{{ opportunity().description || '-' }}</p>
       }
     </div>
 
     <!-- Proposed Budget for Initiative -->
     <div id="field-initiativeBudgetUSD">
-      <h3 class="text-sm font-semibold text-unops-neutral-700 mb-2">{{ 'label.proposedBudgetForInitiative' | translate }} *</h3>
+      <h3 class="text-unops-sm font-semibold text-unops-neutral-700 mb-2">{{ 'label.proposedBudgetForInitiative' | translate }} *</h3>
       @if (isEditing()) {
         <p-inputNumber
           [formControl]="initiativeBudgetControl"
@@ -130,7 +130,7 @@
           inputStyleClass="w-full"
         />
       } @else {
-        <p class="text-unops-primary font-semibold text-lg">
+        <p class="text-unops-primary font-semibold text-unops-lg">
           @if (opportunity().initiativeBudgetUSD && opportunity().initiativeBudgetUSD! > 0) {
             ${{ opportunity().initiativeBudgetUSD | number: '1.2-2' }}
           } @else {
@@ -142,24 +142,24 @@
 
     <!-- Total Budget (Read Only) - Sum of Funding Partners -->
     <div>
-      <h3 class="text-sm font-semibold text-unops-neutral-700 mb-2">{{ 'label.totalBudget' | translate }}</h3>
-      <p class="text-unops-neutral-800 font-medium text-base">
+      <h3 class="text-unops-sm font-semibold text-unops-neutral-700 mb-2">{{ 'label.totalBudget' | translate }}</h3>
+      <p class="text-unops-neutral-800 font-medium text-unops-base">
         @if (opportunity().stats?.totalFundingUSD && opportunity()!.stats!.totalFundingUSD! > 0) {
           ${{ opportunity()!.stats!.totalFundingUSD | number: '1.2-2' }}
         } @else {
           -
         }
       </p>
-      <p class="text-xs text-unops-neutral-500 mt-1">{{ 'label.sumOfAllFundingPartners' | translate }}</p>
+      <p class="text-unops-xs text-unops-neutral-500 mt-1">{{ 'label.sumOfAllFundingPartners' | translate }}</p>
     </div>
 
     <!-- Unfunded Amount (Read Only) - Proposed Budget minus Total Funding -->
     <div>
-      <h3 class="text-sm font-semibold text-unops-neutral-700 mb-2">{{ 'label.unfundedAmount' | translate }}</h3>
+      <h3 class="text-unops-sm font-semibold text-unops-neutral-700 mb-2">{{ 'label.unfundedAmount' | translate }}</h3>
       <p [ngClass]="{
-        'text-unops-error font-semibold text-lg': unfundedAmount() > 0,
-        'text-unops-success font-semibold text-lg': unfundedAmount() <= 0 && hasProposedBudget(),
-        'text-unops-neutral-800 font-medium text-base': !hasProposedBudget()
+        'text-unops-error font-semibold text-unops-lg': unfundedAmount() > 0,
+        'text-unops-success font-semibold text-unops-lg': unfundedAmount() <= 0 && hasProposedBudget(),
+        'text-unops-neutral-800 font-medium text-unops-base': !hasProposedBudget()
       }">
         @if (hasProposedBudget()) {
           @if (unfundedAmount() > 0) {
@@ -173,7 +173,7 @@
           -
         }
       </p>
-      <p class="text-xs text-unops-neutral-500 mt-1">{{ 'helpText.unfundedAmount' | translate }}</p>
+      <p class="text-unops-xs text-unops-neutral-500 mt-1">{{ 'helpText.unfundedAmount' | translate }}</p>
     </div>
   </div>
   
@@ -183,12 +183,12 @@
       <div class="bg-amber-100 border-t-4 border-amber-500 px-4 py-3 rounded-b">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div class="flex items-start gap-2 flex-1">
-            <i class="pi pi-exclamation-triangle text-amber-600 text-lg flex-shrink-0 mt-0.5"></i>
+            <i class="pi pi-exclamation-triangle text-amber-600 text-unops-lg flex-shrink-0 mt-0.5"></i>
             <div class="flex flex-col">
-              <span class="text-sm font-bold text-amber-900">
+              <span class="text-unops-sm font-bold text-amber-900">
                 {{ 'message.unsavedChanges' | translate }}
               </span>
-              <span class="text-xs font-medium text-amber-800">
+              <span class="text-unops-xs font-medium text-amber-800">
                 {{ 'message.unsavedChangesSectionDetail' | translate }}
               </span>
             </div>

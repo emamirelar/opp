@@ -14,7 +14,7 @@
     @if (loading()) {
       <div class="flex-1 flex items-center justify-center">
         <div class="text-center">
-          <i class="pi pi-spin pi-spinner text-4xl text-unops-primary mb-4"></i>
+          <i class="pi pi-spin pi-spinner text-unops-display-medium text-unops-primary mb-4"></i>
           <p class="text-unops-text-secondary">{{ 'message.loadingAuditLog' | translate }}</p>
         </div>
       </div>
@@ -22,7 +22,7 @@
       <!-- Error State -->
       <div class="flex-1 flex items-center justify-center">
         <div class="text-center">
-          <i class="pi pi-exclamation-triangle text-4xl text-unops-warning mb-4"></i>
+          <i class="pi pi-exclamation-triangle text-unops-display-medium text-unops-warning mb-4"></i>
           <p class="text-unops-text-secondary mb-2">{{ error() }}</p>
           <p class="text-unops-sm text-unops-text-secondary">{{ 'message.aiComparison.noAuditLog' | translate }}</p>
         </div>
@@ -69,8 +69,8 @@
       <div class="flex-1 overflow-auto">
         @if (totalCount() === 0) {
           <div class="flex flex-col items-center justify-center h-full text-unops-text-secondary">
-            <i class="pi pi-check-circle text-6xl mb-4 text-unops-success"></i>
-            <h3 class="text-xl font-semibold mb-2">{{ 'message.noDifferences' | translate }}</h3>
+            <i class="pi pi-check-circle text-unops-display-large mb-4 text-unops-success"></i>
+            <h3 class="text-unops-xl font-semibold mb-2">{{ 'message.noDifferences' | translate }}</h3>
             <p>{{ 'message.noDifferencesDescription' | translate }}</p>
           </div>
         } @else {
@@ -209,7 +209,7 @@
                           @for (item of diff.currentValue; track $index) {
                             @let countryItem = asAny(item);
                             <div class="bg-white border border-unops-neutral-light rounded-unops-md px-3 py-2 flex items-center gap-2">
-                              <span class="text-2xl">{{ getCountryFlag(countryItem.country?.iso2Code || countryItem.countryCode) }}</span>
+                              <span class="text-unops-2xl">{{ getCountryFlag(countryItem.country?.iso2Code || countryItem.countryCode) }}</span>
                               <span class="text-unops-sm font-medium text-unops-text-primary">{{ countryItem.country?.name || countryItem.countryName }}</span>
                             </div>
                           }
@@ -240,9 +240,9 @@
                             @let missionIcon = mission.iconClass ?? mission.unopsMission?.iconClass;
                             <div class="bg-white border border-unops-neutral-light rounded-unops-md p-3 flex items-center gap-3">
                               @if (missionIcon) {
-                                <i [class]="missionIcon + ' text-2xl text-unops-primary'"></i>
+                                <i [class]="missionIcon + ' text-unops-2xl text-unops-primary'"></i>
                               } @else {
-                                <i class="pi pi-check-circle text-2xl text-unops-primary"></i>
+                                <i class="pi pi-check-circle text-unops-2xl text-unops-primary"></i>
                               }
                               <div class="flex-1">
                                 <div class="font-medium text-unops-sm text-unops-text-primary">{{ missionName }}</div>
@@ -456,7 +456,7 @@
                                   (ngModelChange)="toggleArrayItem(diff.field, $index)"
                                   (click)="$event.stopPropagation()"
                                 />
-                                <span class="text-2xl">{{ getCountryFlag(countryItem.country?.iso2Code || countryItem.countryCode) }}</span>
+                                <span class="text-unops-2xl">{{ getCountryFlag(countryItem.country?.iso2Code || countryItem.countryCode) }}</span>
                                 <span class="text-unops-sm font-bold text-unops-primary">{{ countryItem.country?.name || countryItem.countryName }}</span>
                               </div>
                             }
@@ -522,9 +522,9 @@
                                 (click)="$event.stopPropagation()"
                               />
                               @if (missionIcon) {
-                                <i [class]="missionIcon + ' text-2xl text-unops-primary'"></i>
+                                <i [class]="missionIcon + ' text-unops-2xl text-unops-primary'"></i>
                               } @else {
-                                <i class="pi pi-check-circle text-2xl text-unops-primary"></i>
+                                <i class="pi pi-check-circle text-unops-2xl text-unops-primary"></i>
                               }
                               <div class="flex-1">
                                 <div class="font-semibold text-unops-sm text-unops-primary">{{ missionName }}</div>

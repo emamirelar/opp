@@ -31,7 +31,7 @@
 
     <!-- Opportunity Basic Info -->
     <div class="mb-4">
-      <h3 class="text-lg font-semibold mb-4 text-gray-800">
+      <h3 class="text-unops-lg font-semibold mb-4 text-gray-800">
         {{ 'title.opportunityBasicInfo' | translate }}
       </h3>
 
@@ -104,7 +104,7 @@
           </div>
 
           <!-- Partner Context Info -->
-          <div class="text-sm text-gray-600 bg-blue-50 p-3 rounded border border-blue-200">
+          <div class="text-unops-sm text-gray-600 bg-blue-50 p-3 rounded border border-blue-200">
             <i class="pi pi-info-circle mr-2"></i>
             {{ 'message.opportunityWillBeCreatedForPartner' | translate: { partnerName: partnerName() } }}
           </div>
@@ -112,7 +112,7 @@
 
         <!-- Org Unit Responsible for Opportunity development (required) -->
         <div>
-          <h4 class="text-sm font-semibold text-gray-700 mb-2">
+          <h4 class="text-unops-sm font-semibold text-gray-700 mb-2">
             {{ 'label.opportunity.responsibleOrgUnit' | translate }} *
           </h4>
           <p-select
@@ -138,15 +138,15 @@
                 </div>
               } @else {
                 @if (groupedDirectorRoles().length > 0 || decisionMakingPathwayRoles().length > 0) {
-                  <div class="text-xs text-unops-secondary mb-3 flex items-center gap-1">
+                  <div class="text-unops-xs text-unops-secondary mb-3 flex items-center gap-1">
                     <i class="pi pi-lock text-unops-secondary"></i>
                     <span>{{ 'label.opportunity.autoPopulatedFromOrgUnit' | translate }}</span>
                   </div>
                   @if (selectedOrgUnitName()) {
-                    <div class="text-sm font-semibold text-unops-primary mb-2 flex items-center gap-2">
+                    <div class="text-unops-sm font-semibold text-unops-primary mb-2 flex items-center gap-2">
                       <i class="pi pi-building text-unops-primary"></i>
                       <span>{{ selectedOrgUnitName() }}</span>
-                      <span class="text-unops-neutral-500 font-normal text-xs">({{ groupedDirectorRoles().length + decisionMakingPathwayRoles().length }})</span>
+                      <span class="text-unops-neutral-500 font-normal text-unops-xs">({{ groupedDirectorRoles().length + decisionMakingPathwayRoles().length }})</span>
                     </div>
                   }
                 }
@@ -157,12 +157,12 @@
                         <div class="flex items-center gap-2">
                           <p-avatar label="A" shape="circle" size="normal" styleClass="bg-emerald-100 text-emerald-600 flex-shrink-0" />
                           <div class="min-w-0 flex-1">
-                            <div class="font-semibold text-unops-secondary text-sm truncate">{{ getTranslatedRoleName(stakeholder) }}</div>
+                            <div class="font-semibold text-unops-secondary text-unops-sm truncate">{{ getTranslatedRoleName(stakeholder) }}</div>
                             @if (stakeholder.userName) {
-                              <div class="text-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">{{ stakeholder.userName }}</div>
+                              <div class="text-unops-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">{{ stakeholder.userName }}</div>
                             }
                             @if (stakeholder.position) {
-                              <div class="text-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">{{ stakeholder.position }}</div>
+                              <div class="text-unops-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">{{ stakeholder.position }}</div>
                             }
                           </div>
                         </div>
@@ -172,7 +172,7 @@
                 }
                 @if (decisionMakingPathwayRoles().length > 0) {
                   <div class="pt-4 mt-4 border-t border-unops-neutral-300">
-                    <h4 class="text-sm font-semibold text-unops-neutral-700 mb-3 flex items-center gap-2">
+                    <h4 class="text-unops-sm font-semibold text-unops-neutral-700 mb-3 flex items-center gap-2">
                       <i class="pi pi-sitemap text-unops-primary"></i>
                       <span>{{ 'label.opportunity.decisionMakingPathway' | translate }}</span>
                     </h4>
@@ -182,12 +182,12 @@
                           <div class="flex items-center gap-2">
                             <p-avatar label="D" shape="circle" size="normal" styleClass="bg-emerald-100 text-emerald-700 flex-shrink-0" />
                             <div class="min-w-0 flex-1">
-                              <div class="font-semibold text-unops-secondary text-sm truncate">{{ getTranslatedRoleName(stakeholder) }}</div>
+                              <div class="font-semibold text-unops-secondary text-unops-sm truncate">{{ getTranslatedRoleName(stakeholder) }}</div>
                               @if (stakeholder.userName) {
-                                <div class="text-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">{{ stakeholder.userName }}</div>
+                                <div class="text-unops-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">{{ stakeholder.userName }}</div>
                               }
                               @if (stakeholder.position) {
-                                <div class="text-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">{{ stakeholder.position }}</div>
+                                <div class="text-unops-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">{{ stakeholder.position }}</div>
                               }
                             </div>
                           </div>
@@ -207,13 +207,13 @@
     
     <!-- Document Upload Section -->
     <div class="mb-4">
-      <h3 class="text-lg font-semibold mb-4 text-gray-800">
+      <h3 class="text-unops-lg font-semibold mb-4 text-gray-800">
         {{ 'title.documents' | translate }} 
-        <span class="text-sm font-normal text-gray-600">({{ 'label.optional' | translate }})</span>
+        <span class="text-unops-sm font-normal text-gray-600">({{ 'label.optional' | translate }})</span>
       </h3>
       
       <!-- Helper Text (matching opportunity-documents component) -->
-      <div class="mb-4 p-3 bg-blue-50 border border-blue-100 rounded text-sm text-blue-900">
+      <div class="mb-4 p-3 bg-blue-50 border border-blue-100 rounded text-unops-sm text-blue-900">
         <div class="flex items-start gap-2">
           <i class="pi pi-info-circle text-blue-600 mt-0.5 flex-shrink-0"></i>
           <span>{{ 'helpText.document.uploadForAutoFill' | translate }}</span>
@@ -227,7 +227,7 @@
             <p-progressSpinner styleClass="w-8 h-8" />
             <div class="flex-1">
               <div class="font-medium text-gray-900">{{ 'message.uploadingDocuments' | translate }}</div>
-              <div class="text-sm text-gray-600 mt-1">{{ uploadProgress() }}</div>
+              <div class="text-unops-sm text-gray-600 mt-1">{{ uploadProgress() }}</div>
             </div>
           </div>
         </div>
@@ -266,23 +266,23 @@
           </button>
         </div>
         
-        <div class="text-xs text-gray-500">
+        <div class="text-unops-xs text-gray-500">
           {{ 'message.acceptedFileTypes' | translate }}
         </div>
         
         <!-- Selected Local Files List -->
         @if (selectedFiles().length > 0) {
           <div class="mt-3 p-3 bg-gray-50 rounded border border-gray-200">
-            <div class="font-medium text-sm mb-2">
+            <div class="font-medium text-unops-sm mb-2">
               {{ 'label.selectedFiles' | translate }} - {{ 'label.fromComputer' | translate }} ({{ selectedFiles().length }})
             </div>
             <div class="flex flex-col gap-2">
               @for (file of selectedFiles(); track $index) {
                 <div class="flex items-center gap-2 p-2 bg-white rounded border border-gray-200">
                   <i class="pi pi-file text-gray-600"></i>
-                  <span class="flex-1 text-sm text-gray-900 truncate">{{ file.file.name }}</span>
-                  <span class="text-xs text-gray-500">{{ (file.file.size / 1024 / 1024).toFixed(2) }} MB</span>
-                  <p-tag [value]="getDocumentTypeName(file.documentTypeId)" severity="info" styleClass="text-xs" />
+                  <span class="flex-1 text-unops-sm text-gray-900 truncate">{{ file.file.name }}</span>
+                  <span class="text-unops-xs text-gray-500">{{ (file.file.size / 1024 / 1024).toFixed(2) }} MB</span>
+                  <p-tag [value]="getDocumentTypeName(file.documentTypeId)" severity="info" styleClass="text-unops-xs" />
                   <button
                     pButton
                     icon="pi pi-times"
@@ -302,7 +302,7 @@
         <!-- Selected Google Drive Files List -->
         @if (selectedGoogleDriveFiles().length > 0) {
           <div class="mt-3 p-3 bg-blue-50 rounded border border-blue-200">
-            <div class="font-medium text-sm mb-2 flex items-center gap-2">
+            <div class="font-medium text-unops-sm mb-2 flex items-center gap-2">
               <i class="pi pi-google text-blue-600"></i>
               <span>{{ 'label.selectedFiles' | translate }} - {{ 'label.fromGoogleDrive' | translate }} ({{ selectedGoogleDriveFiles().length }})</span>
             </div>
@@ -310,8 +310,8 @@
               @for (file of selectedGoogleDriveFiles(); track $index) {
                 <div class="flex items-center gap-2 p-2 bg-white rounded border border-blue-200">
                   <i class="pi pi-google text-blue-600"></i>
-                  <span class="flex-1 text-sm text-gray-900 truncate">{{ file.name }}</span>
-                  <p-tag [value]="getDocumentTypeName(file.documentTypeId)" severity="info" styleClass="text-xs" />
+                  <span class="flex-1 text-unops-sm text-gray-900 truncate">{{ file.name }}</span>
+                  <p-tag [value]="getDocumentTypeName(file.documentTypeId)" severity="info" styleClass="text-unops-xs" />
                   <button
                     pButton
                     icon="pi pi-times"
@@ -346,7 +346,7 @@
           
           @if (showExistingDocuments()) {
             <div class="mt-3 p-4 border border-gray-200 rounded bg-gray-50">
-              <div class="text-sm text-gray-600 mb-3">
+              <div class="text-unops-sm text-gray-600 mb-3">
                 <i class="pi pi-info-circle mr-1"></i>
                 {{ 'message.selectExistingDocumentsFromPartner' | translate }}
               </div>
@@ -372,8 +372,8 @@
                       <i class="pi pi-file text-gray-600"></i>
                       
                       <div class="flex-1 min-w-0">
-                        <div class="font-medium text-sm text-gray-900 truncate">{{ doc.name }}</div>
-                        <div class="text-xs text-gray-600">
+                        <div class="font-medium text-unops-sm text-gray-900 truncate">{{ doc.name }}</div>
+                        <div class="text-unops-xs text-gray-600">
                           {{ doc.documentTypeName || doc.documentType?.name || 'Document' }}
                         </div>
                       </div>
@@ -392,9 +392,9 @@
 
     <!-- Source Content Section (Interactions) -->
     <div class="mb-4">
-      <h3 class="text-lg font-semibold mb-4 text-gray-800">
+      <h3 class="text-unops-lg font-semibold mb-4 text-gray-800">
         {{ 'title.sourceContent' | translate }} 
-        <span class="text-sm font-normal text-gray-600">({{ 'label.optional' | translate }})</span>
+        <span class="text-unops-sm font-normal text-gray-600">({{ 'label.optional' | translate }})</span>
       </h3>
       
       <!-- Selected Interactions Summary -->
@@ -419,17 +419,17 @@
                       <p-tag 
                         value="{{ 'label.current' | translate }}" 
                         severity="info" 
-                        styleClass="text-xs"
+                        styleClass="text-unops-xs"
                       />
                     }
                   </div>
-                  <div class="text-sm text-gray-600 flex items-center gap-2">
+                  <div class="text-unops-sm text-gray-600 flex items-center gap-2">
                     <span>{{ interaction.type }}</span>
                     <span>•</span>
                     <span>{{ interaction.date | date }}</span>
                   </div>
                   @if (interaction.description) {
-                    <div class="text-xs text-gray-500 mt-1 line-clamp-1">
+                    <div class="text-unops-xs text-gray-500 mt-1 line-clamp-1">
                       {{ interaction.description }}
                     </div>
                   }
@@ -513,8 +513,8 @@
                       </p-checkbox>
 
                       <div class="flex-1 min-w-0">
-                        <div class="font-medium text-sm text-gray-900">{{ interaction.subject }}</div>
-                        <div class="text-xs text-gray-600">
+                        <div class="font-medium text-unops-sm text-gray-900">{{ interaction.subject }}</div>
+                        <div class="text-unops-xs text-gray-600">
                           {{ interaction.type }} • {{ interaction.date | date }}
                         </div>
                       </div>
@@ -525,7 +525,7 @@
                   @if (loadingMoreInteractions()) {
                     <div class="flex justify-center items-center py-3">
                       <p-progressSpinner styleClass="w-8 h-8" />
-                      <span class="ml-2 text-sm text-gray-600">Loading more...</span>
+                      <span class="ml-2 text-unops-sm text-gray-600">Loading more...</span>
                     </div>
                   }
                 }
@@ -596,8 +596,8 @@
                       </p-checkbox>
 
                       <div class="flex-1 min-w-0">
-                        <div class="font-medium text-sm text-gray-900">{{ interaction.subject }}</div>
-                        <div class="text-xs text-gray-600">
+                        <div class="font-medium text-unops-sm text-gray-900">{{ interaction.subject }}</div>
+                        <div class="text-unops-xs text-gray-600">
                           {{ interaction.type }} • {{ interaction.date | date }}
                         </div>
                       </div>
@@ -608,7 +608,7 @@
                   @if (loadingMoreInteractions()) {
                     <div class="flex justify-center items-center py-3">
                       <p-progressSpinner styleClass="w-8 h-8" />
-                      <span class="ml-2 text-sm text-gray-600">Loading more...</span>
+                      <span class="ml-2 text-unops-sm text-gray-600">Loading more...</span>
                     </div>
                   }
                 }
@@ -630,13 +630,13 @@
         <!-- AI Proposal Header -->
         <div class="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4">
           <div class="flex items-start gap-3">
-            <i class="pi pi-sparkles text-blue-600 text-2xl"></i>
+            <i class="pi pi-sparkles text-blue-600 text-unops-2xl"></i>
             <div class="flex-1">
-              <h4 class="font-semibold text-blue-900 mb-1 text-lg">{{ 'title.aiGeneratedProposal' | translate }}</h4>
-              <p class="text-sm text-blue-800">
+              <h4 class="font-semibold text-blue-900 mb-1 text-unops-lg">{{ 'title.aiGeneratedProposal' | translate }}</h4>
+              <p class="text-unops-sm text-blue-800">
                 {{ 'message.reviewAndEditProposal' | translate }}
               </p>
-              <div class="mt-2 flex gap-2 text-xs text-blue-700">
+              <div class="mt-2 flex gap-2 text-unops-xs text-blue-700">
                 <span class="bg-blue-100 px-2 py-1 rounded">
                   <i class="pi pi-file-edit mr-1"></i>
                   {{ proposedOpportunity()!.interactionsAnalyzed || 0 }} {{ 'label.interactions' | translate }}
@@ -676,7 +676,7 @@
               </label>
             </div>
           </div>
-          <div class="mt-3 text-sm text-gray-600">
+          <div class="mt-3 text-unops-sm text-gray-600">
             <i class="pi pi-info-circle mr-2"></i>
             {{ 'message.selectFieldsToAccept' | translate }}
           </div>
@@ -706,7 +706,7 @@
                   (ngModelChange)="toggleField('name')"
                   (click)="$event.stopPropagation()"
                 />
-                <label class="block text-sm font-semibold text-gray-700 flex-1">
+                <label class="block text-unops-sm font-semibold text-gray-700 flex-1">
                   {{ 'label.opportunityName' | translate }} *
                 </label>
               </div>
@@ -733,7 +733,7 @@
                   (ngModelChange)="toggleField('description')"
                   (click)="$event.stopPropagation()"
                 />
-                <label class="block text-sm font-semibold text-gray-700 flex-1">
+                <label class="block text-unops-sm font-semibold text-gray-700 flex-1">
                   {{ 'label.opportunityDescription' | translate }}
                 </label>
               </div>
@@ -763,7 +763,7 @@
                     (ngModelChange)="toggleOrgUnitField($event)"
                     (click)="$event.stopPropagation()"
                   />
-                  <label class="block text-sm font-semibold text-gray-700 flex-1">
+                  <label class="block text-unops-sm font-semibold text-gray-700 flex-1">
                     {{ 'label.opportunity.responsibleOrgUnit' | translate }}
                   </label>
                 </div>
@@ -790,15 +790,15 @@
                       </div>
                     } @else {
                       @if (groupedDirectorRoles().length > 0 || decisionMakingPathwayRoles().length > 0) {
-                        <div class="text-xs text-unops-secondary mb-3 flex items-center gap-1">
+                        <div class="text-unops-xs text-unops-secondary mb-3 flex items-center gap-1">
                           <i class="pi pi-lock text-unops-secondary"></i>
                           <span>{{ 'label.opportunity.autoPopulatedFromOrgUnit' | translate }}</span>
                         </div>
                         @if (selectedOrgUnitName()) {
-                          <div class="text-sm font-semibold text-unops-primary mb-2 flex items-center gap-2 flex-wrap">
+                          <div class="text-unops-sm font-semibold text-unops-primary mb-2 flex items-center gap-2 flex-wrap">
                             <i class="pi pi-building text-unops-primary"></i>
                             <span>{{ selectedOrgUnitName() }}</span>
-                            <span class="text-unops-neutral-500 font-normal text-xs">({{ groupedDirectorRoles().length + decisionMakingPathwayRoles().length }})</span>
+                            <span class="text-unops-neutral-500 font-normal text-unops-xs">({{ groupedDirectorRoles().length + decisionMakingPathwayRoles().length }})</span>
                           </div>
                         }
                       }
@@ -809,12 +809,12 @@
                               <div class="flex items-center gap-2">
                                 <p-avatar label="A" shape="circle" size="normal" styleClass="bg-emerald-100 text-emerald-600 flex-shrink-0" />
                                 <div class="min-w-0 flex-1">
-                                  <div class="font-semibold text-unops-secondary text-sm truncate">{{ getTranslatedRoleName(stakeholder) }}</div>
+                                  <div class="font-semibold text-unops-secondary text-unops-sm truncate">{{ getTranslatedRoleName(stakeholder) }}</div>
                                   @if (stakeholder.userName) {
-                                    <div class="text-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">{{ stakeholder.userName }}</div>
+                                    <div class="text-unops-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">{{ stakeholder.userName }}</div>
                                   }
                                   @if (stakeholder.position) {
-                                    <div class="text-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">{{ stakeholder.position }}</div>
+                                    <div class="text-unops-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">{{ stakeholder.position }}</div>
                                   }
                                 </div>
                               </div>
@@ -824,7 +824,7 @@
                       }
                       @if (decisionMakingPathwayRoles().length > 0) {
                         <div class="pt-4 mt-4 border-t border-unops-neutral-300">
-                          <h4 class="text-sm font-semibold text-unops-neutral-700 mb-3 flex items-center gap-2">
+                          <h4 class="text-unops-sm font-semibold text-unops-neutral-700 mb-3 flex items-center gap-2">
                             <i class="pi pi-sitemap text-unops-primary"></i>
                             <span>{{ 'label.opportunity.decisionMakingPathway' | translate }}</span>
                           </h4>
@@ -834,12 +834,12 @@
                                 <div class="flex items-center gap-2">
                                   <p-avatar label="D" shape="circle" size="normal" styleClass="bg-emerald-100 text-emerald-700 flex-shrink-0" />
                                   <div class="min-w-0 flex-1">
-                                    <div class="font-semibold text-unops-secondary text-sm truncate">{{ getTranslatedRoleName(stakeholder) }}</div>
+                                    <div class="font-semibold text-unops-secondary text-unops-sm truncate">{{ getTranslatedRoleName(stakeholder) }}</div>
                                     @if (stakeholder.userName) {
-                                      <div class="text-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">{{ stakeholder.userName }}</div>
+                                      <div class="text-unops-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">{{ stakeholder.userName }}</div>
                                     }
                                     @if (stakeholder.position) {
-                                      <div class="text-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">{{ stakeholder.position }}</div>
+                                      <div class="text-unops-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">{{ stakeholder.position }}</div>
                                     }
                                   </div>
                                 </div>
@@ -867,7 +867,7 @@
                       (ngModelChange)="toggleField('proposedInitiativeTypeName')"
                       (click)="$event.stopPropagation()"
                     />
-                    <label class="block text-sm font-semibold text-gray-700 flex-1">
+                    <label class="block text-unops-sm font-semibold text-gray-700 flex-1">
                       {{ 'label.opportunity.initiativeType' | translate }}
                     </label>
                   </div>
@@ -898,7 +898,7 @@
                       (ngModelChange)="toggleField('deliveryModality')"
                       (click)="$event.stopPropagation()"
                     />
-                    <label class="block text-sm font-semibold text-gray-700 flex-1">
+                    <label class="block text-unops-sm font-semibold text-gray-700 flex-1">
                       {{ 'label.deliveryModality' | translate }}
                     </label>
                   </div>
@@ -934,12 +934,12 @@
                       (ngModelChange)="toggleField('isPooledFunding')"
                       (click)="$event.stopPropagation()"
                     />
-                    <label class="block text-sm font-semibold text-gray-700 flex-1">
+                    <label class="block text-unops-sm font-semibold text-gray-700 flex-1">
                       {{ 'label.pooledFunding' | translate }}
                     </label>
                   </div>
                   <div class="flex items-center gap-2" (click)="$event.stopPropagation()">
-                    <span class="text-sm px-3 py-1 rounded" 
+                    <span class="text-unops-sm px-3 py-1 rounded" 
                           [ngClass]="$any(proposedOpportunity()!.opportunity).isPooledFunding ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
                       {{ $any(proposedOpportunity()!.opportunity).isPooledFunding ? ('label.yes' | translate) : ('label.no' | translate) }}
                     </span>
@@ -964,7 +964,7 @@
                     (ngModelChange)="toggleField('initiativeBudgetUSD')"
                     (click)="$event.stopPropagation()"
                   />
-                  <label class="block text-sm font-semibold text-gray-700 flex-1">
+                  <label class="block text-unops-sm font-semibold text-gray-700 flex-1">
                     {{ 'label.proposedBudgetForInitiative' | translate }} (USD)
                   </label>
                 </div>
@@ -981,7 +981,7 @@
             @if ($any(proposedOpportunity()!.opportunity).partnerBudgets && $any(proposedOpportunity()!.opportunity).partnerBudgets.length > 0) {
               <div>
                 <div class="flex items-center justify-between mb-3">
-                  <label class="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <label class="block text-unops-sm font-semibold text-gray-700 flex items-center gap-2">
                     <i class="pi pi-dollar text-green-600"></i>
                     {{ 'label.partnerBudgetAllocations' | translate }} ({{ $any(proposedOpportunity()!.opportunity).partnerBudgets.length }})
                   </label>
@@ -992,7 +992,7 @@
                       (ngModelChange)="toggleField('partnerBudgets')"
                       inputId="field-partnerBudgets"
                     />
-                    <label for="field-partnerBudgets" class="cursor-pointer text-sm font-medium text-gray-700">
+                    <label for="field-partnerBudgets" class="cursor-pointer text-unops-sm font-medium text-gray-700">
                       {{ 'label.selectAll' | translate }}
                     </label>
                   </div>
@@ -1034,7 +1034,7 @@
             @if (proposedOpportunity()!.opportunity.deliverables && proposedOpportunity()!.opportunity.deliverables!.length > 0) {
               <div>
                 <div class="flex items-center justify-between mb-3">
-                  <label class="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <label class="block text-unops-sm font-semibold text-gray-700 flex items-center gap-2">
                     <i class="pi pi-box text-indigo-600"></i>
                     {{ 'label.opportunity.deliverables' | translate }} ({{ proposedOpportunity()!.opportunity.deliverables!.length }})
                   </label>
@@ -1045,7 +1045,7 @@
                       (ngModelChange)="toggleField('deliverables')"
                       inputId="field-deliverables"
                     />
-                    <label for="field-deliverables" class="cursor-pointer text-sm font-medium text-gray-700">
+                    <label for="field-deliverables" class="cursor-pointer text-unops-sm font-medium text-gray-700">
                       {{ 'label.selectAll' | translate }}
                     </label>
                   </div>
@@ -1077,7 +1077,7 @@
                               
                               <!-- Hierarchical Path (same condition as opportunity-what-section) -->
                               @if (deliverable.level0 || deliverable.level1 || deliverable.level2) {
-                                <div class="text-xs text-unops-neutral-600 mb-3 space-y-0.5">
+                                <div class="text-unops-xs text-unops-neutral-600 mb-3 space-y-0.5">
                                   @if (deliverable.level0) {
                                     <div><span class="font-medium">Level 0:</span> {{ deliverable.level0 }}</div>
                                   }
@@ -1097,21 +1097,21 @@
                                 @if (deliverable.serviceLine) {
                                   <p-chip 
                                     [label]="deliverable.serviceLine" 
-                                    styleClass="text-xs"
+                                    styleClass="text-unops-xs"
                                     [style]="{ 'background-color': '#e0f2fe', 'color': '#0369a1' }"
                                   />
                                 }
                                 @if (deliverable.level0) {
                                   <p-chip 
                                     [label]="deliverable.level0" 
-                                    styleClass="text-xs"
+                                    styleClass="text-unops-xs"
                                     [style]="{ 'background-color': '#f3f4f6', 'color': '#374151' }"
                                   />
                                 }
                                 @if (deliverable.quantity !== null && deliverable.quantity !== undefined) {
                                   <p-chip 
                                     [label]="'Qty: ' + deliverable.quantity.toString()" 
-                                    styleClass="text-xs font-bold"
+                                    styleClass="text-unops-xs font-bold"
                                     [style]="{ 'background-color': '#fef3c7', 'color': '#92400e' }"
                                   />
                                 }
@@ -1153,7 +1153,7 @@
                     (ngModelChange)="toggleField('challenges')"
                     (click)="$event.stopPropagation()"
                   />
-                  <label class="block text-sm font-semibold text-gray-700 flex-1 flex items-center gap-2">
+                  <label class="block text-unops-sm font-semibold text-gray-700 flex-1 flex items-center gap-2">
                     <i class="pi pi-exclamation-circle text-amber-600"></i>
                     {{ 'label.contextAndChallenges' | translate }}
                   </label>
@@ -1187,7 +1187,7 @@
                   (ngModelChange)="toggleField('resultsFocus')"
                   (click)="$event.stopPropagation()"
                 />
-                <label class="block text-sm font-semibold text-gray-700 flex-1 flex items-center gap-2">
+                <label class="block text-unops-sm font-semibold text-gray-700 flex-1 flex items-center gap-2">
                   <i class="pi pi-flag text-indigo-600"></i>
                   {{ 'label.resultsFocus' | translate }}
                 </label>
@@ -1218,7 +1218,7 @@
                   (ngModelChange)="toggleField('expectedBeneficiaries')"
                   (click)="$event.stopPropagation()"
                 />
-                <label class="block text-sm font-semibold text-gray-700 flex-1 flex items-center gap-2">
+                <label class="block text-unops-sm font-semibold text-gray-700 flex-1 flex items-center gap-2">
                   <i class="pi pi-users text-orange-600"></i>
                   {{ 'label.opportunity.expectedBeneficiaries' | translate }}
                 </label>
@@ -1248,7 +1248,7 @@
                   (ngModelChange)="toggleField('expectedImpact')"
                   (click)="$event.stopPropagation()"
                 />
-                <label class="block text-sm font-semibold text-gray-700 flex-1 flex items-center gap-2">
+                <label class="block text-unops-sm font-semibold text-gray-700 flex-1 flex items-center gap-2">
                   <i class="pi pi-chart-line text-blue-600"></i>
                   {{ 'label.opportunity.expectedImpact' | translate }}
                 </label>
@@ -1278,7 +1278,7 @@
                   (ngModelChange)="toggleField('expectedOutcomes')"
                   (click)="$event.stopPropagation()"
                 />
-                <label class="block text-sm font-semibold text-gray-700 flex-1 flex items-center gap-2">
+                <label class="block text-unops-sm font-semibold text-gray-700 flex-1 flex items-center gap-2">
                   <i class="pi pi-check-circle text-green-600"></i>
                   {{ 'label.opportunity.expectedOutcomes' | translate }}
                 </label>
@@ -1311,7 +1311,7 @@
                         (ngModelChange)="toggleField('estimatedDirectBeneficiaries')"
                         (click)="$event.stopPropagation()"
                       />
-                      <label class="block text-sm font-semibold text-gray-700 flex-1">
+                      <label class="block text-unops-sm font-semibold text-gray-700 flex-1">
                         {{ 'label.estimatedDirectBeneficiaries' | translate }}
                       </label>
                     </div>
@@ -1338,7 +1338,7 @@
                         (ngModelChange)="toggleField('estimatedIndirectBeneficiaries')"
                         (click)="$event.stopPropagation()"
                       />
-                      <label class="block text-sm font-semibold text-gray-700 flex-1">
+                      <label class="block text-unops-sm font-semibold text-gray-700 flex-1">
                         {{ 'label.estimatedIndirectBeneficiaries' | translate }}
                       </label>
                     </div>
@@ -1357,7 +1357,7 @@
             @if (proposedOpportunity()!.opportunity.sdGs && proposedOpportunity()!.opportunity.sdGs!.length > 0) {
               <div>
                 <div class="flex items-center justify-between mb-4">
-                  <label class="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <label class="block text-unops-sm font-semibold text-gray-700 flex items-center gap-2">
                     <i class="pi pi-globe text-green-600"></i>
                     {{ 'label.opportunity.sdgAlignment' | translate }} ({{ proposedOpportunity()!.opportunity.sdGs!.length }})
                   </label>
@@ -1368,7 +1368,7 @@
                       (ngModelChange)="toggleField('sdGs')"
                       inputId="field-sdGs"
                     />
-                    <label for="field-sdGs" class="cursor-pointer text-sm font-medium text-gray-700">
+                    <label for="field-sdGs" class="cursor-pointer text-unops-sm font-medium text-gray-700">
                       {{ 'label.selectAll' | translate }}
                     </label>
                   </div>
@@ -1392,7 +1392,7 @@
                             (click)="$event.stopPropagation()"
                           />
                           <!-- SDG Logo/Number -->
-                          <div class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-2xl rounded shadow-sm">
+                          <div class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-unops-2xl rounded shadow-sm">
                             {{ sdg.sdgNumber }}
                           </div>
                           <div class="flex-1">
@@ -1403,13 +1403,13 @@
                               @if (sdg.isPrimary) {
                                 <p-chip
                                   [label]="'label.opportunity.sdgPrimary' | translate"
-                                  styleClass="text-xs font-bold"
+                                  styleClass="text-unops-xs font-bold"
                                   [style]="{ 'background-color': '#22c55e', 'color': 'white' }"
                                 />
                               } @else {
                                 <p-chip
                                   [label]="'label.opportunity.sdgSecondary' | translate"
-                                  styleClass="text-xs font-bold"
+                                  styleClass="text-unops-xs font-bold"
                                   [style]="{ 'background-color': '#0ea5e9', 'color': 'white' }"
                                 />
                               }
@@ -1427,7 +1427,7 @@
             @if ((proposedOpportunity()!.opportunity.unopsMissions && proposedOpportunity()!.opportunity.unopsMissions!.length > 0) || proposedOpportunity()!.opportunity.unopsMissionsNotApplicable) {
               <div>
                 <div class="flex items-center justify-between mb-4">
-                  <label class="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <label class="block text-unops-sm font-semibold text-gray-700 flex items-center gap-2">
                     <i class="pi pi-building text-blue-600"></i>
                     {{ 'label.opportunity.alignmentToUNOPSStrategy' | translate }}
                     @if (proposedOpportunity()!.opportunity.unopsMissions && proposedOpportunity()!.opportunity.unopsMissions!.length > 0) {
@@ -1442,7 +1442,7 @@
                         (ngModelChange)="toggleField('unopsMissions')"
                         inputId="field-unopsMissions"
                       />
-                      <label for="field-unopsMissions" class="cursor-pointer text-sm font-medium text-gray-700">
+                      <label for="field-unopsMissions" class="cursor-pointer text-unops-sm font-medium text-gray-700">
                         {{ 'label.selectAll' | translate }}
                       </label>
                     </div>
@@ -1466,13 +1466,13 @@
                             [inputId]="'unopsMission-' + $index"
                             (click)="$event.stopPropagation()"
                           />
-                          <i class="pi pi-check-circle text-2xl text-blue-600"></i>
+                          <i class="pi pi-check-circle text-unops-2xl text-blue-600"></i>
                           <div class="flex-1">
                             <h4 class="font-semibold text-gray-900 mb-1">
                               {{ mission.name || 'UNOPS Mission ' + ($index + 1) }}
                             </h4>
                             @if (mission.code) {
-                              <span class="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded">
+                              <span class="text-unops-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded">
                                 {{ mission.code }}
                               </span>
                             }
@@ -1497,9 +1497,9 @@
                           inputId="field-unopsMissionsNotApplicable"
                           (click)="$event.stopPropagation()"
                         />
-                        <i class="pi pi-minus-circle text-2xl text-gray-400"></i>
+                        <i class="pi pi-minus-circle text-unops-2xl text-gray-400"></i>
                         <div class="flex-1">
-                          <p class="text-sm text-gray-600">
+                          <p class="text-unops-sm text-gray-600">
                             {{ 'label.opportunity.unopsMissionsNotApplicable' | translate }}
                           </p>
                         </div>
@@ -1528,7 +1528,7 @@
                   (ngModelChange)="toggleField('countries')"
                   inputId="field-countries"
                 />
-                <label for="field-countries" class="cursor-pointer text-sm font-medium text-gray-700">
+                <label for="field-countries" class="cursor-pointer text-unops-sm font-medium text-gray-700">
                   {{ 'label.selectSection' | translate }}
                 </label>
               </div>
@@ -1540,19 +1540,19 @@
                     <div class="flex items-start justify-between mb-2">
                       <div class="flex items-center gap-3">
                         @if (country.country?.iso2Code) {
-                          <span class="text-2xl font-bold text-gray-700">{{ country.country?.iso2Code }}</span>
+                          <span class="text-unops-2xl font-bold text-gray-700">{{ country.country?.iso2Code }}</span>
                         }
                         <div>
                           <h4 class="font-semibold text-gray-900">
                             {{ country.country?.name || country.countryName || 'Unknown Country' }}
                           </h4>
                           @if (country.country && country.country.continent) {
-                            <p class="text-sm text-gray-600">
+                            <p class="text-unops-sm text-gray-600">
                               <span>{{ country.country.continent }}</span>
                             </p>
                           }
                           @if (country.specificAreas) {
-                            <p class="text-xs text-gray-600 mt-1">
+                            <p class="text-unops-xs text-gray-600 mt-1">
                               <i class="pi pi-map-marker mr-1"></i>
                               {{ country.specificAreas }}
                             </p>
@@ -1600,7 +1600,7 @@
                         [ngModel]="isFieldSelected('submissionDeadline')"
                         (ngModelChange)="toggleField('submissionDeadline')"
                       />
-                      <label class="block text-sm font-semibold text-gray-700 flex-1">
+                      <label class="block text-unops-sm font-semibold text-gray-700 flex-1">
                         {{ 'label.submissionDeadline' | translate }}
                       </label>
                     </div>
@@ -1627,7 +1627,7 @@
                         [ngModel]="isFieldSelected('targetSigningDate')"
                         (ngModelChange)="toggleField('targetSigningDate')"
                       />
-                      <label class="block text-sm font-semibold text-gray-700 flex-1">
+                      <label class="block text-unops-sm font-semibold text-gray-700 flex-1">
                         {{ 'label.opportunity.targetSigningDate' | translate }}
                       </label>
                     </div>
@@ -1654,7 +1654,7 @@
                         [ngModel]="isFieldSelected('implementationStartDate')"
                         (ngModelChange)="toggleField('implementationStartDate')"
                       />
-                      <label class="block text-sm font-semibold text-gray-700 flex-1">
+                      <label class="block text-unops-sm font-semibold text-gray-700 flex-1">
                         {{ 'label.implementationStartDate' | translate }}
                       </label>
                     </div>
@@ -1681,7 +1681,7 @@
                         [ngModel]="isFieldSelected('targetDeliveryDate')"
                         (ngModelChange)="toggleField('targetDeliveryDate')"
                       />
-                      <label class="block text-sm font-semibold text-gray-700 flex-1">
+                      <label class="block text-unops-sm font-semibold text-gray-700 flex-1">
                         {{ 'label.opportunity.targetDeliveryDate' | translate }}
                       </label>
                     </div>
@@ -1714,8 +1714,8 @@
               @if (allProposedPartners() && allProposedPartners().length > 0) {
                 <div>
                   <div class="flex items-center justify-between mb-3">
-                    <label class="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                      <i class="pi pi-building text-unops-primary text-base"></i>
+                    <label class="block text-unops-sm font-semibold text-gray-700 flex items-center gap-2">
+                      <i class="pi pi-building text-unops-primary text-unops-base"></i>
                       {{ 'label.opportunity.partners' | translate }} ({{ allProposedPartners().length }})
                     </label>
                     <div class="flex items-center gap-2">
@@ -1725,7 +1725,7 @@
                         (ngModelChange)="toggleAllPartners()"
                         inputId="field-all-partners"
                       />
-                      <label for="field-all-partners" class="cursor-pointer text-sm font-medium text-gray-700">
+                      <label for="field-all-partners" class="cursor-pointer text-unops-sm font-medium text-gray-700">
                         {{ 'label.selectAll' | translate }}
                       </label>
                     </div>
@@ -1745,13 +1745,13 @@
                             <div class="flex-1">
                               <div class="font-semibold text-gray-900">{{ partner.partnerName }}</div>
                               @if (partner.amount) {
-                                <div class="text-sm text-gray-600 mt-1">
+                                <div class="text-unops-sm text-gray-600 mt-1">
                                   <span class="text-gray-600">{{ 'label.amount' | translate }}:</span>
                                   <span class="font-semibold ml-2">${{ partner.amount | number }}</span>
                                 </div>
                               }
                               @if (partner.partnershipAgreementReference) {
-                                <div class="text-xs text-blue-700 mt-2">
+                                <div class="text-unops-xs text-blue-700 mt-2">
                                   <i class="pi pi-file"></i>
                                   {{ partner.partnershipAgreementReference }}
                                 </div>
@@ -1770,7 +1770,7 @@
                         
                         <!-- Partner Role Selection -->
                         <div class="flex items-center gap-4 pl-15 border-t border-yellow-300 pt-3">
-                          <div class="text-sm text-gray-600 font-medium">{{ 'label.partnerRole' | translate }}:</div>
+                          <div class="text-unops-sm text-gray-600 font-medium">{{ 'label.partnerRole' | translate }}:</div>
                           <div class="flex items-center gap-2">
                             <p-checkbox
                               [binary]="true"
@@ -1778,7 +1778,7 @@
                               (ngModelChange)="togglePartnerRole(partner.partnerId, 'funding')"
                               [inputId]="'funding-' + partner.partnerId"
                             />
-                            <label [for]="'funding-' + partner.partnerId" class="cursor-pointer text-sm text-gray-700">
+                            <label [for]="'funding-' + partner.partnerId" class="cursor-pointer text-unops-sm text-gray-700">
                               <i class="pi pi-dollar text-unops-success mr-1"></i>
                               {{ 'label.fundingPartner' | translate }}
                             </label>
@@ -1790,7 +1790,7 @@
                               (ngModelChange)="togglePartnerRole(partner.partnerId, 'client')"
                               [inputId]="'client-' + partner.partnerId"
                             />
-                            <label [for]="'client-' + partner.partnerId" class="cursor-pointer text-sm text-gray-700">
+                            <label [for]="'client-' + partner.partnerId" class="cursor-pointer text-unops-sm text-gray-700">
                               <i class="pi pi-building text-unops-primary mr-1"></i>
                               {{ 'label.clientPartner' | translate }}
                             </label>
@@ -1806,8 +1806,8 @@
               @if (proposedOpportunity()!.opportunity.stakeholders && proposedOpportunity()!.opportunity.stakeholders!.length > 0) {
                 <div>
                   <div class="flex items-center justify-between mb-3">
-                    <label class="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                      <i class="pi pi-users text-unops-primary text-base"></i>
+                    <label class="block text-unops-sm font-semibold text-gray-700 flex items-center gap-2">
+                      <i class="pi pi-users text-unops-primary text-unops-base"></i>
                       {{ 'label.opportunity.stakeholders' | translate }} ({{ proposedOpportunity()!.opportunity.stakeholders!.length }})
                     </label>
                     <div class="flex items-center gap-2">
@@ -1817,7 +1817,7 @@
                         (ngModelChange)="toggleField('stakeholders')"
                         inputId="field-stakeholders"
                       />
-                      <label for="field-stakeholders" class="cursor-pointer text-sm font-medium text-gray-700">
+                      <label for="field-stakeholders" class="cursor-pointer text-unops-sm font-medium text-gray-700">
                         {{ 'label.selectSection' | translate }}
                       </label>
                     </div>
@@ -1834,7 +1834,7 @@
                             />
                             <div class="flex-1">
                               <div class="font-semibold text-gray-900">{{ stakeholder.userName }}</div>
-                              <div class="text-sm text-blue-600">{{ stakeholder.entityRoleName }}</div>
+                              <div class="text-unops-sm text-blue-600">{{ stakeholder.entityRoleName }}</div>
                             </div>
                           </div>
                           <div class="flex items-center gap-2">
@@ -1870,10 +1870,10 @@
                 <div class="bg-gray-50 border border-gray-200 rounded p-3 flex items-center gap-3">
                   <i class="pi pi-file text-gray-600"></i>
                   <div class="flex-1 min-w-0">
-                    <div class="font-medium text-sm text-gray-900 truncate">{{ file.file.name }}</div>
-                    <div class="text-xs text-gray-600">{{ getDocumentTypeName(file.documentTypeId) }}</div>
+                    <div class="font-medium text-unops-sm text-gray-900 truncate">{{ file.file.name }}</div>
+                    <div class="text-unops-xs text-gray-600">{{ getDocumentTypeName(file.documentTypeId) }}</div>
                   </div>
-                  <span class="text-xs text-gray-500">{{ (file.file.size / 1024 / 1024).toFixed(2) }} MB</span>
+                  <span class="text-unops-xs text-gray-500">{{ (file.file.size / 1024 / 1024).toFixed(2) }} MB</span>
                 </div>
               }
               <!-- Google Drive Files -->
@@ -1881,8 +1881,8 @@
                 <div class="bg-blue-50 border border-blue-200 rounded p-3 flex items-center gap-3">
                   <i class="pi pi-google text-blue-600"></i>
                   <div class="flex-1 min-w-0">
-                    <div class="font-medium text-sm text-gray-900 truncate">{{ file.name }}</div>
-                    <div class="text-xs text-gray-600">{{ getDocumentTypeName(file.documentTypeId) }}</div>
+                    <div class="font-medium text-unops-sm text-gray-900 truncate">{{ file.name }}</div>
+                    <div class="text-unops-xs text-gray-600">{{ getDocumentTypeName(file.documentTypeId) }}</div>
                   </div>
                 </div>
               }
@@ -1892,10 +1892,10 @@
                   <div class="bg-green-50 border border-green-200 rounded p-3 flex items-center gap-3">
                     <i class="pi pi-folder text-green-600"></i>
                     <div class="flex-1 min-w-0">
-                      <div class="font-medium text-sm text-gray-900 truncate">{{ docInfo.name }}</div>
-                      <div class="text-xs text-gray-600">{{ docInfo.documentTypeName || docInfo.documentType?.name || 'Document' }}</div>
+                      <div class="font-medium text-unops-sm text-gray-900 truncate">{{ docInfo.name }}</div>
+                      <div class="text-unops-xs text-gray-600">{{ docInfo.documentTypeName || docInfo.documentType?.name || 'Document' }}</div>
                     </div>
-                    <span class="text-xs text-green-700 px-2 py-1 bg-green-100 rounded">{{ 'label.existingDocument' | translate }}</span>
+                    <span class="text-unops-xs text-green-700 px-2 py-1 bg-green-100 rounded">{{ 'label.existingDocument' | translate }}</span>
                   </div>
                 }
               }
@@ -1917,16 +1917,16 @@
                 <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div class="flex items-start gap-3">
                     <div class="w-10 h-10 rounded-full flex items-center justify-center bg-purple-100 text-purple-600 flex-shrink-0">
-                      <i class="pi pi-calendar text-sm"></i>
+                      <i class="pi pi-calendar text-unops-sm"></i>
                     </div>
                     <div class="flex-1 min-w-0">
                       <div class="font-semibold text-gray-900 mb-1">{{ interaction.subject }}</div>
-                      <div class="flex items-center gap-2 text-xs text-gray-600 mb-2">
+                      <div class="flex items-center gap-2 text-unops-xs text-gray-600 mb-2">
                         <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded">{{ interaction.type }}</span>
                         <span>{{ interaction.date | date:'mediumDate' }}</span>
                       </div>
                       @if (interaction.description) {
-                        <p class="text-sm text-gray-700 line-clamp-2">{{ interaction.description }}</p>
+                        <p class="text-unops-sm text-gray-700 line-clamp-2">{{ interaction.description }}</p>
                       }
                     </div>
                   </div>
@@ -1999,13 +1999,13 @@
   [closable]="false">
   
   <div class="mb-4">
-    <p class="text-sm text-gray-700 mb-3">
+    <p class="text-unops-sm text-gray-700 mb-3">
       {{ 'message.selectDocumentTypeForFiles' | translate: { count: pendingFiles().length + pendingGoogleDriveFiles().length } }}
     </p>
     
     <!-- Files to be added -->
     <div class="bg-gray-50 p-3 rounded border border-gray-200 mb-4 max-h-40 overflow-y-auto">
-      <ul class="list-disc list-inside space-y-1 text-sm text-gray-800">
+      <ul class="list-disc list-inside space-y-1 text-unops-sm text-gray-800">
         @for (file of pendingFiles(); track $index) {
           <li>{{ file.name }}</li>
         }
@@ -2019,7 +2019,7 @@
     </div>
     
     <!-- Document Type Selection -->
-    <label for="documentTypeSelect" class="block text-sm font-medium text-gray-700 mb-2">
+    <label for="documentTypeSelect" class="block text-unops-sm font-medium text-gray-700 mb-2">
       {{ 'label.documentType' | translate }} *
     </label>
     <p-select

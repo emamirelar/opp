@@ -50,7 +50,7 @@
 
     .table-container {
       .p-datatable {
-        font-size: 0.875rem;
+        font-size: var(--unops-font-size-body-medium);
         
         .p-datatable-thead > tr > th,
         .p-datatable-tbody > tr > td {
@@ -63,7 +63,7 @@
   // Custom chip styling
   .p-chip {
     &.text-xs {
-      font-size: 0.75rem;
+      font-size: var(--unops-font-size-body-small);
       padding: 0.25rem 0.5rem;
     }
 

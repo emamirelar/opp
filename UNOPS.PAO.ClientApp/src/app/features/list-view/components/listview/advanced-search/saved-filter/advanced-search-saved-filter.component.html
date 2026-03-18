@@ -27,12 +27,12 @@
           <i class="pi pi-bookmark"></i>
           <span class="truncate mr-auto">{{ selectedFilter?.name }}</span>
 <!--          @if (hasModifications()) {-->
-<!--                <i class="pi pi-save text-xs mr-2 text-surface-600 z-50 cursor-pointer hover:text-surface-800"-->
+<!--                <i class="pi pi-save text-unops-xs mr-2 text-surface-600 z-50 cursor-pointer hover:text-surface-800"-->
 <!--                (click)="saveCurrentFilter($event)"-->
 <!--                ></i>-->
 <!--            }-->
           @if (canManageFilter) {
-                <i class="pi pi-pencil text-xs text-surface-600 z-50 cursor-pointer hover:text-surface-800"
+                <i class="pi pi-pencil text-unops-xs text-surface-600 z-50 cursor-pointer hover:text-surface-800"
                 (click)="openUpdateDialog($event)"
                 ></i>
             }

@@ -13,7 +13,7 @@
 }
 
 .chart-title {
-  font-size: 1.25rem;
+  font-size: var(--unops-font-size-headline-small);
   font-weight: 600;
   color: var(--text-color);
   margin: 0;
@@ -41,7 +41,7 @@
   }
   
   .chart-title {
-    font-size: 1.1rem;
+    font-size: var(--unops-font-size-lg);
   }
 }
 
@@ -55,7 +55,7 @@
   }
   
   .chart-title {
-    font-size: 1rem;
+    font-size: var(--unops-font-size-base);
   }
 }
 

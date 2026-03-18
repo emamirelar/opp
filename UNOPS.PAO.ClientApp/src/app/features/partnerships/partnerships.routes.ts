@@ -22,6 +22,12 @@ export const PARTNERSHIPS_ROUTES: Routes = [
     data: { breadcrumb: 'Partners' }
   },
   {
+    path: 'opportunities-alt',
+    loadChildren: () => import('@partnerships/opportunities-alt/opportunities-alt.routes').then(m => m.OPPORTUNITIES_ALT_ROUTES),
+    canActivate: [authGuard],
+    data: { breadcrumb: 'Opportunities Alt' }
+  },
+  {
     path: 'opportunities',
     loadChildren: () => import('@partnerships/opportunities/opportunities.routes').then(m => m.OPPORTUNITIES_ROUTES),
     canActivate: [authGuard, routePermissionGuard],

@@ -235,7 +235,7 @@
       
       // Field type badge
       .field-type {
-        font-size: 10px;
+        font-size: var(--unops-font-size-label-small);
         font-weight: 500;
         padding: 2px 6px;
         border-radius: 3px;
@@ -261,7 +261,7 @@
 // Tooltip enhancements
 .field-tooltip {
   max-width: 300px;
-  font-size: 0.875rem;
+  font-size: var(--unops-font-size-body-medium);
   line-height: 1.4;
 }
 
@@ -523,6 +523,6 @@
 // Styles pour les états d'erreur
 .preview-error-state {
   .material-symbols-outlined {
-    font-size: 2rem;
+    font-size: var(--unops-font-size-display-medium);
   }
 } 

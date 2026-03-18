@@ -8,15 +8,15 @@
   <div class="space-y-4">
     @if (loading()) {
       <div class="flex items-center justify-center py-8">
-        <i class="pi pi-spin pi-spinner text-2xl text-unops-primary"></i>
+        <i class="pi pi-spin pi-spinner text-unops-2xl text-unops-primary"></i>
       </div>
     } @else {
       <!-- Comment List -->
       @if (comments().length === 0) {
         <div class="text-center py-8 text-gray-400">
-          <i class="pi pi-comments text-4xl mb-3"></i>
+          <i class="pi pi-comments text-unops-display-medium mb-3"></i>
           <p>{{ 'message.noCommentsYet' | translate }}</p>
-          <p class="text-sm">{{ 'message.beTheFirstToComment' | translate }}</p>
+          <p class="text-unops-sm">{{ 'message.beTheFirstToComment' | translate }}</p>
         </div>
       } @else {
         @for (comment of comments(); track comment.id) {
@@ -34,12 +34,12 @@
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
                   <span class="font-semibold text-gray-900">{{ comment.createdByName }}</span>
-                  <span class="text-xs text-gray-500">{{ getRelativeTime(comment.createdDate) }}</span>
+                  <span class="text-unops-xs text-gray-500">{{ getRelativeTime(comment.createdDate) }}</span>
                   @if (comment.isEdited) {
-                    <span class="text-xs text-gray-400 italic">({{ 'label.edited' | translate }})</span>
+                    <span class="text-unops-xs text-gray-400 italic">({{ 'label.edited' | translate }})</span>
                   }
                   @if (comment.isPinned) {
-                    <i class="pi pi-thumbtack text-blue-600 text-xs"></i>
+                    <i class="pi pi-thumbtack text-blue-600 text-unops-xs"></i>
                   }
                 </div>
                 
@@ -105,14 +105,14 @@
                   </div>
                 </div>
               } @else {
-                <div class="text-sm text-gray-700">
+                <div class="text-unops-sm text-gray-700">
                   @for (segment of parseCommentContent(comment.content); track $index) {
                     @if (segment.type === 'text') {
                       <span class="whitespace-pre-wrap">{{ segment.value }}</span>
                     } @else {
                       <p-chip 
                         [label]="'@' + segment.value"
-                        styleClass="inline-flex bg-blue-50 text-blue-700 text-xs mx-1">
+                        styleClass="inline-flex bg-blue-50 text-blue-700 text-unops-xs mx-1">
                       </p-chip>
                     }
                   }
@@ -123,7 +123,7 @@
               @if (comment.mentionedUserNames && comment.mentionedUserNames.length > 0) {
                 <div class="flex gap-1 mt-2">
                   @for (mention of comment.mentionedUserNames; track mention) {
-                    <p-chip [label]="'@' + mention" styleClass="text-xs" />
+                    <p-chip [label]="'@' + mention" styleClass="text-unops-xs" />
                   }
                 </div>
               }
@@ -142,8 +142,8 @@
                       <div class="flex-1 bg-white rounded-lg p-3 border border-gray-200">
                         <div class="flex items-center justify-between mb-1">
                           <div class="flex items-center gap-2">
-                            <span class="font-semibold text-sm text-gray-900">{{ reply.createdByName }}</span>
-                            <span class="text-xs text-gray-500">{{ getRelativeTime(reply.createdDate) }}</span>
+                            <span class="font-semibold text-unops-sm text-gray-900">{{ reply.createdByName }}</span>
+                            <span class="text-unops-xs text-gray-500">{{ getRelativeTime(reply.createdDate) }}</span>
                           </div>
                           <div class="flex gap-1">
                             <p-button
@@ -167,7 +167,7 @@
                           <div class="space-y-2">
                             <textarea
                               [(ngModel)]="editingContent"
-                              class="w-full p-2 border border-gray-300 rounded resize-none text-sm"
+                              class="w-full p-2 border border-gray-300 rounded resize-none text-unops-sm"
                               rows="2"
                             ></textarea>
                             <div class="flex justify-end gap-2">
@@ -186,14 +186,14 @@
                             </div>
                           </div>
                         } @else {
-                          <div class="text-sm text-gray-700">
+                          <div class="text-unops-sm text-gray-700">
                             @for (segment of parseCommentContent(reply.content); track $index) {
                               @if (segment.type === 'text') {
                                 <span class="whitespace-pre-wrap">{{ segment.value }}</span>
                               } @else {
                                 <p-chip 
                                   [label]="'@' + segment.value"
-                                  styleClass="inline-flex bg-blue-50 text-blue-700 text-xs mx-1">
+                                  styleClass="inline-flex bg-blue-50 text-blue-700 text-unops-xs mx-1">
                                 </p-chip>
                               }
                             }

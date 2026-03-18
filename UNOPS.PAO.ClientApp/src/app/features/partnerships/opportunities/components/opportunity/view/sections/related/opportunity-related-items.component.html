@@ -1,14 +1,14 @@
 <p-panel [toggleable]="true" [(collapsed)]="isCollapsed">
   <ng-template pTemplate="header">
     <div class="flex items-center gap-2">
-      <i class="pi pi-link text-xl"></i>
+      <i class="pi pi-link text-unops-xl"></i>
       <span class="font-semibold">{{ 'label.opportunity.sourceInteractions' | translate }}</span>
     </div>
   </ng-template>
 
   @if (isLoading()) {
     <div class="text-center py-8">
-      <i class="pi pi-spin pi-spinner text-3xl text-unops-primary"></i>
+      <i class="pi pi-spin pi-spinner text-unops-headline-large text-unops-primary"></i>
       <p class="text-unops-neutral-600 mt-2">{{ 'message.loading' | translate }}</p>
     </div>
   } @else {
@@ -28,8 +28,8 @@
       />
     } @else {
       <div class="text-center py-8 text-unops-neutral-500">
-        <i class="pi pi-comments text-4xl mb-2 text-unops-neutral-400"></i>
-        <p class="text-sm">{{ 'message.noSourceInteractions' | translate }}</p>
+        <i class="pi pi-comments text-unops-display-medium mb-2 text-unops-neutral-400"></i>
+        <p class="text-unops-sm">{{ 'message.noSourceInteractions' | translate }}</p>
       </div>
     }
   }

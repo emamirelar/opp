@@ -1,0 +1,209 @@
+# Local Development Environment Setup — Quick Reference
+
+## When to Use This Rule
+
+Apply this rule whenever the user asks to:
+- Run the app locally
+- Set up the local development environment
+- Start the backend/frontend
+- Connect to the cloud database
+- Troubleshoot local dev issues
+
+## Developer Identity
+
+| Field | Value |
+|---|---|
+| **Email** | `emamirelar@unops.org` |
+| **Database** | `unops-opportunityplus-dev-db-emamirelar` |
+| **GCP Project** | `unops-opportunityplus-dev` |
+
+## Architecture
+
+```
+Angular Dev Server (https://localhost:44426)
+  ↓ proxy /api/** and /user/
+.NET Backend (https://localhost:7123)
+  ↓ port 6364
+SSH Tunnel (localhost:6364)
+  ↓ IAP bastion VM
+Cloud SQL (10.129.0.16:5432)
+```
+
+## appsettings.json Configuration (Already Applied)
+
+File: `UNOPS.PAO.Server/appsettings.json`
+
+These values MUST be set for this developer:
+
+```json
+"ConnectionStrings": {
+  "DbSchema": "public",
+  "DbContext": "Host=127.0.0.1;Port=6364;Database=unops-opportunityplus-dev-db-emamirelar;Username=emamirelar@unops.org;",
+  "UseIamAuthentication": true
+}
+```
+
+```json
+"Development": {
+  "IAPSimulation": {
+    "Enabled": true,
+    "UserEmail": "emamirelar@unops.org",
+    "SkipValidationInDevelopment": true
+  }
+}
+```
+
+If another developer's email appears in these fields, replace with the values above.
+
+## Startup Sequence (3 Terminals)
+
+### Terminal 1: SSH Tunnel to Cloud SQL
+
+```bash
+gcloud compute ssh unopsgc567901-sql-proxy \
+  --tunnel-through-iap \
+  --project=unops-opportunityplus-dev \
+  --zone=europe-west4-b \
+  --ssh-flag="-L 6364:10.129.0.16:5432" \
+  --ssh-flag="-N"
+```
+
+- The `-N` flag keeps the tunnel open without executing a remote command (required for non-interactive shells)
+- Verify with: `lsof -i :6364` — should show `ssh` listening
+- **Keep this terminal open** for the duration of the session
+
+### Terminal 2: .NET Backend
+
+```bash
+# From repo root:
+dotnet watch run --project UNOPS.PAO.Server
+```
+
+- Listens on `https://localhost:7123` (HTTPS) and `http://localhost:5159` (HTTP)
+- Swagger available at `https://localhost:7123/swagger`
+- Hot reload enabled via `dotnet watch`
+
+### Terminal 3: Angular Frontend
+
+```bash
+cd UNOPS.PAO.ClientApp
+npm start
+```
+
+- Serves at `https://localhost:44426` (SSL)
+- Proxy config in `UNOPS.PAO.ClientApp/src/proxy.conf.js` forwards `/api/**` and `/user/` to the backend
+- Auto-login via IAP simulation as `emamirelar@unops.org`
+
+## Prerequisites
+
+| Tool | Required Version | Check Command |
+|---|---|---|
+| .NET SDK | 9.0 | `dotnet --version` |
+| Node.js | 18+ | `node --version` |
+| npm | 10+ | `npm --version` |
+| gcloud CLI | latest | `gcloud --version` |
+
+## First-Time Setup Steps
+
+1. **Initialize git submodules** (UNOPS.Workflow and UNOPS.PAO.ExternalDataService):
+   ```bash
+   git submodule update --init --recursive
+   ```
+
+2. **Authenticate with Google Cloud** (for IAM database tokens):
+   ```bash
+   gcloud auth application-default login
+   ```
+
+3. **Install frontend dependencies**:
+   ```bash
+   cd UNOPS.PAO.ClientApp && npm install && cd ..
+   ```
+
+4. **Restore .NET packages**:
+   ```bash
+   dotnet restore UNOPS.PAO.sln
+   ```
+
+5. Then follow the 3-terminal startup sequence above.
+
+## Known Issues and Fixes
+
+### 1. Workflow Schema Permission Error (42501)
+
+**Symptom:** `permission denied for database unops-opportunityplus-dev-db-emamirelar` on `CREATE SCHEMA IF NOT EXISTS workflow`
+
+**Cause:** IAM-authenticated users lack CREATE privilege on the database. The `workflow` schema already exists.
+
+**Fix:** Already applied in `Program.cs` — the schema creation is wrapped in a try-catch that logs a warning and continues when SqlState is 42501.
+
+### 2. Port 44426 Already in Use
+
+**Symptom:** Angular dev server fails with "Port 44426 is already in use"
+
+**Fix:** Kill the stale process:
+```bash
+lsof -i :44426
+kill <PID>
+```
+
+### 3. SSH Tunnel Exits Immediately
+
+**Symptom:** `gcloud compute ssh` connects but exits with code 0 instantly
+
+**Cause:** No TTY allocated in non-interactive shell; SSH session completes immediately.
+
+**Fix:** Add `--ssh-flag="-N"` to keep the tunnel open without executing a remote command.
+
+### 4. UNOPS.Workflow Submodule Missing
+
+**Symptom:** Build error: `The project file "../UNOPS.Workflow/UNOPS.Workflow.Business/UNOPS.Workflow.Business.csproj" was not found`
+
+**Fix:**
+```bash
+git submodule update --init --recursive
+```
+
+### 5. IAM Token Expired
+
+**Symptom:** Database connection fails after ~1 hour
+
+**Fix:** Tokens auto-refresh every 55 minutes via `CloudSqlIamAuthProvider`. If issues persist:
+```bash
+gcloud auth application-default login
+```
+
+### 6. Self-Signed Certificate Warning
+
+**Symptom:** Browser warns about untrusted certificate on `https://localhost:7123` or `https://localhost:44426`
+
+**Fix:** Accept the certificate in the browser, or trust the ASP.NET Core dev cert:
+```bash
+dotnet dev-certs https --trust
+```
+
+## Database Connection Details
+
+| Parameter | Value |
+|---|---|
+| **Host** | `127.0.0.1` (via SSH tunnel) |
+| **Port** | `6364` (local tunnel port) |
+| **Database** | `unops-opportunityplus-dev-db-emamirelar` |
+| **Username** | `emamirelar@unops.org` |
+| **Auth** | IAM OAuth2 token (auto-refreshed) |
+| **Cloud SQL IP** | `10.129.0.16:5432` |
+| **Bastion VM** | `unopsgc567901-sql-proxy` |
+| **Bastion Zone** | `europe-west4-b` |
+| **GCP Project** | `unops-opportunityplus-dev` |
+
+## Key File Locations
+
+| File | Purpose |
+|---|---|
+| `UNOPS.PAO.Server/appsettings.json` | Connection string, IAP simulation, all dev config |
+| `UNOPS.PAO.Server/Program.cs` | App entry point, workflow schema init |
+| `UNOPS.PAO.Server/Startup.cs` | DI registration, ConfigureDataAccess, auth setup |
+| `UNOPS.PAO.ClientApp/src/proxy.conf.js` | Angular -> .NET API proxy config |
+| `UNOPS.PAO.ClientApp/angular.json` | Angular build config (port 44426, SSL) |
+| `Scripts/connect-cloud-sql-tunnel.bat` | Windows SSH tunnel script (reference only) |
+| `Scripts/connect-cloud-sql-full.bat` | Windows full connection script (reference only) |

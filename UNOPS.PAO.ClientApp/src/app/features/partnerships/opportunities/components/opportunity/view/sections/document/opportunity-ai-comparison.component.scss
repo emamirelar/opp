@@ -25,7 +25,7 @@
     textarea.p-inputtextarea:not(:placeholder-shown) ~ label,
     textarea.p-inputtextarea.p-filled ~ label {
       top: -0.75rem !important;
-      font-size: 0.75rem !important;
+      font-size: var(--unops-font-size-body-small) !important;
       background-color: white;
       padding: 0 0.25rem;
       left: 0.75rem !important;
@@ -36,16 +36,16 @@
   .p-datepicker {
     input.p-inputtext {
       @media (max-width: 640px) {
-        font-size: 0.875rem !important; // sm:text-sm
+        font-size: var(--unops-font-size-body-medium) !important; // sm:text-sm
       }
       @media (max-width: 768px) {
-        font-size: 0.9rem !important; // md:text-base (slightly smaller)
+        font-size: var(--unops-font-size-sm) !important; // md:text-base (slightly smaller)
       }
     }
     
     .p-datepicker-trigger {
       @media (max-width: 640px) {
-        font-size: 0.875rem !important;
+        font-size: var(--unops-font-size-body-medium) !important;
       }
     }
   }

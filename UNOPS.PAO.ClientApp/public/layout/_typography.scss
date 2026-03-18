@@ -16,27 +16,27 @@ h6 {
 }
 
 h1 {
-    font-size: 2.5rem;
+    font-size: var(--unops-font-size-display-large);
 }
 
 h2 {
-    font-size: 2rem;
+    font-size: var(--unops-font-size-display-medium);
 }
 
 h3 {
-    font-size: 1.75rem;
+    font-size: var(--unops-font-size-headline-large);
 }
 
 h4 {
-    font-size: 1.5rem;
+    font-size: var(--unops-font-size-headline-medium);
 }
 
 h5 {
-    font-size: 1.25rem;
+    font-size: var(--unops-font-size-headline-small);
 }
 
 h6 {
-    font-size: 1rem;
+    font-size: var(--unops-font-size-base);
 }
 
 mark {

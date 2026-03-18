@@ -22,17 +22,17 @@
 
 .file-pdf{
   color: var(--p-red-900);
-  font-size: 1.75rem
+  font-size: var(--unops-font-size-headline-large)
 }
 
 .file-sheet{
   color: var(--p-green-900);
-  font-size: 1.75rem
+  font-size: var(--unops-font-size-headline-large)
 }
 
 .file-doc{
   color: var(--p-blue-900);
-  font-size: 1.75rem
+  font-size: var(--unops-font-size-headline-large)
 }
 
 /* Pending file styles */

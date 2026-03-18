@@ -1,7 +1,7 @@
 <div class="grid">
   <div class="col-span-full lg:col-span-6">
     <div class="card">
-      <div class="font-semibold text-xl mb-4">{{'button.upload' | translate}}</div>
+      <div class="font-semibold text-unops-xl mb-4">{{'button.upload' | translate}}</div>
       <p-fileupload name="demo[]" (onUpload)="onUpload($event)" (onSelect)="onSelect($event)"
                     (onRemove)="onRemove($event)" [multiple]="multiple" [maxFileSize]="maxFileSize" [accept]="accept"
                     mode="advanced" url="https://www.primefaces.org/cdn/api/upload.php"

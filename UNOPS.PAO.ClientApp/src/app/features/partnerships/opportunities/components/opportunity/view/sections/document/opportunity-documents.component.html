@@ -51,7 +51,7 @@
           </div>
           <!-- Help Text -->
           <div
-          class="mt-3 p-2 bg-unops-primary-container-soft border border-unops-primary-200 rounded text-xs text-unops-primary-dark"
+          class="mt-3 p-2 bg-unops-primary-container-soft border border-unops-primary-200 rounded text-unops-xs text-unops-primary-dark"
         >
             <div class="flex items-start gap-2">
               <i class="pi pi-info-circle text-unops-primary-dark mt-0.5 flex-shrink-0"></i>
@@ -64,7 +64,7 @@
       @if (loading()) {
         <!-- Loading State -->
         <div class="flex items-center justify-center py-8">
-          <i class="pi pi-spin pi-spinner text-2xl text-unops-primary"></i>
+          <i class="pi pi-spin pi-spinner text-unops-2xl text-unops-primary"></i>
         </div>
       } @else if (documents().length === 0) {
         <!-- Empty State -->
@@ -72,8 +72,8 @@
           <div
             class="border-2 border-dashed border-unops-neutral-400 rounded-unops-lg p-6 bg-unops-surface-secondary text-center"
           >
-            <i class="pi pi-file text-4xl text-unops-neutral-500 mb-2"></i>
-            <p class="text-sm text-unops-neutral-700">
+            <i class="pi pi-file text-unops-display-medium text-unops-neutral-500 mb-2"></i>
+            <p class="text-unops-sm text-unops-neutral-700">
               {{ "message.noDocuments" | translate }}
             </p>
           </div>
@@ -98,7 +98,7 @@
                   <div class="flex items-start gap-3 mb-2">
                     <i
                       [class]="
-                        'pi text-xl flex-shrink-0 mt-0.5 ' +
+                        'pi text-unops-xl flex-shrink-0 mt-0.5 ' +
                         getFileIcon(doc.type || '') +
                         ' ' +
                         getFileIconColor(doc.type || '')
@@ -106,7 +106,7 @@
                     ></i>
                     <div class="flex-1 min-w-0">
                       <p
-                        class="text-sm font-semibold text-unops-secondary leading-snug break-words"
+                        class="text-unops-sm font-semibold text-unops-secondary leading-snug break-words"
                       >
                         {{ doc.name }}
                       </p>
@@ -116,11 +116,11 @@
                   <!-- Metadata Row -->
                   <div class="flex flex-wrap items-center gap-2 ml-9 mb-2">
                     @if (doc.size) {
-                      <span class="text-xs text-unops-neutral-600">{{ doc.size }}</span>
+                      <span class="text-unops-xs text-unops-neutral-600">{{ doc.size }}</span>
                     }
                     @if (doc.documentTypeName) {
                       <span
-                        class="text-xs px-2 py-0.5 bg-unops-neutral-100 text-unops-neutral-800 rounded"
+                        class="text-unops-xs px-2 py-0.5 bg-unops-neutral-100 text-unops-neutral-800 rounded"
                       >
                         {{ doc.documentTypeName }}
                       </span>
@@ -137,9 +137,9 @@
                     }
                     @if (doc.aiTranscribed) {
                       <span
-                        class="inline-flex items-center gap-1 text-xs px-2 py-0.5 bg-unops-primary-container-soft text-unops-primary-dark rounded border border-unops-primary-200"
+                        class="inline-flex items-center gap-1 text-unops-xs px-2 py-0.5 bg-unops-primary-container-soft text-unops-primary-dark rounded border border-unops-primary-200"
                       >
-                        <i class="pi pi-check-circle text-[0.7rem]"></i>
+                        <i class="pi pi-check-circle text-unops-label-small"></i>
                         <span>{{ "label.aiTranscribed" | translate }}</span>
                       </span>
                     }
@@ -218,7 +218,7 @@
         class="p-2 border-b border-gray-200 w-full flex justify-center flex-shrink-0"
       >
         <div class="flex items-center justify-center w-6 h-6">
-          <i [class]="'pi ' + chevronIcon() + ' text-sm'"></i>
+          <i [class]="'pi ' + chevronIcon() + ' text-unops-sm'"></i>
         </div>
       </div>
 
@@ -233,8 +233,8 @@
             white-space: nowrap;
           "
         >
-          <i class="pi pi-file text-unops-primary text-sm"></i>
-          <span class="font-medium text-unops-secondary text-xs">{{
+          <i class="pi pi-file text-unops-primary text-unops-sm"></i>
+          <span class="font-medium text-unops-secondary text-unops-xs">{{
             "title.docs" | translate
           }}</span>
           <p-badge [value]="documentCount().toString()" severity="info" size="small" />
@@ -267,7 +267,7 @@
   <div class="mb-6">
     <label
       for="uploadDocumentType"
-      class="block text-sm font-medium text-gray-700 mb-2"
+      class="block text-unops-sm font-medium text-gray-700 mb-2"
     >
       {{ "label.documentType" | translate }} *
     </label>
@@ -286,7 +286,7 @@
 
   <!-- File Input -->
   <div class="mb-6">
-    <label class="block text-sm font-medium text-gray-700 mb-2">
+    <label class="block text-unops-sm font-medium text-gray-700 mb-2">
       {{ "label.selectFile" | translate }} (.pdf, .doc, .docx, .xls, .xlsx,
       .ppt, .pptx) *
     </label>
@@ -294,10 +294,10 @@
       type="file"
       accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
       (change)="onFileSelected($event)"
-      class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none p-2"
+      class="block w-full text-unops-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none p-2"
     />
     @if (selectedFile) {
-      <p class="mt-2 text-sm text-gray-600">
+      <p class="mt-2 text-unops-sm text-gray-600">
         {{ "label.selected" | translate }}: {{ selectedFile.name }}
       </p>
     }
@@ -343,18 +343,18 @@
   @if (selectedGoogleDriveFile) {
     <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
       <div class="flex items-center gap-3">
-        <i class="pi pi-google text-blue-600 text-2xl"></i>
+        <i class="pi pi-google text-blue-600 text-unops-2xl"></i>
         <div class="flex-1 min-w-0">
-          <p class="text-sm font-semibold text-gray-900 mb-1">
+          <p class="text-unops-sm font-semibold text-gray-900 mb-1">
             {{ selectedGoogleDriveFile.name }}
           </p>
-          <p class="text-xs text-gray-600 mb-2">
+          <p class="text-unops-xs text-gray-600 mb-2">
             {{ "label.selectedFromGoogleDrive" | translate }}
           </p>
           <a
             [href]="googleDriveLink"
             target="_blank"
-            class="text-xs text-blue-600 hover:underline truncate block"
+            class="text-unops-xs text-blue-600 hover:underline truncate block"
           >
             {{ "label.viewInGoogleDrive" | translate }}
           </a>
@@ -367,7 +367,7 @@
   <div class="mb-6">
     <label
       for="linkDocumentType"
-      class="block text-sm font-medium text-gray-700 mb-2"
+      class="block text-unops-sm font-medium text-gray-700 mb-2"
     >
       {{ "label.documentType" | translate }} *
     </label>
@@ -434,8 +434,8 @@
   <!-- Info Message -->
   <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
     <div class="flex items-start gap-2">
-      <i class="pi pi-info-circle text-blue-600 text-sm mt-0.5"></i>
-      <div class="text-sm text-blue-900">
+      <i class="pi pi-info-circle text-blue-600 text-unops-sm mt-0.5"></i>
+      <div class="text-unops-sm text-blue-900">
         <p class="font-semibold mb-1">
           {{ "label.partnerResultsFramework" | translate }}
         </p>
@@ -450,17 +450,17 @@
       <div class="flex items-center gap-3">
         <i
           [class]="
-            'pi text-lg ' +
+            'pi text-unops-lg ' +
             getFileIcon(documentBeingTagged.type || '') +
             ' ' +
             getFileIconColor(documentBeingTagged.type || '')
           "
         ></i>
         <div class="flex-1 min-w-0">
-          <p class="text-sm font-semibold text-gray-900">
+          <p class="text-unops-sm font-semibold text-gray-900">
             {{ documentBeingTagged.name }}
           </p>
-          <p class="text-xs text-gray-600">
+          <p class="text-unops-xs text-gray-600">
             {{ documentBeingTagged.documentTypeName || "Document" }}
           </p>
         </div>
@@ -515,7 +515,7 @@
                 {{ partner.partnerName }}
               </div>
               @if (partner.amount) {
-                <div class="text-sm text-gray-600 mt-1">
+                <div class="text-unops-sm text-gray-600 mt-1">
                   <span>{{ "label.amount" | translate }}:</span>
                   <span class="font-semibold ml-2"
                     >${{ partner.amount | number }}</span
@@ -588,7 +588,7 @@
     <div class="p-4 bg-yellow-50 border border-yellow-200 rounded">
       <div class="flex items-center gap-2 text-yellow-800">
         <i class="pi pi-exclamation-triangle"></i>
-        <span class="text-sm">{{
+        <span class="text-unops-sm">{{
           "message.noPartnersAvailableForTagging" | translate
         }}</span>
       </div>

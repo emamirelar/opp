@@ -193,7 +193,7 @@ html, body {
   color: var(--unops-primary) !important;
 
   /* Typography */
-  font-size: var(--unops-font-size-body-medium) !important;
+  font-size: var(--unops-font-size-base) !important;
   line-height: 1.2 !important;
   font-family: var(--unops-font-body) !important;
   font-weight: var(--unops-font-weight-medium) !important;
@@ -218,7 +218,7 @@ html, body {
 .driver-popover-close-btn {
   background: none;
   border: none;
-  font-size: 20px;
+  font-size: var(--unops-font-size-xl);
   font-weight: 700;
   padding: 4px;
   position: absolute;
@@ -268,7 +268,7 @@ html, body {
 }
 
 .driver-popover-progress-text {
-  font-size: 12px;
+  font-size: var(--unops-font-size-body-small);
   color: var(--text-color-secondary);
 }
 
@@ -335,11 +335,11 @@ app-tour-control p-button:hover {
 }
 
 .tour-control-menu .p-menuitem-icon {
-  font-size: 14px;
+  font-size: var(--unops-font-size-body-medium);
 }
 
 .tour-control-menu .p-menuitem-text {
-  font-size: 14px;
+  font-size: var(--unops-font-size-body-medium);
 }
 
 /* Ensure menu items are properly clickable */
@@ -362,11 +362,10 @@ app-tour-control p-button:hover {
   .driver-popover {
     width: 95%;
     max-width: 320px;
-    font-size: 13px;
+    font-size: var(--unops-font-size-sm);
   }
 
   .driver-popover-title {
-    font-size: 16px;
     padding: 16px 16px 0 16px;
   }
 
@@ -381,7 +380,7 @@ app-tour-control p-button:hover {
   .driver-popover-close-btn {
     top: 12px;
     right: 12px;
-    font-size: 18px;
+    font-size: var(--unops-font-size-lg);
   }
 }
 

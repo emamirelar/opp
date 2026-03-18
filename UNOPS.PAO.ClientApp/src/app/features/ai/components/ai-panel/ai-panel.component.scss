@@ -18,7 +18,7 @@
 
 /* Headings with professional styling */
 .ai-panel ::ng-deep .markdown-content h1 {
-  font-size: 1.75rem !important;
+  font-size: var(--unops-font-size-headline-large) !important;
   font-weight: 700 !important;
   margin-top: 1.5rem !important;
   margin-bottom: 1rem !important;
@@ -38,7 +38,7 @@
 }
 
 .ai-panel ::ng-deep .markdown-content h2 {
-  font-size: 1.5rem !important;
+  font-size: var(--unops-font-size-headline-medium) !important;
   font-weight: 600 !important;
   margin-top: 1.25rem !important;
   margin-bottom: 0.75rem !important;
@@ -46,7 +46,7 @@
 }
 
 .ai-panel ::ng-deep .markdown-content h3 {
-  font-size: 1.25rem !important;
+  font-size: var(--unops-font-size-headline-small) !important;
   font-weight: 600 !important;
   margin-top: 1rem !important;
   margin-bottom: 0.5rem !important;
@@ -56,7 +56,7 @@
 .ai-panel ::ng-deep .markdown-content h4,
 .ai-panel ::ng-deep .markdown-content h5,
 .ai-panel ::ng-deep .markdown-content h6 {
-  font-size: 1.1rem !important;
+  font-size: var(--unops-font-size-lg) !important;
   font-weight: 600 !important;
   margin-top: 0.75rem !important;
   margin-bottom: 0.5rem !important;
@@ -113,7 +113,7 @@
   font-weight: bold !important;
   position: absolute !important;
   left: -1.2rem !important;
-  font-size: 1.2em !important;
+  font-size: var(--unops-font-size-xl) !important;
 }
 
 /* Ordered lists (ol) - use numbers */
@@ -167,7 +167,7 @@
   color: #e11d48 !important;
   padding: 0.25rem 0.5rem !important;
   border-radius: 6px !important;
-  font-size: 0.9em !important;
+  font-size: var(--unops-font-size-sm) !important;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
   border: 1px solid #e2e8f0 !important;
   font-weight: 500 !important;
@@ -200,7 +200,7 @@
   color: inherit !important;
   padding: 0 !important;
   border: none !important;
-  font-size: 0.9rem !important;
+  font-size: var(--unops-font-size-sm) !important;
   border-radius: 0 !important;
 }
 
@@ -218,7 +218,7 @@
 
 .ai-panel ::ng-deep .markdown-content blockquote::before {
   content: '"' !important;
-  font-size: 3rem !important;
+  font-size: var(--unops-font-size-display-large) !important;
   color: #667eea !important;
   position: absolute !important;
   top: -0.5rem !important;
@@ -249,7 +249,7 @@
   color: white !important;
   font-weight: 600 !important;
   text-transform: uppercase !important;
-  font-size: 0.85rem !important;
+  font-size: var(--unops-font-size-sm) !important;
   letter-spacing: 0.5px !important;
 }
 
@@ -302,11 +302,11 @@
 /* Responsive design */
 @media (max-width: 768px) {
   .ai-panel ::ng-deep .markdown-content h1 {
-    font-size: 1.5rem !important;
+    font-size: var(--unops-font-size-headline-medium) !important;
   }
   
   .ai-panel ::ng-deep .markdown-content h2 {
-    font-size: 1.35rem !important;
+    font-size: var(--unops-font-size-headline-small) !important;
   }
   
   .ai-panel ::ng-deep .markdown-content ul,

@@ -41,14 +41,14 @@
   // Tag styling
   .p-tag {
     padding: 0.25rem 0.75rem;
-    font-size: 0.875rem;
+    font-size: var(--unops-font-size-body-medium);
     font-weight: 600;
   }
 
   // Chip styling
   .p-chip {
     padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
+    font-size: var(--unops-font-size-body-small);
   }
 }
 

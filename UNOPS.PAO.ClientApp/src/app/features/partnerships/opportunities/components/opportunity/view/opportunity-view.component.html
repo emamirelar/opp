@@ -3,7 +3,7 @@
 <!-- Workflow Action Loading Overlay - Shows blur effect during Submit/Approve/Reject/Recall/Cancel/Reopen -->
 @if (workflowActionInProgress()) {
   <div class="workflow-action-overlay">
-    <i class="pi pi-spin pi-spinner text-5xl text-white"></i>
+    <i class="pi pi-spin pi-spinner text-unops-display-large text-white"></i>
   </div>
 }
 
@@ -14,7 +14,7 @@
   >
     @if (loading()) {
       <div class="flex items-center justify-center py-12">
-        <i class="pi pi-spin pi-spinner text-4xl text-unops-primary"></i>
+        <i class="pi pi-spin pi-spinner text-unops-display-medium text-unops-primary"></i>
       </div>
     }
 
@@ -62,13 +62,13 @@
                   >
                     @if (isRegeneratingBanner()) {
                       <div class="flex flex-col items-center gap-3">
-                        <i class="pi pi-spin pi-spinner text-white text-3xl sm:text-4xl lg:text-5xl"></i>
-                        <span class="text-white text-xs sm:text-sm font-medium">{{ 'message.generatingBanner' | translate }}</span>
+                        <i class="pi pi-spin pi-spinner text-white text-unops-headline-large sm:text-unops-display-medium lg:text-unops-display-large"></i>
+                        <span class="text-white text-unops-xs sm:text-unops-sm font-medium">{{ 'message.generatingBanner' | translate }}</span>
                       </div>
                     } @else {
                       <div class="flex flex-col items-center gap-2">
-                        <i class="pi pi-refresh text-white text-2xl sm:text-3xl lg:text-4xl"></i>
-                        <span class="text-white text-xs sm:text-sm font-medium">{{ 'button.regenerateBanner' | translate }}</span>
+                        <i class="pi pi-refresh text-white text-unops-2xl sm:text-unops-headline-large lg:text-unops-display-medium"></i>
+                        <span class="text-white text-unops-xs sm:text-unops-sm font-medium">{{ 'button.regenerateBanner' | translate }}</span>
                       </div>
                     }
                   </div>
@@ -91,14 +91,14 @@
                   routerLink="/partnerships/opportunities"
                   class="text-unops-neutral-600 hover:text-unops-secondary flex-shrink-0"
                 >
-                  <i class="pi pi-arrow-left text-xl"></i>
+                  <i class="pi pi-arrow-left text-unops-xl"></i>
                 </a>
                 <div class="flex-1 min-w-0">
                   <h1
                     [class]="
                       headerScrolled()
-                        ? 'text-lg sm:text-xl font-bold text-unops-neutral-900'
-                        : 'text-2xl sm:text-3xl font-bold text-unops-secondary'
+                        ? 'text-unops-lg sm:text-unops-xl font-bold text-unops-neutral-900'
+                        : 'text-unops-2xl sm:text-unops-headline-large font-bold text-unops-secondary'
                     "
                     class="transition-all duration-300"
                   >
@@ -108,7 +108,7 @@
               </div>
               <div class="flex items-center gap-3 flex-shrink-0 flex-wrap justify-end">
                 @if ((opportunity()?.status || '').toLowerCase() === 'closed') {
-                  <span class="px-2 py-1 text-xs rounded-full bg-badge-danger text-badge-danger whitespace-nowrap">{{ opportunity()?.status || '' }}</span>
+                  <span class="px-2 py-1 text-unops-xs rounded-full bg-badge-danger text-badge-danger whitespace-nowrap">{{ opportunity()?.status || '' }}</span>
                 } @else {
                   <p-badge
                     [value]="opportunity()?.status || ''"
@@ -143,8 +143,8 @@
             <div
               [class]="
                 headerScrolled()
-                  ? 'flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-unops-neutral-600 mt-2 transition-all duration-300'
-                  : 'flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-unops-neutral-600 mt-4 transition-all duration-300'
+                  ? 'flex flex-wrap items-center gap-x-2 gap-y-1 text-unops-xs text-unops-neutral-600 mt-2 transition-all duration-300'
+                  : 'flex flex-wrap items-center gap-x-2 gap-y-1 text-unops-sm text-unops-neutral-600 mt-4 transition-all duration-300'
               "
             >
               <span class="whitespace-nowrap"
@@ -204,7 +204,7 @@
               <p-message severity="info" [closable]="false">
                 <ng-template pTemplate="content">
                   <div class="flex items-start gap-3">
-                    <i class="pi pi-info-circle text-blue-500 text-xl flex-shrink-0 mt-0.5"></i>
+                    <i class="pi pi-info-circle text-blue-500 text-unops-xl flex-shrink-0 mt-0.5"></i>
                     <div class="flex flex-col gap-1">
                       <span class="font-semibold">{{ 'workflow.goDecision.guidance.title' | translate }}</span>
                       <span>{{ instructionalGuidanceText | translate }}</span>
@@ -277,9 +277,9 @@
                   </div>
                   
                   <!-- Progress Text -->
-                  <div class="flex items-center gap-3 text-sm text-unops-neutral-700 flex-shrink-0">
+                  <div class="flex items-center gap-3 text-unops-sm text-unops-neutral-700 flex-shrink-0">
                     <span class="flex items-center gap-2">
-                      <i class="pi pi-spin pi-spinner text-unops-primary text-sm"></i>
+                      <i class="pi pi-spin pi-spinner text-unops-primary text-unops-sm"></i>
                       <span class="font-medium hidden sm:inline">{{ progressMessage() }}</span>
                     </span>
                     <span class="text-unops-neutral-500 font-medium">
@@ -341,11 +341,11 @@
                     (click)="scrollToSection(section.id)"
                     [class]="
                       activeSection() === section.id
-                        ? 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-primary text-unops-primary-on font-medium text-sm transition-all duration-200 whitespace-nowrap shadow-unops-sm'
-                        : 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-surface-primary text-unops-neutral-700 hover:bg-unops-neutral-200 font-medium text-sm transition-all duration-200 whitespace-nowrap'
+                        ? 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-primary text-unops-primary-on font-medium text-unops-sm transition-all duration-200 whitespace-nowrap shadow-unops-sm'
+                        : 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-surface-primary text-unops-neutral-700 hover:bg-unops-neutral-200 font-medium text-unops-sm transition-all duration-200 whitespace-nowrap'
                     "
                   >
-                    <i [class]="'pi ' + section.icon + ' text-sm'"></i>
+                    <i [class]="'pi ' + section.icon + ' text-unops-sm'"></i>
                     <span>{{ section.label | translate }}</span>
                   </button>
                 }
@@ -365,7 +365,7 @@
                   >
                     <ng-template pTemplate="selectedItem" let-selectedOption>
                       <div class="flex items-center gap-2">
-                        <i class="pi pi-ellipsis-h text-sm"></i>
+                        <i class="pi pi-ellipsis-h text-unops-sm"></i>
                         <span>More...</span>
                       </div>
                     </ng-template>
@@ -607,7 +607,7 @@
           >
             <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
               <!-- Left: Audit Information -->
-              <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-unops-neutral-600">
+              <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-unops-xs text-unops-neutral-600">
                 <!-- Created By -->
                 <div class="flex items-center gap-2">
                   <i class="pi pi-user-plus text-unops-neutral-500"></i>

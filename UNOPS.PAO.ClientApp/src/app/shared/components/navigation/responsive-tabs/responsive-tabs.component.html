@@ -10,13 +10,13 @@
     [disabled]="disabled">
     <ng-template pTemplate="selectedItem" let-selectedOption>
       <div class="flex items-center gap-2" *ngIf="selectedOption">
-        <span *ngIf="selectedOption.icon" class="material-symbols-outlined text-xl">{{ selectedOption.icon }}</span>
+        <span *ngIf="selectedOption.icon" class="material-symbols-outlined text-unops-xl">{{ selectedOption.icon }}</span>
         <span>{{ selectedOption.translatedLabel }}</span>
       </div>
     </ng-template>
     <ng-template pTemplate="item" let-option>
       <div class="flex items-center gap-2" [class.opacity-50]="option.disabled">
-        <span *ngIf="option.icon" class="material-symbols-outlined text-xl">{{ option.icon }}</span>
+        <span *ngIf="option.icon" class="material-symbols-outlined text-unops-xl">{{ option.icon }}</span>
         <span>{{ option.translatedLabel }}</span>
       </div>
     </ng-template>
@@ -34,7 +34,7 @@
         [disabled]="tab.disabled"
         [class]="getTabClass(tab)"
         class="flex items-center !gap-2 text-inherit">
-        <span *ngIf="tab.icon" class="material-symbols-outlined text-xl">{{ tab.icon }}</span>
+        <span *ngIf="tab.icon" class="material-symbols-outlined text-unops-xl">{{ tab.icon }}</span>
         <span>{{ tab.label | translate }}</span>
       </p-tab>
     </p-tablist>

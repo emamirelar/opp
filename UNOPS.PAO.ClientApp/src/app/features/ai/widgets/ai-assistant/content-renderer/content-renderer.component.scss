@@ -66,7 +66,7 @@
   display: inline-block;
   background: linear-gradient(135deg, #4ec3e0 0%, #1bb3a6 100%);
   color: white;
-  font-size: 0.75rem;
+  font-size: var(--unops-font-size-body-small);
   font-weight: 600;
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
@@ -213,7 +213,7 @@
 
 .content-item.user-message .user-message-text {
   white-space: pre-wrap;
-  font-size: 1rem;
+  font-size: var(--unops-font-size-base);
   font-weight: 400;
   line-height: 1.5;
   color: inherit;
@@ -254,7 +254,7 @@
 
 .content-item .content-markdown.user-message .user-message-text {
   white-space: pre-wrap;
-  font-size: 1rem;
+  font-size: var(--unops-font-size-base);
   font-weight: 400;
   line-height: 1.5;
   color: inherit;
@@ -379,7 +379,7 @@
   font-weight: bold !important;
   position: absolute !important;
   left: -1.2rem !important;
-  font-size: 1.2em !important;
+  font-size: var(--unops-font-size-xl) !important;
 }
 
 /* Ordered lists (ol) - use numbers */
@@ -433,7 +433,7 @@
   color: var(--unops-accent-cherry) !important;
   padding: 0.25rem 0.5rem !important;
   border-radius: var(--unops-radius-sm) !important;
-  font-size: 0.9em !important;
+  font-size: var(--unops-font-size-sm) !important;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
   border: 1px solid var(--unops-neutral-200) !important;
   font-weight: var(--unops-font-weight-medium) !important;
@@ -466,7 +466,7 @@
   color: inherit !important;
   padding: 0 !important;
   border: none !important;
-  font-size: 0.9rem !important;
+  font-size: var(--unops-font-size-sm) !important;
   border-radius: 0 !important;
 }
 
@@ -484,7 +484,7 @@
 
 .content-item markdown blockquote::before {
   content: '"' !important;
-  font-size: 3rem !important;
+  font-size: var(--unops-font-size-display-large) !important;
   color: var(--unops-primary) !important;
   position: absolute !important;
   top: -0.5rem !important;
@@ -539,11 +539,11 @@
 /* Responsive design */
 @media (max-width: 768px) {
   .content-item markdown h1 {
-    font-size: 1.75rem !important;
+    font-size: var(--unops-font-size-headline-large) !important;
   }
   
   .content-item markdown h2 {
-    font-size: 1.35rem !important;
+    font-size: var(--unops-font-size-headline-small) !important;
   }
   
   .content-item markdown ul,
@@ -595,7 +595,7 @@
   position: absolute;
   top: 0.75rem;
   right: 1rem;
-  font-size: 1rem;
+  font-size: var(--unops-font-size-base);
   opacity: 0.6;
 }
 
@@ -659,7 +659,7 @@
   padding: 1rem;
   margin: 0;
   font-family: 'Fira Code', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 0.875rem;
+  font-size: var(--unops-font-size-body-medium);
   line-height: 1.5;
   overflow-x: auto;
   white-space: pre-wrap;
@@ -739,11 +739,11 @@
 }
 
 .file-icon {
-  font-size: 1.5rem;
+  font-size: var(--unops-font-size-headline-medium);
 }
 
 .file-name {
-  font-size: 0.75rem;
+  font-size: var(--unops-font-size-body-small);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

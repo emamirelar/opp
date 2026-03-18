@@ -32,12 +32,12 @@
         <div class="mt-3 bg-amber-100 border-l-4 border-amber-500 px-4 py-3 rounded">
           <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div class="flex items-start gap-2 flex-1">
-              <i class="pi pi-exclamation-triangle text-amber-600 text-lg flex-shrink-0 mt-0.5"></i>
+              <i class="pi pi-exclamation-triangle text-amber-600 text-unops-lg flex-shrink-0 mt-0.5"></i>
               <div class="flex flex-col">
-                <span class="text-sm font-bold text-amber-900">
+                <span class="text-unops-sm font-bold text-amber-900">
                   {{ 'message.unsavedChanges' | translate }}
                 </span>
-                <span class="text-xs font-medium text-amber-800">
+                <span class="text-unops-xs font-medium text-amber-800">
                   {{ 'message.unsavedChangesSectionDetail' | translate }}
                 </span>
               </div>
@@ -73,20 +73,20 @@
     <!-- AI Suggestions -->
     @if (loadingInsightsSuggestions()) {
       <div class="flex items-center gap-3 p-4 bg-unops-surface-secondary rounded-unops-md border border-unops-neutral-light">
-        <i class="pi pi-spin pi-spinner text-xl text-unops-primary"></i>
+        <i class="pi pi-spin pi-spinner text-unops-xl text-unops-primary"></i>
         <span class="text-unops-neutral-700">{{ 'message.opportunity.refreshingInsights' | translate }}</span>
       </div>
     } @else if (suggestions() && suggestions().length > 0) {
       <div style="background-color: rgb(253, 250, 241);" class="rounded-unops-lg p-3 border border-unops-warning-light">
         <div class="flex items-start gap-2 mb-2">
-          <i class="pi pi-lightbulb text-unops-warning-darker text-sm mt-0.5"></i>
-          <h4 class="text-xs font-semibold text-unops-secondary">{{ 'label.aiSuggestions' | translate }}</h4>
+          <i class="pi pi-lightbulb text-unops-warning-darker text-unops-sm mt-0.5"></i>
+          <h4 class="text-unops-xs font-semibold text-unops-secondary">{{ 'label.aiSuggestions' | translate }}</h4>
         </div>
         <div class="space-y-2 pl-5">
           @for (suggestion of suggestions(); track $index) {
             <div class="bg-unops-surface-primary rounded p-2 border border-unops-warning-light shadow-unops-sm">
-              <div class="font-semibold text-xs text-unops-secondary mb-1">{{ suggestion.title }}</div>
-              <p class="text-xs text-unops-neutral-800">{{ suggestion.description }}</p>
+              <div class="font-semibold text-unops-xs text-unops-secondary mb-1">{{ suggestion.title }}</div>
+              <p class="text-unops-xs text-unops-neutral-800">{{ suggestion.description }}</p>
             </div>
           }
         </div>
@@ -96,8 +96,8 @@
     <!-- Implementation Countries -->
     <div id="field-countries">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="text-sm font-semibold text-unops-secondary flex items-center gap-2">
-          <i class="pi pi-globe text-unops-primary text-base"></i>
+        <h3 class="text-unops-sm font-semibold text-unops-secondary flex items-center gap-2">
+          <i class="pi pi-globe text-unops-primary text-unops-base"></i>
           <span>{{ 'label.opportunity.implementationCountries' | translate }} * ({{ countryCount() }})</span>
         </h3>
         @if (isEditing()) {
@@ -143,7 +143,7 @@
       <div class="mb-4 p-3 bg-unops-primary-container-soft border border-unops-primary-200 rounded-unops-lg">
         <div class="flex items-start gap-2">
           <i class="pi pi-info-circle text-unops-primary-dark mt-0.5"></i>
-          <div class="text-xs text-unops-neutral-800">
+          <div class="text-unops-xs text-unops-neutral-800">
             <strong>HCA</strong> = {{ 'label.hostCountryAgreement' | translate }}, 
             <strong>SIDS</strong> = {{ 'label.smallIslandDevelopingState' | translate }}, 
             <strong>UNSDCF</strong> = {{ 'label.unCooperationFramework' | translate }}
@@ -171,7 +171,7 @@
               
               <!-- Country ISO Code Badge (like Partner logo) -->
               <div class="w-10 h-10 bg-unops-primary-container rounded flex items-center justify-center flex-shrink-0">
-                <span class="text-sm font-bold text-unops-primary-on-container">{{ country.country?.iso2Code || 'XX' }}</span>
+                <span class="text-unops-sm font-bold text-unops-primary-on-container">{{ country.country?.iso2Code || 'XX' }}</span>
               </div>
               
               <!-- Country Content -->
@@ -190,7 +190,7 @@
                 
                 <!-- Third Row: Region (Secondary text) -->
                 @if (country.country && (country.country.continent || country.country.region)) {
-                  <div class="text-sm text-unops-neutral-700">
+                  <div class="text-unops-sm text-unops-neutral-700">
                     @if (country.country.continent) {
                       <span>{{ country.country.continent }}</span>
                     }
@@ -199,7 +199,7 @@
                 
                 <!-- Fourth Row: OrgUnit Hierarchy - Only show for saved countries (not newly added) -->
                 @if (country.id !== 0 && country.country?.organizationUnitHierarchy && country.country!.organizationUnitHierarchy!.length > 0) {
-                  <div class="mt-2 flex items-center gap-2 text-sm">
+                  <div class="mt-2 flex items-center gap-2 text-unops-sm">
                     <i class="pi pi-sitemap text-unops-primary"></i>
                     <div class="flex items-center gap-1 flex-wrap">
                       @for (node of country.country!.organizationUnitHierarchy!; track node.id; let isLast = $last) {
@@ -210,7 +210,7 @@
                             {{ node.name }}
                           </span>
                           @if (!isLast) {
-                            <i class="pi pi-angle-right text-gray-400 text-sm"></i>
+                            <i class="pi pi-angle-right text-gray-400 text-unops-sm"></i>
                           }
                         }
                       }
@@ -226,13 +226,13 @@
                         <ng-template pTemplate="icon">
                           <i class="pi pi-check-circle"></i>
                         </ng-template>
-                        <span class="text-sm">{{ 'message.country.activeUNSDCF' | translate }}</span>
+                        <span class="text-unops-sm">{{ 'message.country.activeUNSDCF' | translate }}</span>
                       </p-message>
                     </div>
                   } @else {
                     <div style="background-color: rgb(253, 250, 241);" class="mt-2 p-2 border border-unops-warning-light rounded flex items-start gap-2">
-                      <i class="pi pi-exclamation-circle text-unops-warning-darker text-sm mt-0.5"></i>
-                      <span class="text-xs text-unops-neutral-800">
+                      <i class="pi pi-exclamation-circle text-unops-warning-darker text-unops-sm mt-0.5"></i>
+                      <span class="text-unops-xs text-unops-neutral-800">
                         {{ 'message.country.noActiveUNSDCF' | translate }}
                       </span>
                     </div>
@@ -258,7 +258,7 @@
         }
       } @else {
         <div class="text-center py-8 text-unops-neutral-500">
-          <i class="pi pi-globe text-4xl mb-3 text-unops-neutral-400"></i>
+          <i class="pi pi-globe text-unops-display-medium mb-3 text-unops-neutral-400"></i>
           <p>{{ 'message.noCountries' | translate }}</p>
         </div>
       }
@@ -271,12 +271,12 @@
       <div class="bg-amber-100 border-t-4 border-amber-500 px-4 py-3 rounded-b">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div class="flex items-start gap-2 flex-1">
-            <i class="pi pi-exclamation-triangle text-amber-600 text-lg flex-shrink-0 mt-0.5"></i>
+            <i class="pi pi-exclamation-triangle text-amber-600 text-unops-lg flex-shrink-0 mt-0.5"></i>
             <div class="flex flex-col">
-              <span class="text-sm font-bold text-amber-900">
+              <span class="text-unops-sm font-bold text-amber-900">
                 {{ 'message.unsavedChanges' | translate }}
               </span>
-              <span class="text-xs font-medium text-amber-800">
+              <span class="text-unops-xs font-medium text-amber-800">
                 {{ 'message.unsavedChangesSectionDetail' | translate }}
               </span>
             </div>
@@ -327,7 +327,7 @@
   @if (selectedCountriesData().size > 0) {
     <div class="mb-4 bg-unops-primary-container-soft border border-unops-primary-200 rounded-unops-lg p-4">
       <div class="flex items-center justify-between mb-3">
-        <h4 class="text-sm font-semibold text-unops-secondary flex items-center gap-2">
+        <h4 class="text-unops-sm font-semibold text-unops-secondary flex items-center gap-2">
           <i class="pi pi-check-circle text-unops-primary"></i>
           {{ 'label.selectedCountries' | translate }} ({{ selectedCountriesData().size }})
         </h4>
@@ -343,11 +343,11 @@
       <div class="flex flex-wrap gap-2">
         @for (country of selectedCountriesData() | keyvalue; track country.key) {
           <div
-            class="inline-flex items-center gap-2 bg-unops-surface-primary border border-unops-primary-300 rounded-full px-3 py-1.5 text-sm"
+            class="inline-flex items-center gap-2 bg-unops-surface-primary border border-unops-primary-300 rounded-full px-3 py-1.5 text-unops-sm"
           >
             <span class="font-medium text-unops-secondary">{{ country.value.name }}</span>
             @if (country.value.code) {
-              <span class="text-xs text-unops-neutral-600">({{ country.value.code }})</span>
+              <span class="text-unops-xs text-unops-neutral-600">({{ country.value.code }})</span>
             }
             <button
               type="button"
@@ -355,7 +355,7 @@
               (click)="removeSelectedCountry(country.value.id)"
               [title]="'button.remove' | translate"
             >
-              <i class="pi pi-times text-xs"></i>
+              <i class="pi pi-times text-unops-xs"></i>
             </button>
           </div>
         }
@@ -418,12 +418,12 @@
                       <div class="flex-1">
                         <div class="font-semibold text-unops-secondary">{{ result.country.name }}</div>
                         @if (result.country.continent) {
-                          <div class="text-xs text-unops-neutral-700">
+                          <div class="text-unops-xs text-unops-neutral-700">
                             {{ result.country.continent }}
                           </div>
                         }
                       </div>
-                      <span class="text-xs bg-unops-primary-container text-unops-primary-on-container px-2 py-1 rounded">
+                      <span class="text-unops-xs bg-unops-primary-container text-unops-primary-on-container px-2 py-1 rounded">
                         {{ 'label.nameMatch' | translate }}
                       </span>
                     </div>
@@ -474,12 +474,12 @@
                       <div class="flex-1">
                         <div class="font-semibold">{{ result.country.name }}</div>
                         @if (result.country.continent) {
-                          <div class="text-xs text-gray-600">
+                          <div class="text-unops-xs text-gray-600">
                             {{ result.country.continent }}
                           </div>
                         }
                       </div>
-                      <span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                      <span class="text-unops-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
                         {{ 'label.continent' | translate }}
                       </span>
                     </div>
@@ -526,19 +526,19 @@
                       <div class="flex-1">
                         <div class="font-semibold">{{ result.country.name }}</div>
                         @if (result.country.continent) {
-                          <div class="text-xs text-gray-600">
+                          <div class="text-unops-xs text-gray-600">
                             {{ result.country.continent }}
                           </div>
                         }
                         @for (reason of result.matchReasons; track $index) {
                           @if (reason.matchType === 'ArtifactValue') {
-                            <div class="text-xs mt-1 text-green-700">
+                            <div class="text-unops-xs mt-1 text-green-700">
                               <strong>{{ reason.artifactTypeName }}:</strong> {{ reason.matchedValue }}
                             </div>
                           }
                         }
                       </div>
-                      <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                      <span class="text-unops-xs bg-green-100 text-green-800 px-2 py-1 rounded">
                         {{ group.artifactType }}
                       </span>
                     </div>
@@ -551,7 +551,7 @@
 
       } @else if (searchTerm.value && searchTerm.value.trim().length >= 2 && !isSearching()) {
         <div class="text-center py-8 text-unops-neutral-500">
-          <i class="pi pi-search text-4xl mb-3 text-unops-neutral-400"></i>
+          <i class="pi pi-search text-unops-display-medium mb-3 text-unops-neutral-400"></i>
           <p>{{ 'message.noSearchResults' | translate }}</p>
         </div>
       }

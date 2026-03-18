@@ -1,7 +1,7 @@
 <p-blockui [blocked]="contactService.isLoading() || isLoading() || cachedDataService.isLoading()">
   <div class="flex flex-col items-center justify-center gap-3">
     <p-progressSpinner strokeWidth="4" [style]="{width: '50px', height: '50px'}"></p-progressSpinner>
-    <span class="text-lg font-medium">{{ 'loading.contactData' | translate }}</span>
+    <span class="text-unops-lg font-medium">{{ 'loading.contactData' | translate }}</span>
   </div>
 </p-blockui>
 
@@ -24,7 +24,7 @@
           <div class="col-span-9 flex flex-col gap-2">
             <label for="partner" class="flex items-center gap-2">
               {{ 'label.partner.partner' | translate }}*
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.partner' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -48,7 +48,7 @@
           <div class="col-span-9 sm:col-span-2 flex flex-col gap-2">
             <label class="flex items-center gap-2">
               {{ "label.contact.salutation" | translate }}
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.salutation' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -65,7 +65,7 @@
           <div class="col-span-9 sm:col-span-2 flex flex-col gap-2">
             <label class="flex items-center gap-2">
               {{ "label.contact.firstName" | translate }}
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.firstName' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -75,7 +75,7 @@
           <div class="col-span-9 sm:col-span-2 flex flex-col gap-2">
             <label class="flex items-center gap-2">
               {{ "label.contact.middleName" | translate }}
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.middleName' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -85,7 +85,7 @@
           <div class="col-span-9 sm:col-span-2 flex flex-col gap-2">
             <label class="flex items-center gap-2">
               {{ "label.contact.lastName" | translate }} *
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.lastName' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -98,7 +98,7 @@
           <div class="col-span-9 sm:col-span-1 flex flex-col gap-2">
             <label class="flex items-center gap-2">
               {{ "label.contact.suffix" | translate }}
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.suffix' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -108,7 +108,7 @@
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
             <label class="flex items-center gap-2">
               {{ "label.contact.email" | translate }} *
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.email' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -124,7 +124,7 @@
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
             <label class="flex items-center gap-2">
               {{ "label.contact.phone" | translate }}
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.phone' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -134,7 +134,7 @@
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
             <label class="flex items-center gap-2">
               {{ "label.contact.mobile" | translate }}
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.mobile' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -145,7 +145,7 @@
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
             <label for="selectedOrgUnitId" class="flex items-center gap-2">
               {{ 'label.contact.contactOrgUnit' | translate }}
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.contactOrgUnit' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -167,7 +167,7 @@
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
             <label class="flex items-center gap-2">
               {{ "label.contact.title" | translate }} *
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.title' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -180,7 +180,7 @@
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
             <label class="flex items-center gap-2">
               {{ "label.contact.department" | translate }}
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.department' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -190,7 +190,7 @@
           <div class="col-span-9 flex flex-col gap-2">
             <label class="flex items-center gap-2">
               {{ "label.contact.description" | translate }}
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.description' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -199,7 +199,7 @@
 
           <p-divider class="col-span-full" />
 
-          <div class="col-span-full text-2xl">
+          <div class="col-span-full text-unops-2xl">
             {{ "label.contact.assistant" | translate }}
           </div>
 
@@ -212,7 +212,7 @@
                         inputId="assistantToggle" />
             <label for="assistantToggle" class="font-medium flex items-center gap-2">
               {{ "label.contact.contactViaAssistant" | translate }}
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.contactViaAssistant' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -222,7 +222,7 @@
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
             <label class="flex items-center gap-2">
               {{ "label.contact.assistant" | translate }}
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.assistant' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -232,7 +232,7 @@
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
             <label class="flex items-center gap-2">
               {{ "label.contact.assistantPhone" | translate }}
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.assistantPhone' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -242,7 +242,7 @@
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
             <label class="flex items-center gap-2">
               {{ "label.contact.assistantEmail" | translate }} *
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.assistantEmail' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -259,13 +259,13 @@
 
 
           <p-divider class="col-span-full" />
-          <div class="text-2xl col-span-full">
+          <div class="text-unops-2xl col-span-full">
             {{ "label.contact.mailingAddress" | translate }}
           </div>
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
             <label class="flex items-center gap-2">
               {{ "label.contact.mailingStreet" | translate }}
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.mailingStreet' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -274,7 +274,7 @@
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
             <label class="flex items-center gap-2">
               {{ "label.contact.mailingStreet2" | translate }}
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.mailingStreet2' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -283,7 +283,7 @@
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
             <label class="flex items-center gap-2">
               {{ "label.contact.mailingCity" | translate }}
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.mailingCity' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -292,7 +292,7 @@
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
             <label class="flex items-center gap-2">
               {{ "label.contact.mailingStateProvince" | translate }}
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.mailingStateProvince' | translate"
                  tooltipPosition="right"></i>
             </label>
@@ -301,7 +301,7 @@
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
             <label class="flex items-center gap-2">
               {{ "label.contact.mailingCountry" | translate }}
-              <i class="pi pi-info-circle text-sm text-gray-500"
+              <i class="pi pi-info-circle text-unops-sm text-gray-500"
                  [pTooltip]="'tooltip.contact.mailingCountry' | translate"
                  tooltipPosition="right"></i>
             </label>

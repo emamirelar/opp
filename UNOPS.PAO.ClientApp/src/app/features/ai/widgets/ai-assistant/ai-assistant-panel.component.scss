@@ -252,7 +252,7 @@
   display: block;
   font-weight: 500;
   color: var(--text-color);
-  font-size: 0.875rem;
+  font-size: var(--unops-font-size-body-medium);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -267,14 +267,14 @@
 
 .star-icon {
   color: var(--orange-500);
-  font-size: 0.875rem;
+  font-size: var(--unops-font-size-body-medium);
 }
 
 .no-history {
   padding: 2rem 1rem;
   text-align: center;
   color: var(--text-color-secondary);
-  font-size: 0.875rem;
+  font-size: var(--unops-font-size-body-medium);
 }
 
 /* ===== CHAT AREA ===== */
@@ -489,7 +489,7 @@
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: var(--unops-font-size-body-medium);
 }
 
 .message-content {
@@ -562,7 +562,7 @@
   background: var(--blue-50);
   border: 1px solid var(--blue-200);
   border-radius: 20px;
-  font-size: 0.875rem;
+  font-size: var(--unops-font-size-body-medium);
   color: var(--blue-700);
 }
 
@@ -656,7 +656,7 @@
 }
 
 .input-action-btn i {
-  font-size: 1rem !important;
+  font-size: var(--unops-font-size-base) !important;
 }
 
 /* ===== MESSAGE FILES ===== */
@@ -700,18 +700,18 @@
 
 .file-attachment i {
   color: var(--primary-color);
-  font-size: 1.2rem;
+  font-size: var(--unops-font-size-xl);
 }
 
 .file-name {
   font-weight: 500;
   color: var(--text-color);
-  font-size: 0.9rem;
+  font-size: var(--unops-font-size-sm);
 }
 
 .file-size {
   color: var(--text-color-secondary);
-  font-size: 0.8rem;
+  font-size: var(--unops-font-size-body-small);
 }
 
 /* ===== INLINE DATA ===== */
@@ -743,7 +743,7 @@
 
 .inline-file i {
   color: var(--primary-color);
-  font-size: 1.2rem;
+  font-size: var(--unops-font-size-xl);
 }
 
 .send-btn {
@@ -812,7 +812,7 @@
 }
 
 .message-actions .action-btn i {
-  font-size: 0.75rem !important;
+  font-size: var(--unops-font-size-body-small) !important;
 }
 
 .copy-btn:hover {
@@ -844,7 +844,7 @@
   }
   
   .chat-title {
-    font-size: 0.875rem;
+    font-size: var(--unops-font-size-body-medium);
   }
 
 
@@ -932,7 +932,7 @@
 
 .disclaimer {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--unops-font-size-body-small);
   color: var(--text-color-secondary);
   display: flex;
   align-items: center;
@@ -1063,13 +1063,13 @@
   flex: 1 !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
-  font-size: 0.875rem !important;
+  font-size: var(--unops-font-size-body-medium) !important;
   max-width: 200px !important;
 }
 
 :host ::ng-deep .p-menu .p-menuitem-icon {
   color: var(--primary-color) !important;
-  font-size: 0.875rem !important;
+  font-size: var(--unops-font-size-body-medium) !important;
   margin-right: 0.5rem !important;
 }
 
@@ -1082,7 +1082,7 @@
 :host ::ng-deep .p-menu .p-menuitem.p-menuitem-separator .p-menuitem-link {
   background: var(--surface-50) !important;
   font-weight: 600 !important;
-  font-size: 0.75rem !important;
+  font-size: var(--unops-font-size-body-small) !important;
   text-transform: uppercase !important;
   letter-spacing: 0.05em !important;
   color: var(--text-color-secondary) !important;
@@ -1130,11 +1130,11 @@
   }
   
   .text-4xl.md\\:text-5xl {
-    font-size: 2.25rem !important;
+    font-size: var(--unops-font-size-display-medium) !important;
   }
   
   .text-xl {
-    font-size: 1.125rem !important;
+    font-size: var(--unops-font-size-lg) !important;
   }
   
   .gap-6 {

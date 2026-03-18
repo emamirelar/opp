@@ -39,20 +39,20 @@
 }
 
 .upload-icon {
-  font-size: 2.5rem;
+  font-size: var(--unops-font-size-display-large);
   margin-bottom: 12px;
   opacity: 0.7;
 }
 
 .primary-text {
-  font-size: 1.1rem;
+  font-size: var(--unops-font-size-lg);
   font-weight: 500;
   color: #374151;
   margin-bottom: 6px;
 }
 
 .secondary-text {
-  font-size: 0.875rem;
+  font-size: var(--unops-font-size-body-medium);
   color: #6b7280;
 }
 
@@ -75,7 +75,7 @@
   border: none;
   border-radius: 6px;
   padding: 4px 12px;
-  font-size: 0.8rem;
+  font-size: var(--unops-font-size-body-small);
   cursor: pointer;
   transition: background-color 0.2s;
 }
@@ -128,7 +128,7 @@
 }
 
 .file-icon {
-  font-size: 1.5rem;
+  font-size: var(--unops-font-size-headline-medium);
 }
 
 .file-info {
@@ -139,7 +139,7 @@
 .file-name {
   font-weight: 500;
   color: #111827;
-  font-size: 0.9rem;
+  font-size: var(--unops-font-size-sm);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -149,13 +149,13 @@
 .file-details {
   display: flex;
   gap: 12px;
-  font-size: 0.8rem;
+  font-size: var(--unops-font-size-body-small);
   color: #6b7280;
 }
 
 .file-status {
   margin-top: 4px;
-  font-size: 0.75rem;
+  font-size: var(--unops-font-size-body-small);
 }
 
 .status-pending { color: #6b7280; }
@@ -179,7 +179,7 @@
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  font-size: 1.2rem;
+  font-size: var(--unops-font-size-xl);
   line-height: 1;
 }
 
@@ -218,7 +218,7 @@
 .error-item {
   padding: 8px 16px;
   color: #dc2626;
-  font-size: 0.875rem;
+  font-size: var(--unops-font-size-body-medium);
   border-bottom: 1px solid #fecaca;
 }
 
@@ -251,7 +251,7 @@
 
 .progress-text {
   text-align: center;
-  font-size: 0.875rem;
+  font-size: var(--unops-font-size-body-medium);
   color: #0369a1;
   font-weight: 500;
 }
@@ -264,11 +264,11 @@
   }
   
   .upload-icon {
-    font-size: 2rem;
+    font-size: var(--unops-font-size-display-medium);
   }
   
   .primary-text {
-    font-size: 1rem;
+    font-size: var(--unops-font-size-base);
   }
   
   .file-item {

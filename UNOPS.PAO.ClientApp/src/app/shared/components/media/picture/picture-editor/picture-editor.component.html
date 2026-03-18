@@ -4,9 +4,9 @@
     @if (isProcessing || isUploading()) {
       <div class="absolute z-10 flex flex-col items-center bg-white px-6 py-4 rounded-lg shadow-lg">
         @if (isUploading() && uploadProgress() > 0) {
-          <div class="mt-2 text-sm font-medium">{{ 'label.pictureEditor.uploadProgress' | translate: {progress: uploadProgress()} }}</div>
+          <div class="mt-2 text-unops-sm font-medium">{{ 'label.pictureEditor.uploadProgress' | translate: {progress: uploadProgress()} }}</div>
         } @else if (isProcessing) {
-          <div class="mt-2 text-sm font-medium">{{ 'label.pictureEditor.loadingImage' | translate }}</div>
+          <div class="mt-2 text-unops-sm font-medium">{{ 'label.pictureEditor.loadingImage' | translate }}</div>
         }
       </div>
     }
@@ -21,7 +21,7 @@
             (dragover)="$event.preventDefault()"
             (dragleave)="handleDragLeave($event)"
             (drop)="handleDrop($event)">
-          <i class="pi pi-image text-6xl text-gray-600"></i>
+          <i class="pi pi-image text-unops-display-large text-gray-600"></i>
           <p>{{ 'label.pictureEditor.dropImageHere' | translate }}</p>
 
           <!-- File upload area -->

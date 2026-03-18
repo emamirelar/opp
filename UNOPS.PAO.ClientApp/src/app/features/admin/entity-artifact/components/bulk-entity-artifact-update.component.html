@@ -9,20 +9,20 @@
   <!-- Header Section -->
   <div class="flex flex-wrap items-center justify-between gap-4">
     <div class="flex items-center gap-3">
-      <span class="material-symbols-outlined text-3xl">upload_file</span>
-      <div class="text-3xl font-bold">{{ 'bulkEntityArtifact.title' | translate }}</div>
+      <span class="material-symbols-outlined text-unops-headline-large">upload_file</span>
+      <div class="text-unops-headline-large font-bold">{{ 'bulkEntityArtifact.title' | translate }}</div>
     </div>
   </div>
 
   <!-- Instructions Card -->
   <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
     <div class="flex items-start gap-3">
-      <span class="material-symbols-outlined text-blue-600 text-2xl">info</span>
+      <span class="material-symbols-outlined text-blue-600 text-unops-2xl">info</span>
       <div class="flex-1">
-        <h3 class="text-lg font-semibold text-blue-900 mb-2">
+        <h3 class="text-unops-lg font-semibold text-blue-900 mb-2">
           {{ 'bulkEntityArtifact.instructions.title' | translate }}
         </h3>
-        <ol class="list-decimal list-inside space-y-2 text-sm text-blue-800">
+        <ol class="list-decimal list-inside space-y-2 text-unops-sm text-blue-800">
           <li>{{ 'bulkEntityArtifact.instructions.step1' | translate }}</li>
           <li>{{ 'bulkEntityArtifact.instructions.step2' | translate }}</li>
           <li>{{ 'bulkEntityArtifact.instructions.step3' | translate }}</li>
@@ -51,7 +51,7 @@
       <div class="mb-6">
         <div class="flex items-center gap-2 mb-4">
           <span class="material-symbols-outlined text-primary">category</span>
-          <h3 class="text-lg font-semibold text-gray-900">
+          <h3 class="text-unops-lg font-semibold text-gray-900">
             {{ 'bulkEntityArtifact.step1.title' | translate }}
           </h3>
         </div>
@@ -83,12 +83,12 @@
         @if (uniqueIdExample() && !loadingUniqueIdExample()) {
           <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div class="flex items-start gap-3">
-              <span class="material-symbols-outlined text-yellow-600 text-xl">lightbulb</span>
+              <span class="material-symbols-outlined text-yellow-600 text-unops-xl">lightbulb</span>
               <div class="flex-1">
-                <p class="text-sm font-semibold text-yellow-900 mb-1">
+                <p class="text-unops-sm font-semibold text-yellow-900 mb-1">
                   {{ 'bulkEntityArtifact.uniqueId.title' | translate }}: {{ uniqueIdExample()!.uniqueIdFieldLabel }}
                 </p>
-                <p class="text-sm text-yellow-800">
+                <p class="text-unops-sm text-yellow-800">
                   {{ uniqueIdExample()!.fullExplanation }}
                 </p>
               </div>
@@ -101,7 +101,7 @@
       <div class="mb-6">
         <div class="flex items-center gap-2 mb-4">
           <span class="material-symbols-outlined text-primary">checklist</span>
-          <h3 class="text-lg font-semibold text-gray-900">
+          <h3 class="text-unops-lg font-semibold text-gray-900">
             {{ 'bulkEntityArtifact.step2.title' | translate }}
           </h3>
         </div>
@@ -131,7 +131,7 @@
         }
 
         @if (selectedArtifactTypeIds().length > 0) {
-          <p class="text-sm text-gray-600 mt-2">
+          <p class="text-unops-sm text-gray-600 mt-2">
             {{ 'bulkEntityArtifact.messages.selectedCount' | translate }}: {{ selectedArtifactTypeIds().length }}
           </p>
         }
@@ -141,7 +141,7 @@
       <div class="mb-6">
         <div class="flex items-center gap-2 mb-4">
           <span class="material-symbols-outlined text-primary">download</span>
-          <h3 class="text-lg font-semibold text-gray-900">
+          <h3 class="text-unops-lg font-semibold text-gray-900">
             {{ 'bulkEntityArtifact.step3.title' | translate }}
           </h3>
         </div>
@@ -155,7 +155,7 @@
           [loading]="downloadingTemplate()"
         />
 
-        <p class="text-sm text-gray-600 mt-2">
+        <p class="text-unops-sm text-gray-600 mt-2">
           {{ 'bulkEntityArtifact.messages.downloadHelp' | translate }}
         </p>
       </div>
@@ -164,7 +164,7 @@
       <div class="mb-6">
         <div class="flex items-center gap-2 mb-4">
           <span class="material-symbols-outlined text-primary">cloud_upload</span>
-          <h3 class="text-lg font-semibold text-gray-900">
+          <h3 class="text-unops-lg font-semibold text-gray-900">
             {{ 'bulkEntityArtifact.step4.title' | translate }}
           </h3>
         </div>
@@ -189,7 +189,7 @@
                   <span class="material-symbols-outlined text-blue-600">description</span>
                   <div>
                     <p class="font-medium text-gray-900">{{ file.name }}</p>
-                    <p class="text-sm text-gray-600">{{ (file.size / 1024).toFixed(2) }} KB</p>
+                    <p class="text-unops-sm text-gray-600">{{ (file.size / 1024).toFixed(2) }} KB</p>
                   </div>
                 </div>
               </div>
@@ -228,35 +228,35 @@
   @if (uploadResults()) {
     <div class="bg-white rounded-lg shadow-md p-8">
       <div class="flex items-center gap-3 mb-6">
-        <span class="material-symbols-outlined text-3xl">summarize</span>
-        <h2 class="text-2xl font-bold">{{ 'bulkEntityArtifact.results.title' | translate }}</h2>
+        <span class="material-symbols-outlined text-unops-headline-large">summarize</span>
+        <h2 class="text-unops-2xl font-bold">{{ 'bulkEntityArtifact.results.title' | translate }}</h2>
       </div>
 
       <!-- Summary Cards -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div class="text-sm text-blue-600 font-medium mb-1">
+          <div class="text-unops-sm text-blue-600 font-medium mb-1">
             {{ 'bulkEntityArtifact.results.totalRows' | translate }}
           </div>
-          <div class="text-2xl font-bold text-blue-900">
+          <div class="text-unops-2xl font-bold text-blue-900">
             {{ uploadResults()!.totalRows }}
           </div>
         </div>
         
         <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <div class="text-sm text-green-600 font-medium mb-1">
+          <div class="text-unops-sm text-green-600 font-medium mb-1">
             {{ 'bulkEntityArtifact.results.successful' | translate }}
           </div>
-          <div class="text-2xl font-bold text-green-900">
+          <div class="text-unops-2xl font-bold text-green-900">
             {{ uploadResults()!.successfulRows }}
           </div>
         </div>
         
         <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div class="text-sm text-red-600 font-medium mb-1">
+          <div class="text-unops-sm text-red-600 font-medium mb-1">
             {{ 'bulkEntityArtifact.results.failed' | translate }}
           </div>
-          <div class="text-2xl font-bold text-red-900">
+          <div class="text-unops-2xl font-bold text-red-900">
             {{ uploadResults()!.failedRows }}
           </div>
         </div>
@@ -294,15 +294,15 @@
               </td>
               <td>
                 @if (!rowResult.success && rowResult.errorMessage && (!rowResult.cellResults || rowResult.cellResults.length === 0)) {
-                  <span class="text-red-600 text-sm">{{ rowResult.errorMessage }}</span>
+                  <span class="text-red-600 text-unops-sm">{{ rowResult.errorMessage }}</span>
                 }
                 @if (rowResult.cellResults && rowResult.cellResults.length > 0) {
                   <div class="space-y-2">
                     @for (cellResult of rowResult.cellResults; track cellResult.columnIndex) {
-                      <div class="flex items-start gap-2 text-sm">
+                      <div class="flex items-start gap-2 text-unops-sm">
                         <p-chip 
                           [label]="getCellStatusLabel(cellResult.success, cellResult.skipped)" 
-                          [styleClass]="'text-xs ' + (cellResult.skipped ? 'bg-gray-200 text-gray-700' : (cellResult.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'))"
+                          [styleClass]="'text-unops-xs ' + (cellResult.skipped ? 'bg-gray-200 text-gray-700' : (cellResult.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'))"
                         />
                         <div class="flex-1">
                           <div class="font-medium text-gray-900">{{ cellResult.artifactTypeName }}</div>

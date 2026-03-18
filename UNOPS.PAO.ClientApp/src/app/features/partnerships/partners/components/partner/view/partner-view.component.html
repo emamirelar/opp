@@ -585,7 +585,7 @@
         <ng-template #header>
           <div class="flex gap-4 items-center w-full">
             <i class="pi pi-link size-5 ml-1" style="color: var(--unops-primary);"></i>
-            <div class="text-xl">{{ 'title.relatedEngagements' | translate }}</div>
+            <div class="text-unops-xl">{{ 'title.relatedEngagements' | translate }}</div>
           </div>
         </ng-template>
 
@@ -604,8 +604,8 @@
               <i class="pi pi-user-plus text-blue-600"></i>
             </div>
             <div>
-              <p class="text-xs font-semibold text-gray-500 mb-1">Created By</p>
-              <p class="text-sm text-gray-900">{{ recordData().createdByName || 'Unknown User' }}</p>
+              <p class="text-unops-xs font-semibold text-gray-500 mb-1">Created By</p>
+              <p class="text-unops-sm text-gray-900">{{ recordData().createdByName || 'Unknown User' }}</p>
             </div>
           </div>
           <div class="flex items-center gap-4 rounded-lg">
@@ -613,8 +613,8 @@
               <i class="pi pi-calendar-plus text-green-600"></i>
             </div>
             <div>
-              <p class="text-xs font-semibold text-gray-500 mb-1">Created Date</p>
-              <p class="text-sm text-gray-900">{{ recordData().createdDate ? formatDate(recordData().createdDate!) : 'Not available' }}</p>
+              <p class="text-unops-xs font-semibold text-gray-500 mb-1">Created Date</p>
+              <p class="text-unops-sm text-gray-900">{{ recordData().createdDate ? formatDate(recordData().createdDate!) : 'Not available' }}</p>
             </div>
           </div>
           <div class="flex items-center gap-4 rounded-lg">
@@ -622,8 +622,8 @@
               <i class="pi pi-user-edit text-orange-600"></i>
             </div>
             <div>
-              <p class="text-xs font-semibold text-gray-500 mb-1">Last Modified By</p>
-              <p class="text-sm text-gray-900">{{ recordData().lastModifiedByName || 'Unknown User' }}</p>
+              <p class="text-unops-xs font-semibold text-gray-500 mb-1">Last Modified By</p>
+              <p class="text-unops-sm text-gray-900">{{ recordData().lastModifiedByName || 'Unknown User' }}</p>
             </div>
           </div>
           <div class="flex items-center gap-4 rounded-lg">
@@ -631,8 +631,8 @@
               <i class="pi pi-calendar-times text-purple-600"></i>
             </div>
             <div>
-              <p class="text-xs font-semibold text-gray-500 mb-1">Last Modified</p>
-              <p class="text-sm text-gray-900">{{ recordData().lastModifiedDate ? formatDate(recordData().lastModifiedDate!) : 'Not available' }}</p>
+              <p class="text-unops-xs font-semibold text-gray-500 mb-1">Last Modified</p>
+              <p class="text-unops-sm text-gray-900">{{ recordData().lastModifiedDate ? formatDate(recordData().lastModifiedDate!) : 'Not available' }}</p>
             </div>
           </div>
         </div>

@@ -16,7 +16,7 @@
 
 /* Headings with professional styling */
 .typewriter-content h1 {
-  font-size: 2rem;
+  font-size: var(--unops-font-size-display-medium);
   font-weight: 700;
   margin-top: 1.5rem;
   margin-bottom: 1rem;
@@ -41,7 +41,7 @@
 }
 
 .typewriter-content h2 {
-  font-size: 1.5rem;
+  font-size: var(--unops-font-size-headline-medium);
   font-weight: 600;
   margin-top: 1.25rem;
   margin-bottom: 0.75rem;
@@ -62,7 +62,7 @@
 }
 
 .typewriter-content h3 {
-  font-size: 1.25rem;
+  font-size: var(--unops-font-size-headline-small);
   font-weight: 600;
   margin-top: 1rem;
   margin-bottom: 0.5rem;
@@ -73,7 +73,7 @@
 .typewriter-content h4, 
 .typewriter-content h5, 
 .typewriter-content h6 {
-  font-size: 1.1rem;
+  font-size: var(--unops-font-size-lg);
   font-weight: 600;
   margin-top: 0.75rem;
   margin-bottom: 0.5rem;
@@ -130,7 +130,7 @@
   font-weight: bold;
   position: absolute;
   left: -1.2rem;
-  font-size: 1.2em;
+  font-size: var(--unops-font-size-xl);
 }
 
 /* Ordered lists (ol) - use numbers */
@@ -184,7 +184,7 @@
   color: #e11d48;
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
-  font-size: 0.9em;
+  font-size: var(--unops-font-size-sm);
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   border: 1px solid #e2e8f0;
   font-weight: 500;
@@ -217,7 +217,7 @@
   color: inherit;
   padding: 0;
   border: none;
-  font-size: 0.9rem;
+  font-size: var(--unops-font-size-sm);
   border-radius: 0;
 }
 
@@ -235,7 +235,7 @@
 
 .typewriter-content blockquote::before {
   content: '"';
-  font-size: 3rem;
+  font-size: var(--unops-font-size-display-large);
   color: #667eea;
   position: absolute;
   top: -0.5rem;
@@ -266,7 +266,7 @@
   color: white;
   font-weight: 600;
   text-transform: uppercase;
-  font-size: 0.85rem;
+  font-size: var(--unops-font-size-sm);
   letter-spacing: 0.5px;
 }
 
@@ -319,11 +319,11 @@
 /* Responsive design */
 @media (max-width: 768px) {
   .typewriter-content h1 {
-    font-size: 1.75rem;
+    font-size: var(--unops-font-size-headline-large);
   }
   
   .typewriter-content h2 {
-    font-size: 1.35rem;
+    font-size: var(--unops-font-size-headline-small);
   }
   
   .typewriter-content ul, 

@@ -1,7 +1,7 @@
 <div class="flex flex-col gap-8">
   <!-- Header -->
   <div class="flex justify-between items-center mb-6 ai-prompt-header">
-    <h1 class="text-3xl font-bold">{{ 'aiPrompt.title' | translate }}</h1>
+    <h1 class="text-unops-headline-large font-bold">{{ 'aiPrompt.title' | translate }}</h1>
     <div class="flex gap-3">
       @if (!permissionsLoading() && entityPermissions().permissions.canRead) {
         <p-button
@@ -145,7 +145,7 @@
           <td colspan="7" class="text-center p-4">
             @if (loading()) {
               <div class="flex justify-center items-center p-4">
-                <i class="pi pi-spin pi-spinner text-2xl"></i>
+                <i class="pi pi-spin pi-spinner text-unops-2xl"></i>
               </div>
             } @else {
               <div>{{ 'aiPrompt.noRecords' | translate }}</div>
@@ -169,7 +169,7 @@
 
     <ng-template pTemplate="header">
       <div class="flex justify-between items-center w-full ai-prompt-dialog-header">
-        <h3 class="text-lg font-semibold text-gray-900">{{ dialogTitle() }}</h3>
+        <h3 class="text-unops-lg font-semibold text-gray-900">{{ dialogTitle() }}</h3>
         <div class="flex items-center gap-2">
           <!-- Tour Button -->
           <app-tour-control
@@ -188,10 +188,10 @@
           <div class="flex items-start">
             <i class="pi pi-exclamation-triangle text-amber-600 mr-3 mt-1"></i>
             <div>
-              <p class="text-sm text-amber-800 font-medium mb-1">
+              <p class="text-unops-sm text-amber-800 font-medium mb-1">
                 {{ 'aiPrompt.createPromptNotice' | translate }}
               </p>
-              <p class="text-sm text-amber-700">
+              <p class="text-unops-sm text-amber-700">
                 {{ 'aiPrompt.createPromptDescription' | translate }}
               </p>
             </div>
@@ -204,7 +204,7 @@
         <div class="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded-md">
           <div class="flex items-center">
             <i class="pi pi-info-circle text-blue-600 mr-2"></i>
-            <span class="text-sm text-blue-800 font-medium">
+            <span class="text-unops-sm text-blue-800 font-medium">
               This prompt is being used by the <strong>{{ currentPrompt()?.name || 'Unknown' }}</strong> feature
             </span>
           </div>
@@ -221,7 +221,7 @@
               <!-- Basic Information -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-shrink-0">
                 <div class="space-y-2">
-                  <label for="type" class="block text-sm font-semibold text-gray-700">
+                  <label for="type" class="block text-unops-sm font-semibold text-gray-700">
                     {{ 'aiPrompt.type' | translate }} *
                   </label>
                   <input
@@ -231,7 +231,7 @@
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     [class.border-red-500]="promptForm.get('type')?.invalid && promptForm.get('type')?.touched"
                     [class.ring-red-200]="promptForm.get('type')?.invalid && promptForm.get('type')?.touched">
-                  <small class="text-red-600 text-xs" *ngIf="promptForm.get('type')?.invalid && promptForm.get('type')?.touched">
+                  <small class="text-red-600 text-unops-xs" *ngIf="promptForm.get('type')?.invalid && promptForm.get('type')?.touched">
                     <span *ngIf="promptForm.get('type')?.errors?.['required']">
                       {{ 'aiPrompt.typeRequired' | translate }}
                     </span>
@@ -242,7 +242,7 @@
                 </div>
 
                 <div class="space-y-2">
-                  <label for="dataRetrievalMethod" class="block text-sm font-semibold text-gray-700">
+                  <label for="dataRetrievalMethod" class="block text-unops-sm font-semibold text-gray-700">
                     {{ 'aiPrompt.dataRetrievalMethod' | translate }}
                   </label>
                   <input
@@ -252,13 +252,13 @@
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     [class.border-red-500]="promptForm.get('dataRetrievalMethod')?.invalid && promptForm.get('dataRetrievalMethod')?.touched"
                     [class.ring-red-200]="promptForm.get('dataRetrievalMethod')?.invalid && promptForm.get('dataRetrievalMethod')?.touched">
-                  <small class="text-gray-600 text-xs">
+                  <small class="text-gray-600 text-unops-xs">
                     {{ 'aiPrompt.dataRetrievalMethodHelper' | translate }}
                   </small>
                 </div>
 
                 <div class="space-y-2">
-                  <label for="feature" class="block text-sm font-semibold text-gray-700">
+                  <label for="feature" class="block text-unops-sm font-semibold text-gray-700">
                     {{ 'aiPrompt.feature' | translate }}
                   </label>
                   <input
@@ -267,13 +267,13 @@
                     formControlName="feature"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     [placeholder]="'aiPrompt.featurePlaceholder' | translate">
-                  <small class="text-gray-600 text-xs">
+                  <small class="text-gray-600 text-unops-xs">
                     {{ 'aiPrompt.featureHelper' | translate }}
                   </small>
                 </div>
 
                 <div class="space-y-2 md:col-span-2">
-                  <label for="description" class="block text-sm font-semibold text-gray-700">
+                  <label for="description" class="block text-unops-sm font-semibold text-gray-700">
                     {{ 'aiPrompt.description' | translate }}
                   </label>
                   <textarea
@@ -284,13 +284,13 @@
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-y"
                     [placeholder]="'aiPrompt.descriptionPlaceholder' | translate">
                   </textarea>
-                  <small class="text-gray-600 text-xs">
+                  <small class="text-gray-600 text-unops-xs">
                     {{ 'aiPrompt.descriptionHelper' | translate }}
                   </small>
                 </div>
 
                 <div class="space-y-2">
-                  <label for="model" class="block text-sm font-semibold text-gray-700">
+                  <label for="model" class="block text-unops-sm font-semibold text-gray-700">
                     {{ 'aiPrompt.model' | translate }} *
                   </label>
                   <p-dropdown
@@ -302,13 +302,13 @@
                     class="w-full"
                     [placeholder]="'aiPrompt.selectModel' | translate">
                   </p-dropdown>
-                  <small class="text-red-600 text-xs" *ngIf="promptForm.get('model')?.invalid && promptForm.get('model')?.touched">
+                  <small class="text-red-600 text-unops-xs" *ngIf="promptForm.get('model')?.invalid && promptForm.get('model')?.touched">
                     {{ 'aiPrompt.modelRequired' | translate }}
                   </small>
                 </div>
 
                 <div class="space-y-2">
-                  <label class="block text-sm font-semibold text-gray-700">
+                  <label class="block text-unops-sm font-semibold text-gray-700">
                     {{ 'aiPrompt.project' | translate }} *
                   </label>
                   <input
@@ -319,13 +319,13 @@
                     class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-700 cursor-not-allowed"
                     [class.border-red-500]="promptForm.get('project')?.invalid && promptForm.get('project')?.touched"
                     [class.ring-red-200]="promptForm.get('project')?.invalid && promptForm.get('project')?.touched">
-                  <small class="text-red-600 text-xs" *ngIf="promptForm.get('project')?.invalid && promptForm.get('project')?.touched">
+                  <small class="text-red-600 text-unops-xs" *ngIf="promptForm.get('project')?.invalid && promptForm.get('project')?.touched">
                     {{ 'aiPrompt.projectRequired' | translate }}
                   </small>
                 </div>
 
                 <div class="space-y-2">
-                  <label class="block text-sm font-semibold text-gray-700">
+                  <label class="block text-unops-sm font-semibold text-gray-700">
                     {{ 'aiPrompt.location' | translate }} *
                   </label>
                   <input
@@ -336,7 +336,7 @@
                     class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-700 cursor-not-allowed"
                     [class.border-red-500]="promptForm.get('location')?.invalid && promptForm.get('location')?.touched"
                     [class.ring-red-200]="promptForm.get('location')?.invalid && promptForm.get('location')?.touched">
-                  <small class="text-red-600 text-xs" *ngIf="promptForm.get('location')?.invalid && promptForm.get('location')?.touched">
+                  <small class="text-red-600 text-unops-xs" *ngIf="promptForm.get('location')?.invalid && promptForm.get('location')?.touched">
                     {{ 'aiPrompt.locationRequired' | translate }}
                   </small>
                 </div>
@@ -346,7 +346,7 @@
               <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-shrink-0">
                 <!-- Generation Configuration -->
                 <div class="space-y-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-300 pb-2">
+                  <h3 class="text-unops-lg font-semibold text-gray-800 border-b border-gray-300 pb-2">
                     {{ 'aiPrompt.generationSettings' | translate }}
                   </h3>
 
@@ -354,7 +354,7 @@
                     <!-- Temperature -->
                     <div class="space-y-2">
                       <div class="flex items-center gap-2">
-                        <label class="block text-sm font-semibold text-gray-700">
+                        <label class="block text-unops-sm font-semibold text-gray-700">
                           {{ 'aiPrompt.temperature' | translate }}
                         </label>
                         <i class="pi pi-question-circle text-gray-400 "
@@ -370,7 +370,7 @@
                           class="w-full">
                         </p-slider>
                       </div>
-                      <div class="flex justify-between text-xs text-gray-500">
+                      <div class="flex justify-between text-unops-xs text-gray-500">
                         <span>0</span>
                         <span class="font-semibold text-gray-700">{{ (promptForm.get('temperature')?.value ?? 1) | number:'1.1-1' }}</span>
                         <span>2</span>
@@ -380,7 +380,7 @@
                     <!-- Top P -->
                     <div class="space-y-2">
                       <div class="flex items-center gap-2">
-                        <label class="block text-sm font-semibold text-gray-700">
+                        <label class="block text-unops-sm font-semibold text-gray-700">
                           {{ 'aiPrompt.topP' | translate }}
                         </label>
                         <i class="pi pi-question-circle text-gray-400 "
@@ -396,7 +396,7 @@
                           class="w-full">
                         </p-slider>
                       </div>
-                      <div class="flex justify-between text-xs text-gray-500">
+                      <div class="flex justify-between text-unops-xs text-gray-500">
                         <span>0</span>
                         <span class="font-semibold text-gray-700">{{ (promptForm.get('topP')?.value ?? 0.2) | number:'1.1-1' }}</span>
                         <span>1</span>
@@ -406,7 +406,7 @@
                     <!-- Max Output Tokens -->
                     <div class="space-y-2">
                       <div class="flex items-center gap-2">
-                        <label class="block text-sm font-semibold text-gray-700">
+                        <label class="block text-unops-sm font-semibold text-gray-700">
                           {{ 'aiPrompt.maxOutputTokens' | translate }}
                         </label>
                         <i class="pi pi-question-circle text-gray-400 "
@@ -422,7 +422,7 @@
                           class="w-full">
                         </p-slider>
                       </div>
-                      <div class="flex justify-between text-xs text-gray-500">
+                      <div class="flex justify-between text-unops-xs text-gray-500">
                         <span>0</span>
                         <span class="font-semibold text-gray-700">{{ (promptForm.get('maxOutputTokens')?.value ?? selectedModelMaxTokens()) | number:'1.0-0' }}</span>
                         <span>{{ selectedModelMaxTokens() | number:'1.0-0' }}</span>
@@ -435,12 +435,12 @@
                 <div class="space-y-4">
                   <!-- Tools Configuration -->
                   <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-300 pb-2 mb-4">
+                    <h3 class="text-unops-lg font-semibold text-gray-800 border-b border-gray-300 pb-2 mb-4">
                       {{ 'aiPrompt.tools' | translate }}
                     </h3>
                     <div class="flex items-center gap-3 p-3 bg-white rounded-md border border-gray-200">
                       <p-toggleSwitch formControlName="googleSearch" class="flex-shrink-0"></p-toggleSwitch>
-                      <label class="text-sm font-medium text-gray-700 flex-grow">
+                      <label class="text-unops-sm font-medium text-gray-700 flex-grow">
                         {{ 'aiPrompt.grounding' | translate }}: {{ 'aiPrompt.googleSearch' | translate }}
                       </label>
                     </div>
@@ -448,14 +448,14 @@
 
                   <!-- Caching Configuration -->
                   <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-300 pb-2 mb-4">
+                    <h3 class="text-unops-lg font-semibold text-gray-800 border-b border-gray-300 pb-2 mb-4">
                       {{ 'aiPrompt.cachingSettings' | translate }}
                     </h3>
                     <div class="space-y-4">
                       <!-- Use Cache Toggle -->
                       <div class="flex items-center gap-3 p-3 bg-white rounded-md border border-gray-200">
                         <p-toggleSwitch formControlName="useCache" class="flex-shrink-0"></p-toggleSwitch>
-                        <label class="text-sm font-medium text-gray-700 flex-grow">
+                        <label class="text-unops-sm font-medium text-gray-700 flex-grow">
                           {{ 'aiPrompt.useCache' | translate }}
                         </label>
                       </div>
@@ -463,7 +463,7 @@
                       <!-- Cache Duration (shown when useCache is enabled) -->
                       <div class="space-y-3" *ngIf="promptForm.get('useCache')?.value">
                         <div class="space-y-2">
-                          <label for="cacheInvalidationMinutes" class="block text-sm font-semibold text-gray-700">
+                          <label for="cacheInvalidationMinutes" class="block text-unops-sm font-semibold text-gray-700">
                             {{ 'aiPrompt.cacheInvalidationMinutes' | translate }}
                           </label>
                           <div class="flex gap-2">
@@ -477,48 +477,48 @@
                               class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                               [class.border-red-500]="promptForm.get('cacheInvalidationMinutes')?.invalid && promptForm.get('cacheInvalidationMinutes')?.touched"
                               [class.ring-red-200]="promptForm.get('cacheInvalidationMinutes')?.invalid && promptForm.get('cacheInvalidationMinutes')?.touched">
-                            <span class="px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-sm text-gray-600">
+                            <span class="px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-unops-sm text-gray-600">
                               {{ 'aiPrompt.minutes' | translate }}
                             </span>
                           </div>
-                          <small class="text-red-600 text-xs" *ngIf="promptForm.get('cacheInvalidationMinutes')?.invalid && promptForm.get('cacheInvalidationMinutes')?.touched">
+                          <small class="text-red-600 text-unops-xs" *ngIf="promptForm.get('cacheInvalidationMinutes')?.invalid && promptForm.get('cacheInvalidationMinutes')?.touched">
                             {{ 'aiPrompt.cacheInvalidationMinutesError' | translate }}
                           </small>
                         </div>
 
                         <!-- Quick Duration Buttons -->
                         <div class="space-y-2">
-                          <label class="block text-sm font-semibold text-gray-700">
+                          <label class="block text-unops-sm font-semibold text-gray-700">
                             {{ 'aiPrompt.quickDuration' | translate }}
                           </label>
                           <div class="flex flex-wrap gap-2">
                             <button type="button"
-                                    class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                                    class="px-3 py-1 text-unops-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
                                     (click)="promptForm.get('cacheInvalidationMinutes')?.setValue(30)">
                               30m
                             </button>
                             <button type="button"
-                                    class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                                    class="px-3 py-1 text-unops-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
                                     (click)="promptForm.get('cacheInvalidationMinutes')?.setValue(60)">
                               1h
                             </button>
                             <button type="button"
-                                    class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                                    class="px-3 py-1 text-unops-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
                                     (click)="promptForm.get('cacheInvalidationMinutes')?.setValue(180)">
                               3h
                             </button>
                             <button type="button"
-                                    class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                                    class="px-3 py-1 text-unops-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
                                     (click)="promptForm.get('cacheInvalidationMinutes')?.setValue(720)">
                               12h
                             </button>
                             <button type="button"
-                                    class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                                    class="px-3 py-1 text-unops-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
                                     (click)="promptForm.get('cacheInvalidationMinutes')?.setValue(1440)">
                               1d
                             </button>
                           </div>
-                          <small class="text-gray-600 text-xs">
+                          <small class="text-gray-600 text-unops-xs">
                             {{ 'aiPrompt.cachingHelper' | translate }}
                           </small>
                         </div>
@@ -528,11 +528,11 @@
 
                   <!-- Advanced Configuration -->
                   <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-300 pb-2 mb-4">
+                    <h3 class="text-unops-lg font-semibold text-gray-800 border-b border-gray-300 pb-2 mb-4">
                       {{ 'aiPrompt.advancedSettings' | translate }}
                     </h3>
                     <div class="space-y-2">
-                      <label for="safetySettings" class="block text-sm font-semibold text-gray-700">
+                      <label for="safetySettings" class="block text-unops-sm font-semibold text-gray-700">
                         {{ 'aiPrompt.safetySettings' | translate }}
                       </label>
                       <textarea
@@ -549,7 +549,7 @@
 
               <!-- System Instructions -->
               <div class="space-y-2 flex-shrink-0">
-                <label for="systemInstructions" class="block text-sm font-semibold text-gray-700">
+                <label for="systemInstructions" class="block text-unops-sm font-semibold text-gray-700">
                   {{ 'aiPrompt.systemInstructions' | translate }} *
                 </label>
                 <div class="flex flex-col">
@@ -562,10 +562,10 @@
                     [class.ring-red-200]="promptForm.get('systemInstructions')?.invalid && promptForm.get('systemInstructions')?.touched"
                     [placeholder]="'aiPrompt.systemInstructionsPlaceholder' | translate">
                   </textarea>
-                  <small class="text-blue-600 text-xs mt-2">
+                  <small class="text-blue-600 text-unops-xs mt-2">
                     {{ 'aiPrompt.systemInstructionsHelper' | translate }}
                   </small>
-                  <small class="text-red-600 text-xs" *ngIf="promptForm.get('systemInstructions')?.invalid && promptForm.get('systemInstructions')?.touched">
+                  <small class="text-red-600 text-unops-xs" *ngIf="promptForm.get('systemInstructions')?.invalid && promptForm.get('systemInstructions')?.touched">
                     {{ 'aiPrompt.systemInstructionsRequired' | translate }}
                   </small>
                 </div>
@@ -573,7 +573,7 @@
 
               <!-- User Prompt -->
               <div class="space-y-2 flex-shrink-0">
-                <label for="userPrompt" class="block text-sm font-semibold text-gray-700">
+                <label for="userPrompt" class="block text-unops-sm font-semibold text-gray-700">
                   {{ 'aiPrompt.userPrompt' | translate }}
                 </label>
                 <div class="flex flex-col">
@@ -584,7 +584,7 @@
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-y min-h-[200px]"
                     [placeholder]="'aiPrompt.userPromptPlaceholder' | translate">
                   </textarea>
-                  <small class="text-blue-600 text-xs mt-2">
+                  <small class="text-blue-600 text-unops-xs mt-2">
                     {{ 'aiPrompt.userPromptHelper' | translate }}
                   </small>
                 </div>
@@ -601,7 +601,7 @@
                   <div class="space-y-4">
                     <div>
                       <h4 class="text-md font-semibold text-blue-800">{{ 'aiPrompt.testPrompt' | translate }}</h4>
-                      <p class="text-sm text-blue-600">
+                      <p class="text-unops-sm text-blue-600">
                         @if (isTestSectionDisabled()) {
                           {{ 'aiPrompt.testPromptDisabledDescription' | translate }}
                         } @else {
@@ -612,7 +612,7 @@
 
                     <!-- Test Mode Selection -->
                     <div class="space-y-3">
-                      <label class="block text-sm font-semibold text-blue-800">
+                      <label class="block text-unops-sm font-semibold text-blue-800">
                         {{ 'aiPrompt.testMode' | translate }} *
                       </label>
                       <div class="space-y-2">
@@ -623,7 +623,7 @@
                             value="entityId"
                             inputId="testModeEntityId">
                           </p-radioButton>
-                          <label for="testModeEntityId" class="text-sm font-medium text-blue-700 cursor-pointer">
+                          <label for="testModeEntityId" class="text-unops-sm font-medium text-blue-700 cursor-pointer">
                             {{ 'aiPrompt.useEntityId' | translate }}
                           </label>
                         </div>
@@ -633,12 +633,12 @@
                             value="testData"
                             inputId="testModeTestData">
                           </p-radioButton>
-                          <label for="testModeTestData" class="text-sm font-medium text-blue-700 cursor-pointer">
+                          <label for="testModeTestData" class="text-unops-sm font-medium text-blue-700 cursor-pointer">
                             {{ 'aiPrompt.useTestData' | translate }}
                           </label>
                         </div>
                         <!-- Helper text when Entity ID is not available -->
-                        <div class="text-xs text-blue-600" *ngIf="!showEntityIdOption()">
+                        <div class="text-unops-xs text-blue-600" *ngIf="!showEntityIdOption()">
                           {{ 'aiPrompt.entityIdRequiresFunction' | translate }}
                         </div>
                       </div>
@@ -646,7 +646,7 @@
 
                     <!-- Entity ID Input (shown when Entity ID mode is selected) -->
                     <div class="space-y-2" *ngIf="promptForm.get('testMode')?.value === 'entityId'">
-                      <label for="entityId" class="block text-sm font-semibold text-blue-800">
+                      <label for="entityId" class="block text-unops-sm font-semibold text-blue-800">
                         {{ 'aiPrompt.entityId' | translate }} *
                       </label>
                       <input
@@ -661,7 +661,7 @@
 
                     <!-- Test Data Input (shown when Test Data mode is selected) -->
                     <div class="space-y-2" *ngIf="promptForm.get('testMode')?.value === 'testData'">
-                      <label for="testData" class="block text-sm font-semibold text-blue-800">
+                      <label for="testData" class="block text-unops-sm font-semibold text-blue-800">
                         {{ 'aiPrompt.testData' | translate }} *
                       </label>
                       <textarea
@@ -672,7 +672,7 @@
                         class="w-full px-3 py-2 border border-blue-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-y"
                         [placeholder]="'aiPrompt.testDataPlaceholder' | translate">
                       </textarea>
-                      <small class="text-blue-600 text-xs">
+                      <small class="text-blue-600 text-unops-xs">
                         {{ 'aiPrompt.testDataHelper' | translate }}
                       </small>
                     </div>
@@ -689,14 +689,14 @@
 
                     <!-- Test Results Area -->
                     <div class="space-y-2">
-                      <label class="block text-sm font-semibold text-blue-800">
+                      <label class="block text-unops-sm font-semibold text-blue-800">
                         {{ 'aiPrompt.testResults' | translate }}
                       </label>
                       <div class="bg-white border border-blue-200 rounded-md overflow-hidden">
                         @if (testResults()) {
                           <div class="space-y-0">
                             @if (testResults()?.success) {
-                              <div class="text-sm text-green-700 font-medium p-3 border-b border-blue-100">
+                              <div class="text-unops-sm text-green-700 font-medium p-3 border-b border-blue-100">
                                 <i class="pi pi-check-circle mr-2"></i>{{ 'aiPrompt.testSuccess' | translate }}
                               </div>
 
@@ -705,7 +705,7 @@
                                 <nav class="flex" aria-label="Tabs">
                                   <button
                                     type="button"
-                                    class="flex-1 py-3 px-4 text-sm font-medium text-center border-b-2 transition-all duration-200 hover:bg-gray-100"
+                                    class="flex-1 py-3 px-4 text-unops-sm font-medium text-center border-b-2 transition-all duration-200 hover:bg-gray-100"
                                     [class.border-blue-500]="activeTab() === 'data'"
                                     [class.bg-white]="activeTab() === 'data'"
                                     [class.text-blue-700]="activeTab() === 'data'"
@@ -719,7 +719,7 @@
                                   </button>
                                   <button
                                     type="button"
-                                    class="flex-1 py-3 px-4 text-sm font-medium text-center border-b-2 transition-all duration-200 hover:bg-gray-100"
+                                    class="flex-1 py-3 px-4 text-unops-sm font-medium text-center border-b-2 transition-all duration-200 hover:bg-gray-100"
                                     [class.border-blue-500]="activeTab() === 'preview'"
                                     [class.bg-white]="activeTab() === 'preview'"
                                     [class.text-blue-700]="activeTab() === 'preview'"
@@ -733,7 +733,7 @@
                                   </button>
                                   <button
                                     type="button"
-                                    class="flex-1 py-3 px-4 text-sm font-medium text-center border-b-2 transition-all duration-200 hover:bg-gray-100"
+                                    class="flex-1 py-3 px-4 text-unops-sm font-medium text-center border-b-2 transition-all duration-200 hover:bg-gray-100"
                                     [class.border-blue-500]="activeTab() === 'text'"
                                     [class.bg-white]="activeTab() === 'text'"
                                     [class.text-blue-700]="activeTab() === 'text'"
@@ -747,7 +747,7 @@
                                   </button>
                                   <button
                                     type="button"
-                                    class="flex-1 py-3 px-4 text-sm font-medium text-center border-b-2 transition-all duration-200 hover:bg-gray-100"
+                                    class="flex-1 py-3 px-4 text-unops-sm font-medium text-center border-b-2 transition-all duration-200 hover:bg-gray-100"
                                     [class.border-blue-500]="activeTab() === 'raw'"
                                     [class.bg-white]="activeTab() === 'raw'"
                                     [class.text-blue-700]="activeTab() === 'raw'"
@@ -768,56 +768,56 @@
                                   <!-- Data Tab - Shows data retrieval method results -->
                                   <div class="space-y-3">
                                     <div class="flex items-center justify-between">
-                                      <h6 class="text-sm font-semibold text-gray-800">{{ 'aiPrompt.dataRetrievalResult' | translate }}</h6>
+                                      <h6 class="text-unops-sm font-semibold text-gray-800">{{ 'aiPrompt.dataRetrievalResult' | translate }}</h6>
                                       @if (testResults()?.dataRetrievalResult) {
-                                        <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                                        <span class="text-unops-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
                                           <i class="pi pi-check mr-1"></i>{{ 'aiPrompt.dataAvailable' | translate }}
                                         </span>
                                       } @else {
-                                        <span class="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full">
+                                        <span class="text-unops-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full">
                                           <i class="pi pi-exclamation-triangle mr-1"></i>{{ 'aiPrompt.noDataAvailable' | translate }}
                                         </span>
                                       }
                                     </div>
                                     @if (testResults()?.dataRetrievalResult) {
                                       <div class="bg-blue-50 border border-blue-200 rounded-md p-3">
-                                        <p class="text-xs text-blue-700 mb-2">
+                                        <p class="text-unops-xs text-blue-700 mb-2">
                                           <i class="pi pi-info-circle mr-1"></i>{{ 'aiPrompt.dataExplanation' | translate }}
                                         </p>
-                                        <pre class="text-xs text-gray-700 whitespace-pre-wrap font-mono bg-white border border-blue-100 rounded p-2 overflow-x-auto">{{ formatJsonData(testResults()?.dataRetrievalResult) }}</pre>
+                                        <pre class="text-unops-xs text-gray-700 whitespace-pre-wrap font-mono bg-white border border-blue-100 rounded p-2 overflow-x-auto">{{ formatJsonData(testResults()?.dataRetrievalResult) }}</pre>
                                       </div>
                                     } @else {
                                       <div class="bg-gray-50 border border-gray-200 rounded-md p-3 text-center">
-                                        <i class="pi pi-inbox text-2xl text-gray-400 mb-2 block"></i>
-                                        <p class="text-sm text-gray-600">{{ 'aiPrompt.noDataMessage' | translate }}</p>
+                                        <i class="pi pi-inbox text-unops-2xl text-gray-400 mb-2 block"></i>
+                                        <p class="text-unops-sm text-gray-600">{{ 'aiPrompt.noDataMessage' | translate }}</p>
                                       </div>
                                     }
                                   </div>
                                 } @else if (activeTab() === 'preview') {
                                   <!-- Preview Tab - Markdown Rendered AI Response -->
-                                  <div class="text-sm text-gray-700 prose prose-sm max-w-none">
+                                  <div class="text-unops-sm text-gray-700 prose prose-sm max-w-none">
                                     <markdown [data]="getAiResponseText(testResults()?.response)"></markdown>
                                   </div>
                                 } @else if (activeTab() === 'text') {
                                   <!-- Raw Text Tab - Plain AI Response without JSON structure -->
-                                  <div class="text-sm text-gray-700 whitespace-pre-wrap font-mono">{{ getAiResponseText(testResults()?.response) }}</div>
+                                  <div class="text-unops-sm text-gray-700 whitespace-pre-wrap font-mono">{{ getAiResponseText(testResults()?.response) }}</div>
                                 } @else {
                                   <!-- Raw Response Tab - Full JSON -->
-                                  <pre class="text-xs text-gray-600 whitespace-pre-wrap font-mono">{{ testResults()?.response }}</pre>
+                                  <pre class="text-unops-xs text-gray-600 whitespace-pre-wrap font-mono">{{ testResults()?.response }}</pre>
                                 }
                               </div>
                             } @else {
                               <!-- Error Response -->
                               <div class="p-3">
-                                <div class="text-sm text-red-700 font-medium mb-2">
+                                <div class="text-unops-sm text-red-700 font-medium mb-2">
                                   <i class="pi pi-times-circle mr-2"></i>{{ 'aiPrompt.testError' | translate }}
                                 </div>
-                                <div class="text-sm text-red-600 whitespace-pre-wrap">{{ testResults()?.error }}</div>
+                                <div class="text-unops-sm text-red-600 whitespace-pre-wrap">{{ testResults()?.error }}</div>
                               </div>
                             }
                           </div>
                         } @else {
-                          <div class="text-sm text-gray-500 italic p-3">
+                          <div class="text-unops-sm text-gray-500 italic p-3">
                             {{ 'aiPrompt.testResultsPlaceholder' | translate }}
                           </div>
                         }
@@ -834,29 +834,29 @@
                   <!-- Header -->
                   <div class="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-6 flex-shrink-0 mb-6">
                     <div class="flex items-center mb-3">
-                      <i class="pi pi-lightbulb text-2xl text-green-600 mr-3"></i>
-                      <h4 class="text-xl font-bold text-green-800">
+                      <i class="pi pi-lightbulb text-unops-2xl text-green-600 mr-3"></i>
+                      <h4 class="text-unops-xl font-bold text-green-800">
                         {{ 'aiPrompt.helpTitle' | translate }}
                       </h4>
                     </div>
-                    <p class="text-base text-green-700 leading-relaxed">{{ 'aiPrompt.helpDescription' | translate }}</p>
+                    <p class="text-unops-base text-green-700 leading-relaxed">{{ 'aiPrompt.helpDescription' | translate }}</p>
                   </div>
 
                 <div class="space-y-4 flex-1 overflow-y-auto">
                   <!-- Quick Tips -->
                   <div class="bg-white border border-gray-200 rounded-lg p-4">
-                    <h5 class="font-semibold text-gray-800 mb-3 text-base">{{ 'aiPrompt.quickTips' | translate }}</h5>
-                    <ul class="space-y-2 text-sm text-gray-700">
+                    <h5 class="font-semibold text-gray-800 mb-3 text-unops-base">{{ 'aiPrompt.quickTips' | translate }}</h5>
+                    <ul class="space-y-2 text-unops-sm text-gray-700">
                       <li class="flex items-start">
-                        <i class="pi pi-check-circle text-green-500 mr-2 mt-0.5 flex-shrink-0 text-xs"></i>
+                        <i class="pi pi-check-circle text-green-500 mr-2 mt-0.5 flex-shrink-0 text-unops-xs"></i>
                         <span>{{ 'aiPrompt.tip1' | translate }}</span>
                       </li>
                       <li class="flex items-start">
-                        <i class="pi pi-check-circle text-green-500 mr-2 mt-0.5 flex-shrink-0 text-xs"></i>
+                        <i class="pi pi-check-circle text-green-500 mr-2 mt-0.5 flex-shrink-0 text-unops-xs"></i>
                         <span>{{ 'aiPrompt.tip2' | translate }}</span>
                       </li>
                       <li class="flex items-start">
-                        <i class="pi pi-check-circle text-green-500 mr-2 mt-0.5 flex-shrink-0 text-xs"></i>
+                        <i class="pi pi-check-circle text-green-500 mr-2 mt-0.5 flex-shrink-0 text-unops-xs"></i>
                         <span>{{ 'aiPrompt.tip3' | translate }}</span>
                       </li>
                     </ul>
@@ -864,8 +864,8 @@
 
                   <!-- Writing Structure -->
                   <div class="bg-white border border-gray-200 rounded-lg p-4">
-                    <h5 class="font-semibold text-gray-800 mb-3 text-base">{{ 'aiPrompt.structurePrompt' | translate }}</h5>
-                    <div class="text-sm text-gray-700 space-y-3">
+                    <h5 class="font-semibold text-gray-800 mb-3 text-unops-base">{{ 'aiPrompt.structurePrompt' | translate }}</h5>
+                    <div class="text-unops-sm text-gray-700 space-y-3">
                       <div class="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500">
                         <strong class="text-blue-800">{{ 'aiPrompt.promptStructure.role' | translate }}:</strong>
                         <span class="text-blue-700 ml-2">{{ 'aiPrompt.roleInstruction' | translate }}</span>
@@ -883,21 +883,21 @@
 
                   <!-- Markdown Basics -->
                   <div class="bg-white border border-gray-200 rounded-lg p-4">
-                    <h5 class="font-semibold text-gray-800 mb-3 text-base">{{ 'aiPrompt.markdownBasics' | translate }}</h5>
-                    <div class="text-sm text-gray-700 space-y-2">
-                      <div class="flex items-center"><code class="bg-gray-100 px-2 py-1 rounded text-xs mr-3"># Header</code> → <strong>Header</strong></div>
-                      <div class="flex items-center"><code class="bg-gray-100 px-2 py-1 rounded text-xs mr-3">**bold**</code> → <strong>bold</strong></div>
-                      <div class="flex items-center"><code class="bg-gray-100 px-2 py-1 rounded text-xs mr-3">*italic*</code> → <em>italic</em></div>
-                      <div class="flex items-center"><code class="bg-gray-100 px-2 py-1 rounded text-xs mr-3">`code`</code> → <code>code</code></div>
+                    <h5 class="font-semibold text-gray-800 mb-3 text-unops-base">{{ 'aiPrompt.markdownBasics' | translate }}</h5>
+                    <div class="text-unops-sm text-gray-700 space-y-2">
+                      <div class="flex items-center"><code class="bg-gray-100 px-2 py-1 rounded text-unops-xs mr-3"># Header</code> → <strong>Header</strong></div>
+                      <div class="flex items-center"><code class="bg-gray-100 px-2 py-1 rounded text-unops-xs mr-3">**bold**</code> → <strong>bold</strong></div>
+                      <div class="flex items-center"><code class="bg-gray-100 px-2 py-1 rounded text-unops-xs mr-3">*italic*</code> → <em>italic</em></div>
+                      <div class="flex items-center"><code class="bg-gray-100 px-2 py-1 rounded text-unops-xs mr-3">`code`</code> → <code>code</code></div>
                     </div>
                   </div>
 
                   <!-- JSON Response -->
                   <div class="bg-white border border-gray-200 rounded-lg p-4">
-                    <h5 class="font-semibold text-gray-800 mb-3 text-base">{{ 'aiPrompt.jsonResponse' | translate }}</h5>
-                    <div class="text-sm text-gray-700">
+                    <h5 class="font-semibold text-gray-800 mb-3 text-unops-base">{{ 'aiPrompt.jsonResponse' | translate }}</h5>
+                    <div class="text-unops-sm text-gray-700">
                       <p class="mb-3 font-medium">{{ 'aiPrompt.addToPrompt' | translate }}</p>
-                      <div class="bg-gray-50 p-3 rounded-lg font-mono text-sm border">
+                      <div class="bg-gray-50 p-3 rounded-lg font-mono text-unops-sm border">
                         <div class="text-green-600 font-semibold mb-2">Respond in valid JSON format:</div>
                         <div class="text-gray-800">&#123;</div>
                         <div class="text-gray-800 ml-4">"summary": "Brief overview",</div>
@@ -910,8 +910,8 @@
 
                   <!-- Example -->
                   <div class="bg-white border border-gray-200 rounded-lg p-4">
-                    <h5 class="font-semibold text-gray-800 mb-3 text-base">{{ 'aiPrompt.examplePrompt' | translate }}</h5>
-                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg text-sm text-gray-800 border border-blue-200">
+                    <h5 class="font-semibold text-gray-800 mb-3 text-unops-base">{{ 'aiPrompt.examplePrompt' | translate }}</h5>
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg text-unops-sm text-gray-800 border border-blue-200">
                       <div class="font-semibold text-blue-800 mb-3">{{ 'aiPrompt.analysisExample' | translate }}</div>
                       <div class="space-y-2">
                         <div class="text-blue-700">{{ 'aiPrompt.includeBasicInfo' | translate }}</div>

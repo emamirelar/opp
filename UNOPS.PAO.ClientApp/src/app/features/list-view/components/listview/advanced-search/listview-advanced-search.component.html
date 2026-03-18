@@ -41,10 +41,10 @@
           (onChange)="onMyOfficeFilterChange()"
           inputId="myOfficeFilter"
         ></p-checkbox>
-        <label for="myOfficeFilter" class="text-sm font-medium text-blue-700 cursor-pointer">
+        <label for="myOfficeFilter" class="text-unops-sm font-medium text-blue-700 cursor-pointer">
           {{ 'search.myOfficeOnly' | translate }}
         </label>
-        <i class="pi pi-info-circle text-blue-500 text-xs"
+        <i class="pi pi-info-circle text-blue-500 text-unops-xs"
            [pTooltip]="'search.myOfficeTooltip' | translate"></i>
       </div>
     }
@@ -189,7 +189,7 @@
             <div class="flex items-center gap-2">
               <span class="font-medium">{{ user.name }}</span>
               @if (user.email !== user.name) {
-                <span class="text-sm text-gray-500">({{ user.email }})</span>
+                <span class="text-unops-sm text-gray-500">({{ user.email }})</span>
               }
             </div>
           </ng-template>
@@ -218,7 +218,7 @@
             <div class="flex flex-col">
               <span class="font-medium">{{ partner.name }}</span>
               @if (partner.partnerShortDescription) {
-                <span class="text-sm text-gray-500">{{ partner.partnerShortDescription }}</span>
+                <span class="text-unops-sm text-gray-500">{{ partner.partnerShortDescription }}</span>
               }
             </div>
           </ng-template>

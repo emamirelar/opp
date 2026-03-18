@@ -8,13 +8,13 @@
 
 .icon{
   color: red;
-  font-size: 32px;
+  font-size: var(--unops-font-size-display-medium);
   height: 32px;
   width: 32px;
 }
 
 .header{
-  font-size: 22px;
+  font-size: var(--unops-font-size-headline-small);
   font-weight: 500;
   margin-left: 5px;
 }

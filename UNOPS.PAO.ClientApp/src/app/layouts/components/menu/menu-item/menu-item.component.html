@@ -4,7 +4,7 @@
             class="flex flex-row items-center justify-start gap-2 py-2 rounded-md cursor-pointer text-text-color hover:bg-surface-hover transition-colors duration-200 bg-black/[0.01] font-medium"
             [ngClass]="{'font-bold text-primary': active}">
 
-            <span class="material-symbols-outlined text-xl">{{item.icon}}</span>
+            <span class="material-symbols-outlined text-unops-xl">{{item.icon}}</span>
             <span>{{ item.label! | translate }}</span>
 
             <i class="pi pi-angle-down ml-auto transition-transform duration-200" [ngClass]="{'rotate-180': active}"></i>
@@ -16,7 +16,7 @@
             routerLinkActive="font-bold text-primary bg-sky-400/[0.1]" [routerLinkActiveOptions]="{exact: false}" [attr.tabindex]="0" 
             class="flex flex-row items-center justify-start gap-2 py-2 rounded-md cursor-pointer text-text-color hover:bg-surface-hover transition-colors duration-200">
 
-            <span class="material-symbols-outlined text-xl">{{item.icon}}</span>
+            <span class="material-symbols-outlined text-unops-xl">{{item.icon}}</span>
             <span>{{ item.label! | translate }}</span>
         </a>
     }
@@ -24,7 +24,7 @@
     @if (item.items) {
         <ul [@submenu]="active ? 'visible' : 'hidden'" class="list-none m-0 p-0 overflow-hidden">
             @for (child of item.items; track child) {
-                <app-menu-item [item]="child" class="block pl-4 text-[0.92rem]"></app-menu-item>
+                <app-menu-item [item]="child" class="block pl-4 text-unops-sm"></app-menu-item>
             }
         </ul>
     }

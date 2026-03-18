@@ -37,7 +37,7 @@
     }
     @case ('multiple-avatars') {
       <div>
-        <div class="text-sm text-gray-600 mb-1">{{ column.label | translate }}</div>
+        <div class="text-unops-sm text-gray-600 mb-1">{{ column.label | translate }}</div>
         <div class="flex -space-x-1 overflow-hidden">
           @for (contact of getMultipleAvatarItems(item, column); track $index; let i = $index) {
             @if (i < 3) {
@@ -51,7 +51,7 @@
             }
           }
           @if (getMultipleAvatarItems(item, column).length > 3) {
-            <div class="flex items-center justify-center w-8 h-8 bg-surface-300 text-gray-600 rounded-full border-2 border-white text-xs font-medium"
+            <div class="flex items-center justify-center w-8 h-8 bg-surface-300 text-gray-600 rounded-full border-2 border-white text-unops-xs font-medium"
                  [title]="'And ' + (getMultipleAvatarItems(item, column).length - 3) + ' more'">
               +
             </div>
@@ -179,8 +179,8 @@
   @if (error() && !loading()) {
     <div class="p-4 rounded-lg">
       <div class="flex items-center justify-center p-4">
-        <i class="pi pi-exclamation-triangle text-3xl text-yellow-500 mr-3"></i>
-        <span class="text-xl">{{ 'errors.errorLoadingData' | translate }}</span>
+        <i class="pi pi-exclamation-triangle text-unops-headline-large text-yellow-500 mr-3"></i>
+        <span class="text-unops-xl">{{ 'errors.errorLoadingData' | translate }}</span>
       </div>
     </div>
   }
@@ -189,8 +189,8 @@
   @if (!loading() && !error() && (!data() || data().length === 0)) {
     <div class="p-4 rounded-lg">
       <div class="flex items-center justify-center p-4">
-        <i class="pi pi-info-circle text-3xl text-primary mr-3"></i>
-        <span class="text-xl">{{ 'errors.noDataAvailable' | translate }}</span>
+        <i class="pi pi-info-circle text-unops-headline-large text-primary mr-3"></i>
+        <span class="text-unops-xl">{{ 'errors.noDataAvailable' | translate }}</span>
       </div>
     </div>
   }
@@ -246,7 +246,7 @@
                         'color': getInteractionColor(item, interactionIconColumn()!),
                         'border-color': getInteractionColor(item, interactionIconColumn()!) + '30'
                       }">
-                      <span [class]="'material-symbols-outlined font-medium ' + (cardSize() === 'medium' ? 'text-xl' : 'text-xl')">
+                      <span [class]="'material-symbols-outlined font-medium ' + (cardSize() === 'medium' ? 'text-unops-xl' : 'text-unops-xl')">
                         {{ getInteractionMaterialIconFilled(item, interactionIconColumn()!) }}
                       </span>
                     </div>
@@ -259,7 +259,7 @@
                   @if (shouldShowTags() && getItemTags(item)) {
                     <div class="flex flex-wrap gap-1 mb-2">
                       @for (tag of getItemTags(item)!; track tag.tag) {
-                        <span [class]="'px-2 py-1 text-xs rounded-full whitespace-nowrap ' + tag.color">{{ tag.tag }}</span>
+                        <span [class]="'px-2 py-1 text-unops-xs rounded-full whitespace-nowrap ' + tag.color">{{ tag.tag }}</span>
                       }
                     </div>
                   }
@@ -282,7 +282,7 @@
                       </div>
                     }
                     @if (shouldShowMetadataFieldWithoutDuplication(cardFields().field5, item)) {
-                      <div class="text-gray-500 text-xs ml-3 max-w-[25%] font-medium bg-gray-50 px-2 py-1 rounded-md truncate flex-shrink-0">
+                      <div class="text-gray-500 text-unops-xs ml-3 max-w-[25%] font-medium bg-gray-50 px-2 py-1 rounded-md truncate flex-shrink-0">
                         <ng-container [ngTemplateOutlet]="fieldTemplate"
                                       [ngTemplateOutletContext]="{ item: item, column: cardFields().field5!, context: 'field5' }">
                         </ng-container>
@@ -315,7 +315,7 @@
 
                   <!-- Description/content area - only shown on large cards -->
                   @if (shouldShowDescriptionFieldWithoutDuplication(cardFields().field4, item)) {
-                    <div class="text-sm text-gray-600 leading-relaxed line-clamp-2">
+                    <div class="text-unops-sm text-gray-600 leading-relaxed line-clamp-2">
                       <ng-container [ngTemplateOutlet]="fieldTemplate"
                                     [ngTemplateOutletContext]="{ item: item, column: cardFields().field4!, context: 'field4' }">
                       </ng-container>
@@ -342,7 +342,7 @@
               <!-- Metadata Content -->
               @if (showSearchMetadata()) {
                 <span class="font-medium">Search Match Details</span>
-                <div class="mt-3 space-y-3 text-sm animate-fadeIn">
+                <div class="mt-3 space-y-3 text-unops-sm animate-fadeIn">
                   <!-- Search Type and Matched Field -->
                   <div class="flex flex-wrap items-center gap-2">
                     @if (getSearchType(getSearchMetadata(item))) {
@@ -370,7 +370,7 @@
                             [style.width.%]="getRelevanceScore(getSearchMetadata(item))">
                           </div>
                         </div>
-                        <span class="text-sm font-medium text-gray-700">{{ getRelevanceScore(getSearchMetadata(item)) }}%</span>
+                        <span class="text-unops-sm font-medium text-gray-700">{{ getRelevanceScore(getSearchMetadata(item)) }}%</span>
                       </div>
                     </div>
                   }

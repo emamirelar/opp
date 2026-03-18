@@ -13,7 +13,7 @@
   @else if (!hasAccess()) {
     <div class="flex justify-content-center align-items-center" style="min-height: 400px;">
       <div class="text-center">
-        <i class="pi pi-lock text-6xl text-gray-400 mb-3"></i>
+        <i class="pi pi-lock text-unops-display-large text-gray-400 mb-3"></i>
         <h3 class="text-gray-700 mb-2">{{ 'message.accessDenied' | translate }}</h3>
         <p class="text-gray-600">{{ 'message.userManagementAccessDenied' | translate }}</p>
       </div>
@@ -24,7 +24,7 @@
   @else if (hasAccess()) {
     <!-- Header -->
     <div class="flex justify-content-between align-items-center user-management-header mb-4">
-      <div class="text-3xl font-bold">{{ 'title.userManagement' | translate }}</div>
+      <div class="text-unops-headline-large font-bold">{{ 'title.userManagement' | translate }}</div>
     </div>
 
     <!-- Filters Section -->
@@ -33,7 +33,7 @@
         <div class="grid">
           <!-- Search -->
           <div class="col-12 md:col-4">
-            <label for="search" class="block text-sm font-medium mb-2">
+            <label for="search" class="block text-unops-sm font-medium mb-2">
               {{ 'label.search.searchButton' | translate }}
               <i class="pi pi-search"></i>
             </label>
@@ -50,7 +50,7 @@
 
           <!-- Role Filter -->
           <div class="col-12 md:col-3">
-            <label for="roleFilter" class="block text-sm font-medium mb-2">
+            <label for="roleFilter" class="block text-unops-sm font-medium mb-2">
               {{ 'label.filterByRole' | translate }}
             </label>
             <p-multiSelect
@@ -68,7 +68,7 @@
           <!-- Org Unit Filter -->
           @if (!isOrgUnitAdmin()) {
             <div class="col-12 md:col-3">
-              <label for="orgUnitFilter" class="block text-sm font-medium mb-2">
+              <label for="orgUnitFilter" class="block text-unops-sm font-medium mb-2">
                 {{ 'label.orgUnit' | translate }}
               </label>
               <p-multiSelect
@@ -87,7 +87,7 @@
 
           <!-- Show My Org Unit Only -->
           <div class="col-12 md:col-2">
-            <label class="block text-sm font-medium mb-2">&nbsp;</label>
+            <label class="block text-unops-sm font-medium mb-2">&nbsp;</label>
             <div class="flex align-items-center">
               <p-checkbox
                 [ngModel]="showMyOrgUnitOnly()"
@@ -97,13 +97,13 @@
                 inputId="showMyOrgUnit">
               </p-checkbox>
               <label for="showMyOrgUnit"
-                     class="ml-2 text-sm"
+                     class="ml-2 text-unops-sm"
                      [class.text-gray-400]="isOrgUnitFilterDisabled()"
                      [pTooltip]="isOrgUnitFilterDisabled() ? 'Organization Unit Admins can only view users from their own organization unit' : ''"
                      tooltipPosition="top">
                 {{ 'label.showMyOrgUnitOnly' | translate }}
                 @if (isOrgUnitFilterDisabled()) {
-                  <i class="pi pi-info-circle ml-1 text-xs text-gray-400"></i>
+                  <i class="pi pi-info-circle ml-1 text-unops-xs text-gray-400"></i>
                 }
               </label>
             </div>
@@ -192,17 +192,17 @@
                 <div class="font-medium">{{ user.name }}</div>
               </td>
               <td>
-                <div class="text-sm text-gray-600">{{ user.email }}</div>
+                <div class="text-unops-sm text-gray-600">{{ user.email }}</div>
               </td>
               <td>
-                <div class="text-sm">{{ user.orgUnitDescription || user.orgUnit }}</div>
+                <div class="text-unops-sm">{{ user.orgUnitDescription || user.orgUnit }}</div>
               </td>
               <td>
                 <div class="flex flex-wrap gap-1">
                   @for (role of user.roles; track role) {
                     <p-chip
                       [label]="role"
-                      [styleClass]="'text-xs chip-' + getRoleSeverity(role)">
+                      [styleClass]="'text-unops-xs chip-' + getRoleSeverity(role)">
                     </p-chip>
                   }
                 </div>
@@ -210,11 +210,11 @@
               <td>
                 <p-chip
                   [label]="getStatusText(user.isActive)"
-                  [styleClass]="'text-xs chip-' + getStatusSeverity(user.isActive)">
+                  [styleClass]="'text-unops-xs chip-' + getStatusSeverity(user.isActive)">
                 </p-chip>
               </td>
               <td>
-                <div class="text-sm text-gray-600">
+                <div class="text-unops-sm text-gray-600">
                   {{ user.lastModifiedDate | date:'short' }}
                 </div>
               </td>
@@ -237,8 +237,8 @@
             <tr>
               <td [attr.colspan]="canUpdate() ? 7 : 6" class="text-center p-4">
                 <div class="flex flex-column align-items-center gap-3">
-                  <i class="pi pi-users text-4xl text-gray-400"></i>
-                  <span class="text-lg text-gray-600">
+                  <i class="pi pi-users text-unops-display-medium text-gray-400"></i>
+                  <span class="text-unops-lg text-gray-600">
                     {{ 'message.noUsersFound' | translate }}
                   </span>
                 </div>
@@ -278,14 +278,14 @@
         <div class="dialog-content p-4">
           <!-- User Info -->
           <div class="mb-4 p-4 bg-gray-50 border-round">
-            <div class="font-medium text-lg mb-2">{{ selectedUser()!.name }}</div>
-            <div class="text-sm text-gray-600 mb-1">{{ selectedUser()!.email }}</div>
-            <div class="text-sm text-gray-600">{{ selectedUser()!.orgUnit }}</div>
+            <div class="font-medium text-unops-lg mb-2">{{ selectedUser()!.name }}</div>
+            <div class="text-unops-sm text-gray-600 mb-1">{{ selectedUser()!.email }}</div>
+            <div class="text-unops-sm text-gray-600">{{ selectedUser()!.orgUnit }}</div>
           </div>
 
           <!-- Role Selection -->
           <div class="mb-6">
-            <label class="block text-sm font-medium mb-3">
+            <label class="block text-unops-sm font-medium mb-3">
               {{ 'label.partnershipUserRole' | translate }}
             </label>
 
@@ -296,12 +296,12 @@
                 [binary]="true"
                 inputId="partnerUserRole">
               </p-checkbox>
-              <label for="partnerUserRole" class="text-sm font-medium cursor-pointer">
+              <label for="partnerUserRole" class="text-unops-sm font-medium cursor-pointer">
                 {{ 'label.partnerUser' | translate }}
               </label>
               <p-chip
                 label="PARTNER_USER"
-                styleClass="text-xs chip-info ml-2">
+                styleClass="text-unops-xs chip-info ml-2">
               </p-chip>
             </div>
 
@@ -312,7 +312,7 @@
             <!-- Self-Management Setting -->
             @if (!isOrgUnitAdmin()) {
               <div class="mt-4">
-                <label class="block text-sm font-medium mb-3">
+                <label class="block text-unops-sm font-medium mb-3">
                   {{ 'label.organizationSelfManagement' | translate }}
                 </label>
 
@@ -323,12 +323,12 @@
                     [binary]="true"
                     inputId="selfManagementEnabled">
                   </p-checkbox>
-                  <label for="selfManagementEnabled" class="text-sm font-medium cursor-pointer">
+                  <label for="selfManagementEnabled" class="text-unops-sm font-medium cursor-pointer">
                     {{ 'label.enableSelfManagement' | translate }}
                   </label>
                   <p-chip
                     label="ORG SETTING"
-                    styleClass="text-xs chip-warning ml-2">
+                    styleClass="text-unops-xs chip-warning ml-2">
                   </p-chip>
                 </div>
 
@@ -341,14 +341,14 @@
             <!-- Display other roles (read-only) -->
             @if (otherUserRoles().length > 0) {
               <div class="mt-4">
-                <label class="block text-sm font-medium mb-2 text-gray-600">
+                <label class="block text-unops-sm font-medium mb-2 text-gray-600">
                   {{ 'label.otherRoles' | translate }} ({{ 'label.readOnly' | translate }})
                 </label>
                 <div class="flex flex-wrap gap-2">
                   @for (role of otherUserRoles(); track role) {
                     <p-chip
                       [label]="role"
-                      [styleClass]="'text-xs chip-' + getRoleSeverity(role)">
+                      [styleClass]="'text-unops-xs chip-' + getRoleSeverity(role)">
                     </p-chip>
                   }
                 </div>

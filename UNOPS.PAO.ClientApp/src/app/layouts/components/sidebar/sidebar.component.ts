@@ -3,6 +3,7 @@ import {
   ChangeDetectorRef,
   Component,
   ElementRef,
+  effect,
   inject,
   OnDestroy,
   OnInit,
@@ -21,7 +22,22 @@ import { RouterModule} from '@angular/router';
 import {ButtonModule} from 'primeng/button';
 import {GlobalFilterService} from '@core/services/filters';
 import {LayoutService} from '@layouts/services/layout.service';
+import {OpportunitySectionNavService, SectionDefinition} from '@shared/services/ui/opportunity-section-nav.service';
 
+const SECTION_ICON_MAP: Record<string, string> = {
+  analysis: 'analytics',
+  overview: 'description',
+  what: 'work',
+  why: 'lightbulb',
+  who: 'group',
+  where: 'public',
+  when: 'calendar_today',
+  risks: 'warning',
+  related: 'link',
+  collaboration: 'forum',
+  statement: 'edit_document',
+  team: 'apartment',
+};
 
 @Component({
   selector: 'app-sidebar',
@@ -34,7 +50,7 @@ import {LayoutService} from '@layouts/services/layout.service';
 export class SidebarComponent implements OnInit, OnDestroy {
   private globalFilterService = inject(GlobalFilterService);
   private layoutService = inject(LayoutService);
-
+  private sectionNavService = inject(OpportunitySectionNavService);
 
   constructor(
     public el: ElementRef,
@@ -42,22 +58,29 @@ export class SidebarComponent implements OnInit, OnDestroy {
     public languageService: LanguageService,
     private cdr: ChangeDetectorRef,
     private translateService: TranslateService
-  ) { }
+  ) {
+    effect(() => {
+      const sections = this.sectionNavService.sections();
+      this.updateOpportunitySections(sections);
+      this.cdr.markForCheck();
+    });
+  }
 
   private langChangeSubscription: Subscription = new Subscription;
 
-  // Define menu items
   menuItems: MenuItem[] = [];
   adminMenuItems: MenuItem[] = [];
   globalFilterEnabled = signal<boolean>(true);
 
-  // Initialize menu items in ngOnInit after signals are available
   private initializeMenuItems(isAdmin: boolean, userRoles: string[] = [], canManageOffice: boolean = false) {
+    const opportunityItem = this.buildOpportunityMenuItem(this.sectionNavService.sections());
+
     this.menuItems = [
       {
         label: 'title.home',
         icon: 'home',
         routerLink: ['/'],
+        routerLinkActiveOptions: { exact: true },
       },
       {
         label: 'title.partnerships',
@@ -78,16 +101,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
             icon: 'chat',
             routerLink: ['/partnerships/interactions']
           },
+          opportunityItem,
           {
-            label: 'title.opportunities',
+            label: 'title.opportunitiesAlt',
             icon: 'lightbulb',
-            routerLink: ['/partnerships/opportunities']
+            routerLink: ['/partnerships/opportunities-alt']
           },
-          // {
-          //   label: 'title.partnerTree',
-          //   icon: 'account_tree',
-          //   routerLink: ['/partnerships/partner-tree']
-          // },
           {
             label: 'title.partnershipAgreements',
             icon: 'description',
@@ -95,16 +114,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
           }
         ]
       }
-      // {
-      //   label: 'title.leads',
-      //   icon: 'trending_up',
-      //   routerLink: ['/leads']
-      // },
-      // {
-      //   label: 'title.initiatives',
-      //   icon: 'lightbulb',
-      //   routerLink: ['/initiatives']
-      // }
     ];
 
     if (!isAdmin) {
@@ -112,13 +121,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Check user roles to determine which admin items to show
     const isPartnerGlobAdmin = userRoles.includes('PARTNER_GLOB_ADMIN');
     const isOrgUnitAdmin = userRoles.includes('ORG_UNIT_ADMIN');
 
     let adminItems: MenuItem[] = [];
 
-    // Check if user is PARTNER_GLOB_ADMIN, if yes, add all
     if (isPartnerGlobAdmin) {
       adminItems = [
         {
@@ -163,7 +170,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
         }
       ];
     }
-    // Check if user is ORG_UNIT_ADMIN (but not PARTNER_GLOB_ADMIN), if yes, add only usermanagement and conditionally office management
     else if (isOrgUnitAdmin) {
       adminItems = [
         {
@@ -173,7 +179,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
         }
       ];
 
-      // Add office management if self-management is enabled
       if (canManageOffice) {
         adminItems.push({
           label: 'title.manageOffice',
@@ -192,6 +197,41 @@ export class SidebarComponent implements OnInit, OnDestroy {
     ] : [];
   }
 
+  private buildOpportunityMenuItem(sections: SectionDefinition[]): MenuItem {
+    const base: MenuItem = {
+      label: 'title.opportunities',
+      icon: 'lightbulb',
+      routerLink: ['/partnerships/opportunities']
+    };
+
+    if (sections.length > 0) {
+      base.items = sections.map(section => ({
+        label: section.label,
+        icon: SECTION_ICON_MAP[section.id] || section.icon,
+        state: { sectionId: section.id },
+        command: () => {
+          this.sectionNavService.requestScrollToSection(section.id);
+        }
+      }));
+    }
+
+    return base;
+  }
+
+  private updateOpportunitySections(sections: SectionDefinition[]): void {
+    if (!this.menuItems.length) return;
+
+    const partnershipsGroup = this.menuItems.find(item => item.label === 'title.partnerships');
+    if (!partnershipsGroup?.items) return;
+
+    const oppIndex = partnershipsGroup.items.findIndex(item => item.label === 'title.opportunities');
+    if (oppIndex === -1) return;
+
+    partnershipsGroup.items[oppIndex] = this.buildOpportunityMenuItem(sections);
+
+    this.menuItems = [...this.menuItems];
+  }
+
   closeSidebar(): void {
     this.layoutService.layoutState.update((prev) => ({
       ...prev,
@@ -202,18 +242,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    // Initialize global filter state from service
     this.globalFilterEnabled.set(this.globalFilterService.isFilterEnabled());
 
     this.authService.isAdmin().subscribe((isAdmin: boolean) => {
       if (isAdmin) {
-        // Use AuthService getUserRoles instead of API call
         this.authService.getUserRoles().subscribe({
           next: (userRoles) => {
-            // Convert roles to match expected format (remove 'PARTNER_' prefix if needed)
-            const rolesToCheck = userRoles.map(role => role.replace('PARTNER_', ''));
-
-            // For canManageOffice, we can set a default or derive from roles
             const canManageOffice = userRoles.includes('PARTNER_GLOB_ADMIN') || userRoles.includes('ORG_UNIT_ADMIN');
 
             this.initializeMenuItems(isAdmin, userRoles, canManageOffice);
@@ -221,7 +255,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
           },
           error: (err) => {
             console.error('DEBUG - Error getting user roles from AuthService:', err);
-            // Fallback to basic admin menu
             this.initializeMenuItems(isAdmin, [], false);
             this.cdr.detectChanges();
           }
@@ -236,7 +269,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
       this.cdr.detectChanges();
     });
 
-    // Initialize menu items on startup
     this.initializeMenuItems(false);
   }
 

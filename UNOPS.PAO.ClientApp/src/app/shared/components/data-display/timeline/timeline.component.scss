@@ -65,7 +65,7 @@
 :host ::ng-deep .timeline-item {
   padding: 6px 8px;
   border-radius: 8px;
-  font-size: 10px;
+  font-size: var(--unops-font-size-label-small);
   line-height: 1.1;
   max-width: 180px;
   min-width: 120px;
@@ -84,7 +84,7 @@
 }
 
 :host ::ng-deep .timeline-header i {
-  font-size: 12px;
+  font-size: var(--unops-font-size-body-small);
   color: #666;
   flex-shrink: 0;
   font-family: 'primeicons' !important;
@@ -98,7 +98,7 @@
 }
 
 :host ::ng-deep .timeline-icon-unicode {
-  font-size: 12px;
+  font-size: var(--unops-font-size-body-small);
   flex-shrink: 0;
   margin-right: 2px;
   display: inline-block;
@@ -106,7 +106,7 @@
 
 :host ::ng-deep .timeline-contact {
   color: #666;
-  font-size: 9px;
+  font-size: var(--unops-font-size-label-small);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -116,7 +116,7 @@
 
 :host ::ng-deep .timeline-subject {
   color: #333;
-  font-size: 8px;
+  font-size: var(--unops-font-size-label-small);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -150,7 +150,7 @@
 }
 
 :host ::ng-deep .timeline-contact {
-  font-size: 12px;
+  font-size: var(--unops-font-size-body-small);
   color: #374151;
   font-weight: 500;
   white-space: nowrap;
@@ -187,12 +187,12 @@
 .loading-content {
   display: flex;
   align-items: center;
-  font-size: 11px;
+  font-size: var(--unops-font-size-label-small);
   white-space: nowrap;
 }
 
 .loading-indicator i {
-  font-size: 12px;
+  font-size: var(--unops-font-size-body-small);
 }
 
 /* Animation pour l'indicateur de debounce */

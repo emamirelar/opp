@@ -1,7 +1,7 @@
 <p-panel>
   <ng-template pTemplate="header">
     <div class="flex justify-between items-center w-full">
-      <div class="font-semibold text-xl">{{ 'title.contacts' | translate }}</div>
+      <div class="font-semibold text-unops-xl">{{ 'title.contacts' | translate }}</div>
       <div class="flex gap-2">
         @if(!permissionsLoading() && permissionUtilityService.canCreate(entityPermissions())) {
           <p-button
@@ -29,7 +29,7 @@
     <!-- Loading state -->
     @if (isLoading()) {
       <div class="flex justify-center items-center py-4">
-        <i class="pi pi-spin pi-spinner text-2xl"></i>
+        <i class="pi pi-spin pi-spinner text-unops-2xl"></i>
       </div>
     } @else {
       <!-- Grouped by letter view -->

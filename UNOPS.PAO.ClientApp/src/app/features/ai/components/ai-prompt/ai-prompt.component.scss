@@ -11,7 +11,7 @@
       }
 
       .p-dialog-title {
-        font-size: 1.25rem;
+        font-size: var(--unops-font-size-headline-small);
         font-weight: 600;
         color: var(--text-color);
       }
@@ -169,7 +169,7 @@
       background-color: var(--surface-100);
       padding: 0.125rem 0.25rem;
       border-radius: 0.25rem;
-      font-size: 0.875rem;
+      font-size: var(--unops-font-size-body-medium);
     }
     
     pre {

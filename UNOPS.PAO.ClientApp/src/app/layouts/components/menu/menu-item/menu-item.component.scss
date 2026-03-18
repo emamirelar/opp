@@ -54,7 +54,7 @@ i:not(.layout-submenu-toggler) {
 }
 
 .entity-icon {
-    font-size: 1.25rem;
+    font-size: var(--unops-font-size-headline-small);
 }
 
 // Styles for parent menu items
@@ -75,7 +75,7 @@ i:not(.layout-submenu-toggler) {
 ul app-menu-item {
     .menu-item {
         margin-left: 0.5rem;
-        font-size: 0.95rem;
+        font-size: var(--unops-font-size-base);
         
         .menu-item-link {
             padding-left: 1rem;

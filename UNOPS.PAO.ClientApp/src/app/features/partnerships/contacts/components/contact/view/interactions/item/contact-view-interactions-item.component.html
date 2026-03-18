@@ -9,7 +9,7 @@
     <div class="flex items-center gap-1 text-primary hover:underline">
       <span>{{interaction.description}}</span>
     </div>
-    <div class="flex items-center gap-1 text-sm mt-1">
+    <div class="flex items-center gap-1 text-unops-sm mt-1">
       <span class="text-primary hover:underline">{{getSenderName(interaction)}}</span>
       @if (interaction.type === 'Email') {
         <span>sent an email to</span>
@@ -20,7 +20,7 @@
       }
     </div>
   </div>
-  <div class="flex-shrink-0 text-xs flex items-center whitespace-nowrap">
+  <div class="flex-shrink-0 text-unops-xs flex items-center whitespace-nowrap">
     {{interaction.date | date:'H:mm'}} | {{formatDate(interaction.date)}}
   </div>
 </div>

@@ -9,7 +9,7 @@
       <div class="grid grid-cols-12 gap-4">
 
         <!-- Participants Section -->
-        <div class="text-2xl col-span-full">
+        <div class="text-unops-2xl col-span-full">
           {{ 'title.interactionTitles.participants' | translate }}
         </div>
 
@@ -74,7 +74,7 @@
             <i class="pi pi-info-circle text-gray-400  ml-1"
                [pTooltip]="'tooltip.interaction.partners' | translate"></i>
             @if(getPartnerContext()?.partnerId) {
-              <span class="text-xs text-blue-600 ml-2">({{ 'label.interaction.requiresPartnerContact' | translate }})</span>
+              <span class="text-unops-xs text-blue-600 ml-2">({{ 'label.interaction.requiresPartnerContact' | translate }})</span>
             }
           </label>
           <div class="partners-chips-container">
@@ -122,7 +122,7 @@
               <div class="flex items-center gap-2">
                 <span class="font-medium">{{ user.name }}</span>
                 @if (user.email !== user.name) {
-                  <span class="text-sm text-gray-500">({{ user.email }})</span>
+                  <span class="text-unops-sm text-gray-500">({{ user.email }})</span>
                 }
               </div>
             </ng-template>
@@ -132,7 +132,7 @@
         <p-divider class="col-span-full" />
 
         <!-- Details Section -->
-        <div class="text-2xl col-span-full">
+        <div class="text-unops-2xl col-span-full">
           {{ 'title.interactionTitles.details' | translate }}
         </div>
 
@@ -183,7 +183,7 @@
         }
 
         <!-- Information Section -->
-        <div class="text-2xl col-span-full">
+        <div class="text-unops-2xl col-span-full">
           {{ 'title.interactionTitles.information' | translate }}
         </div>
 
@@ -292,7 +292,7 @@
               <div class="flex items-center gap-2">
                 <span class="font-medium">{{ user.name }}</span>
                 @if (user.email !== user.name) {
-                  <span class="text-sm text-gray-500">({{ user.email }})</span>
+                  <span class="text-unops-sm text-gray-500">({{ user.email }})</span>
                 }
               </div>
             </ng-template>
@@ -303,7 +303,7 @@
         <p-divider class="col-span-full" />
 
         <!-- Documents Section -->
-        <div class="text-2xl col-span-full">
+        <div class="text-unops-2xl col-span-full">
           {{ 'title.doc' | translate }}
           <i class="pi pi-info-circle text-gray-400  ml-1"
              [pTooltip]="'tooltip.interaction.document' | translate"></i>

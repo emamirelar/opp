@@ -177,8 +177,8 @@
   },
   "typography": {
     "fontFamily": {
-      "unops-display": ["Inter", "Noto Sans", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "system-ui", "sans-serif"],
-      "unops-body": ["Inter", "Noto Sans", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "system-ui", "sans-serif"]
+      "unops-display": ["Noto Sans", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "system-ui", "sans-serif"],
+      "unops-body": ["Noto Sans", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "system-ui", "sans-serif"]
     },
     "fontWeight": {
       "unops-light": "300",

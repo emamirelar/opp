@@ -33,7 +33,7 @@
   color: var(--unops-primary-on);
   border-radius: var(--unops-radius-lg);
   padding: var(--unops-spacing-xs) var(--unops-spacing-sm);
-  font-size: var(--unops-font-size-caption);
+  font-size: var(--unops-font-size-body-small);
   min-width: 20px;
   height: 20px;
   text-align: center;
@@ -99,7 +99,7 @@
 
     h3 {
       margin: 0;
-      font-size: 1.1rem;
+      font-size: var(--unops-font-size-lg);
       font-weight: 600;
       color: var(--unops-neutral-900);
     }
@@ -144,7 +144,7 @@
         color: var(--unops-neutral-900);
         border-radius: 12px;
         padding: 2px 8px;
-        font-size: 11px;
+        font-size: var(--unops-font-size-label-small);
         font-weight: 600;
         min-width: 20px;
         text-align: center;
@@ -210,7 +210,7 @@
         margin-top: 0.25rem;
 
         i {
-          font-size: 16px;
+          ;
         }
 
         .pi-spinner {
@@ -235,7 +235,7 @@
         p {
           margin: 0 0 0.5rem 0;
           line-height: 1.4;
-          font-size: 14px;
+          font-size: var(--unops-font-size-body-medium);
           overflow-wrap: break-word;
           word-break: break-word;
         }
@@ -245,7 +245,7 @@
 
           small {
             color: var(--unops-neutral-400);
-            font-size: 11px;
+            font-size: var(--unops-font-size-label-small);
           }
         }
 
@@ -277,7 +277,7 @@
 
       p {
         margin: 0;
-        font-size: 14px;
+        font-size: var(--unops-font-size-body-medium);
       }
     }
   }
@@ -338,7 +338,7 @@
       color: var(--unops-neutral-900);
       border-radius: 12px;
       padding: 2px 8px;
-      font-size: 11px;
+      font-size: var(--unops-font-size-label-small);
       font-weight: 600;
       min-width: 20px;
       text-align: center;
@@ -409,7 +409,7 @@
       margin-top: 0.25rem;
 
       i {
-        font-size: 16px;
+        ;
       }
 
       .pi-spinner {
@@ -425,7 +425,7 @@
       p {
         margin: 0 0 0.5rem 0;
         line-height: 1.4;
-        font-size: 14px;
+        font-size: var(--unops-font-size-body-medium);
         overflow-wrap: break-word;
         word-break: break-word;
       }
@@ -435,7 +435,7 @@
 
         small {
           color: var(--unops-neutral-400);
-          font-size: 11px;
+          font-size: var(--unops-font-size-label-small);
         }
       }
 
@@ -462,7 +462,7 @@
 
     p {
       margin: 0;
-      font-size: 14px;
+      font-size: var(--unops-font-size-body-medium);
     }
   }
 }

@@ -2,13 +2,13 @@
   .country-select {
     .p-select-label {
       font-family: 'Courier New', Monaco, monospace;
-      font-size: 0.875rem;
+      font-size: var(--unops-font-size-body-medium);
     }
   }
 
   .phone-display {
     font-family: 'Courier New', Monaco, monospace;
-    font-size: 0.875rem;
+    font-size: var(--unops-font-size-body-medium);
     color: #6b7280;
   }
 
@@ -19,7 +19,7 @@
 
   .error-message {
     color: #ef4444;
-    font-size: 0.875rem;
+    font-size: var(--unops-font-size-body-medium);
     margin-top: 0.25rem;
   }
 
@@ -30,7 +30,7 @@
     
     .calling-code {
       font-family: 'Courier New', Monaco, monospace;
-      font-size: 0.875rem;
+      font-size: var(--unops-font-size-body-medium);
       min-width: 3rem;
     }
     
@@ -40,7 +40,7 @@
     
     .country-code {
       color: #6b7280;
-      font-size: 0.75rem;
+      font-size: var(--unops-font-size-body-small);
     }
   }
 
@@ -50,7 +50,7 @@
       .phone-tag {
         animation: fadeIn 0.2s ease-in;
         font-family: 'Courier New', Monaco, monospace;
-        font-size: 0.875rem;
+        font-size: var(--unops-font-size-body-medium);
       }
     }
     

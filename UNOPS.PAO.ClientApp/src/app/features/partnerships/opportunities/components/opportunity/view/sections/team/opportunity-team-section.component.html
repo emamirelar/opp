@@ -9,7 +9,7 @@
         </div>
         <div class="flex items-center gap-2">
           @if (isSaving()) {
-            <i class="pi pi-spin pi-spinner text-xl text-primary"></i>
+            <i class="pi pi-spin pi-spinner text-unops-xl text-primary"></i>
           }
           @if (canUpdate()) {
             @if (!isEditing()) {
@@ -32,12 +32,12 @@
         <div class="mt-3 bg-amber-100 border-l-4 border-amber-500 px-4 py-3 rounded">
           <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div class="flex items-start gap-2 flex-1">
-              <i class="pi pi-exclamation-triangle text-amber-600 text-lg flex-shrink-0 mt-0.5"></i>
+              <i class="pi pi-exclamation-triangle text-amber-600 text-unops-lg flex-shrink-0 mt-0.5"></i>
               <div class="flex flex-col">
-                <span class="text-sm font-bold text-amber-900">
+                <span class="text-unops-sm font-bold text-amber-900">
                   {{ 'message.unsavedChanges' | translate }}
                 </span>
-                <span class="text-xs font-medium text-amber-800">
+                <span class="text-unops-xs font-medium text-amber-800">
                   {{ 'message.unsavedChangesSectionDetail' | translate }}
                 </span>
               </div>
@@ -72,20 +72,20 @@
   <!-- AI Suggestions -->
   @if (loadingInsightsSuggestions()) {
     <div class="flex items-center gap-3 p-4 bg-unops-surface-secondary rounded-unops-md border border-unops-neutral-light mb-6">
-      <i class="pi pi-spin pi-spinner text-xl text-unops-primary"></i>
+      <i class="pi pi-spin pi-spinner text-unops-xl text-unops-primary"></i>
       <span class="text-unops-neutral-700">{{ 'message.opportunity.refreshingInsights' | translate }}</span>
     </div>
   } @else if (suggestions() && suggestions().length > 0) {
     <div style="background-color: rgb(253, 250, 241);" class="rounded-unops-lg p-3 border border-unops-warning-light mb-6">
       <div class="flex items-start gap-2 mb-2">
-        <i class="pi pi-lightbulb text-unops-warning-darker text-sm mt-0.5"></i>
-        <h4 class="text-sm font-semibold text-unops-secondary">{{ 'label.aiSuggestions' | translate }}</h4>
+        <i class="pi pi-lightbulb text-unops-warning-darker text-unops-sm mt-0.5"></i>
+        <h4 class="text-unops-sm font-semibold text-unops-secondary">{{ 'label.aiSuggestions' | translate }}</h4>
       </div>
       <div class="space-y-2 pl-5">
         @for (suggestion of suggestions(); track $index) {
           <div class="bg-unops-surface-primary rounded p-2 border border-unops-warning-light shadow-unops-sm">
-            <div class="font-semibold text-sm text-unops-secondary mb-1">{{ suggestion.title }}</div>
-            <p class="text-sm text-unops-neutral-800">{{ suggestion.description }}</p>
+            <div class="font-semibold text-unops-sm text-unops-secondary mb-1">{{ suggestion.title }}</div>
+            <p class="text-unops-sm text-unops-neutral-800">{{ suggestion.description }}</p>
           </div>
         }
       </div>
@@ -97,7 +97,7 @@
     <!-- SUBSECTION 1: Opportunity Development Team -->
     <!-- ============================================ -->
     <div class="bg-unops-surface-primary rounded-unops-lg p-4 border border-unops-neutral-300">
-      <h3 class="text-base font-semibold text-unops-secondary mb-4 flex items-center gap-2">
+      <h3 class="text-unops-base font-semibold text-unops-secondary mb-4 flex items-center gap-2">
         <i class="pi pi-users text-unops-primary"></i>
         <span>{{ 'label.opportunity.opportunityDevelopmentTeam' | translate }}</span>
       </h3>
@@ -106,8 +106,8 @@
         <!-- Warning Banner for Hub/Region/GPO Org Units -->
         @if (showOrgUnitWarningBanner()) {
           <div style="background-color: rgb(253, 250, 241);" class="p-3 border border-unops-warning-light rounded-lg flex items-start gap-3">
-            <i class="pi pi-exclamation-triangle text-unops-warning-darker text-lg mt-0.5 flex-shrink-0"></i>
-            <div class="text-sm text-unops-neutral-800">
+            <i class="pi pi-exclamation-triangle text-unops-warning-darker text-unops-lg mt-0.5 flex-shrink-0"></i>
+            <div class="text-unops-sm text-unops-neutral-800">
               {{ 'message.opportunity.hubRegionOrgUnitWarning' | translate }}
             </div>
           </div>
@@ -115,7 +115,7 @@
 
         <!-- Opportunity Manager* (mandatory) -->
         <div>
-          <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
+          <h4 class="text-unops-sm font-semibold text-unops-neutral-700 mb-2">
             {{ 'label.opportunity.opportunityManager' | translate }} <span class="text-unops-error">*</span>
           </h4>
           @if (isEditing()) {
@@ -133,7 +133,7 @@
               class="w-full"
             />
             @if (opportunityManagerControl.value) {
-              <p class="text-xs text-unops-neutral-600 mt-1">
+              <p class="text-unops-xs text-unops-neutral-600 mt-1">
                 {{ opportunityManagerControl.value.position || '-' }}
               </p>
             }
@@ -148,7 +148,7 @@
                 <div>
                   <p class="text-unops-secondary font-medium">{{ opportunityManager()?.userName || '-' }}</p>
                   @if (opportunityManager()?.position) {
-                    <p class="text-xs text-unops-neutral-600">{{ opportunityManager()?.position }}</p>
+                    <p class="text-unops-xs text-unops-neutral-600">{{ opportunityManager()?.position }}</p>
                   }
                 </div>
               </div>
@@ -161,7 +161,7 @@
         <!-- Opportunity Collaborators (new) -->
         <div>
           <div class="flex items-center justify-between mb-2">
-            <h4 class="text-sm font-semibold text-unops-neutral-700">
+            <h4 class="text-unops-sm font-semibold text-unops-neutral-700">
               {{ 'label.opportunity.opportunityCollaborators' | translate }}
             </h4>
             @if (isEditing()) {
@@ -190,7 +190,7 @@
                         <div class="flex-1">
                           <div class="font-semibold text-unops-secondary">{{ collaborator.name }}</div>
                           @if (collaborator.position) {
-                            <div class="text-sm text-unops-neutral-600">{{ collaborator.position }}</div>
+                            <div class="text-unops-sm text-unops-neutral-600">{{ collaborator.position }}</div>
                           }
                         </div>
                       </div>
@@ -221,7 +221,7 @@
                           <p-tag 
                             [value]="getExpertiseName(expertiseId)" 
                             severity="info"
-                            styleClass="text-xs"
+                            styleClass="text-unops-xs"
                           />
                         }
                       </div>
@@ -230,7 +230,7 @@
                 }
               </div>
             } @else {
-              <p class="text-sm text-unops-neutral-500 italic">{{ 'message.noCollaborators' | translate }}</p>
+              <p class="text-unops-sm text-unops-neutral-500 italic">{{ 'message.noCollaborators' | translate }}</p>
             }
           } @else {
             <!-- View Mode: Show collaborators -->
@@ -247,7 +247,7 @@
                       <div class="flex-1">
                         <div class="font-semibold text-unops-secondary">{{ collaborator.userName || '-' }}</div>
                         @if (collaborator.position) {
-                          <div class="text-sm text-unops-neutral-600">{{ collaborator.position }}</div>
+                          <div class="text-unops-sm text-unops-neutral-600">{{ collaborator.position }}</div>
                         }
                       </div>
                     </div>
@@ -257,7 +257,7 @@
                           <p-tag 
                             [value]="expertise.name" 
                             severity="info"
-                            styleClass="text-xs"
+                            styleClass="text-unops-xs"
                           />
                         }
                       </div>
@@ -266,19 +266,19 @@
                 }
               </div>
             } @else {
-              <p class="text-sm text-unops-neutral-500 italic">{{ 'message.noCollaborators' | translate }}</p>
+              <p class="text-unops-sm text-unops-neutral-500 italic">{{ 'message.noCollaborators' | translate }}</p>
             }
           }
         </div>
 
         <!-- Org Unit Responsible for Opportunity development* (mandatory) -->
         <div id="field-responsibleOrgUnitId">
-          <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
+          <h4 class="text-unops-sm font-semibold text-unops-neutral-700 mb-2">
             {{ 'label.opportunity.responsibleOrgUnit' | translate }} <span class="text-unops-error">*</span>
           </h4>
           @if (isEditing()) {
             @if (suggestedOrgUnitIds().length > 0) {
-              <div class="mb-2 p-2 bg-emerald-50 border border-emerald-200 rounded text-xs text-emerald-700 flex items-start gap-2">
+              <div class="mb-2 p-2 bg-emerald-50 border border-emerald-200 rounded text-unops-xs text-emerald-700 flex items-start gap-2">
                 <i class="pi pi-lightbulb text-emerald-500 mt-0.5 flex-shrink-0"></i>
                 <span>
                   @if (suggestionReason() === 'responsible_for_all_countries') {
@@ -305,22 +305,22 @@
               <ng-template let-item pTemplate="item">
                 <div class="flex items-center gap-2">
                   @if (isPrimarySuggestion(item.id)) {
-                    <i class="pi pi-star-fill text-unops-warning text-xs" pTooltip="{{ 'tooltip.orgUnit.primarySuggestion' | translate }}" tooltipPosition="left"></i>
+                    <i class="pi pi-star-fill text-unops-warning text-unops-xs" pTooltip="{{ 'tooltip.orgUnit.primarySuggestion' | translate }}" tooltipPosition="left"></i>
                   } @else if (isOrgUnitSuggested(item.id)) {
-                    <i class="pi pi-star text-unops-warning text-xs" pTooltip="{{ 'tooltip.orgUnit.suggested' | translate }}" tooltipPosition="left"></i>
+                    <i class="pi pi-star text-unops-warning text-unops-xs" pTooltip="{{ 'tooltip.orgUnit.suggested' | translate }}" tooltipPosition="left"></i>
                   }
                   <span [class.font-semibold]="isOrgUnitSuggested(item.id)">{{ item.name }}</span>
                   @if (isOrgUnitSuggested(item.id)) {
-                    <span class="text-xs text-unops-success ml-auto">{{ 'label.suggested' | translate }}</span>
+                    <span class="text-unops-xs text-unops-success ml-auto">{{ 'label.suggested' | translate }}</span>
                   }
                 </div>
               </ng-template>
               <ng-template let-item pTemplate="selectedItem">
                 <div class="flex items-center gap-2">
                   @if (isPrimarySuggestion(item.id)) {
-                    <i class="pi pi-star-fill text-unops-warning text-xs"></i>
+                    <i class="pi pi-star-fill text-unops-warning text-unops-xs"></i>
                   } @else if (isOrgUnitSuggested(item.id)) {
-                    <i class="pi pi-star text-unops-warning text-xs"></i>
+                    <i class="pi pi-star text-unops-warning text-unops-xs"></i>
                   }
                   <span>{{ item.name }}</span>
                 </div>
@@ -333,8 +333,8 @@
           <!-- Warning banner for org unit not normally responsible -->
           @if (orgUnitConflictsWithNormalOrgUnits().hasConflict && !isEditing()) {
             <div class="mt-3 p-3 bg-amber-50 border border-amber-300 rounded flex items-start gap-3">
-              <i class="pi pi-exclamation-triangle text-amber-600 text-lg mt-0.5 flex-shrink-0"></i>
-              <div class="text-sm">
+              <i class="pi pi-exclamation-triangle text-amber-600 text-unops-lg mt-0.5 flex-shrink-0"></i>
+              <div class="text-unops-sm">
                 <p class="font-semibold text-amber-900 mb-1">
                   {{ 'title.notNormallyResponsible' | translate }}
                 </p>
@@ -354,7 +354,7 @@
         <!-- Role Holders for Responsible Org Unit (read-only) -->
         @if (responsibleOrgUnitStakeholders().length > 0) {
           <div>
-            <div class="text-xs text-unops-secondary mb-3 flex items-center gap-1">
+            <div class="text-unops-xs text-unops-secondary mb-3 flex items-center gap-1">
               <i class="pi pi-lock text-unops-secondary"></i>
               <span>{{ 'label.opportunity.autoPopulatedFromOrgUnit' | translate }}</span>
             </div>
@@ -362,10 +362,10 @@
             @for (group of groupedResponsibleOrgUnitStakeholders(); track group.orgUnitName) {
               <div class="mb-4">
                 <!-- OrgUnit Group Header -->
-                <div class="text-sm font-semibold text-unops-primary mb-2 flex items-center gap-2">
+                <div class="text-unops-sm font-semibold text-unops-primary mb-2 flex items-center gap-2">
                   <i class="pi pi-building text-unops-primary"></i>
                   <span>{{ group.orgUnitName }}</span>
-                  <span class="text-unops-neutral-500 font-normal text-xs">({{ group.stakeholders.length }})</span>
+                  <span class="text-unops-neutral-500 font-normal text-unops-xs">({{ group.stakeholders.length }})</span>
                 </div>
 
                 <!-- Roles Grid - 2 columns on medium screens, 3 on large -->
@@ -380,16 +380,16 @@
                           styleClass="bg-emerald-100 text-emerald-600 flex-shrink-0"
                         />
                         <div class="min-w-0 flex-1">
-                          <div class="font-semibold text-unops-secondary text-sm truncate">
+                          <div class="font-semibold text-unops-secondary text-unops-sm truncate">
                             <span>{{ getTranslatedRoleName(stakeholder) }}</span>
                           </div>
                           @if (stakeholder.userName) {
-                            <div class="text-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">
+                            <div class="text-unops-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">
                               {{ stakeholder.userName }}
                             </div>
                           }
                           @if (stakeholder.position) {
-                            <div class="text-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">
+                            <div class="text-unops-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">
                               {{ stakeholder.position }}
                             </div>
                           }
@@ -434,7 +434,7 @@
               <label for="initiativeType">{{ 'label.opportunity.initiativeType' | translate }} *</label>
             </p-floatlabel>
           } @else {
-            <h4 class="text-sm font-semibold text-unops-neutral-700 mb-2">
+            <h4 class="text-unops-sm font-semibold text-unops-neutral-700 mb-2">
               {{ 'label.opportunity.initiativeType' | translate }} *
             </h4>
             <p class="text-unops-secondary">
@@ -448,12 +448,12 @@
         <!-- ============================================ -->
         @if (responsibleOrgUnitDecisionMakingPathway().length > 0) {
           <div id="field-doaHolders" class="mt-4 pt-4 border-t border-unops-neutral-300">
-            <h4 class="text-sm font-semibold text-unops-neutral-700 mb-3 flex items-center gap-2">
+            <h4 class="text-unops-sm font-semibold text-unops-neutral-700 mb-3 flex items-center gap-2">
               <i class="pi pi-sitemap text-unops-primary"></i>
               <span>{{ 'label.opportunity.decisionMakingPathway' | translate }}</span>
             </h4>
             
-            <div class="text-xs text-unops-secondary mb-3 flex items-center gap-1">
+            <div class="text-unops-xs text-unops-secondary mb-3 flex items-center gap-1">
               <i class="pi pi-lock text-unops-secondary"></i>
               <span>{{ 'label.opportunity.autoPopulatedFromOrgUnit' | translate }}</span>
             </div>
@@ -461,10 +461,10 @@
             @for (group of responsibleOrgUnitDecisionMakingPathway(); track group.orgUnitName) {
               <div class="mb-4">
                 <!-- OrgUnit Group Header -->
-                <div class="text-sm font-semibold text-unops-primary mb-2 flex items-center gap-2 flex-wrap">
+                <div class="text-unops-sm font-semibold text-unops-primary mb-2 flex items-center gap-2 flex-wrap">
                   <i class="pi pi-building text-unops-primary"></i>
                   <span>{{ group.orgUnitName }}</span>
-                  <span class="text-unops-neutral-500 font-normal text-xs">({{ group.stakeholders.length }})</span>
+                  <span class="text-unops-neutral-500 font-normal text-unops-xs">({{ group.stakeholders.length }})</span>
                 </div>
 
                 <!-- DoA Roles Display -->
@@ -479,16 +479,16 @@
                           styleClass="bg-emerald-100 text-emerald-700 flex-shrink-0"
                         />
                         <div class="min-w-0 flex-1">
-                          <div class="font-semibold text-unops-secondary text-sm truncate">
+                          <div class="font-semibold text-unops-secondary text-unops-sm truncate">
                             <span>{{ stakeholder.entityRoleName }}</span>
                           </div>
                           @if (stakeholder.userName) {
-                            <div class="text-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">
+                            <div class="text-unops-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">
                               {{ stakeholder.userName }}
                             </div>
                           }
                           @if (stakeholder.position) {
-                            <div class="text-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">
+                            <div class="text-unops-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">
                               {{ stakeholder.position }}
                             </div>
                           }
@@ -509,7 +509,7 @@
     <!-- ============================================ -->
     <div class="bg-unops-surface-primary rounded-unops-lg p-4 border border-unops-neutral-300">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-base font-semibold text-unops-secondary flex items-center gap-2">
+        <h3 class="text-unops-base font-semibold text-unops-secondary flex items-center gap-2">
           <i class="pi pi-users text-unops-primary"></i>
           <span>{{ 'label.opportunity.otherInternalStakeholders' | translate }}</span>
         </h3>
@@ -532,10 +532,10 @@
       @if (!hasPrerequisitesForStakeholders()) {
         <p-message severity="info" styleClass="mb-4 w-full">
           <div class="flex items-start gap-2">
-            <i class="pi pi-info-circle text-lg"></i>
+            <i class="pi pi-info-circle text-unops-lg"></i>
             <div>
               <div class="font-semibold mb-1">{{ 'message.stakeholderPrerequisitesTitle' | translate }}</div>
-              <div class="text-sm">{{ 'message.stakeholderPrerequisitesDetail' | translate }}</div>
+              <div class="text-unops-sm">{{ 'message.stakeholderPrerequisitesDetail' | translate }}</div>
             </div>
           </div>
         </p-message>
@@ -546,8 +546,8 @@
         <!-- Team & Stakeholders (Internal) -->
         <div id="field-stakeholders">
           <div class="flex items-center justify-between mb-3">
-            <h3 class="text-sm font-semibold text-unops-secondary flex items-center gap-2">
-              <i class="pi pi-users text-unops-primary text-base"></i>
+            <h3 class="text-unops-sm font-semibold text-unops-secondary flex items-center gap-2">
+              <i class="pi pi-users text-unops-primary text-unops-base"></i>
               <span>{{ 'label.opportunity.teamStakeholders' | translate }} ({{ combinedInternalStakeholders().length }})</span>
             </h3>
           </div>
@@ -572,17 +572,17 @@
                         <p-tag 
                           [value]="stakeholder.organizationHierarchyName || 'Normally Responsible'" 
                           severity="warning"
-                          styleClass="text-xs"
+                          styleClass="text-unops-xs"
                         />
                       }
                     </div>
                     <!-- Only show role for normally responsible stakeholders (they have various roles) -->
                     <!-- User-added stakeholders are always "Internal Stakeholder" so role is redundant -->
                     @if (stakeholder.isNormallyResponsible) {
-                      <div class="text-sm text-unops-primary">{{ getTranslatedRoleName(stakeholder) }}</div>
+                      <div class="text-unops-sm text-unops-primary">{{ getTranslatedRoleName(stakeholder) }}</div>
                     }
                     @if (stakeholder.position) {
-                      <div class="text-xs text-unops-primary font-medium mt-0.5 truncate" [title]="stakeholder.position">{{ stakeholder.position }}</div>
+                      <div class="text-unops-xs text-unops-primary font-medium mt-0.5 truncate" [title]="stakeholder.position">{{ stakeholder.position }}</div>
                     }
                   </div>
                 </div>
@@ -607,7 +607,7 @@
                   </div>
                 }
                 @if (stakeholder.isNormallyResponsible) {
-                  <div class="text-xs text-amber-700 flex items-center gap-1 flex-wrap">
+                  <div class="text-unops-xs text-amber-700 flex items-center gap-1 flex-wrap">
                     <i class="pi pi-map-marker"></i>
                     <span>{{ 'label.normallyResponsibleFor' | translate }}: {{ stakeholder.countryName }}</span>
                   </div>
@@ -621,7 +621,7 @@
       <!-- Role Holders from Normally Responsible Org Units (Other Internal Stakeholders) -->
       @if (normallyResponsibleOrgUnitStakeholders().length > 0) {
         <div class="mt-4 pt-4 border-t border-unops-neutral-300">
-          <div class="text-xs text-unops-secondary mb-3 flex items-center gap-1">
+          <div class="text-unops-xs text-unops-secondary mb-3 flex items-center gap-1">
             <i class="pi pi-lock text-unops-secondary"></i>
             <span>{{ 'label.opportunity.autoPopulatedFromNormallyResponsible' | translate }}</span>
           </div>
@@ -629,19 +629,19 @@
           @for (group of groupedNormallyResponsibleStakeholders(); track group.orgUnitName) {
             <div class="mb-4">
               <!-- OrgUnit Group Header with Country Badge -->
-              <div class="text-sm font-semibold text-unops-primary mb-2 flex items-center gap-2">
+              <div class="text-unops-sm font-semibold text-unops-primary mb-2 flex items-center gap-2">
                 <i class="pi pi-building text-unops-primary"></i>
                 <span>{{ group.orgUnitName }}</span>
                 @if (group.countryName) {
                   <p-tag 
                     [value]="group.countryName" 
                     severity="info" 
-                    styleClass="text-xs"
+                    styleClass="text-unops-xs"
                     [pTooltip]="'tooltip.normallyResponsibleForCountry' | translate"
                     tooltipPosition="top"
                   />
                 }
-                <span class="text-unops-neutral-500 font-normal text-xs">({{ group.stakeholders.length }})</span>
+                <span class="text-unops-neutral-500 font-normal text-unops-xs">({{ group.stakeholders.length }})</span>
               </div>
 
               <!-- Roles Grid - 2 columns on medium screens, 3 on large -->
@@ -656,16 +656,16 @@
                         styleClass="bg-amber-100 text-amber-600 flex-shrink-0"
                       />
                       <div class="min-w-0 flex-1">
-                        <div class="font-semibold text-unops-secondary text-sm truncate">
+                        <div class="font-semibold text-unops-secondary text-unops-sm truncate">
                           <span>{{ getTranslatedRoleName(stakeholder) }}</span>
                         </div>
                         @if (stakeholder.userName) {
-                          <div class="text-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">
+                          <div class="text-unops-xs text-unops-neutral-600 truncate" [title]="stakeholder.userName">
                             {{ stakeholder.userName }}
                           </div>
                         }
                         @if (stakeholder.position) {
-                          <div class="text-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">
+                          <div class="text-unops-xs text-unops-primary font-medium truncate" [title]="stakeholder.position">
                             {{ stakeholder.position }}
                           </div>
                         }
@@ -682,7 +682,7 @@
       <!-- Empty state -->
       @if (combinedInternalStakeholders().length === 0 && normallyResponsibleOrgUnitStakeholders().length === 0) {
         <div class="text-center py-8 text-unops-neutral-500">
-          <i class="pi pi-users text-4xl mb-3 text-unops-neutral-400"></i>
+          <i class="pi pi-users text-unops-display-medium mb-3 text-unops-neutral-400"></i>
           <p>{{ 'message.noStakeholders' | translate }}</p>
         </div>
       }
@@ -694,7 +694,7 @@
         <!-- Relevant People Section -->
         <div>
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-unops-secondary flex items-center gap-2">
+            <h3 class="text-unops-lg font-semibold text-unops-secondary flex items-center gap-2">
               <i class="pi pi-users text-unops-primary"></i>
               <span>
                 {{ 'title.dst.relevantPeopleWithSkills' | translate }}
@@ -713,7 +713,7 @@
           </div>
           
           <!-- Help Text -->
-          <div class="mb-4 p-2 bg-unops-primary-container-soft border border-unops-primary-200 rounded text-xs text-unops-neutral-800">
+          <div class="mb-4 p-2 bg-unops-primary-container-soft border border-unops-primary-200 rounded text-unops-xs text-unops-neutral-800">
         <div class="flex items-start gap-2">
           <i class="pi pi-info-circle text-unops-primary-dark mt-0.5 flex-shrink-0"></i>
           <span>{{ 'helpText.dst.relevantPeople' | translate }}</span>
@@ -722,13 +722,13 @@
 
       @if (loadingRelevantPeople()) {
         <div class="text-center py-8">
-          <i class="pi pi-spin pi-spinner text-4xl text-unops-neutral-500"></i>
+          <i class="pi pi-spin pi-spinner text-unops-display-medium text-unops-neutral-500"></i>
           <p class="text-unops-neutral-700 mt-2">{{ 'message.dst.loadingRelevantPeople' | translate }}</p>
         </div>
       } @else if (relevantPeopleError()) {
         <div class="bg-unops-error-lighter border border-unops-error-light rounded-unops-lg p-4 flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <i class="pi pi-exclamation-triangle text-unops-error text-xl"></i>
+            <i class="pi pi-exclamation-triangle text-unops-error text-unops-xl"></i>
             <span class="text-unops-error-darker">{{ relevantPeopleError() }}</span>
           </div>
           <p-button
@@ -768,11 +768,11 @@
                 <!-- Name -->
                 @if (person.name) {
                   <div class="flex-1 min-w-0">
-                    <h3 class="text-sm font-semibold text-unops-secondary mb-1">
+                    <h3 class="text-unops-sm font-semibold text-unops-secondary mb-1">
                       {{ person.name }}
                     </h3>
                     @if (person.title) {
-                      <p class="text-xs text-unops-neutral-700 line-clamp-1">
+                      <p class="text-unops-xs text-unops-neutral-700 line-clamp-1">
                         {{ person.title }}
                       </p>
                     }
@@ -783,15 +783,15 @@
               <!-- Relevance Explanation (AI-generated) -->
               @if (person.relevanceExplanation) {
                 <div class="bg-unops-success-lighter border border-unops-success-light rounded px-3 py-2 mb-3 flex items-start gap-2">
-                  <i class="pi pi-info-circle text-unops-success text-xs mt-0.5 flex-shrink-0"></i>
-                  <p class="text-xs text-unops-success-darker italic">
+                  <i class="pi pi-info-circle text-unops-success text-unops-xs mt-0.5 flex-shrink-0"></i>
+                  <p class="text-unops-xs text-unops-success-darker italic">
                     {{ person.relevanceExplanation }}
                   </p>
                 </div>
               }
 
               <!-- Person Details -->
-              <div class="text-xs text-unops-neutral-700 space-y-2">
+              <div class="text-unops-xs text-unops-neutral-700 space-y-2">
 
                 <!-- Department -->
                 @if (person.department) {
@@ -826,10 +826,10 @@
                     <i class="pi pi-star text-unops-neutral-500 mt-0.5 flex-shrink-0"></i>
                     <div class="flex flex-wrap gap-1">
                       @for (skill of person.expertise.slice(0, 3); track skill) {
-                        <p-tag [value]="skill" severity="secondary" styleClass="text-xs" />
+                        <p-tag [value]="skill" severity="secondary" styleClass="text-unops-xs" />
                       }
                       @if (person.expertise.length > 3) {
-                        <p-tag [value]="'+' + (person.expertise.length - 3)" severity="secondary" styleClass="text-xs" />
+                        <p-tag [value]="'+' + (person.expertise.length - 3)" severity="secondary" styleClass="text-unops-xs" />
                       }
                     </div>
                   </div>
@@ -850,12 +850,12 @@
       <div class="bg-amber-100 border-t-4 border-amber-500 px-4 py-3 rounded-b">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div class="flex items-start gap-2 flex-1">
-            <i class="pi pi-exclamation-triangle text-amber-600 text-lg flex-shrink-0 mt-0.5"></i>
+            <i class="pi pi-exclamation-triangle text-amber-600 text-unops-lg flex-shrink-0 mt-0.5"></i>
             <div class="flex flex-col">
-              <span class="text-sm font-bold text-amber-900">
+              <span class="text-unops-sm font-bold text-amber-900">
                 {{ 'message.unsavedChanges' | translate }}
               </span>
-              <span class="text-xs font-medium text-amber-800">
+              <span class="text-unops-xs font-medium text-amber-800">
                 {{ 'message.unsavedChangesSectionDetail' | translate }}
               </span>
             </div>
@@ -956,12 +956,12 @@
       @if (isEditingCollaborator()) {
         <!-- Show read-only user info when editing -->
         <div class="p-3 bg-unops-surface-secondary rounded border border-unops-neutral-300">
-          <label class="text-xs text-unops-neutral-600 mb-1 block">{{ 'label.user' | translate }}</label>
+          <label class="text-unops-xs text-unops-neutral-600 mb-1 block">{{ 'label.user' | translate }}</label>
           <div class="flex items-center gap-2">
             <p-avatar
               [label]="(collaboratorUserControl.value?.name?.charAt(0) || '?').toUpperCase()"
               shape="circle"
-              styleClass="bg-blue-100 text-blue-600 !w-8 !h-8 text-sm"
+              styleClass="bg-blue-100 text-blue-600 !w-8 !h-8 text-unops-sm"
             />
             <span class="font-medium text-unops-secondary">{{ collaboratorUserControl.value?.name }}</span>
           </div>
@@ -1004,7 +1004,7 @@
         />
         <label for="collaboratorExpertise">{{ 'label.expertiseIn' | translate }} *</label>
       </p-floatlabel>
-      <p class="text-xs text-unops-neutral-600 mt-1">{{ 'helpText.expertiseSelection' | translate }}</p>
+      <p class="text-unops-xs text-unops-neutral-600 mt-1">{{ 'helpText.expertiseSelection' | translate }}</p>
     </div>
   </div>
 

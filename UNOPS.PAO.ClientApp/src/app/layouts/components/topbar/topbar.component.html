@@ -37,7 +37,7 @@
 			class="global-filters-button global-filters-desktop flex-shrink-0"
 			[class.filters-active]="hasActiveFilters">
 			<ng-template pTemplate="content">
-				<i class="pi pi-sliders-h text-xl"></i>
+				<i class="pi pi-sliders-h text-unops-xl"></i>
 			</ng-template>
 		</p-button>
 	</div>
@@ -57,7 +57,7 @@
 			[class.filters-active]="hasActiveFilters"
 			[class.search-expanded-hide-mobile]="isSearchExpanded">
 			<ng-template pTemplate="content">
-				<i class="pi pi-sliders-h text-xl"></i>
+				<i class="pi pi-sliders-h text-unops-xl"></i>
 			</ng-template>
 		</p-button>
 		<!-- Priority 3: AI Assistant -->
@@ -101,7 +101,7 @@
 				(onClick)="notificationPanel.toggle($event)"
 				class="notifications-button">
 				<ng-template pTemplate="content">
-					<i class="pi pi-bell text-xl"></i>
+					<i class="pi pi-bell text-unops-xl"></i>
 				</ng-template>
 			</p-button>
 
@@ -198,11 +198,11 @@
             <!-- Empty states -->
             <div *ngIf="getCurrentNotifications().length === 0" class="no-notifications">
               <div *ngIf="activeNotificationTab === 'unread'">
-                <i class="pi pi-bell-slash text-4xl text-gray-300 mb-3"></i>
+                <i class="pi pi-bell-slash text-unops-display-medium text-gray-300 mb-3"></i>
                 <p>{{ 'notifications.noUnread' | translate }}</p>
               </div>
               <div *ngIf="activeNotificationTab === 'all'">
-                <i class="pi pi-inbox text-4xl text-gray-300 mb-3"></i>
+                <i class="pi pi-inbox text-unops-display-medium text-gray-300 mb-3"></i>
                 <p>{{ 'notifications.noNotifications' | translate }}</p>
               </div>
             </div>
@@ -253,7 +253,7 @@
             </div>
 
             <div *ngIf="!isLoadingChatSessions && chatSessions.length === 0" class="no-chats-message">
-              <span class="text-sm text-gray-500">{{ 'chatHistory.noChats' | translate }}</span>
+              <span class="text-unops-sm text-gray-500">{{ 'chatHistory.noChats' | translate }}</span>
             </div>
 
             <div *ngFor="let session of filteredChatSessions; trackBy: trackByChatId"
@@ -276,7 +276,7 @@
             </div>
 
             <div *ngIf="!isLoadingChatSessions && filteredChatSessions.length === 0 && chatSessions.length > 0" class="no-results-message">
-              <span class="text-sm text-gray-500">{{ 'chatHistory.noResults' | translate }}</span>
+              <span class="text-unops-sm text-gray-500">{{ 'chatHistory.noResults' | translate }}</span>
             </div>
           </div>
         </div>
@@ -293,7 +293,7 @@
 					(onClick)="menu.toggle($event)"
 					class="profile-menu-button">
 					<ng-template pTemplate="content">
-						<i class="pi pi-user text-xl"></i>
+						<i class="pi pi-user text-unops-xl"></i>
 					</ng-template>
 				</p-button>
 				<p-menu #menu [popup]="true" [model]="profileMenuItems"></p-menu>
@@ -393,11 +393,11 @@
     <!-- Empty states -->
     <div *ngIf="getCurrentNotifications().length === 0" class="no-notifications">
       <div *ngIf="activeNotificationTab === 'unread'">
-        <i class="pi pi-bell-slash text-4xl text-gray-300 mb-3"></i>
+        <i class="pi pi-bell-slash text-unops-display-medium text-gray-300 mb-3"></i>
         <p>{{ 'notifications.noUnread' | translate }}</p>
       </div>
       <div *ngIf="activeNotificationTab === 'all'">
-        <i class="pi pi-inbox text-4xl text-gray-300 mb-3"></i>
+        <i class="pi pi-inbox text-unops-display-medium text-gray-300 mb-3"></i>
         <p>{{ 'notifications.noNotifications' | translate }}</p>
       </div>
     </div>

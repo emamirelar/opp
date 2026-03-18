@@ -2,28 +2,28 @@
   <!-- Header with icon and type -->
   <div class="flex items-center gap-3 mb-3">
     <i [class]="getInteractionIcon(interaction.type)" 
-       class="text-lg text-blue-600">
+       class="text-unops-lg text-blue-600">
     </i>
     <div class="flex-1">
-      <h4 class="font-semibold text-gray-900 text-sm mb-1">{{ interaction.subject }}</h4>
-      <p class="text-xs text-gray-500">{{ 'interaction.type.' + interaction.type | translate }}</p>
+      <h4 class="font-semibold text-gray-900 text-unops-sm mb-1">{{ interaction.subject }}</h4>
+      <p class="text-unops-xs text-gray-500">{{ 'interaction.type.' + interaction.type | translate }}</p>
     </div>
     <p-tag 
       [value]="interaction.status" 
       severity="info"
-      class="text-xs">
+      class="text-unops-xs">
     </p-tag>
   </div>
 
   <!-- Date and Location -->
   <div class="space-y-2 mb-3">
-    <div class="flex items-center gap-2 text-sm text-gray-600">
-      <i class="pi pi-calendar text-xs"></i>
+    <div class="flex items-center gap-2 text-unops-sm text-gray-600">
+      <i class="pi pi-calendar text-unops-xs"></i>
       <span>{{ formatDate(interaction.date) }}</span>
     </div>
     @if (interaction.location) {
-      <div class="flex items-center gap-2 text-sm text-gray-600">
-        <i class="pi pi-map-marker text-xs"></i>
+      <div class="flex items-center gap-2 text-unops-sm text-gray-600">
+        <i class="pi pi-map-marker text-unops-xs"></i>
         <span>{{ interaction.location }}</span>
       </div>
     }
@@ -31,7 +31,7 @@
 
   <!-- Description Preview -->
   @if (interaction.description) {
-    <p class="text-sm text-gray-700 leading-relaxed mb-3">
+    <p class="text-unops-sm text-gray-700 leading-relaxed mb-3">
       {{ truncateText(interaction.description, 120) }}
     </p>
   }
@@ -42,8 +42,8 @@
   <div class="space-y-2">
     @if (interaction.contactIds && interaction.contactIds.length > 0) {
       <div class="flex items-center gap-2">
-        <i class="pi pi-users text-xs text-gray-500"></i>
-        <span class="text-xs text-gray-600">
+        <i class="pi pi-users text-unops-xs text-gray-500"></i>
+        <span class="text-unops-xs text-gray-600">
           {{ interaction.contactIds.length }} contact{{ interaction.contactIds.length > 1 ? 's' : '' }}
         </span>
       </div>
@@ -51,8 +51,8 @@
     
     @if (interaction.partnerIds && interaction.partnerIds.length > 0) {
       <div class="flex items-center gap-2">
-        <i class="pi pi-building text-xs text-gray-500"></i>
-        <span class="text-xs text-gray-600">
+        <i class="pi pi-building text-unops-xs text-gray-500"></i>
+        <span class="text-unops-xs text-gray-600">
           {{ interaction.partnerIds.length }} partner{{ interaction.partnerIds.length > 1 ? 's' : '' }}
         </span>
       </div>
@@ -60,8 +60,8 @@
     
     @if (interaction.documents && interaction.documents.length > 0) {
       <div class="flex items-center gap-2">
-        <i class="pi pi-paperclip text-xs text-gray-500"></i>
-        <span class="text-xs text-gray-600">
+        <i class="pi pi-paperclip text-unops-xs text-gray-500"></i>
+        <span class="text-unops-xs text-gray-600">
           {{ interaction.documents.length }} attachment{{ interaction.documents.length > 1 ? 's' : '' }}
         </span>
       </div>
@@ -70,6 +70,6 @@
 
   <!-- Footer hint -->
   <div class="mt-3 pt-2 border-t border-gray-100">
-    <p class="text-xs text-gray-500 text-center">{{ 'interaction.preview.clickForDetails' | translate }}</p>
+    <p class="text-unops-xs text-gray-500 text-center">{{ 'interaction.preview.clickForDetails' | translate }}</p>
   </div>
 </div>
