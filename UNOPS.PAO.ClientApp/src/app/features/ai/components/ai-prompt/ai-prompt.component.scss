@@ -56,9 +56,10 @@
     .p-inputtextarea {
       transition: all 0.2s ease-in-out;
 
-      &:focus {
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); /* blue-500 with opacity */
-        outline: none;
+      &:focus-visible {
+        outline: 2px solid var(--unops-primary);
+        outline-offset: -2px;
+        box-shadow: 0 0 0 3px var(--unops-primary-container-soft);
       }
     }
 

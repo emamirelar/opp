@@ -22,6 +22,7 @@ import { PanelModule } from 'primeng/panel';
 import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 import { BadgeModule } from 'primeng/badge';
+import { TagModule } from 'primeng/tag';
 import { AvatarModule } from 'primeng/avatar';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
@@ -65,6 +66,7 @@ import { DocumentService } from '@shared/services/api/document.service';
     ButtonModule,
     DividerModule,
     BadgeModule,
+    TagModule,
     AvatarModule,
     DialogModule,
     SelectModule,
@@ -103,6 +105,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
   readonly opportunityUpdated = output<Opportunity>();
   readonly changesDetected = output<void>();
   readonly changesSavedOrDiscarded = output<void>();
+
+  // Progressive disclosure: track which partner cards are expanded
+  readonly expandedPartners = signal<Set<number>>(new Set());
 
   // State signals
   readonly isEditing = signal(false);
@@ -856,6 +861,20 @@ export class OpportunityWhoSectionComponent implements OnInit {
   onPartnerImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
     img.src = 'assets/images/Partner.png';
+  }
+
+  /**
+   * @description Toggle partner card detail expansion for progressive disclosure
+   * @param {number} partnerId - The partner ID to toggle
+   */
+  togglePartnerDetails(partnerId: number): void {
+    const current = new Set(this.expandedPartners());
+    if (current.has(partnerId)) {
+      current.delete(partnerId);
+    } else {
+      current.add(partnerId);
+    }
+    this.expandedPartners.set(current);
   }
   
   /**

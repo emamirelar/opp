@@ -45,7 +45,7 @@ public class DevelopmentController : ControllerBase
     [HttpGet("users")]
     public async Task<IActionResult> GetDevelopmentUsers()
     {
-        if (!_environment.IsDevelopment())
+        if (!(_environment.IsDevelopment() || _environment.IsEnvironment("Local")))
             return NotFound();
             
         var users = await _userManager.Users.ToListAsync();
@@ -69,7 +69,7 @@ public class DevelopmentController : ControllerBase
     [HttpPost("login/{email}")]
     public IActionResult SetDevelopmentUser(string email)
     {
-        if (!_environment.IsDevelopment())
+        if (!(_environment.IsDevelopment() || _environment.IsEnvironment("Local")))
             return NotFound();
             
         // First delete any existing cookie to avoid issues
@@ -99,12 +99,12 @@ public class DevelopmentController : ControllerBase
     [HttpPost("seed-dev-users")]
     public async Task<IActionResult> SeedDevelopmentUsers()
     {
-        if (!_environment.IsDevelopment())
+        if (!(_environment.IsDevelopment() || _environment.IsEnvironment("Local")))
             return NotFound();
             
         // First, clear existing users and roles
         // Only do this if we're in development mode for safety
-        if (_environment.IsDevelopment())
+        if ((_environment.IsDevelopment() || _environment.IsEnvironment("Local")))
         {
             // Remove existing users
             var existingUsers = await _userManager.Users.ToListAsync();
@@ -206,7 +206,7 @@ public class DevelopmentController : ControllerBase
     [HttpGet("check-iap-simulation")]
     public IActionResult CheckIAPSimulation()
     {
-        if (!_environment.IsDevelopment())
+        if (!(_environment.IsDevelopment() || _environment.IsEnvironment("Local")))
             return NotFound();
             
         var hasIapEmailHeaderValue = Request.Headers.TryGetValue("X-Goog-Authenticated-User-Email", out var headerValue);
@@ -238,7 +238,7 @@ public class DevelopmentController : ControllerBase
     [HttpGet("debug")]
     public IActionResult DebugAuthPage()
     {
-        if (!_environment.IsDevelopment())
+        if (!(_environment.IsDevelopment() || _environment.IsEnvironment("Local")))
             return NotFound();
             
         // Generate debug view - using simple string with minimal JS
@@ -321,7 +321,7 @@ public class DevelopmentController : ControllerBase
     [HttpGet("direct-login/{email}")]
     public async Task<IActionResult> DirectLogin(string email)
     {
-        if (!_environment.IsDevelopment())
+        if (!(_environment.IsDevelopment() || _environment.IsEnvironment("Local")))
             return NotFound();
             
         // Set IAP simulation header to bypass UNOPSUserValidator checks
@@ -429,7 +429,7 @@ public class DevelopmentController : ControllerBase
     [HttpGet("set-cookie/{email}")]
     public IActionResult SetBrowserCookie(string email)
     {
-        if (!_environment.IsDevelopment())
+        if (!(_environment.IsDevelopment() || _environment.IsEnvironment("Local")))
         {
             return NotFound();
         }
@@ -538,7 +538,7 @@ public class DevelopmentController : ControllerBase
     [HttpGet("debug-auth")]
     public IActionResult DebugAuthStatus()
     {
-        if (!_environment.IsDevelopment())
+        if (!(_environment.IsDevelopment() || _environment.IsEnvironment("Local")))
             return NotFound();
             
         // Detect circular references in services
@@ -625,7 +625,7 @@ public class DevelopmentController : ControllerBase
     [HttpGet("verify-roles")]
     public async Task<IActionResult> VerifyRoles()
     {
-        if (!_environment.IsDevelopment())
+        if (!(_environment.IsDevelopment() || _environment.IsEnvironment("Local")))
             return NotFound();
             
         var usersWithRoles = new List<object>();
@@ -655,7 +655,7 @@ public class DevelopmentController : ControllerBase
     [HttpPost("clear-all-users")]
     public async Task<IActionResult> ClearAllUsers()
     {
-        if (!_environment.IsDevelopment())
+        if (!(_environment.IsDevelopment() || _environment.IsEnvironment("Local")))
             return NotFound();
             
         // Only do this if we're in development mode for safety
@@ -697,7 +697,7 @@ public class DevelopmentController : ControllerBase
     [HttpPost("setup-row-level-filters")]
     public async Task<IActionResult> SetupRowLevelFilters()
     {
-        if (!_environment.IsDevelopment())
+        if (!(_environment.IsDevelopment() || _environment.IsEnvironment("Local")))
             return NotFound();
             
         // First, clear existing entity permissions
@@ -757,7 +757,7 @@ public class DevelopmentController : ControllerBase
     [HttpPost("create-user")]
     public async Task<IActionResult> CreateUserWithDefaultRole([FromBody] CreateUserRequest request)
     {
-        if (!_environment.IsDevelopment())
+        if (!(_environment.IsDevelopment() || _environment.IsEnvironment("Local")))
             return NotFound();
 
         if (string.IsNullOrEmpty(request.Email))
@@ -837,7 +837,7 @@ public class DevelopmentController : ControllerBase
     [HttpGet("configured-user")]
     public IActionResult GetConfiguredUser()
     {
-        if (!_environment.IsDevelopment())
+        if (!(_environment.IsDevelopment() || _environment.IsEnvironment("Local")))
             return NotFound();
 
         var configuredEmail = _configuration["Development:IAPSimulation:UserEmail"];

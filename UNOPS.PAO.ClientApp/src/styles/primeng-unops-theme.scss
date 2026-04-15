@@ -44,7 +44,7 @@
   /* Outlined Button */
   &.p-button-outlined {
     background: transparent !important;
-    color: var(--unops-primary) !important;
+    color: var(--unops-primary-text) !important;
     border-color: var(--unops-primary) !important;
     
     &:hover:not(:disabled) {
@@ -63,7 +63,7 @@
   /* Text Button */
   &.p-button-text {
     background: transparent !important;
-    color: var(--unops-primary) !important;
+    color: var(--unops-primary-text) !important;
     border: none !important;
     
     &:hover:not(:disabled) {
@@ -102,11 +102,10 @@
   
   /* Disabled state */
   &:disabled {
-    opacity: 0.5 !important;
     cursor: not-allowed !important;
     background: var(--unops-neutral-200) !important;
-    color: var(--unops-neutral-500) !important;
-    border-color: var(--unops-neutral-200) !important;
+    color: var(--unops-neutral-600) !important;
+    border-color: var(--unops-neutral-300) !important;
     
     &.p-button-text,
     &.p-button-outlined {
@@ -219,13 +218,12 @@
   
   &:disabled {
     background: var(--unops-neutral-100) !important;
-    color: var(--unops-neutral-500) !important;
+    color: var(--unops-neutral-600) !important;
     border-color: var(--unops-neutral-200) !important;
-    opacity: 0.7 !important;
   }
   
   &::placeholder {
-    color: var(--unops-neutral-300) !important;
+    color: var(--unops-neutral-500) !important;
   }
 }
 
@@ -328,7 +326,7 @@
 
 /* Placeholder styling for p-select and p-dropdown */
 .p-placeholder {
-  color: var(--unops-neutral-300) !important;
+  color: var(--unops-neutral-500) !important;
 }
 
 .p-dropdown-panel {
@@ -481,7 +479,11 @@
       &:focus {
         background: var(--unops-primary-container) !important;
         color: var(--unops-primary-darker) !important;
-        outline: none !important;
+      }
+      
+      &:focus-visible {
+        outline: 2px solid var(--unops-primary) !important;
+        outline-offset: -2px !important;
       }
       
       .p-menuitem-icon {
@@ -867,9 +869,8 @@ button.unops-icon-button.p-button,
   }
   
   &:disabled {
-    opacity: 0.5 !important;
     cursor: not-allowed !important;
-    color: var(--unops-neutral-400) !important;
+    color: var(--unops-neutral-500) !important;
     background: transparent !important;
   }
   

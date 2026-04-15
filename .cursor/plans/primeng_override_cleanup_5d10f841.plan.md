@@ -110,8 +110,8 @@ flowchart TB
 In [unops-design-tokens.css](UNOPS.PAO.ClientApp/src/styles/unops-design-tokens.css) lines 167-168, change `'Inter'` to `'Noto Sans'`:
 
 ```css
---unops-font-display: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
---unops-font-body: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+--font-display: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+--font-body: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 ```
 
 ### 1b. Fix mask contradiction

@@ -790,7 +790,7 @@
       </div>
     </div>
 
-    <!-- Tree View Container (Always visible) -->
+    <!-- Tree View Container using PrimeNG Tree (ARIA compliant, keyboard navigable) -->
     <div class="border border-gray-200 rounded-lg overflow-hidden bg-white max-h-[350px] overflow-y-auto tree-container">
       @if (filteredTreeData().length === 0) {
         <div class="text-center py-8 text-gray-500">
@@ -798,111 +798,82 @@
           <p class="text-unops-sm">{{ 'message.noMatchingItems' | translate }}</p>
         </div>
       } @else {
-        <!-- Recursive Tree Rendering -->
-        <ng-container *ngTemplateOutlet="treeNodeTemplate; context: { nodes: filteredTreeData(), depth: 0 }"></ng-container>
-      }
-    </div>
-
-    <!-- Tree Node Recursive Template -->
-    <ng-template #treeNodeTemplate let-nodes="nodes" let-depth="depth">
-      @for (node of nodes; track node.id) {
-        <div class="tree-node" [style.--depth]="depth">
-          <!-- Node Row -->
-          <div 
-            class="tree-node-row flex items-center gap-2 px-3 py-2 border-b border-gray-100 transition-colors"
-            [ngClass]="{
-              'bg-green-50': isTreeNodeSelected(node),
-              'hover:bg-gray-50 cursor-pointer': node.isSelectable && !isTreeNodeSelected(node),
-              'hover:bg-gray-50': !node.isSelectable
-            }"
-            [style.padding-left.px]="16 + (depth * 20)"
-            (click)="node.isSelectable ? selectTreeNode(node) : null"
-          >
-            <!-- Expand/Collapse Toggle -->
-            @if (node.children.length > 0) {
-              <button 
-                class="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 transition-colors"
-                (click)="toggleNodeExpansion(node.id); $event.stopPropagation()"
-              >
-                <i 
-                  class="pi text-unops-xs text-gray-500"
-                  [ngClass]="isNodeExpanded(node.id) ? 'pi-chevron-down' : 'pi-chevron-right'"
-                ></i>
-              </button>
-            } @else {
-              <span class="flex-shrink-0 w-6"></span>
-            }
-
-            <!-- Level Badge -->
-            <span 
-              class="flex-shrink-0 w-7 h-5 flex items-center justify-center rounded text-unops-xs font-bold"
-              [ngClass]="getLevelColorClass(node.level)"
+        <p-tree
+          [value]="primeTreeNodes()"
+          [filter]="false"
+          [style]="{ border: 'none' }"
+          (onNodeExpand)="onPrimeNodeExpand($event)"
+          (onNodeCollapse)="onPrimeNodeCollapse($event)"
+        >
+          <ng-template let-primeNode pTemplate="default">
+            <div 
+              class="flex items-center gap-2 py-1 w-full transition-colors"
+              [class.bg-green-50]="primeNode.data?.isSelectable && isTreeNodeSelected(primeNode.data)"
+              [class.cursor-pointer]="primeNode.data?.isSelectable"
+              (click)="primeNode.data?.isSelectable ? selectTreeNode(primeNode.data) : null"
             >
-              L{{ node.level }}
-            </span>
+              <!-- Level Badge -->
+              <span 
+                class="flex-shrink-0 w-7 h-5 flex items-center justify-center rounded text-unops-xs font-bold"
+                [ngClass]="getLevelColorClass(primeNode.data?.level)"
+              >
+                L{{ primeNode.data?.level }}
+              </span>
 
-            <!-- Node Content -->
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2">
-                <span class="font-medium text-unops-sm text-gray-900 truncate">{{ node.label }}</span>
+              <!-- Node Content -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="font-medium text-unops-sm text-gray-900 truncate">{{ primeNode.label }}</span>
+                  
+                  @if (primeNode.data?.children?.length > 0 && !primeNode.expanded) {
+                    <span class="flex-shrink-0 text-unops-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                      {{ primeNode.data.selectableCount }} {{ 'label.items' | translate }}
+                    </span>
+                  }
+                  
+                  @if (primeNode.data?.serviceLine && primeNode.data?.isSelectable) {
+                    <p-chip 
+                      [label]="primeNode.data.serviceLine" 
+                      styleClass="text-unops-xs"
+                      [style]="{ 'background-color': '#dbeafe', 'color': '#1e40af', 'height': '18px', 'font-size': '10px' }"
+                    />
+                  }
+                  
+                  @if (primeNode.data?.hasProcurementComponent && primeNode.data?.serviceLine?.toLowerCase() !== 'procurement') {
+                    <span 
+                      class="flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded border-2 border-unops-warning-light text-unops-xs"
+                      style="background-color: rgb(253, 250, 241);"
+                      [pTooltip]="'message.procurementComponentDetected' | translate"
+                      tooltipPosition="top"
+                    >
+                      <i class="pi pi-exclamation-triangle text-unops-label-small text-unops-warning-darker"></i>
+                    </span>
+                  }
+                </div>
                 
-                <!-- Item Count Badge (for non-selectable parents) -->
-                @if (node.children.length > 0 && !isNodeExpanded(node.id)) {
-                  <span class="flex-shrink-0 text-unops-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
-                    {{ node.selectableCount }} {{ 'label.items' | translate }}
-                  </span>
-                }
-                
-                <!-- Service Line -->
-                @if (node.serviceLine && node.isSelectable) {
-                  <p-chip 
-                    [label]="node.serviceLine" 
-                    styleClass="text-unops-xs"
-                    [style]="{ 'background-color': '#dbeafe', 'color': '#1e40af', 'height': '18px', 'font-size': '10px' }"
-                  />
-                }
-                
-                <!-- Procurement Component Warning -->
-                @if (node.hasProcurementComponent && node.serviceLine?.toLowerCase() !== 'procurement') {
-                  <span 
-                    class="flex-shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded border-2 border-unops-warning-light text-unops-xs"
-                    style="background-color: rgb(253, 250, 241);"
-                    [pTooltip]="'message.procurementComponentDetected' | translate"
-                    tooltipPosition="top"
-                  >
-                    <i class="pi pi-exclamation-triangle text-unops-label-small text-unops-warning-darker"></i>
-                  </span>
+                @if (primeNode.data?.definition && primeNode.expanded) {
+                  <p class="text-unops-xs text-gray-500 mt-1 line-clamp-2">{{ primeNode.data.definition }}</p>
                 }
               </div>
-              
-              <!-- Definition (if available and node is expanded) -->
-              @if (node.definition && isNodeExpanded(node.id)) {
-                <p class="text-unops-xs text-gray-500 mt-1 line-clamp-2">{{ node.definition }}</p>
+
+              <!-- Selection Status -->
+              @if (primeNode.data?.isSelectable) {
+                <div class="flex-shrink-0">
+                  @if (isTreeNodeSelected(primeNode.data)) {
+                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-unops-xs font-medium bg-green-100 text-green-700">
+                      <i class="pi pi-check text-unops-label-small"></i>
+                      {{ 'label.added' | translate }}
+                    </span>
+                  } @else {
+                    <i class="pi pi-plus-circle text-gray-400 text-unops-lg"></i>
+                  }
+                </div>
               }
             </div>
-
-            <!-- Selection Status -->
-            @if (node.isSelectable) {
-              <div class="flex-shrink-0">
-                @if (isTreeNodeSelected(node)) {
-                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-unops-xs font-medium bg-green-100 text-green-700">
-                    <i class="pi pi-check text-unops-label-small"></i>
-                    {{ 'label.added' | translate }}
-                  </span>
-                } @else {
-                  <i class="pi pi-plus-circle text-gray-400 text-unops-lg"></i>
-                }
-              </div>
-            }
-          </div>
-
-          <!-- Children (recursive) -->
-          @if (node.children.length > 0 && isNodeExpanded(node.id)) {
-            <ng-container *ngTemplateOutlet="treeNodeTemplate; context: { nodes: node.children, depth: depth + 1 }"></ng-container>
-          }
-        </div>
+          </ng-template>
+        </p-tree>
       }
-    </ng-template>
+    </div>
 
     <!-- Selected Items Summary (Shown in both modes) -->
     @if (selectedOutputsForDialog().length > 0) {

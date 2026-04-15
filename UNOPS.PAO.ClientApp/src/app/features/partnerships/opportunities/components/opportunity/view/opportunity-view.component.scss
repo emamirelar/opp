@@ -237,14 +237,8 @@ a:hover i {
 // Loading Progress Strip Styles
 .loading-progress-strip {
   animation: fadeIn 0.3s ease-in-out;
-
-  // Smooth progress bar fill animation
-  .bg-unops-primary {
-    transition: width 0.5s ease-out;
-  }
 }
 
-// Fade in animation for progress strip
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -256,14 +250,9 @@ a:hover i {
   }
 }
 
-// Reduced motion support
 @media (prefers-reduced-motion: reduce) {
   .loading-progress-strip {
     animation: none;
-  }
-
-  .loading-progress-strip .bg-unops-primary {
-    transition: none;
   }
 
   .pi-spinner {

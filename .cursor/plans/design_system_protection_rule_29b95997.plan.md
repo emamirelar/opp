@@ -64,12 +64,12 @@ Create a single new rule file at `[.cursor/rules/design-system-protection.mdc](U
 - Always use:
   - Tailwind UNOPS utility classes (`bg-unops-primary`, `p-unops-md`, `rounded-unops-md`, etc.)
   - CSS custom properties (`var(--unops-primary)`, `var(--unops-spacing-md)`, etc.)
-  - SCSS variables (`$unops-primary`, `$unops-font-size-base`, etc.)
+  - SCSS variables (`$unops-primary`, `$font-size-base`, etc.)
   - PrimeNG theme tokens (from the Material-based `unops.preset.ts`)
 - Specifically prohibited patterns:
   - `color: #0092d1` (use `var(--unops-primary)` or `text-unops-primary`)
   - `padding: 16px` (use `var(--unops-spacing-md)` or `p-unops-md`)
-  - `font-size: 14px` (use `var(--unops-font-size-sm)` or Tailwind class)
+  - `font-size: 14px` (use `var(--font-size-sm)` or Tailwind class)
   - `border-radius: 8px` (use `var(--unops-radius-md)` or `rounded-unops-md`)
 - The only exception is `0` and `1px` which are universal constants
 

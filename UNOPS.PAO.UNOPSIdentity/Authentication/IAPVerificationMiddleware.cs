@@ -121,7 +121,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             }
             
             // Skip verification in development if configured
-            if (_environment.IsDevelopment() && _configuration.GetValue<bool>("IAP:SkipValidationInDevelopment", _configuration.GetValue<bool>("Development:IAPSimulation:SkipValidationInDevelopment", false)))
+            if ((_environment.IsDevelopment() || _environment.IsEnvironment("Local")) && _configuration.GetValue<bool>("IAP:SkipValidationInDevelopment", _configuration.GetValue<bool>("Development:IAPSimulation:SkipValidationInDevelopment", false)))
             {
                 string devEmail = GetDevelopmentUserEmail(context);
                 if (!string.IsNullOrEmpty(devEmail))
@@ -184,7 +184,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                             verifiedEmail, extractedEmail);
                         
                         // In production, this would be suspicious and might indicate tampering
-                        if (!_environment.IsDevelopment())
+                        if (!_environment.IsDevelopment() && !_environment.IsEnvironment("Local"))
                         {
                             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                             await context.Response.WriteAsync("Unauthorized: Identity mismatch");
@@ -196,7 +196,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         _logger.LogInformation("Email in JWT and header match: {Email}", extractedEmail);
                     }
                 }
-                else if (!_configuration.GetValue<bool>("IAP:RequireJwtVerification", true) || _environment.IsDevelopment())
+                else if (!_configuration.GetValue<bool>("IAP:RequireJwtVerification", true) || _environment.IsDevelopment() || _environment.IsEnvironment("Local"))
                 {
                     // Only use email header if JWT verification isn't required or in development
                     _logger.LogDebug("Using email from header: {Email}", extractedEmail);

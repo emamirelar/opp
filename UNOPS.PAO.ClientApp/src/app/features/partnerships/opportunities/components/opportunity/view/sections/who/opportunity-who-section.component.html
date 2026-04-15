@@ -197,16 +197,48 @@
                   
                   <!-- Partner Status Badge -->
                   @if (partner.partnerStatus) {
-                    <p-badge 
+                    <p-tag 
                       [value]="partner.partnerStatus" 
                       [severity]="getPartnerStatusSeverity(partner.partnerStatus)"
+                      [rounded]="true"
                       styleClass="ml-2"
                     />
                   }
                   
+                  <!-- Summary line: amount + DD badge inline -->
+                  <div class="mt-2 flex items-center gap-3 flex-wrap">
+                    <span class="text-unops-sm font-semibold">{{ partner.amount | number:'1.0-2' }} {{ partner.currencyCode }}</span>
+                    @if (partner.ddStatus) {
+                      <p-tag 
+                        [value]="partner.ddStatus" 
+                        [severity]="getDDStatusSeverity(partner.ddStatus)"
+                        [rounded]="true"
+                      />
+                    }
+                    @if (partner.availableAgreements && partner.availableAgreements.length > 0) {
+                      <span class="text-unops-xs text-unops-neutral-600">
+                        <i class="pi pi-file-check mr-1"></i>{{ partner.availableAgreements.length }} {{ 'label.agreements' | translate }}
+                      </span>
+                    }
+                  </div>
+
+                  <!-- Expandable Details Toggle -->
+                  <button
+                    type="button"
+                    class="mt-2 text-unops-xs text-unops-primary hover:text-unops-primary-light font-medium flex items-center gap-1 transition-colors"
+                    (click)="togglePartnerDetails(partner.id)"
+                  >
+                    <i [class]="expandedPartners().has(partner.id) ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" class="text-unops-label-small"></i>
+                    {{ expandedPartners().has(partner.id) ? ('button.hideDetails' | translate) : ('button.showDetails' | translate) }}
+                  </button>
+
+                  <!-- Collapsible Details Section -->
+                  @if (expandedPartners().has(partner.id)) {
+                  <div class="mt-3 pt-3 border-t border-unops-neutral-200 space-y-2">
+                  
                   <!-- Draft Warning -->
                   @if (partner.partnerStatus === 'Draft') {
-                  <div style="background-color: rgb(253, 250, 241);" class="mt-2 p-2 border border-unops-warning-light rounded flex items-start gap-2">
+                  <div style="background-color: rgb(253, 250, 241);" class="p-2 border border-unops-warning-light rounded flex items-start gap-2">
                     <i class="pi pi-exclamation-triangle text-unops-warning-darker text-unops-sm mt-0.5"></i>
                     <span class="text-unops-xs text-unops-neutral-800">
                       {{ 'message.warning.partnerDraftStatus' | translate }}
@@ -216,13 +248,14 @@
                   
                   <!-- DD Status Display -->
                   @if (partner.ddStatus) {
-                    <div class="mt-2 flex items-center gap-2">
+                    <div class="flex items-center gap-2">
                       <span class="text-unops-xs font-medium text-gray-700">
                         {{ 'label.dueDiligence' | translate }}:
                       </span>
-                      <p-badge 
+                      <p-tag 
                         [value]="partner.ddStatus" 
                         [severity]="getDDStatusSeverity(partner.ddStatus)"
+                        [rounded]="true"
                       />
                       @if (partner.ddExpiryDate) {
                         <span class="text-unops-xs text-gray-600">
@@ -410,18 +443,12 @@
                     </div>
                   }
                   
-                  <div class="grid grid-cols-2 gap-2 text-unops-sm mt-2">
-                    <div>
-                      <span class="text-gray-600">{{ 'label.amount' | translate }}:</span>
-                      <span class="font-semibold ml-2">{{ partner.amount | number:'1.0-2' }} {{ partner.currencyCode }}</span>
+                  @if (partner.feeAmount) {
+                    <div class="text-unops-sm mt-2">
+                      <span class="text-gray-600">{{ 'label.fee' | translate }}:</span>
+                      <span class="font-semibold ml-2">{{ formatCurrency(partner.feeAmount) }}</span>
                     </div>
-                    @if (partner.feeAmount) {
-                      <div>
-                        <span class="text-gray-600">{{ 'label.fee' | translate }}:</span>
-                        <span class="font-semibold ml-2">{{ formatCurrency(partner.feeAmount) }}</span>
-                      </div>
-                    }
-                  </div>
+                  }
                   
                   <!-- USD Equivalent and Exchange Rate -->
                   @if (partner.amountUSD && partner.currencyCode !== 'USD') {
@@ -494,10 +521,14 @@
                       </div>
                     </div>
                   }
+
+                  </div>
+                  } <!-- end expandable details -->
+                  
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <p-badge [value]="calculatePercentage(partner) + '%'" severity="info" />
+                <p-tag [value]="calculatePercentage(partner) + '%'" severity="info" [rounded]="true" />
                 @if (isEditing()) {
                   <p-button
                     icon="pi pi-pencil"

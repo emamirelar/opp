@@ -6,27 +6,32 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   inject,
   OnDestroy,
   OnInit,
   signal,
   computed,
+  ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
+import { CheckboxModule } from 'primeng/checkbox';
 import { ChipModule } from 'primeng/chip';
 import { DividerModule } from 'primeng/divider';
 import { MessageModule } from 'primeng/message';
-import { PanelModule } from 'primeng/panel';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
+
+import { DocumentService } from '@shared/services/api/document.service';
+import { FeedbackDialogService } from '@shared/services/ui';
 
 import { DashboardCardComponent, DashboardCardConfig } from '@app/shared/components/data-display/dashboard-card';
 import { OpportunityService } from '@partnerships/opportunities/services/opportunity.service';
@@ -45,17 +50,17 @@ import { Subscription } from 'rxjs';
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     RouterModule,
     TranslateModule,
     AvatarModule,
     ButtonModule,
     CardModule,
+    CheckboxModule,
     ChipModule,
     DividerModule,
     MessageModule,
-    PanelModule,
     ProgressSpinnerModule,
-    TableModule,
     TagModule,
     TooltipModule,
     DashboardCardComponent,
@@ -68,14 +73,50 @@ export class OpportunityAltComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly opportunityService = inject(OpportunityService);
+  private readonly documentService = inject(DocumentService);
+  private readonly feedbackService = inject(FeedbackDialogService);
+  private readonly translate = inject(TranslateService);
+
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
   readonly loading = signal(false);
   readonly opportunity = signal<Opportunity | null>(null);
   readonly recordId = signal<number | null>(null);
 
+  readonly sidePaneExpanded = signal(false);
+  readonly activePaneSection = signal<'notifications' | 'documents' | 'ai'>('notifications');
+  readonly canUpdate = signal(true);
+
+  docPanelOpen = true;
+  aiPanelOpen = false;
+
+  // --- Document signals ---
+  readonly documents = signal<any[]>([]);
+  readonly documentsLoading = signal(false);
+  readonly documentSearch = signal('');
+  readonly selectedDocIds = signal<Set<number>>(new Set());
+
+  readonly filteredDocuments = computed(() => {
+    const query = this.documentSearch().toLowerCase().trim();
+    const docs = this.documents();
+    if (!query) return docs;
+    return docs.filter((d: any) => (d.name || '').toLowerCase().includes(query));
+  });
+
   // --- Header signals ---
   readonly opportunityName = computed(() => this.opportunity()?.name ?? '');
   readonly stageName = computed(() => this.opportunity()?.workflowStatus ?? '');
+  readonly stageNumber = computed(() => {
+    const stage = this.stageName();
+    const match = stage.match(/^(\d+)\s*-/);
+    return match ? match[1] : null;
+  });
+  readonly stageLabel = computed(() => {
+    const stage = this.stageName();
+    const idx = stage.indexOf('-');
+    return idx >= 0 ? stage.substring(idx + 1).trim() : stage;
+  });
+  readonly stageTotalSteps = computed(() => 2);
   readonly hasRecord = computed(() => this.recordId() !== null);
   readonly orgUnitName = computed(() => this.opportunity()?.responsibleOrgUnitName ?? '');
   readonly initiativeType = computed(() => this.opportunity()?.proposedInitiativeTypeName ?? '');
@@ -112,45 +153,53 @@ export class OpportunityAltComponent implements OnInit, OnDestroy {
   readonly submissionDeadline = computed(() => this.opportunity()?.submissionDeadline ?? null);
 
   // --- Dashboard card configs ---
-  readonly fundingPartnersCardConfig: DashboardCardConfig = {
-    icon: 'account_balance',
-    iconColor: 'bg-unops-primary/10',
-    title: 'Funding Partners',
-    subtitle: 'Financial contributors to this opportunity',
-    size: 'auto',
-    showViewAll: false,
-  };
+  fundingPartnersCardConfig!: DashboardCardConfig;
+  deliverablesCardConfig!: DashboardCardConfig;
+  keyDatesCardConfig!: DashboardCardConfig;
+  countriesAndSdgsCardConfig!: DashboardCardConfig;
 
-  readonly deliverablesCardConfig: DashboardCardConfig = {
-    icon: 'inventory_2',
-    iconColor: 'bg-unops-accent-orange/10',
-    title: 'Deliverables',
-    subtitle: 'Products and services',
-    size: 'auto',
-    showViewAll: false,
-  };
+  private initCardConfigs(): void {
+    this.fundingPartnersCardConfig = {
+      icon: 'account_balance',
+      iconColor: 'bg-unops-primary/10',
+      title: this.translate.instant('label.fundingPartners'),
+      subtitle: this.translate.instant('label.alt.cardSubtitle.fundingPartners'),
+      size: 'auto',
+      showViewAll: false,
+    };
 
-  readonly keyDatesCardConfig: DashboardCardConfig = {
-    icon: 'calendar_month',
-    iconColor: 'bg-unops-info/10',
-    title: 'Key Dates',
-    subtitle: 'Timeline milestones',
-    size: 'auto',
-    showViewAll: false,
-  };
+    this.deliverablesCardConfig = {
+      icon: 'inventory_2',
+      iconColor: 'bg-unops-accent-orange/10',
+      title: this.translate.instant('label.deliverables'),
+      subtitle: this.translate.instant('label.alt.cardSubtitle.deliverables'),
+      size: 'auto',
+      showViewAll: false,
+    };
 
-  readonly countriesAndSdgsCardConfig: DashboardCardConfig = {
-    icon: 'public',
-    iconColor: 'bg-unops-success/10',
-    title: 'Countries & SDGs',
-    subtitle: 'Geographic and alignment coverage',
-    size: 'auto',
-    showViewAll: false,
-  };
+    this.keyDatesCardConfig = {
+      icon: 'calendar_month',
+      iconColor: 'bg-unops-info/10',
+      title: this.translate.instant('label.alt.keyDates'),
+      subtitle: this.translate.instant('label.alt.cardSubtitle.keyDates'),
+      size: 'auto',
+      showViewAll: false,
+    };
+
+    this.countriesAndSdgsCardConfig = {
+      icon: 'public',
+      iconColor: 'bg-unops-success/10',
+      title: this.translate.instant('label.alt.countriesAndSdgs'),
+      subtitle: this.translate.instant('label.alt.cardSubtitle.countriesAndSdgs'),
+      size: 'auto',
+      showViewAll: false,
+    };
+  }
 
   private subscriptions = new Subscription();
 
   ngOnInit(): void {
+    this.initCardConfigs();
     this.subscriptions.add(
       this.route.params.subscribe(params => {
         const id = params['recordId'];
@@ -158,6 +207,7 @@ export class OpportunityAltComponent implements OnInit, OnDestroy {
           const numericId = Number(id);
           this.recordId.set(numericId);
           this.loadOpportunity(numericId);
+          this.loadDocuments();
         } else {
           this.recordId.set(null);
           this.opportunity.set(null);
@@ -186,6 +236,108 @@ export class OpportunityAltComponent implements OnInit, OnDestroy {
     );
   }
 
+  expandSidePane(section: 'notifications' | 'documents' | 'ai'): void {
+    this.activePaneSection.set(section);
+    this.sidePaneExpanded.set(true);
+  }
+
+  collapseSidePane(): void {
+    this.sidePaneExpanded.set(false);
+  }
+
+  // --- Document methods ---
+
+  private loadDocuments(): void {
+    const id = this.recordId();
+    if (!id) return;
+    this.documentsLoading.set(true);
+    this.subscriptions.add(
+      this.documentService.getDocumentsByEntity('Opportunity', id).subscribe({
+        next: (docs: any) => {
+          this.documents.set(Array.isArray(docs) ? docs : []);
+          this.documentsLoading.set(false);
+        },
+        error: () => {
+          this.documentsLoading.set(false);
+        },
+      })
+    );
+  }
+
+  isDocSelected(docId: number): boolean {
+    return this.selectedDocIds().has(docId);
+  }
+
+  toggleDocSelection(docId: number): void {
+    const current = new Set(this.selectedDocIds());
+    if (current.has(docId)) {
+      current.delete(docId);
+    } else {
+      current.add(docId);
+    }
+    this.selectedDocIds.set(current);
+  }
+
+  downloadDocument(doc: any): void {
+    this.subscriptions.add(
+      this.documentService.downloadDocument(doc.id).subscribe({
+        next: (blob: Blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = doc.name || 'document';
+          a.click();
+          window.URL.revokeObjectURL(url);
+        },
+      })
+    );
+  }
+
+  deleteDocument(doc: any): void {
+    this.feedbackService.showConfirmDialog(
+      {
+        summary: this.translate.instant('button.delete'),
+        detail: this.translate.instant('message.confirmDeleteDocument'),
+      },
+      () => {
+        this.subscriptions.add(
+          this.documentService.deleteDocument(doc.id).subscribe({
+            next: () => {
+              this.loadDocuments();
+              this.feedbackService.showSuccessToast({
+                summary: this.translate.instant('message.success'),
+                detail: this.translate.instant('message.documentDeleted'),
+              });
+            },
+          })
+        );
+      }
+    );
+  }
+
+  triggerFileUpload(): void {
+    this.fileInput?.nativeElement?.click();
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !this.recordId()) return;
+
+    this.subscriptions.add(
+      this.documentService.uploadDocument(file, 'Opportunity', this.recordId()!).subscribe({
+        next: () => {
+          this.loadDocuments();
+          this.feedbackService.showSuccessToast({
+            summary: this.translate.instant('message.success'),
+            detail: this.translate.instant('message.documentUploaded'),
+          });
+        },
+      })
+    );
+    input.value = '';
+  }
+
   navigateToOriginal(): void {
     const id = this.recordId();
     if (id) {
@@ -193,6 +345,10 @@ export class OpportunityAltComponent implements OnInit, OnDestroy {
     } else {
       this.router.navigate(['/partnerships/opportunities']);
     }
+  }
+
+  onPartnerImageError(event: Event): void {
+    (event.target as HTMLImageElement).src = 'assets/images/Partner.png';
   }
 
   getStageSeverity(): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {

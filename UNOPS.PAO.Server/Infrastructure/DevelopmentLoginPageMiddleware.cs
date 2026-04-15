@@ -28,7 +28,7 @@ public class DevelopmentLoginPageMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (!_environment.IsDevelopment() || !context.Request.Path.StartsWithSegments("/dev-login"))
+        if ((!_environment.IsDevelopment() && !_environment.IsEnvironment("Local")) || !context.Request.Path.StartsWithSegments("/dev-login"))
         {
             await _next(context);
             return;

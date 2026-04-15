@@ -107,20 +107,20 @@
                 </div>
               </div>
               <div class="flex items-center gap-3 flex-shrink-0 flex-wrap justify-end">
-                @if ((opportunity()?.status || '').toLowerCase() === 'closed') {
-                  <span class="px-2 py-1 text-unops-xs rounded-full bg-badge-danger text-badge-danger whitespace-nowrap">{{ opportunity()?.status || '' }}</span>
-                } @else {
-                  <p-badge
+                @if (opportunity()?.status) {
+                  <p-tag
                     [value]="opportunity()?.status || ''"
                     [severity]="getStatusSeverity(opportunity()?.status)"
-                    styleClass="whitespace-nowrap"
+                    [rounded]="true"
+                    styleClass="whitespace-nowrap text-unops-xs"
                   />
                 }
                 @if (opportunity()?.stage) {
-                  <p-badge
+                  <p-tag
                     [value]="opportunity()?.stage || ''"
                     severity="warn"
-                    styleClass="whitespace-nowrap"
+                    [rounded]="true"
+                    styleClass="whitespace-nowrap text-unops-xs"
                   />
                 }
                 @if (oupEngagementUrl()) {
@@ -262,21 +262,15 @@
           <div class="px-unops-md md:px-unops-2xl py-3 border-t border-unops-neutral-300">
             <!-- Loading Progress Strip -->
             @if (showProgressBar()) {
-              <div 
-                class="loading-progress-strip mb-3 transition-all duration-300"
-              >
+              <div class="loading-progress-strip mb-3">
                 <div class="flex items-center justify-between gap-4">
-                  <!-- Progress Bar -->
                   <div class="flex-1 min-w-0">
-                    <div class="w-full bg-unops-neutral-200 rounded-full h-1.5 overflow-hidden">
-                      <div 
-                        class="bg-unops-primary h-1.5 rounded-full transition-all duration-500 ease-out"
-                        [style.width.%]="progressPercentage()"
-                      ></div>
-                    </div>
+                    <p-progressbar
+                      [value]="progressPercentage()"
+                      [showValue]="false"
+                      [style]="{ height: '6px' }"
+                    />
                   </div>
-                  
-                  <!-- Progress Text -->
                   <div class="flex items-center gap-3 text-unops-sm text-unops-neutral-700 flex-shrink-0">
                     <span class="flex items-center gap-2">
                       <i class="pi pi-spin pi-spinner text-unops-primary text-unops-sm"></i>
@@ -287,18 +281,21 @@
                     </span>
                   </div>
                 </div>
-                
-                <!-- Accessibility: Screen reader announcement -->
-                <div 
-                  role="status" 
-                  aria-live="polite" 
-                  aria-atomic="true"
-                  class="sr-only"
-                >
-                  {{ progressMessage() }}
-                </div>
               </div>
             }
+
+            <!-- Mobile: Open Documents Drawer button -->
+            <div class="md:hidden mb-2">
+              <p-button
+                [label]="'title.documents' | translate"
+                icon="pi pi-folder-open"
+                [outlined]="true"
+                severity="secondary"
+                size="small"
+                (onClick)="mobileDocumentsVisible = true"
+                styleClass="w-full"
+              />
+            </div>
 
             <!-- Mobile/Tablet: Dropdown (hidden on lg and above) -->
             <div class="lg:hidden">
@@ -341,12 +338,18 @@
                     (click)="scrollToSection(section.id)"
                     [class]="
                       activeSection() === section.id
-                        ? 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-primary text-unops-primary-on font-medium text-unops-sm transition-all duration-200 whitespace-nowrap shadow-unops-sm'
-                        : 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-surface-primary text-unops-neutral-700 hover:bg-unops-neutral-200 font-medium text-unops-sm transition-all duration-200 whitespace-nowrap'
+                        ? 'relative flex items-center gap-2 px-4 py-2 rounded-full bg-unops-primary text-unops-primary-on font-medium text-unops-sm transition-all duration-200 whitespace-nowrap shadow-unops-sm'
+                        : 'relative flex items-center gap-2 px-4 py-2 rounded-full bg-unops-surface-primary text-unops-neutral-700 hover:bg-unops-neutral-200 font-medium text-unops-sm transition-all duration-200 whitespace-nowrap'
                     "
                   >
                     <i [class]="'pi ' + section.icon + ' text-unops-sm'"></i>
                     <span>{{ section.label | translate }}</span>
+                    @if (sectionsWithUnsavedChanges().has(section.id)) {
+                      <span class="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                      </span>
+                    }
                   </button>
                 }
                 
@@ -386,12 +389,32 @@
       </div>
     </div>
 
+    <!-- Mobile Documents Drawer -->
+    <p-drawer
+      [(visible)]="mobileDocumentsVisible"
+      position="left"
+      [style]="{ width: '85vw', 'max-width': '400px' }"
+      styleClass="md:hidden"
+      [modal]="true"
+    >
+      <ng-template pTemplate="header">
+        <span class="font-semibold text-unops-sm">{{ 'title.documents' | translate }}</span>
+      </ng-template>
+      <app-opportunity-documents
+        [opportunityId]="opportunity()!.id!"
+        [opportunity]="opportunity()"
+        [collapsed]="false"
+        [canUpdate]="canUpdate()"
+        (togglePanel)="mobileDocumentsVisible = false"
+        (opportunityUpdated)="handleDocumentUploaded()"
+      />
+    </p-drawer>
+
     <!-- Scrollable Content Area - Documents Panel + Content Sections -->
     <div #contentScrollContainer class="flex flex-1 min-h-0 overflow-y-auto">
-      <!-- LEFT: Documents Panel (hidden on mobile by default) -->
+      <!-- LEFT: Documents Panel (desktop only - inline sidebar) -->
       <div
-        class="flex-shrink-0 bg-unops-surface-primary sticky top-0 transition-all duration-300"
-        [class.hidden]="documentsCollapsed() && innerWidth() < 768"
+        class="hidden md:block flex-shrink-0 bg-unops-surface-primary sticky top-0 transition-all duration-300"
         style="align-self: flex-start"
       >
         <app-opportunity-documents
@@ -438,6 +461,13 @@
               (changesDetected)="handleSectionChangesDetected('overview')"
               (changesSavedOrDiscarded)="handleSectionChangesSaved('overview')"
             />
+          </div>
+
+          <!-- ══════ Core Details ══════ -->
+          <div class="flex items-center gap-3 pt-2" aria-hidden="true">
+            <div class="flex-1 border-t border-unops-neutral-300"></div>
+            <span class="text-unops-xs font-semibold tracking-wide uppercase text-unops-neutral-500">{{ 'label.sectionGroup.coreDetails' | translate }}</span>
+            <div class="flex-1 border-t border-unops-neutral-300"></div>
           </div>
 
           <!-- WHAT Section -->
@@ -538,6 +568,13 @@
             />
           </div>
 
+          <!-- ══════ Assessment ══════ -->
+          <div class="flex items-center gap-3 pt-2" aria-hidden="true">
+            <div class="flex-1 border-t border-unops-neutral-300"></div>
+            <span class="text-unops-xs font-semibold tracking-wide uppercase text-unops-neutral-500">{{ 'label.sectionGroup.assessment' | translate }}</span>
+            <div class="flex-1 border-t border-unops-neutral-300"></div>
+          </div>
+
           <!-- Risks Section - Insights & Recommendations -->
           <div 
             id="section-risks"
@@ -553,6 +590,13 @@
               (opportunityUpdated)="handleOpportunityUpdate($event)"
               (changesDetected)="handleSectionChangesDetected('risks')"
               (changesSavedOrDiscarded)="handleSectionChangesSaved('risks')" />
+          </div>
+
+          <!-- ══════ Supporting ══════ -->
+          <div class="flex items-center gap-3 pt-2" aria-hidden="true">
+            <div class="flex-1 border-t border-unops-neutral-300"></div>
+            <span class="text-unops-xs font-semibold tracking-wide uppercase text-unops-neutral-500">{{ 'label.sectionGroup.supporting' | translate }}</span>
+            <div class="flex-1 border-t border-unops-neutral-300"></div>
           </div>
 
           <!-- Related Items Section -->

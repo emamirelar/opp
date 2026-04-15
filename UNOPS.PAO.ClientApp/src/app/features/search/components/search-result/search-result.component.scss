@@ -30,10 +30,9 @@
     }
 
     /* Better focus states for mobile dropdown */
-    select:focus {
-      outline: none;
-      ring: 2px;
-      ring-offset: 2px;
+    select:focus-visible {
+      outline: 2px solid var(--unops-primary);
+      outline-offset: 2px;
     }
 
     /* Improved touch targets */

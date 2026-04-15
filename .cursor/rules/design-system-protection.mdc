@@ -93,7 +93,7 @@ This applies even if the styling change seems minor or cosmetic.
 |---|---|
 | Tailwind UNOPS classes | `bg-unops-primary`, `p-unops-md`, `rounded-unops-md`, `text-unops-sm` |
 | CSS custom properties | `var(--unops-primary)`, `var(--unops-spacing-md)`, `var(--unops-radius-md)` |
-| SCSS variables | `$unops-primary`, `$unops-font-size-base`, `$unops-spacing-lg` |
+| SCSS variables | `$unops-primary`, `$font-size-base`, `$unops-spacing-lg` |
 | PrimeNG theme tokens | Tokens from `unops.preset.ts` (Material-based preset) |
 
 ### Prohibited Patterns
@@ -112,7 +112,7 @@ padding: var(--unops-spacing-md);
 /* WRONG — hard-coded font size */
 font-size: 14px;
 /* CORRECT */
-font-size: var(--unops-font-size-sm);
+font-size: var(--font-size-sm);
 
 /* WRONG — hard-coded border radius */
 border-radius: 8px;

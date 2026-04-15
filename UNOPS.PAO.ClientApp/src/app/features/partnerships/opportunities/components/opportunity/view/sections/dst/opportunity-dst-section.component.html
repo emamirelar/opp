@@ -69,8 +69,16 @@
     </div>
   </ng-template>
 
-    <div class="space-y-6">
-      <!-- Risks and Recommendations Grid -->
+    <p-accordion [multiple]="true" [activeIndex]="[0]" styleClass="dst-accordion">
+      <!-- Risks & Recommendations -->
+      <p-accordionTab>
+        <ng-template pTemplate="header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-exclamation-triangle text-unops-warning"></i>
+            <span class="font-semibold">{{ 'title.dst.risksAndRecommendations' | translate }}</span>
+            <p-tag [value]="risks().length + ' + ' + visibleRecommendations().length" severity="secondary" [rounded]="true" />
+          </div>
+        </ng-template>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Risks from Register (Left Panel) -->
         <div>
@@ -284,8 +292,20 @@
         </div>
       </div>
 
-      <!-- High Risk Acknowledgement Section -->
-      <div class="bg-slate-50 border border-slate-200 rounded-unops-lg p-4 mt-4">
+      </p-accordionTab>
+
+      <!-- High Risk Acknowledgement -->
+      <p-accordionTab>
+        <ng-template pTemplate="header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-shield text-unops-warning"></i>
+            <span class="font-semibold">{{ 'label.dst.highRiskAcknowledgement' | translate }}</span>
+            @if (highRiskAcknowledged) {
+              <p-tag value="Acknowledged" severity="success" [rounded]="true" />
+            }
+          </div>
+        </ng-template>
+      <div class="bg-slate-50 border border-slate-200 rounded-unops-lg p-4">
         <div class="flex items-start gap-3">
           <p-checkbox
             [(ngModel)]="highRiskAcknowledged"
@@ -302,20 +322,22 @@
         </div>
       </div>
 
-      <p-divider />
+      </p-accordionTab>
 
-    <!-- Similar Opportunities Section -->
+      <!-- Similar Opportunities -->
+      <p-accordionTab>
+        <ng-template pTemplate="header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-search text-unops-primary"></i>
+            <span class="font-semibold">{{ 'title.dst.similarOpportunities' | translate }}</span>
+            @if (similarOpportunities(); as opportunities) {
+              <p-tag [value]="'' + opportunities.length" severity="info" [rounded]="true" />
+            }
+          </div>
+        </ng-template>
       <div>
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-unops-lg font-semibold text-unops-secondary flex items-center gap-2">
-          <i class="pi pi-search text-unops-primary"></i>
-          <span>
-            {{ 'title.dst.similarOpportunities' | translate }}
-            @if (similarOpportunities(); as opportunities) {
-              ({{ opportunities.length }})
-            }
-          </span>
-        </h3>
+        <h3 class="sr-only">{{ 'title.dst.similarOpportunities' | translate }}</h3>
         <p-button
           icon="pi pi-refresh"
           [text]="true"
@@ -418,19 +440,22 @@
         }
     </div>
 
-    <p-divider />
-    
+      </p-accordionTab>
+
+      <!-- Relevant UNOPS Experience -->
+      <p-accordionTab>
+        <ng-template pTemplate="header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-box text-unops-primary"></i>
+            <span class="font-semibold">{{ 'title.dst.relevantUnopsExperience' | translate }}</span>
+            @if (similarProjects(); as projects) {
+              <p-tag [value]="'' + projects.length" severity="info" [rounded]="true" />
+            }
+          </div>
+        </ng-template>
     <div>
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-unops-lg font-semibold text-unops-secondary flex items-center gap-2">
-          <i class="pi pi-box text-unops-primary"></i>
-          <span>
-            {{ 'title.dst.relevantUnopsExperience' | translate }}
-            @if (similarProjects(); as projects) {
-              ({{ projects.length }})
-            }
-          </span>
-        </h3>
+        <h3 class="sr-only">{{ 'title.dst.relevantUnopsExperience' | translate }}</h3>
         <p-button
           icon="pi pi-refresh"
           [text]="true"
@@ -545,8 +570,8 @@
           </div>
         }
       </div>
-
-    </div>
+      </p-accordionTab>
+    </p-accordion>
   
   <!-- Footer with Unsaved Changes Warning -->
   <ng-template pTemplate="footer">

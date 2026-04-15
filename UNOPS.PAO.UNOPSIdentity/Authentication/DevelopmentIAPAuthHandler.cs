@@ -27,8 +27,8 @@ public class DevelopmentIAPAuthHandler : IMiddleware
 
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
-        // Only apply in Development environment
-        if (_environment.IsDevelopment())
+        // Only apply in Development or Local environment
+        if (_environment.IsDevelopment() || _environment.IsEnvironment("Local"))
         {
             _logger.LogInformation("DevelopmentIAPAuthHandler running for path: {Path}", context.Request.Path);
             
@@ -73,8 +73,46 @@ public class DevelopmentIAPAuthHandler : IMiddleware
                 }
                 else
                 {
-                    _logger.LogWarning("No dev cookie found for API call: {Path}", context.Request.Path);
-                    _lastProcessedEmail = string.Empty;
+                    var autoEmail = GetDevelopmentUserEmail(context);
+                    if (!string.IsNullOrEmpty(autoEmail) && autoEmail != "dev.user@unops.org")
+                    {
+                        _logger.LogInformation("Auto-setting dev cookie for API call: {Path} with user: {Email}", 
+                            context.Request.Path, autoEmail);
+                        
+                        context.Response.Cookies.Append("dev-user-email", autoEmail, new CookieOptions
+                        {
+                            HttpOnly = false,
+                            Secure = context.Request.IsHttps,
+                            SameSite = SameSiteMode.Lax,
+                            Path = "/",
+                            Expires = DateTimeOffset.Now.AddDays(7)
+                        });
+                        context.Response.Cookies.Append("DevIAPAuth", autoEmail, new CookieOptions
+                        {
+                            HttpOnly = true,
+                            Secure = context.Request.IsHttps,
+                            SameSite = SameSiteMode.Lax,
+                            Path = "/",
+                            Expires = DateTimeOffset.Now.AddDays(7)
+                        });
+                        
+                        _lastProcessedEmail = autoEmail;
+                        
+                        context.Request.Headers.Remove("X-Goog-Authenticated-User-Email");
+                        context.Request.Headers.Remove("X-Goog-Iap-Jwt-Assertion");
+                        context.Request.Headers.Remove("X-Dev-IAP-Simulation");
+                        context.Request.Headers.Remove("X-Dev-Auth-Timestamp");
+                        
+                        context.Request.Headers.Append("X-Goog-Authenticated-User-Email", $"accounts.google.com:{autoEmail}");
+                        context.Request.Headers.Append("X-Goog-Iap-Jwt-Assertion", "dev-jwt-placeholder");
+                        context.Request.Headers.Append("X-Dev-IAP-Simulation", "true");
+                        context.Request.Headers.Append("X-Dev-Auth-Timestamp", DateTime.UtcNow.Ticks.ToString());
+                    }
+                    else
+                    {
+                        _logger.LogWarning("No dev cookie found for API call: {Path}", context.Request.Path);
+                        _lastProcessedEmail = string.Empty;
+                    }
                 }
                 
                 await next(context);
@@ -167,31 +205,45 @@ public class DevelopmentIAPAuthHandler : IMiddleware
             }
             else
             {
-                _logger.LogWarning("No dev cookies (dev-user-email or DevIAPAuth) found in request");
-                
-                // Reset last processed email if we no longer have cookies
-                if (!string.IsNullOrEmpty(_lastProcessedEmail))
+                var autoEmail = GetDevelopmentUserEmail(context);
+                if (!string.IsNullOrEmpty(autoEmail) && autoEmail != "dev.user@unops.org")
                 {
-                    _logger.LogWarning("Clearing last processed user email: {Email}", _lastProcessedEmail);
-                    _lastProcessedEmail = string.Empty;
-                }
-                
-                // If no dev cookie and trying to access a page that needs auth, 
-                // redirect to dev login instead of regular login
-                if (context.Request.Path.Value?.EndsWith("/login") == false && 
-                    !context.Request.Path.Value?.Contains("/dev-login") == true &&
-                    !context.Request.Path.Value?.StartsWith("/api/dev/") == true &&
-                    !context.Request.Path.Value?.StartsWith("/api/user/") == true &&
-                    !context.Request.Path.Value?.StartsWith("/assets/") == true)
-                {
-                    // Try to check if this is an authenticated request first
-                    if (context.User?.Identity?.IsAuthenticated != true)
+                    _logger.LogInformation("Auto-setting dev cookies for page request: {Path} with user: {Email}",
+                        context.Request.Path, autoEmail);
+                    
+                    context.Response.Cookies.Append("dev-user-email", autoEmail, new CookieOptions
                     {
-                        _logger.LogInformation("Redirecting to dev-login for unauthenticated request to: {Path}", 
-                            context.Request.Path);
-                        context.Response.Redirect("/dev-login");
-                        return;
-                    }
+                        HttpOnly = false,
+                        Secure = context.Request.IsHttps,
+                        SameSite = SameSiteMode.Lax,
+                        Path = "/",
+                        Expires = DateTimeOffset.Now.AddDays(7)
+                    });
+                    context.Response.Cookies.Append("DevIAPAuth", autoEmail, new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = context.Request.IsHttps,
+                        SameSite = SameSiteMode.Lax,
+                        Path = "/",
+                        Expires = DateTimeOffset.Now.AddDays(7)
+                    });
+                    
+                    _lastProcessedEmail = autoEmail;
+                    
+                    context.Request.Headers.Remove("X-Goog-Authenticated-User-Email");
+                    context.Request.Headers.Remove("X-Goog-Iap-Jwt-Assertion");
+                    context.Request.Headers.Remove("X-Dev-IAP-Simulation");
+                    context.Request.Headers.Remove("X-Dev-Auth-Timestamp");
+                    
+                    context.Request.Headers["X-Goog-Authenticated-User-Email"] = $"accounts.google.com:{autoEmail}";
+                    context.Request.Headers["X-Goog-Iap-Jwt-Assertion"] = "dev-jwt-placeholder";
+                    context.Request.Headers["X-Dev-IAP-Simulation"] = "true";
+                    context.Request.Headers["X-Dev-Auth-Timestamp"] = DateTime.UtcNow.Ticks.ToString();
+                }
+                else
+                {
+                    _logger.LogWarning("No dev cookies found and no configured email for: {Path}", context.Request.Path);
+                    _lastProcessedEmail = string.Empty;
                 }
             }
         }

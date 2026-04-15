@@ -24,6 +24,7 @@ import { MessageModule } from 'primeng/message';
 import { TooltipModule } from 'primeng/tooltip';
 import { TreeSelectModule } from 'primeng/treeselect';
 import { CheckboxModule } from 'primeng/checkbox';
+import { AccordionModule } from 'primeng/accordion';
 import { FormsModule } from '@angular/forms';
 import { TreeNode } from 'primeng/api';
 
@@ -90,6 +91,7 @@ import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.servi
     TooltipModule,
     TreeSelectModule,
     CheckboxModule,
+    AccordionModule,
   ],
   templateUrl: './opportunity-dst-section.component.html',
   styleUrls: ['./opportunity-dst-section.component.scss'],

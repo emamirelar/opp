@@ -2,3 +2,52 @@
   display: block;
   height: 100%;
 }
+
+.stat-cards-grid {
+  grid-template-columns: repeat(auto-fill, minmax(192px, 1fr));
+}
+
+.stat-cards-grid > ::ng-deep p-card {
+  min-width: 182px;
+}
+
+// Main content adjusts right margin so it doesn't sit behind the fixed sidebar
+.main-content {
+  height: 100%;
+  overflow: auto;
+  transition: margin-right 0.3s ease-in-out;
+
+  &--pane-collapsed {
+    margin-right: 64px;
+  }
+
+  &--pane-expanded {
+    margin-right: 280px;
+  }
+}
+
+// Fixed right sidebar
+.side-pane {
+  &--collapsed {
+    width: 64px;
+  }
+
+  &--expanded {
+    width: 280px;
+  }
+
+  &__rail,
+  &__content {
+    background: var(--unops-surface-cool);
+  }
+
+  .doc-panel__surface {
+    background: var(--unops-surface);
+  }
+}
+
+.side-pane__content {
+  background: var(--unops-surface-cool);
+  border-radius: 30px;
+  border: 2px solid var(--unops-neutral-300);
+}

@@ -1,4 +1,4 @@
-﻿<div class="dashboard-card bg-unops-surface-primary rounded-unops-lg shadow-unops-md border border-unops-neutral-200 overflow-hidden"
+<div class="dashboard-card bg-unops-surface-primary rounded-unops-lg shadow-unops-md border border-unops-neutral-200 overflow-hidden"
      [style.height]="cardHeight"
      [class.card-size-auto]="cardSize === 'auto'"
      [class.card-size-fixed]="cardSize === 'fixed'"
@@ -53,7 +53,7 @@
             <button 
               class="px-unops-md py-unops-sm rounded-unops-md font-unops-body text-unops-body-small font-unops-medium transition-all duration-unops-short border"
               [class.bg-unops-primary]="filter.active"
-              [class.text-unops-white]="filter.active"
+              [class.text-white]="filter.active"
               [class.border-unops-primary]="filter.active"
               [class.bg-unops-surface-cool]="!filter.active"
               [class.text-unops-neutral-700]="!filter.active"
@@ -105,7 +105,7 @@
               type="button" 
               icon="pi pi-plus" 
               [label]="config.emptyStateActionLabel"
-              class="p-button-sm unops-button-primary"
+              class="p-button-sm"
               (click)="onEmptyStateAction()">
             </button>
           }

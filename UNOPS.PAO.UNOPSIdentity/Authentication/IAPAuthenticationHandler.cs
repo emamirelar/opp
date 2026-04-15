@@ -246,7 +246,7 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
             var env = Context.RequestServices.GetService(typeof(IWebHostEnvironment)) as IWebHostEnvironment;
             var config = Context.RequestServices.GetService(typeof(IConfiguration)) as IConfiguration;
             
-            if (env?.IsDevelopment() == true && 
+            if ((env?.IsDevelopment() == true || env?.IsEnvironment("Local") == true) && 
                 config?.GetValue<bool>("Development:IAPSimulation:Enabled", false) == true)
             {
                 // Look for dev auth cookie first
@@ -391,7 +391,7 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
                 // In development mode, also trust the configured dev user for testing
                 var devEnv = Context.RequestServices.GetService(typeof(IWebHostEnvironment)) as IWebHostEnvironment;
                 var devConfig = Context.RequestServices.GetService(typeof(IConfiguration)) as IConfiguration;
-                if (devEnv?.IsDevelopment() == true)
+                if (devEnv?.IsDevelopment() == true || devEnv?.IsEnvironment("Local") == true)
                 {
                     var configuredDevEmail = devConfig?.GetValue<string>("Development:IAPSimulation:UserEmail");
                     if (!string.IsNullOrEmpty(configuredDevEmail) && 
@@ -513,7 +513,7 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         var hostEnv = Context.RequestServices.GetService(typeof(IWebHostEnvironment)) as IWebHostEnvironment;
         var appConfig = Context.RequestServices.GetService(typeof(IConfiguration)) as IConfiguration;
         
-        if (hostEnv?.IsDevelopment() == true && 
+        if ((hostEnv?.IsDevelopment() == true || hostEnv?.IsEnvironment("Local") == true) && 
             appConfig?.GetValue<bool>("Development:IAPSimulation:Enabled", false) == true)
         {
             // Set a dev auth cookie to persist authentication (use effective user for consistency)
@@ -543,7 +543,7 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         var hostingEnv = Context.RequestServices.GetService(typeof(IWebHostEnvironment)) as IWebHostEnvironment;
         var appConfiguration = Context.RequestServices.GetService(typeof(IConfiguration)) as IConfiguration;
         
-        if (hostingEnv?.IsDevelopment() == true)
+        if (hostingEnv?.IsDevelopment() == true || hostingEnv?.IsEnvironment("Local") == true)
         {
             // Skip validation in development if configured
             if (appConfiguration?.GetValue<bool>("Development:IAPSimulation:SkipValidationInDevelopment", false) == true)

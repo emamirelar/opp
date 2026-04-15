@@ -8,6 +8,11 @@
   border-color: var(--p-inputtext-border-color) !important;
 }
 
+.search-input-no-focus-border:focus-visible {
+  outline: 2px solid var(--unops-primary) !important;
+  outline-offset: -2px !important;
+}
+
 // Ensure search input text doesn't overlap the search icon (PNO-964)
 // PrimeNG's pInputText overrides Tailwind's pl-9 padding
 .search-input-no-focus-border.p-inputtext {

@@ -58,13 +58,16 @@ public class Startup
 
     public IConfiguration Configuration { get; }
     private IWebHostEnvironment CurrentEnvironment { get; }
+    
+    private static bool IsLocalDev(IWebHostEnvironment env) =>
+        env.IsDevelopment() || env.IsEnvironment("Local");
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
     {
         var myAllowSpecificOrigins = "AllowAll";
 
         // Configure the HTTP request pipeline.
-        if (!env.IsDevelopment())
+        if (!IsLocalDev(env))
         {
             // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
             app.UseHsts();
@@ -91,8 +94,8 @@ public class Startup
         // Add diagnostic logging middleware to check headers FIRST
         app.UseMiddleware<AuthenticationLoggingMiddleware>();
         
-        // Add IAP simulation in development BEFORE verification - must add headers first
-        if (env.IsDevelopment())
+        // Add IAP simulation in development/local BEFORE verification - must add headers first
+        if (IsLocalDev(env))
         {
             // Development login page middleware
             app.UseWhen(
@@ -108,7 +111,7 @@ public class Startup
         app.UseIAPVerification();
         
         // Add a second instance of logging AFTER development middleware to see modified headers in development
-        if (env.IsDevelopment())
+        if (IsLocalDev(env))
         {
             app.Use(async (context, next) =>
             {
@@ -135,7 +138,7 @@ public class Startup
             });
         }
         
-        if (!env.IsDevelopment())
+        if (!IsLocalDev(env))
         {
             app.UseHttpsRedirection();
         }
@@ -533,7 +536,7 @@ public class Startup
 
     private void ConfigureDataAccess(ServiceRegistry services)
     {
-        string? connectionString = !CurrentEnvironment.IsDevelopment() && !CurrentEnvironment.IsEnvironment("Testing") ? GetConnectionStringFromSecretManager() : Configuration.GetConnectionString("DbContext");
+        string? connectionString = !IsLocalDev(CurrentEnvironment) && !CurrentEnvironment.IsEnvironment("Testing") ? GetConnectionStringFromSecretManager() : Configuration.GetConnectionString("DbContext");
 
         if (connectionString == null)
             throw new Exception("Connection string cannot be null. " +
@@ -543,7 +546,7 @@ public class Startup
         // Check if IAM authentication is enabled (ONLY for local development)
         // In Dev/QA/Prod, connection strings from Secret Manager already have proper credentials
         var connectionStringsSection = Configuration.GetSection("ConnectionStrings");
-        var useIamAuth = CurrentEnvironment.IsDevelopment() && 
+        var useIamAuth = IsLocalDev(CurrentEnvironment) && 
                          connectionStringsSection.GetValue<bool>("UseIamAuthentication", false);
         DataAccess.Services.CloudSqlIamAuthProvider.IsEnabled = useIamAuth;
 

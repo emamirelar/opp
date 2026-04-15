@@ -16,6 +16,8 @@ import { ChipModule } from 'primeng/chip';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
+import { TreeModule } from 'primeng/tree';
+import { TreeNode as PrimeTreeNode } from 'primeng/api';
 
 // Services and Models
 import { ValuesService, SimpleValue, OrganizationUnit, Output, OutputSemanticSearchMatch, OutputSemanticSearchResponse } from '@shared/services/api/values.service';
@@ -83,6 +85,7 @@ export interface TreeNode {
     TooltipModule,
     DialogModule,
     InputTextModule,
+    TreeModule,
   ],
   templateUrl: './opportunity-what-section.component.html',
   styleUrls: ['./opportunity-what-section.component.scss'],
@@ -238,6 +241,41 @@ export class OpportunityWhatSectionComponent implements OnInit {
     
     return this.filterTreeBySearch(tree, query);
   });
+
+  /**
+   * @description Convert filtered tree data to PrimeNG TreeNode[] format for the p-tree component.
+   * Preserves all custom data in the `data` property for the custom nodeTemplate.
+   */
+  readonly primeTreeNodes = computed((): PrimeTreeNode[] => {
+    const expanded = this.expandedNodes();
+    const convertNode = (node: TreeNode): PrimeTreeNode => ({
+      key: node.id,
+      label: node.label,
+      data: node,
+      expanded: expanded.has(node.id),
+      leaf: node.children.length === 0,
+      children: node.children.map(convertNode),
+    });
+    return this.filteredTreeData().map(convertNode);
+  });
+
+  /**
+   * @description Handle PrimeNG tree node expand event — sync with internal expandedNodes state
+   */
+  onPrimeNodeExpand(event: { node: PrimeTreeNode }): void {
+    const current = new Set(this.expandedNodes());
+    current.add(event.node.key as string);
+    this.expandedNodes.set(current);
+  }
+
+  /**
+   * @description Handle PrimeNG tree node collapse event — sync with internal expandedNodes state
+   */
+  onPrimeNodeCollapse(event: { node: PrimeTreeNode }): void {
+    const current = new Set(this.expandedNodes());
+    current.delete(event.node.key as string);
+    this.expandedNodes.set(current);
+  }
 
   /**
    * Computed signal to detect if procurement expert is required

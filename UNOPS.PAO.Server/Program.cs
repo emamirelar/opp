@@ -22,12 +22,13 @@ public partial class Program
             {
                 webBuilder.ConfigureKestrel((context, options) =>
                 {
+                    var isLocalDev = environment is null or "Development" or "Local";
                     options.ListenAnyIP(7123, listenOptions =>
                     {
-                        listenOptions.Protocols = environment is null or "Development"
+                        listenOptions.Protocols = isLocalDev
                             ? HttpProtocols.Http1AndHttp2
                             : HttpProtocols.Http2;
-                        if (environment is null or "Development") listenOptions.UseHttps();
+                        if (isLocalDev) listenOptions.UseHttps();
                     });
                     options.ListenAnyIP(5159, listenOptions =>
                     {
@@ -72,7 +73,7 @@ public partial class Program
                                 .AllowAnyMethod();
                         });
                     });
-                    if (environment is null or "Development")
+                    if (environment is null or "Development" or "Local")
                     {
                         // Expose the WebAPI endpoints to swagger
                         services.AddEndpointsApiExplorer();

@@ -40,6 +40,8 @@ import { FileUploadModule } from 'primeng/fileupload';
 import { TooltipModule } from 'primeng/tooltip';
 import { DropdownModule } from 'primeng/dropdown';
 import { SelectModule } from 'primeng/select';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { DrawerModule } from 'primeng/drawer';
 import { MarkdownModule } from 'ngx-markdown';
 
 // Workflow components
@@ -120,6 +122,8 @@ import { OpportunityDecisionInfoPanelComponent } from '../opportunity-decision-i
     TooltipModule,
     DropdownModule,
     SelectModule,
+    ProgressBarModule,
+    DrawerModule,
     MarkdownModule,
     StageWorkflowComponent,
     RequirementsValidationComponent,
@@ -208,7 +212,8 @@ export class OpportunityViewComponent
     return progress.completed === progress.total;
   });
   showAIPanel = signal<boolean>(true); // AI Assistant panel toggle state
-  documentsCollapsed = signal(true); // Document panel state
+  documentsCollapsed = signal(true); // Document panel state (desktop)
+  mobileDocumentsVisible = false; // Drawer visibility for mobile documents panel
   activeSection = signal<string>(''); // Active section for navigation - will be set from route params
   headerScrolled = signal<boolean>(false); // Header shrunk state when scrolled
   innerWidth = signal<number>(window.innerWidth); // Track window width for responsive behavior

@@ -39,9 +39,8 @@
   }
   
   &:disabled {
-    opacity: 0.5 !important;
     cursor: not-allowed !important;
-    color: var(--unops-neutral-400) !important;
+    color: var(--unops-neutral-500) !important;
   }
   
   /* Icon size adjustments */
@@ -304,7 +303,7 @@
 
 /* Color utilities */
 .unops-text-primary {
-  color: var(--unops-primary) !important;
+  color: var(--unops-primary-text) !important;
 }
 
 .unops-text-secondary {

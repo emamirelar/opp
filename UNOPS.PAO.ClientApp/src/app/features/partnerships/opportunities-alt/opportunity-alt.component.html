@@ -3,7 +3,12 @@
     <p-progressSpinner strokeWidth="4" />
   </div>
 } @else if (hasRecord() && opportunity()) {
-  <div class="flex flex-col gap-6 p-4 sm:p-6 md:px-8">
+
+  <!-- ============================================================ -->
+  <!-- MAIN CONTENT AREA                                            -->
+  <!-- ============================================================ -->
+  <div class="main-content" [class.main-content--pane-collapsed]="!sidePaneExpanded()" [class.main-content--pane-expanded]="sidePaneExpanded()">
+    <div class="flex flex-col gap-6 p-4 sm:p-6 md:px-8">
 
     <!-- ============================================================ -->
     <!-- PAGE HEADER: Avatar + Name + Stage + Subtitle                -->
@@ -36,15 +41,6 @@
           }
         </div>
       </div>
-      <p-button
-        icon="pi pi-external-link"
-        [text]="true"
-        [rounded]="true"
-        severity="secondary"
-        (onClick)="navigateToOriginal()"
-        pTooltip="View original"
-        tooltipPosition="left"
-      />
     </div>
 
     <p-divider />
@@ -52,7 +48,7 @@
     <!-- ============================================================ -->
     <!-- STAT CARDS ROW (Sakai-style summary)                         -->
     <!-- ============================================================ -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
+    <div class="stat-cards-grid grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-4 items-stretch">
 
       <!-- Budget Card -->
       <p-card styleClass="shadow-unops-sm h-full">
@@ -73,19 +69,41 @@
         </div>
       </p-card>
 
-      <!-- Total Funding Card -->
+
+      <!-- Current Stage Card -->
       <p-card styleClass="shadow-unops-sm h-full">
         <div class="flex justify-between items-start">
           <div class="flex flex-col gap-1">
-            <span class="text-unops-sm font-medium text-unops-neutral-600">
-              {{ fundingPartnerCount() }} {{ 'label.fundingPartners' | translate }}
-            </span>
-            <span class="text-unops-2xl font-semibold text-unops-secondary">
-              @if (totalFundingDisplay() !== null) {
-                {{ totalFundingDisplay() | currency:'USD':'symbol':'1.0-0' }}
-              } @else {
-                -
+            <span class="text-unops-sm font-medium text-unops-neutral-600">{{ 'label.stage' | translate }}</span>
+            @if (stageName()) {
+              <span class="text-unops-2xl font-semibold text-unops-secondary">
+                @if (stageNumber()) {
+                  {{ stageNumber() }} / {{ stageTotalSteps() }}
+                } @else {
+                  {{ stageName() }}
+                }
+              </span>
+              @if (stageLabel()) {
+                <span class="text-unops-xs text-unops-neutral-500 leading-snug">{{ stageLabel() }}</span>
               }
+            } @else {
+              <span class="text-unops-2xl font-semibold text-unops-secondary">-</span>
+            }
+          </div>
+          <div class="flex items-center justify-center w-12 h-12 rounded-full bg-unops-info/10">
+            <i class="pi pi-sitemap text-unops-info text-unops-2xl"></i>
+          </div>
+        </div>
+      </p-card>
+
+
+      <!-- Funding Partners Card -->
+      <p-card styleClass="shadow-unops-sm h-full">
+        <div class="flex justify-between items-start">
+          <div class="flex flex-col gap-1">
+            <span class="text-unops-sm font-medium text-unops-neutral-600">{{ 'label.fundingPartners' | translate }}</span>
+            <span class="text-unops-2xl font-semibold text-unops-secondary">
+              {{ fundingPartnerCount() }}
             </span>
           </div>
           <div class="flex items-center justify-center w-12 h-12 rounded-full bg-unops-success/10">
@@ -94,19 +112,32 @@
         </div>
       </p-card>
 
-      <!-- Partners Card -->
+      <!-- SDGs Card -->
       <p-card styleClass="shadow-unops-sm h-full">
         <div class="flex justify-between items-start">
           <div class="flex flex-col gap-1">
-            <span class="text-unops-sm font-medium text-unops-neutral-600">
-              {{ fundingPartnerCount() }} funding, {{ clientPartnerCount() }} client
-            </span>
+            <span class="text-unops-sm font-medium text-unops-neutral-600">{{ 'label.alt.sdgs' | translate }}</span>
             <span class="text-unops-2xl font-semibold text-unops-secondary">
-              {{ partnerCount() }}
+              {{ sdgCount() }}
             </span>
           </div>
           <div class="flex items-center justify-center w-12 h-12 rounded-full bg-unops-info/10">
-            <i class="pi pi-users text-unops-info text-unops-2xl"></i>
+            <i class="pi pi-globe text-unops-info text-unops-2xl"></i>
+          </div>
+        </div>
+      </p-card>
+
+      <!-- Countries Card -->
+      <p-card styleClass="shadow-unops-sm h-full">
+        <div class="flex justify-between items-start">
+          <div class="flex flex-col gap-1">
+            <span class="text-unops-sm font-medium text-unops-neutral-600">{{ 'label.countries' | translate }}</span>
+            <span class="text-unops-2xl font-semibold text-unops-secondary">
+              {{ countryCount() }}
+            </span>
+          </div>
+          <div class="flex items-center justify-center w-12 h-12 rounded-full bg-unops-primary/10">
+            <i class="pi pi-map text-unops-primary text-unops-2xl"></i>
           </div>
         </div>
       </p-card>
@@ -115,9 +146,7 @@
       <p-card styleClass="shadow-unops-sm h-full">
         <div class="flex justify-between items-start">
           <div class="flex flex-col gap-1">
-            <span class="text-unops-sm font-medium text-unops-neutral-600">
-              {{ countryCount() }} countries, {{ sdgCount() }} SDGs
-            </span>
+            <span class="text-unops-sm font-medium text-unops-neutral-600">{{ 'label.deliverables' | translate }}</span>
             <span class="text-unops-2xl font-semibold text-unops-secondary">
               {{ deliverableCount() }}
             </span>
@@ -138,84 +167,89 @@
       <!-- LEFT COLUMN -->
       <div class="flex flex-col gap-6">
 
-        <!-- Funding Partners Table -->
+        <!-- Funding Partners -->
         <app-dashboard-card
           [config]="fundingPartnersCardConfig"
           [hasContent]="fundingPartners().length > 0"
         >
-          <p-table
-            [value]="fundingPartners()"
-            [rows]="5"
-            [paginator]="fundingPartners().length > 5"
-            [rowsPerPageOptions]="[5, 10]"
-            styleClass="p-datatable-sm"
-          >
-            <ng-template pTemplate="header">
-              <tr>
-                <th>{{ 'label.partnerName' | translate }}</th>
-                <th class="text-right">{{ 'label.amount' | translate }}</th>
-                <th>{{ 'label.currency' | translate }}</th>
-              </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-fp>
-              <tr>
-                <td class="font-medium">{{ fp.partnerName }}</td>
-                <td class="text-right">
-                  @if (fp.amountUSD != null) {
-                    {{ fp.amountUSD | currency:'USD':'symbol':'1.0-0' }}
-                  } @else if (fp.amount != null) {
-                    {{ fp.amount | number:'1.0-0' }}
-                  } @else {
-                    -
-                  }
-                </td>
-                <td>{{ fp.currencyCode || 'USD' }}</td>
-              </tr>
-            </ng-template>
-            <ng-template pTemplate="emptymessage">
-              <tr>
-                <td colspan="3" class="text-center text-unops-neutral-500">
-                  No funding partners
-                </td>
-              </tr>
-            </ng-template>
-          </p-table>
+          <div class="flex flex-col gap-3">
+            @for (fp of fundingPartners(); track fp.id) {
+              <div class="flex items-start gap-3 p-3 rounded-unops-md border border-unops-neutral-200 bg-unops-surface-secondary hover:shadow-unops-sm transition-shadow">
+                <img
+                  [src]="fp.partnerLogoUrl || 'assets/images/Partner.png'"
+                  [alt]="fp.partnerName"
+                  class="w-10 h-10 object-contain rounded-unops-md shrink-0"
+                  (error)="onPartnerImageError($event)"
+                />
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <a
+                      [href]="'/partnerships/partners/' + fp.partnerId"
+                      class="text-unops-sm font-semibold text-unops-neutral-900 hover:text-unops-primary truncate"
+                      target="_blank"
+                    >
+                      {{ fp.partnerName }}
+                      <i class="pi pi-external-link text-unops-xs ml-1"></i>
+                    </a>
+                    @if (fp.commitmentStatus) {
+                      <p-tag [value]="fp.commitmentStatus" severity="info" [rounded]="true" />
+                    }
+                  </div>
+
+                  <div class="flex items-center gap-4 mt-1.5 text-unops-xs text-unops-neutral-600">
+                    @if (fp.amountUSD != null) {
+                      <span class="font-medium text-unops-neutral-900">
+                        {{ fp.amountUSD | currency:'USD':'symbol':'1.0-0' }}
+                      </span>
+                    } @else if (fp.amount != null) {
+                      <span class="font-medium text-unops-neutral-900">
+                        {{ fp.amount | number:'1.0-0' }} {{ fp.currencyCode }}
+                      </span>
+                    }
+                    @if (fp.percentage != null) {
+                      <span>({{ fp.percentage }}%)</span>
+                    }
+                    @if (fp.partnershipAgreementReference) {
+                      <span class="truncate">
+                        <i class="pi pi-file text-unops-xs mr-1"></i>{{ fp.partnershipAgreementReference }}
+                      </span>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
         </app-dashboard-card>
 
-        <!-- Deliverables Table -->
+        <!-- Deliverables List -->
         <app-dashboard-card
           [config]="deliverablesCardConfig"
           [hasContent]="deliverables().length > 0"
         >
-          <p-table
-            [value]="deliverables()"
-            [rows]="5"
-            [paginator]="deliverables().length > 5"
-            [rowsPerPageOptions]="[5, 10]"
-            styleClass="p-datatable-sm"
-          >
-            <ng-template pTemplate="header">
-              <tr>
-                <th>{{ 'label.output' | translate }}</th>
-                <th>{{ 'label.serviceLine' | translate }}</th>
-                <th class="text-right">{{ 'label.quantity' | translate }}</th>
-              </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-d>
-              <tr>
-                <td class="font-medium">{{ d.outputName || d.level2 || d.level1 || '-' }}</td>
-                <td>{{ d.serviceLine || '-' }}</td>
-                <td class="text-right">{{ d.quantity ?? '-' }}</td>
-              </tr>
-            </ng-template>
-            <ng-template pTemplate="emptymessage">
-              <tr>
-                <td colspan="3" class="text-center text-unops-neutral-500">
-                  No deliverables
-                </td>
-              </tr>
-            </ng-template>
-          </p-table>
+          <div class="flex flex-col">
+            @for (d of deliverables(); track $index; let last = $last) {
+              <div class="flex items-start gap-3 py-3 px-1" [class.border-b]="!last" [class.border-unops-neutral-100]="!last">
+                <div class="flex items-center justify-center w-8 h-8 rounded-full bg-unops-accent-orange/10 shrink-0 mt-0.5">
+                  <i class="pi pi-box text-unops-accent-orange text-unops-xs"></i>
+                </div>
+                <div class="flex flex-col flex-1 min-w-0 gap-0.5">
+                  <span class="text-unops-sm font-medium text-unops-neutral-900 leading-snug">
+                    {{ d.outputName || d.level2 || d.level1 || '-' }}
+                  </span>
+                  <span class="text-unops-xs text-unops-neutral-500">
+                    {{ d.serviceLine || '-' }}
+                  </span>
+                </div>
+                @if (d.quantity != null) {
+                  <p-tag [value]="d.quantity.toString()" severity="secondary" [rounded]="true" />
+                }
+              </div>
+            } @empty {
+              <div class="flex items-center justify-center py-6 text-unops-sm text-unops-neutral-500">
+                {{ 'label.alt.noDeliverables' | translate }}
+              </div>
+            }
+          </div>
         </app-dashboard-card>
 
       </div>
@@ -233,10 +267,10 @@
             @if (daysToSigning() !== null) {
               <div class="flex items-center gap-3 p-3 rounded-unops-md bg-unops-surface-cool">
                 <p-tag
-                  [value]="daysToSigning()! + ' days'"
+                  [value]="daysToSigning()! + ' ' + ('label.alt.days' | translate)"
                   [severity]="daysToSigning()! <= 30 ? 'danger' : daysToSigning()! <= 90 ? 'warn' : 'info'"
                 />
-                <span class="text-unops-sm font-medium text-unops-neutral-700">until target signing</span>
+                <span class="text-unops-sm font-medium text-unops-neutral-700">{{ 'label.alt.untilTargetSigning' | translate }}</span>
               </div>
             }
 
@@ -245,7 +279,7 @@
               <div class="flex items-center justify-between py-2 border-b border-unops-neutral-100">
                 <div class="flex items-center gap-2">
                   <i class="pi pi-clock text-unops-warning"></i>
-                  <span class="text-unops-sm font-medium text-unops-neutral-700">Submission Deadline</span>
+                  <span class="text-unops-sm font-medium text-unops-neutral-700">{{ 'label.alt.submissionDeadline' | translate }}</span>
                 </div>
                 <span class="text-unops-sm text-unops-neutral-900 font-medium">
                   {{ submissionDeadline() ? (submissionDeadline() | date:'mediumDate') : '-' }}
@@ -256,7 +290,7 @@
               <div class="flex items-center justify-between py-2 border-b border-unops-neutral-100">
                 <div class="flex items-center gap-2">
                   <i class="pi pi-pencil text-unops-primary"></i>
-                  <span class="text-unops-sm font-medium text-unops-neutral-700">Target Signing</span>
+                  <span class="text-unops-sm font-medium text-unops-neutral-700">{{ 'label.alt.targetSigning' | translate }}</span>
                 </div>
                 <span class="text-unops-sm text-unops-neutral-900 font-medium">
                   {{ targetSigningDate() ? (targetSigningDate() | date:'mediumDate') : '-' }}
@@ -267,7 +301,7 @@
               <div class="flex items-center justify-between py-2 border-b border-unops-neutral-100">
                 <div class="flex items-center gap-2">
                   <i class="pi pi-play text-unops-success"></i>
-                  <span class="text-unops-sm font-medium text-unops-neutral-700">Implementation Start</span>
+                  <span class="text-unops-sm font-medium text-unops-neutral-700">{{ 'label.alt.implementationStart' | translate }}</span>
                 </div>
                 <span class="text-unops-sm text-unops-neutral-900 font-medium">
                   {{ implementationStartDate() ? (implementationStartDate() | date:'mediumDate') : '-' }}
@@ -278,7 +312,7 @@
               <div class="flex items-center justify-between py-2">
                 <div class="flex items-center gap-2">
                   <i class="pi pi-flag-fill text-unops-info"></i>
-                  <span class="text-unops-sm font-medium text-unops-neutral-700">Target Delivery</span>
+                  <span class="text-unops-sm font-medium text-unops-neutral-700">{{ 'label.alt.targetDelivery' | translate }}</span>
                 </div>
                 <span class="text-unops-sm text-unops-neutral-900 font-medium">
                   {{ targetDeliveryDate() ? (targetDeliveryDate() | date:'mediumDate') : '-' }}
@@ -299,11 +333,11 @@
             @if (countries().length > 0) {
               <div>
                 <h4 class="text-unops-sm font-semibold text-unops-neutral-700 mb-2">
-                  Countries ({{ countries().length }})
+                  {{ 'label.countries' | translate }} ({{ countries().length }})
                 </h4>
                 <div class="flex flex-wrap gap-2">
                   @for (c of countries(); track c.id) {
-                    <p-chip [label]="c.country?.name ?? 'Unknown'" />
+                    <p-chip [label]="c.country?.name ?? ('label.unknown' | translate)" />
                   }
                 </div>
               </div>
@@ -312,12 +346,12 @@
             @if (sdgs().length > 0) {
               <div>
                 <h4 class="text-unops-sm font-semibold text-unops-neutral-700 mb-2">
-                  SDGs ({{ sdgs().length }})
+                  {{ 'label.alt.sdgs' | translate }} ({{ sdgs().length }})
                 </h4>
                 <div class="flex flex-wrap gap-2">
                   @for (sdg of sdgs(); track sdg.id) {
                     <p-tag
-                      [value]="'SDG ' + sdg.sdgNumber + (sdg.isPrimary ? ' (Primary)' : '')"
+                      [value]="'SDG ' + sdg.sdgNumber + (sdg.isPrimary ? ' (' + ('label.alt.primary' | translate) + ')' : '')"
                       [severity]="sdg.isPrimary ? 'success' : 'info'"
                       [rounded]="true"
                     />
@@ -332,15 +366,205 @@
       </div>
     </div>
 
-  </div>
+    </div><!-- /flex-col gap-6 -->
+  </div><!-- /main-content -->
+
+  <!-- ============================================================ -->
+  <!-- FIXED RIGHT SIDEBAR (outside content scroll)                  -->
+  <!-- ============================================================ -->
+  <aside
+    class="side-pane fixed top-[64px] right-0 bottom-0 z-[100] flex transition-all duration-300 ease-in-out overflow-hidden"
+    [class.side-pane--collapsed]="!sidePaneExpanded()"
+    [class.side-pane--expanded]="sidePaneExpanded()"
+  >
+      <!-- Collapsed icon rail (narrow strip) -->
+      @if (!sidePaneExpanded()) {
+        <div class="side-pane__rail flex flex-col items-center gap-2.5 p-4 h-full border-l border-unops-neutral-200">
+          <!-- Expand chevron -->
+          <div
+            class="flex items-center justify-center p-3 rounded cursor-pointer hover:bg-unops-neutral-200/50 transition-colors"
+            (click)="expandSidePane('documents')"
+            [pTooltip]="'label.alt.pane.closeSidebar' | translate"
+            tooltipPosition="left"
+          >
+            <i class="pi pi-chevron-left text-unops-neutral-700"></i>
+          </div>
+          <!-- Documents icon -->
+          <div
+            class="flex items-center justify-center p-3 rounded cursor-pointer hover:bg-unops-neutral-200/50 transition-colors"
+            (click)="expandSidePane('documents')"
+            [pTooltip]="'label.alt.pane.documents' | translate"
+            tooltipPosition="left"
+          >
+            <i class="pi pi-file text-unops-neutral-700"></i>
+          </div>
+          <!-- AI icon -->
+          <div
+            class="flex items-center justify-center p-3 rounded cursor-pointer hover:bg-unops-neutral-200/50 transition-colors"
+            (click)="expandSidePane('ai')"
+            [pTooltip]="'label.alt.pane.aiSuggestions' | translate"
+            tooltipPosition="left"
+          >
+            <i class="pi pi-question-circle text-unops-neutral-700"></i>
+          </div>
+        </div>
+      }
+
+      <!-- Expanded content -->
+      @if (sidePaneExpanded()) {
+        <div class="side-pane__content flex flex-col h-full w-full p-4 gap-2.5 border-l border-unops-neutral-200">
+
+          <!-- Close Sidebar toggle -->
+          <div
+            class="flex items-center gap-2 py-3 rounded cursor-pointer"
+            (click)="collapseSidePane()"
+          >
+            <i class="pi pi-chevron-right text-unops-neutral-700"></i>
+            <span class="text-base font-medium text-unops-neutral-800">
+              {{ 'label.alt.pane.closeSidebar' | translate }}
+            </span>
+          </div>
+
+          <!-- Documents Panel -->
+          <div class="doc-panel border border-[#4479a2] rounded overflow-hidden">
+            <!-- Accordion Header — transparent bg (inherits sidebar gray) -->
+            <div
+              class="doc-panel__header flex items-center gap-2 px-3 py-4 cursor-pointer select-none rounded-t"
+              (click)="docPanelOpen = !docPanelOpen"
+            >
+              <i class="pi pi-file text-unops-neutral-700 text-xl"></i>
+              <span class="flex-1 text-base font-semibold text-unops-secondary leading-6">
+                {{ 'label.alt.pane.documents' | translate }}
+              </span>
+              <i [class]="'pi text-unops-neutral-600 text-xl ' + (docPanelOpen ? 'pi-chevron-up' : 'pi-chevron-down')"></i>
+            </div>
+
+            @if (docPanelOpen) {
+              <!-- Search — surface bg -->
+              <div class="doc-panel__surface pt-2 px-3">
+                <div class="flex items-center gap-2 border border-[#c0c7cd] rounded-full pl-4 pr-8 py-2 w-full">
+                  <i class="pi pi-search text-unops-neutral-500 text-xl shrink-0"></i>
+                  <input
+                    type="text"
+                    [placeholder]="'label.alt.pane.searchDocuments' | translate"
+                    class="flex-1 min-w-0 bg-transparent border-none outline-none text-base leading-6 text-unops-neutral-600 placeholder:text-unops-neutral-500"
+                    [ngModel]="documentSearch()"
+                    (ngModelChange)="documentSearch.set($event)"
+                  />
+                </div>
+              </div>
+
+              <!-- Document rows -->
+              @if (documentsLoading()) {
+                <div class="doc-panel__surface flex items-center justify-center py-8">
+                  <i class="pi pi-spin pi-spinner text-unops-primary text-unops-xl"></i>
+                </div>
+              } @else if (filteredDocuments().length === 0) {
+                <div class="doc-panel__surface py-6 text-center">
+                  <p class="text-sm text-unops-neutral-500">
+                    {{ 'message.noDocuments' | translate }}
+                  </p>
+                </div>
+              } @else {
+                @for (doc of filteredDocuments(); track doc.id) {
+                  <div class="doc-panel__surface flex items-center px-3 py-4 border-b border-[#e2e8f0]">
+                    <div class="flex flex-1 items-center gap-2 h-10 min-w-0">
+                      <p-checkbox
+                        [binary]="true"
+                        [ngModel]="isDocSelected(doc.id)"
+                        (ngModelChange)="toggleDocSelection(doc.id)"
+                      />
+                      <span class="flex-1 min-w-0 text-sm font-medium leading-6 text-unops-secondary truncate overflow-hidden whitespace-nowrap" [pTooltip]="doc.name" tooltipPosition="left">
+                        {{ doc.name }}
+                      </span>
+                      <div class="flex items-center gap-1 shrink-0">
+                        <button
+                          class="p-1 rounded"
+                          (click)="downloadDocument(doc); $event.stopPropagation()"
+                          [pTooltip]="'button.download' | translate"
+                          tooltipPosition="top"
+                        >
+                          <i class="pi pi-cloud-download text-unops-primary text-xl"></i>
+                        </button>
+                        @if (canUpdate()) {
+                          <button
+                            class="p-1 rounded"
+                            (click)="deleteDocument(doc); $event.stopPropagation()"
+                            [pTooltip]="'button.delete' | translate"
+                            tooltipPosition="top"
+                          >
+                            <i class="pi pi-trash text-unops-error text-xl"></i>
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+              }
+
+              <!-- Upload + Share URL buttons -->
+              @if (canUpdate()) {
+                <div class="doc-panel__surface flex flex-wrap items-center gap-2 px-3 py-4">
+                  <p-button
+                    [label]="'button.upload' | translate"
+                    icon="pi pi-upload"
+                    size="small"
+                    (onClick)="triggerFileUpload()"
+                  />
+                  <p-button
+                    [label]="'label.alt.pane.shareUrl' | translate"
+                    icon="pi pi-link"
+                    size="small"
+                    severity="secondary"
+                    [outlined]="true"
+                  />
+                </div>
+              }
+            }
+          </div>
+
+          <!-- AI Suggestions Panel -->
+          <div class="doc-panel border border-[#4479a2] rounded overflow-hidden">
+            <div
+              class="doc-panel__header flex items-center gap-2 px-3 py-4 cursor-pointer select-none"
+              (click)="aiPanelOpen = !aiPanelOpen"
+            >
+              <i class="pi pi-question-circle text-unops-neutral-700 text-xl"></i>
+              <span class="flex-1 text-base font-semibold text-unops-secondary leading-6">
+                {{ 'label.alt.pane.aiSuggestions' | translate }}
+              </span>
+              <i [class]="'pi text-unops-neutral-600 text-xl ' + (aiPanelOpen ? 'pi-chevron-up' : 'pi-chevron-down')"></i>
+            </div>
+
+            @if (aiPanelOpen) {
+              <div class="doc-panel__surface px-3 pb-4">
+                <p class="text-sm text-unops-neutral-500">
+                  {{ 'label.alt.pane.noAiHelp' | translate }}
+                </p>
+              </div>
+            }
+          </div>
+
+        </div>
+
+        <!-- Hidden file input for upload -->
+        <input
+          #fileInput
+          type="file"
+          class="hidden"
+          (change)="onFileSelected($event)"
+        />
+      }
+  </aside>
+
 } @else {
   <!-- No record selected -->
   <div class="flex flex-col items-center justify-center h-full min-h-[400px] gap-4">
     <p-message severity="info" styleClass="w-auto">
-      {{ 'title.opportunitiesAlt' | translate }} — navigate to an opportunity record to view it here.
+      {{ 'label.alt.navigateToOpportunity' | translate }}
     </p-message>
     <p-button
-      label="Go to Opportunities"
+      [label]="'label.alt.goToOpportunities' | translate"
       icon="pi pi-list"
       severity="secondary"
       [outlined]="true"

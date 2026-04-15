@@ -177,16 +177,11 @@
                       <div class="flex items-center gap-2 flex-wrap">
                         <span class="font-semibold text-unops-xs text-unops-secondary">{{ insight.title }}</span>
                         @if (insight.priority) {
-                          <span 
-                            class="inline-flex items-center px-2 py-0.5 rounded text-unops-xs font-medium"
-                            [ngClass]="{
-                              'bg-unops-error text-unops-error-on': insight.priority === 'high',
-                              'bg-unops-warning text-unops-warning-on': insight.priority === 'medium',
-                              'bg-unops-info text-unops-info-on': insight.priority === 'low'
-                            }"
-                          >
-                            {{ insight.priority | titlecase }}
-                          </span>
+                          <p-tag
+                            [value]="(insight.priority | titlecase) ?? ''"
+                            [severity]="getInsightPrioritySeverity(insight.priority)"
+                            [rounded]="true"
+                          />
                         }
                       </div>
                       <p class="text-unops-xs text-unops-neutral-700 mt-1">{{ insight.description }}</p>

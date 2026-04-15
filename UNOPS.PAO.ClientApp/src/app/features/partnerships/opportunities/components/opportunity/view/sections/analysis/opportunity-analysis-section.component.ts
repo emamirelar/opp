@@ -12,9 +12,10 @@ import { PanelModule } from 'primeng/panel';
 import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 import { TooltipModule } from 'primeng/tooltip';
+import { TagModule } from 'primeng/tag';
 
 // Models
-import { Opportunity, InsightType } from '@shared/models/opportunity.model';
+import { Opportunity, InsightType, InsightPriority } from '@shared/models/opportunity.model';
 
 /**
  * @class OpportunityAnalysisSectionComponent
@@ -40,6 +41,7 @@ import { Opportunity, InsightType } from '@shared/models/opportunity.model';
     ButtonModule,
     DividerModule,
     TooltipModule,
+    TagModule,
   ],
   templateUrl: './opportunity-analysis-section.component.html',
   styleUrls: ['./opportunity-analysis-section.component.scss'],
@@ -128,6 +130,24 @@ export class OpportunityAnalysisSectionComponent {
    */
   refreshInsights(): void {
     this.refreshRequested.emit();
+  }
+
+  /**
+   * @description Map insight priority to PrimeNG Tag severity
+   * @param {InsightPriority} priority - The insight priority level
+   * @returns {string} PrimeNG tag severity
+   */
+  getInsightPrioritySeverity(priority: InsightPriority): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' {
+    switch (priority) {
+      case 'high':
+        return 'danger';
+      case 'medium':
+        return 'warn';
+      case 'low':
+        return 'info';
+      default:
+        return 'secondary';
+    }
   }
 
   /**

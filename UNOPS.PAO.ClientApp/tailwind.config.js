@@ -32,6 +32,7 @@ module.exports = {
         // Primary Colors
         "unops-primary": {
           DEFAULT: "#0092d1",
+          text: "#00669A",
           light: "#1aa3db",
           lighter: "#4ec3e0", 
           dark: "#007bb8",
@@ -106,16 +107,16 @@ module.exports = {
           "black-soft": "#1a1b1c",
           white: "#ffffff",
           "white-soft": "#fefefe",
-          50: "#f9fafb",
-          100: "#f3f4f6",
-          200: "#e8e9ea",
-          300: "#d1d2d3",
-          400: "#b8babb",
-          500: "#97999b",
-          600: "#7a7c7e",
-          700: "#5c5e60",
-          800: "#1a1b1c",
-          900: "#00070a"
+          50: "#F4F5F6",
+          100: "#E8EAEC",
+          200: "#D1D4D8",
+          300: "#B3B7BD",
+          400: "#8E939C",
+          500: "#6A6F7B",
+          600: "#44495B",
+          700: "#363A49",
+          800: "#272A36",
+          900: "#191B24",
         },
         // Special Colors
         "unops-midnight-blue": "#004976",
@@ -180,8 +181,8 @@ module.exports = {
         "unops-bold": "700"
       },
       fontSize: {
-        "unops-xs": "0.75rem",
-        "unops-sm": "0.875rem", 
+        "unops-xs": "0.875rem",
+        "unops-sm": "0.9rem", 
         "unops-base": "1rem",
         "unops-lg": "1.125rem",
         "unops-xl": "1.25rem",
@@ -192,9 +193,9 @@ module.exports = {
         "unops-headline-large": "1.875rem",
         "unops-headline-medium": "1.5rem", 
         "unops-headline-small": "1.25rem",
-        "unops-body-large": "1rem",
-        "unops-body-medium": "0.875rem",
-        "unops-body-small": "0.75rem",
+        "unops-body-large": "1.5rem",
+        "unops-body-medium": "1.25rem",
+        "unops-body-small": "1rem",
         "unops-label-large": "0.875rem",
         "unops-label-medium": "0.75rem",
         "unops-label-small": "0.6875rem"
